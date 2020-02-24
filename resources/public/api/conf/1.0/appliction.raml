@@ -1,0 +1,67 @@
+#%RAML 1.0
+---
+title: CTC Traders Public API
+
+protocols: [ HTTPS ]
+baseUri: https://common-transit-convention-traders.hmrc.gov.uk//{version}
+version: v0.1
+
+documentation:
+ - title: Overview
+   content: !include docs/overview.md
+ - title: Versioning
+   content: !include https://developer.service.hmrc.gov.uk/api-documentation/assets/common/docs/versioning.md
+ - title: Errors
+   content: !include https://developer.service.hmrc.gov.uk/api-documentation/assets/common/docs/errors.md
+
+mediaType: application/hal+json
+
+uses:
+  sec: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/securitySchemes.raml
+  headers: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/headers.raml
+  annotations: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/annotations.raml
+  types: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/types.raml
+
+/movements:
+  /arrivals:	
+    post:
+      displayName: Submit a new movement
+      description: |
+        Submit a new Arrivals movement notification
+      is: [headers.acceptHeader]
+      (annotations.scope): "common-transit-convention-traders"
+      securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+      responses:
+        202:
+          body:
+            application/xml:
+              example: |
+                <IE007>
+                </IE007>
+    get:
+      displayName: Retrieve all arrivals
+      description: |
+        Retrieve all arrival movement notifications for the last 30 days for the current [user|eori]
+      is: [headers.acceptHeader]
+      (annotations.scope): "common-transit-convention-traders"
+      securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+      responses:
+        200:
+          body:
+            <list of IE007??></list>
+     /{transactionId}:
+         get:
+          displayName: Retrieve all arrivals
+          description: |
+            Retrieve all arrival movement notifications for the last 30 days for the current [user|eori]
+            404 if transaction does not exist or user/eori does not match the owner
+          is: [headers.acceptHeader]
+          (annotations.scope): "common-transit-convention-traders"
+          securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+          responses:
+            200:
+              body:
+                <IE007></IE007>
+            404:
+              body:
+                <???>
