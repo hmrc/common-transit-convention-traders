@@ -48,7 +48,10 @@ uses:
       responses:
         200:
           body:
-            <list of IE007??></list>
+            <transactions>
+              <IE007>
+              </IE007>
+            </transactions>
      /{transactionId}:
          get:
           displayName: Retrieve all arrivals
@@ -61,7 +64,72 @@ uses:
           responses:
             200:
               body:
-                <IE007></IE007>
+                <IE007>
+                </IE007>
             404:
-              body:
-                <???>
+              description: when transaction id does not exist or is not available to the eori/user
+        /messages:
+          get:
+            displayName: Retrieve all messages for the given arrival notification
+            description: |
+              Retrieve all messages for the last 30 days for the current [user|eori] and the given arrival notification
+            responses:
+              200:
+                body:
+                  <?xml version="1.0" encoding="UTF-8"?>
+                  <messages>
+                    <CC058A>
+                       <SynIdeMES1>UNOC</SynIdeMES1>
+                       <SynVerNumMES2>3</SynVerNumMES2>
+                       <MesSenMES3>NTA.GB</MesSenMES3>
+                       <MesRecMES6>SYST17B-NCTS_EU_EXIT</MesRecMES6>
+                       <DatOfPreMES9>20191015</DatOfPreMES9>
+                       <TimOfPreMES10>1130</TimOfPreMES10>
+                       <IntConRefMES11>48391015113007</IntConRefMES11>
+                       <AppRefMES14>NCTS</AppRefMES14>
+                       <TesIndMES18>0</TesIndMES18>
+                       <MesIdeMES19>48391015113007</MesIdeMES19>
+                       <MesTypMES20>GB058A</MesTypMES20>
+                       <HEAHEA>
+                          <DocNumHEA5>19IT02110010007BA9</DocNumHEA5>
+                          <UnlRemRejDatHEA218>20191015</UnlRemRejDatHEA218>
+                          <UnlRemRejReaHEA280>The IE044 Message was invalid</UnlRemRejReaHEA280>
+                       </HEAHEA>
+                       <FUNERRER1>
+                          <ErrTypER11>12</ErrTypER11>
+                          <ErrPoiER12>REM.Unloading Date</ErrPoiER12>
+                          <OriAttValER14>20190101</OriAttValER14>
+                       </FUNERRER1>
+                    </CC058A>
+                  </messages>
+            /{messageId}:
+              get:
+                displayName: Retrieve a message for the given arrival notification and message id
+                description: |
+                  Retrieve a message for the given transaction id and message id.  Will return if the eori/user does not match either the transaction id and/or message id.
+                responses:
+                body:
+                  <?xml version="1.0" encoding="UTF-8"?>
+                  <CC058A>
+                     <SynIdeMES1>UNOC</SynIdeMES1>
+                     <SynVerNumMES2>3</SynVerNumMES2>
+                     <MesSenMES3>NTA.GB</MesSenMES3>
+                     <MesRecMES6>SYST17B-NCTS_EU_EXIT</MesRecMES6>
+                     <DatOfPreMES9>20191015</DatOfPreMES9>
+                     <TimOfPreMES10>1130</TimOfPreMES10>
+                     <IntConRefMES11>48391015113007</IntConRefMES11>
+                     <AppRefMES14>NCTS</AppRefMES14>
+                     <TesIndMES18>0</TesIndMES18>
+                     <MesIdeMES19>48391015113007</MesIdeMES19>
+                     <MesTypMES20>GB058A</MesTypMES20>
+                     <HEAHEA>
+                        <DocNumHEA5>19IT02110010007BA9</DocNumHEA5>
+                        <UnlRemRejDatHEA218>20191015</UnlRemRejDatHEA218>
+                        <UnlRemRejReaHEA280>The IE044 Message was invalid</UnlRemRejReaHEA280>
+                     </HEAHEA>
+                     <FUNERRER1>
+                        <ErrTypER11>12</ErrTypER11>
+                        <ErrPoiER12>REM.Unloading Date</ErrPoiER12>
+                        <OriAttValER14>20190101</OriAttValER14>
+                     </FUNERRER1>
+                  </CC058A>
