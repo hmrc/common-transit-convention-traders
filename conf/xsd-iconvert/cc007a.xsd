@@ -1,0 +1,470 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" version="1.00">
+    <!--=========================================-->
+    <!--===== CC007A -->
+    <!--===== XSD version v1.00  -->
+    <!--=========================================-->
+    <!--===== Includes =====-->
+    <xs:include schemaLocation="doc.xsd" />
+    <xs:include schemaLocation="simple_types.xsd" />
+    <!--===== Root Element =====-->
+    <xs:element name="CC007A" type="CC007AType" />
+    <!--===== MESSAGE Content =====-->
+    <xs:complexType name="CC007AType">
+        <xs:annotation>
+            <xs:documentation />
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="SynIdeMES1" type="Alpha_4" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="SynVerNumMES2" type="Numeric_1_-8" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="MesSenMES3" type="Alphanumeric_Max35" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="SenIdeCodQuaMES4" type="Alphanumeric_Min0Max4" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="MesRecMES6" type="Alphanumeric_Max35" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="RecIdeCodQuaMES7" type="Alphanumeric_Max4_-5" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="DatOfPreMES9" type="Numeric_Min6Max8" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="TimOfPreMES10" type="Numeric_4" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="IntConRefMES11" type="Alphanumeric_Max14" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="RecRefMES12" type="Alphanumeric_Max14" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="RecRefQuaMES13" type="Alphanumeric_2_-6" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="AppRefMES14" type="Alphanumeric_Max14" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="PriMES15" type="Alpha_1_-17" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="AckReqMES16" type="Numeric_1" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="ComAgrIdMES17" type="Alphanumeric_Max35" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="TesIndMES18" type="Numeric_1" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="MesIdeMES19" type="Alphanumeric_Max14" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="MesTypMES20" type="Alphanumeric_Min0Max6" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="ComAccRefMES21" type="Alphanumeric_Max35" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="MesSeqNumMES22" type="Numeric_Min0Max2" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="FirAndLasTraMES23" type="Alpha_1_-18" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="HEAHEA" type="HEAHEAType" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="TRADESTRD" type="TRADESTRDType" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="CUSOFFPREOFFRES" type="CUSOFFPREOFFRESType" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="ENROUEVETEV" type="ENROUEVETEVType" minOccurs="0" maxOccurs="9">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="HEAHEAType">
+        <xs:annotation>
+            <xs:documentation />
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="DocNumHEA5" type="Alphanumeric_Max21" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="CusSubPlaHEA66" type="Alphanumeric_Max17" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="ArrNotPlaHEA60" type="Alphanumeric_Max35" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="ArrNotPlaHEA60LNG" type="Alpha_2" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="ArrAgrLocCodHEA62" type="Alphanumeric_Max17" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="ArrAgrLocOfGooHEA63" type="Alphanumeric_Max35" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="ArrAgrLocOfGooHEA63LNG" type="Alpha_2" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="ArrAutLocOfGooHEA65" type="Alphanumeric_Max17" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="SimProFlaHEA132" type="Numeric_1" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="ArrNotDatHEA141" type="Numeric_8" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="DiaLanIndAtDesHEA255" type="Alpha_2_-24" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="TRADESTRDType">
+        <xs:annotation>
+            <xs:documentation />
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="NamTRD7" type="Alphanumeric_Max35" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="StrAndNumTRD22" type="Alphanumeric_Max35" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="PosCodTRD23" type="Alphanumeric_Max9_-3" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="CitTRD24" type="Alphanumeric_Max35" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="CouTRD25" type="Alpha_2_-1" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="NADLNGRD" type="Alpha_2" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="TINTRD59" type="Alphanumeric_Max17" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="CUSOFFPREOFFRESType">
+        <xs:annotation>
+            <xs:documentation />
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="RefNumRES1" type="Alphanumeric_8" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="ENROUEVETEVType">
+        <xs:annotation>
+            <xs:documentation />
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="PlaTEV10" type="Alphanumeric_Max35" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="PlaTEV10LNG" type="Alpha_2" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="CouTEV13" type="Alpha_2_-14" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="CTLCTL" type="CTLCTLType" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="INCINC" type="INCINCType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="SEAINFSF1" type="SEAINFSF1Type" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="TRASHP" type="TRASHPType" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="CTLCTLType">
+        <xs:annotation>
+            <xs:documentation />
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="AlrInNCTCTL29" type="Numeric_1" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="INCINCType">
+        <xs:annotation>
+            <xs:documentation />
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="IncFlaINC3" type="Numeric_1" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="IncInfINC4" type="Alphanumeric_Max350" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="IncInfINC4LNG" type="Alpha_2" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="EndDatINC6" type="Numeric_8" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="EndAutINC7" type="Alphanumeric_Max35" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="EndAutINC7LNG" type="Alpha_2" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="EndPlaINC10" type="Alphanumeric_Max35" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="EndPlaINC10LNG" type="Alpha_2" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="EndCouINC12" type="Alpha_2_-14" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="SEAINFSF1Type">
+        <xs:annotation>
+            <xs:documentation />
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="SeaNumSF12" type="Numeric_Min0Max4" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="SEAIDSI1" type="SEAIDSI1Type" minOccurs="1" maxOccurs="9999">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="SEAIDSI1Type">
+        <xs:annotation>
+            <xs:documentation />
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="SeaIdeSI11" type="Alphanumeric_Max20" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="SeaIdeSI11LNG" type="Alpha_2" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="TRASHPType">
+        <xs:annotation>
+            <xs:documentation />
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="NewTraMeaIdeSHP26" type="Alphanumeric_Max27" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="NewTraMeaIdeSHP26LNG" type="Alpha_2" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="NewTraMeaNatSHP54" type="Alpha_2_-1" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="EndDatSHP60" type="Numeric_8" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="EndAutSHP61" type="Alphanumeric_Max35" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="EndAutSHP61LNG" type="Alpha_2" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="EndPlaSHP63" type="Alphanumeric_Max35" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="EndPlaSHP63LNG" type="Alpha_2" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="EndCouSHP65" type="Alpha_2_-14" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="CONNR3" type="CONNR3Type" minOccurs="0" maxOccurs="99">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="CONNR3Type">
+        <xs:annotation>
+            <xs:documentation />
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="ConNumNR31" type="Alphanumeric_Max17" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation />
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
