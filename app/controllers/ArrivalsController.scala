@@ -17,17 +17,19 @@
 package controllers
 
 import javax.inject.Inject
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import play.mvc.Http.MimeTypes
+import models.request.ArrivalNotificationXSD
+import play.api.mvc.{Action, ControllerComponents}
+import services.XmlValidationService
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
-class ArrivalsController @Inject()(cc: ControllerComponents) extends BackendController(cc) {
-  def createArrivalNotification(): Action[AnyContent] = Action {
-    implicit request => {
-      request.contentType match {
-        case Some(MimeTypes.XML) => Accepted
-        case _ => BadRequest
+import scala.xml.NodeSeq
+
+class ArrivalsController @Inject()(cc: ControllerComponents, xmlValidationService: XmlValidationService) extends BackendController(cc) {
+  def createArrivalNotification(): Action[NodeSeq] = Action(parse.xml) {
+    implicit request =>
+      xmlValidationService.validate(request.body.toString, ArrivalNotificationXSD) match {
+        case Right(_) => Accepted
+        case Left(_) => BadRequest
       }
-    }
   }
 }
