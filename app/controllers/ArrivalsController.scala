@@ -18,10 +18,16 @@ package controllers
 
 import javax.inject.Inject
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 class ArrivalsController @Inject()(cc: ControllerComponents) extends BackendController(cc) {
   def createArrivalNotification(): Action[AnyContent] = Action {
-    implicit request => Accepted
+    implicit request => {
+      request.contentType match {
+        case Some(MimeTypes.XML) => Accepted
+        case _ => BadRequest
+      }
+    }
   }
 }

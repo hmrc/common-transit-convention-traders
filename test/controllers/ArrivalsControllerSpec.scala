@@ -19,16 +19,33 @@ package controllers
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{FreeSpec, MustMatchers, OptionValues}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.test.FakeRequest
+import play.api.http.HeaderNames
+import play.api.test.{FakeHeaders, FakeRequest}
 import play.api.test.Helpers._
 
 class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures {
  "POST /movements/arrivals" - {
-   "must return 202" in {
+   "must return Accepted" in {
      val request = FakeRequest(POST, routes.ArrivalsController.createArrivalNotification().url)
+       .withHeaders(FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")))
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
+   }
+
+   "must return BadRequest when Content-Type is JSON" in {
+     val request = FakeRequest(POST, routes.ArrivalsController.createArrivalNotification().url)
+       .withHeaders(FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")))
+     val result = route(app, request).value
+
+     status(result) mustBe BAD_REQUEST
+   }
+
+   "must return BadRequest when no Content-Type specified" in {
+     val request = FakeRequest(POST, routes.ArrivalsController.createArrivalNotification().url)
+     val result = route(app, request).value
+
+     status(result) mustBe BAD_REQUEST
    }
  }
 }
