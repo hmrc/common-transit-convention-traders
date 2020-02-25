@@ -16,7 +16,7 @@
 
 package controllers
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{FreeSpec, MustMatchers}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.{Configuration, Environment, Mode}
 import play.api.http.Status
@@ -25,7 +25,7 @@ import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.play.bootstrap.config.{RunMode, ServicesConfig}
 import config.AppConfig
 
-class MicroserviceHelloWorldControllerSpec extends WordSpec with Matchers with GuiceOneAppPerSuite {
+class MicroserviceHelloWorldControllerSpec extends FreeSpec with MustMatchers with GuiceOneAppPerSuite {
 
   private val fakeRequest = FakeRequest("GET", "/")
 
@@ -37,10 +37,10 @@ class MicroserviceHelloWorldControllerSpec extends WordSpec with Matchers with G
 
   private val controller = new MicroserviceHelloWorldController(appConfig, Helpers.stubControllerComponents())
 
-  "GET /" should {
-    "return 200" in {
+  "GET /" - {
+    "must return 200" in {
       val result = controller.hello()(fakeRequest)
-      status(result) shouldBe Status.OK
+      status(result) mustBe Status.OK
     }
   }
 }
