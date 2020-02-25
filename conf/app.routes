@@ -1,3 +1,4 @@
 # microservice specific routes
 
 GET        /hello-world             controllers.MicroserviceHelloWorldController.hello
+POST       /movements/arrivals      controllers.ArrivalsController.createArrivalNotification
