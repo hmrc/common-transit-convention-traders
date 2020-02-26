@@ -69,6 +69,29 @@ class XmlValidationServiceSpec extends FreeSpec with MustMatchers with ScalaChec
         xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
       }
     }
+
+    "must fail when validating an xml message" - {
+
+      "with no associated schema" in {
+        val xmlString       = "<CC307A></CC307A>"
+        val expectedMessage = "Schema not found for message 'CC307A'."
+
+        xmlValidationService.validate(xml.XML.loadString(xmlString)) mustBe Left(FailedToValidateXml(expectedMessage))
+      }
+    }
+
+    "must return ArrivalNotificationXSD" - {
+
+      "with a valid ArrivalNotification xml message and a valid ArrivalNotification xsd file" in {
+        val xml = buildXml(withEnrouteEvent = false)
+        xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Right(XmlSuccessfullyValidated(ArrivalNotificationXSD))
+      }
+
+      "with a valid ArrivalNotification xml message and no xsd file specified" in {
+        val xmlString = buildXml(withEnrouteEvent = false)
+        xmlValidationService.validate(xml.XML.loadString(xmlString)) mustBe Right(XmlSuccessfullyValidated(ArrivalNotificationXSD))
+      }
+    }
   }
 
   private def buildXml(withEnrouteEvent: Boolean,

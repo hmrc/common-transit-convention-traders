@@ -17,7 +17,6 @@
 package controllers
 
 import javax.inject.Inject
-import models.request.ArrivalNotificationXSD
 import play.api.mvc.{Action, ControllerComponents}
 import services.XmlValidationService
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
@@ -27,7 +26,7 @@ import scala.xml.NodeSeq
 class ArrivalsController @Inject()(cc: ControllerComponents, xmlValidationService: XmlValidationService) extends BackendController(cc) {
   def createArrivalNotification(): Action[NodeSeq] = Action(parse.xml) {
     implicit request =>
-      xmlValidationService.validate(request.body.toString, ArrivalNotificationXSD) match {
+      xmlValidationService.validate(request.body) match {
         case Right(_) => Accepted
         case Left(_) => BadRequest
       }

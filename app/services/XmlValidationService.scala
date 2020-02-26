@@ -21,15 +21,13 @@ import java.net.URL
 
 import javax.xml.parsers.SAXParserFactory
 import javax.xml.validation.Schema
-import models.request.XSDFile
+import models.request.{ArrivalNotificationXSD, XSDFile}
 import org.xml.sax.InputSource
 import org.xml.sax.helpers.DefaultHandler
 import play.api.Logger
 
 import scala.xml.factory.XMLLoader
-import scala.xml.Elem
-import scala.xml.SAXParseException
-import scala.xml.SAXParser
+import scala.xml.{Elem, NodeSeq, SAXParseException, SAXParser}
 
 class XmlValidationService {
 
@@ -43,10 +41,21 @@ class XmlValidationService {
     saxParser.newSAXParser()
   }
 
-  def validate(xml: String, xsdFile: XSDFile): Either[XmlError, XmlValid] =
+  private val xsdFiles = Map("CC007A" -> ArrivalNotificationXSD)
+
+  def validate(xml: NodeSeq): Either[XmlError, XmlValid] = {
+    val rootElementName = xml.head.label
+
+    xsdFiles.get(rootElementName) match {
+      case Some(xsd) => validate(xml.toString(), xsd)
+      case None      => Left(FailedToValidateXml("Schema not found for message '%s'." format rootElementName))
+    }
+  }
+
+  def validate(xml: String, xsd: XSDFile): Either[XmlError, XmlValid] =
     try {
 
-      val url: URL = getClass.getResource(xsdFile.filePath)
+      val url: URL = getClass.getResource(xsd.filePath)
 
       val schema: Schema = javax.xml.validation.SchemaFactory.newInstance(schemaLang).newSchema(url)
 
@@ -67,7 +76,7 @@ class XmlValidationService {
 
       xmlResponse.parser.parse(new InputSource(new StringReader(xml)), new CustomParseHandler)
 
-      Right(XmlSuccessfullyValidated)
+      Right(XmlSuccessfullyValidated(xsd))
 
     } catch {
       case e: Throwable =>
@@ -79,7 +88,7 @@ class XmlValidationService {
 
 sealed trait XmlValid
 
-object XmlSuccessfullyValidated extends XmlValid
+case class XmlSuccessfullyValidated(xsdFile: XSDFile) extends XmlValid
 
 sealed trait XmlError
 
