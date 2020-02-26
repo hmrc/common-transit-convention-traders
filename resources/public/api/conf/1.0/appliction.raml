@@ -39,9 +39,9 @@ uses:
                 <IE007>
                 </IE007>
     get:
-      displayName: Retrieve all arrivals
+      displayName: Pull all arrival notifications
       description: |
-        Retrieve all arrival movement notifications for the last 30 days for the current [user|eori]
+        Pull all messages sent to the Office of Destination in the last 28 days to let them know that the goods have arrived.
       is: [headers.acceptHeader]
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -54,10 +54,9 @@ uses:
             </transactions>
      /{transactionId}:
          get:
-          displayName: Retrieve all arrivals
+          displayName: Pull all notifications for a transaction ID
           description: |
-            Retrieve all arrival movement notifications for the last 30 days for the current [user|eori]
-            404 if transaction does not exist or user/eori does not match the owner
+            Pull a specific message which was sent to the Office of Destination in the last 28 days to let them know that the goods had arrived.
           is: [headers.acceptHeader]
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -106,7 +105,7 @@ uses:
               get:
                 displayName: Retrieve a message for the given arrival notification and message id
                 description: |
-                  Retrieve a message for the given transaction id and message id.  Will return if the eori/user does not match either the transaction id and/or message id.
+                  Pull all messages relating to a specific transaction ID. For example, this could include messages about route diversions or unloading permissions. Any messages more than 28 days old will be archived. Archived messages will be return a status of "not found" message
                 responses:
                 body:
                   <?xml version="1.0" encoding="UTF-8"?>
