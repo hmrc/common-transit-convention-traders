@@ -1,2 +1,3 @@
 GET        /api/definition                                  controllers.DocumentationController.definition()
 GET        /api/conf/:version/*file                         controllers.DocumentationController.raml(version, file)
+POST       /movements/arrivals      controllers.ArrivalsController.createArrivalNotification
