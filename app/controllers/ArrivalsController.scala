@@ -32,8 +32,4 @@ class ArrivalsController @Inject()(cc: ControllerComponents, xmlValidationServic
         case Left(_) => BadRequest
       }
   }
-
-  def test(): Action[AnyContent] = Action {
-      Ok(s"Hello Arrivals")
-    }
 }
