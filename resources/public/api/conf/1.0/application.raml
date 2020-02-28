@@ -1,6 +1,6 @@
 #%RAML 1.0
 ---
-title: CTC Traders Public API
+title: CTC Traders
 
 protocols: [ HTTPS ]
 baseUri: https://common-transit-convention-traders.hmrc.gov.uk//{version}
@@ -23,7 +23,7 @@ uses:
   types: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/types.raml
 
 /movements:
-  /arrivals:	
+  /arrivals:
     post:
       displayName: Send an arrivals notification
       description: |
@@ -35,6 +35,7 @@ uses:
         202:
           body:
             application/xml:
+              description: Valid XML Payload
               example: |
                 <IE007>
                 </IE007>
@@ -48,87 +49,51 @@ uses:
       responses:
         200:
           body:
-            <transactions>
-              <IE007>
-              </IE007>
-            </transactions>
-     /{transactionId}:
-         get:
-          displayName: Pull all notifications for a transaction ID
+            application/xml:
+              description: Valid XML Payload
+              example: |
+                <transactions>
+                  <IE007>
+                  </IE007>
+                </transactions>
+    /{transactionId}:
+      get:
+        displayName: Pull all notifications for a transaction ID
+        description: |
+          Pull a specific message which was sent to the Office of Destination in the last 28 days to let them know that the goods had arrived.
+        is: [headers.acceptHeader]
+        (annotations.scope): "common-transit-convention-traders"
+        securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+        responses:
+          200:
+            body:
+              application/xml:
+                description: Valid XML Payload
+                example: |
+                  <IE007></IE007>
+          404:
+            description: when transaction id does not exist or is not available to the eori/user
+      /messages:
+        get:
+          displayName: Retrieve all messages for the given arrival notification
           description: |
-            Pull a specific message which was sent to the Office of Destination in the last 28 days to let them know that the goods had arrived.
-          is: [headers.acceptHeader]
-          (annotations.scope): "common-transit-convention-traders"
-          securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+            Retrieve all messages for the last 30 days for the current [user|eori] and the given arrival notification
           responses:
             200:
               body:
-                <IE007>
-                </IE007>
-            404:
-              description: when transaction id does not exist or is not available to the eori/user
-        /messages:
+                application/xml:
+                  description: Valid XML Payload
+                  example: |
+                    <123></123>
+        /{messageId}:
           get:
-            displayName: Retrieve all messages for the given arrival notification
+            displayName: Retrieve a message for the given arrival notification and message id
             description: |
-              Retrieve all messages for the last 30 days for the current [user|eori] and the given arrival notification
+              Pull all messages relating to a specific transaction ID. For example, this could include messages about route diversions or unloading permissions. Any messages more than 28 days old will be archived. Archived messages will be return a status of "not found" message
             responses:
               200:
                 body:
-                  <?xml version="1.0" encoding="UTF-8"?>
-                  <messages>
-                    <CC058A>
-                       <SynIdeMES1>UNOC</SynIdeMES1>
-                       <SynVerNumMES2>3</SynVerNumMES2>
-                       <MesSenMES3>NTA.GB</MesSenMES3>
-                       <MesRecMES6>SYST17B-NCTS_EU_EXIT</MesRecMES6>
-                       <DatOfPreMES9>20191015</DatOfPreMES9>
-                       <TimOfPreMES10>1130</TimOfPreMES10>
-                       <IntConRefMES11>48391015113007</IntConRefMES11>
-                       <AppRefMES14>NCTS</AppRefMES14>
-                       <TesIndMES18>0</TesIndMES18>
-                       <MesIdeMES19>48391015113007</MesIdeMES19>
-                       <MesTypMES20>GB058A</MesTypMES20>
-                       <HEAHEA>
-                          <DocNumHEA5>19IT02110010007BA9</DocNumHEA5>
-                          <UnlRemRejDatHEA218>20191015</UnlRemRejDatHEA218>
-                          <UnlRemRejReaHEA280>The IE044 Message was invalid</UnlRemRejReaHEA280>
-                       </HEAHEA>
-                       <FUNERRER1>
-                          <ErrTypER11>12</ErrTypER11>
-                          <ErrPoiER12>REM.Unloading Date</ErrPoiER12>
-                          <OriAttValER14>20190101</OriAttValER14>
-                       </FUNERRER1>
-                    </CC058A>
-                  </messages>
-            /{messageId}:
-              get:
-                displayName: Retrieve a message for the given arrival notification and message id
-                description: |
-                  Pull all messages relating to a specific transaction ID. For example, this could include messages about route diversions or unloading permissions. Any messages more than 28 days old will be archived. Archived messages will be return a status of "not found" message
-                responses:
-                body:
-                  <?xml version="1.0" encoding="UTF-8"?>
-                  <CC058A>
-                     <SynIdeMES1>UNOC</SynIdeMES1>
-                     <SynVerNumMES2>3</SynVerNumMES2>
-                     <MesSenMES3>NTA.GB</MesSenMES3>
-                     <MesRecMES6>SYST17B-NCTS_EU_EXIT</MesRecMES6>
-                     <DatOfPreMES9>20191015</DatOfPreMES9>
-                     <TimOfPreMES10>1130</TimOfPreMES10>
-                     <IntConRefMES11>48391015113007</IntConRefMES11>
-                     <AppRefMES14>NCTS</AppRefMES14>
-                     <TesIndMES18>0</TesIndMES18>
-                     <MesIdeMES19>48391015113007</MesIdeMES19>
-                     <MesTypMES20>GB058A</MesTypMES20>
-                     <HEAHEA>
-                        <DocNumHEA5>19IT02110010007BA9</DocNumHEA5>
-                        <UnlRemRejDatHEA218>20191015</UnlRemRejDatHEA218>
-                        <UnlRemRejReaHEA280>The IE044 Message was invalid</UnlRemRejReaHEA280>
-                     </HEAHEA>
-                     <FUNERRER1>
-                        <ErrTypER11>12</ErrTypER11>
-                        <ErrPoiER12>REM.Unloading Date</ErrPoiER12>
-                        <OriAttValER14>20190101</OriAttValER14>
-                     </FUNERRER1>
-                  </CC058A>
+                  application/xml:
+                    description: Valid XML Payload
+                    example: |
+                      <CC058A></CC058A>
