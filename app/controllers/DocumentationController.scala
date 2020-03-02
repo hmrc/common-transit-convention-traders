@@ -19,15 +19,15 @@ package controllers
 import javax.inject.{Inject, Singleton}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
-import config.AppConfig
 
-import scala.concurrent.Future
+@Singleton
+class DocumentationController @Inject()(assets: Assets, cc: ControllerComponents) extends BackendController(cc) {
 
-@Singleton()
-class MicroserviceHelloWorldController @Inject()(appConfig: AppConfig, cc: ControllerComponents)
-    extends BackendController(cc) {
+  def definition(): Action[AnyContent] = {
+    assets.at("/public/api", "definition.json")
+  }
 
-  def hello(): Action[AnyContent] = Action.async { implicit request =>
-    Future.successful(Ok("Hello world"))
+  def raml(version: String, file: String): Action[AnyContent] = {
+     assets.at(s"/public/api/conf/$version", file)
   }
 }

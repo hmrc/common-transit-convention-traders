@@ -15,3 +15,6 @@ lazy val microservice = Project(appName, file("."))
   .settings(integrationTestSettings(): _*)
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(PlayKeys.playDefaultPort := 9487)
+  .settings(
+    unmanagedResourceDirectories in Compile += baseDirectory.value / "resources"
+  )

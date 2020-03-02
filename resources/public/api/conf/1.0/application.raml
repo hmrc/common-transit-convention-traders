@@ -1,0 +1,99 @@
+#%RAML 1.0
+---
+title: CTC Traders
+
+protocols: [ HTTPS ]
+baseUri: https://common-transit-convention-traders.hmrc.gov.uk//{version}
+version: v0.1
+
+documentation:
+ - title: Overview
+   content: !include docs/overview.md
+ - title: Versioning
+   content: !include https://developer.service.hmrc.gov.uk/api-documentation/assets/common/docs/versioning.md
+ - title: Errors
+   content: !include https://developer.service.hmrc.gov.uk/api-documentation/assets/common/docs/errors.md
+
+mediaType: application/hal+json
+
+uses:
+  sec: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/securitySchemes.raml
+  headers: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/headers.raml
+  annotations: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/annotations.raml
+  types: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/types.raml
+
+/movements:
+  /arrivals:
+    post:
+      displayName: Send an arrivals notification
+      description: |
+        Send a message to let the Office of Destination know that the goods have arrived. This message will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).
+      is: [headers.acceptHeader]
+      (annotations.scope): "common-transit-convention-traders"
+      securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+      responses:
+        202:
+          body:
+            application/xml:
+              description: Valid XML Payload
+              example: |
+                <IE007>
+                </IE007>
+    get:
+      displayName: Pull all arrival notifications
+      description: |
+        Pull all messages sent to the Office of Destination in the last 28 days to let them know that the goods have arrived.
+      is: [headers.acceptHeader]
+      (annotations.scope): "common-transit-convention-traders"
+      securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+      responses:
+        200:
+          body:
+            application/xml:
+              description: Valid XML Payload
+              example: |
+                <transactions>
+                  <IE007>
+                  </IE007>
+                </transactions>
+    /{transactionId}:
+      get:
+        displayName: Pull all notifications for a transaction ID
+        description: |
+          Pull a specific message which was sent to the Office of Destination in the last 28 days to let them know that the goods had arrived.
+        is: [headers.acceptHeader]
+        (annotations.scope): "common-transit-convention-traders"
+        securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+        responses:
+          200:
+            body:
+              application/xml:
+                description: Valid XML Payload
+                example: |
+                  <IE007></IE007>
+          404:
+            description: when transaction id does not exist or is not available to the eori/user
+      /messages:
+        get:
+          displayName: Retrieve all messages for the given arrival notification
+          description: |
+            Retrieve all messages for the last 30 days for the current [user|eori] and the given arrival notification
+          responses:
+            200:
+              body:
+                application/xml:
+                  description: Valid XML Payload
+                  example: |
+                    <123></123>
+        /{messageId}:
+          get:
+            displayName: Retrieve a message for the given arrival notification and message id
+            description: |
+              Pull all messages relating to a specific transaction ID. For example, this could include messages about route diversions or unloading permissions. Any messages more than 28 days old will be archived. Archived messages will be return a status of "not found" message
+            responses:
+              200:
+                body:
+                  application/xml:
+                    description: Valid XML Payload
+                    example: |
+                      <CC058A></CC058A>

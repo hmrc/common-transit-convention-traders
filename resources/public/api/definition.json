@@ -1,0 +1,21 @@
+{
+  "scopes": [
+    {
+      "key": "common-transit-convention-traders",
+      "name": "Common Transit Convention Traders",
+      "description": "Common Transit Convention Traders Public API"
+    }
+  ],
+  "api": {
+    "name": "Common Transit Convention Traders",
+    "description": "The public API to allow traders to submit and receive Common Transit Convention (IE) messages",
+    "context": "common-transit-convention-traders",
+    "versions": [
+      {
+        "version": "1.0",
+        "status": "ALPHA",
+        "endpointsEnabled": false
+      }
+    ]
+  }
+}

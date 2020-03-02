@@ -1,4 +1,6 @@
 # microservice specific routes
 
-GET        /hello-world             controllers.MicroserviceHelloWorldController.hello
 POST       /movements/arrivals      controllers.ArrivalsController.createArrivalNotification
+
+GET        /api/definition                                  controllers.DocumentationController.definition
+GET        /api/conf/:version/*file                         controllers.DocumentationController.raml(version, file)
