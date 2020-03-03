@@ -12,9 +12,21 @@ lazy val microservice = Project(appName, file("."))
   )
   .settings(publishingSettings: _*)
   .configs(IntegrationTest)
+  .settings(inConfig(IntegrationTest)(itSettings): _*)
   .settings(integrationTestSettings(): _*)
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(PlayKeys.playDefaultPort := 9487)
   .settings(
     unmanagedResourceDirectories in Compile += baseDirectory.value / "resources"
   )
+
+lazy val itSettings = Defaults.itSettings ++ Seq(
+  unmanagedSourceDirectories := Seq(
+    baseDirectory.value / "it",
+  ),
+  parallelExecution := false,
+  fork := true,
+  javaOptions ++= Seq(
+    "-Dlogger.resource=it.logback.xml"
+  )
+)

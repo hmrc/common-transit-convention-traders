@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-package config
+package connectors
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import config.AppConfig
+import javax.inject.Inject
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
-@Singleton
-class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig) {
+import scala.concurrent.ExecutionContext
+import scala.xml.NodeSeq
 
-  val authBaseUrl: String = servicesConfig.baseUrl("auth")
+class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) {
 
-  val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
-  val graphiteHost: String     = config.get[String]("microservice.metrics.graphite.host")
-
-  val traderAtDestinationUrl   = servicesConfig.baseUrl("transit-movement-trader-at-destination")
+  def post(message: NodeSeq)(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
+    val url = appConfig.traderAtDestinationUrl + "/common-transit-convention-trader-at-destination/message-notification"
+    http.POSTString(url, message.toString)(HttpReads.readRaw, implicitly, implicitly)
+  }
 }
