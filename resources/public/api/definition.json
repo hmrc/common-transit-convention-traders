@@ -9,7 +9,7 @@
   "api": {
     "name": "Common Transit Convention Traders",
     "description": "The public API to allow traders to submit and receive Common Transit Convention (IE) messages",
-    "context": "common-transit-convention-traders",
+    "context": "customs/common-transit-convention-traders",
     "versions": [
       {
         "version": "1.0",
