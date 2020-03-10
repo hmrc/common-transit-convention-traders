@@ -27,12 +27,11 @@ uses:
     post:
       displayName: Send an arrivals notification
       description: |
-        Send a message to let the Office of Destination know that the goods have arrived. This message will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).
-      is: [headers.acceptHeader]
+        Send a message to let the Office of Destination know that the goods have arrived. This message will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).      is: [headers.acceptHeader]
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
-        202:
+        204:
           body:
             application/xml:
               description: Valid XML Payload
@@ -42,7 +41,7 @@ uses:
     get:
       displayName: Pull all arrival notifications
       description: |
-        Pull all messages sent to the Office of Destination in the last 28 days to let them know that the goods have arrived.
+        Pull all arrival messages sent to the Office of Destination in the last 28 days.
       is: [headers.acceptHeader]
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -58,9 +57,9 @@ uses:
                 </transactions>
     /{transactionId}:
       get:
-        displayName: Pull all notifications for a transaction ID
+        displayName: Pull an arrival notification for a transaction ID
         description: |
-          Pull a specific message which was sent to the Office of Destination in the last 28 days to let them know that the goods had arrived.
+          Pull a specific arrival message which was sent to the Office of Destination in the last 28 days. Any arrival notifications that are more than 28 days old will be archived. Archived notifications will be return a “not found” message.
         is: [headers.acceptHeader]
         (annotations.scope): "common-transit-convention-traders"
         securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -72,12 +71,12 @@ uses:
                 example: |
                   <IE007></IE007>
           404:
-            description: when transaction id does not exist or is not available to the eori/user
+            description: when arrival movement does not exist, has been archived or is not available to the eori.
       /messages:
         get:
-          displayName: Retrieve all messages for the given arrival notification
+          displayName: Pull all messages relating to an arrival movement
           description: |
-            Retrieve all messages for the last 30 days for the current [user|eori] and the given arrival notification
+            Pull all messages sent in the last 28 days relating to an arrival movement. You will only be able to retrieve these messages if you have the EORI associated with the arrival movement.
           responses:
             200:
               body:
@@ -85,11 +84,13 @@ uses:
                   description: Valid XML Payload
                   example: |
                     <123></123>
+            404:
+              description: when the arrival movement does not exist, has been archived or is not available to the eori.
         /{messageId}:
           get:
-            displayName: Retrieve a message for the given arrival notification and message id
+            displayName: Pull a message relating to an arrival movement and message ID
             description: |
-              Pull all messages relating to a specific transaction ID. For example, this could include messages about route diversions or unloading permissions. Any messages more than 28 days old will be archived. Archived messages will be return a status of "not found" message
+              Pull a message relating to a specific arrival movement and message ID. For example, this could include messages about route diversions or unloading permissions. Any messages more than 28 days old will be archived. Archived messages will be return a “not found” message.
             responses:
               200:
                 body:
@@ -97,3 +98,5 @@ uses:
                     description: Valid XML Payload
                     example: |
                       <CC058A></CC058A>
+              404:
+                description: when message does not exist, has been archived or is not available to the eori.
