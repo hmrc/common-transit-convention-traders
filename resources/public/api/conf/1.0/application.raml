@@ -27,11 +27,16 @@ uses:
     post:
       displayName: Send an arrivals notification
       description: |
-        Send a message to let the Office of Destination know that the goods have arrived. This message will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).      is: [headers.acceptHeader]
+        Send a message to let the Office of Destination know that the goods have arrived. This message will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).
+      is: [headers.acceptHeader]
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
         204:
+          headers:
+            Location:
+              description: The uri to retrieve the arrival notification, including transaction ID
+              example: /movements/arrivals/123456
           body:
             application/xml:
               description: Valid XML Payload
@@ -65,6 +70,10 @@ uses:
         securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
         responses:
           200:
+            headers:
+              SubmissionStatus:
+                description: The status of the notification submission, either Pending or Success
+                example: Pending
             body:
               application/xml:
                 description: Valid XML Payload
