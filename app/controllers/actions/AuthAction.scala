@@ -52,7 +52,7 @@ class AuthAction @Inject()(
           identifier <- enrolment.getIdentifier(enrolmentIdentifierKey)
         } yield identifier.value).getOrElse(throw InsufficientEnrolments(s"Unable to retrieve enrolment for $enrolmentIdentifierKey"))
 
-        block(IdentifierRequest(request, eoriNumber))
+        block(IdentifierRequest(request, Some(eoriNumber)))
     }
   } recover {
     case _: InsufficientEnrolments =>

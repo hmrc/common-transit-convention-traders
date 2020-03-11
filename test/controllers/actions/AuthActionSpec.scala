@@ -39,7 +39,7 @@ class AuthActionSpec extends FreeSpec with MustMatchers with MockitoSugar {
   class Harness(authAction: AuthAction) {
     def get(): Action[AnyContent] = authAction {
       authedRequest =>
-        Ok(authedRequest.eoriNumber)
+        Ok
     }
   }
 
