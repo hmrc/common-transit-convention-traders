@@ -25,14 +25,16 @@ uses:
 /movements:
   /arrivals:
     post:
-      displayName: Send an arrivals notification
+      displayName: Send an arrival notification
       description: |
         Send a message to let the Office of Destination know that the goods have arrived. This message will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).
+        The location header in the response will contain a URI and transaction ID for the arrival notification. This will allow you to retrieve the submission status and relating status messages. The submission status will be either “pending” or “success”.
+        A “pending” status means the arrival notification has not got to the NCTS yet. A “success” status means the arrival notification is being processed by the NCTS.
       is: [headers.acceptHeader]
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
-        204:
+        202:
           headers:
             Location:
               description: The uri to retrieve the arrival notification, including transaction ID
@@ -85,7 +87,7 @@ uses:
         get:
           displayName: Pull all messages relating to an arrival movement
           description: |
-            Pull all messages sent in the last 28 days relating to an arrival movement. You will only be able to retrieve these messages if you have the EORI associated with the arrival movement.
+            Pull all messages sent in the last 28 days relating to an arrival movement. You will only be able to retrieve these messages if you have the Economic Operator Registration and Identification (EORI) number associated with the arrival movement.
           responses:
             200:
               body:
@@ -99,7 +101,7 @@ uses:
           get:
             displayName: Pull a message relating to an arrival movement and message ID
             description: |
-              Pull a message relating to a specific arrival movement and message ID. For example, this could include messages about route diversions or unloading permissions. Any messages more than 28 days old will be archived. Archived messages will be return a “not found” message.
+              Pull all messages relating to a specific arrival movement and message ID. For example, this could include messages about route diversions or unloading permissions. Any messages more than 28 days old will be archived. Archived messages will be return a “not found” message.
             responses:
               200:
                 body:
