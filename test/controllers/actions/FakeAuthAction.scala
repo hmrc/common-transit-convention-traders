@@ -31,6 +31,6 @@ case class FakeAuthAction @Inject()(
   extends AuthAction(authConnector, config, parser) {
 
   override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] = {
-    block(AuthRequest(request, None))
+    block(AuthRequest(request, "id"))
   }
 }
