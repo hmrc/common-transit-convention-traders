@@ -88,6 +88,8 @@ uses:
           displayName: Pull all messages relating to an arrival movement
           description: |
             Pull all messages sent in the last 28 days relating to an arrival movement. You will only be able to retrieve these messages if you have the Economic Operator Registration and Identification (EORI) number associated with the arrival movement.
+          (annotations.scope): "common-transit-convention-traders"
+          securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
             200:
               body:
@@ -102,6 +104,8 @@ uses:
             displayName: Pull a message relating to an arrival movement and message ID
             description: |
               Pull all messages relating to a specific arrival movement and message ID. For example, this could include messages about route diversions or unloading permissions. Any messages more than 28 days old will be archived. Archived messages will be return a “not found” status.
+            (annotations.scope): "common-transit-convention-traders"
+            securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
             responses:
               200:
                 body:
@@ -175,6 +179,8 @@ uses:
           displayName: Pull all messages relating to a departure movement
           description: |
             Pull all messages sent in the last 28 days relating to a departure movement. You will only be able to retrieve these messages if you have the Economic Operator Registration and Identification (EORI) number associated with the departure movement.
+          (annotations.scope): "common-transit-convention-traders"
+          securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
             200:
               body:
@@ -189,6 +195,8 @@ uses:
             displayName: Pull a message relating to a departure movement and message ID
             description: |
               Pull all messages relating to a specific departure movement and message ID. For example, this could include declaration rejected or Movement Reference Number (MRN) allocated messages. Any messages more than 28 days old will be archived. Archived messages will be return a “not found” status.
+            (annotations.scope): "common-transit-convention-traders"
+            securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
             responses:
               200:
                 body:
