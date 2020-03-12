@@ -35,33 +35,21 @@ import services.XmlValidationService
 import uk.gov.hmrc.auth.core.AuthConnector
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.inject.bind
+import play.api.inject.guice.GuiceApplicationBuilder
 
 class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar {
-  implicit val system = ActorSystem()
-  implicit val materializer = ActorMaterializer()
+  override lazy val app = GuiceApplicationBuilder()
+    .overrides(bind[AuthAction].to[FakeAuthAction])
+    .build()
 
-  implicit def appConfig: AppConfig = app.injector.instanceOf[AppConfig]
-
-  val xmlValidation = new XmlValidationService
-
-  val cc = stubControllerComponents()
-
-  val config: AppConfig = app.injector.instanceOf[AppConfig]
-
-  val parser = app.injector.instanceOf[BodyParsers.Default]
-
-  val authConnector = mock[AuthConnector]
-  val fakeAuthAction = FakeAuthAction(authConnector, config, parser)
-
-  object TestArrivalsController extends ArrivalsController(cc, fakeAuthAction, xmlValidation)
-
-  def ctcFakeRequest() = FakeRequest(method = "POST", uri = "", headers = FakeHeaders(), body = AnyContentAsEmpty)
+  def ctcFakeRequest() = FakeRequest(method = "POST", uri = routes.ArrivalsController.createArrivalNotification().url, headers = FakeHeaders(), body = AnyContentAsEmpty)
 
   def ctcFakeRequestXML() =
-    FakeRequest(method = "POST", uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body = AnyContentAsEmpty)
+    FakeRequest(method = "POST", uri = routes.ArrivalsController.createArrivalNotification().url, headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body = AnyContentAsEmpty)
 
   def ctcFakeRequestXML(body: NodeSeq) =
-    FakeRequest(method = "POST", uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body)
+    FakeRequest(method = "POST", uri = routes.ArrivalsController.createArrivalNotification().url, headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body)
 
  "POST /movements/arrivals" - {
    "must return Accepted" in {
@@ -101,15 +89,15 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
          </CUSOFFPREOFFRES>
        </CC007A>
      )
-     val result = TestArrivalsController.createArrivalNotification().apply(request)
+     val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {
-     val request = FakeRequest(method = "POST", uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")), body = AnyContentAsEmpty)
+     val request = FakeRequest(method = "POST", uri = routes.ArrivalsController.createArrivalNotification().url, headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")), body = AnyContentAsEmpty)
 
-     val result = TestArrivalsController.createArrivalNotification().apply(request)
+     val result = route(app, request).value
 
      status(result) mustBe UNSUPPORTED_MEDIA_TYPE
    }
@@ -117,7 +105,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
    "must return UnsupportedMediaType when no Content-Type specified" in {
      val request = ctcFakeRequest().withRawBody(ByteString("body"))
 
-     val result = TestArrivalsController.createArrivalNotification().apply(request)
+     val result = route(app, request).value
 
      status(result) mustBe UNSUPPORTED_MEDIA_TYPE
    }
@@ -125,7 +113,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
    "must return UnsupportedMediaType when empty XML payload is sent" in {
      val request = ctcFakeRequest()
 
-     val result = TestArrivalsController.createArrivalNotification().apply(request)
+     val result = route(app, request).value
 
      status(result) mustBe UNSUPPORTED_MEDIA_TYPE
    }
@@ -133,7 +121,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
    "must return BadRequest when invalid XML payload is sent" in {
      val request = ctcFakeRequestXML(<message>007</message>)
 
-     val result = TestArrivalsController.createArrivalNotification().apply(request)
+     val result = route(app, request).value
 
      status(result) mustBe BAD_REQUEST
    }
@@ -173,7 +161,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
        </CC007A>
      )
 
-     val result = TestArrivalsController.createArrivalNotification().apply(request)
+     val result = route(app, request).value
 
      status(result) mustBe BAD_REQUEST
    }

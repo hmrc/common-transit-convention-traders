@@ -18,7 +18,6 @@ package controllers.actions
 
 import com.google.inject.Inject
 import config.{AppConfig}
-import models.requests.IdentifierRequest
 import play.api.mvc._
 import uk.gov.hmrc.auth.core._
 
@@ -31,7 +30,7 @@ case class FakeAuthAction @Inject()(
                           )(implicit override val executionContext: ExecutionContext)
   extends AuthAction(authConnector, config, parser) {
 
-  override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
-    block(IdentifierRequest(request, None))
+  override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] = {
+    block(AuthRequest(request, None))
   }
 }

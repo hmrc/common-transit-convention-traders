@@ -18,8 +18,6 @@ package controllers.actions
 
 import com.google.inject.Inject
 import config.{AppConfig}
-import controllers.routes
-import models.requests.IdentifierRequest
 import play.api.mvc.Results._
 import play.api.mvc._
 import uk.gov.hmrc.auth.core._
@@ -29,19 +27,17 @@ import uk.gov.hmrc.play.HeaderCarrierConverter
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait IdentifierAction extends ActionBuilder[IdentifierRequest, AnyContent] with ActionFunction[Request, IdentifierRequest]
-
 class AuthAction @Inject()(
                                                override val authConnector: AuthConnector,
                                                config: AppConfig,
                                                val parser: BodyParsers.Default
                                              )(implicit val executionContext: ExecutionContext)
-  extends IdentifierAction
+  extends ActionBuilder[AuthRequest, AnyContent] with ActionFunction[Request, AuthRequest]
     with AuthorisedFunctions {
 
   private val enrolmentIdentifierKey: String = "VATRegNoTURN"
 
-  override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] = {
 
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers, Some(request.session))
 
@@ -52,7 +48,7 @@ class AuthAction @Inject()(
           identifier <- enrolment.getIdentifier(enrolmentIdentifierKey)
         } yield identifier.value).getOrElse(throw InsufficientEnrolments(s"Unable to retrieve enrolment for $enrolmentIdentifierKey"))
 
-        block(IdentifierRequest(request, Some(eoriNumber)))
+        block(AuthRequest(request, Some(eoriNumber)))
     }
   } recover {
     case _: InsufficientEnrolments =>
