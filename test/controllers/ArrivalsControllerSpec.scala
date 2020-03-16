@@ -21,9 +21,12 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.util.ByteString
 import config.AppConfig
+import connectors.MessageConnector
+import org.mockito.Matchers.any
+import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.mockito.MockitoSugar
-import org.scalatest.{FreeSpec, MustMatchers, OptionValues}
+import org.scalatest.{BeforeAndAfterEach, FreeSpec, MustMatchers, OptionValues}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames
 import play.api.mvc.{AnyContentAsEmpty, BodyParsers}
@@ -37,11 +40,22 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import uk.gov.hmrc.http.{HttpResponse, Upstream5xxResponse}
 
-class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar {
+import scala.concurrent.Future
+
+class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
+  private val mockMessageConnector: MessageConnector = mock[MessageConnector]
+
   override lazy val app = GuiceApplicationBuilder()
     .overrides(bind[AuthAction].to[FakeAuthAction])
+    .overrides(bind[MessageConnector].toInstance(mockMessageConnector))
     .build()
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    reset(mockMessageConnector)
+  }
 
   def ctcFakeRequest() = FakeRequest(method = "POST", uri = routes.ArrivalsController.createArrivalNotification().url, headers = FakeHeaders(), body = AnyContentAsEmpty)
 
@@ -52,7 +66,10 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
     FakeRequest(method = "POST", uri = routes.ArrivalsController.createArrivalNotification().url, headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body)
 
  "POST /movements/arrivals" - {
-   "must return Accepted" in {
+   "must return Accepted when successful" in {
+     when(mockMessageConnector.post(any())(any(), any()))
+       .thenReturn(Future.successful(HttpResponse(NO_CONTENT)))
+
      val request = ctcFakeRequestXML(
        <CC007A>
          <SynIdeMES1>UNOC</SynIdeMES1>
@@ -92,6 +109,51 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
+   }
+
+   "must return InternalServerError when unsuccessful" in {
+     when(mockMessageConnector.post(any())(any(), any()))
+       .thenReturn(Future.failed(new Upstream5xxResponse("", 500, 500)))
+
+     val request = ctcFakeRequestXML(
+       <CC007A>
+         <SynIdeMES1>UNOC</SynIdeMES1>
+         <SynVerNumMES2>3</SynVerNumMES2>
+         <MesSenMES3>LOCAL-eori</MesSenMES3>
+         <MesRecMES6>NCTS</MesRecMES6>
+         <DatOfPreMES9>20200204</DatOfPreMES9>
+         <TimOfPreMES10>1302</TimOfPreMES10>
+         <IntConRefMES11>WE202002046</IntConRefMES11>
+         <AppRefMES14>NCTS</AppRefMES14>
+         <TesIndMES18>0</TesIndMES18>
+         <MesIdeMES19>1</MesIdeMES19>
+         <MesTypMES20>GB007A</MesTypMES20>
+         <HEAHEA>
+           <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>
+           <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>
+           <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>
+           <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>
+           <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>
+           <SimProFlaHEA132>0</SimProFlaHEA132>
+           <ArrNotDatHEA141>20200204</ArrNotDatHEA141>
+         </HEAHEA>
+         <TRADESTRD>
+           <NamTRD7>EXAMPLE2</NamTRD7>
+           <StrAndNumTRD22>Baker Street</StrAndNumTRD22>
+           <PosCodTRD23>NW16XE</PosCodTRD23>
+           <CitTRD24>London</CitTRD24>
+           <CouTRD25>GB</CouTRD25>
+           <NADLNGRD>EN</NADLNGRD>
+           <TINTRD59>EXAMPLE3</TINTRD59>
+         </TRADESTRD>
+         <CUSOFFPREOFFRES>
+           <RefNumRES1>GB000128</RefNumRES1>
+         </CUSOFFPREOFFRES>
+       </CC007A>
+     )
+     val result = route(app, request).value
+
+     status(result) mustBe INTERNAL_SERVER_ERROR
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {
