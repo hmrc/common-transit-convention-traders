@@ -16,21 +16,37 @@
 
 package controllers
 
+import connectors.MessageConnector
 import controllers.actions.AuthAction
 import javax.inject.Inject
 import models.request.ArrivalNotificationXSD
 import play.api.mvc.{Action, ControllerComponents}
 import services.XmlValidationService
+import uk.gov.hmrc.auth.core.InsufficientEnrolments
+import uk.gov.hmrc.http.Upstream5xxResponse
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
-class ArrivalsController @Inject()(cc: ControllerComponents, authAction: AuthAction, xmlValidationService: XmlValidationService) extends BackendController(cc) {
-  def createArrivalNotification(): Action[NodeSeq] = authAction(parse.xml) {
+
+class ArrivalsController @Inject()(cc: ControllerComponents,
+                                   authAction: AuthAction,
+                                   messageConnector: MessageConnector,
+                                   xmlValidationService: XmlValidationService)(implicit ec: ExecutionContext) extends BackendController(cc) {
+  def createArrivalNotification(): Action[NodeSeq] = authAction.async(parse.xml) {
     implicit request =>
       xmlValidationService.validate(request.body.toString, ArrivalNotificationXSD) match {
-        case Right(_) => Accepted
-        case Left(_) => BadRequest
+        case Right(_) =>
+          messageConnector.post(request.body).map { response =>
+            response.status match {
+              case NO_CONTENT => Accepted
+            }
+          } recover {
+            case _: Throwable => InternalServerError
+          }
+        case Left(_) =>
+          Future.successful(BadRequest)
       }
   }
 }

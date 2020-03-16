@@ -39,7 +39,7 @@ class AuthActionSpec extends FreeSpec with MustMatchers with MockitoSugar {
   class Harness(authAction: AuthAction) {
     def get(): Action[AnyContent] = authAction {
       authedRequest =>
-        Ok
+        Ok(authedRequest.eori)
     }
   }
 
@@ -81,14 +81,14 @@ class AuthActionSpec extends FreeSpec with MustMatchers with MockitoSugar {
         state = "Activated"
       ),
       Enrolment(
-        key = "HMCE-NCTS-ORG",
+        key = "IR-CT",
         identifiers = Seq(
           EnrolmentIdentifier(
-            "VATRegNoTURN",
-            "123"
+            "UTR",
+            "345"
           )
         ),
-        state = "NotYetActivated"
+        state = "Activated"
       ),
       Enrolment(
         key = "HMCE-NCTS-ORG",
@@ -122,6 +122,7 @@ class AuthActionSpec extends FreeSpec with MustMatchers with MockitoSugar {
       val result = controller.get()(FakeRequest())
 
       status(result) mustEqual OK
+      contentAsString(result) mustEqual "456"
     }
 
     "when the user is logged in and doesn't have the correct enrolment" in {
