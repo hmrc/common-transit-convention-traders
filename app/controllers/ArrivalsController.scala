@@ -16,7 +16,7 @@
 
 package controllers
 
-import java.net.URLEncoder
+import java.net.{URI, URLEncoder}
 
 import connectors.MessageConnector
 import controllers.actions.AuthAction
@@ -27,14 +27,13 @@ import services.XmlValidationService
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 import scala.xml.NodeSeq
 
 class ArrivalsController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    messageConnector: MessageConnector,
                                    xmlValidationService: XmlValidationService)(implicit ec: ExecutionContext) extends BackendController(cc) {
-
-  private val arrivalsFormat = """^/arrivals/(.*)$""".r
 
   def createArrivalNotification(): Action[NodeSeq] = authAction.async(parse.xml) {
     implicit request =>
@@ -46,10 +45,10 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
                 val location = response.header(LOCATION)
 
                 location match {
-                  case Some(locationValue) => locationValue match {
-                    case arrivalsFormat(arrivalID) =>
-                      Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(arrivalID)}")
-                    case _ =>
+                  case Some(locationValue) => arrivalId(locationValue) match {
+                    case Success(id) =>
+                      Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(id)}")
+                    case Failure(_) =>
                       InternalServerError
                   }
                   case _ =>
@@ -65,5 +64,9 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
       }
   }
 
-  private def urlEncode(s: String): String = URLEncoder.encode(s, "UTF-8")
+  private def arrivalId(location: String): Try[String] =
+    Try(new URI(location).getPath.split("/").last)
+
+  private def urlEncode(s: String): String =
+    URLEncoder.encode(s, "UTF-8")
 }

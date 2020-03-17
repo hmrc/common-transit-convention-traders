@@ -198,7 +198,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
 
    "must escape arrival ID in Location response header" in {
      when(mockMessageConnector.post(any())(any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123-@+{`]")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123-@+*~-31@")), responseString = None) ))
 
      val request = ctcFakeRequestXML(
        <CC007A>
@@ -238,7 +238,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
      )
      val result = route(app, request).value
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> "/movements/arrivals/123-%40%2B%7B%60%5D")
+     headers(result) must contain (LOCATION -> "/movements/arrivals/123-%40%2B*%7E-31%40")
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {
