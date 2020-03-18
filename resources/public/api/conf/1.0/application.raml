@@ -22,7 +22,7 @@ uses:
   annotations: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/annotations.raml
   types: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/types.raml
 
-/movements:
+/customs/transits/movements:
   /arrivals:
     post:
       displayName: Send an arrival notification
@@ -38,7 +38,7 @@ uses:
           headers:
             Location:
               description: The uri to retrieve the arrival notification, including arrival ID
-              example: /movements/arrivals/123456
+              example: /customs/transits/movements/arrivals/123456
           body:
             application/xml:
               description: Valid XML Payload
@@ -106,7 +106,7 @@ uses:
             headers:
               Location:
                 description: The uri to retrieve the arrival notification, including arrival ID
-                example: /movements/arrivals/123456
+                example: /customs/transits/movements/arrivals/123456
             body:
               application/xml:
                 description: Valid XML Payload
@@ -173,7 +173,7 @@ uses:
           headers:
             Location:
               description: The uri to retrieve the departure notification, including departure ID
-              example: /movements/departures/123456
+              example: /customs/transits/movements/departures/123456
           body:
             application/xml:
               description: Valid XML Payload
