@@ -28,7 +28,7 @@ uses:
       displayName: Send an arrival notification
       description: |
         Send a message to let the Office of Destination know that the goods have arrived. This message will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).
-        The location header in the response will contain a URI and transaction ID for the arrival notification. This will allow you to retrieve the submission status and relating status messages. The submission status will be either “pending” or “success”.
+        The location header in the response will contain a URI and arrival ID for the arrival notification. This will allow you to retrieve the submission status and relating status messages. The submission status will be either “pending” or “success”.
         A “pending” status means the arrival notification has not got to the NCTS yet. A “success” status means the arrival notification is being processed by the NCTS.
       is: [headers.acceptHeader]
       (annotations.scope): "common-transit-convention-traders"
@@ -37,7 +37,7 @@ uses:
         202:
           headers:
             Location:
-              description: The uri to retrieve the arrival notification, including transaction ID
+              description: The uri to retrieve the arrival notification, including arrival ID
               example: /movements/arrivals/123456
           body:
             application/xml:
@@ -48,25 +48,32 @@ uses:
     get:
       displayName: Pull all arrival notifications
       description: |
-        Pull all arrival messages sent to the Office of Destination in the last 28 days.
+        Pull all arrival messages sent to the Office of Destination within 21 days ofthe goods being released.
       is: [headers.acceptHeader]
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
         200:
           body:
+            application/json:
+              description: JSON Payload
+              example: |
+                {
+                   "arrivals":[
+                      {
+                         "body":"<IE007>....</IE007>"
+                      }
+                   ]
+                }
             application/xml:
               description: Valid XML Payload
               example: |
-                <transactions>
-                  <IE007>
-                  </IE007>
-                </transactions>
-    /{transactionId}:
+                <IE007>....</IE007>
+    /{arrivalId}:
       get:
-        displayName: Pull an arrival notification for a transaction ID
+        displayName: Pull an arrival notification for an arrival ID
         description: |
-          Pull a specific arrival message which was sent to the Office of Destination in the last 28 days. Any arrival notifications that are more than 28 days old will be archived. Archived notifications will be return a “not found” status.
+          Pull a specific arrival message which was sent to the Office of Destination within 21 days of the goods being released. Any arrival notifications that are more than 21 days old will be archived. Archived notifications will be return a “not found” status.
         is: [headers.acceptHeader]
         (annotations.scope): "common-transit-convention-traders"
         securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -77,33 +84,66 @@ uses:
                 description: The status of the notification submission, either Pending or Success
                 example: Pending
             body:
+              application/json:
+                description: JSON Payload
+                example: |
+                  {
+                    "arrival": {
+                      "body": "<IE007>....</IE007>"
+                      }
+                  }
+          404:
+            description: when arrival movement does not exist, has been archived or is not available to the eori.
+      post:
+        displayName: Send a message to confirm that the goods have been unloaded
+        description: |
+          Send a message to the Office of Destination to let them know that the goods have been unloaded. This message is called an E_ULD_REM (IE044).
+          You should use this message to let the Office of Destination know about any issues you found with the goods when they were unloaded. This couldinclude things like extra or missing boxes, or damaged or changed seals. You should notify them about any details that are different to what was recorded in the initial declaration.
+        (annotations.scope): "common-transit-convention-traders"
+        securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+        responses:
+          202:
+            headers:
+              Location:
+                description: The uri to retrieve the arrival notification, including arrival ID
+                example: /movements/arrivals/123456
+            body:
               application/xml:
                 description: Valid XML Payload
                 example: |
-                  <IE007></IE007>
-          404:
-            description: when arrival movement does not exist, has been archived or is not available to the eori.
+                  <IE044>...</IE044>
       /messages:
         get:
           displayName: Pull all messages relating to an arrival movement
           description: |
-            Pull all messages sent in the last 28 days relating to an arrival movement. You will only be able to retrieve these messages if you have the Economic Operator Registration and Identification (EORI) number associated with the arrival movement.
+            Pull all messages sent within 21 days of the goods being released relating to an arrival movement. You will only be able to retrieve these messages if you have the Economic Operator Registration and Identification (EORI) number associated with the arrival movement.
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
             200:
               body:
-                application/xml:
-                  description: Valid XML Payload
+                application/json:
+                  description: A json list containing messages with an XML body
                   example: |
-                    <123></123>
+                    {
+                       "messages":[
+                          {
+                             "date":"2020-12-31",
+                             "body":"<CC058A>....</CC058A>"
+                          },
+                          {
+                             "date":"2020-12-30",
+                             "body":"<CC058A>....</CC058A>"
+                          }
+                       ]
+                    }
             404:
               description: when the arrival movement does not exist, has been archived or is not available to the eori.
         /{messageId}:
           get:
             displayName: Pull a message relating to an arrival movement and message ID
             description: |
-              Pull all messages relating to a specific arrival movement and message ID. For example, this could include messages about route diversions or unloading permissions. Any messages more than 28 days old will be archived. Archived messages will be return a “not found” status.
+              Pull all messages relating to a specific arrival movement and message ID. For example, this could include messages about route diversions or unloading permissions. Any messages more than 21 days old will be archived. Archived messages will be return a “not found” status.
             (annotations.scope): "common-transit-convention-traders"
             securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
             responses:
@@ -112,14 +152,18 @@ uses:
                   application/xml:
                     description: Valid XML Payload
                     example: |
-                      <CC058A></CC058A>
+                      {
+                        date: "2020-12-30",
+                        body: "<CC058A>....</CC058A>"
+                      }
               404:
                 description: when message does not exist, has been archived or is not available to the eori.
   /departures:
     post:
       displayName: Send a departure notification
       description: |
-        Send a message to let the Office of Departure know that the goods are on route to their final destination. This message will be sent when the goods leave the Office of Departure. It is also called an E_DEC_DAT (IE015).The location header in the response will contain a URI and transaction ID for the departure notification. This will allow you to retrieve the submission status and relating status messages. The submission status will be either “pending” or “success”.
+        Send a message to let the Office of Departure know that the goods are on route to their final destination. This message will be sent when the goods leave the Office of Departure. It is also called an E_DEC_DAT (IE015).
+        The location header in the response will contain a URI and departure ID forthe departure notification. This will allow you to retrieve the submission status and relating status messages. The submission status will be either “pending” or “success”.
         A “pending” status means the departure notification has not got to the NCTS yet. A “success” status means the departure notification is being processed by the NCTS.
       is: [headers.acceptHeader]
       (annotations.scope): "common-transit-convention-traders"
@@ -128,36 +172,43 @@ uses:
         202:
           headers:
             Location:
-              description: The uri to retrieve the departure notification, including transaction ID
+              description: The uri to retrieve the departure notification, including departure ID
               example: /movements/departures/123456
           body:
             application/xml:
               description: Valid XML Payload
               example: |
-                <IE007>
-                </IE007>
+                <IE015>...</IE015>
     get:
       displayName: Pull all departure notifications
       description: |
-        Pull all departure messages sent to the Office of Departures in the last 28 days.
+        Pull all departure messages sent to the Office of Departures within 21 days of the goods being released at their final destination.
       is: [headers.acceptHeader]
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
         200:
           body:
-            application/xml:
-              description: Valid XML Payload
+            application/json:
+              description: JSON list of departures with XML body
               example: |
-                <transactions>
-                  <IE007>
-                  </IE007>
-                </transactions>
-    /{transactionId}:
+                {
+                   "departures":[
+                      {
+                        "date": "2021-01-15",
+                         "body":"<IE015>....</IE015>"
+                      },
+                      {
+                        "date": "2021-01-16",
+                         "body":"<IE015>....</IE015>"
+                      }
+                   ]
+                }
+    /{departureId}:
       get:
-        displayName: Pull a departure notification for a transaction ID
+        displayName: Pull a departure notification for a departure ID
         description: |
-          Pull a specific departure message which was sent to the Office of Departure in the last 28 days. Any departure notifications that are more than 28 days old will be archived. Archived notifications will be return a “not found” status.
+          Pull a specific departure message which was sent to the Office of Departure within21 days of the goods being released at their final destination. Any departure notifications that are more than 21 days old will be archived. Archived notifications will be return a “not found” status.
         is: [headers.acceptHeader]
         (annotations.scope): "common-transit-convention-traders"
         securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -171,14 +222,21 @@ uses:
               application/xml:
                 description: Valid XML Payload
                 example: |
-                  <IE007></IE007>
+                  <IE015></IE015>
+              application/json:
+                description: JSON departure
+                example: |
+                  {
+                    "date": "2021-01-15",
+                     "body":"<IE015>....</IE015>"
+                  }
           404:
             description: when departure movement does not exist, has been archived or is not available to the eori.
       /messages:
         get:
           displayName: Pull all messages relating to a departure movement
           description: |
-            Pull all messages sent in the last 28 days relating to a departure movement. You will only be able to retrieve these messages if you have the Economic Operator Registration and Identification (EORI) number associated with the departure movement.
+            Pull all messages sent within 21 days of the goods being released relating to a departure movement. You will only be able to retrieve these messages if you have the Economic Operator Registration and Identification (EORI) number associated with the departure movement.
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
@@ -187,22 +245,39 @@ uses:
                 application/xml:
                   description: Valid XML Payload
                   example: |
-                    <123></123>
+                application/json:
+                  description: A json list containing messages with an XML body
+                  example: |
+                    {
+                       "messages":[
+                          {
+                             "date":"2020-12-31",
+                             "body":"<CC0XXA>....</CC0XXA>"
+                          },
+                          {
+                             "date":"2020-12-30",
+                             "body":"<CC0XXA>....</CC0XXA>"
+                          }
+                       ]
+                    }
             404:
               description: when the movement does not exist, has been archived or is not available to the eori.
         /{messageId}:
           get:
             displayName: Pull a message relating to a departure movement and message ID
             description: |
-              Pull all messages relating to a specific departure movement and message ID. For example, this could include declaration rejected or Movement Reference Number (MRN) allocated messages. Any messages more than 28 days old will be archived. Archived messages will be return a “not found” status.
+              Pull all messages relating to a specific departure movement and message ID. For example, this could include declaration rejected or Movement Reference Number (MRN) allocated messages. Any messages more than 21 days old will be archived. Archived messages will return a “not found” status.
             (annotations.scope): "common-transit-convention-traders"
             securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
             responses:
               200:
                 body:
-                  application/xml:
-                    description: Valid XML Payload
+                  application/json:
+                    description: JSON Payload
                     example: |
-                      <CC058A></CC058A>
+                      {
+                         "date":"2020-12-30",
+                         "body":"<CC0XXA>....</CC0XXA>"
+                      }
               404:
                 description: when message does not exist, has been archived or is not available to the eori.
