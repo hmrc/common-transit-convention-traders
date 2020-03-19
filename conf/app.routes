@@ -1,6 +1,6 @@
 # microservice specific routes
 
-POST       /movements/arrivals      controllers.ArrivalsController.createArrivalNotification()
+POST       /customs/transits/movements/arrivals      controllers.ArrivalsController.createArrivalNotification()
 
 GET        /admin/metrics                   com.kenshoo.play.metrics.MetricsController.metrics
 GET        /api/definition                  controllers.DocumentationController.definition
