@@ -1,4 +1,3 @@
 # microservice specific routes
 
-POST       /movements/arrivals      controllers.ArrivalsController.createArrivalNotification
-
+POST       /movements/arrivals      controllers.ArrivalsController.createArrivalNotification()
