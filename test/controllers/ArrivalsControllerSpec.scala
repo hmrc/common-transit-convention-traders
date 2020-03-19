@@ -51,13 +51,13 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
     reset(mockMessageConnector)
   }
 
-  def ctcFakeRequest() = FakeRequest(method = "POST", uri = routes.ArrivalsController.createArrivalNotification().url, headers = FakeHeaders(), body = AnyContentAsEmpty)
+  def ctcFakeRequest() = FakeRequest(method = "POST", uri = "/customs/transits/movements/arrivals", headers = FakeHeaders(), body = AnyContentAsEmpty)
 
   def ctcFakeRequestXML() =
-    FakeRequest(method = "POST", uri = routes.ArrivalsController.createArrivalNotification().url, headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body = AnyContentAsEmpty)
+    FakeRequest(method = "POST", uri = "/customs/transits/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body = AnyContentAsEmpty)
 
   def ctcFakeRequestXML(body: NodeSeq) =
-    FakeRequest(method = "POST", uri = routes.ArrivalsController.createArrivalNotification().url, headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body)
+    FakeRequest(method = "POST", uri = "/customs/transits/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body)
 
  "POST /movements/arrivals" - {
    "must return Accepted when successful" in {
@@ -332,7 +332,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {
-     val request = FakeRequest(method = "POST", uri = routes.ArrivalsController.createArrivalNotification().url, headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")), body = AnyContentAsEmpty)
+     val request = FakeRequest(method = "POST", uri = "/customs/transits/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")), body = AnyContentAsEmpty)
 
      val result = route(app, request).value
 
