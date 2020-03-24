@@ -21,7 +21,7 @@ import java.net.{URI, URLEncoder}
 import connectors.MessageConnector
 import controllers.actions.AuthAction
 import javax.inject.Inject
-import models.request.ArrivalNotificationXSD
+import models.request.{ArrivalNotificationXSD, UnloadingRemarksXSD}
 import play.api.mvc.{Action, ControllerComponents}
 import services.XmlValidationService
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
@@ -34,6 +34,16 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    messageConnector: MessageConnector,
                                    xmlValidationService: XmlValidationService)(implicit ec: ExecutionContext) extends BackendController(cc) {
+
+  def createUnloadingPermission(arrivalId: String): Action[NodeSeq] = authAction.async(parse.xml) {
+    implicit request =>
+      xmlValidationService.validate(request.body.toString, UnloadingRemarksXSD) match {
+        case Right(_) =>
+          Future.successful(Accepted)
+        case Left(_) =>
+          Future.successful(BadRequest)
+      }
+  }
 
   def createArrivalNotification(): Action[NodeSeq] = authAction.async(parse.xml) {
     implicit request =>
