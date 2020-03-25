@@ -115,8 +115,8 @@ uses:
       put:
         displayName: Resubmit an arrival notification
         description: |
-          Resend an arrival notification to the Office of Destination if the first arrival notification was rejected. Arrival notifications will be rejected when the NCTS validation fails. This can happen for reasons like if:
-          - a guarantee against the Economic Operator Registration and Identification (EORI) number is not enough to cover the goods to be transported
+          Resend an arrival notification to the Office of Destination if the first arrival notification was rejected. Arrival notifications will be rejected when the NCTS validation fails. This can happen for reasons, such as if:
+          - a guarantee against the Economic Operator Registration and Identification (EORI) number is not enough to cover the goods being transported
           - the Movement Reference Number (MRN) has already been used on another arrival notification
           This message is called E_ARR_REJ (IE008).
         is: [headers.acceptHeader]
