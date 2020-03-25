@@ -18,7 +18,7 @@ package controllers
 
 import java.net.{URI, URLEncoder}
 
-import connectors.MessageConnector
+import connectors.{ArrivalConnector, MessageConnector}
 import controllers.actions.AuthAction
 import javax.inject.Inject
 import models.request.ArrivalNotificationXSD
@@ -33,6 +33,7 @@ import scala.xml.NodeSeq
 class ArrivalsController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    messageConnector: MessageConnector,
+                                   arrivalConnector: ArrivalConnector,
                                    xmlValidationService: XmlValidationService)(implicit ec: ExecutionContext) extends BackendController(cc) {
 
   def createArrivalNotification(): Action[NodeSeq] = authAction.async(parse.xml) {
@@ -45,7 +46,7 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
                 val location = response.header(LOCATION)
 
                 location match {
-                  case Some(locationValue) => arrivalId(locationValue) match {
+                  case Some(locationValue) => parseArrivalIdFromLocation(locationValue) match {
                     case Success(id) =>
                       Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(id)}")
                     case Failure(_) =>
@@ -64,7 +65,35 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
       }
   }
 
-  private def arrivalId(location: String): Try[String] =
+  def resubmitArrivalNotification(arrivalId: String): Action[NodeSeq] = authAction.async(parse.xml) {
+    implicit request =>
+      xmlValidationService.validate(request.body.toString, ArrivalNotificationXSD) match {
+        case Right(_) =>
+            arrivalConnector.put(arrivalId, request.body).map { response =>
+              response.status match {
+                case NO_CONTENT =>
+                  val location = response.header(LOCATION)
+
+                  location match {
+                    case Some(locationValue) => parseArrivalIdFromLocation(locationValue) match {
+                      case Success(id) =>
+                        Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(id)}")
+                      case Failure(_) =>
+                        InternalServerError
+                    }
+                    case _ => InternalServerError
+                  }
+              }
+            } recover {
+              case _: Throwable =>
+                InternalServerError
+            }
+        case Left(_) =>
+          Future.successful(BadRequest)
+      }
+  }
+
+  private def parseArrivalIdFromLocation(location: String): Try[String] =
     Try(new URI(location).getPath.split("/").last)
 
   private def urlEncode(s: String): String =
