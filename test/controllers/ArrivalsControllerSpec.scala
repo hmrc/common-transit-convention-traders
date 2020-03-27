@@ -204,12 +204,12 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
 
    "must return Accepted when successful" in {
      when(mockArrivalConnector.put(any(), any())(any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123/messages/4")), responseString = None) ))
 
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> "/movements/arrivals/123")
+     headers(result) must contain (LOCATION -> "/movements/arrivals/123/messages/4")
    }
 
    "must return InternalServerError when unsuccessful" in {
@@ -232,7 +232,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
 
    "must return InternalServerError when invalid Location value in downstream response header" in {
      when(mockArrivalConnector.put(any(), any())(any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/<>")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/1/messages/<>")), responseString = None) ))
 
      val result = route(app, request).value
 
@@ -241,20 +241,20 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
 
    "must escape arrival ID in Location response header" in {
      when(mockArrivalConnector.put(any(), any())(any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123-@+*~-31@")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123-@+*~-31@/messages/123-@+*~-31@")), responseString = None) ))
 
      val result = route(app, request).value
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> "/movements/arrivals/123-%40%2B*%7E-31%40")
+     headers(result) must contain (LOCATION -> "/movements/arrivals/123-%40%2B*%7E-31%40/messages/123-%40%2B*%7E-31%40")
    }
 
    "must exclude query string if present in downstream Location header" in {
      when(mockArrivalConnector.put(any(), any())(any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123?status=success")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123/messages/4?status=success")), responseString = None) ))
 
      val result = route(app, request).value
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> "/movements/arrivals/123")
+     headers(result) must contain (LOCATION -> "/movements/arrivals/123/messages/4")
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {

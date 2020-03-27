@@ -24,6 +24,7 @@ import javax.inject.Inject
 import models.request.ArrivalNotificationXSD
 import play.api.mvc.{Action, ControllerComponents}
 import services.XmlValidationService
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -43,14 +44,14 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
           messageConnector.post(request.body).map { response =>
             response.status match {
               case NO_CONTENT =>
-                val location = response.header(LOCATION)
-
-                location match {
-                  case Some(locationValue) => parseArrivalIdFromLocation(locationValue) match {
-                    case Success(id) =>
-                      Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(id)}")
-                    case Failure(_) =>
-                      InternalServerError
+                getLocationHeader(response) match {
+                  case Some(locationHeader) => {
+                    (locationHeader.isEmpty, locationHeader.arrivalId) match {
+                      case (false, Some(a)) =>
+                        Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(a)}")
+                      case _ =>
+                        InternalServerError
+                    }
                   }
                   case _ =>
                     InternalServerError
@@ -72,13 +73,12 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
             arrivalConnector.put(arrivalId, request.body).map { response =>
               response.status match {
                 case NO_CONTENT =>
-                  val location = response.header(LOCATION)
-
-                  location match {
-                    case Some(locationValue) => parseArrivalIdFromLocation(locationValue) match {
-                      case Success(id) =>
-                        Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(id)}")
-                      case Failure(_) =>
+                  getLocationHeader(response) match {
+                    case Some(locationHeader) =>
+                      (locationHeader.isEmpty, locationHeader.arrivalId, locationHeader.messageId) match {
+                      case (false, Some(a), Some(m)) =>
+                        Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(a)}/messages/${urlEncode(m)}")
+                      case _ =>
                         InternalServerError
                     }
                     case _ => InternalServerError
@@ -93,8 +93,10 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
       }
   }
 
-  private def parseArrivalIdFromLocation(location: String): Try[String] =
-    Try(new URI(location).getPath.split("/").last)
+  private def getLocationHeader(r: HttpResponse): Option[LocationHeader] =
+  {
+    r.header(LOCATION).map(l => LocationHeader(l))
+  }
 
   private def urlEncode(s: String): String =
     URLEncoder.encode(s, "UTF-8")
