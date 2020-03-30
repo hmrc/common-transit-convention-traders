@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-package connectors
+package controllers
 
-import config.AppConfig
-import javax.inject.Inject
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import java.net.URI
 
-import scala.concurrent.{ExecutionContext}
-import scala.xml.NodeSeq
+case class LocationHeader(arrivalId: Option[String], messageId: Option[String]) {
+  def isEmpty = arrivalId.isEmpty && messageId.isEmpty
+}
 
-class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) {
-
-  def post(message: NodeSeq)(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
-    val url = appConfig.traderAtDestinationUrl + "/transit-movements-trader-at-destination/movements/message-notification"
-    http.POSTString(url, message.toString)(HttpReads.readRaw, implicitly, implicitly)
+object LocationHeader {
+  def apply(location: String): LocationHeader = {
+    val split = new URI(location).getPath.split("/")
+    new LocationHeader(
+      if(split.length > 1) Some(split(2)) else None,
+      if(split.length > 3) Some(split(4)) else None)
   }
 }

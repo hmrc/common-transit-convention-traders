@@ -18,12 +18,13 @@ package controllers
 
 import java.net.{URI, URLEncoder}
 
-import connectors.MessageConnector
+import connectors.{ArrivalConnector, MessageConnector}
 import controllers.actions.AuthAction
 import javax.inject.Inject
 import models.request.ArrivalNotificationXSD
 import play.api.mvc.{Action, ControllerComponents}
 import services.XmlValidationService
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,6 +34,7 @@ import scala.xml.NodeSeq
 class ArrivalsController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    messageConnector: MessageConnector,
+                                   arrivalConnector: ArrivalConnector,
                                    xmlValidationService: XmlValidationService)(implicit ec: ExecutionContext) extends BackendController(cc) {
 
   def createArrivalNotification(): Action[NodeSeq] = authAction.async(parse.xml) {
@@ -42,14 +44,14 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
           messageConnector.post(request.body).map { response =>
             response.status match {
               case NO_CONTENT =>
-                val location = response.header(LOCATION)
-
-                location match {
-                  case Some(locationValue) => arrivalId(locationValue) match {
-                    case Success(id) =>
-                      Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(id)}")
-                    case Failure(_) =>
-                      InternalServerError
+                getLocationHeader(response) match {
+                  case Some(locationHeader) => {
+                    (locationHeader.isEmpty, locationHeader.arrivalId) match {
+                      case (false, Some(a)) =>
+                        Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(a)}")
+                      case _ =>
+                        InternalServerError
+                    }
                   }
                   case _ =>
                     InternalServerError
@@ -64,8 +66,37 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
       }
   }
 
-  private def arrivalId(location: String): Try[String] =
-    Try(new URI(location).getPath.split("/").last)
+  def resubmitArrivalNotification(arrivalId: String): Action[NodeSeq] = authAction.async(parse.xml) {
+    implicit request =>
+      xmlValidationService.validate(request.body.toString, ArrivalNotificationXSD) match {
+        case Right(_) =>
+            arrivalConnector.put(arrivalId, request.body).map { response =>
+              response.status match {
+                case NO_CONTENT =>
+                  getLocationHeader(response) match {
+                    case Some(locationHeader) =>
+                      (locationHeader.isEmpty, locationHeader.arrivalId, locationHeader.messageId) match {
+                      case (false, Some(a), Some(m)) =>
+                        Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(a)}/messages/${urlEncode(m)}")
+                      case _ =>
+                        InternalServerError
+                    }
+                    case _ => InternalServerError
+                  }
+              }
+            } recover {
+              case _: Throwable =>
+                InternalServerError
+            }
+        case Left(_) =>
+          Future.successful(BadRequest)
+      }
+  }
+
+  private def getLocationHeader(r: HttpResponse): Option[LocationHeader] =
+  {
+    r.header(LOCATION).map(l => LocationHeader(l))
+  }
 
   private def urlEncode(s: String): String =
     URLEncoder.encode(s, "UTF-8")

@@ -16,18 +16,22 @@
 
 package connectors
 
+import uk.gov.hmrc.http.HttpResponse
 import config.AppConfig
 import javax.inject.Inject
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
-import scala.concurrent.{ExecutionContext}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
-class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) {
+class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) {
 
-  def post(message: NodeSeq)(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
-    val url = appConfig.traderAtDestinationUrl + "/transit-movements-trader-at-destination/movements/message-notification"
-    http.POSTString(url, message.toString)(HttpReads.readRaw, implicitly, implicitly)
+  val arrivalRoute = "/transit-movements-trader-at-destination/movements/arrivals/"
+
+  def put(arrivalId: String, message: NodeSeq)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val url = appConfig.traderAtDestinationUrl + arrivalRoute + arrivalId
+    http.PUTString(url, message.toString)(HttpReads.readRaw, implicitly, implicitly)
   }
+
 }
