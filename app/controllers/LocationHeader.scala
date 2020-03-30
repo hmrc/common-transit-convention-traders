@@ -18,15 +18,13 @@ package controllers
 
 import java.net.URI
 
-case class LocationHeader(arrivalId: Option[String], messageId: Option[String]) {
-  def isEmpty = arrivalId.isEmpty && messageId.isEmpty
+sealed case class LocationHeader(arrivalId: String) {
+  def isEmpty = arrivalId.isEmpty
 }
 
 object LocationHeader {
   def apply(location: String): LocationHeader = {
     val split = new URI(location).getPath.split("/")
-    new LocationHeader(
-      if(split.length > 1) Some(split(2)) else None,
-      if(split.length > 3) Some(split(4)) else None)
+    LocationHeader(split.last)
   }
 }
