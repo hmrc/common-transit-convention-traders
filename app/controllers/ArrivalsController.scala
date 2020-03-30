@@ -46,9 +46,9 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
               case NO_CONTENT =>
                 getLocationHeader(response) match {
                   case Some(locationHeader) => {
-                    (locationHeader.isEmpty, locationHeader.arrivalId) match {
-                      case (false, Some(a)) =>
-                        Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(a)}")
+                    (locationHeader.isEmpty, locationHeader.arrivalId, locationHeader.messageId) match {
+                      case (false, Some(a), Some(m)) =>
+                        Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(a)}/messages/${urlEncode(m)}")
                       case _ =>
                         InternalServerError
                     }
