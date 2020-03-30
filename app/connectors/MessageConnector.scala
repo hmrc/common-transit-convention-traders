@@ -22,12 +22,17 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.ExecutionContext
-import scala.xml.NodeSeq
 
 class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) {
 
-  def post(message: NodeSeq)(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
-    val url = appConfig.traderAtDestinationUrl + "/common-transit-convention-trader-at-destination/message-notification"
-    http.POSTString(url, message.toString)(HttpReads.readRaw, implicitly, implicitly)
+  def post(message: String, arrivalId: Option[String])(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
+    arrivalId match {
+      case Some(id) =>
+        val url = appConfig.traderAtDestinationUrl + "/common-transit-convention-trader-at-destination/message-notification/" + id
+        http.POSTString(url, message)(HttpReads.readRaw, implicitly, implicitly)
+      case None =>
+        val url = appConfig.traderAtDestinationUrl + "/common-transit-convention-trader-at-destination/message-notification"
+        http.POSTString(url, message)(HttpReads.readRaw, implicitly, implicitly)
+    }
   }
 }

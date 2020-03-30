@@ -23,7 +23,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
       implicit val hc = HeaderCarrier()
 
-      val result = connector.post(<document></document>).futureValue
+      val result = connector.post("<document></document>", None).futureValue
 
       result.status mustEqual NO_CONTENT
     }
@@ -44,7 +44,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
           implicit val hc = HeaderCarrier()
 
-          val result = connector.post(<document></document>)
+          val result = connector.post("<document></document>", None)
 
           whenReady(result.failed) {
             response =>

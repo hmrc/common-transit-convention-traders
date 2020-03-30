@@ -16,67 +16,66 @@
 
 package controllers
 
-import java.net.{URI, URLEncoder}
-
 import connectors.MessageConnector
 import controllers.actions.AuthAction
 import javax.inject.Inject
-import models.request.{ArrivalNotificationXSD, UnloadingRemarksXSD}
-import play.api.mvc.{Action, ControllerComponents}
+import models.request.{ArrivalNotificationXSD, UnloadingRemarksXSD, XSDFile}
+import play.api.mvc.{Action, ControllerComponents, Result}
 import services.XmlValidationService
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import utils.Utils
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 import scala.xml.NodeSeq
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, Upstream4xxResponse}
 
 class ArrivalsController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    messageConnector: MessageConnector,
                                    xmlValidationService: XmlValidationService)(implicit ec: ExecutionContext) extends BackendController(cc) {
 
-  def createUnloadingPermission(arrivalId: String): Action[NodeSeq] = authAction.async(parse.xml) {
-    implicit request =>
-      xmlValidationService.validate(request.body.toString, UnloadingRemarksXSD) match {
-        case Right(_) =>
-          Future.successful(Accepted)
-        case Left(_) =>
-          Future.successful(BadRequest)
-      }
-  }
-
   def createArrivalNotification(): Action[NodeSeq] = authAction.async(parse.xml) {
     implicit request =>
-      xmlValidationService.validate(request.body.toString, ArrivalNotificationXSD) match {
-        case Right(_) =>
-          messageConnector.post(request.body).map { response =>
-            response.status match {
-              case NO_CONTENT =>
-                val location = response.header(LOCATION)
-
-                location match {
-                  case Some(locationValue) => arrivalId(locationValue) match {
-                    case Success(id) =>
-                      Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(id)}")
-                    case Failure(_) =>
-                      InternalServerError
-                  }
-                  case _ =>
-                    InternalServerError
-                }
-            }
-          } recover {
-            case _: Throwable =>
-              InternalServerError
-          }
-        case Left(_) =>
-          Future.successful(BadRequest)
-      }
+      postToArrivalEndpointDownstream(request.body.toString, ArrivalNotificationXSD, None)
   }
 
-  private def arrivalId(location: String): Try[String] =
-    Try(new URI(location).getPath.split("/").last)
+  def createUnloadingPermission(arrivalId: String): Action[NodeSeq] = authAction.async(parse.xml) {
+    implicit request =>
+      postToArrivalEndpointDownstream(request.body.toString, UnloadingRemarksXSD, Some(arrivalId))
+  }
 
-  private def urlEncode(s: String): String =
-    URLEncoder.encode(s, "UTF-8")
+  private def postToArrivalEndpointDownstream(body: String, xsdFile: XSDFile, arrivalId: Option[String])(implicit hc: HeaderCarrier): Future[Result] =
+    xmlValidationService.validate(body, xsdFile) match {
+      case Right(_) =>
+        messageConnector.post(body, arrivalId).map { response =>
+          response.status match {
+            case s if Utils.is2xx(s) =>
+              val location = response.header(LOCATION)
+
+              location match {
+                case Some(locationValue) => Utils.arrivalId(locationValue) match {
+                  case Success(id) =>
+                    Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(id)}")
+                  case Failure(_) =>
+                    InternalServerError
+                }
+                case _ =>
+                  InternalServerError
+              }
+          }
+        } recover {
+          case e: Upstream4xxResponse =>
+            if (e.upstreamResponseCode == 400)
+              BadRequest
+            else if (e.upstreamResponseCode == 404)
+              NotFound
+            else
+              InternalServerError
+          case _: Throwable =>
+            InternalServerError
+        }
+      case Left(_) =>
+        Future.successful(BadRequest)
+    }
 }
