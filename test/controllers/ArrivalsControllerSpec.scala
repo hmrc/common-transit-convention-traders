@@ -18,7 +18,8 @@ package controllers
 
 import controllers.actions.{AuthAction, FakeAuthAction}
 import akka.util.ByteString
-import connectors.MessageConnector
+import connectors.{ArrivalConnector, MessageConnector}
+import data.TestXml
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures
@@ -26,80 +27,50 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, FreeSpec, MustMatchers, OptionValues}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames
-import play.api.mvc.{AnyContentAsEmpty}
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.{FakeHeaders, FakeRequest}
-import play.api.test.Helpers._
+import play.api.test.Helpers.{headers, _}
 
 import scala.xml.NodeSeq
-
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.http.{HttpResponse, Upstream5xxResponse}
 
 import scala.concurrent.Future
 
-class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
+class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
   private val mockMessageConnector: MessageConnector = mock[MessageConnector]
+  private val mockArrivalConnector: ArrivalConnector = mock[ArrivalConnector]
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(bind[AuthAction].to[FakeAuthAction])
     .overrides(bind[MessageConnector].toInstance(mockMessageConnector))
+    .overrides(bind[ArrivalConnector].toInstance(mockArrivalConnector))
     .build()
 
   override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockMessageConnector)
+    reset(mockArrivalConnector)
   }
 
-  def ctcFakeRequest() = FakeRequest(method = "POST", uri = "/customs/transits/movements/arrivals", headers = FakeHeaders(), body = AnyContentAsEmpty)
+  def ctcFakeRequest() = FakeRequest(method = "POST", uri = "/movements/arrivals", headers = FakeHeaders(), body = AnyContentAsEmpty)
 
   def ctcFakeRequestXML() =
-    FakeRequest(method = "POST", uri = "/customs/transits/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body = AnyContentAsEmpty)
+    FakeRequest(method = "POST", uri = "/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body = AnyContentAsEmpty)
 
   def ctcFakeRequestXML(body: NodeSeq) =
-    FakeRequest(method = "POST", uri = "/customs/transits/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body)
+    FakeRequest(method = "POST", uri = "/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body)
+
+  def ctcFakeRequestXML(body: NodeSeq, uri: String, verb: String) =
+    FakeRequest(verb, uri, headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body)
 
  "POST /movements/arrivals" - {
    "must return Accepted when successful" in {
      when(mockMessageConnector.post(any(), any())(any(), any()))
        .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123")), responseString = None) ))
 
-     val request = ctcFakeRequestXML(
-       <CC007A>
-         <SynIdeMES1>UNOC</SynIdeMES1>
-         <SynVerNumMES2>3</SynVerNumMES2>
-         <MesSenMES3>LOCAL-eori</MesSenMES3>
-         <MesRecMES6>NCTS</MesRecMES6>
-         <DatOfPreMES9>20200204</DatOfPreMES9>
-         <TimOfPreMES10>1302</TimOfPreMES10>
-         <IntConRefMES11>WE202002046</IntConRefMES11>
-         <AppRefMES14>NCTS</AppRefMES14>
-         <TesIndMES18>0</TesIndMES18>
-         <MesIdeMES19>1</MesIdeMES19>
-         <MesTypMES20>GB007A</MesTypMES20>
-         <HEAHEA>
-           <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>
-           <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>
-           <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>
-           <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>
-           <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>
-           <SimProFlaHEA132>0</SimProFlaHEA132>
-           <ArrNotDatHEA141>20200204</ArrNotDatHEA141>
-         </HEAHEA>
-         <TRADESTRD>
-           <NamTRD7>EXAMPLE2</NamTRD7>
-           <StrAndNumTRD22>Baker Street</StrAndNumTRD22>
-           <PosCodTRD23>NW16XE</PosCodTRD23>
-           <CitTRD24>London</CitTRD24>
-           <CouTRD25>GB</CouTRD25>
-           <NADLNGRD>EN</NADLNGRD>
-           <TINTRD59>EXAMPLE3</TINTRD59>
-         </TRADESTRD>
-         <CUSOFFPREOFFRES>
-           <RefNumRES1>GB000128</RefNumRES1>
-         </CUSOFFPREOFFRES>
-       </CC007A>
-     )
+     val request = ctcFakeRequestXML(CC007A)
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
@@ -110,42 +81,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
      when(mockMessageConnector.post(any(), any())(any(), any()))
        .thenReturn(Future.failed(new Upstream5xxResponse("", 500, 500)))
 
-     val request = ctcFakeRequestXML(
-       <CC007A>
-         <SynIdeMES1>UNOC</SynIdeMES1>
-         <SynVerNumMES2>3</SynVerNumMES2>
-         <MesSenMES3>LOCAL-eori</MesSenMES3>
-         <MesRecMES6>NCTS</MesRecMES6>
-         <DatOfPreMES9>20200204</DatOfPreMES9>
-         <TimOfPreMES10>1302</TimOfPreMES10>
-         <IntConRefMES11>WE202002046</IntConRefMES11>
-         <AppRefMES14>NCTS</AppRefMES14>
-         <TesIndMES18>0</TesIndMES18>
-         <MesIdeMES19>1</MesIdeMES19>
-         <MesTypMES20>GB007A</MesTypMES20>
-         <HEAHEA>
-           <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>
-           <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>
-           <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>
-           <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>
-           <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>
-           <SimProFlaHEA132>0</SimProFlaHEA132>
-           <ArrNotDatHEA141>20200204</ArrNotDatHEA141>
-         </HEAHEA>
-         <TRADESTRD>
-           <NamTRD7>EXAMPLE2</NamTRD7>
-           <StrAndNumTRD22>Baker Street</StrAndNumTRD22>
-           <PosCodTRD23>NW16XE</PosCodTRD23>
-           <CitTRD24>London</CitTRD24>
-           <CouTRD25>GB</CouTRD25>
-           <NADLNGRD>EN</NADLNGRD>
-           <TINTRD59>EXAMPLE3</TINTRD59>
-         </TRADESTRD>
-         <CUSOFFPREOFFRES>
-           <RefNumRES1>GB000128</RefNumRES1>
-         </CUSOFFPREOFFRES>
-       </CC007A>
-     )
+     val request = ctcFakeRequestXML(CC007A)
      val result = route(app, request).value
 
      status(result) mustBe INTERNAL_SERVER_ERROR
@@ -155,42 +91,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
      when(mockMessageConnector.post(any(), any())(any(), any()))
        .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(), responseString = None) ))
 
-     val request = ctcFakeRequestXML(
-       <CC007A>
-         <SynIdeMES1>UNOC</SynIdeMES1>
-         <SynVerNumMES2>3</SynVerNumMES2>
-         <MesSenMES3>LOCAL-eori</MesSenMES3>
-         <MesRecMES6>NCTS</MesRecMES6>
-         <DatOfPreMES9>20200204</DatOfPreMES9>
-         <TimOfPreMES10>1302</TimOfPreMES10>
-         <IntConRefMES11>WE202002046</IntConRefMES11>
-         <AppRefMES14>NCTS</AppRefMES14>
-         <TesIndMES18>0</TesIndMES18>
-         <MesIdeMES19>1</MesIdeMES19>
-         <MesTypMES20>GB007A</MesTypMES20>
-         <HEAHEA>
-           <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>
-           <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>
-           <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>
-           <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>
-           <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>
-           <SimProFlaHEA132>0</SimProFlaHEA132>
-           <ArrNotDatHEA141>20200204</ArrNotDatHEA141>
-         </HEAHEA>
-         <TRADESTRD>
-           <NamTRD7>EXAMPLE2</NamTRD7>
-           <StrAndNumTRD22>Baker Street</StrAndNumTRD22>
-           <PosCodTRD23>NW16XE</PosCodTRD23>
-           <CitTRD24>London</CitTRD24>
-           <CouTRD25>GB</CouTRD25>
-           <NADLNGRD>EN</NADLNGRD>
-           <TINTRD59>EXAMPLE3</TINTRD59>
-         </TRADESTRD>
-         <CUSOFFPREOFFRES>
-           <RefNumRES1>GB000128</RefNumRES1>
-         </CUSOFFPREOFFRES>
-       </CC007A>
-     )
+     val request = ctcFakeRequestXML(CC007A)
      val result = route(app, request).value
 
      status(result) mustBe INTERNAL_SERVER_ERROR
@@ -200,42 +101,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
      when(mockMessageConnector.post(any(), any())(any(), any()))
        .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/<>")), responseString = None) ))
 
-     val request = ctcFakeRequestXML(
-       <CC007A>
-         <SynIdeMES1>UNOC</SynIdeMES1>
-         <SynVerNumMES2>3</SynVerNumMES2>
-         <MesSenMES3>LOCAL-eori</MesSenMES3>
-         <MesRecMES6>NCTS</MesRecMES6>
-         <DatOfPreMES9>20200204</DatOfPreMES9>
-         <TimOfPreMES10>1302</TimOfPreMES10>
-         <IntConRefMES11>WE202002046</IntConRefMES11>
-         <AppRefMES14>NCTS</AppRefMES14>
-         <TesIndMES18>0</TesIndMES18>
-         <MesIdeMES19>1</MesIdeMES19>
-         <MesTypMES20>GB007A</MesTypMES20>
-         <HEAHEA>
-           <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>
-           <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>
-           <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>
-           <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>
-           <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>
-           <SimProFlaHEA132>0</SimProFlaHEA132>
-           <ArrNotDatHEA141>20200204</ArrNotDatHEA141>
-         </HEAHEA>
-         <TRADESTRD>
-           <NamTRD7>EXAMPLE2</NamTRD7>
-           <StrAndNumTRD22>Baker Street</StrAndNumTRD22>
-           <PosCodTRD23>NW16XE</PosCodTRD23>
-           <CitTRD24>London</CitTRD24>
-           <CouTRD25>GB</CouTRD25>
-           <NADLNGRD>EN</NADLNGRD>
-           <TINTRD59>EXAMPLE3</TINTRD59>
-         </TRADESTRD>
-         <CUSOFFPREOFFRES>
-           <RefNumRES1>GB000128</RefNumRES1>
-         </CUSOFFPREOFFRES>
-       </CC007A>
-     )
+     val request = ctcFakeRequestXML(CC007A)
      val result = route(app, request).value
 
      status(result) mustBe INTERNAL_SERVER_ERROR
@@ -245,42 +111,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
      when(mockMessageConnector.post(any(), any())(any(), any()))
        .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123-@+*~-31@")), responseString = None) ))
 
-     val request = ctcFakeRequestXML(
-       <CC007A>
-         <SynIdeMES1>UNOC</SynIdeMES1>
-         <SynVerNumMES2>3</SynVerNumMES2>
-         <MesSenMES3>LOCAL-eori</MesSenMES3>
-         <MesRecMES6>NCTS</MesRecMES6>
-         <DatOfPreMES9>20200204</DatOfPreMES9>
-         <TimOfPreMES10>1302</TimOfPreMES10>
-         <IntConRefMES11>WE202002046</IntConRefMES11>
-         <AppRefMES14>NCTS</AppRefMES14>
-         <TesIndMES18>0</TesIndMES18>
-         <MesIdeMES19>1</MesIdeMES19>
-         <MesTypMES20>GB007A</MesTypMES20>
-         <HEAHEA>
-           <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>
-           <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>
-           <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>
-           <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>
-           <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>
-           <SimProFlaHEA132>0</SimProFlaHEA132>
-           <ArrNotDatHEA141>20200204</ArrNotDatHEA141>
-         </HEAHEA>
-         <TRADESTRD>
-           <NamTRD7>EXAMPLE2</NamTRD7>
-           <StrAndNumTRD22>Baker Street</StrAndNumTRD22>
-           <PosCodTRD23>NW16XE</PosCodTRD23>
-           <CitTRD24>London</CitTRD24>
-           <CouTRD25>GB</CouTRD25>
-           <NADLNGRD>EN</NADLNGRD>
-           <TINTRD59>EXAMPLE3</TINTRD59>
-         </TRADESTRD>
-         <CUSOFFPREOFFRES>
-           <RefNumRES1>GB000128</RefNumRES1>
-         </CUSOFFPREOFFRES>
-       </CC007A>
-     )
+     val request = ctcFakeRequestXML(CC007A)
      val result = route(app, request).value
      status(result) mustBe ACCEPTED
      headers(result) must contain (LOCATION -> "/customs/transits/movements/arrivals/123-%40%2B*%7E-31%40")
@@ -290,49 +121,14 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
      when(mockMessageConnector.post(any(), any())(any(), any()))
        .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123?status=success")), responseString = None) ))
 
-     val request = ctcFakeRequestXML(
-       <CC007A>
-         <SynIdeMES1>UNOC</SynIdeMES1>
-         <SynVerNumMES2>3</SynVerNumMES2>
-         <MesSenMES3>LOCAL-eori</MesSenMES3>
-         <MesRecMES6>NCTS</MesRecMES6>
-         <DatOfPreMES9>20200204</DatOfPreMES9>
-         <TimOfPreMES10>1302</TimOfPreMES10>
-         <IntConRefMES11>WE202002046</IntConRefMES11>
-         <AppRefMES14>NCTS</AppRefMES14>
-         <TesIndMES18>0</TesIndMES18>
-         <MesIdeMES19>1</MesIdeMES19>
-         <MesTypMES20>GB007A</MesTypMES20>
-         <HEAHEA>
-           <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>
-           <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>
-           <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>
-           <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>
-           <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>
-           <SimProFlaHEA132>0</SimProFlaHEA132>
-           <ArrNotDatHEA141>20200204</ArrNotDatHEA141>
-         </HEAHEA>
-         <TRADESTRD>
-           <NamTRD7>EXAMPLE2</NamTRD7>
-           <StrAndNumTRD22>Baker Street</StrAndNumTRD22>
-           <PosCodTRD23>NW16XE</PosCodTRD23>
-           <CitTRD24>London</CitTRD24>
-           <CouTRD25>GB</CouTRD25>
-           <NADLNGRD>EN</NADLNGRD>
-           <TINTRD59>EXAMPLE3</TINTRD59>
-         </TRADESTRD>
-         <CUSOFFPREOFFRES>
-           <RefNumRES1>GB000128</RefNumRES1>
-         </CUSOFFPREOFFRES>
-       </CC007A>
-     )
+     val request = ctcFakeRequestXML(CC007A)
      val result = route(app, request).value
      status(result) mustBe ACCEPTED
      headers(result) must contain (LOCATION -> "/customs/transits/movements/arrivals/123")
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {
-     val request = FakeRequest(method = "POST", uri = "/customs/transits/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")), body = AnyContentAsEmpty)
+     val request = FakeRequest(method = "POST", uri = "/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")), body = AnyContentAsEmpty)
 
      val result = route(app, request).value
 
@@ -364,43 +160,182 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
    }
 
    "must return BadRequest when XML payload is missing elements" in {
-     val request = ctcFakeRequestXML(
-       <CC007A>
-         <SynIdeMES1>UNOC</SynIdeMES1>
-         <SynVerNumMES2>3</SynVerNumMES2>
-         <MesSenMES3>LOCAL-eori</MesSenMES3>
-         <MesRecMES6>NCTS</MesRecMES6>
-         <DatOfPreMES9>20200204</DatOfPreMES9>
-         <TimOfPreMES10>1302</TimOfPreMES10>
-         <IntConRefMES11>WE202002046</IntConRefMES11>
-         <AppRefMES14>NCTS</AppRefMES14>
-         <TesIndMES18>0</TesIndMES18>
-         <MesIdeMES19>1</MesIdeMES19>
-         <MesTypMES20>GB007A</MesTypMES20>
-         <HEAHEA>
-           <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>
-           <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>
-           <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>
-           <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>
-           <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>
-           <SimProFlaHEA132>0</SimProFlaHEA132>
-           <ArrNotDatHEA141>20200204</ArrNotDatHEA141>
-         </HEAHEA>
-         <TRADESTRD>
-           <NamTRD7>EXAMPLE2</NamTRD7>
-           <StrAndNumTRD22>Baker Street</StrAndNumTRD22>
-           <PosCodTRD23>NW16XE</PosCodTRD23>
-           <CitTRD24>London</CitTRD24>
-           <CouTRD25>GB</CouTRD25>
-           <NADLNGRD>EN</NADLNGRD>
-           <TINTRD59>EXAMPLE3</TINTRD59>
-         </TRADESTRD>
-       </CC007A>
-     )
+     val request = ctcFakeRequestXML(<CC007A>
+       <SynIdeMES1>UNOC</SynIdeMES1>
+       <SynVerNumMES2>3</SynVerNumMES2>
+       <MesSenMES3>LOCAL-eori</MesSenMES3>
+       <MesRecMES6>NCTS</MesRecMES6>
+       <DatOfPreMES9>20200204</DatOfPreMES9>
+       <TimOfPreMES10>1302</TimOfPreMES10>
+       <IntConRefMES11>WE202002046</IntConRefMES11>
+       <AppRefMES14>NCTS</AppRefMES14>
+       <TesIndMES18>0</TesIndMES18>
+       <MesIdeMES19>1</MesIdeMES19>
+       <MesTypMES20>GB007A</MesTypMES20>
+       <HEAHEA>
+         <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>
+         <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>
+         <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>
+         <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>
+         <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>
+         <SimProFlaHEA132>0</SimProFlaHEA132>
+         <ArrNotDatHEA141>20200204</ArrNotDatHEA141>
+       </HEAHEA>
+       <TRADESTRD>
+         <NamTRD7>EXAMPLE2</NamTRD7>
+         <StrAndNumTRD22>Baker Street</StrAndNumTRD22>
+         <PosCodTRD23>NW16XE</PosCodTRD23>
+         <CitTRD24>London</CitTRD24>
+         <CouTRD25>GB</CouTRD25>
+         <NADLNGRD>EN</NADLNGRD>
+         <TINTRD59>EXAMPLE3</TINTRD59>
+       </TRADESTRD>
+     </CC007A>)
 
      val result = route(app, request).value
 
      status(result) mustBe BAD_REQUEST
    }
  }
-}
+
+ "PUT /movements/arrivals/:arrivalId" - {
+
+   val request = ctcFakeRequestXML(CC007A, "/movements/arrivals/123" ,"PUT")
+
+   "must return Accepted when successful" in {
+     when(mockArrivalConnector.put(any(), any())(any(), any()))
+       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123")), responseString = None) ))
+
+     val result = route(app, request).value
+
+     status(result) mustBe ACCEPTED
+     headers(result) must contain (LOCATION -> "/movements/arrivals/123")
+   }
+
+   "must return InternalServerError when unsuccessful" in {
+     when(mockArrivalConnector.put(any(), any())(any(), any()))
+       .thenReturn(Future.failed(new Upstream5xxResponse("", 500, 500)))
+
+     val result = route(app, request).value
+
+     status(result) mustBe INTERNAL_SERVER_ERROR
+   }
+
+   "must return InternalServerError when no Location in downstream response header" in {
+     when(mockArrivalConnector.put(any(), any())(any(), any()))
+       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(), responseString = None) ))
+
+     val result = route(app, request).value
+
+     status(result) mustBe INTERNAL_SERVER_ERROR
+   }
+
+   "must return InternalServerError when invalid Location value in downstream response header" in {
+     when(mockArrivalConnector.put(any(), any())(any(), any()))
+       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/1/messages/<>")), responseString = None) ))
+
+     val result = route(app, request).value
+
+     status(result) mustBe INTERNAL_SERVER_ERROR
+   }
+
+   "must escape arrival ID in Location response header" in {
+     when(mockArrivalConnector.put(any(), any())(any(), any()))
+       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123-@+*~-31@/messages/123-@+*~-31@")), responseString = None) ))
+
+     val result = route(app, request).value
+     status(result) mustBe ACCEPTED
+     headers(result) must contain (LOCATION -> "/movements/arrivals/123-%40%2B*%7E-31%40")
+   }
+
+   "must exclude query string if present in downstream Location header" in {
+     when(mockArrivalConnector.put(any(), any())(any(), any()))
+       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123?status=success")), responseString = None) ))
+
+     val result = route(app, request).value
+     status(result) mustBe ACCEPTED
+     headers(result) must contain (LOCATION -> "/movements/arrivals/123")
+   }
+
+   "must return UnsupportedMediaType when Content-Type is JSON" in {
+     val request = FakeRequest(method = "PUT", uri = "/movements/arrivals/123", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")), body = AnyContentAsEmpty)
+
+     val result = route(app, request).value
+
+     status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+   }
+
+   "must return UnsupportedMediaType when no Content-Type specified" in {
+     val request = FakeRequest(method = "PUT", uri = "/movements/arrivals/123", headers = FakeHeaders(), body = AnyContentAsEmpty)
+       .withRawBody(ByteString("body"))
+
+     val result = route(app, request).value
+
+     status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+   }
+
+   "must return UnsupportedMediaType when empty XML payload is sent" in {
+     val request = FakeRequest(method = "PUT", uri = "/movements/arrivals/123", headers = FakeHeaders(), body = AnyContentAsEmpty)
+
+     val result = route(app, request).value
+
+     status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+   }
+
+   "must return BadRequest when invalid XML payload is sent" in {
+     val body = <abc>123</abc>
+
+     val request = ctcFakeRequestXML(body, "/movements/arrivals/123" ,"PUT")
+
+     val result = route(app, request).value
+
+     status(result) mustBe BAD_REQUEST
+   }
+
+   "must return BadRequest when XML payload is missing elements" in {
+     val body = <CC007A>
+       <SynIdeMES1>UNOC</SynIdeMES1>
+       <SynVerNumMES2>3</SynVerNumMES2>
+       <MesSenMES3>LOCAL-eori</MesSenMES3>
+       <MesRecMES6>NCTS</MesRecMES6>
+       <DatOfPreMES9>20200204</DatOfPreMES9>
+       <TimOfPreMES10>1302</TimOfPreMES10>
+       <IntConRefMES11>WE202002046</IntConRefMES11>
+       <AppRefMES14>NCTS</AppRefMES14>
+       <TesIndMES18>0</TesIndMES18>
+       <MesIdeMES19>1</MesIdeMES19>
+       <MesTypMES20>GB007A</MesTypMES20>
+       <HEAHEA>
+         <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>
+         <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>
+         <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>
+         <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>
+         <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>
+         <SimProFlaHEA132>0</SimProFlaHEA132>
+         <ArrNotDatHEA141>20200204</ArrNotDatHEA141>
+       </HEAHEA>
+       <TRADESTRD>
+         <NamTRD7>EXAMPLE2</NamTRD7>
+         <StrAndNumTRD22>Baker Street</StrAndNumTRD22>
+         <PosCodTRD23>NW16XE</PosCodTRD23>
+         <CitTRD24>London</CitTRD24>
+         <CouTRD25>GB</CouTRD25>
+         <NADLNGRD>EN</NADLNGRD>
+         <TINTRD59>EXAMPLE3</TINTRD59>
+       </TRADESTRD>
+     </CC007A>
+
+     val request = ctcFakeRequestXML(body, "/movements/arrivals/123" ,"PUT")
+
+     val result = route(app, request).value
+
+     status(result) mustBe BAD_REQUEST
+   }
+ }
+
+
+
+
+
+
+ }

@@ -16,7 +16,9 @@
 
 package controllers
 
-import connectors.MessageConnector
+import java.net.{URI, URLEncoder}
+
+import connectors.{ArrivalConnector, MessageConnector}
 import controllers.actions.AuthAction
 import javax.inject.Inject
 import models.request.{ArrivalNotificationXSD, UnloadingRemarksXSD, XSDFile}
@@ -33,12 +35,8 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, Upstream4xxResponse}
 class ArrivalsController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    messageConnector: MessageConnector,
+                                   arrivalConnector: ArrivalConnector,
                                    xmlValidationService: XmlValidationService)(implicit ec: ExecutionContext) extends BackendController(cc) {
-
-  def createArrivalNotification(): Action[NodeSeq] = authAction.async(parse.xml) {
-    implicit request =>
-      postToArrivalEndpointDownstream(request.body.toString, ArrivalNotificationXSD, None)
-  }
 
   def createUnloadingPermission(arrivalId: String): Action[NodeSeq] = authAction.async(parse.xml) {
     implicit request =>
@@ -78,4 +76,58 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
       case Left(_) =>
         Future.successful(BadRequest)
     }
+
+  def createArrivalNotification(): Action[NodeSeq] = authAction.async(parse.xml) {
+    implicit request =>
+      xmlValidationService.validate(request.body.toString, ArrivalNotificationXSD) match {
+        case Right(_) =>
+          messageConnector.post(request.body).map { response =>
+            response.status match {
+              case NO_CONTENT =>
+                getLocationHeader(response) match {
+                  case Some(lh) =>
+                    Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(lh.arrivalId)}")
+                  case _ => InternalServerError
+                }
+              case _ => InternalServerError
+            }
+          } recover {
+            case _: Throwable =>
+              InternalServerError
+          }
+        case Left(_) =>
+          Future.successful(BadRequest)
+      }
+  }
+
+  def resubmitArrivalNotification(arrivalId: String): Action[NodeSeq] = authAction.async(parse.xml) {
+    implicit request =>
+      xmlValidationService.validate(request.body.toString, ArrivalNotificationXSD) match {
+        case Right(_) =>
+            arrivalConnector.put(arrivalId, request.body).map { response =>
+              response.status match {
+                case NO_CONTENT =>
+                  getLocationHeader(response) match {
+                    case Some(lh) =>
+                      Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(lh.arrivalId)}")
+                    case _ => InternalServerError
+                  }
+                case _ => InternalServerError
+              }
+            } recover {
+              case _: Throwable =>
+                InternalServerError
+            }
+        case Left(_) =>
+          Future.successful(BadRequest)
+      }
+  }
+
+  private def getLocationHeader(r: HttpResponse): Option[LocationHeader] =
+  {
+    r.header(LOCATION).map(l => LocationHeader.parse(l))
+  }
+
+  private def urlEncode(s: String): String =
+    URLEncoder.encode(s, "UTF-8")
 }
