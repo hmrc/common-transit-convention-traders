@@ -18,15 +18,18 @@ package controllers
 
 import java.net.URI
 
-case class LocationHeader(arrivalId: Option[String], messageId: Option[String]) {
-  def isEmpty = arrivalId.isEmpty && messageId.isEmpty
-}
+import play.api.libs.json.JsError
+import play.api.libs.json.JsResult.Exception
+
+import scala.util.{Failure, Success, Try}
+
+case class LocationHeader(arrivalId: String)
 
 object LocationHeader {
-  def apply(location: String): LocationHeader = {
-    val split = new URI(location).getPath.split("/")
-    new LocationHeader(
-      if(split.length > 1) Some(split(2)) else None,
-      if(split.length > 3) Some(split(4)) else None)
+  def parse(location: String): LocationHeader = {
+    Try(new URI(location).getPath.split("/").last) match {
+      case Success(value) =>  new LocationHeader(arrivalId = value)
+      case Failure(_) => throw Exception(JsError(s"Unable to extract arrivalId from locationHeader: $location"))
+    }
   }
 }

@@ -45,17 +45,11 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
             response.status match {
               case NO_CONTENT =>
                 getLocationHeader(response) match {
-                  case Some(locationHeader) => {
-                    (locationHeader.isEmpty, locationHeader.arrivalId) match {
-                      case (false, Some(a)) =>
-                        Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(a)}")
-                      case _ =>
-                        InternalServerError
-                    }
-                  }
-                  case _ =>
-                    InternalServerError
+                  case Some(lh) =>
+                    Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(lh.arrivalId)}")
+                  case _ => InternalServerError
                 }
+              case _ => InternalServerError
             }
           } recover {
             case _: Throwable =>
@@ -74,15 +68,11 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
               response.status match {
                 case NO_CONTENT =>
                   getLocationHeader(response) match {
-                    case Some(locationHeader) =>
-                      (locationHeader.isEmpty, locationHeader.arrivalId, locationHeader.messageId) match {
-                      case (false, Some(a), Some(m)) =>
-                        Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(a)}/messages/${urlEncode(m)}")
-                      case _ =>
-                        InternalServerError
-                    }
+                    case Some(lh) =>
+                      Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(lh.arrivalId)}")
                     case _ => InternalServerError
                   }
+                case _ => InternalServerError
               }
             } recover {
               case _: Throwable =>
@@ -95,7 +85,7 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
 
   private def getLocationHeader(r: HttpResponse): Option[LocationHeader] =
   {
-    r.header(LOCATION).map(l => LocationHeader(l))
+    r.header(LOCATION).map(l => LocationHeader.parse(l))
   }
 
   private def urlEncode(s: String): String =
