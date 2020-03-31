@@ -85,7 +85,7 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
 
   private def getLocationHeader(r: HttpResponse): Option[LocationHeader] =
   {
-    r.header(LOCATION).map(l => LocationHeader(l))
+    r.header(LOCATION).map(l => LocationHeader.parse(l))
   }
 
   private def urlEncode(s: String): String =

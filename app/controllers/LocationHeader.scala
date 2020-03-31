@@ -23,12 +23,12 @@ import play.api.libs.json.JsResult.Exception
 
 import scala.util.{Failure, Success, Try}
 
-sealed case class LocationHeader(arrivalId: String)
+case class LocationHeader(arrivalId: String)
 
 object LocationHeader {
-  def apply(location: String): LocationHeader = {
+  def parse(location: String): LocationHeader = {
     Try(new URI(location).getPath.split("/").last) match {
-      case Success(value) =>  LocationHeader(value)
+      case Success(value) =>  new LocationHeader(arrivalId = value)
       case Failure(_) => throw Exception(JsError(s"Unable to extract arrivalId from locationHeader: $location"))
     }
   }

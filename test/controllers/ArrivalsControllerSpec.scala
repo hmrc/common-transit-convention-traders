@@ -204,12 +204,12 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
 
    "must return Accepted when successful" in {
      when(mockArrivalConnector.put(any(), any())(any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123/messages/4")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123")), responseString = None) ))
 
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> "/movements/arrivals/123/messages/4")
+     headers(result) must contain (LOCATION -> "/movements/arrivals/123")
    }
 
    "must return InternalServerError when unsuccessful" in {
@@ -245,16 +245,16 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
 
      val result = route(app, request).value
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> "/movements/arrivals/123-%40%2B*%7E-31%40/messages/123-%40%2B*%7E-31%40")
+     headers(result) must contain (LOCATION -> "/movements/arrivals/123-%40%2B*%7E-31%40")
    }
 
    "must exclude query string if present in downstream Location header" in {
      when(mockArrivalConnector.put(any(), any())(any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123/messages/4?status=success")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123?status=success")), responseString = None) ))
 
      val result = route(app, request).value
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> "/movements/arrivals/123/messages/4")
+     headers(result) must contain (LOCATION -> "/movements/arrivals/123")
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {
