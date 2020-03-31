@@ -62,7 +62,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
  "POST /movements/arrivals" - {
    "must return Accepted when successful" in {
      when(mockMessageConnector.post(any(), any())(any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/movements/arrivals/123")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123")), responseString = None) ))
 
      val request = ctcFakeRequestXML(
        <CC007A>
@@ -198,7 +198,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
 
    "must return InternalServerError when invalid Location value in downstream response header" in {
      when(mockMessageConnector.post(any(), any())(any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/movements/arrivals/<>")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/<>")), responseString = None) ))
 
      val request = ctcFakeRequestXML(
        <CC007A>
@@ -243,7 +243,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
 
    "must escape arrival ID in Location response header" in {
      when(mockMessageConnector.post(any(), any())(any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/movements/arrivals/123-@+*~-31@")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123-@+*~-31@")), responseString = None) ))
 
      val request = ctcFakeRequestXML(
        <CC007A>
@@ -288,7 +288,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
 
    "must exclude query string if present in downstream Location header" in {
      when(mockMessageConnector.post(any(), any())(any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/movements/arrivals/123?status=success")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123?status=success")), responseString = None) ))
 
      val request = ctcFakeRequestXML(
        <CC007A>
