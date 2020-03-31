@@ -209,7 +209,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> "/movements/arrivals/123")
+     headers(result) must contain (LOCATION -> "/customs/transits/movements/arrivals/123")
    }
 
    "must return InternalServerError when unsuccessful" in {
@@ -245,7 +245,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
 
      val result = route(app, request).value
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> "/movements/arrivals/123-%40%2B*%7E-31%40")
+     headers(result) must contain (LOCATION -> "/customs/transits/movements/arrivals/123-%40%2B*%7E-31%40")
    }
 
    "must exclude query string if present in downstream Location header" in {
@@ -254,7 +254,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
 
      val result = route(app, request).value
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> "/movements/arrivals/123")
+     headers(result) must contain (LOCATION -> "/customs/transits/movements/arrivals/123")
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {

@@ -81,12 +81,12 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
     implicit request =>
       xmlValidationService.validate(request.body.toString, ArrivalNotificationXSD) match {
         case Right(_) =>
-          messageConnector.post(request.body).map { response =>
+          messageConnector.post(request.body.toString, None).map { response =>
             response.status match {
               case NO_CONTENT =>
                 getLocationHeader(response) match {
                   case Some(lh) =>
-                    Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(lh.arrivalId)}")
+                    Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${urlEncode(lh.arrivalId)}")
                   case _ => InternalServerError
                 }
               case _ => InternalServerError
@@ -109,7 +109,7 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
                 case NO_CONTENT =>
                   getLocationHeader(response) match {
                     case Some(lh) =>
-                      Accepted.withHeaders(LOCATION -> s"/movements/arrivals/${urlEncode(lh.arrivalId)}")
+                      Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${urlEncode(lh.arrivalId)}")
                     case _ => InternalServerError
                   }
                 case _ => InternalServerError
