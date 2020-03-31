@@ -54,13 +54,13 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
     reset(mockArrivalConnector)
   }
 
-  def ctcFakeRequest() = FakeRequest(method = "POST", uri = "/customs/transits/movements/arrivals", headers = FakeHeaders(), body = AnyContentAsEmpty)
+  def ctcFakeRequest() = FakeRequest(method = "POST", uri = "/movements/arrivals", headers = FakeHeaders(), body = AnyContentAsEmpty)
 
   def ctcFakeRequestXML() =
-    FakeRequest(method = "POST", uri = "/customs/transits/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body = AnyContentAsEmpty)
+    FakeRequest(method = "POST", uri = "/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body = AnyContentAsEmpty)
 
   def ctcFakeRequestXML(body: NodeSeq) =
-    FakeRequest(method = "POST", uri = "/customs/transits/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body)
+    FakeRequest(method = "POST", uri = "/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body)
 
   def ctcFakeRequestXML(body: NodeSeq, uri: String, verb: String) =
     FakeRequest(verb, uri, headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body)
@@ -128,7 +128,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {
-     val request = FakeRequest(method = "POST", uri = "/customs/transits/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")), body = AnyContentAsEmpty)
+     val request = FakeRequest(method = "POST", uri = "/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")), body = AnyContentAsEmpty)
 
      val result = route(app, request).value
 
@@ -200,7 +200,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
 
  "PUT /movements/arrivals/:arrivalId" - {
 
-   val request = ctcFakeRequestXML(CC007A, "/customs/transits/movements/arrivals/123" ,"PUT")
+   val request = ctcFakeRequestXML(CC007A, "/movements/arrivals/123" ,"PUT")
 
    "must return Accepted when successful" in {
      when(mockArrivalConnector.put(any(), any())(any(), any()))
@@ -258,7 +258,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {
-     val request = FakeRequest(method = "PUT", uri = "/customs/transits/movements/arrivals/123", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")), body = AnyContentAsEmpty)
+     val request = FakeRequest(method = "PUT", uri = "/movements/arrivals/123", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")), body = AnyContentAsEmpty)
 
      val result = route(app, request).value
 
@@ -266,7 +266,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
    }
 
    "must return UnsupportedMediaType when no Content-Type specified" in {
-     val request = FakeRequest(method = "PUT", uri = "/customs/transits/movements/arrivals/123", headers = FakeHeaders(), body = AnyContentAsEmpty)
+     val request = FakeRequest(method = "PUT", uri = "/movements/arrivals/123", headers = FakeHeaders(), body = AnyContentAsEmpty)
        .withRawBody(ByteString("body"))
 
      val result = route(app, request).value
@@ -275,7 +275,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
    }
 
    "must return UnsupportedMediaType when empty XML payload is sent" in {
-     val request = FakeRequest(method = "PUT", uri = "/customs/transits/movements/arrivals/123", headers = FakeHeaders(), body = AnyContentAsEmpty)
+     val request = FakeRequest(method = "PUT", uri = "/movements/arrivals/123", headers = FakeHeaders(), body = AnyContentAsEmpty)
 
      val result = route(app, request).value
 
@@ -285,7 +285,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
    "must return BadRequest when invalid XML payload is sent" in {
      val body = <abc>123</abc>
 
-     val request = ctcFakeRequestXML(body, "/customs/transits/movements/arrivals/123" ,"PUT")
+     val request = ctcFakeRequestXML(body, "/movements/arrivals/123" ,"PUT")
 
      val result = route(app, request).value
 
@@ -325,7 +325,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
        </TRADESTRD>
      </CC007A>
 
-     val request = ctcFakeRequestXML(body, "/customs/transits/movements/arrivals/123" ,"PUT")
+     val request = ctcFakeRequestXML(body, "/movements/arrivals/123" ,"PUT")
 
      val result = route(app, request).value
 
