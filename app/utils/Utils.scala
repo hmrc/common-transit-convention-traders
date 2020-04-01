@@ -14,22 +14,18 @@
  * limitations under the License.
  */
 
-package controllers
+package utils
 
-import java.net.URI
+import java.net.{URI, URLEncoder}
 
-import play.api.libs.json.JsError
-import play.api.libs.json.JsResult.Exception
+import scala.util.Try
 
-import scala.util.{Failure, Success, Try}
+object Utils {
+  def arrivalId(location: String): Try[String] =
+    Try(new URI(location).getPath.split("/").last)
 
-case class LocationHeader(arrivalId: String)
+  def is2xx(status: Int) = status >= 200 && status <= 299
 
-object LocationHeader {
-  def parse(location: String): LocationHeader = {
-    Try(new URI(location).getPath.split("/").last) match {
-      case Success(value) =>  new LocationHeader(arrivalId = value)
-      case Failure(_) => throw Exception(JsError(s"Unable to extract arrivalId from locationHeader: $location"))
-    }
-  }
+  def urlEncode(str: String): String =
+    URLEncoder.encode(str, "UTF-8")
 }

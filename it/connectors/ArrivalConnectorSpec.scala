@@ -10,26 +10,26 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
+class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
   "post" - {
     "must return NO_CONTENT when post is successful" in {
-      val connector = app.injector.instanceOf[MessageConnector]
+      val connector = app.injector.instanceOf[ArrivalConnector]
 
       server.stubFor(
         post(
-          urlEqualTo("/common-transit-convention-trader-at-destination/message-notification")
+          urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/")
         ).willReturn(aResponse().withStatus(NO_CONTENT))
       )
 
       implicit val hc = HeaderCarrier()
 
-      val result = connector.post(<document></document>).futureValue
+      val result = connector.post("<document></document>").futureValue
 
       result.status mustEqual NO_CONTENT
     }
 
     "throw exception when post is unsuccessful" in {
-      val connector = app.injector.instanceOf[MessageConnector]
+      val connector = app.injector.instanceOf[ArrivalConnector]
 
       val errorCodes = Gen.choose(400, 599)
 
@@ -38,13 +38,13 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
           server.stubFor(
             post(
-              urlEqualTo("/common-transit-convention-trader-at-destination/message-notification")
+              urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/")
             ).willReturn(aResponse().withStatus(errorCode))
           )
 
           implicit val hc = HeaderCarrier()
 
-          val result = connector.post(<document></document>)
+          val result = connector.post("<document></document>")
 
           whenReady(result.failed) {
             response =>

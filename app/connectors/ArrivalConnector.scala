@@ -23,15 +23,24 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.xml.NodeSeq
 
 class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) {
 
   val arrivalRoute = "/transit-movements-trader-at-destination/movements/arrivals/"
 
-  def put(arrivalId: String, message: NodeSeq)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def post(message: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val url = appConfig.traderAtDestinationUrl + arrivalRoute
+    http.POSTString(url, message)(HttpReads.readRaw, implicitly, implicitly)
+  }
+
+  def post(message: String, arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute + arrivalId
-    http.PUTString(url, message.toString)(HttpReads.readRaw, implicitly, implicitly)
+    http.POSTString(url, message)(HttpReads.readRaw, implicitly, implicitly)
+  }
+
+  def put(message: String, arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val url = appConfig.traderAtDestinationUrl + arrivalRoute + arrivalId
+    http.PUTString(url, message)(HttpReads.readRaw, implicitly, implicitly)
   }
 
 }

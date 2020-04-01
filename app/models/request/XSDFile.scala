@@ -23,3 +23,7 @@ sealed trait XSDFile {
 object ArrivalNotificationXSD extends XSDFile {
   val filePath = "/xsd-iconvert/cc007a.xsd"
 }
+
+object UnloadingRemarksXSD extends XSDFile {
+  val filePath = "/xsd-iconvert/cc044a.xsd"
+}
