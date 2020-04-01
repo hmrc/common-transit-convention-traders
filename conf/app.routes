@@ -1,6 +1,6 @@
 # microservice specific routes
 
-POST       /movements/arrivals                 controllers.ArrivalsController.createArrivalNotification()
-POST       /movements/arrivals/:arrivalId      controllers.ArrivalsController.createUnloadingPermission(arrivalId: String)
+POST       /movements/arrivals                          controllers.ArrivalsController.createArrivalNotification()
+POST       /movements/arrivals/:arrivalId/messages      controllers.ArrivalsController.createUnloadingPermission(arrivalId: String)
 
-PUT        /movements/arrivals/:arrivalId      controllers.ArrivalsController.resubmitArrivalNotification(arrivalId: String)
+PUT        /movements/arrivals/:arrivalId               controllers.ArrivalsController.resubmitArrivalNotification(arrivalId: String)

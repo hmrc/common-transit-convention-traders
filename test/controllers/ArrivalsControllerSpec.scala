@@ -18,7 +18,7 @@ package controllers
 
 import controllers.actions.{AuthAction, FakeAuthAction}
 import akka.util.ByteString
-import connectors.{ArrivalConnector, MessageConnector}
+import connectors.ArrivalConnector
 import data.TestXml
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{reset, when}
@@ -39,18 +39,15 @@ import uk.gov.hmrc.http.{HttpResponse, Upstream5xxResponse}
 import scala.concurrent.Future
 
 class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
-  private val mockMessageConnector: MessageConnector = mock[MessageConnector]
   private val mockArrivalConnector: ArrivalConnector = mock[ArrivalConnector]
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(bind[AuthAction].to[FakeAuthAction])
-    .overrides(bind[MessageConnector].toInstance(mockMessageConnector))
     .overrides(bind[ArrivalConnector].toInstance(mockArrivalConnector))
     .build()
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    reset(mockMessageConnector)
     reset(mockArrivalConnector)
   }
 
@@ -67,7 +64,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
 
  "POST /movements/arrivals" - {
    "must return Accepted when successful" in {
-     when(mockMessageConnector.post(any(), any())(any(), any()))
+     when(mockArrivalConnector.post(any())(any(), any()))
        .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123")), responseString = None) ))
 
      val request = ctcFakeRequestXML(CC007A)
@@ -78,7 +75,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
    }
 
    "must return InternalServerError when unsuccessful" in {
-     when(mockMessageConnector.post(any(), any())(any(), any()))
+     when(mockArrivalConnector.post(any())(any(), any()))
        .thenReturn(Future.failed(new Upstream5xxResponse("", 500, 500)))
 
      val request = ctcFakeRequestXML(CC007A)
@@ -88,7 +85,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
    }
 
    "must return InternalServerError when no Location in downstream response header" in {
-     when(mockMessageConnector.post(any(), any())(any(), any()))
+     when(mockArrivalConnector.post(any())(any(), any()))
        .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(), responseString = None) ))
 
      val request = ctcFakeRequestXML(CC007A)
@@ -98,7 +95,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
    }
 
    "must return InternalServerError when invalid Location value in downstream response header" in {
-     when(mockMessageConnector.post(any(), any())(any(), any()))
+     when(mockArrivalConnector.post(any())(any(), any()))
        .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/<>")), responseString = None) ))
 
      val request = ctcFakeRequestXML(CC007A)
@@ -108,7 +105,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
    }
 
    "must escape arrival ID in Location response header" in {
-     when(mockMessageConnector.post(any(), any())(any(), any()))
+     when(mockArrivalConnector.post(any())(any(), any()))
        .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123-@+*~-31@")), responseString = None) ))
 
      val request = ctcFakeRequestXML(CC007A)
@@ -118,7 +115,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
    }
 
    "must exclude query string if present in downstream Location header" in {
-     when(mockMessageConnector.post(any(), any())(any(), any()))
+     when(mockArrivalConnector.post(any())(any(), any()))
        .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123?status=success")), responseString = None) ))
 
      val request = ctcFakeRequestXML(CC007A)
@@ -332,10 +329,5 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
      status(result) mustBe BAD_REQUEST
    }
  }
-
-
-
-
-
 
  }
