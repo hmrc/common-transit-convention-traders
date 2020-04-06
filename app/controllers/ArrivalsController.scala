@@ -16,7 +16,9 @@
 
 package controllers
 
-import connectors.ArrivalConnector
+import java.net.{URLEncoder}
+
+import connectors.{ArrivalConnector, MessageConnector}
 import controllers.actions.AuthAction
 import javax.inject.Inject
 import models.request.{ArrivalNotificationXSD, UnloadingRemarksXSD}

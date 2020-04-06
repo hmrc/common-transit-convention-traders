@@ -42,5 +42,4 @@ class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute + arrivalId
     http.PUTString(url, message)(HttpReads.readRaw, implicitly, implicitly)
   }
-
 }

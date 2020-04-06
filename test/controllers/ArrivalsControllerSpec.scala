@@ -65,7 +65,7 @@ class ArrivalsControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
  "POST /movements/arrivals" - {
    "must return Accepted when successful" in {
      when(mockArrivalConnector.post(any())(any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123")), responseString = None) ))
+       .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/arrivals/123")), responseString = None) ))
 
      val request = ctcFakeRequestXML(CC007A)
      val result = route(app, request).value
