@@ -4,3 +4,4 @@ POST       /movements/arrivals                          controllers.ArrivalsCont
 POST       /movements/arrivals/:arrivalId/messages      controllers.ArrivalsController.createUnloadingPermission(arrivalId: String)
 
 PUT        /movements/arrivals/:arrivalId               controllers.ArrivalsController.resubmitArrivalNotification(arrivalId: String)
+GET        /movements/arrivals/:arrivalId/messages/:messageId       controllers.MessagesController.getArrivalMessage(arrivalId: String, messageId: String)
