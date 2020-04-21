@@ -16,9 +16,7 @@
 
 package controllers
 
-import java.net.{URLEncoder}
-
-import connectors.{ArrivalConnector, MessageConnector}
+import connectors.ArrivalConnector
 import controllers.actions.AuthAction
 import javax.inject.Inject
 import models.request.{ArrivalNotificationXSD, UnloadingRemarksXSD}
@@ -41,13 +39,13 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
     implicit request =>
       xmlValidationService.validate(request.body.toString, UnloadingRemarksXSD) match {
         case Right(_) =>
-          arrivalConnector.post(request.body.toString, arrivalId).map { response =>
+          arrivalConnector.postToMessagesRoute(request.body.toString, arrivalId).map { response =>
             response.status match {
               case s if Utils.is2xx(s) =>
                 val location = response.header(LOCATION)
 
                 location match {
-                  case Some(locationValue) => Utils.arrivalId(locationValue) match {
+                  case Some(locationValue) => Utils.arrivalId(locationValue, fragmentIndex = -2) match {
                     case Success(id) =>
                       Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(id)}/messages")
                     case Failure(_) =>
@@ -61,8 +59,12 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
             case e: Upstream4xxResponse =>
               if (e.upstreamResponseCode == 400)
                 BadRequest
+              else if (e.upstreamResponseCode == 401)
+                Unauthorized
               else if (e.upstreamResponseCode == 404)
                 NotFound
+              else if (e.upstreamResponseCode == 423)
+                Locked
               else
                 InternalServerError
             case _: Throwable =>
@@ -97,8 +99,12 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
             case e: Upstream4xxResponse =>
               if (e.upstreamResponseCode == 400)
                 BadRequest
+              else if (e.upstreamResponseCode == 401)
+                Unauthorized
               else if (e.upstreamResponseCode == 404)
                 NotFound
+              else if (e.upstreamResponseCode == 423)
+                Locked
               else
                 InternalServerError
             case _: Throwable =>
@@ -133,8 +139,12 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
             case e: Upstream4xxResponse =>
               if (e.upstreamResponseCode == 400)
                 BadRequest
+              else if (e.upstreamResponseCode == 401)
+                Unauthorized
               else if (e.upstreamResponseCode == 404)
                 NotFound
+              else if (e.upstreamResponseCode == 423)
+                Locked
               else
                 InternalServerError
             case _: Throwable =>
@@ -144,5 +154,4 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
           Future.successful(BadRequest)
       }
   }
-
 }

@@ -39,7 +39,7 @@ import scala.xml.NodeSeq
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.{HttpResponse, Upstream5xxResponse}
+import uk.gov.hmrc.http.{HttpResponse, Upstream4xxResponse, Upstream5xxResponse}
 
 import scala.concurrent.Future
 
@@ -92,7 +92,7 @@ class MessagesControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
 
     "return 400 if the downstream returns 400" in {
       when(mockMessageConnector.get(any(), any())(any(), any()))
-        .thenReturn(Future.successful(HttpResponse(responseStatus = BAD_REQUEST, responseJson = Some(json), responseHeaders = Map(), responseString = None) ))
+        .thenReturn(Future.failed(Upstream4xxResponse("", 400, 400)))
 
       val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
       val result = route(app, request).value
@@ -102,7 +102,7 @@ class MessagesControllerSpec extends FreeSpec with MustMatchers with GuiceOneApp
 
     "return 404 if the downstream returns 404" in {
       when(mockMessageConnector.get(any(), any())(any(), any()))
-        .thenReturn(Future.successful(HttpResponse(responseStatus = NOT_FOUND, responseJson = Some(json), responseHeaders = Map(), responseString = None) ))
+        .thenReturn(Future.failed(Upstream4xxResponse("", 404, 404)))
 
       val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
       val result = route(app, request).value

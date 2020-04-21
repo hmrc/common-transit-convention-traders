@@ -55,12 +55,21 @@ class MessagesController @Inject()(cc: ControllerComponents,
               case _ => InternalServerError
             }
           }
-          case BAD_REQUEST => BadRequest
-          case NOT_FOUND => NotFound
-          case INTERNAL_SERVER_ERROR => InternalServerError
         }
       } recover {
-        case _: Throwable =>  InternalServerError
+        case e: Upstream4xxResponse =>
+          if (e.upstreamResponseCode == 400)
+            BadRequest
+          else if (e.upstreamResponseCode == 401)
+            Unauthorized
+          else if (e.upstreamResponseCode == 404)
+            NotFound
+          else if (e.upstreamResponseCode == 423)
+            Locked
+          else
+            InternalServerError
+        case _: Throwable =>
+          InternalServerError
       }
     }
   }

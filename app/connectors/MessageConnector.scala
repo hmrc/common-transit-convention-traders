@@ -18,7 +18,7 @@ package connectors
 
 import config.AppConfig
 import javax.inject.Inject
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,6 +29,6 @@ class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) {
 
   def get(arrivalId: String, messageId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = rootUrl + s"/arrivals/$arrivalId/messages/$messageId"
-    http.GET[HttpResponse](url)
+    http.GET[HttpResponse](url)(HttpReads.readRaw, implicitly, implicitly)
   }
 }

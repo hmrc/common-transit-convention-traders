@@ -38,6 +38,11 @@ class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) {
     http.POSTString(url, message)(HttpReads.readRaw, implicitly, implicitly)
   }
 
+  def postToMessagesRoute(message: String, arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val url = appConfig.traderAtDestinationUrl + arrivalRoute + arrivalId + "/messages"
+    http.POSTString(url, message)(HttpReads.readRaw, implicitly, implicitly)
+  }
+
   def put(message: String, arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute + arrivalId
     http.PUTString(url, message)(HttpReads.readRaw, implicitly, implicitly)
