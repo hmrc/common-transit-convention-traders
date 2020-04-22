@@ -16,9 +16,7 @@
 
 package controllers
 
-import java.net.URLEncoder
-
-import connectors.{ArrivalConnector, MessageConnector}
+import connectors.ArrivalConnector
 import controllers.actions.AuthAction
 import javax.inject.Inject
 import models.request.{ArrivalNotificationXSD, UnloadingRemarksXSD}
@@ -30,48 +28,12 @@ import utils.Utils
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 import scala.xml.NodeSeq
-import uk.gov.hmrc.http.{HttpErrorFunctions, Upstream4xxResponse}
+import uk.gov.hmrc.http.Upstream4xxResponse
 
-class ArrivalsController @Inject()(cc: ControllerComponents,
+class ArrivalMovementController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    arrivalConnector: ArrivalConnector,
-                                   xmlValidationService: XmlValidationService)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions {
-
-  def createUnloadingPermission(arrivalId: String): Action[NodeSeq] = authAction.async(parse.xml) {
-    implicit request =>
-      xmlValidationService.validate(request.body.toString, UnloadingRemarksXSD) match {
-        case Right(_) =>
-          arrivalConnector.post(request.body.toString, arrivalId).map { response =>
-            response.status match {
-              case s if Utils.is2xx(s) =>
-                val location = response.header(LOCATION)
-
-                location match {
-                  case Some(locationValue) => Utils.arrivalId(locationValue) match {
-                    case Success(id) =>
-                      Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(id)}/messages")
-                    case Failure(_) =>
-                      InternalServerError
-                  }
-                  case _ =>
-                    InternalServerError
-                }
-            }
-          } recover {
-            case e: Upstream4xxResponse =>
-              if (e.upstreamResponseCode == 400)
-                BadRequest
-              else if (e.upstreamResponseCode == 404)
-                NotFound
-              else
-                InternalServerError
-            case _: Throwable =>
-              InternalServerError
-          }
-        case Left(_) =>
-          Future.successful(BadRequest)
-      }
-  }
+                                   xmlValidationService: XmlValidationService)(implicit ec: ExecutionContext) extends BackendController(cc) {
 
   def createArrivalNotification(): Action[NodeSeq] = authAction.async(parse.xml) {
     implicit request =>
@@ -97,8 +59,12 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
             case e: Upstream4xxResponse =>
               if (e.upstreamResponseCode == 400)
                 BadRequest
+              else if (e.upstreamResponseCode == 401)
+                Unauthorized
               else if (e.upstreamResponseCode == 404)
                 NotFound
+              else if (e.upstreamResponseCode == 423)
+                Locked
               else
                 InternalServerError
             case _: Throwable =>
@@ -115,8 +81,9 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
         case Right(_) =>
           arrivalConnector.put(request.body.toString, arrivalId).map { response =>
             response.status match {
-              case s if is2xx(s) =>
+              case s if Utils.is2xx(s) =>
                 val location = response.header(LOCATION)
+
                 location match {
                   case Some(locationValue) => Utils.arrivalId(locationValue) match {
                     case Success(id) =>
@@ -124,10 +91,24 @@ class ArrivalsController @Inject()(cc: ControllerComponents,
                     case Failure(_) =>
                       InternalServerError
                   }
-                  case _ => InternalServerError
+                  case _ =>
+                    InternalServerError
                 }
-              case _ => Status(response.status)
             }
+          } recover {
+            case e: Upstream4xxResponse =>
+              if (e.upstreamResponseCode == 400)
+                BadRequest
+              else if (e.upstreamResponseCode == 401)
+                Unauthorized
+              else if (e.upstreamResponseCode == 404)
+                NotFound
+              else if (e.upstreamResponseCode == 423)
+                Locked
+              else
+                InternalServerError
+            case _: Throwable =>
+              InternalServerError
           }
         case Left(_) =>
           Future.successful(BadRequest)

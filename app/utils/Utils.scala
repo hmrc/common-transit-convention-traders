@@ -24,6 +24,16 @@ object Utils {
   def arrivalId(location: String): Try[String] =
     Try(new URI(location).getPath.split("/").last)
 
+  def arrivalId(location: String, fragmentIndex: Int): Try[String] =
+    Try {
+      val fragments: Array[String] = new URI(location).getPath.split("/")
+      if (fragmentIndex >= 0) {
+        fragments.apply(fragmentIndex)
+      } else {
+        fragments.apply(fragments.length + fragmentIndex)
+      }
+    }
+
   def is2xx(status: Int) = status >= 200 && status <= 299
 
   def urlEncode(str: String): String =
