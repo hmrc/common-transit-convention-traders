@@ -27,31 +27,6 @@ class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
       result.status mustEqual NO_CONTENT
     }
-
-    "throw exception when post is unsuccessful" in {
-      val connector = app.injector.instanceOf[ArrivalConnector]
-
-      val errorCodes = Gen.choose(400, 599)
-
-      forAll(errorCodes) {
-        errorCode =>
-
-          server.stubFor(
-            post(
-              urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/")
-            ).willReturn(aResponse().withStatus(errorCode))
-          )
-
-          implicit val hc = HeaderCarrier()
-
-          val result = connector.post("<document></document>")
-
-          whenReady(result.failed) {
-            response =>
-              response mustBe an[Exception]
-          }
-      }
-    }
   }
 
   override protected def portConfigKey: String = "microservice.services.transit-movement-trader-at-destination.port"
