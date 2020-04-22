@@ -20,9 +20,8 @@ import uk.gov.hmrc.http.HttpResponse
 import config.AppConfig
 import connectors.util.CustomHttpReader
 import javax.inject.Inject
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-
 import scala.concurrent.{ExecutionContext, Future}
 
 class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) {
@@ -31,12 +30,12 @@ class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) {
 
   def post(message: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute
-    http.POSTString(url, message)(HttpReads.readRaw, implicitly, implicitly)
+    http.POSTString(url, message)(CustomHttpReader, implicitly, implicitly)
   }
 
   def post(message: String, arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute + arrivalId
-    http.POSTString(url, message)(HttpReads.readRaw, implicitly, implicitly)
+    http.POSTString(url, message)(CustomHttpReader, implicitly, implicitly)
   }
 
   def put(message: String, arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {

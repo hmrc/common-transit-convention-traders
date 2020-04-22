@@ -34,7 +34,7 @@ import play.api.test.Helpers.{headers, _}
 import scala.xml.NodeSeq
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import uk.gov.hmrc.http.{HttpResponse, Upstream5xxResponse}
+import uk.gov.hmrc.http.HttpResponse
 
 import scala.concurrent.Future
 
@@ -76,7 +76,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
    "must return InternalServerError when unsuccessful" in {
      when(mockArrivalConnector.post(any())(any(), any()))
-       .thenReturn(Future.failed(new Upstream5xxResponse("", 500, 500)))
+       .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR)))
 
      val request = ctcFakeRequestXML(CC007A)
      val result = route(app, request).value
@@ -211,7 +211,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
    "must return InternalServerError when unsuccessful" in {
      when(mockArrivalConnector.put(any(), any())(any(), any()))
-       .thenReturn(Future.failed(new Upstream5xxResponse("", 500, 500)))
+       .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR)))
 
      val result = route(app, request).value
 
