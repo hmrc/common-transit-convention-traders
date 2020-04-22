@@ -18,6 +18,7 @@ package connectors
 
 import uk.gov.hmrc.http.HttpResponse
 import config.AppConfig
+import connectors.util.CustomHttpReader
 import javax.inject.Inject
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -40,6 +41,6 @@ class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) {
 
   def put(message: String, arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute + arrivalId
-    http.PUTString(url, message)(HttpReads.readRaw, implicitly, implicitly)
+    http.PUTString(url, message)(CustomHttpReader, implicitly, implicitly)
   }
 }
