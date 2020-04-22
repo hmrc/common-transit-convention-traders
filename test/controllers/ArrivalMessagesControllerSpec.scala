@@ -92,7 +92,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
 
     "return 400 if the downstream returns 400" in {
       when(mockMessageConnector.get(any(), any())(any(), any()))
-        .thenReturn(Future.failed(Upstream4xxResponse("", 400, 400)))
+        .thenReturn(Future.successful(HttpResponse(400)))
 
       val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
       val result = route(app, request).value
@@ -102,7 +102,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
 
     "return 404 if the downstream returns 404" in {
       when(mockMessageConnector.get(any(), any())(any(), any()))
-        .thenReturn(Future.failed(Upstream4xxResponse("", 404, 404)))
+        .thenReturn(Future.successful(HttpResponse(404)))
 
       val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
       val result = route(app, request).value
