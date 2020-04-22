@@ -43,7 +43,7 @@ import uk.gov.hmrc.http.{HttpResponse, Upstream4xxResponse, Upstream5xxResponse}
 
 import scala.concurrent.Future
 
-class MessagesControllerSpec extends FreeSpec with MustMatchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml{
+class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml{
   private val mockMessageConnector: MessageConnector = mock[MessageConnector]
 
   override lazy val app = GuiceApplicationBuilder()

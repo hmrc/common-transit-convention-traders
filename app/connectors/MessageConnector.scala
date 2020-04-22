@@ -31,4 +31,9 @@ class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) {
     val url = rootUrl + s"/arrivals/$arrivalId/messages/$messageId"
     http.GET[HttpResponse](url)(HttpReads.readRaw, implicitly, implicitly)
   }
+
+  def post(message: String, arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val url = rootUrl + s"/arrivals/$arrivalId/messages"
+    http.POSTString(url, message)(HttpReads.readRaw, implicitly, implicitly)
+  }
 }
