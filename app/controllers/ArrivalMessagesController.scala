@@ -17,7 +17,7 @@
 package controllers
 
 import connectors.MessageConnector
-import controllers.actions.{AuthAction, ValidateMessage}
+import controllers.actions.{AuthAction, ValidateMessageAction}
 import javax.inject.Inject
 import models.domain.MovementMessage
 import models.domain.MovementMessage.format
@@ -35,9 +35,9 @@ import scala.xml.NodeSeq
 class ArrivalMessagesController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    messageConnector: MessageConnector,
-                                   validateMessage: ValidateMessage)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions {
+                                   validateMessageAction: ValidateMessageAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions {
 
-  def sendMessageDownstream(arrivalId: String): Action[NodeSeq] = (authAction andThen validateMessage).async(parse.xml) {
+  def sendMessageDownstream(arrivalId: String): Action[NodeSeq] = (authAction andThen validateMessageAction).async(parse.xml) {
     implicit request =>
       messageConnector.post(request.body.toString, arrivalId).map { response =>
         response.status match {

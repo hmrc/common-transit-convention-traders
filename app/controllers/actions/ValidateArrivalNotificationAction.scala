@@ -17,15 +17,15 @@
 package controllers.actions
 
 import javax.inject.Inject
-import models.request.{ArrivalNotificationXSD, UnloadingRemarksXSD}
+import models.request.ArrivalNotificationXSD
 import play.api.mvc.{ActionRefiner, Request, Result}
-import play.api.mvc.Results.{BadRequest, NotImplemented}
+import play.api.mvc.Results.BadRequest
 import services.XmlValidationService
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
-class ValidateArrivalNotification @Inject()(xmlValidationService: XmlValidationService)(
+class ValidateArrivalNotificationAction @Inject()(xmlValidationService: XmlValidationService)(
   implicit val executionContext: ExecutionContext)
   extends ActionRefiner[Request, Request] {
 
@@ -38,38 +38,6 @@ class ValidateArrivalNotification @Inject()(xmlValidationService: XmlValidationS
               Future.successful(Right(request))
             case Left(_) =>
               Future.successful(Left(BadRequest))
-          }
-        } else {
-          Future.successful(Left(BadRequest))
-        }
-      case _ =>
-        Future.successful(Left(BadRequest))
-    }
-  }
-}
-
-class ValidateMessage @Inject()(xmlValidationService: XmlValidationService)(
-  implicit val executionContext: ExecutionContext)
-  extends ActionRefiner[Request, Request] {
-
-  private val supportedMessageTypes = Map("CC044A" -> UnloadingRemarksXSD)
-
-  override protected def refine[A](request: Request[A]): Future[Either[Result, Request[A]]] = {
-    request.body match {
-      case body: NodeSeq =>
-        if (body.nonEmpty) {
-          val rootElementName = body.head.label
-
-          supportedMessageTypes.get(rootElementName) match {
-            case Some(xsd) =>
-              xmlValidationService.validate(body.toString, xsd) match {
-                case Right(_) =>
-                  Future.successful(Right(request))
-                case Left(_) =>
-                  Future.successful(Left(BadRequest))
-              }
-            case None =>
-              Future.successful(Left(NotImplemented))
           }
         } else {
           Future.successful(Left(BadRequest))
