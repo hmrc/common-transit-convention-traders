@@ -49,7 +49,7 @@ class ValidateMessageActionSpec extends FreeSpec with MustMatchers with GuiceOne
     }
   }
 
-  "Validate message" - {
+  "ValidateMessageAction" - {
     "must execute the block when passed in a valid IE044 xml request" in {
       val validateMessage = app.injector.instanceOf[ValidateMessageAction]
       val cc = app.injector.instanceOf[ControllerComponents]
