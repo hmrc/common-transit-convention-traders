@@ -94,47 +94,25 @@ uses:
                   }
           404:
             description: when arrival movement does not exist, has been archived or is not available to the eori.
-      post:
-        displayName: Send a message to confirm that the goods have been unloaded
-        description: |
-          Send a message to the Office of Destination to let them know that the goods have been unloaded. This message is called an E_ULD_REM (IE044).
-          You should use this message to let the Office of Destination know about any issues you found with the goods when they were unloaded. This couldinclude things like extra or missing boxes, or damaged or changed seals. You should notify them about any details that are different to what was recorded in the initial declaration.
-        (annotations.scope): "common-transit-convention-traders"
-        securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
-        responses:
-          202:
-            headers:
-              Location:
-                description: The uri to retrieve the arrival notification, including arrival ID
-                example: /customs/transits/movements/arrivals/123456/messages
-            body:
-              application/xml:
-                description: Valid XML Payload
-                example: |
-                  <IE044>...</IE044>
-      put:
-        displayName: Resubmit an arrival notification
-        description: |
-          Resend an arrival notification to the Office of Destination if the first arrival notification was rejected. Arrival notifications will be rejected when the NCTS validation fails. This can happen for reasons, such as if:
-          - a guarantee against the Economic Operator Registration and Identification (EORI) number is not enough to cover the goods being transported
-          - the Movement Reference Number (MRN) has already been used on another arrival notification
-          This message is called E_ARR_REJ (IE008).
-        is: [headers.acceptHeader]
-        (annotations.scope): "common-transit-convention-traders"
-        securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
-        responses:
-          202:
-            headers:
-              Location:
-                description: The uri to retrieve the arrival notification, including arrival ID
-                example: /customs/transits/movements/arrivals/123456/message/123456
-            body:
-              application/xml:
-                description: Valid XML Payload
-                example: |
-                  <IE007>
-                  </IE007>
       /messages:
+        post:
+          displayName: Send a message related to an arrival movement
+          description: |
+            Send a message to the Office of Destination.  For example, an E_ULD_REM (IE044) message to let them know that the goods have been unloaded.
+            You should use this message to let the Office of Destination know about any issues you found with the goods when they were unloaded. This could include things like extra or missing boxes, or damaged or changed seals. You should notify them about any details that are different to what was recorded in the initial declaration.
+          (annotations.scope): "common-transit-convention-traders"
+          securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+          responses:
+            202:
+              headers:
+                Location:
+                  description: The uri to retrieve the arrival notification, including arrival ID
+                  example: /customs/transits/movements/arrivals/123456/messages
+              body:
+                application/xml:
+                  description: Valid XML Payload
+                  example: |
+                    <IE044>...</IE044>
         get:
           displayName: Pull all messages relating to an arrival movement
           description: |
@@ -255,6 +233,23 @@ uses:
           404:
             description: when departure movement does not exist, has been archived or is not available to the eori.
       /messages:
+        post:
+          displayName: Send a message related to a departure movement
+          description: |
+            Send a message to the Office of Destination.
+          (annotations.scope): "common-transit-convention-traders"
+          securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+          responses:
+            202:
+              headers:
+                Location:
+                  description: The uri to retrieve the departure notification, including arrival ID
+                  example: /customs/transits/movements/departures/123456/messages
+              body:
+                application/xml:
+                  description: Valid XML Payload
+                  example: |
+                    <IE0XX>...</IE0XX>
         get:
           displayName: Pull all messages relating to a departure movement
           description: |
