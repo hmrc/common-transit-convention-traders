@@ -39,28 +39,33 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
                                    messageConnector: MessageConnector,
                                    xmlValidationService: XmlValidationService)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions {
 
-  def createUnloadingPermission(arrivalId: String): Action[NodeSeq] = authAction.async(parse.xml) {
+  def sendMessageDownstream(arrivalId: String): Action[NodeSeq] = authAction.async(parse.xml) {
     implicit request =>
-      xmlValidationService.validate(request.body.toString, UnloadingRemarksXSD) match {
-        case Right(_) =>
-          messageConnector.post(request.body.toString, arrivalId).map { response =>
-            response.status match {
-              case s if is2xx(s) =>
-                response.header(LOCATION) match {
-                  case Some(locationValue) => Utils.arrivalId(locationValue, fragmentIndex = -2) match {
-                    case Success(id) =>
-                      Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(id)}/messages")
-                    case Failure(_) =>
-                      InternalServerError
-                  }
-                  case _ =>
-                    InternalServerError
+      request.body.head.label match {
+        case "CC044A" =>
+          xmlValidationService.validate(request.body.toString, UnloadingRemarksXSD) match {
+            case Right(_) =>
+              messageConnector.post(request.body.toString, arrivalId).map { response =>
+                response.status match {
+                  case s if is2xx(s) =>
+                    response.header(LOCATION) match {
+                      case Some(locationValue) => Utils.arrivalId(locationValue, fragmentIndex = -2) match {
+                        case Success(id) =>
+                          Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(id)}/messages")
+                        case Failure(_) =>
+                          InternalServerError
+                      }
+                      case _ =>
+                        InternalServerError
+                    }
+                  case _ => Status(response.status)
                 }
-              case _ => Status(response.status)
-            }
+              }
+            case Left(_) =>
+              Future.successful(BadRequest)
           }
-        case Left(_) =>
-          Future.successful(BadRequest)
+        case _ =>
+          Future.successful(NotImplemented)
       }
   }
 
