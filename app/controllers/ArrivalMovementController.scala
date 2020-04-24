@@ -17,7 +17,7 @@
 package controllers
 
 import connectors.ArrivalConnector
-import controllers.actions.{AuthAction, ValidateArrivalNotificationAction}
+import controllers.actions.{AuthAction, ValidateAcceptXmlHeaderAction, ValidateArrivalNotificationAction}
 import javax.inject.Inject
 import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
@@ -31,9 +31,10 @@ import uk.gov.hmrc.http.HttpErrorFunctions
 class ArrivalMovementController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    arrivalConnector: ArrivalConnector,
-                                   validateArrivalNotificationAction: ValidateArrivalNotificationAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions {
+                                   validateArrivalNotificationAction: ValidateArrivalNotificationAction,
+                                   validateAcceptXmlHeaderAction: ValidateAcceptXmlHeaderAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions {
 
-  def createArrivalNotification(): Action[NodeSeq] = (authAction andThen validateArrivalNotificationAction).async(parse.xml) {
+  def createArrivalNotification(): Action[NodeSeq] = (authAction andThen validateAcceptXmlHeaderAction andThen validateArrivalNotificationAction).async(parse.xml) {
     implicit request =>
       arrivalConnector.post(request.body.toString).map { response =>
         response.status match {
@@ -53,7 +54,7 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
       }
   }
 
-  def resubmitArrivalNotification(arrivalId: String): Action[NodeSeq] = (authAction andThen validateArrivalNotificationAction).async(parse.xml) {
+  def resubmitArrivalNotification(arrivalId: String): Action[NodeSeq] = (authAction andThen validateAcceptXmlHeaderAction andThen validateArrivalNotificationAction).async(parse.xml) {
     implicit request =>
       arrivalConnector.put(request.body.toString, arrivalId).map { response =>
         response.status match {

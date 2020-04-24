@@ -72,7 +72,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       when(mockMessageConnector.get(any(), any())(any(), any()))
           .thenReturn(Future.successful(HttpResponse(responseStatus = OK, responseJson = Some(json), responseHeaders = Map(LOCATION -> Seq("/arrivals/123")), responseString = None) ))
 
-      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
+      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
       val result = route(app, request).value
 
       contentAsString(result) mustEqual expectedResult.toString()
@@ -83,7 +83,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       when(mockMessageConnector.get(any(), any())(any(), any()))
         .thenReturn(Future.successful(HttpResponse(responseStatus = OK, responseJson = Some(json), responseHeaders = Map(), responseString = None) ))
 
-      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
+      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
       val result = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
@@ -94,7 +94,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       when(mockMessageConnector.get(any(), any())(any(), any()))
         .thenReturn(Future.successful(HttpResponse(400)))
 
-      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
+      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
       val result = route(app, request).value
 
       status(result) mustBe BAD_REQUEST
@@ -104,7 +104,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       when(mockMessageConnector.get(any(), any())(any(), any()))
         .thenReturn(Future.successful(HttpResponse(404)))
 
-      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
+      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
       val result = route(app, request).value
 
       status(result) mustBe NOT_FOUND
@@ -115,7 +115,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       when(mockMessageConnector.get(any(), any())(any(), any()))
         .thenReturn(Future.successful(HttpResponse(responseStatus = INTERNAL_SERVER_ERROR, responseJson = Some(json), responseHeaders = Map(), responseString = None) ))
 
-      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
+      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
       val result = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR

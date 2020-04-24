@@ -17,7 +17,7 @@
 package controllers
 
 import connectors.MessageConnector
-import controllers.actions.{AuthAction, ValidateMessageAction}
+import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateAcceptXmlHeaderAction, ValidateMessageAction}
 import javax.inject.Inject
 import models.domain.MovementMessage
 import models.domain.MovementMessage.format
@@ -35,9 +35,11 @@ import scala.xml.NodeSeq
 class ArrivalMessagesController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    messageConnector: MessageConnector,
-                                   validateMessageAction: ValidateMessageAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions {
+                                   validateMessageAction: ValidateMessageAction,
+                                   validateAcceptXmlHeaderAction: ValidateAcceptXmlHeaderAction,
+                                   validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions {
 
-  def sendMessageDownstream(arrivalId: String): Action[NodeSeq] = (authAction andThen validateMessageAction).async(parse.xml) {
+  def sendMessageDownstream(arrivalId: String): Action[NodeSeq] = (authAction andThen validateAcceptXmlHeaderAction andThen validateMessageAction).async(parse.xml) {
     implicit request =>
       messageConnector.post(request.body.toString, arrivalId).map { response =>
         response.status match {
@@ -58,7 +60,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
   }
 
   def getArrivalMessage(arrivalId: String, messageId: String): Action[AnyContent] =
-  authAction.async {
+    (authAction andThen validateAcceptJsonHeaderAction).async {
     implicit request => {
       messageConnector.get(arrivalId, messageId).map { response =>
         response.status match {
