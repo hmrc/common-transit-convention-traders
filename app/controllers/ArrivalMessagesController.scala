@@ -21,7 +21,6 @@ import controllers.actions.{AuthAction, ValidateMessageAction}
 import javax.inject.Inject
 import models.domain.MovementMessage
 import models.domain.MovementMessage.format
-import models.response.Message
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
@@ -67,7 +66,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
               case Some(locationValue) => Utils.arrivalId(locationValue) match {
                 case Success(id) => {
                   val message = response.json.as[MovementMessage]
-                  val responseMessage = Message(s"/movements/arrivals/${Utils.urlEncode(id)}/messages/$messageId", message.date, message.message)
+                  val responseMessage = message.copy(location = s"/movements/arrivals/${Utils.urlEncode(id)}/messages/$messageId") //Message(, message.dateTime, message.message)
                   Ok(Json.toJson(responseMessage))
                 }
                 case Failure(_) => InternalServerError

@@ -16,30 +16,25 @@
 
 package controllers
 
-import java.time.{LocalDate, LocalTime}
+import java.time.{LocalDateTime, LocalTime}
 
+import connectors.MessageConnector
 import controllers.actions.{AuthAction, FakeAuthAction}
-import akka.util.ByteString
-import connectors.{ArrivalConnector, MessageConnector}
 import data.TestXml
 import models.domain.MovementMessage
 import models.response.Message
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, FreeSpec, MustMatchers, OptionValues}
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.http.HeaderNames
-import play.api.mvc.AnyContentAsEmpty
-import play.api.test.{FakeHeaders, FakeRequest}
-import play.api.test.Helpers.{headers, _}
-
-import scala.xml.NodeSeq
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.{HttpResponse, Upstream4xxResponse, Upstream5xxResponse}
+import play.api.test.FakeRequest
+import play.api.test.Helpers._
+import uk.gov.hmrc.http.HttpResponse
 
 import scala.concurrent.Future
 
@@ -58,14 +53,13 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
 
   val sourceMovement = MovementMessage(
     "/movements/arrivals/123/messages/4",
-    LocalDate.of(2020, 2, 2),
-    LocalTime.of(2,2,2).toString,
+    LocalDateTime.of(2020, 2, 2, 2, 2, 2),
     "IE025",
-    "<test></test>")
+    <test></test>)
 
   val json = Json.toJson[MovementMessage](sourceMovement)
 
-  val expectedResult = Json.toJson[Message](Message(sourceMovement.location, sourceMovement.date, sourceMovement.message))
+  val expectedResult = Json.toJson[MovementMessage](MovementMessage(sourceMovement.location, sourceMovement.dateTime, sourceMovement.messageType, sourceMovement.message))
 
   "GET /movements/arrivals/:arrivalId/messages/:messageId" - {
     "return 200 and Message" in {
