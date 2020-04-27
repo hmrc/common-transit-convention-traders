@@ -16,13 +16,12 @@
 
 package controllers
 
-import java.time.{LocalDateTime, LocalTime}
+import java.time.LocalDateTime
 
 import connectors.MessageConnector
 import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
 import models.domain.MovementMessage
-import models.response.Message
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures
@@ -55,7 +54,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
     "/movements/arrivals/123/messages/4",
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
     "IE025",
-    <test></test>)
+    <test>default</test>)
 
   val json = Json.toJson[MovementMessage](sourceMovement)
 
