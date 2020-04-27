@@ -22,6 +22,7 @@ import connectors.MessageConnector
 import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
 import models.domain.MovementMessage
+import models.response.ResponseMessage
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures
@@ -58,12 +59,12 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
 
   val json = Json.toJson[MovementMessage](sourceMovement)
 
-  val expectedResult = Json.toJson[MovementMessage](MovementMessage(sourceMovement.location, sourceMovement.dateTime, sourceMovement.messageType, sourceMovement.message))
+  val expectedResult = Json.toJson[ResponseMessage](ResponseMessage(sourceMovement.location, sourceMovement.dateTime, sourceMovement.messageType, sourceMovement.message))
 
   "GET /movements/arrivals/:arrivalId/messages/:messageId" - {
     "return 200 and Message" in {
       when(mockMessageConnector.get(any(), any())(any(), any()))
-          .thenReturn(Future.successful(HttpResponse(responseStatus = OK, responseJson = Some(json), responseHeaders = Map(LOCATION -> Seq("/arrivals/123")), responseString = None) ))
+          .thenReturn(Future.successful(Right(sourceMovement)))
 
       val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
       val result = route(app, request).value
@@ -72,20 +73,9 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       status(result) mustBe OK
     }
 
-    "return 500 if the downstream location header is missing" in {
-      when(mockMessageConnector.get(any(), any())(any(), any()))
-        .thenReturn(Future.successful(HttpResponse(responseStatus = OK, responseJson = Some(json), responseHeaders = Map(), responseString = None) ))
-
-      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
-      val result = route(app, request).value
-
-      status(result) mustBe INTERNAL_SERVER_ERROR
-
-    }
-
     "return 400 if the downstream returns 400" in {
       when(mockMessageConnector.get(any(), any())(any(), any()))
-        .thenReturn(Future.successful(HttpResponse(400)))
+        .thenReturn(Future.successful(Left(HttpResponse(400))))
 
       val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
       val result = route(app, request).value
@@ -95,7 +85,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
 
     "return 404 if the downstream returns 404" in {
       when(mockMessageConnector.get(any(), any())(any(), any()))
-        .thenReturn(Future.successful(HttpResponse(404)))
+        .thenReturn(Future.successful(Left(HttpResponse(404))))
 
       val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
       val result = route(app, request).value
@@ -106,7 +96,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
 
     "return 500 for other downstream errors" in {
       when(mockMessageConnector.get(any(), any())(any(), any()))
-        .thenReturn(Future.successful(HttpResponse(responseStatus = INTERNAL_SERVER_ERROR, responseJson = Some(json), responseHeaders = Map(), responseString = None) ))
+        .thenReturn(Future.successful(Left(HttpResponse(responseStatus = INTERNAL_SERVER_ERROR, responseJson = Some(json), responseHeaders = Map(), responseString = None) )))
 
       val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
       val result = route(app, request).value

@@ -21,6 +21,7 @@ import controllers.actions.{AuthAction, ValidateMessageAction}
 import javax.inject.Inject
 import models.domain.MovementMessage
 import models.domain.MovementMessage.format
+import models.response.ResponseMessage
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
@@ -59,22 +60,10 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
   def getArrivalMessage(arrivalId: String, messageId: String): Action[AnyContent] =
   authAction.async {
     implicit request => {
-      messageConnector.get(arrivalId, messageId).map { response =>
-        response.status match {
-          case s if is2xx(s) => {
-            response.header(LOCATION) match {
-              case Some(locationValue) => Utils.arrivalId(locationValue) match {
-                case Success(id) => {
-                  val message = response.json.as[MovementMessage]
-                  val responseMessage = message.copy(location = s"/movements/arrivals/${Utils.urlEncode(id)}/messages/$messageId") //Message(, message.dateTime, message.message)
-                  Ok(Json.toJson(responseMessage))
-                }
-                case Failure(_) => InternalServerError
-              }
-              case _ => InternalServerError
-            }
-          }
-          case _ => Status(response.status)
+      messageConnector.get(arrivalId, messageId).map { r =>
+        r match {
+          case Right(m) => Ok(Json.toJson(ResponseMessage(m).copy(location = s"/movements/arrivals/$arrivalId/messages/$messageId")))
+          case Left(response) => Status(response.status)
         }
       }
     }

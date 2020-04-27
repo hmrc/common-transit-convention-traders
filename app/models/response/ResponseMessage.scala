@@ -16,14 +16,18 @@
 
 package models.response
 
-import java.time.LocalDate
+import java.time.LocalDateTime
 
+import models.domain.MovementMessage
 import play.api.libs.json.Json
+import utils.NodeSeqFormat
 
 import scala.xml.NodeSeq
 
-object Message {
-  implicit val format = Json.format[Message]
+object ResponseMessage extends NodeSeqFormat{
+  implicit val format = Json.format[ResponseMessage]
+
+  def apply(m: MovementMessage): ResponseMessage = ResponseMessage(m.location, m.dateTime, m.messageType, m.message)
 }
 
-case class Message(location: String, recieved: LocalDate, body: String)
+case class ResponseMessage(location: String, recieved: LocalDateTime, messageType: String, body: NodeSeq)
