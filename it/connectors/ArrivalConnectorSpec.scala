@@ -2,7 +2,6 @@ package connectors
 
 import org.scalatest.{FreeSpec, MustMatchers}
 import com.github.tomakehurst.wiremock.client.WireMock._
-import org.scalacheck.Gen
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.test.Helpers._

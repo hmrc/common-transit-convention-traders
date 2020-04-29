@@ -17,23 +17,33 @@
 package connectors
 
 import config.AppConfig
+import connectors.util.CustomHttpReader
+import connectors.util.CustomHttpReader.INTERNAL_SERVER_ERROR
 import javax.inject.Inject
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
+import models.domain.MovementMessage
+import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) {
+class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends HttpErrorFunctions {
 
   val rootUrl = appConfig.traderAtDestinationUrl + "/transit-movements-trader-at-destination/movements"
 
-  def get(arrivalId: String, messageId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def get(arrivalId: String, messageId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, MovementMessage]] = {
     val url = rootUrl + s"/arrivals/$arrivalId/messages/$messageId"
-    http.GET[HttpResponse](url)(HttpReads.readRaw, implicitly, implicitly)
+    http.GET[HttpResponse](url)(CustomHttpReader, implicitly, implicitly).map { r =>
+      if(is2xx(r.status)) {
+        r.json.asOpt[MovementMessage] match {
+          case Some(x) => Right(x)
+          case _ => Left(CustomHttpReader.recode(INTERNAL_SERVER_ERROR, r))
+        }
+      } else Left(r)
+    }
   }
 
   def post(message: String, arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = rootUrl + s"/arrivals/$arrivalId/messages"
-    http.POSTString(url, message)(HttpReads.readRaw, implicitly, implicitly)
+    http.POSTString(url, message)(CustomHttpReader, implicitly, implicitly)
   }
 }
