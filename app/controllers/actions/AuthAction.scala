@@ -18,6 +18,7 @@ package controllers.actions
 
 import com.google.inject.Inject
 import config.AppConfig
+import play.api.Logger
 import play.api.mvc.Results._
 import play.api.mvc._
 import uk.gov.hmrc.auth.core._
@@ -52,10 +53,10 @@ class AuthAction @Inject()(
     }
   } recover {
     case _: InsufficientEnrolments =>
-      println("insufficient enrolements")
+      Logger.logger.warn("insufficient enrolments")
       Unauthorized
     case _: AuthorisationException =>
-      println("auth issues")
+      Logger.logger.warn("auth issues")
       Unauthorized
   }
 }
