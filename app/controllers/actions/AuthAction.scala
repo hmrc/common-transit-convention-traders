@@ -52,8 +52,10 @@ class AuthAction @Inject()(
     }
   } recover {
     case _: InsufficientEnrolments =>
+      println("insufficient enrolements")
       Unauthorized
     case _: AuthorisationException =>
+      println("auth issues")
       Unauthorized
   }
 }
