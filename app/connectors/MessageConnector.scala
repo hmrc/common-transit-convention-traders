@@ -21,6 +21,7 @@ import connectors.util.CustomHttpReader
 import connectors.util.CustomHttpReader.INTERNAL_SERVER_ERROR
 import javax.inject.Inject
 import models.domain.MovementMessage
+import play.api.http.HeaderNames
 import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
@@ -32,7 +33,7 @@ class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
 
   def get(arrivalId: String, messageId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, MovementMessage]] = {
     val url = rootUrl + s"/arrivals/$arrivalId/messages/$messageId"
-    http.GET[HttpResponse](url)(CustomHttpReader, implicitly, implicitly).map { r =>
+    http.GET[HttpResponse](url, queryParams = Seq(), headers = Seq(HeaderNames.CONTENT_TYPE -> "application/json"))(CustomHttpReader, implicitly, implicitly).map { r =>
       if(is2xx(r.status)) {
         r.json.asOpt[MovementMessage] match {
           case Some(x) => Right(x)
@@ -44,6 +45,6 @@ class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
 
   def post(message: String, arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = rootUrl + s"/arrivals/$arrivalId/messages"
-    http.POSTString(url, message)(CustomHttpReader, implicitly, implicitly)
+    http.POSTString(url, message, Seq(HeaderNames.CONTENT_TYPE -> "application/xml"))(CustomHttpReader, implicitly, implicitly)
   }
 }
