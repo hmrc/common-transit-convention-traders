@@ -25,25 +25,22 @@ import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) {
+class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends BaseConnector {
 
   val arrivalRoute = "/transit-movements-trader-at-destination/movements/arrivals/"
 
-  private def headers()(implicit hc: HeaderCarrier): Seq[(String, String)] =
-    hc.headers ++ Seq((HeaderNames.CONTENT_TYPE, MimeTypes.XML))
-
   def post(message: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute
-    http.POSTString(url, message, headers())(CustomHttpReader, hc, implicitly)
+    http.POSTString(url, message, requestHeaders())(CustomHttpReader, hc, implicitly)
   }
 
   def post(message: String, arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute + arrivalId
-    http.POSTString(url, message, headers())(CustomHttpReader, hc, implicitly)
+    http.POSTString(url, message, requestHeaders())(CustomHttpReader, hc, implicitly)
   }
 
   def put(message: String, arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute + arrivalId
-    http.PUTString(url, message, headers())(CustomHttpReader, hc, implicitly)
+    http.PUTString(url, message, requestHeaders())(CustomHttpReader, hc, implicitly)
   }
 }
