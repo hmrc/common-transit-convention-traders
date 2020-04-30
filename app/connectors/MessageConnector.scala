@@ -27,13 +27,13 @@ import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends HttpErrorFunctions {
+class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends BaseConnector with HttpErrorFunctions {
 
   val rootUrl = appConfig.traderAtDestinationUrl + "/transit-movements-trader-at-destination/movements"
 
   def get(arrivalId: String, messageId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, MovementMessage]] = {
     val url = rootUrl + s"/arrivals/$arrivalId/messages/$messageId"
-    http.GET[HttpResponse](url, queryParams = Seq(), headers = Seq(HeaderNames.CONTENT_TYPE -> "application/json"))(CustomHttpReader, implicitly, implicitly).map { r =>
+    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders())(CustomHttpReader, implicitly, implicitly).map { r =>
       if(is2xx(r.status)) {
         r.json.asOpt[MovementMessage] match {
           case Some(x) => Right(x)
@@ -45,6 +45,6 @@ class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
 
   def post(message: String, arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = rootUrl + s"/arrivals/$arrivalId/messages"
-    http.POSTString(url, message, Seq(HeaderNames.CONTENT_TYPE -> "application/xml"))(CustomHttpReader, implicitly, implicitly)
+    http.POSTString(url, message, requestHeaders())(CustomHttpReader, implicitly, implicitly)
   }
 }
