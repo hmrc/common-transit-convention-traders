@@ -89,7 +89,7 @@ trait TestXml {
       <MesRecMES6>111111</MesRecMES6>
       <!--Optional:-->
       <RecIdeCodQuaMES7>1111</RecIdeCodQuaMES7>
-      <DatOfPreMES9>111111</DatOfPreMES9>
+      <DatOfPreMES9>20001001</DatOfPreMES9>
       <TimOfPreMES10>1111</TimOfPreMES10>
       <IntConRefMES11>111111</IntConRefMES11>
       <!--Optional:-->
