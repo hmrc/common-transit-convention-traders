@@ -54,7 +54,7 @@ class AuthAction @Inject()(
   } recover {
     case _: InsufficientEnrolments =>
       Logger.logger.warn("insufficient enrolments")
-      Unauthorized
+      Forbidden
     case _: AuthorisationException =>
       Logger.logger.warn("auth issues")
       Unauthorized
