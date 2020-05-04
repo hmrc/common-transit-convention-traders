@@ -19,8 +19,6 @@ package controllers
 import connectors.MessageConnector
 import controllers.actions.{AuthAction, ValidateMessageAction}
 import javax.inject.Inject
-import models.domain.MovementMessage
-import models.domain.MovementMessage.format
 import models.response.ResponseMessage
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
@@ -43,9 +41,9 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
         response.status match {
           case s if is2xx(s) =>
             response.header(LOCATION) match {
-              case Some(locationValue) => Utils.arrivalId(locationValue, fragmentIndex = -2) match {
+              case Some(locationValue) => Utils.lastFragment(locationValue) match {
                 case Success(id) =>
-                  Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(id)}/messages")
+                  Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.urlEncode(id)}")
                 case Failure(_) =>
                   InternalServerError
               }
@@ -62,7 +60,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
     implicit request => {
       messageConnector.get(arrivalId, messageId).map { r =>
         r match {
-          case Right(m) => Ok(Json.toJson(ResponseMessage(m).copy(location = s"/movements/arrivals/$arrivalId/messages/$messageId")))
+          case Right(m) => Ok(Json.toJson(ResponseMessage(m).copy(location = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.urlEncode(messageId)}")))
           case Left(response) => Status(response.status)
         }
       }
