@@ -54,13 +54,13 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
   def ctcFakeRequest() = FakeRequest(method = "POST", uri = "/movements/arrivals", headers = FakeHeaders(), body = AnyContentAsEmpty)
 
   def ctcFakeRequestXML() =
-    FakeRequest(method = "POST", uri = "/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml", HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+xml")), body = AnyContentAsEmpty)
+    FakeRequest(method = "POST", uri = "/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body = AnyContentAsEmpty)
 
   def ctcFakeRequestXML(body: NodeSeq) =
-    FakeRequest(method = "POST", uri = "/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml", HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+xml")), body)
+    FakeRequest(method = "POST", uri = "/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body)
 
   def ctcFakeRequestXML(body: NodeSeq, uri: String, verb: String) =
-    FakeRequest(verb, uri, headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml", HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+xml")), body)
+    FakeRequest(verb, uri, headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), body)
 
  "POST /movements/arrivals" - {
    "must return Accepted when successful" in {
