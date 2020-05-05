@@ -29,10 +29,12 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterEach, FreeSpec, MustMatchers, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.http.HeaderNames
+import play.api.mvc.AnyContentAsEmpty
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import play.api.test.FakeRequest
+import play.api.test.{FakeHeaders, FakeRequest}
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
 
@@ -66,7 +68,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       when(mockMessageConnector.get(any(), any())(any(), any()))
           .thenReturn(Future.successful(Right(sourceMovement)))
 
-      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
+      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
       val result = route(app, request).value
 
       contentAsString(result) mustEqual expectedResult.toString()
@@ -77,7 +79,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       when(mockMessageConnector.get(any(), any())(any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(400))))
 
-      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
+      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
       val result = route(app, request).value
 
       status(result) mustBe BAD_REQUEST
@@ -87,7 +89,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       when(mockMessageConnector.get(any(), any())(any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(404))))
 
-      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
+      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
       val result = route(app, request).value
 
       status(result) mustBe NOT_FOUND
@@ -98,7 +100,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       when(mockMessageConnector.get(any(), any())(any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(responseStatus = INTERNAL_SERVER_ERROR, responseJson = Some(json), responseHeaders = Map(), responseString = None) )))
 
-      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4")
+      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
       val result = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR

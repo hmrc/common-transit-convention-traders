@@ -21,6 +21,8 @@ import java.net.{URI, URLEncoder}
 import scala.util.Try
 
 object Utils {
+  val acceptHeaderPattern = "^application/vnd[.]{1}hmrc[.]{1}(.*?)[+]{1}(.*)$".r
+
   def lastFragment(location: String): Try[String] =
     Try(new URI(location).getPath.split("/").last)
 

@@ -17,7 +17,7 @@
 package controllers
 
 import connectors.MessageConnector
-import controllers.actions.{AuthAction, ValidateMessageAction}
+import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateMessageAction}
 import javax.inject.Inject
 import models.response.ResponseMessage
 import play.api.libs.json.Json
@@ -33,7 +33,8 @@ import scala.xml.NodeSeq
 class ArrivalMessagesController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    messageConnector: MessageConnector,
-                                   validateMessageAction: ValidateMessageAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions {
+                                   validateMessageAction: ValidateMessageAction,
+                                   validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions {
 
   def sendMessageDownstream(arrivalId: String): Action[NodeSeq] = (authAction andThen validateMessageAction).async(parse.xml) {
     implicit request =>
@@ -56,7 +57,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
   }
 
   def getArrivalMessage(arrivalId: String, messageId: String): Action[AnyContent] =
-  authAction.async {
+    (authAction andThen validateAcceptJsonHeaderAction).async {
     implicit request => {
       messageConnector.get(arrivalId, messageId).map { r =>
         r match {
