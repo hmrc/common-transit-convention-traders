@@ -17,7 +17,7 @@
 package controllers
 
 import connectors.MessageConnector
-import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateAcceptXmlHeaderAction, ValidateMessageAction}
+import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateMessageAction}
 import javax.inject.Inject
 import models.response.ResponseMessage
 import play.api.libs.json.Json
@@ -34,10 +34,9 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    messageConnector: MessageConnector,
                                    validateMessageAction: ValidateMessageAction,
-                                   validateAcceptXmlHeaderAction: ValidateAcceptXmlHeaderAction,
                                    validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions {
 
-  def sendMessageDownstream(arrivalId: String): Action[NodeSeq] = (authAction andThen validateAcceptXmlHeaderAction andThen validateMessageAction).async(parse.xml) {
+  def sendMessageDownstream(arrivalId: String): Action[NodeSeq] = (authAction andThen validateMessageAction).async(parse.xml) {
     implicit request =>
       messageConnector.post(request.body.toString, arrivalId).map { response =>
         response.status match {
