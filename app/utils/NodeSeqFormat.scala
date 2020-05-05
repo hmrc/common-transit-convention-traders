@@ -16,18 +16,21 @@
 
 package utils
 
-import java.net.{URI, URLEncoder}
+import play.api.libs.json.{JsError, JsResult, JsString, JsSuccess, JsValue, Reads, Writes}
 
-import scala.util.Try
+import scala.xml.{NodeSeq, XML}
 
-object Utils {
-  val acceptHeaderPattern = "^application/vnd[.]{1}hmrc[.]{1}(.*?)[+]{1}(.*)$".r
+trait NodeSeqFormat {
+  implicit val writesNodeSeq: Writes[NodeSeq] = new Writes[NodeSeq] {
+    override def writes(o: NodeSeq): JsValue = JsString(o.mkString)
+  }
 
-  def lastFragment(location: String): Try[String] =
-    Try(new URI(location).getPath.split("/").last)
-
-  def is2xx(status: Int) = status >= 200 && status <= 299
-
-  def urlEncode(str: String): String =
-    URLEncoder.encode(str, "UTF-8")
+  implicit val readsNodeSeq: Reads[NodeSeq] = new Reads[NodeSeq] {
+    override def reads(json: JsValue): JsResult[NodeSeq] = json match {
+      case JsString(value) => JsSuccess(XML.loadString(value))
+      case _               => JsError("Value cannot be parsed as XML")
+    }
+  }
 }
+
+object NodeSeqFormat extends NodeSeqFormat

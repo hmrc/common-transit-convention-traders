@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package models.response
+package connectors
 
-import java.time.LocalDate
+import play.mvc.Http.{HeaderNames, MimeTypes}
+import uk.gov.hmrc.http.HeaderCarrier
 
-import play.api.libs.json.Json
+trait BaseConnector {
+  protected def requestHeaders()(implicit hc: HeaderCarrier): Seq[(String, String)] =
+    hc.headers ++ Seq((HeaderNames.CONTENT_TYPE, MimeTypes.XML))
 
-import scala.xml.NodeSeq
-
-object Message {
-  implicit val format = Json.format[Message]
+  protected def responseHeaders()(implicit hc: HeaderCarrier): Seq[(String, String)] =
+    hc.headers ++ Seq((HeaderNames.CONTENT_TYPE, MimeTypes.JSON))
 }
-
-case class Message(location: String, recieved: LocalDate, body: String)

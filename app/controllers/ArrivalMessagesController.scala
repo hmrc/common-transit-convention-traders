@@ -19,9 +19,7 @@ package controllers
 import connectors.MessageConnector
 import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateAcceptXmlHeaderAction, ValidateMessageAction}
 import javax.inject.Inject
-import models.domain.MovementMessage
-import models.domain.MovementMessage.format
-import models.response.Message
+import models.response.ResponseMessage
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
@@ -45,9 +43,9 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
         response.status match {
           case s if is2xx(s) =>
             response.header(LOCATION) match {
-              case Some(locationValue) => Utils.arrivalId(locationValue, fragmentIndex = -2) match {
+              case Some(locationValue) => Utils.lastFragment(locationValue) match {
                 case Success(id) =>
-                  Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(id)}/messages")
+                  Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.urlEncode(id)}")
                 case Failure(_) =>
                   InternalServerError
               }
@@ -62,22 +60,10 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
   def getArrivalMessage(arrivalId: String, messageId: String): Action[AnyContent] =
     (authAction andThen validateAcceptJsonHeaderAction).async {
     implicit request => {
-      messageConnector.get(arrivalId, messageId).map { response =>
-        response.status match {
-          case s if is2xx(s) => {
-            response.header(LOCATION) match {
-              case Some(locationValue) => Utils.arrivalId(locationValue) match {
-                case Success(id) => {
-                  val message = response.json.as[MovementMessage]
-                  val responseMessage = Message(s"/movements/arrivals/${Utils.urlEncode(id)}/messages/$messageId", message.date, message.message)
-                  Ok(Json.toJson(responseMessage))
-                }
-                case Failure(_) => InternalServerError
-              }
-              case _ => InternalServerError
-            }
-          }
-          case _ => Status(response.status)
+      messageConnector.get(arrivalId, messageId).map { r =>
+        r match {
+          case Right(m) => Ok(Json.toJson(ResponseMessage(m).copy(location = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.urlEncode(messageId)}")))
+          case Left(response) => Status(response.status)
         }
       }
     }

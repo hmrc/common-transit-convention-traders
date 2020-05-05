@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-package models.domain
+package models.response
 
 import java.time.LocalDateTime
 
+import models.domain.MovementMessage
 import play.api.libs.json.Json
 import utils.NodeSeqFormat
 
 import scala.xml.NodeSeq
 
-object MovementMessage extends NodeSeqFormat{
-  implicit val format = Json.format[MovementMessage]
+object ResponseMessage extends NodeSeqFormat{
+  implicit val format = Json.format[ResponseMessage]
+
+  def apply(m: MovementMessage): ResponseMessage = ResponseMessage(m.location, m.dateTime, m.messageType, m.message)
 }
 
-case class MovementMessage(location: String, dateTime: LocalDateTime, messageType: String, message: NodeSeq)
+case class ResponseMessage(location: String, recieved: LocalDateTime, messageType: String, body: NodeSeq)
