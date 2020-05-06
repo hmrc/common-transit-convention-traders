@@ -22,13 +22,6 @@ import play.api.mvc.{Result, Results}
 
 trait ResponseHelper extends Results with Status{
   def handleNon2xx(response: HttpResponse): Result = {
-    response.status match {
-      case BAD_REQUEST => try {
-        BadRequest(response.body)
-      } catch {
-        case e: NullPointerException => BadRequest
-      }
-      case _ => Status(response.status)
-    }
+    if(response.body != null) Status(response.status)(response.body) else Status(response.status)
   }
 }
