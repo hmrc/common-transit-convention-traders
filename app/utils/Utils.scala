@@ -25,9 +25,7 @@ object Utils {
 
   def lastFragment(location: String): Try[String] =
     Try(new URI(location).getPath.split("/").last)
-
-  def is2xx(status: Int) = status >= 200 && status <= 299
-
+  
   def urlEncode(str: String): String =
     URLEncoder.encode(str, "UTF-8")
 }
