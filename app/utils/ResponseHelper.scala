@@ -17,11 +17,14 @@
 package utils
 
 import play.api.http.Status
-import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.{HttpErrorFunctions, HttpResponse}
 import play.api.mvc.{Result, Results}
 
-trait ResponseHelper extends Results with Status{
+trait ResponseHelper extends Results with Status with HttpErrorFunctions {
   def handleNon2xx(response: HttpResponse): Result = {
-    if(response.body != null) Status(response.status)(response.body) else Status(response.status)
+    response.status match {
+      case s if is4xx(s) => if(response.body != null) Status(response.status)(response.body) else Status(response.status)
+      case _ => Status(response.status)
+    }
   }
 }
