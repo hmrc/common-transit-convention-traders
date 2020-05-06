@@ -68,7 +68,4 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
       }
     }
   }
-
-
-
 }
