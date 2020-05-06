@@ -43,12 +43,10 @@ import scala.concurrent.Future
 
 class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml{
   private val mockMessageConnector: MessageConnector = mock[MessageConnector]
-  private val mockArrivalConnector: ArrivalConnector = mock[ArrivalConnector]
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(bind[AuthAction].to[FakeAuthAction])
     .overrides(bind[MessageConnector].toInstance(mockMessageConnector))
-    .overrides(bind[ArrivalConnector].toInstance(mockArrivalConnector))
     .build()
 
   override def beforeEach(): Unit = {
@@ -227,7 +225,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
 
   "GET /movements/arrivals/:arrivalId/messages" - {
     "return 200 with body of arrival and messages" in {
-        when(mockArrivalConnector.get(any())(any(), any()))
+        when(mockMessageConnector.getArrivalMessages(any())(any(), any()))
           .thenReturn(Future.successful(Right(sourceArrival)))
 
         val request = FakeRequest("GET", "/movements/arrivals/123/messages", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
@@ -238,7 +236,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       }
 
     "return 404 if downstream returns 404" in {
-      when(mockArrivalConnector.get(any())(any(), any()))
+      when(mockMessageConnector.getArrivalMessages(any())(any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(404))))
 
       val request = FakeRequest("GET", "/movements/arrivals/123/messages", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
@@ -248,7 +246,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
     }
 
     "return 500 for other downstream errors" in {
-      when(mockArrivalConnector.get(any())(any(), any()))
+      when(mockMessageConnector.getArrivalMessages(any())(any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(responseStatus = INTERNAL_SERVER_ERROR, responseJson = Some(json), responseHeaders = Map(), responseString = None) )))
 
       val request = FakeRequest("GET", "/movements/arrivals/123/messages", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)

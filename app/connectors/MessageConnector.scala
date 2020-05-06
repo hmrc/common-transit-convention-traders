@@ -20,7 +20,7 @@ import config.AppConfig
 import connectors.util.CustomHttpReader
 import connectors.util.CustomHttpReader.INTERNAL_SERVER_ERROR
 import javax.inject.Inject
-import models.domain.MovementMessage
+import models.domain.{Arrival, MovementMessage}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.Utils
@@ -47,4 +47,7 @@ class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
     val url = rootUrl + s"/arrivals/${Utils.urlEncode(arrivalId)}/messages"
     http.POSTString(url, message, requestHeaders())(CustomHttpReader, implicitly, implicitly)
   }
+
+  def getArrivalMessages(arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] = ???
+
 }
