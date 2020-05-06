@@ -18,6 +18,7 @@ package controllers
 
 import java.time.LocalDateTime
 
+import akka.util.ByteString
 import connectors.MessageConnector
 import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
@@ -35,7 +36,7 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.{FakeHeaders, FakeRequest}
-import play.api.test.Helpers._
+import play.api.test.Helpers.{headers, _}
 import uk.gov.hmrc.http.HttpResponse
 
 import scala.concurrent.Future
@@ -62,6 +63,9 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
   val json = Json.toJson[MovementMessage](sourceMovement)
 
   val expectedResult = Json.toJson[ResponseMessage](ResponseMessage(sourceMovement.location, sourceMovement.dateTime, sourceMovement.messageType, sourceMovement.message))
+
+  def fakeRequestMessages[A](method: String, headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), uri: String, body: A) =
+    FakeRequest(method = method, uri = uri, headers, body = body)
 
   "GET /movements/arrivals/:arrivalId/messages/:messageId" - {
     "return 200 and Message" in {
@@ -105,7 +109,6 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       val result = route(app, request).value
 
       status(result) mustBe NOT_FOUND
-
     }
 
     "return 500 for other downstream errors" in {
@@ -116,7 +119,103 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       val result = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
+    }
+  }
 
+  "POST /movements/arrivals/:arrivalId/messages" - {
+    "must return Accepted when successful" in {
+      when(mockMessageConnector.post(any(), any())(any(), any()))
+        .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123/messages/1")), responseString = None) ))
+
+      val request = fakeRequestMessages(method = "POST", uri = "/movements/arrivals/123/messages", body = CC044A)
+      val result = route(app, request).value
+
+      status(result) mustBe ACCEPTED
+      headers(result) must contain (LOCATION -> "/customs/transits/movements/arrivals/123/messages/1")
+    }
+
+    "must return InternalServerError when unsuccessful" in {
+      when(mockMessageConnector.post(any(), any())(any(), any()))
+        .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR)))
+
+      val request = fakeRequestMessages(method = "POST", uri = "/movements/arrivals/123/messages", body = CC044A)
+      val result = route(app, request).value
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+    }
+
+    "must return InternalServerError when no Location in downstream response header" in {
+      when(mockMessageConnector.post(any(), any())(any(), any()))
+        .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(), responseString = None) ))
+
+      val request = fakeRequestMessages(method = "POST", uri = "/movements/arrivals/123/messages", body = CC044A)
+      val result = route(app, request).value
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+    }
+
+    "must return InternalServerError when invalid Location value in downstream response header" in {
+      when(mockMessageConnector.post(any(), any())(any(), any()))
+        .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123/messages/<>")), responseString = None) ))
+
+      val request = fakeRequestMessages(method = "POST", uri = "/movements/arrivals/123/messages", body = CC044A)
+      val result = route(app, request).value
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+    }
+
+    "must escape arrival ID in Location response header" in {
+      when(mockMessageConnector.post(any(), any())(any(), any()))
+        .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123/messages/123-@+*~-31@")), responseString = None) ))
+
+      val request = fakeRequestMessages(method = "POST", uri = "/movements/arrivals/123/messages", body = CC044A)
+      val result = route(app, request).value
+
+      status(result) mustBe ACCEPTED
+      headers(result) must contain (LOCATION -> "/customs/transits/movements/arrivals/123/messages/123-%40%2B*%7E-31%40")
+    }
+
+    "must exclude query string if present in downstream Location header" in {
+      when(mockMessageConnector.post(any(), any())(any(), any()))
+        .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123/messages/123?status=success")), responseString = None) ))
+
+      val request = fakeRequestMessages(method = "POST", uri = "/movements/arrivals/123/messages", body = CC044A)
+      val result = route(app, request).value
+
+      status(result) mustBe ACCEPTED
+      headers(result) must contain (LOCATION -> "/customs/transits/movements/arrivals/123/messages/123")
+    }
+
+    "must return UnsupportedMediaType when Content-Type is JSON" in {
+      val request = FakeRequest(method = "POST", uri = "/movements/arrivals/123/messages", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")), body = AnyContentAsEmpty)
+
+      val result = route(app, request).value
+
+      status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+    }
+
+    "must return UnsupportedMediaType when no Content-Type specified" in {
+      val request = fakeRequestMessages(method = "POST", headers = FakeHeaders(), uri = "/movements/arrivals/123/messages", body = ByteString("body"))
+
+      val result = route(app, request).value
+
+      status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+    }
+
+    "must return UnsupportedMediaType when empty XML payload is sent" in {
+      val request = fakeRequestMessages(method = "POST", headers = FakeHeaders(), uri = "/movements/arrivals/123/messages", body = AnyContentAsEmpty)
+
+      val result = route(app, request).value
+
+      status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+    }
+
+    "must return BadRequest when invalid XML payload is sent" in {
+      val request = fakeRequestMessages(method = "POST", uri = "/movements/arrivals/123/messages", body = InvalidCC044A)
+
+      val result = route(app, request).value
+
+      status(result) mustBe BAD_REQUEST
     }
   }
 }
