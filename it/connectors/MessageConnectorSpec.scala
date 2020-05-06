@@ -130,7 +130,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
       val response = ResponseArrival(arrival)
       server.stubFor(
         get(
-          urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1/messages/1")
+          urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1/messages")
         ).willReturn(aResponse().withStatus(OK)
           .withBody(Json.toJson(response).toString())))
 

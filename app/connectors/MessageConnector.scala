@@ -48,6 +48,16 @@ class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
     http.POSTString(url, message, requestHeaders())(CustomHttpReader, implicitly, implicitly)
   }
 
-  def getArrivalMessages(arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] = ???
+  def getArrivalMessages(arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] = {
+    val url = rootUrl + s"/arrivals/${Utils.urlEncode(arrivalId)}/messages"
+    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders())(CustomHttpReader, implicitly, implicitly).map { r =>
+      if(is2xx(r.status)) {
+        r.json.asOpt[Arrival] match {
+          case Some(x) => Right(x)
+          case _ => Left(CustomHttpReader.recode(INTERNAL_SERVER_ERROR, r))
+        }
+      } else Left(r)
+    }
+  }
 
 }
