@@ -20,6 +20,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import config.AppConfig
 import connectors.util.CustomHttpReader
 import javax.inject.Inject
+import models.domain.Arrival
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.Utils
 
@@ -43,4 +44,6 @@ class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
     val url = appConfig.traderAtDestinationUrl + arrivalRoute + Utils.urlEncode(arrivalId)
     http.PUTString(url, message, requestHeaders())(CustomHttpReader, hc, implicitly)
   }
+
+  def get(arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] = ???
 }

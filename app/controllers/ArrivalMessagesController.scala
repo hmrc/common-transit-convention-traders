@@ -68,4 +68,6 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
       }
     }
   }
+
+  def getArrivalMessages(arrivalId: String): Action[AnyContent] = ???
 }
