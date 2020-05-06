@@ -16,16 +16,15 @@
 
 package utils
 
-import java.net.{URI, URLEncoder}
+import play.api.http.Status
+import uk.gov.hmrc.http.{HttpErrorFunctions, HttpResponse}
+import play.api.mvc.{Result, Results}
 
-import scala.util.Try
-
-object Utils {
-  val acceptHeaderPattern = "^application/vnd[.]{1}hmrc[.]{1}(.*?)[+]{1}(.*)$".r
-
-  def lastFragment(location: String): Try[String] =
-    Try(new URI(location).getPath.split("/").last)
-  
-  def urlEncode(str: String): String =
-    URLEncoder.encode(str, "UTF-8")
+trait ResponseHelper extends Results with Status with HttpErrorFunctions {
+  def handleNon2xx(response: HttpResponse): Result = {
+    response.status match {
+      case s if is4xx(s) => if(response.body != null) Status(response.status)(response.body) else Status(response.status)
+      case _ => Status(response.status)
+    }
+  }
 }

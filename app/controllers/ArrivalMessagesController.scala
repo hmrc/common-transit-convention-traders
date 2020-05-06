@@ -21,10 +21,10 @@ import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, Validate
 import javax.inject.Inject
 import models.response.ResponseMessage
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.http.HttpErrorFunctions
+import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
+import uk.gov.hmrc.http.{HttpErrorFunctions, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
-import utils.Utils
+import utils.{ResponseHelper, Utils}
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
@@ -34,7 +34,8 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    messageConnector: MessageConnector,
                                    validateMessageAction: ValidateMessageAction,
-                                   validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions {
+                                   validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper
+{
 
   def sendMessageDownstream(arrivalId: String): Action[NodeSeq] = (authAction andThen validateMessageAction).async(parse.xml) {
     implicit request =>
@@ -51,7 +52,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
               case _ =>
                 InternalServerError
             }
-          case _ => Status(response.status)
+          case _ => handleNon2xx(response)
         }
       }
   }
@@ -62,9 +63,12 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
       messageConnector.get(arrivalId, messageId).map { r =>
         r match {
           case Right(m) => Ok(Json.toJson(ResponseMessage(m).copy(location = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.urlEncode(messageId)}")))
-          case Left(response) => Status(response.status)
+          case Left(response) => handleNon2xx(response)
         }
       }
     }
   }
+
+
+
 }

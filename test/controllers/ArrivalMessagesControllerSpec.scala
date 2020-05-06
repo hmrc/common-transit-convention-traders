@@ -85,6 +85,18 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       status(result) mustBe BAD_REQUEST
     }
 
+    "return 400 with body if the downstream returns 400 with body" in {
+      when(mockMessageConnector.get(any(), any())(any(), any()))
+        .thenReturn(Future.successful(Left(HttpResponse(400, responseString = Some("abc")))))
+
+      val request = FakeRequest("GET", "/movements/arrivals/123/messages/4", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val result = route(app, request).value
+
+      status(result) mustBe BAD_REQUEST
+      contentAsString(result) mustBe "abc"
+    }
+
+
     "return 404 if the downstream returns 404" in {
       when(mockMessageConnector.get(any(), any())(any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(404))))

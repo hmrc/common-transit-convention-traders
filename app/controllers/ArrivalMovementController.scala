@@ -21,7 +21,7 @@ import controllers.actions.{AuthAction, ValidateArrivalNotificationAction}
 import javax.inject.Inject
 import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
-import utils.Utils
+import utils.{ResponseHelper, Utils}
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
@@ -31,7 +31,7 @@ import uk.gov.hmrc.http.HttpErrorFunctions
 class ArrivalMovementController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    arrivalConnector: ArrivalConnector,
-                                   validateArrivalNotificationAction: ValidateArrivalNotificationAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions {
+                                   validateArrivalNotificationAction: ValidateArrivalNotificationAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper {
 
   def createArrivalNotification(): Action[NodeSeq] = (authAction andThen validateArrivalNotificationAction).async(parse.xml) {
     implicit request =>
@@ -48,7 +48,7 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
               case _ =>
                 InternalServerError
             }
-          case _ => Status(response.status)
+          case _ => handleNon2xx(response)
         }
       }
   }
@@ -68,7 +68,7 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
               case _ =>
                 InternalServerError
             }
-          case _ => Status(response.status)
+          case _ => handleNon2xx(response)
         }
       }
   }
