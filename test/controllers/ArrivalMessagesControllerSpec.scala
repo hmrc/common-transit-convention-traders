@@ -254,5 +254,15 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
 
       status(result) mustBe INTERNAL_SERVER_ERROR
     }
+
+    "return 500 if downstream provides an unsafe message header" in {
+      when(mockMessageConnector.getArrivalMessages(any())(any(), any()))
+        .thenReturn(Future.successful(Right(sourceArrival.copy(messages = Seq(sourceMovement.copy(location = "/transit-movements-trader-at-destination/movements/arrivals/<>"))))))
+
+      val request = FakeRequest("GET", "/movements/arrivals/123/messages", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val result = route(app, request).value
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+    }
   }
 }

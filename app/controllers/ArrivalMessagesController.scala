@@ -19,14 +19,14 @@ package controllers
 import connectors.MessageConnector
 import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateMessageAction}
 import javax.inject.Inject
-import models.response.ResponseMessage
+import models.response.{ResponseArrival, ResponseMessage}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
 import uk.gov.hmrc.http.{HttpErrorFunctions, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.{ResponseHelper, Utils}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 import scala.xml.NodeSeq
 
@@ -69,5 +69,27 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
     }
   }
 
-  def getArrivalMessages(arrivalId: String): Action[AnyContent] = ???
+  def getArrivalMessages(arrivalId: String): Action[AnyContent] =
+    (authAction andThen validateAcceptJsonHeaderAction).async {
+      implicit request => {
+        try {
+          messageConnector.getArrivalMessages(arrivalId).map { r =>
+            r match {
+              case Right(a) => {
+                val messages = a.messages.map { m =>
+                  Utils.lastFragment(m.location) match {
+                    case Failure(_) => throw new Exception("parsing location header failed")
+                    case Success(value) => ResponseMessage(m) copy (location = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/$value")
+                  }
+                }
+                Ok(Json.toJson(ResponseArrival(a).copy(arrival = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}", messages = messages)))
+              }
+              case Left(response) => handleNon2xx(response)
+            }
+          }
+        } catch {
+          case _ => Future.successful(InternalServerError)
+        }
+      }
+    }
 }
