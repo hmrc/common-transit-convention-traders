@@ -72,23 +72,27 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
   def getArrivalMessages(arrivalId: String): Action[AnyContent] =
     (authAction andThen validateAcceptJsonHeaderAction).async {
       implicit request => {
-        try {
           messageConnector.getArrivalMessages(arrivalId).map { r =>
             r match {
               case Right(a) => {
-                val messages = a.messages.map { m =>
-                  Utils.lastFragment(m.location) match {
-                    case Failure(_) => throw new Exception("parsing location header failed")
-                    case Success(value) => ResponseMessage(m) copy (location = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/$value")
+
+                try {
+                  val messages = a.messages.map { m =>
+                    Utils.lastFragment(m.location) match {
+                      case Failure(_) => throw new Exception("parsing location header failed")
+                      case Success(value) => ResponseMessage(m) copy (location = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/$value")
+                    }
                   }
+                  Ok(Json.toJson(ResponseArrival(a).copy(arrival = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}", messages = messages)))
                 }
-                Ok(Json.toJson(ResponseArrival(a).copy(arrival = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}", messages = messages)))
+                catch {
+                  case _ => InternalServerError
+                }
+
               }
               case Left(response) => handleNon2xx(response)
-            }
+
           }
-        } catch {
-          case _ => Future.successful(InternalServerError)
         }
       }
     }
