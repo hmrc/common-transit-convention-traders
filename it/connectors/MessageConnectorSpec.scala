@@ -100,7 +100,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
   "getArrivalMessages" - {
     "must return Arrival when arrival is found" in {
       val connector = app.injector.instanceOf[MessageConnector]
-      val arrival = Arrival("1", "/movements/arrivals/1", "/movements/arrivals/1/messages", "MRN", "status", LocalDateTime.now, LocalDateTime.now,
+      val arrival = Arrival(1, "/movements/arrivals/1", "/movements/arrivals/1/messages", "MRN", "status", LocalDateTime.now, LocalDateTime.now,
         Seq(
           MovementMessage("/movements/arrivals/1/messages/1", LocalDateTime.now, "abc", <test>default</test>),
           MovementMessage("/movements/arrivals/1/messages/2", LocalDateTime.now, "abc", <test>default</test>)
@@ -121,7 +121,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[MessageConnector]
-      val arrival = Arrival("1", "/movements/arrivals/1", "/movements/arrivals/1/messages", "MRN", "status", LocalDateTime.now, LocalDateTime.now,
+      val arrival = Arrival(1, "/movements/arrivals/1", "/movements/arrivals/1/messages", "MRN", "status", LocalDateTime.now, LocalDateTime.now,
         Seq(
           MovementMessage("/movements/arrivals/1/messages/1", LocalDateTime.now, "abc", <test>default</test>),
           MovementMessage("/movements/arrivals/1/messages/2", LocalDateTime.now, "abc", <test>default</test>)

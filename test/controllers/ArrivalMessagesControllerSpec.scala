@@ -60,7 +60,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
     "IE025",
     <test>default</test>)
 
-  val sourceArrival = Arrival("123", "/movements/arrivals/123", "/movements/arrivals/123/messages", "MRN", "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2), Seq(sourceMovement, sourceMovement))
+  val sourceArrival = Arrival(123, "/movements/arrivals/123", "/movements/arrivals/123/messages", "MRN", "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2), Seq(sourceMovement, sourceMovement))
 
   val json = Json.toJson[MovementMessage](sourceMovement)
 
