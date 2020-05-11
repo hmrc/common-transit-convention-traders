@@ -39,12 +39,8 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
         response.status match {
           case s if is2xx(s) =>
             response.header(LOCATION) match {
-              case Some(locationValue) => Utils.lastFragment(locationValue) match {
-                case Success(id) =>
-                  Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(id)}")
-                case Failure(_) =>
-                  InternalServerError
-              }
+              case Some(locationValue) =>
+                  Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(Utils.lastFragment(locationValue))}")
               case _ =>
                 InternalServerError
             }
@@ -59,12 +55,8 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
         response.status match {
           case s if is2xx(s) =>
             response.header(LOCATION) match {
-              case Some(locationValue) => Utils.lastFragment(locationValue) match {
-                case Success(id) =>
-                  Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(id)}")
-                case Failure(_) =>
-                  InternalServerError
-              }
+              case Some(locationValue) =>
+                  Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(Utils.lastFragment(locationValue))}")
               case _ =>
                 InternalServerError
             }

@@ -23,9 +23,9 @@ import scala.util.Try
 object Utils {
   val acceptHeaderPattern = "^application/vnd[.]{1}hmrc[.]{1}(.*?)[+]{1}(.*)$".r
 
-  def lastFragment(location: String): Try[String] =
-    Try(new URI(location).getPath.split("/").last)
-  
+  def lastFragment(location: String): String =
+    URI.create(location).getPath.split("/").last
+
   def urlEncode(str: String): String =
     URLEncoder.encode(str, "UTF-8")
 }
