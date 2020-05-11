@@ -21,25 +21,21 @@ import connectors.util.CustomHttpReader
 import connectors.util.CustomHttpReader.INTERNAL_SERVER_ERROR
 import javax.inject.Inject
 import models.domain.{Arrival, MovementMessage}
+import play.api.libs.json.Reads
 import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.Utils
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends BaseConnector with HttpErrorFunctions {
+class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends BaseConnector {
 
   val rootUrl = appConfig.traderAtDestinationUrl + "/transit-movements-trader-at-destination/movements"
 
   def get(arrivalId: String, messageId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, MovementMessage]] = {
     val url = rootUrl + s"/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.urlEncode(messageId)}"
-    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders())(CustomHttpReader, implicitly, implicitly).map { r =>
-      if(is2xx(r.status)) {
-        r.json.asOpt[MovementMessage] match {
-          case Some(x) => Right(x)
-          case _ => Left(CustomHttpReader.recode(INTERNAL_SERVER_ERROR, r))
-        }
-      } else Left(r)
+    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders())(CustomHttpReader, implicitly, implicitly).map { response =>
+      extractIfSuccessful[MovementMessage](response)
     }
   }
 
@@ -50,14 +46,8 @@ class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
 
   def getArrivalMessages(arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] = {
     val url = rootUrl + s"/arrivals/${Utils.urlEncode(arrivalId)}/messages"
-    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders())(CustomHttpReader, implicitly, implicitly).map { r =>
-      if(is2xx(r.status)) {
-        r.json.asOpt[Arrival] match {
-          case Some(x) => Right(x)
-          case _ => Left(CustomHttpReader.recode(INTERNAL_SERVER_ERROR, r))
-        }
-      } else Left(r)
+    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders())(CustomHttpReader, implicitly, implicitly).map { response =>
+      extractIfSuccessful[Arrival](response)
     }
   }
-
 }
