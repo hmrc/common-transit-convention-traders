@@ -16,13 +16,25 @@
 
 package connectors
 
+import connectors.util.CustomHttpReader
+import connectors.util.CustomHttpReader.INTERNAL_SERVER_ERROR
+import play.api.libs.json.Reads
 import play.mvc.Http.{HeaderNames, MimeTypes}
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpResponse}
 
-trait BaseConnector {
+trait BaseConnector extends HttpErrorFunctions{
   protected def requestHeaders()(implicit hc: HeaderCarrier): Seq[(String, String)] =
     hc.headers ++ Seq((HeaderNames.CONTENT_TYPE, MimeTypes.XML))
 
   protected def responseHeaders()(implicit hc: HeaderCarrier): Seq[(String, String)] =
     hc.headers ++ Seq((HeaderNames.CONTENT_TYPE, MimeTypes.JSON))
+
+  protected def extractIfSuccessful[T](response: HttpResponse)(implicit reads: Reads[T]): Either[HttpResponse, T] =
+    if(is2xx(response.status)) {
+      response.json.asOpt[T] match {
+        case Some(instance) => Right(instance)
+        case _ => Left(CustomHttpReader.recode(INTERNAL_SERVER_ERROR, response))
+      }
+    } else Left(response)
+
 }

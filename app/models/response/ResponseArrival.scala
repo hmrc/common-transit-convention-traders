@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package utils
+package models.response
 
-import java.net.{URI, URLEncoder}
+import java.time.LocalDateTime
 
-import scala.util.Try
+import models.domain.Arrival
+import play.api.libs.json.Json
 
-object Utils {
-  val acceptHeaderPattern = "^application/vnd[.]{1}hmrc[.]{1}(.*?)[+]{1}(.*)$".r
+object ResponseArrival {
 
-  def lastFragment(location: String): String =
-    URI.create(location).getPath.split("/").last
+  implicit val format = Json.format[ResponseArrival]
 
-  def urlEncode(str: String): String =
-    URLEncoder.encode(str, "UTF-8")
+  def apply(a: Arrival): ResponseArrival = ResponseArrival(a.location, a.created, a.status, a.messages.map { m => ResponseMessage(m)})
 }
+
+case class ResponseArrival(arrival: String, created: LocalDateTime, status: String, messages: Seq[ResponseMessage])

@@ -1,9 +1,14 @@
 package connectors
 
+import java.time.LocalDateTime
+
 import org.scalatest.{FreeSpec, MustMatchers}
 import com.github.tomakehurst.wiremock.client.WireMock._
+import models.domain.{Arrival, MovementMessage}
+import models.response.{ResponseArrival, ResponseMessage}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import play.api.libs.json.Json
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 
