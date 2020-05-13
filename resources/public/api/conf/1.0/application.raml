@@ -28,8 +28,7 @@ uses:
       displayName: Send an arrival notification
       description: |
         Send a message to let the Office of Destination know that the goods have arrived. This message will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).
-        The location header in the response will contain a URI and arrival ID for the arrival notification. This will allow you to retrieve the submission status and relating status messages. The submission status will be either “pending” or “success”.
-        A “pending” status means the arrival notification has not got to the NCTS yet. A “success” status means the arrival notification is being processed by the NCTS.
+        The location header in the response will contain a URI  or not and arrival ID for the arrival notification. This will allow you to retrieve messages that relate to the arrival. 
       is: [headers.acceptHeader]
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -38,7 +37,7 @@ uses:
           headers:
             Location:
               description: The uri to retrieve the arrival notification, including arrival ID
-              example: /customs/transits/movements/arrivals/123456/messages/7898765
+              example: /customs/transits/movements/arrivals/123456
           body:
             application/xml:
               description: Valid XML Payload
