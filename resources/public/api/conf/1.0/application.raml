@@ -28,7 +28,7 @@ uses:
       displayName: Send an arrival notification
       description: |
         Send a message to let the Office of Destination know that the goods have arrived. This message will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).
-        The location header in the response will contain a URI  or not and arrival ID for the arrival notification. This will allow you to retrieve messages that relate to the arrival. 
+        The location header in the response will contain a URI and arrival ID for the arrival notification. This will allow you to retrieve messages that relate to the arrival. 
       is: [headers.acceptHeader]
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
