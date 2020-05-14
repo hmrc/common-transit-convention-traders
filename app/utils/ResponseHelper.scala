@@ -16,12 +16,17 @@
 
 package utils
 
+import play.api.Logger
 import play.api.http.Status
 import uk.gov.hmrc.http.{HttpErrorFunctions, HttpResponse}
 import play.api.mvc.{Result, Results}
 
 trait ResponseHelper extends Results with Status with HttpErrorFunctions {
   def handleNon2xx(response: HttpResponse): Result = {
+    Logger.debug(s"ResponseHelper Log\nstatus: ${response.status}\nbody: ${response.body}\nheaders: ${response.allHeaders.map {
+      x =>
+        s"\n  ${x._1} : ${x._2}"
+    }}")
     response.status match {
       case s if is4xx(s) => if(response.body != null) Status(response.status)(response.body) else Status(response.status)
       case _ => Status(response.status)
