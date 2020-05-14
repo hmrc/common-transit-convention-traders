@@ -16,11 +16,16 @@
 
 package connectors.util
 
+import play.api.Logger
 import play.api.http.Status
 import uk.gov.hmrc.http.{HttpErrorFunctions, HttpReads, HttpResponse}
 
 object CustomHttpReader extends HttpReads[HttpResponse] with HttpErrorFunctions with Status {
   override def read(method: String, url: String, response: HttpResponse): HttpResponse = {
+    Logger.debug(s"CustomHttpReader Log\nstatus: ${response.status}\nbody: ${response.body}\nheaders: ${response.allHeaders.map {
+      x =>
+        s"\n  ${x._1} : ${x._2}"
+    }}")
     response.status match {
       case LOCKED | BAD_GATEWAY => recode(INTERNAL_SERVER_ERROR, response)
       case _ => response
