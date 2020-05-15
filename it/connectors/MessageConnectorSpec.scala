@@ -9,6 +9,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import models.domain.{Arrival, MovementMessage}
 import models.response.{ResponseArrival, ResponseMessage}
 import play.api.libs.json.Json
+import play.api.mvc.Headers
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
@@ -28,7 +29,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
       implicit val hc = HeaderCarrier()
 
-      val result = connector.get("1", "1").futureValue
+      val result = connector.get("1", "1", Headers.create()).futureValue
 
       result mustEqual Right(movement)
     }
@@ -45,7 +46,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
       implicit val hc = HeaderCarrier()
 
-      val result = connector.get("1", "1").futureValue
+      val result = connector.get("1", "1", Headers.create()).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
@@ -60,7 +61,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
       implicit val hc = HeaderCarrier()
 
-      val result = connector.get("1", "1").futureValue
+      val result = connector.get("1", "1", Headers.create()).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual NOT_FOUND }
@@ -75,7 +76,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
       implicit val hc = HeaderCarrier()
 
-      val result = connector.get("1", "1").futureValue
+      val result = connector.get("1", "1", Headers.create()).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual BAD_REQUEST }
@@ -90,7 +91,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
       implicit val hc = HeaderCarrier()
 
-      val result = connector.get("1", "1").futureValue
+      val result = connector.get("1", "1", Headers.create()).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
@@ -114,7 +115,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
       implicit val hc = HeaderCarrier()
 
-      val result = connector.getArrivalMessages("1").futureValue
+      val result = connector.getArrivalMessages("1", Headers.create()).futureValue
 
       result mustEqual Right(arrival)
     }
@@ -136,7 +137,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
       implicit val hc = HeaderCarrier()
 
-      val result = connector.getArrivalMessages("1").futureValue
+      val result = connector.getArrivalMessages("1", Headers.create()).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
@@ -151,7 +152,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
       implicit val hc = HeaderCarrier()
 
-      val result = connector.getArrivalMessages("1").futureValue
+      val result = connector.getArrivalMessages("1", Headers.create()).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual NOT_FOUND }
@@ -166,7 +167,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
       implicit val hc = HeaderCarrier()
 
-      val result = connector.getArrivalMessages("1").futureValue
+      val result = connector.getArrivalMessages("1", Headers.create()).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual BAD_REQUEST }
@@ -181,7 +182,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
       implicit val hc = HeaderCarrier()
 
-      val result = connector.getArrivalMessages("1").futureValue
+      val result = connector.getArrivalMessages("1", Headers.create()).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }

@@ -27,7 +27,7 @@ trait BaseConnector extends HttpErrorFunctions{
     Seq("Content-Type" -> "application/xml")
 
   protected def responseHeaders(): Seq[(String, String)] =
-    Seq((HeaderNames.CONTENT_TYPE, MimeTypes.JSON))
+    Seq("Content-Type" -> "application/json")
 
   protected def extractIfSuccessful[T](response: HttpResponse)(implicit reads: Reads[T]): Either[HttpResponse, T] =
     if(is2xx(response.status)) {

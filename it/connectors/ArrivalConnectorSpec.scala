@@ -28,7 +28,7 @@ class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
       implicit val hc = HeaderCarrier()
 
-      val result = connector.postWithHeaders("<document></document>", Headers.create()).futureValue
+      val result = connector.post("<document></document>", Headers.create()).futureValue
 
       result.status mustEqual ACCEPTED
     }
@@ -45,7 +45,7 @@ class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
         implicit val hc = HeaderCarrier()
 
-        val result = connector.postWithHeaders("<document></document>", Headers.create()).futureValue
+        val result = connector.post("<document></document>", Headers.create()).futureValue
 
         result.status mustEqual INTERNAL_SERVER_ERROR
       }
@@ -63,7 +63,7 @@ class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
       implicit val hc = HeaderCarrier()
 
-      val result = connector.postWithHeaders("<document></document>", Headers.create()).futureValue
+      val result = connector.post("<document></document>", Headers.create()).futureValue
 
       result.status mustEqual BAD_REQUEST
     }
@@ -81,7 +81,7 @@ class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
         implicit val hc = HeaderCarrier()
 
-        val result = connector.put("<document></document>", "2").futureValue
+        val result = connector.put("<document></document>", "2", Headers.create()).futureValue
 
         result.status mustEqual ACCEPTED
     }
@@ -98,7 +98,7 @@ class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
         implicit val hc = HeaderCarrier()
 
-        val result = connector.put("<document></document>", "2").futureValue
+        val result = connector.put("<document></document>", "2", Headers.create()).futureValue
 
         result.status mustEqual INTERNAL_SERVER_ERROR
       }
@@ -116,7 +116,7 @@ class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
       implicit val hc = HeaderCarrier()
 
-      val result = connector.put("<document></document>", "2").futureValue
+      val result = connector.put("<document></document>", "2", Headers.create()).futureValue
 
       result.status mustEqual BAD_REQUEST
     }

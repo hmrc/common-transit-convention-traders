@@ -38,7 +38,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
 
   def sendMessageDownstream(arrivalId: String): Action[NodeSeq] = (authAction andThen validateMessageAction).async(parse.xml) {
     implicit request =>
-      messageConnector.post(request.body.toString, arrivalId).map { response =>
+      messageConnector.post(request.body.toString, arrivalId, request.headers).map { response =>
         response.status match {
           case s if is2xx(s) =>
             response.header(LOCATION) match {
@@ -55,7 +55,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
   def getArrivalMessage(arrivalId: String, messageId: String): Action[AnyContent] =
     (authAction andThen validateAcceptJsonHeaderAction).async {
     implicit request => {
-      messageConnector.get(arrivalId, messageId).map { r =>
+      messageConnector.get(arrivalId, messageId, request.headers).map { r =>
         r match {
           case Right(m) => Ok(Json.toJson(ResponseMessage(m).copy(location = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.urlEncode(messageId)}")))
           case Left(response) => handleNon2xx(response)
@@ -67,7 +67,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
   def getArrivalMessages(arrivalId: String): Action[AnyContent] =
     (authAction andThen validateAcceptJsonHeaderAction).async {
       implicit request => {
-          messageConnector.getArrivalMessages(arrivalId).map { r =>
+          messageConnector.getArrivalMessages(arrivalId, request.headers).map { r =>
             r match {
               case Right(a) => {
                 val messages = a.messages.map { m =>

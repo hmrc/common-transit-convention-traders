@@ -35,7 +35,7 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
 
   def createArrivalNotification(): Action[NodeSeq] = (authAction andThen validateArrivalNotificationAction).async(parse.xml) {
     implicit request =>
-      arrivalConnector.postWithHeaders(request.body.toString, request.headers).map { response =>
+      arrivalConnector.post(request.body.toString, request.headers).map { response =>
         response.status match {
           case s if is2xx(s) =>
             response.header(LOCATION) match {
@@ -51,7 +51,7 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
 
   def resubmitArrivalNotification(arrivalId: String): Action[NodeSeq] = (authAction andThen validateArrivalNotificationAction).async(parse.xml) {
     implicit request =>
-      arrivalConnector.put(request.body.toString, arrivalId).map { response =>
+      arrivalConnector.put(request.body.toString, arrivalId, request.headers).map { response =>
         response.status match {
           case s if is2xx(s) =>
             response.header(LOCATION) match {
