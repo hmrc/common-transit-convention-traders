@@ -10,6 +10,7 @@ import models.domain.{Arrival, MovementMessage}
 import models.response.{ResponseArrival, ResponseMessage}
 import play.api.libs.json.Json
 import play.api.mvc.Headers
+import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
@@ -28,8 +29,9 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
           .withBody(Json.toJson(movement).toString())))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1", "1", Headers.create()).futureValue
+      val result = connector.get("1", "1").futureValue
 
       result mustEqual Right(movement)
     }
@@ -45,8 +47,9 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
           .withBody(Json.toJson(response).toString())))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1", "1", Headers.create()).futureValue
+      val result = connector.get("1", "1").futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
@@ -60,8 +63,9 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
         ).willReturn(aResponse().withStatus(NOT_FOUND)))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1", "1", Headers.create()).futureValue
+      val result = connector.get("1", "1").futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual NOT_FOUND }
@@ -75,8 +79,9 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
         ).willReturn(aResponse().withStatus(BAD_REQUEST)))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1", "1", Headers.create()).futureValue
+      val result = connector.get("1", "1").futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual BAD_REQUEST }
@@ -90,8 +95,9 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
         ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR)))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1", "1", Headers.create()).futureValue
+      val result = connector.get("1", "1").futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
@@ -114,8 +120,9 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
           .withBody(Json.toJson(arrival).toString())))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
-      val result = connector.getArrivalMessages("1", Headers.create()).futureValue
+      val result = connector.getArrivalMessages("1").futureValue
 
       result mustEqual Right(arrival)
     }
@@ -136,8 +143,9 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
           .withBody(Json.toJson(response).toString())))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
-      val result = connector.getArrivalMessages("1", Headers.create()).futureValue
+      val result = connector.getArrivalMessages("1").futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
@@ -151,8 +159,9 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
         ).willReturn(aResponse().withStatus(NOT_FOUND)))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
-      val result = connector.getArrivalMessages("1", Headers.create()).futureValue
+      val result = connector.getArrivalMessages("1").futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual NOT_FOUND }
@@ -166,8 +175,9 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
         ).willReturn(aResponse().withStatus(BAD_REQUEST)))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
-      val result = connector.getArrivalMessages("1", Headers.create()).futureValue
+      val result = connector.getArrivalMessages("1").futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual BAD_REQUEST }
@@ -181,8 +191,9 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
         ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR)))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
-      val result = connector.getArrivalMessages("1", Headers.create()).futureValue
+      val result = connector.getArrivalMessages("1").futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
