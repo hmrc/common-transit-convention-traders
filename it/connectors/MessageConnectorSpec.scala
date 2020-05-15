@@ -9,6 +9,8 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import models.domain.{Arrival, MovementMessage}
 import models.response.{ResponseArrival, ResponseMessage}
 import play.api.libs.json.Json
+import play.api.mvc.Headers
+import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
@@ -27,6 +29,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
           .withBody(Json.toJson(movement).toString())))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
       val result = connector.get("1", "1").futureValue
 
@@ -44,6 +47,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
           .withBody(Json.toJson(response).toString())))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
       val result = connector.get("1", "1").futureValue
 
@@ -59,6 +63,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
         ).willReturn(aResponse().withStatus(NOT_FOUND)))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
       val result = connector.get("1", "1").futureValue
 
@@ -74,6 +79,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
         ).willReturn(aResponse().withStatus(BAD_REQUEST)))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
       val result = connector.get("1", "1").futureValue
 
@@ -89,6 +95,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
         ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR)))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
       val result = connector.get("1", "1").futureValue
 
@@ -113,6 +120,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
           .withBody(Json.toJson(arrival).toString())))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
       val result = connector.getArrivalMessages("1").futureValue
 
@@ -135,6 +143,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
           .withBody(Json.toJson(response).toString())))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
       val result = connector.getArrivalMessages("1").futureValue
 
@@ -150,6 +159,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
         ).willReturn(aResponse().withStatus(NOT_FOUND)))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
       val result = connector.getArrivalMessages("1").futureValue
 
@@ -165,6 +175,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
         ).willReturn(aResponse().withStatus(BAD_REQUEST)))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
       val result = connector.getArrivalMessages("1").futureValue
 
@@ -180,6 +191,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
         ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR)))
 
       implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
 
       val result = connector.getArrivalMessages("1").futureValue
 

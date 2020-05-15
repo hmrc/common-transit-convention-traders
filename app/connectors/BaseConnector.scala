@@ -18,13 +18,15 @@ package connectors
 
 import connectors.util.CustomHttpReader
 import connectors.util.CustomHttpReader.INTERNAL_SERVER_ERROR
+import play.api.http.{HeaderNames, MimeTypes}
 import play.api.libs.json.Reads
-import play.mvc.Http.{HeaderNames, MimeTypes}
+import play.api.mvc.{Headers, RequestHeader}
+import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpResponse}
 
 trait BaseConnector extends HttpErrorFunctions{
   protected def requestHeaders(): Seq[(String, String)] =
-    Seq("Content-Type" -> "application/xml")
+    Seq((HeaderNames.CONTENT_TYPE, MimeTypes.XML))
 
   protected def responseHeaders(): Seq[(String, String)] =
     Seq((HeaderNames.CONTENT_TYPE, MimeTypes.JSON))
@@ -37,4 +39,10 @@ trait BaseConnector extends HttpErrorFunctions{
       }
     } else Left(response)
 
+  protected def customHeaderCarrier(extraHeaders: Seq[(String, String)])(implicit requestHeader: RequestHeader, headerCarrier: HeaderCarrier): HeaderCarrier = {
+    val newHeaderCarrier = headerCarrier
+      .copy(authorization = Some(Authorization(requestHeader.headers.get(HeaderNames.AUTHORIZATION).getOrElse(""))))
+      .withExtraHeaders(extraHeaders: _*)
+    newHeaderCarrier
+  }
 }
