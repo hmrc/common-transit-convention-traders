@@ -24,7 +24,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpResponse}
 
 trait BaseConnector extends HttpErrorFunctions{
   protected def requestHeaders(): Seq[(String, String)] =
-    Seq((HeaderNames.CONTENT_TYPE, MimeTypes.XML))
+    Seq("Content-Type" -> "application/xml;charset=UTF-8")
 
   protected def responseHeaders(): Seq[(String, String)] =
     Seq((HeaderNames.CONTENT_TYPE, MimeTypes.JSON))

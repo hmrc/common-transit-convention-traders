@@ -32,16 +32,25 @@ class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
 
   def post(message: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute
-    http.POSTString(url, message, requestHeaders())(CustomHttpReader, hc, implicitly)
+
+    val newHeaders = hc.withExtraHeaders(requestHeaders(): _*)
+
+    http.POSTString(url, message)(CustomHttpReader, newHeaders, implicitly)
   }
 
   def post(message: String, arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute + Utils.urlEncode(arrivalId)
-    http.POSTString(url, message, requestHeaders())(CustomHttpReader, hc, implicitly)
+
+    val newHeaders = hc.withExtraHeaders(requestHeaders(): _*)
+
+    http.POSTString(url, message)(CustomHttpReader, newHeaders, implicitly)
   }
 
   def put(message: String, arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute + Utils.urlEncode(arrivalId)
-    http.PUTString(url, message, requestHeaders())(CustomHttpReader, hc, implicitly)
+
+    val newHeaders = hc.withExtraHeaders(requestHeaders(): _*)
+
+    http.PUTString(url, message)(CustomHttpReader, newHeaders, implicitly)
   }
 }
