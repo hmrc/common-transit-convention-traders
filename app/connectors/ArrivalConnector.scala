@@ -32,23 +32,15 @@ class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
 
   val arrivalRoute = "/transit-movements-trader-at-destination/movements/arrivals/"
 
-  def post(message: String, headers: Headers)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def post(message: String, headers: Headers)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute
 
-    val newHeaders = headerCarrier
-      .copy(authorization = Some(Authorization(headers.get("Authorization").getOrElse(""))))
-      .withExtraHeaders(requestHeaders(): _*)
-
-    http.POSTString(url, message)(CustomHttpReader, hc = newHeaders, ec = ec)
+    http.POSTString(url, message)(CustomHttpReader, customHeaderCarrier(headers, requestHeaders()), ec = ec)
   }
 
   def put(message: String, arrivalId: String, headers: Headers)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute + Utils.urlEncode(arrivalId)
 
-    val newHeaders = headerCarrier
-      .copy(authorization = Some(Authorization(headers.get("Authorization").getOrElse(""))))
-      .withExtraHeaders(requestHeaders(): _*)
-
-    http.PUTString(url, message)(CustomHttpReader, hc = newHeaders, ec = ec)
+    http.PUTString(url, message)(CustomHttpReader, customHeaderCarrier(headers, requestHeaders()), ec = ec)
   }
 }
