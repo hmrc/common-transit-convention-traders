@@ -21,6 +21,8 @@ import config.AppConfig
 import connectors.util.CustomHttpReader
 import javax.inject.Inject
 import models.domain.Arrival
+import play.api.mvc.Headers
+import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.Utils
 
@@ -30,12 +32,14 @@ class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
 
   val arrivalRoute = "/transit-movements-trader-at-destination/movements/arrivals/"
 
-  def post(message: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def postWithHeaders(message: String, headers: Headers)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute
 
-    val newHeaders = hc.withExtraHeaders(requestHeaders(): _*)
+    val newHeaders = headerCarrier
+      .copy(authorization = Some(Authorization(headers.get("Authorization").getOrElse(""))))
+      .withExtraHeaders(requestHeaders(): _*)
 
-    http.POSTString(url, message)(CustomHttpReader, newHeaders, implicitly)
+    http.POSTString(url, message)(CustomHttpReader, hc = newHeaders, ec = ec)
   }
 
   def post(message: String, arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {

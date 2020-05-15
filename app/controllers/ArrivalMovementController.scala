@@ -35,7 +35,7 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
 
   def createArrivalNotification(): Action[NodeSeq] = (authAction andThen validateArrivalNotificationAction).async(parse.xml) {
     implicit request =>
-      arrivalConnector.post(request.body.toString).map { response =>
+      arrivalConnector.postWithHeaders(request.body.toString, request.headers).map { response =>
         response.status match {
           case s if is2xx(s) =>
             response.header(LOCATION) match {

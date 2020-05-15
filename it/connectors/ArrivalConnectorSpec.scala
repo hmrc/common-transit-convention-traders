@@ -9,6 +9,7 @@ import models.response.{ResponseArrival, ResponseMessage}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.Json
+import play.api.mvc.Headers
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -27,7 +28,7 @@ class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
       implicit val hc = HeaderCarrier()
 
-      val result = connector.post("<document></document>").futureValue
+      val result = connector.postWithHeaders("<document></document>", Headers.create()).futureValue
 
       result.status mustEqual ACCEPTED
     }
@@ -44,7 +45,7 @@ class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
         implicit val hc = HeaderCarrier()
 
-        val result = connector.post("<document></document>").futureValue
+        val result = connector.postWithHeaders("<document></document>", Headers.create()).futureValue
 
         result.status mustEqual INTERNAL_SERVER_ERROR
       }
@@ -62,7 +63,7 @@ class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
       implicit val hc = HeaderCarrier()
 
-      val result = connector.post("<document></document>").futureValue
+      val result = connector.postWithHeaders("<document></document>", Headers.create()).futureValue
 
       result.status mustEqual BAD_REQUEST
     }
