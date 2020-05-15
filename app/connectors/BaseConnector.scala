@@ -23,11 +23,11 @@ import play.mvc.Http.{HeaderNames, MimeTypes}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpResponse}
 
 trait BaseConnector extends HttpErrorFunctions{
-  protected def requestHeaders()(implicit hc: HeaderCarrier): Seq[(String, String)] =
-    hc.headers ++ Seq((HeaderNames.CONTENT_TYPE, MimeTypes.XML))
+  protected def requestHeaders(): Seq[(String, String)] =
+    Seq((HeaderNames.CONTENT_TYPE, MimeTypes.XML))
 
-  protected def responseHeaders()(implicit hc: HeaderCarrier): Seq[(String, String)] =
-    hc.headers ++ Seq((HeaderNames.CONTENT_TYPE, MimeTypes.JSON))
+  protected def responseHeaders(): Seq[(String, String)] =
+    Seq((HeaderNames.CONTENT_TYPE, MimeTypes.JSON))
 
   protected def extractIfSuccessful[T](response: HttpResponse)(implicit reads: Reads[T]): Either[HttpResponse, T] =
     if(is2xx(response.status)) {
