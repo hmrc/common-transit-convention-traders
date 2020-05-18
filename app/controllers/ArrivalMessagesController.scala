@@ -73,7 +73,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
                 val messages = a.messages.map { m =>
                   ResponseMessage(m) copy (location = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.lastFragment(m.location)}")
                 }
-                Ok(Json.toJson(ResponseArrivalWithMessages(a).copy(arrival = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}", messages = messages)))
+                Ok(Json.toJson(ResponseArrivalWithMessages(a).copy(messages = messages)))
               }
               case Left(response) => handleNon2xx(response)
           }
