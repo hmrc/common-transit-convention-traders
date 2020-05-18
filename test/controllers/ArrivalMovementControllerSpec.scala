@@ -22,7 +22,7 @@ import controllers.actions.{AuthAction, FakeAuthAction}
 import akka.util.ByteString
 import connectors.ArrivalConnector
 import data.TestXml
-import models.domain.ArrivalWithMessages
+import models.domain.{Arrival, ArrivalWithMessages}
 import models.response.ResponseArrival
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{reset, when}
@@ -54,7 +54,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
     reset(mockArrivalConnector)
   }
 
-  val sourceArrival = ArrivalWithMessages(123, "/movements/arrivals/123", "/movements/arrivals/123/messages", "MRN", "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2), Nil)
+  val sourceArrival = Arrival(123, "/movements/arrivals/123", "/movements/arrivals/123/messages", "MRN", "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2))
   val expectedArrival = ResponseArrival(sourceArrival)
   val expectedArrivalResult = Json.toJson[ResponseArrival](expectedArrival)
 

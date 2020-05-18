@@ -20,7 +20,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import config.AppConfig
 import connectors.util.CustomHttpReader
 import javax.inject.Inject
-import models.domain.ArrivalWithMessages
+import models.domain.{Arrival, ArrivalWithMessages}
 import play.api.mvc.{Headers, RequestHeader}
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -46,5 +46,5 @@ class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
   }
 
   //TODO: We may need to replace OTHER Arrivals with an ArrivalsWithMessages model
-  def get(arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, ArrivalWithMessages]] = ???
+  def get(arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] = ???
 }
