@@ -45,6 +45,11 @@ class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
     http.PUTString(url, message)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
   }
 
-  //TODO: We may need to replace OTHER Arrivals with an ArrivalsWithMessages model
-  def get(arrivalId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] = ???
+  def get(arrivalId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] = {
+    val url = appConfig.traderAtDestinationUrl + arrivalRoute + Utils.urlEncode(arrivalId)
+
+    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response =>
+      extractIfSuccessful[Arrival](response)
+    }
+  }
 }

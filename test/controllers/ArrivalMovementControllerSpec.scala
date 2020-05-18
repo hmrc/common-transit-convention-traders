@@ -254,7 +254,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
  "GET /movements/arrivals/:arrivalId" - {
    "return 200 with json body of arrival" in {
-     when(mockArrivalConnector.get(any())(any(), any()))
+     when(mockArrivalConnector.get(any())(any(), any(), any()))
        .thenReturn(Future.successful(Right(sourceArrival)))
 
      //TODO: Refactor Requests and Test Data to seperate traits to clean up our test code
@@ -267,7 +267,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
    }
 
    "return 404 if downstream return 404" in {
-     when(mockArrivalConnector.get(any())(any(), any()))
+     when(mockArrivalConnector.get(any())(any(), any(), any()))
        .thenReturn(Future.successful(Left(HttpResponse(404))))
 
      val request = FakeRequest("GET", "/movements/arrivals/123", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0.+json")), AnyContentAsEmpty)
@@ -277,7 +277,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
    }
 
    "return 500 for other downstream errors" in {
-     when(mockArrivalConnector.get(any())(any(), any()))
+     when(mockArrivalConnector.get(any())(any(), any(), any()))
        .thenReturn(Future.successful(Left(HttpResponse(responseStatus = INTERNAL_SERVER_ERROR))))
 
      val request = FakeRequest("GET", "/movements/arrivals/123", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0.+json")), AnyContentAsEmpty)
