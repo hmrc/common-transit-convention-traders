@@ -37,7 +37,7 @@ class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
   def get(arrivalId: String, messageId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, MovementMessage]] = {
     val url = rootUrl + s"/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.urlEncode(messageId)}"
 
-    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders())(CustomHttpReader, customHeaderCarrier(responseHeaders()), ec).map { response =>
+    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response =>
       extractIfSuccessful[MovementMessage](response)
     }
   }
@@ -45,13 +45,13 @@ class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
   def post(message: String, arrivalId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = rootUrl + s"/arrivals/${Utils.urlEncode(arrivalId)}/messages"
 
-    http.POSTString(url, message, requestHeaders())(CustomHttpReader, customHeaderCarrier(requestHeaders()), ec)
+    http.POSTString(url, message, requestHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
   }
 
   def getArrivalMessages(arrivalId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] = {
     val url = rootUrl + s"/arrivals/${Utils.urlEncode(arrivalId)}/messages"
 
-    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders())(CustomHttpReader, customHeaderCarrier(responseHeaders()), ec).map { response =>
+    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response =>
       extractIfSuccessful[Arrival](response)
     }
   }

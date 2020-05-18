@@ -35,12 +35,12 @@ class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
   def post(message: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute
 
-    http.POSTString(url, message)(CustomHttpReader, customHeaderCarrier(requestHeaders()), ec)
+    http.POSTString(url, message)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
   }
 
   def put(message: String, arrivalId: String)(implicit requestHeader: RequestHeader, headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute + Utils.urlEncode(arrivalId)
 
-    http.PUTString(url, message)(CustomHttpReader, customHeaderCarrier(requestHeaders()), ec)
+    http.PUTString(url, message)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
   }
 }
