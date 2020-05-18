@@ -17,8 +17,10 @@
 package controllers
 
 import connectors.ArrivalConnector
-import controllers.actions.{AuthAction, ValidateArrivalNotificationAction}
+import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateArrivalNotificationAction}
 import javax.inject.Inject
+import models.response.ResponseArrival
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.{ResponseHelper, Utils}
@@ -31,7 +33,8 @@ import uk.gov.hmrc.http.HttpErrorFunctions
 class ArrivalMovementController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    arrivalConnector: ArrivalConnector,
-                                   validateArrivalNotificationAction: ValidateArrivalNotificationAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper {
+                                   validateArrivalNotificationAction: ValidateArrivalNotificationAction,
+                                   validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper {
 
   def createArrivalNotification(): Action[NodeSeq] = (authAction andThen validateArrivalNotificationAction).async(parse.xml) {
     implicit request =>
@@ -66,5 +69,16 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
       }
   }
 
-  def getArrival(arrivalId: String): Action[AnyContent] = ???
-}
+  def getArrival(arrivalId: String): Action[AnyContent] =
+    (authAction andThen validateAcceptJsonHeaderAction).async {
+    implicit request => {
+      arrivalConnector.get(arrivalId).map { r =>
+          r match {
+            case Right(a) => Ok(Json.toJson(ResponseArrival(a)))
+            case Left(response) => handleNon2xx(response)
+          }
+      }
+    }
+  }
+
+  }

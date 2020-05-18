@@ -258,19 +258,19 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
        .thenReturn(Future.successful(Right(sourceArrival)))
 
      //TODO: Refactor Requests and Test Data to seperate traits to clean up our test code
-     val request = FakeRequest("GET", "/movements/arrivals/123", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0.+json")), AnyContentAsEmpty)
+     val request = FakeRequest("GET", "/movements/arrivals/123", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value
 
      //TODO: if this works, rewrite other tests to use this instead of contentAsString
-     contentAsJson(result) mustEqual expectedArrivalResult
      status(result) mustBe OK
+     contentAsString(result) mustEqual expectedArrivalResult.toString()
    }
 
    "return 404 if downstream return 404" in {
      when(mockArrivalConnector.get(any())(any(), any(), any()))
        .thenReturn(Future.successful(Left(HttpResponse(404))))
 
-     val request = FakeRequest("GET", "/movements/arrivals/123", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0.+json")), AnyContentAsEmpty)
+     val request = FakeRequest("GET", "/movements/arrivals/123", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value
 
      status(result) mustBe NOT_FOUND
@@ -280,7 +280,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
      when(mockArrivalConnector.get(any())(any(), any(), any()))
        .thenReturn(Future.successful(Left(HttpResponse(responseStatus = INTERNAL_SERVER_ERROR))))
 
-     val request = FakeRequest("GET", "/movements/arrivals/123", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0.+json")), AnyContentAsEmpty)
+     val request = FakeRequest("GET", "/movements/arrivals/123", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value
 
      status(result) mustBe INTERNAL_SERVER_ERROR

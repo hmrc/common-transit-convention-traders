@@ -25,7 +25,10 @@ object ResponseArrival {
 
   implicit val format = Json.format[ResponseArrival]
 
-  def apply(a: Arrival): ResponseArrival = ResponseArrival(a.location, a.created, a.status)
+  def apply(a: Arrival): ResponseArrival = {
+    println(s"arrival here : ${a.location}")
+    ResponseArrival(a.location, a.created, a.status)
+  }
 }
 
 case class ResponseArrival(arrival: String, created: LocalDateTime, status: String)
