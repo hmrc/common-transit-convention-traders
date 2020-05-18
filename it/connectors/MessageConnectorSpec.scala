@@ -6,8 +6,8 @@ import org.scalatest.{FreeSpec, MustMatchers}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import com.github.tomakehurst.wiremock.client.WireMock._
-import models.domain.{Arrival, MovementMessage}
-import models.response.{ResponseArrival, ResponseMessage}
+import models.domain.{ArrivalWithMessages, MovementMessage}
+import models.response.{ResponseArrivalWithMessages, ResponseMessage}
 import play.api.libs.json.Json
 import play.api.mvc.Headers
 import play.api.test.FakeRequest
@@ -107,7 +107,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
   "getArrivalMessages" - {
     "must return Arrival when arrival is found" in {
       val connector = app.injector.instanceOf[MessageConnector]
-      val arrival = Arrival(1, "/movements/arrivals/1", "/movements/arrivals/1/messages", "MRN", "status", LocalDateTime.now, LocalDateTime.now,
+      val arrival = ArrivalWithMessages(1, "/movements/arrivals/1", "/movements/arrivals/1/messages", "MRN", "status", LocalDateTime.now, LocalDateTime.now,
         Seq(
           MovementMessage("/movements/arrivals/1/messages/1", LocalDateTime.now, "abc", <test>default</test>),
           MovementMessage("/movements/arrivals/1/messages/2", LocalDateTime.now, "abc", <test>default</test>)
@@ -129,13 +129,13 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[MessageConnector]
-      val arrival = Arrival(1, "/movements/arrivals/1", "/movements/arrivals/1/messages", "MRN", "status", LocalDateTime.now, LocalDateTime.now,
+      val arrival = ArrivalWithMessages(1, "/movements/arrivals/1", "/movements/arrivals/1/messages", "MRN", "status", LocalDateTime.now, LocalDateTime.now,
         Seq(
           MovementMessage("/movements/arrivals/1/messages/1", LocalDateTime.now, "abc", <test>default</test>),
           MovementMessage("/movements/arrivals/1/messages/2", LocalDateTime.now, "abc", <test>default</test>)
         ))
 
-      val response = ResponseArrival(arrival)
+      val response = ResponseArrivalWithMessages(arrival)
       server.stubFor(
         get(
           urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1/messages")
@@ -183,7 +183,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
       result.left.map { x => x.status mustEqual BAD_REQUEST }
     }
 
-    "must return HttpResponse with an internal server if if there is an internal server error" in {
+    "must return HttpResponse with an internal server if there is an internal server error" in {
       val connector = app.injector.instanceOf[MessageConnector]
       server.stubFor(
         get(
@@ -200,5 +200,6 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
     }
   }
 
+  //TODO: Refactor this and other spec usages to a common trait
   override protected def portConfigKey: String = "microservice.services.transit-movement-trader-at-destination.port"
 }

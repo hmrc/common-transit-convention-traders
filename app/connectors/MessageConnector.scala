@@ -20,7 +20,7 @@ import config.AppConfig
 import connectors.util.CustomHttpReader
 import connectors.util.CustomHttpReader.INTERNAL_SERVER_ERROR
 import javax.inject.Inject
-import models.domain.{Arrival, MovementMessage}
+import models.domain.{ArrivalWithMessages, MovementMessage}
 import play.api.libs.json.Reads
 import play.api.mvc.{Headers, RequestHeader}
 import uk.gov.hmrc.http.logging.Authorization
@@ -48,11 +48,11 @@ class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
     http.POSTString(url, message, requestHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
   }
 
-  def getArrivalMessages(arrivalId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] = {
+  def getArrivalMessages(arrivalId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, ArrivalWithMessages]] = {
     val url = rootUrl + s"/arrivals/${Utils.urlEncode(arrivalId)}/messages"
 
     http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response =>
-      extractIfSuccessful[Arrival](response)
+      extractIfSuccessful[ArrivalWithMessages](response)
     }
   }
 }

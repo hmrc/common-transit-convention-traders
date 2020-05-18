@@ -19,7 +19,7 @@ package controllers
 import connectors.ArrivalConnector
 import controllers.actions.{AuthAction, ValidateArrivalNotificationAction}
 import javax.inject.Inject
-import play.api.mvc.{Action, ControllerComponents}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.{ResponseHelper, Utils}
 
@@ -35,6 +35,7 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
 
   def createArrivalNotification(): Action[NodeSeq] = (authAction andThen validateArrivalNotificationAction).async(parse.xml) {
     implicit request =>
+      request.headers
       arrivalConnector.post(request.body.toString).map { response =>
         response.status match {
           case s if is2xx(s) =>
@@ -64,4 +65,6 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
         }
       }
   }
+
+  def getArrival(arrivalId: String): Action[AnyContent] = ???
 }

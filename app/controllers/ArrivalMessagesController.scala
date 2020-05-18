@@ -19,7 +19,7 @@ package controllers
 import connectors.MessageConnector
 import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateMessageAction}
 import javax.inject.Inject
-import models.response.{ResponseArrival, ResponseMessage}
+import models.response.{ResponseArrivalWithMessages, ResponseMessage}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
@@ -73,7 +73,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
                 val messages = a.messages.map { m =>
                   ResponseMessage(m) copy (location = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.lastFragment(m.location)}")
                 }
-                Ok(Json.toJson(ResponseArrival(a).copy(arrival = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}", messages = messages)))
+                Ok(Json.toJson(ResponseArrivalWithMessages(a).copy(arrival = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}", messages = messages)))
               }
               case Left(response) => handleNon2xx(response)
           }

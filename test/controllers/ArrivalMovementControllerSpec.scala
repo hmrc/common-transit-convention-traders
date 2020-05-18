@@ -16,10 +16,14 @@
 
 package controllers
 
+import java.time.LocalDateTime
+
 import controllers.actions.{AuthAction, FakeAuthAction}
 import akka.util.ByteString
 import connectors.ArrivalConnector
 import data.TestXml
+import models.domain.ArrivalWithMessages
+import models.response.ResponseArrival
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures
@@ -32,6 +36,7 @@ import play.api.test.{FakeHeaders, FakeRequest}
 import play.api.test.Helpers.{headers, _}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpResponse
 
 import scala.concurrent.Future
@@ -48,6 +53,10 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
     super.beforeEach()
     reset(mockArrivalConnector)
   }
+
+  val sourceArrival = ArrivalWithMessages(123, "/movements/arrivals/123", "/movements/arrivals/123/messages", "MRN", "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2), Nil)
+  val expectedArrival = ResponseArrival(sourceArrival)
+  val expectedArrivalResult = Json.toJson[ResponseArrival](expectedArrival)
 
   def fakeRequestArrivals[A](method: String, headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), uri: String = "/movements/arrivals", body: A) =
     FakeRequest(method = method, uri = uri, headers, body = body)
@@ -241,5 +250,43 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
      status(result) mustBe BAD_REQUEST
    }
+ }
+
+ "GET /movements/arrivals/:arrivalId" - {
+   "return 200 with json body of arrival" in {
+     when(mockArrivalConnector.get(any())(any(), any()))
+       .thenReturn(Future.successful(Right(sourceArrival)))
+
+     //TODO: Refactor Requests and Test Data to seperate traits to clean up our test code
+     val request = FakeRequest("GET", "/movements/arrivals/123", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0.+json")), AnyContentAsEmpty)
+     val result = route(app, request).value
+
+     //TODO: if this works, rewrite other tests to use this instead of contentAsString
+     contentAsJson(result) mustEqual expectedArrivalResult
+     status(result) mustBe OK
+   }
+
+   "return 404 if downstream return 404" in {
+     when(mockArrivalConnector.get(any())(any(), any()))
+       .thenReturn(Future.successful(Left(HttpResponse(404))))
+
+     val request = FakeRequest("GET", "/movements/arrivals/123", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0.+json")), AnyContentAsEmpty)
+     val result = route(app, request).value
+
+     status(result) mustBe NOT_FOUND
+   }
+
+   "return 500 for other downstream errors" in {
+     when(mockArrivalConnector.get(any())(any(), any()))
+       .thenReturn(Future.successful(Left(HttpResponse(responseStatus = INTERNAL_SERVER_ERROR))))
+
+     val request = FakeRequest("GET", "/movements/arrivals/123", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0.+json")), AnyContentAsEmpty)
+     val result = route(app, request).value
+
+     status(result) mustBe INTERNAL_SERVER_ERROR
+   }
+
+   "return 500 if downstream provides an unsafe message header" ignore {}
+
  }
 }
