@@ -24,11 +24,11 @@ import play.api.mvc.{Headers, RequestHeader}
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpResponse}
 
-trait BaseConnector extends HttpErrorFunctions{
-  protected def requestHeaders(): Seq[(String, String)] =
+class BaseConnector extends HttpErrorFunctions {
+  protected val requestHeaders: Seq[(String, String)] =
     Seq((HeaderNames.CONTENT_TYPE, MimeTypes.XML))
 
-  protected def responseHeaders(): Seq[(String, String)] =
+  protected val responseHeaders: Seq[(String, String)] =
     Seq((HeaderNames.CONTENT_TYPE, MimeTypes.JSON))
 
   protected def extractIfSuccessful[T](response: HttpResponse)(implicit reads: Reads[T]): Either[HttpResponse, T] =
