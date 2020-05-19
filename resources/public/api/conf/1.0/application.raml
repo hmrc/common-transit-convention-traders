@@ -27,9 +27,11 @@ uses:
     post:
       displayName: Send an arrival notification
       description: |
-        Send a message to let the Office of Destination know that the goods have arrived. This message will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).
-        The location header in the response will contain a URI and arrival ID for the arrival notification. This will allow you to retrieve the submission status and relating status messages. The submission status will be either “pending” or “success”.
-        A “pending” status means the arrival notification has not got to the NCTS yet. A “success” status means the arrival notification is being processed by the NCTS.
+        Send a notification to let the Office of Destination know that the goods have arrived. This message will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).
+
+        The location header in the response will contain a URI and arrival ID for the arrival notification. This will allow you to get the message status.
+
+        If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive a HTTP 403 Forbidden status. 
       is: [headers.acceptHeader]
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -37,8 +39,8 @@ uses:
         202:
           headers:
             Location:
-              description: The uri to retrieve the arrival notification, including arrival ID
-              example: /customs/transits/movements/arrivals/123456/messages/7898765
+              description: The URI to get the arrival notification, including an arrival ID
+              example: /customs/transits/movements/arrivals/123456
           body:
             application/xml:
               description: Valid XML Payload
@@ -46,9 +48,11 @@ uses:
                 <IE007>
                 </IE007>
     get:
-      displayName: Pull all arrival notifications
+      displayName: Pull all Movement Arrivals
       description: |
-        Pull all arrival messages sent to the Office of Destination within 21 days ofthe goods being released.
+        Pull all Movement Arrivals sent to the Office of Destination within 21 days of the goods being released. Any Movement Arrivals more than 21 days old will be archived along with their related messages. Archived movements will return a HTTP 404 Not Found status.
+
+        You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
       is: [headers.acceptHeader]
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -71,18 +75,16 @@ uses:
                 <IE007>....</IE007>
     /{arrivalId}:
       get:
-        displayName: Pull an arrival notification for an arrival ID
+        displayName: Pull a Movement Arrival for an arrival ID
         description: |
-          Pull a specific arrival message which was sent to the Office of Destination within 21 days of the goods being released. Any arrival notifications that are more than 21 days old will be archived. Archived notifications will be return a “not found” status.
+          Pull a specific Movement Arrival which was sent to the Office of Destination within 21 days of the goods being released. Any Movement Arrivals more than 21 days old will be archived along with their related messages. Archived movements will return a HTTP 404 Not Found status.
+
+          You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival 
         is: [headers.acceptHeader]
         (annotations.scope): "common-transit-convention-traders"
         securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
         responses:
           200:
-            headers:
-              SubmissionStatus:
-                description: The status of the notification submission, either Pending or Success
-                example: Pending
             body:
               application/json:
                 description: JSON Payload
@@ -93,79 +95,69 @@ uses:
                       }
                   }
           404:
-            description: when arrival movement does not exist, has been archived or is not available to the eori.
-      post:
-        displayName: Send a message to confirm that the goods have been unloaded
-        description: |
-          Send a message to the Office of Destination to let them know that the goods have been unloaded. This message is called an E_ULD_REM (IE044).
-          You should use this message to let the Office of Destination know about any issues you found with the goods when they were unloaded. This could include things like extra or missing boxes, or damaged or changed seals. You should notify them about any details that are different to what was recorded in the initial declaration.
-        (annotations.scope): "common-transit-convention-traders"
-        securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
-        responses:
-          202:
-            headers:
-              Location:
-                description: The uri to retrieve the arrival notification, including arrival ID
-                example: /customs/transits/movements/arrivals/123456/messages
-            body:
-              application/xml:
-                description: Valid XML Payload
-                example: |
-                  <IE044>...</IE044>
-      put:
-        displayName: Resubmit an arrival notification
-        description: |
-          Resend an arrival notification to the Office of Destination if the first arrival notification was rejected. Arrival notifications will be rejected when the NCTS validation fails. This can happen for reasons, such as if:
-          - a guarantee against the Economic Operator Registration and Identification (EORI) number is not enough to cover the goods being transported
-          - the Movement Reference Number (MRN) has already been used on another arrival notification
-          This message is called E_ARR_REJ (IE008).
-        is: [headers.acceptHeader]
-        (annotations.scope): "common-transit-convention-traders"
-        securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
-        responses:
-          202:
-            headers:
-              Location:
-                description: The uri to retrieve the arrival notification, including arrival ID
-                example: /customs/transits/movements/arrivals/123456/message/123456
-            body:
-              application/xml:
-                description: Valid XML Payload
-                example: |
-                  <IE007>
-                  </IE007>
+            description: When a Movement Arrival does not exist, has been archived or is not available to the EORI number.
       /messages:
-        get:
-          displayName: Pull all messages relating to an arrival movement
+        post:
+          displayName: Send a message related to an arrival movement
           description: |
-            Pull all messages sent within 21 days of the goods being released relating to an arrival movement. You will only be able to retrieve these messages if you have the Economic Operator Registration and Identification (EORI) number associated with the arrival movement.
+            Send a message to the Office of Destination.  For example, an an Unloading Remarks message, otherwise known as E_ULD_REM (IE044), to let them know that the goods have been unloaded.
+
+            If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive a HTTP 403 Forbidden status. 
+          (annotations.scope): "common-transit-convention-traders"
+          securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+          responses:
+            202:
+              headers:
+                Location:
+                  description: The URI to retrieve the arrival notification, including arrival ID
+                  example: /customs/transits/movements/arrivals/123456/messages
+              body:
+                application/xml:
+                  description: Valid XML Payload
+                  example: |
+                    <IE044>...</IE044>
+        get:
+          displayName: Pull all messages that relate to a Movement Arrival
+          description: |
+            Pull all the messages to do with a Movement Arrival. Any Movement Arrivals more than 21 days old will be archived along with their related messages. Any Movement Arrivals more than 21 days old will be archived along with their related messages. Archived movements will return a HTTP 404 Not Found status.
+
+            You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
             200:
               body:
                 application/json:
-                  description: A json list containing messages with an XML body
+                  description: A JSON list containing messages with an XML body
                   example: |
                     {
-                       "messages":[
-                          {
-                             "date":"2020-12-31",
-                             "body":"<CC058A>....</CC058A>"
-                          },
-                          {
-                             "date":"2020-12-30",
-                             "body":"<CC058A>....</CC058A>"
-                          }
-                       ]
+                        "arrival": "/movements/arrivals/123",
+                        "created": "2020-03-20",
+                        "updated": "2020-03-20",
+                        "movementReferenceNumber":"MRN",
+                        "status", "arrival notification received"
+                        "messages": [
+                            {
+                                "message": "/movements/arrivals/1234/messages/456"
+                                "received": "2020-01-01",
+                                "body": "<CC025A>...</CC025A>"
+                            },
+                            {
+                                "message": "/movements/arrivals/1234/messages/789"
+                                "received": "2020-01-02",
+                                "body": "<CC043A>...</CC043A>"
+                            }
+                        ]
                     }
             404:
-              description: when the arrival movement does not exist, has been archived or is not available to the eori.
+              description: When the arrival movement does not exist, has been archived or is not available to the EORI number.
         /{messageId}:
           get:
-            displayName: Pull a message relating to an arrival movement and message ID
+            displayName: Pull a message relating to a Movement Arrival and message ID
             description: |
-              Pull all messages relating to a specific arrival movement and message ID. For example, this could include messages about route diversions or unloading permissions. Any messages more than 21 days old will be archived. Archived messages will be return a “not found” status.
+              Pull all messages relating to a specific Movement Arrival and message ID. For example, this could include messages about route diversions or unloading permissions. Any Movement Arrivals more than 21 days old will be archived along with their related messages. Archived movements will return a HTTP 404 Not Found status.
+
+              You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
             (annotations.scope): "common-transit-convention-traders"
             securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
             responses:
@@ -179,7 +171,7 @@ uses:
                         body: "<CC058A>....</CC058A>"
                       }
               404:
-                description: when message does not exist, has been archived or is not available to the eori.
+                description: When a message does not exist, has been archived or is not available to the EORI number.
   /departures:
     post:
       displayName: Send a departure notification
@@ -255,6 +247,23 @@ uses:
           404:
             description: when departure movement does not exist, has been archived or is not available to the eori.
       /messages:
+        post:
+          displayName: Send a message related to a departure movement
+          description: |
+            Send a message to the Office of Destination.
+          (annotations.scope): "common-transit-convention-traders"
+          securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+          responses:
+            202:
+              headers:
+                Location:
+                  description: The uri to retrieve the departure notification, including arrival ID
+                  example: /customs/transits/movements/departures/123456/messages
+              body:
+                application/xml:
+                  description: Valid XML Payload
+                  example: |
+                    <IE0XX>...</IE0XX>
         get:
           displayName: Pull all messages relating to a departure movement
           description: |

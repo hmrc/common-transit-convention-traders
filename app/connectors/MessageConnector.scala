@@ -17,17 +17,42 @@
 package connectors
 
 import config.AppConfig
+import connectors.util.CustomHttpReader
+import connectors.util.CustomHttpReader.INTERNAL_SERVER_ERROR
 import javax.inject.Inject
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads}
+import models.domain.{Arrival, MovementMessage}
+import play.api.libs.json.Reads
+import play.api.mvc.{Headers, RequestHeader}
+import uk.gov.hmrc.http.logging.Authorization
+import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import utils.Utils
 
-import scala.concurrent.ExecutionContext
-import scala.xml.NodeSeq
+import scala.concurrent.{ExecutionContext, Future}
 
-class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) {
+class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends BaseConnector {
 
-  def post(message: NodeSeq)(implicit hc: HeaderCarrier, ec: ExecutionContext) = {
-    val url = appConfig.traderAtDestinationUrl + "/common-transit-convention-trader-at-destination/message-notification"
-    http.POSTString(url, message.toString)(HttpReads.readRaw, implicitly, implicitly)
+  val rootUrl = appConfig.traderAtDestinationUrl + "/transit-movements-trader-at-destination/movements"
+
+  def get(arrivalId: String, messageId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, MovementMessage]] = {
+    val url = rootUrl + s"/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.urlEncode(messageId)}"
+
+    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response =>
+      extractIfSuccessful[MovementMessage](response)
+    }
+  }
+
+  def post(message: String, arrivalId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val url = rootUrl + s"/arrivals/${Utils.urlEncode(arrivalId)}/messages"
+
+    http.POSTString(url, message, requestHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
+  }
+
+  def getArrivalMessages(arrivalId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] = {
+    val url = rootUrl + s"/arrivals/${Utils.urlEncode(arrivalId)}/messages"
+
+    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response =>
+      extractIfSuccessful[Arrival](response)
+    }
   }
 }

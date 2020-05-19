@@ -14,25 +14,18 @@
  * limitations under the License.
  */
 
-package models.request
+package models.response
 
-sealed trait XSDFile {
-  val filePath: String
-  val label: String
+import java.time.LocalDateTime
+
+import models.domain.Arrival
+import play.api.libs.json.Json
+
+object ResponseArrival {
+
+  implicit val format = Json.format[ResponseArrival]
+
+  def apply(a: Arrival): ResponseArrival = ResponseArrival(a.location, a.created, a.status, a.messages.map { m => ResponseMessage(m)})
 }
 
-object XSDFile {
-  val values = Seq(ArrivalNotificationXSD, UnloadingRemarksXSD)
-  val map = values.map(xsd => xsd.label -> xsd).toMap
-  val supportedMessageTypes = map.filterKeys(_ != ArrivalNotificationXSD.label)
-}
-
-object ArrivalNotificationXSD extends XSDFile {
-  val filePath = "/xsd-iconvert/cc007a.xsd"
-  val label = "CC007A"
-}
-
-object UnloadingRemarksXSD extends XSDFile {
-  val filePath = "/xsd-iconvert/cc044a.xsd"
-  val label = "CC044A"
-}
+case class ResponseArrival(arrival: String, created: LocalDateTime, status: String, messages: Seq[ResponseMessage])

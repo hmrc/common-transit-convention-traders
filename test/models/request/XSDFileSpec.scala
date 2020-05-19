@@ -16,23 +16,17 @@
 
 package models.request
 
-sealed trait XSDFile {
-  val filePath: String
-  val label: String
-}
+import org.scalatestplus.mockito.MockitoSugar
+import org.scalatest.{FreeSpec, MustMatchers}
 
-object XSDFile {
-  val values = Seq(ArrivalNotificationXSD, UnloadingRemarksXSD)
-  val map = values.map(xsd => xsd.label -> xsd).toMap
-  val supportedMessageTypes = map.filterKeys(_ != ArrivalNotificationXSD.label)
-}
+class XSDFileSpec extends FreeSpec with MustMatchers with MockitoSugar {
+  "XSDFile" - {
+    "supported message types must contain UnloadingRemarksXSD" in {
+      XSDFile.supportedMessageTypes must contain ("CC044A" -> UnloadingRemarksXSD)
+    }
 
-object ArrivalNotificationXSD extends XSDFile {
-  val filePath = "/xsd-iconvert/cc007a.xsd"
-  val label = "CC007A"
-}
-
-object UnloadingRemarksXSD extends XSDFile {
-  val filePath = "/xsd-iconvert/cc044a.xsd"
-  val label = "CC044A"
+    "supported message types must not contain ArrivalNotificationXSD" in {
+      XSDFile.supportedMessageTypes mustNot contain ("CC007A" -> ArrivalNotificationXSD)
+    }
+  }
 }

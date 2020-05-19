@@ -14,25 +14,17 @@
  * limitations under the License.
  */
 
-package models.request
+package models.domain
 
-sealed trait XSDFile {
-  val filePath: String
-  val label: String
+import java.time.LocalDateTime
+
+import play.api.libs.json.Json
+import utils.NodeSeqFormat
+
+import scala.xml.NodeSeq
+
+object MovementMessage extends NodeSeqFormat{
+  implicit val format = Json.format[MovementMessage]
 }
 
-object XSDFile {
-  val values = Seq(ArrivalNotificationXSD, UnloadingRemarksXSD)
-  val map = values.map(xsd => xsd.label -> xsd).toMap
-  val supportedMessageTypes = map.filterKeys(_ != ArrivalNotificationXSD.label)
-}
-
-object ArrivalNotificationXSD extends XSDFile {
-  val filePath = "/xsd-iconvert/cc007a.xsd"
-  val label = "CC007A"
-}
-
-object UnloadingRemarksXSD extends XSDFile {
-  val filePath = "/xsd-iconvert/cc044a.xsd"
-  val label = "CC044A"
-}
+case class MovementMessage(location: String, dateTime: LocalDateTime, messageType: String, message: NodeSeq)

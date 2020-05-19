@@ -17,7 +17,6 @@
 package controllers.actions
 
 import config.{AppConfig}
-import javax.inject.Inject
 import org.scalatest.{FreeSpec, MustMatchers}
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -26,11 +25,8 @@ import play.api.mvc.Results.Ok
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.{AuthConnector, Enrolment, EnrolmentIdentifier, Enrolments, MissingBearerToken}
-import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.retrieve.Retrieval
-import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.mockito.Mockito._
 import org.mockito.Matchers.any
@@ -142,7 +138,7 @@ class AuthActionSpec extends FreeSpec with MustMatchers with MockitoSugar {
       val controller = new Harness(authAction)
       val result = controller.get()(FakeRequest())
 
-      status(result) mustEqual UNAUTHORIZED
+      status(result) mustEqual FORBIDDEN
     }
   }
 

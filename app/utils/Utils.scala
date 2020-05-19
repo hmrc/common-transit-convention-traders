@@ -14,25 +14,18 @@
  * limitations under the License.
  */
 
-package models.request
+package utils
 
-sealed trait XSDFile {
-  val filePath: String
-  val label: String
-}
+import java.net.{URI, URLEncoder}
 
-object XSDFile {
-  val values = Seq(ArrivalNotificationXSD, UnloadingRemarksXSD)
-  val map = values.map(xsd => xsd.label -> xsd).toMap
-  val supportedMessageTypes = map.filterKeys(_ != ArrivalNotificationXSD.label)
-}
+import scala.util.Try
 
-object ArrivalNotificationXSD extends XSDFile {
-  val filePath = "/xsd-iconvert/cc007a.xsd"
-  val label = "CC007A"
-}
+object Utils {
+  val acceptHeaderPattern = "^application/vnd[.]{1}hmrc[.]{1}(.*?)[+]{1}(.*)$".r
 
-object UnloadingRemarksXSD extends XSDFile {
-  val filePath = "/xsd-iconvert/cc044a.xsd"
-  val label = "CC044A"
+  def lastFragment(location: String): String =
+    URI.create(location).getPath.split("/").last
+
+  def urlEncode(str: String): String =
+    URLEncoder.encode(str, "UTF-8")
 }
