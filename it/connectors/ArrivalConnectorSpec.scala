@@ -133,10 +133,8 @@ class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
   "get" - {
     "must return Arrival when arrival is found" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      //TODO: Make into test data that can be shared. May need to change this model based on the backend.
       val arrival = Arrival(1, "/movements/arrivals/1", "/movements/arrivals/1/messages", "MRN", "status", LocalDateTime.now, LocalDateTime.now)
 
-      //TODO: Make into Test Url Trait alongside those in message connector
       server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1"))
         .willReturn(aResponse().withStatus(OK)
         .withBody(Json.toJson(arrival).toString())))
@@ -211,6 +209,5 @@ class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
     }
   }
 
-  //TODO: Refactor this and other spec usages to a common trait
   override protected def portConfigKey: String = "microservice.services.transit-movement-trader-at-destination.port"
 }
