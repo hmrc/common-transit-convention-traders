@@ -24,9 +24,7 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.{ResponseHelper, Utils}
-
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success}
 import scala.xml.NodeSeq
 import uk.gov.hmrc.http.HttpErrorFunctions
 
@@ -38,10 +36,9 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
 
   def createArrivalNotification(): Action[NodeSeq] = (authAction andThen validateArrivalNotificationAction).async(parse.xml) {
     implicit request =>
-      request.headers
       arrivalConnector.post(request.body.toString).map { response =>
         response.status match {
-          case s if is2xx(s) =>
+          case status if is2xx(status) =>
             response.header(LOCATION) match {
               case Some(locationValue) =>
                   Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(Utils.lastFragment(locationValue))}")
@@ -57,7 +54,7 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
     implicit request =>
       arrivalConnector.put(request.body.toString, arrivalId).map { response =>
         response.status match {
-          case s if is2xx(s) =>
+          case status if is2xx(status) =>
             response.header(LOCATION) match {
               case Some(locationValue) =>
                   Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(Utils.lastFragment(locationValue))}")
@@ -72,10 +69,10 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
   def getArrival(arrivalId: String): Action[AnyContent] =
     (authAction andThen validateAcceptJsonHeaderAction).async {
     implicit request => {
-      arrivalConnector.get(arrivalId).map { r =>
-          r match {
-            case Right(a) => Ok(Json.toJson(ResponseArrival(a)))
-            case Left(response) => handleNon2xx(response)
+      arrivalConnector.get(arrivalId).map { result =>
+          result match {
+            case Right(arrival) => Ok(Json.toJson(ResponseArrival(arrival)))
+            case Left(invalidResponse) => handleNon2xx(invalidResponse)
           }
       }
     }
