@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-package models.response
+package models.domain
 
 import java.time.LocalDateTime
 
-import models.domain.{Arrival}
 import play.api.libs.json.Json
 
-object ResponseArrival {
-
-  implicit val format = Json.format[ResponseArrival]
-
-  def apply(a: Arrival): ResponseArrival = {
-    ResponseArrival(a.location, a.created, a.updated, a.movementReferenceNumber, a.status, a.messagesLocation)
-  }
+object ArrivalWithMessages {
+  implicit val format = Json.format[ArrivalWithMessages]
 }
 
-case class ResponseArrival(arrival :String, created: LocalDateTime, updated: LocalDateTime, movementReferenceNumber: String, status: String, messages: String)
+case class ArrivalWithMessages(arrivalId: Int,
+                               location: String,
+                               messagesLocation: String,
+                               movementReferenceNumber: String,
+                               status: String,
+                               created: LocalDateTime,
+                               updated: LocalDateTime,
+                               messages: Seq[MovementMessage])
+                               extends BaseArrival
