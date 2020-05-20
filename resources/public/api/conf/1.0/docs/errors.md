@@ -1,10 +1,7 @@
 Here is the list error codes that we will keep updating.
 We use standard HTTP status codes to show whether an API request has succeeded or not: 
+
 **POST:**
-
-Returned to user:
-
-202 Accepted: if operation succeeds.
 
 400 BadRequest: if XML message is invalid.
 
@@ -22,10 +19,6 @@ Returned to user:
 
 **PUT**
 
-Returned to user:
-
-202 Accepted: if operation succeeds.
-
 400 BadRequest: if XML message is invalid.
 
 401 Unauthorized: if client passes invalid auth credentials.
@@ -39,8 +32,6 @@ Returned to user:
 500 Internal Server Error: if exception in code occurs.
 
 **GET**
-
-Returned to user:
 
 200 OK: if operation succeeds.
 
