@@ -85,6 +85,7 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
         arrivalConnector.getForEori.map { result =>
           result match {
             case Right(arrivals) => Ok(Json.toJson(ResponseArrivals(arrivals.arrivals.map { arrival => ResponseArrival(arrival) } ) ) )
+            case Left(invalidResponse) => handleNon2xx(invalidResponse)
           }
         }
       }

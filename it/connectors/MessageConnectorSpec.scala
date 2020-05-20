@@ -139,8 +139,6 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
         ).willReturn(aResponse().withStatus(OK)
           .withBody(Json.toJson(response).toString())))
 
-      println(Json.toJson(response).toString())
-
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
