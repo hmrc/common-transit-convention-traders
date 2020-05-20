@@ -73,7 +73,7 @@ uses:
               description: Valid XML Payload
               example: |
                 <IE007>....</IE007>
-    /{arrivalId}:
+    /arrivals/{arrivalId}:
       put:
         displayName: Resubmit an arrival notification
         description: |
@@ -113,7 +113,7 @@ uses:
                   }
           404:
             description: When a Movement Arrival does not exist, has been archived or is not available to the EORI number.
-      /messages:
+    /arrivals/{arrivalId}/messages:
         post:
           displayName: Send a message related to an arrival movement
           description: |
@@ -168,7 +168,7 @@ uses:
                     }
             404:
               description: When the arrival movement does not exist, has been archived or is not available to the EORI number.
-        /{messageId}:
+        /arrivals/{arrivalId}/messages/{messageId}:
           get:
             displayName: Pull a message relating to a Movement Arrival and message ID
             description: |
