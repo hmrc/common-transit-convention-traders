@@ -30,4 +30,4 @@ object ResponseMessage extends NodeSeqFormat{
   def apply(m: MovementMessage): ResponseMessage = ResponseMessage(m.location, m.dateTime, m.messageType, m.message)
 }
 
-case class ResponseMessage(location: String, recieved: LocalDateTime, messageType: String, body: NodeSeq)
+case class ResponseMessage(message: String, recieved: LocalDateTime, messageType: String, body: NodeSeq)
