@@ -33,7 +33,6 @@ We use standard HTTP status codes to show whether an API request has succeeded o
 
 **GET**
 
-200 OK: if operation succeeds.
 
 401 Unauthorized: if client passes invalid auth credentials.
 
