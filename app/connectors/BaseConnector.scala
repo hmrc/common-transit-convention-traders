@@ -31,6 +31,8 @@ class BaseConnector extends HttpErrorFunctions {
   protected val responseHeaders: Seq[(String, String)] =
     Seq((HeaderNames.CONTENT_TYPE, MimeTypes.JSON))
 
+  protected val arrivalRoute = "/transit-movements-trader-at-destination/movements/arrivals/"
+
   protected def extractIfSuccessful[T](response: HttpResponse)(implicit reads: Reads[T]): Either[HttpResponse, T] =
     if(is2xx(response.status)) {
       response.json.asOpt[T] match {

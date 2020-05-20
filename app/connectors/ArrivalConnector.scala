@@ -31,8 +31,6 @@ import scala.xml.NodeSeq
 
 class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends BaseConnector {
 
-  val arrivalRoute = "/transit-movements-trader-at-destination/movements/arrivals/"
-
   def post(message: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val url = appConfig.traderAtDestinationUrl + arrivalRoute
 

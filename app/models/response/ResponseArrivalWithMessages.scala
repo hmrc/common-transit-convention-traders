@@ -25,7 +25,7 @@ object ResponseArrivalWithMessages {
 
   implicit val format = Json.format[ResponseArrivalWithMessages]
 
-  def apply(a: ArrivalWithMessages): ResponseArrivalWithMessages = ResponseArrivalWithMessages(a.created, a.updated, a.movementReferenceNumber, a.status, a.messages.map { m => ResponseMessage(m)})
+  def apply(a: ArrivalWithMessages): ResponseArrivalWithMessages = ResponseArrivalWithMessages(a.location, a.created, a.updated, a.movementReferenceNumber, a.status, a.messages.map { m => ResponseMessage(m)})
 }
 
-case class ResponseArrivalWithMessages(created: LocalDateTime, updated: LocalDateTime, movementReferenceNumber: String, status: String, messages: Seq[ResponseMessage])
+case class ResponseArrivalWithMessages(arrival: String, created: LocalDateTime, updated: LocalDateTime, movementReferenceNumber: String, status: String, messages: Seq[ResponseMessage])

@@ -66,7 +66,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
 
   val expectedMessage = ResponseMessage(sourceMovement.location, sourceMovement.dateTime, sourceMovement.messageType, sourceMovement.message)
   val expectedMessageResult = Json.toJson[ResponseMessage](expectedMessage)
-  val expectedArrival = ResponseArrivalWithMessages(sourceArrival.created, sourceArrival.updated, sourceArrival.movementReferenceNumber, sourceArrival.status, Seq(expectedMessage, expectedMessage))
+  val expectedArrival = ResponseArrivalWithMessages(sourceArrival.location, sourceArrival.created, sourceArrival.updated, sourceArrival.movementReferenceNumber, sourceArrival.status, Seq(expectedMessage, expectedMessage))
   val expectedArrivalResult = Json.toJson[ResponseArrivalWithMessages](expectedArrival)
 
   def fakeRequestMessages[A](method: String, headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), uri: String, body: A) =

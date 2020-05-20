@@ -57,7 +57,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
     implicit request => {
       messageConnector.get(arrivalId, messageId).map { r =>
         r match {
-          case Right(m) => Ok(Json.toJson(ResponseMessage(m).copy(location = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.urlEncode(messageId)}")))
+          case Right(m) => Ok(Json.toJson(ResponseMessage(m).copy(message = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.urlEncode(messageId)}")))
           case Left(response) => handleNon2xx(response)
         }
       }
@@ -71,7 +71,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
             r match {
               case Right(a) => {
                 val messages = a.messages.map { m =>
-                  ResponseMessage(m) copy (location = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.lastFragment(m.location)}")
+                  ResponseMessage(m) copy (message = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.lastFragment(m.location)}")
                 }
                 Ok(Json.toJson(ResponseArrivalWithMessages(a).copy(messages = messages)))
               }
