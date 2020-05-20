@@ -20,7 +20,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import config.AppConfig
 import connectors.util.CustomHttpReader
 import javax.inject.Inject
-import models.domain.{Arrival, ArrivalWithMessages}
+import models.domain.{Arrival, ArrivalWithMessages, Arrivals}
 import play.api.mvc.{Headers, RequestHeader}
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -48,6 +48,14 @@ class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
 
     http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response =>
       extractIfSuccessful[Arrival](response)
+    }
+  }
+
+  def getForEori()(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrivals]] = {
+    val url = appConfig.traderAtDestinationUrl + arrivalRoute
+
+    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response =>
+      extractIfSuccessful[Arrivals](response)
     }
   }
 }
