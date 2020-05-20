@@ -73,7 +73,13 @@ uses:
               description: Valid XML Payload
               example: |
                 <IE007>....</IE007>
-    /arrivals/{arrivalId}:
+    /{arrivalId}:
+     uriParameters:
+       arrivalId:
+         description: The arrival ID specifying the arrival to return
+         type: string
+         example: 1
+         required: true
       put:
         displayName: Resubmit an arrival notification
         description: |
@@ -113,13 +119,13 @@ uses:
                   }
           404:
             description: When a Movement Arrival does not exist, has been archived or is not available to the EORI number.
-    /arrivals/{arrivalId}/messages:
+      /messages:
         post:
           displayName: Send a message related to an arrival movement
           description: |
             Send a message to the Office of Destination.  For example, an an Unloading Remarks message, otherwise known as E_ULD_REM (IE044), to let them know that the goods have been unloaded.
 
-            If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive a HTTP 403 Forbidden status. 
+            If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive a HTTP 403 Forbidden status.
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
@@ -168,7 +174,13 @@ uses:
                     }
             404:
               description: When the arrival movement does not exist, has been archived or is not available to the EORI number.
-        /arrivals/{arrivalId}/messages/{messageId}:
+        /{messageId}:
+          uriParameters:
+            messageId:
+              description: The message ID specifying the message to return
+              type: string
+              example: 1
+              required: true
           get:
             displayName: Pull a message relating to a Movement Arrival and message ID
             description: |
