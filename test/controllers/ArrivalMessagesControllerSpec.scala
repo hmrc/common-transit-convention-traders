@@ -22,8 +22,8 @@ import akka.util.ByteString
 import connectors.{ArrivalConnector, MessageConnector}
 import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
-import models.domain.{Arrival, MovementMessage}
-import models.response.{ResponseArrival, ResponseMessage}
+import models.domain.{ArrivalWithMessages, MovementMessage}
+import models.response.{ResponseArrivalWithMessages, ResponseMessage}
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures
@@ -60,14 +60,14 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
     "IE025",
     <test>default</test>)
 
-  val sourceArrival = Arrival(123, "/movements/arrivals/123", "/movements/arrivals/123/messages", "MRN", "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2), Seq(sourceMovement, sourceMovement))
+  val sourceArrival = ArrivalWithMessages(123, "/movements/arrivals/123", "/movements/arrivals/123/messages", "MRN", "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2), Seq(sourceMovement, sourceMovement))
 
   val json = Json.toJson[MovementMessage](sourceMovement)
 
   val expectedMessage = ResponseMessage(sourceMovement.location, sourceMovement.dateTime, sourceMovement.messageType, sourceMovement.message)
   val expectedMessageResult = Json.toJson[ResponseMessage](expectedMessage)
-  val expectedArrival = ResponseArrival(sourceArrival.location, sourceArrival.created, sourceArrival.status, Seq(expectedMessage, expectedMessage))
-  val expectedArrivalResult = Json.toJson[ResponseArrival](expectedArrival)
+  val expectedArrival = ResponseArrivalWithMessages(sourceArrival.location, sourceArrival.created, sourceArrival.updated, sourceArrival.movementReferenceNumber, sourceArrival.status, Seq(expectedMessage, expectedMessage))
+  val expectedArrivalResult = Json.toJson[ResponseArrivalWithMessages](expectedArrival)
 
   def fakeRequestMessages[A](method: String, headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), uri: String, body: A) =
     FakeRequest(method = method, uri = uri, headers, body = body)

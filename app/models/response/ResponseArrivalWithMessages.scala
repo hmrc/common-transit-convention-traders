@@ -18,16 +18,14 @@ package models.response
 
 import java.time.LocalDateTime
 
-import models.domain.{Arrival}
+import models.domain.ArrivalWithMessages
 import play.api.libs.json.Json
 
-object ResponseArrival {
+object ResponseArrivalWithMessages {
 
-  implicit val format = Json.format[ResponseArrival]
+  implicit val format = Json.format[ResponseArrivalWithMessages]
 
-  def apply(a: Arrival): ResponseArrival = {
-    ResponseArrival(a.location, a.created, a.updated, a.movementReferenceNumber, a.status, a.messagesLocation)
-  }
+  def apply(a: ArrivalWithMessages): ResponseArrivalWithMessages = ResponseArrivalWithMessages(a.location, a.created, a.updated, a.movementReferenceNumber, a.status, a.messages.map { m => ResponseMessage(m)})
 }
 
-case class ResponseArrival(arrival :String, created: LocalDateTime, updated: LocalDateTime, movementReferenceNumber: String, status: String, messages: String)
+case class ResponseArrivalWithMessages(arrival: String, created: LocalDateTime, updated: LocalDateTime, movementReferenceNumber: String, status: String, messages: Seq[ResponseMessage])
