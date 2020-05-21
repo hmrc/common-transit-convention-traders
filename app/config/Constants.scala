@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-package utils
+package config
 
-import java.net.{URI, URLEncoder}
+object Constants {
+  val AcceptHeaderPattern = "^application/vnd[.]{1}hmrc[.]{1}(.*?)[+]{1}(.*)$".r
 
-object Utils {
-  def lastFragment(location: String): String =
-    URI.create(location).getPath.split("/").last
-
-  def urlEncode(str: String): String =
-    URLEncoder.encode(str, "UTF-8")
+  val AcceptHeaderMissing = "The accept header is missing or invalid"
 }
