@@ -19,11 +19,12 @@ package controllers
 import connectors.ArrivalConnector
 import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateArrivalNotificationAction}
 import javax.inject.Inject
-import models.response.ResponseArrival
+import models.response.{ResponseArrival, ResponseArrivals}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.{ResponseHelper, Utils}
+
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 import uk.gov.hmrc.http.HttpErrorFunctions
@@ -77,5 +78,17 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
       }
     }
   }
+
+  def getArrivalsForEori: Action[AnyContent] =
+    (authAction andThen validateAcceptJsonHeaderAction).async {
+      implicit request => {
+        arrivalConnector.getForEori.map { result =>
+          result match {
+            case Right(arrivals) => Ok(Json.toJson(ResponseArrivals(arrivals.arrivals.map { arrival => ResponseArrival(arrival) } ) ) )
+            case Left(invalidResponse) => handleNon2xx(invalidResponse)
+          }
+        }
+      }
+    }
 
   }

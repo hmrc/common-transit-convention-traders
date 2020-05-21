@@ -50,7 +50,6 @@ class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
     val url = appConfig.traderAtDestinationUrl + s"$arrivalRoute${Utils.urlEncode(arrivalId)}/messages"
 
     http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response =>
-      println(response.body)
       extractIfSuccessful[ArrivalWithMessages](response)
     }
   }
