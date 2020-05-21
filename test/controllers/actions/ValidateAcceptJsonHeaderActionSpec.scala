@@ -24,10 +24,13 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.Json
 import play.api.mvc._
 import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.http.ErrorResponse
+import utils.Utils
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -62,7 +65,7 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
       status(result) mustEqual OK
     }
 
-    "must return HttpVersionNotSupported if Accept header with invalid version is passed in" in {
+    "must return NotAcceptable if Accept header with invalid version is passed in" in {
       val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
@@ -72,10 +75,11 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
 
       val result = controller.post()(req)
 
-      status(result) mustEqual HTTP_VERSION_NOT_SUPPORTED
+      status(result) mustEqual NOT_ACCEPTABLE
+      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)).toString()
     }
 
-    "must return UnsupportedMediaType if Accept header is missing" in {
+    "must return NotAcceptable if Accept header is missing" in {
       val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
@@ -85,10 +89,11 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
 
       val result = controller.post()(req)
 
-      status(result) mustEqual UNSUPPORTED_MEDIA_TYPE
+      status(result) mustEqual NOT_ACCEPTABLE
+      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)).toString()
     }
 
-    "must return UnsupportedMediaType if Accept header is empty" in {
+    "must return NotAcceptable if Accept header is empty" in {
       val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
@@ -98,10 +103,11 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
 
       val result = controller.post()(req)
 
-      status(result) mustEqual UNSUPPORTED_MEDIA_TYPE
+      status(result) mustEqual NOT_ACCEPTABLE
+      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)).toString()
     }
 
-    "must return UnsupportedMediaType if Accept header is */*" in {
+    "must return NotAcceptable if Accept header is */*" in {
       val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
@@ -111,10 +117,11 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
 
       val result = controller.post()(req)
 
-      status(result) mustEqual UNSUPPORTED_MEDIA_TYPE
+      status(result) mustEqual NOT_ACCEPTABLE
+      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)).toString()
     }
 
-    "must return UnsupportedMediaType if Accept header is application/xml" in {
+    "must return NotAcceptable if Accept header is application/xml" in {
       val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
@@ -124,10 +131,11 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
 
       val result = controller.post()(req)
 
-      status(result) mustEqual UNSUPPORTED_MEDIA_TYPE
+      status(result) mustEqual NOT_ACCEPTABLE
+      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)).toString()
     }
 
-    "must return UnsupportedMediaType if Accept header is text/html" in {
+    "must return NotAcceptable if Accept header is text/html" in {
       val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
@@ -137,7 +145,8 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
 
       val result = controller.post()(req)
 
-      status(result) mustEqual UNSUPPORTED_MEDIA_TYPE
+      status(result) mustEqual NOT_ACCEPTABLE
+      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)).toString()
     }
   }
 }

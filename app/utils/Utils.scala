@@ -23,6 +23,8 @@ import scala.util.Try
 object Utils {
   val acceptHeaderPattern = "^application/vnd[.]{1}hmrc[.]{1}(.*?)[+]{1}(.*)$".r
 
+  val acceptHeaderMissing = "The accept header is missing or invalid"
+
   def lastFragment(location: String): String =
     URI.create(location).getPath.split("/").last
 

@@ -17,9 +17,11 @@
 package controllers.actions
 
 import javax.inject.Inject
-import play.api.mvc.Results.HttpVersionNotSupported
-import play.api.mvc.Results.UnsupportedMediaType
+import play.api.libs.json.Json
+import play.api.mvc.Results.NotAcceptable
+import play.api.http.Status.NOT_ACCEPTABLE
 import play.api.mvc.{ActionRefiner, Request, Result}
+import uk.gov.hmrc.play.bootstrap.http.ErrorResponse
 import utils.Utils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,16 +38,17 @@ class ValidateAcceptJsonHeaderAction @Inject()()(
             (version, contentType) match {
               case ("1.0", "json") =>
                 Future.successful(Right(request))
-              case (_, "json") =>
-                Future.successful(Left(HttpVersionNotSupported))
               case _ =>
-                Future.successful(Left(UnsupportedMediaType))
+                val response = ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)
+                Future.successful(Left(NotAcceptable(Json.toJson(response))))
             }
           case _ =>
-            Future.successful(Left(UnsupportedMediaType))
+            val response = ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)
+            Future.successful(Left(NotAcceptable(Json.toJson(response))))
         }
       case None =>
-        Future.successful(Left(UnsupportedMediaType))
+        val response = ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)
+        Future.successful(Left(NotAcceptable(Json.toJson(response))))
     }
   }
 }
