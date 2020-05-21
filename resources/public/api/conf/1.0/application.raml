@@ -4,7 +4,7 @@ title: CTC Traders
 
 protocols: [ HTTPS ]
 baseUri: https://common-transit-convention-traders.hmrc.gov.uk/
-version: v0.1
+version: v1.0
 
 documentation:
  - title: Overview
@@ -22,6 +22,16 @@ uses:
   annotations: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/annotations.raml
   types: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/types.raml
 
+traits:
+  contentXmlHeader:
+    headers:
+      Content-Type:
+        description: Specifies the format of the request body, which must be XML.
+        type: string
+        required: true
+        example: application/xml
+
+
 /customs/transits/movements:
   /arrivals:
     post:
@@ -32,7 +42,7 @@ uses:
         The location header in the response will contain a URI and arrival ID for the arrival notification. This will allow you to get the message status.
 
         If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive a HTTP 403 Forbidden status. 
-      is: [headers.acceptHeader]
+      is: [contentXmlHeader]
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
@@ -88,7 +98,7 @@ uses:
           The location header in the response will contain an arrival ID for the arrival notification. This will allow you to get the message status.
 
           If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive a HTTP 403 Forbidden status.
-        is: [headers.acceptHeader]
+        is: [contentXmlHeader]
         (annotations.scope): "common-transit-convention-traders"
         securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
         responses:
@@ -126,6 +136,7 @@ uses:
             Send a message to the Office of Destination.  For example, an an Unloading Remarks message, otherwise known as E_ULD_REM (IE044), to let them know that the goods have been unloaded.
 
             If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive a HTTP 403 Forbidden status.
+          is: [contentXmlHeader]
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
@@ -145,6 +156,7 @@ uses:
             Pull all the messages to do with a Movement Arrival. Any Movement Arrivals more than 21 days old will be archived along with their related messages. Any Movement Arrivals more than 21 days old will be archived along with their related messages. Archived movements will return a HTTP 404 Not Found status.
 
             You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
+          is: [headers.acceptHeader]
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
@@ -187,6 +199,7 @@ uses:
               Pull all messages relating to a specific Movement Arrival and message ID. For example, this could include messages about route diversions or unloading permissions. Any Movement Arrivals more than 21 days old will be archived along with their related messages. Archived movements will return a HTTP 404 Not Found status.
 
               You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
+            is: [headers.acceptHeader]
             (annotations.scope): "common-transit-convention-traders"
             securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
             responses:
