@@ -22,8 +22,8 @@ import controllers.actions.{AuthAction, FakeAuthAction}
 import akka.util.ByteString
 import connectors.ArrivalConnector
 import data.TestXml
-import models.domain.{Arrival, ArrivalWithMessages}
-import models.response.ResponseArrival
+import models.domain.{Arrival, ArrivalWithMessages, Arrivals}
+import models.response.{ResponseArrival, ResponseArrivals}
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures
@@ -257,11 +257,9 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
      when(mockArrivalConnector.get(any())(any(), any(), any()))
        .thenReturn(Future.successful(Right(sourceArrival)))
 
-     //TODO: Refactor Requests and Test Data to seperate traits to clean up our test code
      val request = FakeRequest("GET", "/movements/arrivals/123", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value
 
-     //TODO: if this works, rewrite other tests to use this instead of contentAsString
      status(result) mustBe OK
      contentAsString(result) mustEqual expectedArrivalResult.toString()
    }
@@ -286,7 +284,40 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
      status(result) mustBe INTERNAL_SERVER_ERROR
    }
 
-   "return 500 if downstream provides an unsafe message header" ignore {}
+ }
 
+ "GET /movements/arrivals/" - {
+
+   "return 200 with json body of a sequence of arrivals" in {
+     when(mockArrivalConnector.getForEori()(any(), any(), any()))
+       .thenReturn(Future.successful(Right(Arrivals(Seq(sourceArrival, sourceArrival, sourceArrival)))))
+
+     val request = FakeRequest("GET", "/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+     val result = route(app, request).value
+
+     status(result) mustBe OK
+     contentAsString(result) mustEqual Json.toJson(ResponseArrivals(Seq(expectedArrival, expectedArrival, expectedArrival))).toString()
+   }
+
+   "return 200 with empty list if that is provided" in {
+     when(mockArrivalConnector.getForEori()(any(), any(), any()))
+       .thenReturn(Future.successful(Right(Arrivals(Nil))))
+
+     val request = FakeRequest("GET", "/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+     val result = route(app, request).value
+
+     status(result) mustBe OK
+     contentAsString(result) mustEqual Json.toJson(ResponseArrivals(Nil)).toString()
+   }
+
+   "return 500 for downstream errors" in {
+     when(mockArrivalConnector.getForEori()(any(), any(), any()))
+       .thenReturn(Future.successful(Left(HttpResponse(INTERNAL_SERVER_ERROR))))
+
+     val request = FakeRequest("GET", "/movements/arrivals", headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+     val result = route(app, request).value
+
+     status(result) mustBe INTERNAL_SERVER_ERROR
+   }
  }
 }
