@@ -1,7 +1,7 @@
 Here is the list error codes that we will keep updating.
 We use standard HTTP status codes to show whether an API request has succeeded or not: 
 
-**POST:**
+**POST**
 
 400 BadRequest: If XML message is invalid
 
