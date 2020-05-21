@@ -16,6 +16,7 @@
 
 package controllers.actions
 
+import config.Constants
 import data.TestXml
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterEach, FreeSpec, MustMatchers, OptionValues}
@@ -76,7 +77,7 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
       val result = controller.post()(req)
 
       status(result) mustEqual NOT_ACCEPTABLE
-      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)).toString()
+      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)).toString()
     }
 
     "must return NotAcceptable if Accept header is missing" in {
@@ -90,7 +91,7 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
       val result = controller.post()(req)
 
       status(result) mustEqual NOT_ACCEPTABLE
-      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)).toString()
+      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)).toString()
     }
 
     "must return NotAcceptable if Accept header is empty" in {
@@ -104,7 +105,7 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
       val result = controller.post()(req)
 
       status(result) mustEqual NOT_ACCEPTABLE
-      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)).toString()
+      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)).toString()
     }
 
     "must return NotAcceptable if Accept header is */*" in {
@@ -118,7 +119,7 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
       val result = controller.post()(req)
 
       status(result) mustEqual NOT_ACCEPTABLE
-      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)).toString()
+      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)).toString()
     }
 
     "must return NotAcceptable if Accept header is application/xml" in {
@@ -132,7 +133,7 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
       val result = controller.post()(req)
 
       status(result) mustEqual NOT_ACCEPTABLE
-      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)).toString()
+      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)).toString()
     }
 
     "must return NotAcceptable if Accept header is text/html" in {
@@ -146,7 +147,7 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
       val result = controller.post()(req)
 
       status(result) mustEqual NOT_ACCEPTABLE
-      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)).toString()
+      contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)).toString()
     }
   }
 }

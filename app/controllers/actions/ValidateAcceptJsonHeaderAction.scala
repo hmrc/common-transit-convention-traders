@@ -16,13 +16,13 @@
 
 package controllers.actions
 
+import config.Constants
 import javax.inject.Inject
 import play.api.libs.json.Json
 import play.api.mvc.Results.NotAcceptable
 import play.api.http.Status.NOT_ACCEPTABLE
 import play.api.mvc.{ActionRefiner, Request, Result}
 import uk.gov.hmrc.play.bootstrap.http.ErrorResponse
-import utils.Utils
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,20 +34,20 @@ class ValidateAcceptJsonHeaderAction @Inject()()(
     request.headers.get("Accept") match {
       case Some(value) =>
         value match {
-          case Utils.acceptHeaderPattern(version, contentType) =>
+          case Constants.AcceptHeaderPattern(version, contentType) =>
             (version, contentType) match {
               case ("1.0", "json") =>
                 Future.successful(Right(request))
               case _ =>
-                val response = ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)
+                val response = ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)
                 Future.successful(Left(NotAcceptable(Json.toJson(response))))
             }
           case _ =>
-            val response = ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)
+            val response = ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)
             Future.successful(Left(NotAcceptable(Json.toJson(response))))
         }
       case None =>
-        val response = ErrorResponse(NOT_ACCEPTABLE, Utils.acceptHeaderMissing)
+        val response = ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)
         Future.successful(Left(NotAcceptable(Json.toJson(response))))
     }
   }
