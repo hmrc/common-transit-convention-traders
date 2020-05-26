@@ -18,8 +18,9 @@ package controllers.actions
 
 import config.Constants
 import javax.inject.Inject
+import play.api.Logger
 import play.api.libs.json.Json
-import play.api.mvc.Results.NotAcceptable
+import play.api.mvc.Results.ImATeapot
 import play.api.http.Status.NOT_ACCEPTABLE
 import play.api.mvc.{ActionRefiner, Request, Result}
 import uk.gov.hmrc.play.bootstrap.http.ErrorResponse
@@ -39,16 +40,19 @@ class ValidateAcceptJsonHeaderAction @Inject()()(
               case ("1.0", "json") =>
                 Future.successful(Right(request))
               case _ =>
+                Logger.debug("Accept header: wrong version number")
                 val response = ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)
-                Future.successful(Left(NotAcceptable(Json.toJson(response))))
+                Future.successful(Left(ImATeapot))
             }
           case _ =>
+            Logger.debug("Accept header: missing header value")
             val response = ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)
-            Future.successful(Left(NotAcceptable(Json.toJson(response))))
+            Future.successful(Left(ImATeapot))
         }
       case None =>
+        Logger.debug("Accept header: missing header")
         val response = ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)
-        Future.successful(Left(NotAcceptable(Json.toJson(response))))
+        Future.successful(Left(ImATeapot))
     }
   }
 }
