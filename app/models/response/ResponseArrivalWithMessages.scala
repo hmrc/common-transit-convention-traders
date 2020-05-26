@@ -20,12 +20,13 @@ import java.time.LocalDateTime
 
 import models.domain.ArrivalWithMessages
 import play.api.libs.json.Json
+import utils.Utils
 
 object ResponseArrivalWithMessages {
 
   implicit val format = Json.format[ResponseArrivalWithMessages]
 
-  def apply(a: ArrivalWithMessages): ResponseArrivalWithMessages = ResponseArrivalWithMessages(a.location, a.created, a.updated, a.movementReferenceNumber, a.status, a.messages.map { m => ResponseMessage(m)})
+  def apply(a: ArrivalWithMessages): ResponseArrivalWithMessages = ResponseArrivalWithMessages(s"/movements/arrivals/${Utils.urlEncode(a.arrivalId.toString)}", a.created, a.updated, a.movementReferenceNumber, a.status, a.messages.map { m => ResponseMessage(m)})
 }
 
 case class ResponseArrivalWithMessages(arrival: String, created: LocalDateTime, updated: LocalDateTime, movementReferenceNumber: String, status: String, messages: Seq[ResponseMessage])

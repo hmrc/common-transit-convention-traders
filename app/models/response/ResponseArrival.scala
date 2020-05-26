@@ -18,15 +18,16 @@ package models.response
 
 import java.time.LocalDateTime
 
-import models.domain.{Arrival}
+import models.domain.Arrival
 import play.api.libs.json.Json
+import utils.Utils
 
 object ResponseArrival {
 
   implicit val format = Json.format[ResponseArrival]
 
   def apply(a: Arrival): ResponseArrival = {
-    ResponseArrival(a.location, a.created, a.updated, a.movementReferenceNumber, a.status, a.messagesLocation)
+    ResponseArrival(s"/movements/arrivals/${Utils.urlEncode(a.arrivalId.toString)}", a.created, a.updated, a.movementReferenceNumber, a.status, s"/movements/arrivals/${Utils.urlEncode(a.arrivalId.toString)}/messages")
   }
 }
 
