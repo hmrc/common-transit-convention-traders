@@ -66,7 +66,7 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
       status(result) mustEqual OK
     }
 
-    "must return NotAcceptable if Accept header with invalid version is passed in" ignore {
+    "must return NotAcceptable if Accept header with invalid version is passed in" in {
       val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
@@ -80,7 +80,7 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
       contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)).toString()
     }
 
-    "must return NotAcceptable if Accept header is missing" ignore {
+    "must return NotAcceptable if Accept header is missing" in {
       val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
@@ -94,7 +94,7 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
       contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)).toString()
     }
 
-    "must return NotAcceptable if Accept header is empty" ignore {
+    "must return NotAcceptable if Accept header is empty" in {
       val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
@@ -108,7 +108,7 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
       contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)).toString()
     }
 
-    "must return NotAcceptable if Accept header is */*" ignore {
+    "must return NotAcceptable if Accept header is */*" in {
       val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
@@ -122,7 +122,7 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
       contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)).toString()
     }
 
-    "must return NotAcceptable if Accept header is application/xml" ignore {
+    "must return NotAcceptable if Accept header is application/xml" in {
       val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
@@ -136,7 +136,7 @@ class ValidateAcceptJsonHeaderActionSpec extends FreeSpec with MustMatchers with
       contentAsString(result) mustEqual Json.toJson(ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)).toString()
     }
 
-    "must return NotAcceptable if Accept header is text/html" ignore {
+    "must return NotAcceptable if Accept header is text/html" in {
       val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
