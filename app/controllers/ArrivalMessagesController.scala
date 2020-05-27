@@ -25,7 +25,7 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.{ResponseHelper, Utils}
-
+import utils.CallOps._
 import scala.concurrent.{ExecutionContext}
 import scala.xml.NodeSeq
 
@@ -43,7 +43,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
           case s if is2xx(s) =>
             response.header(LOCATION) match {
               case Some(locationValue) =>
-                  Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.urlEncode(Utils.lastFragment(locationValue))}")
+                  Accepted.withHeaders(LOCATION -> routes.ArrivalMessagesController.getArrivalMessage(arrivalId, Utils.lastFragment(locationValue)).urlWithContext().url)
               case _ =>
                 InternalServerError
             }

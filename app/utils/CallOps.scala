@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package config
+package utils
+import config.Constants
+import play.api.mvc.Call
 
-object Constants {
-  val AcceptHeaderPattern = "^application/vnd[.]{1}hmrc[.]{1}(.*?)[+]{1}(.*)$".r
-
-  val AcceptHeaderMissing = "The accept header is missing or invalid"
-
-  val Context = "/customs/transits"
+object CallOps {
+  implicit class CallOps(c: Call) {
+    def urlWithContext(): Call =
+      Call(c.method, Constants.Context + c.url, c.fragment)
+  }
 }

@@ -38,6 +38,7 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpResponse
+import utils.CallOps._
 
 import scala.concurrent.Future
 
@@ -70,7 +71,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> "/customs/transits/movements/arrivals/123")
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext().url)
    }
 
    "must return InternalServerError when unsuccessful" in {
@@ -111,7 +112,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> "/customs/transits/movements/arrivals/123-%40%2B*%7E-31%40")
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123-@+*~-31@").urlWithContext().url)
    }
 
    "must exclude query string if present in downstream Location header" in {
@@ -122,7 +123,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> "/customs/transits/movements/arrivals/123")
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext().url)
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {
@@ -169,7 +170,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> "/customs/transits/movements/arrivals/123")
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext().url)
    }
 
    "must return InternalServerError when unsuccessful" in {
@@ -206,7 +207,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> "/customs/transits/movements/arrivals/123-%40%2B*%7E-31%40")
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123-@+*~-31@").urlWithContext().url)
    }
 
    "must exclude query string if present in downstream Location header" in {
@@ -216,7 +217,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> "/customs/transits/movements/arrivals/123")
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext().url)
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {

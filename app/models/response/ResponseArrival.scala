@@ -21,14 +21,13 @@ import java.time.LocalDateTime
 import controllers.routes
 import models.domain.Arrival
 import play.api.libs.json.Json
-import utils.Utils
-
+import utils.CallOps._
 object ResponseArrival {
 
   implicit val format = Json.format[ResponseArrival]
 
   def apply(a: Arrival): ResponseArrival = {
-    ResponseArrival(routes.ArrivalMovementController.getArrival(a.arrivalId.toString).url, a.created, a.updated, a.movementReferenceNumber, a.status, routes.ArrivalMessagesController.getArrivalMessages(a.arrivalId.toString).url)
+    ResponseArrival(routes.ArrivalMovementController.getArrival(a.arrivalId.toString).urlWithContext().url, a.created, a.updated, a.movementReferenceNumber, a.status, routes.ArrivalMessagesController.getArrivalMessages(a.arrivalId.toString).urlWithContext().url)
   }
 }
 

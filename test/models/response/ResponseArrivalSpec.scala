@@ -18,8 +18,9 @@ package models.response
 
 import java.time.LocalDateTime
 
+import controllers.routes
 import models.domain.Arrival
-import org.scalacheck.Arbitrary
+import utils.CallOps._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterEach, FreeSpec, MustMatchers, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
@@ -33,7 +34,7 @@ class ResponseArrivalSpec extends FreeSpec with MustMatchers with GuiceOneAppPer
 
       val result = ResponseArrival(arrival)
 
-      result.arrival mustBe "/movements/arrivals/3"
+      result.arrival mustBe routes.ArrivalMovementController.getArrival("3").urlWithContext().url
     }
 
     "must have valid public messages location" in {
@@ -41,7 +42,7 @@ class ResponseArrivalSpec extends FreeSpec with MustMatchers with GuiceOneAppPer
 
       val result = ResponseArrival(arrival)
 
-      result.messages mustBe "/movements/arrivals/3/messages"
+      result.messages mustBe routes.ArrivalMessagesController.getArrivalMessages("3").urlWithContext().url
     }
   }
 

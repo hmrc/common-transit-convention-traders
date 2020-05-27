@@ -38,7 +38,7 @@ import play.api.libs.json.Json
 import play.api.test.{FakeHeaders, FakeRequest}
 import play.api.test.Helpers.{headers, _}
 import uk.gov.hmrc.http.HttpResponse
-
+import utils.CallOps._
 import scala.concurrent.Future
 
 class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml{
@@ -55,12 +55,12 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
   }
 
   val sourceMovement = MovementMessage(
-    "/movements/arrivals/123/messages/4",
+    "/customs/transits/movements/arrivals/123/messages/4",
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
     "IE025",
     <test>default</test>)
 
-  val sourceArrival = ArrivalWithMessages(123, "/movements/arrivals/123", "/movements/arrivals/123/messages", "MRN", "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2), Seq(sourceMovement, sourceMovement))
+  val sourceArrival = ArrivalWithMessages(123, "/customs/transits/movements/arrivals/123", "/customs/transits/movements/arrivals/123/messages", "MRN", "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2), Seq(sourceMovement, sourceMovement))
 
   val json = Json.toJson[MovementMessage](sourceMovement)
 
@@ -135,7 +135,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       val result = route(app, request).value
 
       status(result) mustBe ACCEPTED
-      headers(result) must contain (LOCATION -> "/customs/transits/movements/arrivals/123/messages/1")
+      headers(result) must contain (LOCATION -> routes.ArrivalMessagesController.getArrivalMessage("123", "1").urlWithContext().url)
     }
 
     "must return InternalServerError when unsuccessful" in {
@@ -176,7 +176,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       val result = route(app, request).value
 
       status(result) mustBe ACCEPTED
-      headers(result) must contain (LOCATION -> "/customs/transits/movements/arrivals/123/messages/123-%40%2B*%7E-31%40")
+      headers(result) must contain (LOCATION -> routes.ArrivalMessagesController.getArrivalMessage("123", "123-@+*~-31@").urlWithContext().url)
     }
 
     "must exclude query string if present in downstream Location header" in {

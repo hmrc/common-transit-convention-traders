@@ -1,14 +1,14 @@
 # microservice specific routes
 
-GET        /movements/arrivals                                      controllers.ArrivalMovementController.getArrivalsForEori()
-POST       /movements/arrivals                                      controllers.ArrivalMovementController.createArrivalNotification()
+GET        /movements/arrivals                                      @controllers.ArrivalMovementController.getArrivalsForEori()
+POST       /movements/arrivals                                      @controllers.ArrivalMovementController.createArrivalNotification()
 
-PUT        /movements/arrivals/:arrivalId                           controllers.ArrivalMovementController.resubmitArrivalNotification(arrivalId: String)
-GET        /movements/arrivals/:arrivalId                           controllers.ArrivalMovementController.getArrival(arrivalId: String)
+PUT        /movements/arrivals/:arrivalId                           @controllers.ArrivalMovementController.resubmitArrivalNotification(arrivalId: String)
+GET        /movements/arrivals/:arrivalId                           @controllers.ArrivalMovementController.getArrival(arrivalId: String)
 
-POST       /movements/arrivals/:arrivalId/messages                  controllers.ArrivalMessagesController.sendMessageDownstream(arrivalId: String)
-GET        /movements/arrivals/:arrivalId/messages                  controllers.ArrivalMessagesController.getArrivalMessages(arrivalId: String)
+POST       /movements/arrivals/:arrivalId/messages                  @controllers.ArrivalMessagesController.sendMessageDownstream(arrivalId: String)
+GET        /movements/arrivals/:arrivalId/messages                  @controllers.ArrivalMessagesController.getArrivalMessages(arrivalId: String)
 
-GET        /movements/arrivals/:arrivalId/messages/:messageId       controllers.ArrivalMessagesController.getArrivalMessage(arrivalId: String, messageId: String)
+GET        /movements/arrivals/:arrivalId/messages/:messageId       @controllers.ArrivalMessagesController.getArrivalMessage(arrivalId: String, messageId: String)
 
 
