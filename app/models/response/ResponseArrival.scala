@@ -18,6 +18,7 @@ package models.response
 
 import java.time.LocalDateTime
 
+import controllers.routes
 import models.domain.Arrival
 import play.api.libs.json.Json
 import utils.Utils
@@ -27,7 +28,7 @@ object ResponseArrival {
   implicit val format = Json.format[ResponseArrival]
 
   def apply(a: Arrival): ResponseArrival = {
-    ResponseArrival(s"/movements/arrivals/${Utils.urlEncode(a.arrivalId.toString)}", a.created, a.updated, a.movementReferenceNumber, a.status, s"/movements/arrivals/${Utils.urlEncode(a.arrivalId.toString)}/messages")
+    ResponseArrival(routes.ArrivalMovementController.getArrival(a.arrivalId.toString).url, a.created, a.updated, a.movementReferenceNumber, a.status, routes.ArrivalMessagesController.getArrivalMessages(a.arrivalId.toString).url)
   }
 }
 

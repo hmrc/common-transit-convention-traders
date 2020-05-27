@@ -18,17 +18,21 @@ package models.response
 
 import java.time.LocalDateTime
 
-import controllers.routes
 import models.domain.MovementMessage
-import play.api.libs.json.Json
-import utils.NodeSeqFormat
+import org.scalatest.{BeforeAndAfterEach, FreeSpec, MustMatchers, OptionValues}
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
-import scala.xml.NodeSeq
+class ResponseMessageSpec extends FreeSpec with MustMatchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
 
-object ResponseMessage extends NodeSeqFormat{
-  implicit val format = Json.format[ResponseMessage]
+  "ResponseMessage" - {
+    "must have a valid message location" in {
+      val message = MovementMessage("", LocalDateTime.now(), "type", <test>default</test>)
 
-  def apply(m: MovementMessage, arrivalId: String, messageId: String): ResponseMessage = ResponseMessage(routes.ArrivalMessagesController.getArrivalMessage(arrivalId, messageId).url, m.dateTime, m.messageType, m.message)
+      val result = ResponseMessage(message, "1", "3")
+
+      result.message mustBe "/movements/arrivals/1/messages/3"
+    }
+  }
 }
-
-case class ResponseMessage(message: String, recieved: LocalDateTime, messageType: String, body: NodeSeq)

@@ -18,7 +18,7 @@ package models.response
 
 import java.time.LocalDateTime
 
-import models.domain.{Arrival, ArrivalWithMessages}
+import models.domain.{Arrival, ArrivalWithMessages, MovementMessage}
 import org.scalatest.{BeforeAndAfterEach, FreeSpec, MustMatchers, OptionValues}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.mockito.MockitoSugar
@@ -33,6 +33,14 @@ class ResponseArrivalWithMessagesSpec extends FreeSpec with MustMatchers with Gu
       val result = ResponseArrivalWithMessages(arrival)
 
       result.arrival mustBe "/movements/arrivals/3"
+    }
+
+    "messages must have valid public locations" in {
+      val arrival = ArrivalWithMessages(3, "loc", "messageLoc", "mrn", "status", LocalDateTime.now(), LocalDateTime.now(), Seq(MovementMessage("/3", LocalDateTime.now(), "type", <test>default</test>)))
+
+      val result = ResponseArrivalWithMessages(arrival)
+
+      result.messages.head.message mustBe "/movements/arrivals/3/messages/3"
     }
   }
 
