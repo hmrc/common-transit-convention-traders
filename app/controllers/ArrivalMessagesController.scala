@@ -18,7 +18,7 @@ package controllers
 
 import connectors.MessageConnector
 import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateMessageAction}
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import models.response.{ResponseArrivalWithMessages, ResponseMessage}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
@@ -26,9 +26,10 @@ import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.{ResponseHelper, Utils}
 import utils.CallOps._
-import scala.concurrent.{ExecutionContext}
+import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
+@Singleton
 class ArrivalMessagesController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    messageConnector: MessageConnector,
