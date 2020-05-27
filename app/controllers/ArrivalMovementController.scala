@@ -58,8 +58,6 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
           case status if is2xx(status) =>
             response.header(LOCATION) match {
               case Some(locationValue) =>
-                println(Utils.lastFragment(locationValue))
-                println(Utils.urlEncode(Utils.lastFragment(locationValue)))
                 Accepted.withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(Utils.lastFragment(locationValue)).urlWithContext().url)
               case _ =>
                 InternalServerError
