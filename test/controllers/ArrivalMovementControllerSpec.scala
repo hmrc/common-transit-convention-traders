@@ -59,7 +59,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
   val expectedArrival = ResponseArrival(sourceArrival)
   val expectedArrivalResult = Json.toJson[ResponseArrival](expectedArrival)
 
-  def fakeRequestArrivals[A](method: String, headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), uri: String = "/movements/arrivals", body: A) =
+  def fakeRequestArrivals[A](method: String, headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), uri: String = routes.ArrivalMovementController.createArrivalNotification().url, body: A) =
     FakeRequest(method = method, uri = uri, headers, body = body)
 
  "POST /movements/arrivals" - {
