@@ -135,7 +135,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       val result = route(app, request).value
 
       status(result) mustBe ACCEPTED
-      headers(result) must contain (LOCATION -> routes.ArrivalMessagesController.getArrivalMessage("123", "1").urlWithContext().url)
+      headers(result) must contain (LOCATION -> routes.ArrivalMessagesController.getArrivalMessage("123", "1").urlWithContext())
     }
 
     "must return InternalServerError when unsuccessful" in {
@@ -176,7 +176,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
       val result = route(app, request).value
 
       status(result) mustBe ACCEPTED
-      headers(result) must contain (LOCATION -> routes.ArrivalMessagesController.getArrivalMessage("123", "123-@+*~-31@").urlWithContext().url)
+      headers(result) must contain (LOCATION -> routes.ArrivalMessagesController.getArrivalMessage("123", "123-@+*~-31@").urlWithContext())
     }
 
     "must exclude query string if present in downstream Location header" in {

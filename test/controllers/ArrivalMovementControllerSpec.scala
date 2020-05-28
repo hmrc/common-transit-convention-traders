@@ -71,7 +71,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext().url)
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext())
    }
 
    "must return InternalServerError when unsuccessful" in {
@@ -112,7 +112,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123-@+*~-31@").urlWithContext().url)
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123-@+*~-31@").urlWithContext())
    }
 
    "must exclude query string if present in downstream Location header" in {
@@ -123,7 +123,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext().url)
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext())
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {
@@ -170,7 +170,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext().url)
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext())
    }
 
    "must return InternalServerError when unsuccessful" in {
@@ -202,12 +202,12 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
    "must escape arrival ID in Location response header" in {
      when(mockArrivalConnector.put(any(), any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123-@+*~-31@/messages/123-@+*~-31@")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123-@+*~-31@")), responseString = None) ))
 
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123-@+*~-31@").urlWithContext().url)
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123-@+*~-31@").urlWithContext())
    }
 
    "must exclude query string if present in downstream Location header" in {
@@ -217,7 +217,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext().url)
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext())
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {

@@ -27,7 +27,7 @@ object ResponseArrival {
   implicit val format = Json.format[ResponseArrival]
 
   def apply(a: Arrival): ResponseArrival = {
-    ResponseArrival(routes.ArrivalMovementController.getArrival(a.arrivalId.toString).urlWithContext().url, a.created, a.updated, a.movementReferenceNumber, a.status, routes.ArrivalMessagesController.getArrivalMessages(a.arrivalId.toString).urlWithContext().url)
+    ResponseArrival(routes.ArrivalMovementController.getArrival(a.arrivalId.toString).urlWithContext(), a.created, a.updated, a.movementReferenceNumber, a.status, routes.ArrivalMessagesController.getArrivalMessages(a.arrivalId.toString).urlWithContext())
   }
 }
 

@@ -1,0 +1,2 @@
+GET        /api/definition              controllers.documentation.DocumentationController.definition()
+GET        /api/conf/:version/*file     controllers.documentation.DocumentationController.raml(version: String, file: String)

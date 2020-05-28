@@ -20,7 +20,7 @@ import play.api.mvc.Call
 
 object CallOps {
   implicit class CallOps(c: Call) {
-    def urlWithContext(): Call =
-      Call(c.method, Constants.Context + c.url, c.fragment)
+    def urlWithContext(): String =
+      Call(c.method, Constants.Context + c.url, c.fragment).url
   }
 }

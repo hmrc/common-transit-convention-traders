@@ -44,7 +44,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
           case s if is2xx(s) =>
             response.header(LOCATION) match {
               case Some(locationValue) =>
-                  Accepted.withHeaders(LOCATION -> routes.ArrivalMessagesController.getArrivalMessage(arrivalId, Utils.lastFragment(locationValue)).urlWithContext().url)
+                  Accepted.withHeaders(LOCATION -> routes.ArrivalMessagesController.getArrivalMessage(arrivalId, Utils.lastFragment(locationValue)).urlWithContext())
               case _ =>
                 InternalServerError
             }

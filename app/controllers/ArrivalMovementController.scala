@@ -44,7 +44,7 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
           case status if is2xx(status) =>
             response.header(LOCATION) match {
               case Some(locationValue) =>
-                  Accepted.withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(Utils.lastFragment(locationValue)).urlWithContext().url)
+                  Accepted.withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(Utils.lastFragment(locationValue)).urlWithContext())
               case _ =>
                 InternalServerError
             }
@@ -60,7 +60,7 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
           case status if is2xx(status) =>
             response.header(LOCATION) match {
               case Some(locationValue) =>
-                Accepted.withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(Utils.lastFragment(locationValue)).urlWithContext().url)
+                Accepted.withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(Utils.lastFragment(locationValue)).urlWithContext())
               case _ =>
                 InternalServerError
             }
