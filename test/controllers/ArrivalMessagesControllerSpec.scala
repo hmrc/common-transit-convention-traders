@@ -55,7 +55,7 @@ class ArrivalMessagesControllerSpec extends FreeSpec with MustMatchers with Guic
   }
 
   val sourceMovement = MovementMessage(
-    "/customs/transits/movements/arrivals/123/messages/4",
+    routes.ArrivalMessagesController.getArrivalMessage("123","4").urlWithContext,
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
     "IE025",
     <test>default</test>)

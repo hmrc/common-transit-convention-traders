@@ -18,7 +18,7 @@ package controllers
 
 import connectors.MessageConnector
 import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateMessageAction}
-import javax.inject.{Inject, Singleton}
+import javax.inject.{Inject}
 import models.response.{ResponseArrivalWithMessages, ResponseMessage}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
