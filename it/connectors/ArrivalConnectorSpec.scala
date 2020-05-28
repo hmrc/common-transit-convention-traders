@@ -4,12 +4,13 @@ import java.time.LocalDateTime
 
 import org.scalatest.{FreeSpec, MustMatchers}
 import com.github.tomakehurst.wiremock.client.WireMock._
+import controllers.routes
 import models.domain.{Arrival, ArrivalWithMessages, Arrivals, MovementMessage}
 import models.response.{ResponseArrival, ResponseArrivalWithMessages, ResponseArrivals, ResponseMessage}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.Json
-import play.api.mvc.Headers
+import utils.CallOps._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
@@ -133,7 +134,7 @@ class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
   "get" - {
     "must return Arrival when arrival is found" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      val arrival = Arrival(1, "/movements/arrivals/1", "/movements/arrivals/1/messages", "MRN", "status", LocalDateTime.now, LocalDateTime.now)
+      val arrival = Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)
 
       server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1"))
         .willReturn(aResponse().withStatus(OK)
@@ -149,7 +150,7 @@ class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      val arrival = Arrival(1, "/movements/arrivals/1", "/movements/arrivals/1/messages", "MRN", "status", LocalDateTime.now, LocalDateTime.now)
+      val arrival = Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)
 
       val response = ResponseArrival(arrival)
 
@@ -212,7 +213,7 @@ class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
   "getForEori" - {
     "must return Arrival when arrival is found" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      val arrivals = Arrivals(Seq(Arrival(1, "/movements/arrivals/1", "/movements/arrivals/1/messages", "MRN", "status", LocalDateTime.now, LocalDateTime.now)))
+      val arrivals = Arrivals(Seq(Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)))
 
       server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/"))
         .willReturn(aResponse().withStatus(OK)
@@ -228,7 +229,7 @@ class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      val arrival = Arrivals(Seq(Arrival(1, "/movements/arrivals/1", "/movements/arrivals/1/messages", "MRN", "status", LocalDateTime.now, LocalDateTime.now)))
+      val arrival = Arrivals(Seq(Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)))
 
       val response = ResponseArrivals(arrival.arrivals.map { a => ResponseArrival(a) })
 

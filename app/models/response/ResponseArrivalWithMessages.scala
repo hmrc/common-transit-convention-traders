@@ -18,14 +18,17 @@ package models.response
 
 import java.time.LocalDateTime
 
+import utils.CallOps._
+import controllers.routes
 import models.domain.ArrivalWithMessages
 import play.api.libs.json.Json
+import utils.Utils
 
 object ResponseArrivalWithMessages {
 
   implicit val format = Json.format[ResponseArrivalWithMessages]
 
-  def apply(a: ArrivalWithMessages): ResponseArrivalWithMessages = ResponseArrivalWithMessages(a.location, a.created, a.updated, a.movementReferenceNumber, a.status, a.messages.map { m => ResponseMessage(m)})
+  def apply(a: ArrivalWithMessages): ResponseArrivalWithMessages = ResponseArrivalWithMessages(routes.ArrivalMovementController.getArrival(a.arrivalId.toString).urlWithContext, a.created, a.updated, a.movementReferenceNumber, a.status, a.messages.map { m => ResponseMessage(m, a.arrivalId.toString, Utils.lastFragment(m.location))})
 }
 
 case class ResponseArrivalWithMessages(arrival: String, created: LocalDateTime, updated: LocalDateTime, movementReferenceNumber: String, status: String, messages: Seq[ResponseMessage])
