@@ -10,5 +10,3 @@ POST       /movements/arrivals/:arrivalId/messages                  controllers.
 GET        /movements/arrivals/:arrivalId/messages                  controllers.ArrivalMessagesController.getArrivalMessages(arrivalId: String)
 
 GET        /movements/arrivals/:arrivalId/messages/:messageId       controllers.ArrivalMessagesController.getArrivalMessage(arrivalId: String, messageId: String)
-
-

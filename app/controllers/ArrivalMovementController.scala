@@ -18,12 +18,13 @@ package controllers
 
 import connectors.ArrivalConnector
 import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateArrivalNotificationAction}
-import javax.inject.Inject
+import javax.inject.{Inject}
 import models.response.{ResponseArrival, ResponseArrivals}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.{ResponseHelper, Utils}
+import utils.CallOps._
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
@@ -42,7 +43,7 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
           case status if is2xx(status) =>
             response.header(LOCATION) match {
               case Some(locationValue) =>
-                  Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(Utils.lastFragment(locationValue))}")
+                  Accepted.withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(Utils.lastFragment(locationValue)).urlWithContext)
               case _ =>
                 InternalServerError
             }
@@ -58,7 +59,7 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
           case status if is2xx(status) =>
             response.header(LOCATION) match {
               case Some(locationValue) =>
-                  Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(Utils.lastFragment(locationValue))}")
+                Accepted.withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(Utils.lastFragment(locationValue)).urlWithContext)
               case _ =>
                 InternalServerError
             }

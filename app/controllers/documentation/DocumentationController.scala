@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
-package config
+package controllers.documentation
 
-object Constants {
-  val AcceptHeaderPattern = "^application/vnd[.]{1}hmrc[.]{1}(.*?)[+]{1}(.*)$".r
+import controllers.Assets
+import javax.inject.{Inject}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
-  val AcceptHeaderMissing = "The accept header is missing or invalid"
+class DocumentationController @Inject()(assets: Assets, cc: ControllerComponents) extends BackendController(cc) {
 
-  val Context = "/customs/transits"
+  def definition(): Action[AnyContent] = {
+    assets.at("/public/api", "definition.json")
+  }
+
+  def raml(version: String, file: String): Action[AnyContent] = {
+     assets.at(s"/public/api/conf/$version", file)
+  }
 }

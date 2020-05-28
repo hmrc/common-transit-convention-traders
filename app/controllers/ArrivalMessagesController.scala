@@ -18,15 +18,15 @@ package controllers
 
 import connectors.MessageConnector
 import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateMessageAction}
-import javax.inject.Inject
+import javax.inject.{Inject}
 import models.response.{ResponseArrivalWithMessages, ResponseMessage}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.{ResponseHelper, Utils}
-
-import scala.concurrent.{ExecutionContext}
+import utils.CallOps._
+import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
 class ArrivalMessagesController @Inject()(cc: ControllerComponents,
@@ -43,7 +43,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
           case s if is2xx(s) =>
             response.header(LOCATION) match {
               case Some(locationValue) =>
-                  Accepted.withHeaders(LOCATION -> s"/customs/transits/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.urlEncode(Utils.lastFragment(locationValue))}")
+                  Accepted.withHeaders(LOCATION -> routes.ArrivalMessagesController.getArrivalMessage(arrivalId, Utils.lastFragment(locationValue)).urlWithContext)
               case _ =>
                 InternalServerError
             }
@@ -57,7 +57,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
     implicit request => {
       messageConnector.get(arrivalId, messageId).map { r =>
         r match {
-          case Right(m) => Ok(Json.toJson(ResponseMessage(m).copy(message = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.urlEncode(messageId)}")))
+          case Right(m) => Ok(Json.toJson(ResponseMessage(m, arrivalId, messageId)))
           case Left(response) => handleNon2xx(response)
         }
       }
@@ -70,10 +70,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
           messageConnector.getArrivalMessages(arrivalId).map { r =>
             r match {
               case Right(a) => {
-                val messages = a.messages.map { m =>
-                  ResponseMessage(m) copy (message = s"/movements/arrivals/${Utils.urlEncode(arrivalId)}/messages/${Utils.lastFragment(m.location)}")
-                }
-                Ok(Json.toJson(ResponseArrivalWithMessages(a).copy(messages = messages)))
+                Ok(Json.toJson(ResponseArrivalWithMessages(a)))
               }
               case Left(response) => handleNon2xx(response)
           }

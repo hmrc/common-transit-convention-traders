@@ -6,6 +6,7 @@ import org.scalatest.{FreeSpec, MustMatchers}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import com.github.tomakehurst.wiremock.client.WireMock._
+import controllers.routes
 import models.domain.{Arrival, ArrivalWithMessages, MovementMessage}
 import models.response.{ResponseArrival, ResponseArrivalWithMessages, ResponseMessage}
 import play.api.libs.json.Json
@@ -13,6 +14,7 @@ import play.api.mvc.Headers
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import utils.CallOps._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -21,7 +23,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
   "get" - {
     "must return MovementMessage when message is found" in {
       val connector = app.injector.instanceOf[MessageConnector]
-      val movement = MovementMessage("/movements/arrivals/1/messages/1", LocalDateTime.now, "abc", <test>default</test>)
+      val movement = MovementMessage(routes.ArrivalMessagesController.getArrivalMessage("1","1").urlWithContext, LocalDateTime.now, "abc", <test>default</test>)
       server.stubFor(
         get(
           urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1/messages/1")
@@ -38,7 +40,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[MessageConnector]
-      val arrival = Arrival(1, "/movements/arrivals/1", "/movements/arrivals/1/messages", "MRN", "status", LocalDateTime.now, LocalDateTime.now)
+      val arrival = Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)
 
       val response = ResponseArrival(arrival)
       server.stubFor(
@@ -108,10 +110,10 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
   "getArrivalMessages" - {
     "must return Arrival when arrival is found" in {
       val connector = app.injector.instanceOf[MessageConnector]
-      val arrival = ArrivalWithMessages(1, "/movements/arrivals/1", "/movements/arrivals/1/messages", "MRN", "status", LocalDateTime.now, LocalDateTime.now,
+      val arrival = ArrivalWithMessages(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now,
         Seq(
-          MovementMessage("/movements/arrivals/1/messages/1", LocalDateTime.now, "abc", <test>default</test>),
-          MovementMessage("/movements/arrivals/1/messages/2", LocalDateTime.now, "abc", <test>default</test>)
+          MovementMessage(routes.ArrivalMessagesController.getArrivalMessage("1","1").urlWithContext, LocalDateTime.now, "abc", <test>default</test>),
+          MovementMessage(routes.ArrivalMessagesController.getArrivalMessage("1","2").urlWithContext, LocalDateTime.now, "abc", <test>default</test>)
         ))
 
       server.stubFor(
@@ -130,7 +132,7 @@ class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[MessageConnector]
-      val arrival = Arrival(1, "/movements/arrivals/1", "/movements/arrivals/1/messages", "MRN", "status", LocalDateTime.now, LocalDateTime.now)
+      val arrival = Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)
 
       val response = ResponseArrival(arrival)
       server.stubFor(
