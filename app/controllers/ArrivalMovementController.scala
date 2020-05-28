@@ -30,7 +30,6 @@ import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 import uk.gov.hmrc.http.HttpErrorFunctions
 
-@Singleton
 class ArrivalMovementController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    arrivalConnector: ArrivalConnector,
@@ -44,7 +43,7 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
           case status if is2xx(status) =>
             response.header(LOCATION) match {
               case Some(locationValue) =>
-                  Accepted.withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(Utils.lastFragment(locationValue)).urlWithContext())
+                  Accepted.withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(Utils.lastFragment(locationValue)).urlWithContext)
               case _ =>
                 InternalServerError
             }
@@ -60,7 +59,7 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
           case status if is2xx(status) =>
             response.header(LOCATION) match {
               case Some(locationValue) =>
-                Accepted.withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(Utils.lastFragment(locationValue)).urlWithContext())
+                Accepted.withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(Utils.lastFragment(locationValue)).urlWithContext)
               case _ =>
                 InternalServerError
             }

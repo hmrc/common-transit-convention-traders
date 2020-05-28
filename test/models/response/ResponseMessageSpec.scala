@@ -34,7 +34,7 @@ class ResponseMessageSpec extends FreeSpec with MustMatchers with GuiceOneAppPer
 
       val result = ResponseMessage(message, "1", "3")
 
-      result.message mustBe routes.ArrivalMessagesController.getArrivalMessage("1","3").urlWithContext()
+      result.message mustBe routes.ArrivalMessagesController.getArrivalMessage("1","3").urlWithContext
     }
   }
 }

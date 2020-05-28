@@ -34,7 +34,7 @@ class ResponseArrivalSpec extends FreeSpec with MustMatchers with GuiceOneAppPer
 
       val result = ResponseArrival(arrival)
 
-      result.arrival mustBe routes.ArrivalMovementController.getArrival("3").urlWithContext()
+      result.arrival mustBe routes.ArrivalMovementController.getArrival("3").urlWithContext
     }
 
     "must have valid public messages location" in {
@@ -42,7 +42,7 @@ class ResponseArrivalSpec extends FreeSpec with MustMatchers with GuiceOneAppPer
 
       val result = ResponseArrival(arrival)
 
-      result.messages mustBe routes.ArrivalMessagesController.getArrivalMessages("3").urlWithContext()
+      result.messages mustBe routes.ArrivalMessagesController.getArrivalMessages("3").urlWithContext
     }
   }
 

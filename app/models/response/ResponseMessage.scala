@@ -28,7 +28,7 @@ import scala.xml.NodeSeq
 object ResponseMessage extends NodeSeqFormat{
   implicit val format = Json.format[ResponseMessage]
 
-  def apply(m: MovementMessage, arrivalId: String, messageId: String): ResponseMessage = ResponseMessage(routes.ArrivalMessagesController.getArrivalMessage(arrivalId, messageId).urlWithContext(), m.dateTime, m.messageType, m.message)
+  def apply(m: MovementMessage, arrivalId: String, messageId: String): ResponseMessage = ResponseMessage(routes.ArrivalMessagesController.getArrivalMessage(arrivalId, messageId).urlWithContext, m.dateTime, m.messageType, m.message)
 }
 
 case class ResponseMessage(message: String, recieved: LocalDateTime, messageType: String, body: NodeSeq)
