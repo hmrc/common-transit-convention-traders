@@ -37,13 +37,12 @@ We use standard HTTP status codes to show whether an API request has succeeded o
 
 403 Forbidden: If supplied auth token doesn't contain valid enrolment
 
-404 Not Found: If no object with specified ID found in database
+404 Not Found: If no object with specified ID found in database. Or if client passes in an ``Accept`` header which contains the wrong API version number. We have only released version 1.0 of the API
 
 415 Unsupported Media Type: If ``Accept`` header contains invalid type
 
 500 Internal Server Error: If exception in code occurs
 
-505 HttpVersionNotSupported: If client passes in an ``Accept`` header which contains the wrong version number
 
 Errors specific to each API are shown in the Endpoints section, under Response. 
 See our [reference guide](/api-documentation/docs/reference-guide#errors) for more on errors.
