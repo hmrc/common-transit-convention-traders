@@ -70,7 +70,7 @@ traits:
     get:
       displayName: Pull all Movement Arrivals
       description: |
-        Pull all Movement Arrivals.  Any Movement Arrivals more than 21 days old will have been archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
+        Pull all Movement Arrivals.  Any Movement Arrivals more than 28 days old will have been archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
 
         You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
       is:
@@ -97,8 +97,8 @@ traits:
                         },
                         {
                           "arrival": "/movements/arrivals/987",
-                          "created": "2020-03-21",
-                          "updated": "2020-03-21",
+                          "created": "2020-03-28",
+                          "updated": "2020-03-28",
                           "movementReferenceNumber":"MRN",
                           "status", "unloading permissions received",
                           "messages": "/movements/arrivals/987/messages"
@@ -136,7 +136,7 @@ traits:
       get:
         displayName: Pull a Movement Arrival for an arrival ID
         description: |
-          Pull a specific Movement Arrival. Any Movement Arrivals more than 21 days old will be haven archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
+          Pull a specific Movement Arrival. Any Movement Arrivals more than 28 days old will be haven archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
 
           You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
         is:
@@ -184,7 +184,7 @@ traits:
         get:
           displayName: Pull all messages that relate to a Movement Arrival
           description: |
-            Pull all the messages to do with a Movement Arrival. Any Movement Arrivals more than 21 days old will have been archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
+            Pull all the messages to do with a Movement Arrival. Any Movement Arrivals more than 28 days old will have been archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
 
             You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
           is:
@@ -229,7 +229,7 @@ traits:
           get:
             displayName: Pull a message relating to a Movement Arrival and message ID
             description: |
-              Pull all messages relating to a specific Movement Arrival and message ID. For example, this could include messages about route diversions or unloading permissions. Any Movement Arrivals more than 21 days old will have been archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
+              Pull all messages relating to a specific Movement Arrival and message ID. For example, this could include messages about route diversions or unloading permissions. Any Movement Arrivals more than 28 days old will have been archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
 
               You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
             is:
@@ -273,7 +273,7 @@ traits:
     get:
       displayName: Pull all departure notifications
       description: |
-        Pull all departure messages sent to the Office of Departures within 21 days of the goods being released at their final destination.
+        Pull all departure messages sent to the Office of Departures within 28 days of the goods being released at their final destination.
       is: [headers.acceptHeader]
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -286,11 +286,11 @@ traits:
                 {
                    "departures":[
                       {
-                        "date": "2021-01-15",
+                        "date": "2028-01-15",
                          "body":"<IE015>....</IE015>"
                       },
                       {
-                        "date": "2021-01-16",
+                        "date": "2028-01-16",
                          "body":"<IE015>....</IE015>"
                       }
                    ]
@@ -299,7 +299,7 @@ traits:
       get:
         displayName: Pull a departure notification for a departure ID
         description: |
-          Pull a specific departure message which was sent to the Office of Departure within 21 days of the goods being released at their final destination. Any departure notifications that are more than 21 days old will have been archived. Archived notifications will be return a “not found” status.
+          Pull a specific departure message which was sent to the Office of Departure within 28 days of the goods being released at their final destination. Any departure notifications that are more than 28 days old will have been archived. Archived notifications will be return a “not found” status.
         is: [headers.acceptHeader]
         (annotations.scope): "common-transit-convention-traders"
         securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -318,7 +318,7 @@ traits:
                 description: JSON departure
                 example: |
                   {
-                    "date": "2021-01-15",
+                    "date": "2028-01-15",
                      "body":"<IE015>....</IE015>"
                   }
           404:
@@ -344,7 +344,7 @@ traits:
         get:
           displayName: Pull all messages relating to a departure movement
           description: |
-            Pull all messages sent within 21 days of the goods being released relating to a departure movement. You will only be able to retrieve these messages if you have the Economic Operator Registration and Identification (EORI) number associated with the departure movement.
+            Pull all messages sent within 28 days of the goods being released relating to a departure movement. You will only be able to retrieve these messages if you have the Economic Operator Registration and Identification (EORI) number associated with the departure movement.
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
@@ -374,7 +374,7 @@ traits:
           get:
             displayName: Pull a message relating to a departure movement and message ID
             description: |
-              Pull all messages relating to a specific departure movement and message ID. For example, this could include declaration rejected or Movement Reference Number (MRN) allocated messages. Any messages more than 21 days old will be archived. Archived messages will return a “not found” status.
+              Pull all messages relating to a specific departure movement and message ID. For example, this could include declaration rejected or Movement Reference Number (MRN) allocated messages. Any messages more than 28 days old will be archived. Archived messages will return a “not found” status.
             (annotations.scope): "common-transit-convention-traders"
             securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
             responses:
