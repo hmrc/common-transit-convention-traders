@@ -10,3 +10,9 @@ POST       /movements/arrivals/:arrivalId/messages                  controllers.
 GET        /movements/arrivals/:arrivalId/messages                  controllers.ArrivalMessagesController.getArrivalMessages(arrivalId: String)
 
 GET        /movements/arrivals/:arrivalId/messages/:messageId       controllers.ArrivalMessagesController.getArrivalMessage(arrivalId: String, messageId: String)
+
+
+
+POST       /movements/departures                                    controllers.DeparturesController.submitDeclaration()
+
+GET        /movements/departures/:departureId                       controllers.DeparturesController.getDeparture(departureId: String)
