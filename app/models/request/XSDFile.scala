@@ -22,9 +22,9 @@ sealed trait XSDFile {
 }
 
 object XSDFile {
-  val values = Seq(ArrivalNotificationXSD, UnloadingRemarksXSD)
+  val values = Seq(ArrivalNotificationXSD, DepartureDeclarationXSD, UnloadingRemarksXSD)
   val map = values.map(xsd => xsd.label -> xsd).toMap
-  val supportedMessageTypes = map.filterKeys(_ != ArrivalNotificationXSD.label)
+  val supportedMessageTypes = map.filterKeys(x => (x != ArrivalNotificationXSD.label) && (x != DepartureDeclarationXSD.label))
 }
 
 object ArrivalNotificationXSD extends XSDFile {

@@ -36,15 +36,12 @@ class ValidateDepartureDeclarationAction @Inject()(xmlValidationService: XmlVali
             case Right(_) =>
               Future.successful(Right(request))
             case Left(_) =>
-              println("a")
               Future.successful(Left(BadRequest))
           }
         } else {
-          println("b")
           Future.successful(Left(BadRequest))
         }
       case _ =>
-        println("c")
         Future.successful(Left(BadRequest))
     }
   }

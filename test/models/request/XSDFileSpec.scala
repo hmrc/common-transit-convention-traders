@@ -25,6 +25,10 @@ class XSDFileSpec extends FreeSpec with MustMatchers with MockitoSugar {
       XSDFile.supportedMessageTypes must contain ("CC044A" -> UnloadingRemarksXSD)
     }
 
+    "supported message types must not contain DepartureDeclarationXSD" in {
+      XSDFile.supportedMessageTypes mustNot contain ("CC015B" -> DepartureDeclarationXSD)
+    }
+
     "supported message types must not contain ArrivalNotificationXSD" in {
       XSDFile.supportedMessageTypes mustNot contain ("CC007A" -> ArrivalNotificationXSD)
     }

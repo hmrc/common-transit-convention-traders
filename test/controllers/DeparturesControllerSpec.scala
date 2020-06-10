@@ -28,6 +28,7 @@ import play.api.inject.bind
 import org.mockito.Matchers.any
 import org.mockito.Mockito.{reset, when}
 import play.api.http.HeaderNames
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.http.HttpResponse
 import play.api.test.Helpers.{headers, _}
@@ -55,7 +56,7 @@ class DeparturesControllerSpec extends FreeSpec with MustMatchers with GuiceOneA
 
     "must return Accepted when successful" in {
       when(mockDepartureConnector.post(any())(any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-departure/movements/depatures/123")), responseString = None) ))
+        .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-departure/movements/departures/123")), responseString = None) ))
 
       val request = fakeRequestDepartures(method = "POST", body = CC015B)
       val result = route(app, request).value
@@ -64,21 +65,80 @@ class DeparturesControllerSpec extends FreeSpec with MustMatchers with GuiceOneA
       headers(result) must contain (LOCATION -> routes.DeparturesController.getDeparture("123").urlWithContext)
     }
 
-    "must return InternalServerError when unsuccessful" in {}
+    "must return InternalServerError when unsuccessful" in {
+      when(mockDepartureConnector.post(any())(any(), any(), any()))
+        .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR)))
 
-    "must return InternalServerError when no location in downstream response header" in {}
+      val request = fakeRequestDepartures(method = "POST", body = CC015B)
+      val result = route(app, request).value
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+    }
+
+    "must return InternalServerError when no location in downstream response header" in {
+      when(mockDepartureConnector.post(any())(any(), any(), any()))
+        .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseString = None) ))
+
+      val request = fakeRequestDepartures(method = "POST", body = CC015B)
+      val result = route(app, request).value
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+    }
 
     "must return InternalServerError when invalid Location value in downstream response header" ignore {}
 
-    "must escape departureId in location response header" in {}
+    "must escape departureId in location response header" in {
+      when(mockDepartureConnector.post(any())(any(), any(), any()))
+        .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-departure/movements/departures/123-@+*~-31@")), responseString = None) ))
 
-    "must exclude query string if present in downstream location header" in {}
+      val request = fakeRequestDepartures(method = "POST", body = CC015B)
+      val result = route(app, request).value
 
-    "must return UnsupportedMediaType when Content-Type is JSON" in {}
+      status(result) mustBe ACCEPTED
+      headers(result) must contain (LOCATION -> routes.DeparturesController.getDeparture("123-@+*~-31@").urlWithContext)
+    }
 
-    "must return UnsupportedMediaType when no Content-Type specified" in {}
+    "must exclude query string if present in downstream location header" in {
+      when(mockDepartureConnector.post(any())(any(), any(), any()))
+        .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-departure/movements/departures/123?status=success")), responseString = None) ))
 
-    "must return UnsupportedMediaType when empty XML payload is sent" in {}
+      val request = fakeRequestDepartures(method = "POST", body = CC015B)
+      val result = route(app, request).value
+
+      status(result) mustBe ACCEPTED
+      headers(result) must contain (LOCATION -> routes.DeparturesController.getDeparture("123").urlWithContext)
+    }
+
+    "must return UnsupportedMediaType when Content-Type is JSON" in {
+      when(mockDepartureConnector.post(any())(any(), any(), any()))
+        .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-departure/movements/departures/123")), responseString = None) ))
+
+      val request = FakeRequest(method = "POST", uri = "/movements/departures", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")), body = AnyContentAsEmpty)
+      val result = route(app, request).value
+
+      status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+    }
+
+    "must return UnsupportedMediaType when no Content-Type specified" in {
+      when(mockDepartureConnector.post(any())(any(), any(), any()))
+        .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-departure/movements/departures/123")), responseString = None) ))
+
+      val request = FakeRequest(method = "POST", uri = "/movements/departures", headers = FakeHeaders(Nil), body = AnyContentAsEmpty)
+
+      val result = route(app, request).value
+
+      status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+    }
+
+    "must return UnsupportedMediaType when empty XML payload is sent" in {
+      when(mockDepartureConnector.post(any())(any(), any(), any()))
+        .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-departure/movements/departures/123")), responseString = None) ))
+
+      val request = FakeRequest(method = "POST", uri = "/movements/departures", headers = FakeHeaders(), body = AnyContentAsEmpty)
+      val result = route(app, request).value
+
+      status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+    }
   }
 
 }
