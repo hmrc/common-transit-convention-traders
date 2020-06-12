@@ -45,7 +45,7 @@ traits:
 /customs/transits/movements:
   /arrivals:
     post:
-      displayName: Send an Arrival Notification
+      displayName: Send an Arrival Notification message
       description: |
         Send a notification to let the Office of Destination know that the goods have arrived. This notification will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).
 
@@ -251,9 +251,9 @@ traits:
                 description: When a message does not exist, has been archived or is not available to the EORI number.
   /departures:
     post:
-      displayName: Send a Declaration Data
+      displayName: Send a Declaration Data message
       description: |
-        Send a Declaration Data, to let the Office of Destination know that the goods are on their way. This notification will be sent when the goods leave the Office of Departure. It is also called an E_DEC_DAT (IE015).
+        Send a Declaration Data message, to let the Office of Destination know that the goods are on their way. This notification will be sent when the goods leave the Office of Departure. It is also called an E_DEC_DAT (IE015).
         
         The location header in the response will contain a URI and departure ID for the Declaration Data. This will allow you to retrieve the submission status.
 
