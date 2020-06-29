@@ -46,7 +46,7 @@ class XmlValidationService {
   def validate(xml: String, xsdFile: XSDFile): Either[XmlError, XmlValid] =
     try {
 
-      val url: URL = getClass.getResource(xsdFile.filePath)
+      val url: URL = getClass.getResource(xsdFile.FilePath)
 
       val schema: Schema = javax.xml.validation.SchemaFactory.newInstance(schemaLang).newSchema(url)
 
