@@ -21,16 +21,11 @@ import org.scalatest.{FreeSpec, MustMatchers}
 
 class XSDFileSpec extends FreeSpec with MustMatchers with MockitoSugar {
   "XSDFile" - {
-    "supported message types must contain UnloadingRemarksXSD" in {
-      XSDFile.supportedMessageTypes must contain ("CC044A" -> UnloadingRemarksXSD)
-    }
-
-    "supported message types must not contain DepartureDeclarationXSD" in {
-      XSDFile.supportedMessageTypes mustNot contain ("CC015B" -> DepartureDeclarationXSD)
-    }
-
-    "supported message types must not contain ArrivalNotificationXSD" in {
-      XSDFile.supportedMessageTypes mustNot contain ("CC007A" -> ArrivalNotificationXSD)
+    "Arrival" - {
+      "supported messages must contain only UnloadingRemarksXSD" in {
+        XSDFile.Arrival.SupportedMessages must contain ("CC044A" -> UnloadingRemarksXSD)
+        XSDFile.Arrival.SupportedMessages.size mustBe 1
+      }
     }
   }
 }

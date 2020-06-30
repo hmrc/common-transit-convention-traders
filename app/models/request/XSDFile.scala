@@ -17,27 +17,34 @@
 package models.request
 
 sealed trait XSDFile {
-  val filePath: String
-  val label: String
+  val FilePath: String
+  val Label: String
 }
 
+sealed trait ArrivalMessage
+
 object XSDFile {
-  val values = Seq(ArrivalNotificationXSD, DepartureDeclarationXSD, UnloadingRemarksXSD)
-  val map = values.map(xsd => xsd.label -> xsd).toMap
-  val supportedMessageTypes = map.filterKeys(x => (x != ArrivalNotificationXSD.label) && (x != DepartureDeclarationXSD.label))
+  object Arrival {
+    val Definitions = Seq(ArrivalNotificationXSD, UnloadingRemarksXSD)
+    val DefinitionsMap = Definitions.map(xsd => xsd.Label -> xsd).toMap
+    val SupportedMessages: Map[String, XSDFile] = DefinitionsMap.filter {
+      case (key: String, value: XSDFile) =>
+        value.isInstanceOf[ArrivalMessage]
+    }
+  }
 }
 
 object ArrivalNotificationXSD extends XSDFile {
-  val filePath = "/xsd/cc007a.xsd"
-  val label = "CC007A"
+  val FilePath = "/xsd/cc007a.xsd"
+  val Label = "CC007A"
 }
 
 object DepartureDeclarationXSD extends XSDFile {
-  val filePath = "/xsd/cc015b.xsd"
-  val label = "CC015B"
+  val FilePath = "/xsd/cc015b.xsd"
+  val Label = "CC015B"
 }
 
-object UnloadingRemarksXSD extends XSDFile {
-  val filePath = "/xsd/cc044a.xsd"
-  val label = "CC044A"
+object UnloadingRemarksXSD extends XSDFile with ArrivalMessage {
+  val FilePath = "/xsd/cc044a.xsd"
+  val Label = "CC044A"
 }

@@ -35,7 +35,7 @@ class ValidateMessageAction @Inject()(xmlValidationService: XmlValidationService
         if (body.nonEmpty) {
           val rootElementName = body.head.label
 
-          XSDFile.supportedMessageTypes.get(rootElementName) match {
+          XSDFile.Arrival.SupportedMessages.get(rootElementName) match {
             case Some(xsd) =>
               xmlValidationService.validate(body.toString, xsd) match {
                 case Right(_) =>
