@@ -35,16 +35,16 @@ object XSDFile {
 }
 
 object ArrivalNotificationXSD extends XSDFile {
-  val FilePath = "/xsd-iconvert/cc007a.xsd"
+  val FilePath = "/xsd/cc007a.xsd"
   val Label = "CC007A"
 }
 
 object DepartureDeclarationXSD extends XSDFile {
-  val FilePath = "/xsd-iconvert/cc015b.xsd"
+  val FilePath = "/xsd/cc015b.xsd"
   val Label = "CC015B"
 }
 
 object UnloadingRemarksXSD extends XSDFile with ArrivalMessage {
-  val FilePath = "/xsd-iconvert/cc044a.xsd"
+  val FilePath = "/xsd/cc044a.xsd"
   val Label = "CC044A"
 }
