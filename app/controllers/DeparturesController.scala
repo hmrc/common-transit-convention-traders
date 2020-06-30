@@ -17,8 +17,10 @@
 package controllers
 
 import connectors.DeparturesConnector
-import controllers.actions.{AuthAction, ValidateDepartureDeclarationAction}
+import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateDepartureDeclarationAction}
 import javax.inject.Inject
+import models.response.ResponseDeparture
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
@@ -31,6 +33,7 @@ import scala.xml.NodeSeq
 class DeparturesController @Inject()(cc: ControllerComponents,
                                      authAction: AuthAction,
                                      departuresConnector: DeparturesConnector,
+                                     validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction,
                                      validateDepartureDeclarationAction: ValidateDepartureDeclarationAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper {
 
   def submitDeclaration(): Action[NodeSeq] = (authAction andThen validateDepartureDeclarationAction).async(parse.xml) {
@@ -49,5 +52,16 @@ class DeparturesController @Inject()(cc: ControllerComponents,
       }
   }
 
-  def getDeparture(departureId: String): Action[AnyContent] = ???
+  def getDeparture(departureId: String): Action[AnyContent] = (authAction andThen validateAcceptJsonHeaderAction).async {
+      implicit request => {
+        departuresConnector.get(departureId).map { result =>
+          result match {
+            case Right(departure) => Ok(Json.toJson(ResponseDeparture(departure)))
+            case Left(invalidResponse) => handleNon2xx(invalidResponse)
+          }
+        }
+      }
+    }
+
+  def getDepartureMessages(departureId: String): Action[AnyContent] = ???
 }

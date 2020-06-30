@@ -16,3 +16,5 @@ GET        /movements/arrivals/:arrivalId/messages/:messageId       controllers.
 POST       /movements/departures                                    controllers.DeparturesController.submitDeclaration()
 
 GET        /movements/departures/:departureId                       controllers.DeparturesController.getDeparture(departureId: String)
+
+GET        /movements/departures/:departureId/messages              controllers.DeparturesController.getDepartureMessages(departureId: String)
