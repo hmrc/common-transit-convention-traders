@@ -75,7 +75,7 @@ class DepartureConnectorSpec extends FreeSpec with MustMatchers with WiremockSui
   "get" - {
     "must return Arrival when arrival is found" in {
       val connector = app.injector.instanceOf[DeparturesConnector]
-      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DeparturesController.getDepartureMessages("1").urlWithContext, "MRN", "reference", "status", LocalDateTime.now, LocalDateTime.now)
+      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DeparturesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "reference", "status", LocalDateTime.now, LocalDateTime.now)
 
       server.stubFor(get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/1"))
         .willReturn(aResponse().withStatus(OK)
@@ -91,7 +91,7 @@ class DepartureConnectorSpec extends FreeSpec with MustMatchers with WiremockSui
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[DeparturesConnector]
-      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "reference","status", LocalDateTime.now, LocalDateTime.now)
+      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, Some("MRN"), "reference","status", LocalDateTime.now, LocalDateTime.now)
 
       val response = ResponseDeparture(departure)
 

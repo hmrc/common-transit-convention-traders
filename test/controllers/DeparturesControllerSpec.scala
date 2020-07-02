@@ -54,7 +54,7 @@ class DeparturesControllerSpec extends FreeSpec with MustMatchers with GuiceOneA
     reset(mockDepartureConnector)
   }
 
-  val sourceDeparture = Departure(123, routes.DeparturesController.getDeparture("123").urlWithContext, routes.DeparturesController.getDepartureMessages("123").urlWithContext, "MRN", "reference", "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2))
+  val sourceDeparture = Departure(123, routes.DeparturesController.getDeparture("123").urlWithContext, routes.DeparturesController.getDepartureMessages("123").urlWithContext, Some("MRN"), "reference", "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2))
   val expectedDeparture = ResponseDeparture(sourceDeparture)
   val expectedDepartureResult = Json.toJson[ResponseDeparture](expectedDeparture)
 
