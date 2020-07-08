@@ -340,6 +340,7 @@ traits:
           displayName: Send a message related to a Movement Departure
           description: |
             Send a message to the Office of Destination.
+          is: [contentXmlHeader]
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
@@ -359,6 +360,9 @@ traits:
             Pull all messages sent within 28 days of the goods being released relating to a Movement Departure. Any Movements that are more than 28 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status. 
 
             You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
+          is: 
+            - headers.acceptHeader
+            - acceptHeaderInvalid
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
@@ -391,6 +395,9 @@ traits:
               Pull all messages relating to a specific Movement Departure and message ID. For example, this could include declaration rejected or Movement Reference Number (MRN) allocated messages. Any messages more than 28 days old will be archived. Archived notifications will be return an HTTP 404 Not Found status. 
 
               You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
+            is:
+              - headers.acceptHeader
+              - acceptHeaderInvalid
             (annotations.scope): "common-transit-convention-traders"
             securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
             responses:
