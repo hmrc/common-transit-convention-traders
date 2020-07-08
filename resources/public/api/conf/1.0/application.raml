@@ -260,7 +260,7 @@ traits:
         If the user is not enrolled for an EORI number, they will receive an HTTP Forbidden Status.
 
 
-      is: [headers.acceptHeader]
+      is: [contentXmlHeader]
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
@@ -280,8 +280,9 @@ traits:
         Pull all Movement Departures sent to the Office of Departures within 28 days of the goods being released at their final destination. Any Movement more than 28 days old will have been archived along with their related messages. Archived Movements will return an HTTP 404 Not Found status.
 
         You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
-
-      is: [headers.acceptHeader]
+      is: 
+        - headers.acceptHeader
+        - acceptHeaderInvalid
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
@@ -309,7 +310,9 @@ traits:
           Pull a specific Movement Departure  which was sent to the Office of Departure within 28 days of the goods being released at their final destination. Any Movements that are more than 28 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status. 
 
           You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
-        is: [headers.acceptHeader]
+        is: 
+          - headers.acceptHeader
+          - acceptHeaderInvalid
         (annotations.scope): "common-transit-convention-traders"
         securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
         responses:
