@@ -9,6 +9,7 @@ You can find our full list of endpoints on the [API definition page](https://dev
 
 
 ### Prerequisites
+
 - Scala 2.12.11
 - Java 8
 - sbt > 1.3.13
