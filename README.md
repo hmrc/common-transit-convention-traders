@@ -29,7 +29,7 @@ dependencyUpdatesReport | Writes a list of project dependencies to a file | ```$
 
 ### Helpful information
 
-You can find helpful guides on the [HMRC Developer Hub](https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation)
+You can find helpful guides on the [HMRC Developer Hub](hhttps://developer.service.hmrc.gov.uk/api-documentation/docs/using-the-hub)
 
 ### Reporting Issues
 
