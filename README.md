@@ -27,6 +27,10 @@ dependencyCheck | Runs dependency-check against the current project. It aggregat
 dependencyUpdates |  Shows a list of project dependencies that can be updated | ```$ sbt dependencyUpdates```
 dependencyUpdatesReport | Writes a list of project dependencies to a file | ```$ sbt dependencyUpdatesReport```
 
+### Helpful information
+
+You can find helpful guides on the [HMRC Developer Hub](https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation)
+
 ### Reporting Issues
 
 You can create a [GitHub issue](https://github.com/hmrc/common-transit-convention-traders/issues). Alternatively you can contact our Software Development Support team. Email them to receive a form where you can add details about your requirements and questions at sdsteam@hmr.gov.uk.
