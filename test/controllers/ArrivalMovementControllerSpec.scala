@@ -22,27 +22,29 @@ import controllers.actions.{AuthAction, FakeAuthAction}
 import akka.util.ByteString
 import connectors.ArrivalConnector
 import data.TestXml
-import models.domain.{Arrival, ArrivalWithMessages, Arrivals}
+import models.domain.{Arrival, Arrivals}
 import models.response.{ResponseArrival, ResponseArrivals}
-import org.mockito.Matchers.any
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfterEach, FreeSpec, MustMatchers, OptionValues}
+import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames
-import play.api.mvc.AnyContentAsEmpty
+import play.api.mvc.{AnyContentAsEmpty, Headers}
 import play.api.test.{FakeHeaders, FakeRequest}
 import play.api.test.Helpers.{headers, _}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Json
+import play.api.libs.json.{JsNull, Json}
 import uk.gov.hmrc.http.HttpResponse
 import utils.CallOps._
 
 import scala.concurrent.Future
 
-class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
+class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
   private val mockArrivalConnector: ArrivalConnector = mock[ArrivalConnector]
 
   override lazy val app = GuiceApplicationBuilder()
@@ -65,7 +67,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
  "POST /movements/arrivals" - {
    "must return Accepted when successful" in {
      when(mockArrivalConnector.post(any())(any(), any(), any()))
-       .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123")), responseString = None) ))
+       .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123"))) ))
 
      val request = fakeRequestArrivals(method = "POST", body = CC007A)
      val result = route(app, request).value
@@ -76,7 +78,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
    "must return InternalServerError when unsuccessful" in {
      when(mockArrivalConnector.post(any())(any(), any(), any()))
-       .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR)))
+       .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "")))
 
      val request = fakeRequestArrivals(method = "POST", body = CC007A)
      val result = route(app, request).value
@@ -86,7 +88,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
    "must return InternalServerError when no Location in downstream response header" in {
      when(mockArrivalConnector.post(any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Headers.create().toMap) ))
 
      val request = fakeRequestArrivals(method = "POST", body = CC007A)
      val result = route(app, request).value
@@ -96,7 +98,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
    "must return InternalServerError when invalid Location value in downstream response header" ignore {
      when(mockArrivalConnector.post(any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/<>")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/<>"))) ))
 
      val request = fakeRequestArrivals(method = "POST", body = CC007A)
      val result = route(app, request).value
@@ -106,7 +108,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
    "must escape arrival ID in Location response header" in {
      when(mockArrivalConnector.post(any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123-@+*~-31@")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123-@+*~-31@"))) ))
 
      val request = fakeRequestArrivals(method = "POST", body = CC007A)
      val result = route(app, request).value
@@ -117,7 +119,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
    "must exclude query string if present in downstream Location header" in {
      when(mockArrivalConnector.post(any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123?status=success")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123?status=success"))) ))
 
      val request = fakeRequestArrivals(method = "POST", body = CC007A)
      val result = route(app, request).value
@@ -165,7 +167,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
    "must return Accepted when successful" in {
      when(mockArrivalConnector.put(any(), any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123"))) ))
 
      val result = route(app, request).value
 
@@ -175,7 +177,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
    "must return InternalServerError when unsuccessful" in {
      when(mockArrivalConnector.put(any(), any())(any(), any(), any()))
-       .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR)))
+       .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "")))
 
      val result = route(app, request).value
 
@@ -184,7 +186,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
    "must return InternalServerError when no Location in downstream response header" in {
      when(mockArrivalConnector.put(any(), any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Headers.create().toMap) ))
 
      val result = route(app, request).value
 
@@ -193,7 +195,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
    "must return InternalServerError when invalid Location value in downstream response header" ignore {
      when(mockArrivalConnector.put(any(), any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/<>")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/<>"))) ))
 
      val result = route(app, request).value
 
@@ -202,7 +204,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
    "must escape arrival ID in Location response header" in {
      when(mockArrivalConnector.put(any(), any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123-@+*~-31@")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123-@+*~-31@"))) ))
 
      val result = route(app, request).value
 
@@ -212,7 +214,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
    "must exclude query string if present in downstream Location header" in {
      when(mockArrivalConnector.put(any(), any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123?status=success")), responseString = None) ))
+       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123?status=success"))) ))
 
      val result = route(app, request).value
 
@@ -267,7 +269,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
    "return 404 if downstream return 404" in {
      when(mockArrivalConnector.get(any())(any(), any(), any()))
-       .thenReturn(Future.successful(Left(HttpResponse(404))))
+       .thenReturn(Future.successful(Left(HttpResponse(404, ""))))
 
      val request = FakeRequest("GET", routes.ArrivalMovementController.getArrival("123").url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value
@@ -277,7 +279,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
    "return 500 for other downstream errors" in {
      when(mockArrivalConnector.get(any())(any(), any(), any()))
-       .thenReturn(Future.successful(Left(HttpResponse(responseStatus = INTERNAL_SERVER_ERROR))))
+       .thenReturn(Future.successful(Left(HttpResponse(INTERNAL_SERVER_ERROR, ""))))
 
      val request = FakeRequest("GET", routes.ArrivalMovementController.getArrival("123").url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value
@@ -313,7 +315,7 @@ class ArrivalMovementControllerSpec extends FreeSpec with MustMatchers with Guic
 
    "return 500 for downstream errors" in {
      when(mockArrivalConnector.getForEori()(any(), any(), any()))
-       .thenReturn(Future.successful(Left(HttpResponse(INTERNAL_SERVER_ERROR))))
+       .thenReturn(Future.successful(Left(HttpResponse(INTERNAL_SERVER_ERROR, ""))))
 
      val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori.url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value

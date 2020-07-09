@@ -16,15 +16,17 @@
 
 package connectors.util
 
-import org.scalatest.{FreeSpec, MustMatchers, OptionValues}
+import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.http.HttpResponse
 import play.api.http.Status
 import org.scalacheck.Gen
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class CustomHttpReaderSpec extends FreeSpec with MustMatchers with OptionValues with ScalaFutures with MockitoSugar with ScalaCheckDrivenPropertyChecks {
+class CustomHttpReaderSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar with ScalaCheckPropertyChecks {
 
   val _2xxGenerator: Gen[Int] = Gen.oneOf(Seq(Status.OK, Status.CREATED, Status.ACCEPTED, Status.NO_CONTENT))
   val clientErrorGenerator: Gen[Int] = Gen.oneOf(Seq(Status.UNAUTHORIZED, Status.FORBIDDEN, Status.NOT_FOUND, Status.BAD_REQUEST))

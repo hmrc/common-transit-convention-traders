@@ -16,10 +16,11 @@
 
 package models.request
 
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import org.scalatest.{FreeSpec, MustMatchers}
 
-class XSDFileSpec extends FreeSpec with MustMatchers with MockitoSugar {
+class XSDFileSpec extends AnyFreeSpec with Matchers with MockitoSugar {
   "XSDFile" - {
     "Arrival" - {
       "supported messages must contain only UnloadingRemarksXSD" in {

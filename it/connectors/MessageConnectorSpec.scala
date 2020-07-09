@@ -2,23 +2,23 @@ package connectors
 
 import java.time.LocalDateTime
 
-import org.scalatest.{FreeSpec, MustMatchers}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import com.github.tomakehurst.wiremock.client.WireMock._
 import controllers.routes
 import models.domain.{Arrival, ArrivalWithMessages, MovementMessage}
-import models.response.{ResponseArrival, ResponseArrivalWithMessages, ResponseMessage}
+import models.response.ResponseArrival
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 import play.api.libs.json.Json
-import play.api.mvc.Headers
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.HeaderCarrier
 import utils.CallOps._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class MessageConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
+class MessageConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
 
   "get" - {
     "must return MovementMessage when message is found" in {

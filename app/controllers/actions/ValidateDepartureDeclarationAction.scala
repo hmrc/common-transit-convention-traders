@@ -17,7 +17,7 @@
 package controllers.actions
 
 import javax.inject.Inject
-import models.request.{ArrivalNotificationXSD, DepartureDeclarationXSD}
+import models.request.DepartureDeclarationXSD
 import play.api.mvc.Results.BadRequest
 import play.api.mvc.{ActionRefiner, Request, Result}
 import services.XmlValidationService
