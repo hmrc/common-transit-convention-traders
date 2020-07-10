@@ -5,7 +5,7 @@ This is a microservice for a public API which provides ability for traders to su
 
 This mircoservice is in [Beta](https://www.gov.uk/help/beta). The signature may change. 
 
-You can find our full list of endpoints on the [API definition page](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/common-transit-convention-traders/1.0).
+You can find our full list of endpoints on [API definitions](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/common-transit-convention-traders/1.0).
 
 
 ### Prerequisites  
@@ -19,6 +19,7 @@ You can find our full list of endpoints on the [API definition page](https://dev
 Run from the console using: `sbt run`
 
 ## Highlighted SBT Tasks
+
 Task | Description | Command
 :-------|:------------|:-----
 test | Runs the standard unit tests | ```$ sbt test```
@@ -27,9 +28,15 @@ dependencyCheck | Runs dependency-check against the current project. It aggregat
 dependencyUpdates |  Shows a list of project dependencies that can be updated | ```$ sbt dependencyUpdates```
 dependencyUpdatesReport | Writes a list of project dependencies to a file | ```$ sbt dependencyUpdatesReport```
 
+### CTC Traders API related pages
+
+- [CTC Traders API end-to-end service guide](https://developer.service.hmrc.gov.uk/guides/common-transit-convention-traders-service-guide) gives you a brief outline of why we are creating the API and the processes involved.
+- [CTC Traders API roadmap](https://developer.service.hmrc.gov.uk/roadmaps/common-transit-convention-traders-roadmap) shows you what you can test now and our progress as we make more endpoints ready for test.
+- [CTC Traders API definitions](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/common-transit-convention-traders/1.0) lets you see a list of our endpoints.
+
 ### Helpful information
 
-You can find helpful guides on the [HMRC Developer Hub](https://developer.service.hmrc.gov.uk/api-documentation/docs/using-the-hub)
+You can find helpful guides on the [HMRC Developer Hub](https://developer.service.hmrc.gov.uk/api-documentation/docs/using-the-hub).
 
 ### Reporting Issues
 
