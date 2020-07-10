@@ -16,8 +16,7 @@
 
 package controllers.actions
 
-import config.{AppConfig}
-import org.scalatest.{FreeSpec, MustMatchers}
+import config.AppConfig
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{Action, AnyContent, BodyParsers}
@@ -29,9 +28,11 @@ import uk.gov.hmrc.auth.core.{AuthConnector, Enrolment, EnrolmentIdentifier, Enr
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.mockito.Mockito._
-import org.mockito.Matchers.any
+import org.mockito.ArgumentMatchers.any
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 
-class AuthActionSpec extends FreeSpec with MustMatchers with MockitoSugar {
+class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
   class Harness(authAction: AuthAction) {
     def get(): Action[AnyContent] = authAction {
       authedRequest =>

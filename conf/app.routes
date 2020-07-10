@@ -1,5 +1,3 @@
-# microservice specific routes
-
 GET        /movements/arrivals                                      controllers.ArrivalMovementController.getArrivalsForEori()
 POST       /movements/arrivals                                      controllers.ArrivalMovementController.createArrivalNotification()
 

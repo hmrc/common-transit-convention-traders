@@ -17,12 +17,12 @@
 package services
 
 import models.request.ArrivalNotificationXSD
-import org.scalatest.{FreeSpec, MustMatchers}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 
-class XmlValidationServiceSpec extends FreeSpec with MustMatchers with ScalaCheckPropertyChecks {
+class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks {
 
   private val xmlValidationService = new XmlValidationService
 

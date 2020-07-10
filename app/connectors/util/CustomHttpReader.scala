@@ -22,7 +22,7 @@ import uk.gov.hmrc.http.{HttpErrorFunctions, HttpReads, HttpResponse}
 
 object CustomHttpReader extends HttpReads[HttpResponse] with HttpErrorFunctions with Status {
   override def read(method: String, url: String, response: HttpResponse): HttpResponse = {
-    Logger.debug(s"CustomHttpReader Log\nstatus: ${response.status}\nbody: ${response.body}\nheaders: ${response.allHeaders.map {
+    Logger.debug(s"CustomHttpReader Log\nstatus: ${response.status}\nbody: ${response.body}\nheaders: ${response.headers.map {
       x =>
         s"\n  ${x._1} : ${x._2}"
     }}")
@@ -32,5 +32,5 @@ object CustomHttpReader extends HttpReads[HttpResponse] with HttpErrorFunctions 
     }
   }
 
-  def recode(newCode: Int, response: HttpResponse) = HttpResponse(newCode, Some(response.json), response.allHeaders, Some(response.body))
+  def recode(newCode: Int, response: HttpResponse) = HttpResponse(newCode, response.json, response.headers)
 }

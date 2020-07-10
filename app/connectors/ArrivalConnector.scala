@@ -20,14 +20,12 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import config.AppConfig
 import connectors.util.CustomHttpReader
 import javax.inject.Inject
-import models.domain.{Arrival, ArrivalWithMessages, Arrivals}
-import play.api.mvc.{Headers, RequestHeader}
-import uk.gov.hmrc.http.logging.Authorization
+import models.domain.{Arrival, Arrivals}
+import play.api.mvc.{RequestHeader}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.Utils
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.xml.NodeSeq
 
 class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends BaseConnector {
 

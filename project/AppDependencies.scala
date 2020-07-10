@@ -6,19 +6,19 @@ import sbt._
 object AppDependencies {
 
   val compile = Seq(
-
-    "uk.gov.hmrc"             %% "bootstrap-play-26"        % "1.4.0"
+    "uk.gov.hmrc"       %% "bootstrap-play-26"   % "1.13.0"
   )
 
   val test = Seq(
-    "uk.gov.hmrc"             %% "bootstrap-play-26"        % "1.4.0" % Test classifier "tests",
-    "org.scalatest"           %% "scalatest"                % "3.0.8"                 % "test, it",
-    "com.typesafe.play"       %% "play-test"                % current                 % "test, it",
-    "org.pegdown"             %  "pegdown"                  % "1.6.0"                 % "test, it",
-    "org.scalatestplus.play"  %% "scalatestplus-play"       % "3.1.2"                 % "test, it",
-    "org.scalacheck"          %% "scalacheck"               % "1.14.1"                % "test, it",
-    "org.mockito"             %  "mockito-all"              % "2.0.2-beta"            % "test, it",
-    "com.github.tomakehurst"  %  "wiremock-standalone"      % "2.17.0"                % "it"
-  )
-
+    "org.mockito"            % "mockito-core"          % "3.3.3",
+    "org.scalatest"          %% "scalatest"            % "3.2.0",
+    "com.typesafe.play"      %% "play-test"            % current,
+    "org.pegdown"            % "pegdown"               % "1.6.0",
+    "org.scalatestplus.play" %% "scalatestplus-play"   % "3.1.3",
+    "org.scalatestplus"      %% "mockito-3-2"          % "3.1.2.0",
+    "org.scalacheck"         %% "scalacheck"           % "1.14.3",
+    "com.github.tomakehurst" % "wiremock-standalone"   % "2.27.1",
+    "org.typelevel"          %% "discipline-scalatest" % "1.0.1",
+    "com.vladsch.flexmark"   % "flexmark-all"          % "0.35.10"
+  ).map(_ % "test, it")
 }

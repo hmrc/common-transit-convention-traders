@@ -23,16 +23,18 @@ import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
 import models.domain.Departure
 import models.response.ResponseDeparture
-import org.scalatest.{BeforeAndAfterEach, FreeSpec, MustMatchers, OptionValues}
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.bind
-import org.mockito.Matchers.any
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
+import org.scalatest.freespec.AnyFreeSpec
 import play.api.http.HeaderNames
-import play.api.libs.json.Json
+import play.api.libs.json.{JsNull, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.http.HttpResponse
@@ -41,7 +43,7 @@ import utils.CallOps._
 
 import scala.concurrent.Future
 
-class DeparturesControllerSpec extends FreeSpec with MustMatchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
+class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
   private val mockDepartureConnector: DeparturesConnector = mock[DeparturesConnector]
 
   override lazy val app = GuiceApplicationBuilder()
@@ -66,7 +68,7 @@ class DeparturesControllerSpec extends FreeSpec with MustMatchers with GuiceOneA
 
     "must return Accepted when successful" in {
       when(mockDepartureConnector.post(any())(any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123")), responseString = None) ))
+        .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123"))) ))
 
       val request = fakeRequestDepartures(method = "POST", body = CC015B)
       val result = route(app, request).value
@@ -77,7 +79,7 @@ class DeparturesControllerSpec extends FreeSpec with MustMatchers with GuiceOneA
 
     "must return InternalServerError when unsuccessful" in {
       when(mockDepartureConnector.post(any())(any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR)))
+        .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "")))
 
       val request = fakeRequestDepartures(method = "POST", body = CC015B)
       val result = route(app, request).value
@@ -87,7 +89,7 @@ class DeparturesControllerSpec extends FreeSpec with MustMatchers with GuiceOneA
 
     "must return InternalServerError when no location in downstream response header" in {
       when(mockDepartureConnector.post(any())(any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseString = None) ))
+        .thenReturn(Future.successful(HttpResponse(NO_CONTENT, "") ))
 
       val request = fakeRequestDepartures(method = "POST", body = CC015B)
       val result = route(app, request).value
@@ -99,7 +101,7 @@ class DeparturesControllerSpec extends FreeSpec with MustMatchers with GuiceOneA
 
     "must escape departureId in location response header" in {
       when(mockDepartureConnector.post(any())(any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123-@+*~-31@")), responseString = None) ))
+        .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123-@+*~-31@"))) ))
 
       val request = fakeRequestDepartures(method = "POST", body = CC015B)
       val result = route(app, request).value
@@ -110,7 +112,7 @@ class DeparturesControllerSpec extends FreeSpec with MustMatchers with GuiceOneA
 
     "must exclude query string if present in downstream location header" in {
       when(mockDepartureConnector.post(any())(any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123?status=success")), responseString = None) ))
+        .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123?status=success"))) ))
 
       val request = fakeRequestDepartures(method = "POST", body = CC015B)
       val result = route(app, request).value
@@ -121,7 +123,7 @@ class DeparturesControllerSpec extends FreeSpec with MustMatchers with GuiceOneA
 
     "must return UnsupportedMediaType when Content-Type is JSON" in {
       when(mockDepartureConnector.post(any())(any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123")), responseString = None) ))
+        .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123"))) ))
 
       val request = FakeRequest(method = "POST", uri = "/movements/departures", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")), body = AnyContentAsEmpty)
       val result = route(app, request).value
@@ -131,7 +133,7 @@ class DeparturesControllerSpec extends FreeSpec with MustMatchers with GuiceOneA
 
     "must return UnsupportedMediaType when no Content-Type specified" in {
       when(mockDepartureConnector.post(any())(any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123")), responseString = None) ))
+        .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123"))) ))
 
       val request = FakeRequest(method = "POST", uri = "/movements/departures", headers = FakeHeaders(Nil), body = AnyContentAsEmpty)
 
@@ -142,7 +144,7 @@ class DeparturesControllerSpec extends FreeSpec with MustMatchers with GuiceOneA
 
     "must return UnsupportedMediaType when empty XML payload is sent" in {
       when(mockDepartureConnector.post(any())(any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(responseStatus = NO_CONTENT, responseJson = None, responseHeaders = Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123")), responseString = None) ))
+        .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123")))))
 
       val request = FakeRequest(method = "POST", uri = "/movements/departures", headers = FakeHeaders(), body = AnyContentAsEmpty)
       val result = route(app, request).value
@@ -165,7 +167,7 @@ class DeparturesControllerSpec extends FreeSpec with MustMatchers with GuiceOneA
 
     "return 404 if downstream return 404" in {
       when(mockDepartureConnector.get(any())(any(), any(), any()))
-        .thenReturn(Future.successful(Left(HttpResponse(404))))
+        .thenReturn(Future.successful(Left(HttpResponse(404, ""))))
 
       val request = FakeRequest("GET", routes.DeparturesController.getDeparture("123").url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
       val result = route(app, request).value
@@ -175,7 +177,7 @@ class DeparturesControllerSpec extends FreeSpec with MustMatchers with GuiceOneA
 
     "return 500 for other downstream errors" in {
       when(mockDepartureConnector.get(any())(any(), any(), any()))
-        .thenReturn(Future.successful(Left(HttpResponse(responseStatus = INTERNAL_SERVER_ERROR))))
+        .thenReturn(Future.successful(Left(HttpResponse(INTERNAL_SERVER_ERROR, ""))))
 
       val request = FakeRequest("GET", routes.DeparturesController.getDeparture("123").url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
       val result = route(app, request).value

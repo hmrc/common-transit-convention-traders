@@ -18,13 +18,10 @@ package connectors
 
 import config.AppConfig
 import connectors.util.CustomHttpReader
-import connectors.util.CustomHttpReader.INTERNAL_SERVER_ERROR
 import javax.inject.Inject
 import models.domain.{ArrivalWithMessages, MovementMessage}
-import play.api.libs.json.Reads
-import play.api.mvc.{Headers, RequestHeader}
-import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpResponse}
+import play.api.mvc.RequestHeader
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.Utils
 

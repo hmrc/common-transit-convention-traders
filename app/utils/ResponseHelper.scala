@@ -23,7 +23,7 @@ import play.api.mvc.{Result, Results}
 
 trait ResponseHelper extends Results with Status with HttpErrorFunctions {
   def handleNon2xx(response: HttpResponse): Result = {
-    Logger.debug(s"ResponseHelper Log\nstatus: ${response.status}\nbody: ${response.body}\nheaders: ${response.allHeaders.map {
+    Logger.debug(s"ResponseHelper Log\nstatus: ${response.status}\nbody: ${response.body}\nheaders: ${response.headers.map {
       x =>
         s"\n  ${x._1} : ${x._2}"
     }}")
