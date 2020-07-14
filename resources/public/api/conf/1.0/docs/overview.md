@@ -6,4 +6,4 @@ Further details of the User Restricted Authentication are given on the
 [Authorisation](https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation) page.
 
 For more information about how to develop your own client applications, including example clients for this API, 
-see [Tutorials](/https://developer.service.hmrc.gov.uk/api-documentation/docs/tutorials).
+see [Tutorials](https://developer.service.hmrc.gov.uk/api-documentation/docs/tutorials).
