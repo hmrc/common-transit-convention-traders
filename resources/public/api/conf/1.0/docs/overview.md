@@ -3,7 +3,7 @@ This API will allow you to send departure and arrival movement notifications to 
 We will be re-releasing the API with working arrivals endpoints soon.
 
 Further details of the User Restricted Authentication are given on the 
-[Authorisation](/api-documentation/docs/authorisation) page.
+[Authorisation](https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation) page.
 
 For more information about how to develop your own client applications, including example clients for this API, 
-see [Tutorials](/api-documentation/docs/tutorials).
+see [Tutorials](/https://developer.service.hmrc.gov.uk/api-documentation/docs/tutorials).
