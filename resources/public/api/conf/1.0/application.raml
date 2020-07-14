@@ -151,12 +151,12 @@ traits:
                 description: JSON Payload
                 example: |
                   {
-                    "arrival": "/movements/arrivals/123",
+                    "arrival": "/customs/transits/movements/arrivals/123",
                     "created": "2020-03-20",
                     "updated": "2020-03-20",
                     "movementReferenceNumber":"MRN",
                     "status", "arrival notification received",
-                    "messages": "/movements/arrivals/123/messages"
+                    "messages": "/customs/transits/movements/arrivals/123/messages"
                   }
           404:
             description: When a Movement Arrival does not exist, has been archived or is not available to the EORI number.
@@ -199,19 +199,19 @@ traits:
                   description: A JSON list containing messages with an XML body
                   example: |
                     {
-                        "arrival": "/movements/arrivals/123",
+                        "arrival": "/customs/transits/movements/arrivals/123",
                         "created": "2020-03-20",
                         "updated": "2020-03-20",
                         "movementReferenceNumber":"MRN",
                         "status", "Arrival Notification received"
                         "messages": [
                             {
-                                "message": "/movements/arrivals/1234/messages/456"
+                                "message": "/customs/transits/movements/arrivals/1234/messages/456"
                                 "received": "2020-01-01",
                                 "body": "<CC025A>...</CC025A>"
                             },
                             {
-                                "message": "/movements/arrivals/1234/messages/789"
+                                "message": "/customs/transits/movements/arrivals/1234/messages/789"
                                 "received": "2020-01-02",
                                 "body": "<CC043A>...</CC043A>"
                             }
