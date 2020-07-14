@@ -45,4 +45,4 @@ We use standard HTTP status codes to show whether an API request has succeeded o
 
 
 Errors specific to each API are shown in the Endpoints section, under Response. 
-See our [reference guide](/api-documentation/docs/reference-guide#errors) for more on errors.
+See our [reference guide](https://developer.service.hmrc.gov.uk/api-documentation/docs/reference-guide#errors) for more on errors.
