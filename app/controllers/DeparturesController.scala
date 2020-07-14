@@ -63,5 +63,4 @@ class DeparturesController @Inject()(cc: ControllerComponents,
       }
     }
 
-  def getDepartureMessages(departureId: String): Action[AnyContent] = ???
 }

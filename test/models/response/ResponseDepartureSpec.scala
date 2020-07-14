@@ -19,24 +19,33 @@ package models.response
 import java.time.LocalDateTime
 
 import controllers.routes
-import models.domain.MovementMessage
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import models.domain.{Arrival, Departure}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import utils.CallOps._
 
-class ResponseMessageSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
+class ResponseDepartureSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
 
-  "ResponseMessage" - {
-    "must have a valid message location that has an applied url context" in {
-      val message = MovementMessage("", LocalDateTime.now(), "type", <test>default</test>)
+  "ResponseDeparture" - {
+    "must have valid public location" in {
+      val departure = Departure(3, "loc", "messageLoc", Some("mrn"), "ref", "status", LocalDateTime.now(), LocalDateTime.now())
 
-      val arrivalResult = ResponseMessage(message, routes.ArrivalMessagesController.getArrivalMessage("1","3"))
+      val result = ResponseDeparture(departure)
 
-      arrivalResult.message mustBe routes.ArrivalMessagesController.getArrivalMessage("1","3").urlWithContext
+      result.departure mustBe routes.DeparturesController.getDeparture("3").urlWithContext
+    }
+
+    "must have valid public messages location" in {
+      val departure = Departure(3, "loc", "messageLoc", Some("mrn"), "ref", "status", LocalDateTime.now(), LocalDateTime.now())
+
+      val result = ResponseDeparture(departure)
+
+      result.messages mustBe routes.DepartureMessagesController.getDepartureMessages("3").urlWithContext
     }
   }
+
 }

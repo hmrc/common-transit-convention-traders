@@ -16,7 +16,7 @@
 
 package controllers
 
-import connectors.MessageConnector
+import connectors.ArrivalMessageConnector
 import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateMessageAction}
 import javax.inject.{Inject}
 import models.response.{ResponseArrivalWithMessages, ResponseMessage}
@@ -30,10 +30,10 @@ import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
 class ArrivalMessagesController @Inject()(cc: ControllerComponents,
-                                   authAction: AuthAction,
-                                   messageConnector: MessageConnector,
-                                   validateMessageAction: ValidateMessageAction,
-                                   validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper
+                                          authAction: AuthAction,
+                                          messageConnector: ArrivalMessageConnector,
+                                          validateMessageAction: ValidateMessageAction,
+                                          validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper
 {
 
   def sendMessageDownstream(arrivalId: String): Action[NodeSeq] = (authAction andThen validateMessageAction).async(parse.xml) {
@@ -57,7 +57,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
     implicit request => {
       messageConnector.get(arrivalId, messageId).map { r =>
         r match {
-          case Right(m) => Ok(Json.toJson(ResponseMessage(m, arrivalId, messageId)))
+          case Right(m) => Ok(Json.toJson(ResponseMessage(m, routes.ArrivalMessagesController.getArrivalMessage(arrivalId, messageId))))
           case Left(response) => handleNon2xx(response)
         }
       }
@@ -67,7 +67,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
   def getArrivalMessages(arrivalId: String): Action[AnyContent] =
     (authAction andThen validateAcceptJsonHeaderAction).async {
       implicit request => {
-          messageConnector.getArrivalMessages(arrivalId).map { r =>
+          messageConnector.getMessages(arrivalId).map { r =>
             r match {
               case Right(a) => {
                 Ok(Json.toJson(ResponseArrivalWithMessages(a)))
