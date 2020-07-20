@@ -28,7 +28,7 @@ object ResponseDeparture {
   implicit val format = Json.format[ResponseDeparture]
 
   def apply(d: Departure): ResponseDeparture = {
-    ResponseDeparture(routes.DeparturesController.getDeparture(d.departureId.toString).urlWithContext, d.created, d.updated, d.movementReferenceNumber, d.referenceNumber, d.status, routes.DeparturesController.getDepartureMessages(d.departureId.toString).urlWithContext)
+    ResponseDeparture(routes.DeparturesController.getDeparture(d.departureId.toString).urlWithContext, d.created, d.updated, d.movementReferenceNumber, d.referenceNumber, d.status, routes.DepartureMessagesController.getDepartureMessages(d.departureId.toString).urlWithContext)
   }
 }
 

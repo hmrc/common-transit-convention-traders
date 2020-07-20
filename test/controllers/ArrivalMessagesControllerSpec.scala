@@ -19,7 +19,7 @@ package controllers
 import java.time.LocalDateTime
 
 import akka.util.ByteString
-import connectors.MessageConnector
+import connectors.ArrivalMessageConnector
 import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
 import models.domain.{ArrivalWithMessages, MovementMessage}
@@ -45,11 +45,11 @@ import scala.concurrent.Future
 import org.mockito.ArgumentMatchers.any
 
 class ArrivalMessagesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
-  private val mockMessageConnector: MessageConnector = mock[MessageConnector]
+  private val mockMessageConnector: ArrivalMessageConnector = mock[ArrivalMessageConnector]
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(bind[AuthAction].to[FakeAuthAction])
-    .overrides(bind[MessageConnector].toInstance(mockMessageConnector))
+    .overrides(bind[ArrivalMessageConnector].toInstance(mockMessageConnector))
     .build()
 
   override def beforeEach(): Unit = {
@@ -228,7 +228,7 @@ class ArrivalMessagesControllerSpec extends AnyFreeSpec with Matchers with Guice
 
   "GET /movements/arrivals/:arrivalId/messages" - {
     "return 200 with body of arrival and messages" in {
-        when(mockMessageConnector.getArrivalMessages(any())(any(), any(), any()))
+        when(mockMessageConnector.getMessages(any())(any(), any(), any()))
           .thenReturn(Future.successful(Right(sourceArrival)))
 
         val request = FakeRequest("GET", routes.ArrivalMessagesController.getArrivalMessages("123").url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
@@ -239,7 +239,7 @@ class ArrivalMessagesControllerSpec extends AnyFreeSpec with Matchers with Guice
       }
 
     "return 404 if downstream returns 404" in {
-      when(mockMessageConnector.getArrivalMessages(any())(any(), any(), any()))
+      when(mockMessageConnector.getMessages(any())(any(), any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(404, ""))))
 
       val request = FakeRequest("GET", routes.ArrivalMessagesController.getArrivalMessages("123").url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
@@ -249,7 +249,7 @@ class ArrivalMessagesControllerSpec extends AnyFreeSpec with Matchers with Guice
     }
 
     "return 500 for other downstream errors" in {
-      when(mockMessageConnector.getArrivalMessages(any())(any(), any(), any()))
+      when(mockMessageConnector.getMessages(any())(any(), any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(INTERNAL_SERVER_ERROR, json, Headers.create().toMap) )))
 
       val request = FakeRequest("GET", routes.ArrivalMessagesController.getArrivalMessages("123").url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
@@ -259,7 +259,7 @@ class ArrivalMessagesControllerSpec extends AnyFreeSpec with Matchers with Guice
     }
 
     "return 500 if downstream provides an unsafe message header" ignore {
-      when(mockMessageConnector.getArrivalMessages(any())(any(), any(), any()))
+      when(mockMessageConnector.getMessages(any())(any(), any(), any()))
         .thenReturn(Future.successful(Right(sourceArrival.copy(messages = Seq(sourceMovement.copy(location = "/transit-movements-trader-at-destination/movements/arrivals/<>"))))))
 
       val request = FakeRequest("GET", routes.ArrivalMessagesController.getArrivalMessages("123").url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)

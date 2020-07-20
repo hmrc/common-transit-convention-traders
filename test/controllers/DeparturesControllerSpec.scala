@@ -56,7 +56,7 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
     reset(mockDepartureConnector)
   }
 
-  val sourceDeparture = Departure(123, routes.DeparturesController.getDeparture("123").urlWithContext, routes.DeparturesController.getDepartureMessages("123").urlWithContext, Some("MRN"), "reference", "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2))
+  val sourceDeparture = Departure(123, routes.DeparturesController.getDeparture("123").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("123").urlWithContext, Some("MRN"), "reference", "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2))
   val expectedDeparture = ResponseDeparture(sourceDeparture)
   val expectedDepartureResult = Json.toJson[ResponseDeparture](expectedDeparture)
 
