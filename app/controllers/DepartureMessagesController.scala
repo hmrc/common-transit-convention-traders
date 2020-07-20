@@ -19,7 +19,7 @@ package controllers
 import connectors.{ArrivalMessageConnector, DepartureMessageConnector}
 import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateMessageAction}
 import javax.inject.Inject
-import models.response.ResponseDepartureWithMessages
+import models.response.{ResponseDepartureWithMessages, ResponseMessage}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
@@ -48,6 +48,15 @@ class DepartureMessagesController @Inject()(cc: ControllerComponents,
       }
     }
 
-  def getDepartureMessage(departureId: String, messageId: String): Action[AnyContent] = ???
-
+  def getDepartureMessage(departureId: String, messageId: String): Action[AnyContent] =
+    (authAction andThen validateAcceptJsonHeaderAction).async {
+      implicit request => {
+        messageConnector.get(departureId, messageId).map { r =>
+          r match {
+            case Right(m) => Ok(Json.toJson(ResponseMessage(m, routes.DepartureMessagesController.getDepartureMessage(departureId, messageId))))
+            case Left(response) => handleNon2xx(response)
+          }
+        }
+      }
+    }
 }

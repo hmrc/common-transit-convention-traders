@@ -115,4 +115,59 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
       status(result) mustBe INTERNAL_SERVER_ERROR
     }
   }
+
+  "GET /movements/departures/:departureId/messages/:messageId" - {
+    "return 200 and Message" in {
+      when(mockMessageConnector.get(any(), any())(any(), any(), any()))
+        .thenReturn(Future.successful(Right(sourceMovement)))
+
+      val request = FakeRequest("GET", routes.DepartureMessagesController.getDepartureMessage("123","4").url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val result = route(app, request).value
+
+      contentAsString(result) mustEqual expectedMessageResult.toString()
+      status(result) mustBe OK
+    }
+
+    "return 400 if the downstream returns 400" in {
+      when(mockMessageConnector.get(any(), any())(any(), any(), any()))
+        .thenReturn(Future.successful(Left(HttpResponse(400, ""))))
+
+      val request = FakeRequest("GET", routes.DepartureMessagesController.getDepartureMessage("123","4").url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val result = route(app, request).value
+
+      status(result) mustBe BAD_REQUEST
+    }
+
+    "return 400 with body if the downstream returns 400 with body" in {
+      when(mockMessageConnector.get(any(), any())(any(), any(), any()))
+        .thenReturn(Future.successful(Left(HttpResponse(400, "abc"))))
+
+      val request = FakeRequest("GET", routes.DepartureMessagesController.getDepartureMessage("123","4").url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val result = route(app, request).value
+
+      status(result) mustBe BAD_REQUEST
+      contentAsString(result) mustBe "abc"
+    }
+
+    "return 404 if the downstream returns 404" in {
+      when(mockMessageConnector.get(any(), any())(any(), any(), any()))
+        .thenReturn(Future.successful(Left(HttpResponse(404, ""))))
+
+      val request = FakeRequest("GET", routes.DepartureMessagesController.getDepartureMessage("123","4").url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val result = route(app, request).value
+
+      status(result) mustBe NOT_FOUND
+    }
+
+    "return 500 for other downstream errors" in {
+      when(mockMessageConnector.get(any(), any())(any(), any(), any()))
+        .thenReturn(Future.successful(Left(HttpResponse.apply(INTERNAL_SERVER_ERROR, json, Headers.create().toMap) )))
+
+      val request = FakeRequest("GET", routes.DepartureMessagesController.getDepartureMessage("123","4").url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val result = route(app, request).value
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+    }
+  }
+
 }
