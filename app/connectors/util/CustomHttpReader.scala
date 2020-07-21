@@ -32,5 +32,5 @@ object CustomHttpReader extends HttpReads[HttpResponse] with HttpErrorFunctions 
     }
   }
 
-  def recode(newCode: Int, response: HttpResponse) = HttpResponse(newCode, response.json, response.headers)
+  def recode(newCode: Int, response: HttpResponse) = HttpResponse(newCode, response.body, response.headers)
 }
