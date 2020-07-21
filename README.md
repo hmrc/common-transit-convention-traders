@@ -33,7 +33,7 @@ dependencyUpdatesReport | Writes a list of project dependencies to a file | ```$
 ### CTC Traders API related pages
 
 - [CTC Traders API end-to-end service guide](https://developer.service.hmrc.gov.uk/guides/common-transit-convention-traders-service-guide) gives you an overview of  of the API, the support we offer and the processes involved in creating your solution.
-- [CTC Traders API definitions](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/common-transit-convention-traders/1.0) lets you see a list of our endpoints.
+- [CTC Traders API specifications](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/common-transit-convention-traders/1.0) lets you see a list of our endpoints.
 
 ### Helpful information
 
