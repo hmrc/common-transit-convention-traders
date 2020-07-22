@@ -16,7 +16,7 @@
 
 package controllers
 
-import connectors.{ArrivalMessageConnector, DepartureMessageConnector}
+import connectors.DepartureMessageConnector
 import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateMessageAction}
 import javax.inject.Inject
 import models.response.{ResponseDepartureWithMessages, ResponseMessage}
@@ -24,15 +24,32 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
-import utils.ResponseHelper
-
+import utils.{ResponseHelper, Utils}
+import utils.CallOps._
 import scala.concurrent.ExecutionContext
+import scala.xml.NodeSeq
 
 class DepartureMessagesController @Inject()(cc: ControllerComponents,
                                    authAction: AuthAction,
                                    messageConnector: DepartureMessageConnector,
                                    validateMessageAction: ValidateMessageAction,
                                    validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper {
+
+  def sendMessageDownstream(departureId: String): Action[NodeSeq] = (authAction andThen validateMessageAction).async(parse.xml) {
+    implicit request =>
+      messageConnector.post(request.body.toString, departureId).map { response =>
+        response.status match {
+          case s if is2xx(s) =>
+            response.header(LOCATION) match {
+              case Some(locationValue) =>
+                Accepted.withHeaders(LOCATION -> routes.DepartureMessagesController.getDepartureMessage(departureId, Utils.lastFragment(locationValue)).urlWithContext)
+              case _ =>
+                InternalServerError
+            }
+          case _ => handleNon2xx(response)
+        }
+      }
+  }
 
   def getDepartureMessages(departureId: String): Action[AnyContent] =
     (authAction andThen validateAcceptJsonHeaderAction).async {
