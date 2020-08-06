@@ -52,7 +52,7 @@ class ValidateDepartureMessageActionSpec extends AnyFreeSpec with Matchers with 
   }
 
   "ValidateDepartureMessageAction" - {
-    "must execute the block when passed in a valid IE044 xml request" in {
+    "must execute the block when passed in a valid IE054 xml request" in {
       val validateMessage = app.injector.instanceOf[ValidateDepartureMessageAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
@@ -65,7 +65,7 @@ class ValidateDepartureMessageActionSpec extends AnyFreeSpec with Matchers with 
       status(result) mustEqual OK
     }
 
-    "must return BadRequest when passed in an invalid IE044 xml request " in {
+    "must return BadRequest when passed in an invalid IE054 xml request " in {
       val validateMessage = app.injector.instanceOf[ValidateDepartureMessageAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
