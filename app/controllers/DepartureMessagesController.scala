@@ -17,7 +17,7 @@
 package controllers
 
 import connectors.DepartureMessageConnector
-import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateMessageAction}
+import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateArrivalMessageAction}
 import javax.inject.Inject
 import models.response.{ResponseDepartureWithMessages, ResponseMessage}
 import play.api.libs.json.Json
@@ -30,10 +30,10 @@ import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
 class DepartureMessagesController @Inject()(cc: ControllerComponents,
-                                   authAction: AuthAction,
-                                   messageConnector: DepartureMessageConnector,
-                                   validateMessageAction: ValidateMessageAction,
-                                   validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper {
+                                            authAction: AuthAction,
+                                            messageConnector: DepartureMessageConnector,
+                                            validateMessageAction: ValidateDepartureMessageAction,
+                                            validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper {
 
   def sendMessageDownstream(departureId: String): Action[NodeSeq] = (authAction andThen validateMessageAction).async(parse.xml) {
     implicit request =>

@@ -35,7 +35,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class ValidateMessageActionSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
+class ValidateArrivalMessageActionSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
   override lazy val app = GuiceApplicationBuilder()
     .overrides(bind[AuthAction].to[FakeAuthAction])
     .build()
@@ -44,16 +44,16 @@ class ValidateMessageActionSpec extends AnyFreeSpec with Matchers with GuiceOneA
     super.beforeEach()
   }
 
-  class Harness(validateMessage: ValidateMessageAction, cc: ControllerComponents) extends BackendController(cc) {
+  class Harness(validateMessage: ValidateArrivalMessageAction, cc: ControllerComponents) extends BackendController(cc) {
     def post: Action[NodeSeq] = (DefaultActionBuilder.apply(cc.parsers.anyContent) andThen validateMessage).async(cc.parsers.xml) {
       _ =>
         Future.successful(Ok)
     }
   }
 
-  "ValidateMessageAction" - {
+  "ValidateArrivalMessageAction" - {
     "must execute the block when passed in a valid IE044 xml request" in {
-      val validateMessage = app.injector.instanceOf[ValidateMessageAction]
+      val validateMessage = app.injector.instanceOf[ValidateArrivalMessageAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateMessage, cc)
@@ -66,7 +66,7 @@ class ValidateMessageActionSpec extends AnyFreeSpec with Matchers with GuiceOneA
     }
 
     "must return BadRequest when passed in an invalid IE044 xml request " in {
-      val validateMessage = app.injector.instanceOf[ValidateMessageAction]
+      val validateMessage = app.injector.instanceOf[ValidateArrivalMessageAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateMessage, cc)
@@ -79,7 +79,7 @@ class ValidateMessageActionSpec extends AnyFreeSpec with Matchers with GuiceOneA
     }
 
     "must return BadRequest when passed in an empty request" in {
-      val validateMessage = app.injector.instanceOf[ValidateMessageAction]
+      val validateMessage = app.injector.instanceOf[ValidateArrivalMessageAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateMessage, cc)
@@ -92,7 +92,7 @@ class ValidateMessageActionSpec extends AnyFreeSpec with Matchers with GuiceOneA
     }
 
     "must return NotImplemented when passed in an incorrect XML request" in {
-      val validateMessage = app.injector.instanceOf[ValidateMessageAction]
+      val validateMessage = app.injector.instanceOf[ValidateArrivalMessageAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateMessage, cc)

@@ -42,8 +42,6 @@ object XSDFile {
         value.isInstanceOf[DepartureMessage]
     }
   }
-
-  val SupportedMessages: Map[String, XSDFile] = Arrival.SupportedMessages ++ Departure.SupportedMessages
 }
 
 object ArrivalNotificationXSD extends XSDFile {

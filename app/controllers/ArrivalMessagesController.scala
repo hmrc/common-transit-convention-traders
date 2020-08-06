@@ -17,7 +17,7 @@
 package controllers
 
 import connectors.ArrivalMessageConnector
-import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateMessageAction}
+import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateArrivalMessageAction}
 import javax.inject.{Inject}
 import models.response.{ResponseArrivalWithMessages, ResponseMessage}
 import play.api.libs.json.Json
@@ -32,7 +32,7 @@ import scala.xml.NodeSeq
 class ArrivalMessagesController @Inject()(cc: ControllerComponents,
                                           authAction: AuthAction,
                                           messageConnector: ArrivalMessageConnector,
-                                          validateMessageAction: ValidateMessageAction,
+                                          validateMessageAction: ValidateArrivalMessageAction,
                                           validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper
 {
 
