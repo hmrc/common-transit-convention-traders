@@ -17,7 +17,7 @@
 package controllers
 
 import connectors.DepartureMessageConnector
-import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateArrivalMessageAction}
+import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateDepartureMessageAction}
 import javax.inject.Inject
 import models.response.{ResponseDepartureWithMessages, ResponseMessage}
 import play.api.libs.json.Json
@@ -26,6 +26,7 @@ import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 import utils.{ResponseHelper, Utils}
 import utils.CallOps._
+
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 

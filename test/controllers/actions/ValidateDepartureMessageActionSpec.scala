@@ -58,7 +58,7 @@ class ValidateDepartureMessageActionSpec extends AnyFreeSpec with Matchers with 
 
       val controller = new Harness(validateMessage, cc)
 
-      val req: FakeRequest[NodeSeq] = FakeRequest(method = "", uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), CC044A)
+      val req: FakeRequest[NodeSeq] = FakeRequest(method = "", uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), CC054A)
 
       val result = controller.post()(req)
 
@@ -71,7 +71,7 @@ class ValidateDepartureMessageActionSpec extends AnyFreeSpec with Matchers with 
 
       val controller = new Harness(validateMessage, cc)
 
-      val req: FakeRequest[NodeSeq] = FakeRequest(method = "", uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), InvalidCC044A)
+      val req: FakeRequest[NodeSeq] = FakeRequest(method = "", uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), InvalidCC054A)
 
       val result = controller.post()(req)
 
@@ -97,7 +97,7 @@ class ValidateDepartureMessageActionSpec extends AnyFreeSpec with Matchers with 
 
       val controller = new Harness(validateMessage, cc)
 
-      val req: FakeRequest[NodeSeq] = FakeRequest(method = "", uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), <CC045A></CC045A>)
+      val req: FakeRequest[NodeSeq] = FakeRequest(method = "", uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), <CC011A></CC011A>)
 
       val result = controller.post()(req)
 
