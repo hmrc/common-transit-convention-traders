@@ -1,5 +1,3 @@
-# microservice specific routes
-
 GET        /movements/arrivals                                      controllers.ArrivalMovementController.getArrivalsForEori()
 POST       /movements/arrivals                                      controllers.ArrivalMovementController.createArrivalNotification()
 
@@ -17,4 +15,6 @@ POST       /movements/departures                                    controllers.
 
 GET        /movements/departures/:departureId                       controllers.DeparturesController.getDeparture(departureId: String)
 
-GET        /movements/departures/:departureId/messages              controllers.DeparturesController.getDepartureMessages(departureId: String)
+GET        /movements/departures/:departureId/messages              controllers.DepartureMessagesController.getDepartureMessages(departureId: String)
+
+GET        /movements/departures/:departureId/messages/:messageId   controllers.DepartureMessagesController.getDepartureMessage(departureId: String, messageId: String)

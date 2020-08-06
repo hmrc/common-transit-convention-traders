@@ -19,32 +19,32 @@ package models.response
 import java.time.LocalDateTime
 
 import controllers.routes
-import models.domain.Arrival
-import utils.CallOps._
+import models.domain.{Arrival, Departure}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import utils.CallOps._
 
-class ResponseArrivalSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
+class ResponseDepartureSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
 
-  "ResponseArrival" - {
+  "ResponseDeparture" - {
     "must have valid public location" in {
-      val arrival = Arrival(3, "loc", "messageLoc", "mrn", "status", LocalDateTime.now(), LocalDateTime.now())
+      val departure = Departure(3, "loc", "messageLoc", Some("mrn"), "ref", "status", LocalDateTime.now(), LocalDateTime.now())
 
-      val result = ResponseArrival(arrival)
+      val result = ResponseDeparture(departure)
 
-      result.arrival mustBe routes.ArrivalMovementController.getArrival("3").urlWithContext
+      result.departure mustBe routes.DeparturesController.getDeparture("3").urlWithContext
     }
 
     "must have valid public messages location" in {
-      val arrival = Arrival(3, "loc", "messageLoc", "mrn", "status", LocalDateTime.now(), LocalDateTime.now())
+      val departure = Departure(3, "loc", "messageLoc", Some("mrn"), "ref", "status", LocalDateTime.now(), LocalDateTime.now())
 
-      val result = ResponseArrival(arrival)
+      val result = ResponseDeparture(departure)
 
-      result.messages mustBe routes.ArrivalMessagesController.getArrivalMessages("3").urlWithContext
+      result.messages mustBe routes.DepartureMessagesController.getDepartureMessages("3").urlWithContext
     }
   }
 

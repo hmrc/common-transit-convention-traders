@@ -88,20 +88,20 @@ traits:
                      "arrivals":
                        [
                         {
-                          "arrival": "/movements/arrivals/123",
+                          "arrival": "/customs/transits/movements/arrivals/123",
                           "created": "2020-03-20",
                           "updated": "2020-03-20",
                           "movementReferenceNumber":"MRN",
                           "status": "arrival notification received",
-                          "messages": "/movements/arrivals/123/messages"
+                          "messages": "/customs/transits/movements/arrivals/123/messages"
                         },
                         {
-                          "arrival": "/movements/arrivals/987",
+                          "arrival": "/customs/transits/movements/arrivals/987",
                           "created": "2020-03-28",
                           "updated": "2020-03-28",
                           "movementReferenceNumber":"MRN",
                           "status", "unloading permissions received",
-                          "messages": "/movements/arrivals/987/messages"
+                          "messages": "/customs/transits/movements/arrivals/987/messages"
                         }
                        ]
                 }
@@ -131,7 +131,7 @@ traits:
           202:
             headers:
               Location:
-                description: The uri to retrieve the Arrival Notification, including arrival ID
+                description: The URI to retrieve the Arrival Notification, including arrival ID
                 example: /customs/transits/movements/arrivals/{arrivalId}
       get:
         displayName: Pull a Movement Arrival for an arrival ID
@@ -151,12 +151,12 @@ traits:
                 description: JSON Payload
                 example: |
                   {
-                    "arrival": "/movements/arrivals/123",
+                    "arrival": "/customs/transits/movements/arrivals/123",
                     "created": "2020-03-20",
                     "updated": "2020-03-20",
                     "movementReferenceNumber":"MRN",
                     "status", "arrival notification received",
-                    "messages": "/movements/arrivals/123/messages"
+                    "messages": "/customs/transits/movements/arrivals/123/messages"
                   }
           404:
             description: When a Movement Arrival does not exist, has been archived or is not available to the EORI number.
@@ -164,7 +164,7 @@ traits:
         post:
           displayName: Send a message related to an Arrival Movement
           description: |
-            Send a message to the Office of Destination. For example, an an Unloading Remarks message, otherwise known as E_ULD_REM (IE044), to let them know that the goods have been unloaded.
+            Send a message to the Office of Destination. For example, an Unloading Remarks message, otherwise known as E_ULD_REM (IE044), to let them know that the goods have been unloaded.
 
             If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive an HTTP 403 Forbidden status.
           is: [contentXmlHeader]
@@ -199,19 +199,19 @@ traits:
                   description: A JSON list containing messages with an XML body
                   example: |
                     {
-                        "arrival": "/movements/arrivals/123",
+                        "arrival": "/customs/transits/movements/arrivals/123",
                         "created": "2020-03-20",
                         "updated": "2020-03-20",
                         "movementReferenceNumber":"MRN",
                         "status", "Arrival Notification received"
                         "messages": [
                             {
-                                "message": "/movements/arrivals/1234/messages/456"
+                                "message": "/customs/transits/movements/arrivals/1234/messages/456"
                                 "received": "2020-01-01",
                                 "body": "<CC025A>...</CC025A>"
                             },
                             {
-                                "message": "/movements/arrivals/1234/messages/789"
+                                "message": "/customs/transits/movements/arrivals/1234/messages/789"
                                 "received": "2020-01-02",
                                 "body": "<CC043A>...</CC043A>"
                             }

@@ -18,19 +18,16 @@ package connectors
 
 import config.AppConfig
 import connectors.util.CustomHttpReader
-import connectors.util.CustomHttpReader.INTERNAL_SERVER_ERROR
 import javax.inject.Inject
 import models.domain.{ArrivalWithMessages, MovementMessage}
-import play.api.libs.json.Reads
-import play.api.mvc.{Headers, RequestHeader}
-import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpResponse}
+import play.api.mvc.RequestHeader
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.Utils
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends BaseConnector {
+class ArrivalMessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends BaseConnector {
 
   def get(arrivalId: String, messageId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, MovementMessage]] = {
     val url = appConfig.traderAtDestinationUrl + s"$arrivalRoute${Utils.urlEncode(arrivalId)}/messages/${Utils.urlEncode(messageId)}"
@@ -46,11 +43,12 @@ class MessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends
     http.POSTString(url, message, requestHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
   }
 
-  def getArrivalMessages(arrivalId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, ArrivalWithMessages]] = {
+  def getMessages(arrivalId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, ArrivalWithMessages]] = {
     val url = appConfig.traderAtDestinationUrl + s"$arrivalRoute${Utils.urlEncode(arrivalId)}/messages"
 
     http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response =>
       extractIfSuccessful[ArrivalWithMessages](response)
     }
   }
+
 }

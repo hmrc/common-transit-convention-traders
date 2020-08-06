@@ -2,7 +2,6 @@ package connectors
 
 import java.time.LocalDateTime
 
-import org.scalatest.{FreeSpec, MustMatchers}
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.domain.Departure
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -12,11 +11,14 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier
 import controllers.routes
 import models.response.ResponseDeparture
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 import utils.CallOps._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.test.Helpers._
 
-class DepartureConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
+class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
   "post" - {
     "must return ACCEPTED when post is successful" in {
       val connector = app.injector.instanceOf[DeparturesConnector]
@@ -75,7 +77,7 @@ class DepartureConnectorSpec extends FreeSpec with MustMatchers with WiremockSui
   "get" - {
     "must return Arrival when arrival is found" in {
       val connector = app.injector.instanceOf[DeparturesConnector]
-      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DeparturesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "reference", "status", LocalDateTime.now, LocalDateTime.now)
+      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "reference", "status", LocalDateTime.now, LocalDateTime.now)
 
       server.stubFor(get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/1"))
         .willReturn(aResponse().withStatus(OK)

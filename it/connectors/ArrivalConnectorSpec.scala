@@ -2,22 +2,23 @@ package connectors
 
 import java.time.LocalDateTime
 
-import org.scalatest.{FreeSpec, MustMatchers}
 import com.github.tomakehurst.wiremock.client.WireMock._
 import controllers.routes
-import models.domain.{Arrival, ArrivalWithMessages, Arrivals, MovementMessage}
-import models.response.{ResponseArrival, ResponseArrivalWithMessages, ResponseArrivals, ResponseMessage}
+import models.domain.{Arrival, Arrivals}
+import models.response.{ResponseArrival, ResponseArrivals}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.Json
 import utils.CallOps._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.{HeaderCarrier}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class ArrivalConnectorSpec extends FreeSpec with MustMatchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
+class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
   "post" - {
     "must return ACCEPTED when post is successful" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
