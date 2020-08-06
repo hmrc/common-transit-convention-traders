@@ -206,7 +206,7 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
 
     "must return InternalServerError when invalid Location value in downstream response header" ignore {
       when(mockMessageConnector.post(any(), any())(any(), any(), any()))
-        .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123/messages/<>"))) ))
+        .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/<>"))) ))
 
       val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC054A)
       val result = route(app, request).value
@@ -214,9 +214,9 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
       status(result) mustBe INTERNAL_SERVER_ERROR
     }
 
-    "must escape arrival ID in Location response header" in {
+    "must escape departure ID in Location response header" in {
       when(mockMessageConnector.post(any(), any())(any(), any(), any()))
-        .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123/messages/123-@+*~-31@"))) ))
+        .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/123-@+*~-31@"))) ))
 
       val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC054A)
       val result = route(app, request).value
@@ -227,7 +227,7 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
 
     "must exclude query string if present in downstream Location header" in {
       when(mockMessageConnector.post(any(), any())(any(), any(), any()))
-        .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123/messages/123?status=success"))) ))
+        .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/123?status=success"))) ))
 
       val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC054A)
       val result = route(app, request).value

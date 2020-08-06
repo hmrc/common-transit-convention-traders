@@ -65,7 +65,7 @@ class ValidateDepartureMessageActionSpec extends AnyFreeSpec with Matchers with 
       status(result) mustEqual OK
     }
 
-    "must return BadRequest when passed in an invalid IE054 xml request " in {
+    "must return BadRequest when passed in an invalid IE054  xml request " in {
       val validateMessage = app.injector.instanceOf[ValidateDepartureMessageAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
