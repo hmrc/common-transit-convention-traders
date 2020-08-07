@@ -18,7 +18,8 @@ package controllers
 
 import java.time.LocalDateTime
 
-import connectors.{DepartureMessageConnector}
+import akka.util.ByteString
+import connectors.DepartureMessageConnector
 import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
 import models.domain.{DepartureWithMessages, MovementMessage}
@@ -34,12 +35,13 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Json
+import play.api.libs.json.{JsNull, Json}
 import play.api.mvc.{AnyContentAsEmpty, Headers}
-import play.api.test.Helpers._
+import play.api.test.Helpers.{headers, _}
 import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.http.HttpResponse
 import utils.CallOps._
+
 import scala.concurrent.Future
 
 class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
@@ -167,6 +169,103 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
       val result = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
+    }
+  }
+
+  "POST /movements/departures/:departureId/messages" - {
+    "must return Accepted when successful" in {
+      when(mockMessageConnector.post(any(), any())(any(), any(), any()))
+        .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/1"))) ))
+
+      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC054A)
+      val result = route(app, request).value
+
+      status(result) mustBe ACCEPTED
+      headers(result) must contain (LOCATION -> routes.DepartureMessagesController.getDepartureMessage("123", "1").urlWithContext)
+    }
+
+    "must return InternalServerError when unsuccessful" in {
+      when(mockMessageConnector.post(any(), any())(any(), any(), any()))
+        .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "")))
+
+      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC054A)
+      val result = route(app, request).value
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+    }
+
+    "must return InternalServerError when no Location in downstream response header" in {
+      when(mockMessageConnector.post(any(), any())(any(), any(), any()))
+        .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Headers.create().toMap) ))
+
+      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC054A)
+      val result = route(app, request).value
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+    }
+
+    "must return InternalServerError when invalid Location value in downstream response header" ignore {
+      when(mockMessageConnector.post(any(), any())(any(), any(), any()))
+        .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/<>"))) ))
+
+      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC054A)
+      val result = route(app, request).value
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+    }
+
+    "must escape departure ID in Location response header" in {
+      when(mockMessageConnector.post(any(), any())(any(), any(), any()))
+        .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/123-@+*~-31@"))) ))
+
+      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC054A)
+      val result = route(app, request).value
+
+      status(result) mustBe ACCEPTED
+      headers(result) must contain (LOCATION -> routes.DepartureMessagesController.getDepartureMessage("123", "123-@+*~-31@").urlWithContext)
+    }
+
+    "must exclude query string if present in downstream Location header" in {
+      when(mockMessageConnector.post(any(), any())(any(), any(), any()))
+        .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/123?status=success"))) ))
+
+      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC054A)
+      val result = route(app, request).value
+
+      status(result) mustBe ACCEPTED
+      headers(result) must contain (LOCATION -> routes.DepartureMessagesController.getDepartureMessage("123","123").urlWithContext)
+    }
+
+    "must return UnsupportedMediaType when Content-Type is JSON" in {
+      val request = FakeRequest(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")), body = AnyContentAsEmpty)
+
+      val result = route(app, request).value
+
+      status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+    }
+
+    "must return UnsupportedMediaType when no Content-Type specified" in {
+      val request = fakeRequestMessages(method = "POST", headers = FakeHeaders(), uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = ByteString("body"))
+
+      val result = route(app, request).value
+
+      status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+    }
+
+    "must return UnsupportedMediaType when empty XML payload is sent" in {
+      val request = fakeRequestMessages(method = "POST", headers = FakeHeaders(), uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = AnyContentAsEmpty)
+
+      val result = route(app, request).value
+
+      status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+    }
+
+    "must return BadRequest when invalid XML payload is sent" in {
+      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = InvalidCC054A)
+
+      val result = route(app, request).value
+
+      status(result) mustBe BAD_REQUEST
     }
   }
 

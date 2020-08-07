@@ -29,6 +29,11 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class DepartureMessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends BaseConnector {
 
+  def post(message: String, departureId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val url = appConfig.traderAtDeparturesUrl + s"$departureRoute${Utils.urlEncode(departureId)}/messages"
+
+    http.POSTString(url, message, requestHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
+  }
 
   def getMessages(departureId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, DepartureWithMessages]] = {
     val url = appConfig.traderAtDeparturesUrl + s"$departureRoute${Utils.urlEncode(departureId)}/messages"

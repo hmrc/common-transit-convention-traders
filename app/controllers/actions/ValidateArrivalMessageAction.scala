@@ -25,7 +25,7 @@ import services.XmlValidationService
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 
-class ValidateMessageAction @Inject()(xmlValidationService: XmlValidationService)(
+class ValidateArrivalMessageAction @Inject()(xmlValidationService: XmlValidationService)(
   implicit val executionContext: ExecutionContext)
   extends ActionRefiner[Request, Request] {
 
@@ -34,7 +34,6 @@ class ValidateMessageAction @Inject()(xmlValidationService: XmlValidationService
       case body: NodeSeq =>
         if (body.nonEmpty) {
           val rootElementName = body.head.label
-
           XSDFile.Arrival.SupportedMessages.get(rootElementName) match {
             case Some(xsd) =>
               xmlValidationService.validate(body.toString, xsd) match {

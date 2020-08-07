@@ -22,6 +22,7 @@ sealed trait XSDFile {
 }
 
 sealed trait ArrivalMessage
+sealed trait DepartureMessage
 
 object XSDFile {
   object Arrival {
@@ -30,6 +31,15 @@ object XSDFile {
     val SupportedMessages: Map[String, XSDFile] = DefinitionsMap.filter {
       case (key: String, value: XSDFile) =>
         value.isInstanceOf[ArrivalMessage]
+    }
+  }
+
+  object Departure {
+    val Definitions = Seq(DepartureDeclarationXSD, RequestOfReleaseXSD)
+    val DefinitionsMap = Definitions.map(xsd => xsd.Label -> xsd).toMap
+    val SupportedMessages: Map[String, XSDFile] = DefinitionsMap.filter {
+      case (key: String, value: XSDFile) =>
+        value.isInstanceOf[DepartureMessage]
     }
   }
 }
@@ -47,4 +57,9 @@ object DepartureDeclarationXSD extends XSDFile {
 object UnloadingRemarksXSD extends XSDFile with ArrivalMessage {
   val FilePath = "/xsd/cc044a.xsd"
   val Label = "CC044A"
+}
+
+object RequestOfReleaseXSD extends XSDFile with DepartureMessage {
+  val FilePath = "/xsd/cc054a.xsd"
+  val Label = "CC054A"
 }
