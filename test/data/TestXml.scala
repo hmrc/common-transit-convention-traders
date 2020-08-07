@@ -632,48 +632,4 @@ trait TestXml {
       </PACGS2>
     </GOOITEGDS>
   </CC015B>
-
-  val CC054A = <CC054A>
-    <SynIdeMES1>ABCD</SynIdeMES1>
-    <SynVerNumMES2>1</SynVerNumMES2>
-    <MesSenMES3>defaulta</MesSenMES3>
-    <MesRecMES6>defaultb</MesRecMES6>
-    <DatOfPreMES9>20190912</DatOfPreMES9>
-    <TimOfPreMES10>1222</TimOfPreMES10>
-    <IntConRefMES11>defaultc</IntConRefMES11>
-    <MesIdeMES19>defaultd</MesIdeMES19>
-    <MesTypMES20>sample</MesTypMES20>
-    <HEAHEA>
-      <DocNumHEA5>defaulte</DocNumHEA5>
-      <RelReqHEA105>1</RelReqHEA105>
-      <RelReqDatHEA154>20190912</RelReqDatHEA154>
-    </HEAHEA>
-    <TRAPRIPC1>
-    </TRAPRIPC1>
-    <CUSOFFDEPEPT>
-      <RefNumEPT1>defaultf</RefNumEPT1>
-    </CUSOFFDEPEPT>
-  </CC054A>
-
-  val InvalidCC054A = <CC054A>
-    <SynIdeMES1>ABCD</SynIdeMES1>
-    <!-- Missing field SynVerNumMES2 -->
-    <MesSenMES3>defaulta</MesSenMES3>
-    <MesRecMES6>defaultb</MesRecMES6>
-    <DatOfPreMES9>20190912</DatOfPreMES9>
-    <TimOfPreMES10>1222</TimOfPreMES10>
-    <IntConRefMES11>defaultc</IntConRefMES11>
-    <MesIdeMES19>defaultd</MesIdeMES19>
-    <MesTypMES20>sample</MesTypMES20>
-    <HEAHEA>
-      <DocNumHEA5>defaulte</DocNumHEA5>
-      <RelReqHEA105>1</RelReqHEA105>
-      <RelReqDatHEA154>20190912</RelReqDatHEA154>
-    </HEAHEA>
-    <TRAPRIPC1>
-    </TRAPRIPC1>
-    <CUSOFFDEPEPT>
-      <RefNumEPT1>defaultf</RefNumEPT1>
-    </CUSOFFDEPEPT>
-  </CC054A>
 }

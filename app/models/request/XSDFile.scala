@@ -35,7 +35,7 @@ object XSDFile {
   }
 
   object Departure {
-    val Definitions = Seq(DepartureDeclarationXSD, RequestOfReleaseXSD)
+    val Definitions = Seq(DepartureDeclarationXSD)
     val DefinitionsMap = Definitions.map(xsd => xsd.Label -> xsd).toMap
     val SupportedMessages: Map[String, XSDFile] = DefinitionsMap.filter {
       case (key: String, value: XSDFile) =>
@@ -57,9 +57,4 @@ object DepartureDeclarationXSD extends XSDFile {
 object UnloadingRemarksXSD extends XSDFile with ArrivalMessage {
   val FilePath = "/xsd/cc044a.xsd"
   val Label = "CC044A"
-}
-
-object RequestOfReleaseXSD extends XSDFile with DepartureMessage {
-  val FilePath = "/xsd/cc054a.xsd"
-  val Label = "CC054A"
 }
