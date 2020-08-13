@@ -25,7 +25,7 @@
           <xs:documentation />
         </xs:annotation>
       </xs:element>
-      <xs:element name="MesSenMES3" type="Alphanumeric_Max35" minOccurs="1" maxOccurs="1">
+      <xs:element name="MesSenMES3" type="Alphanumeric_Max35" minOccurs="0" maxOccurs="0">
         <xs:annotation>
           <xs:documentation />
         </xs:annotation>
