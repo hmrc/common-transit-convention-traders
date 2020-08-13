@@ -77,6 +77,13 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
       headers(result) must contain (LOCATION -> routes.DeparturesController.getDeparture("123").urlWithContext)
     }
 
+    "must return BadRequest when xml includes MesSenMES3" in {
+      val request = fakeRequestDepartures(method = "POST", body = CC015BwithMesSenMES3)
+      val result = route(app, request).value
+
+      status(result) mustBe BAD_REQUEST
+    }
+
     "must return InternalServerError when unsuccessful" in {
       when(mockDepartureConnector.post(any())(any(), any(), any()))
         .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "")))
