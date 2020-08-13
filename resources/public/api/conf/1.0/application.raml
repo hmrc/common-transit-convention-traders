@@ -68,9 +68,9 @@ traits:
                 <IE007>
                 </IE007>
     get:
-      displayName: Pull all Movement Arrivals
+      displayName: PULL all Movement Arrivals
       description: |
-        Pull all Movement Arrivals.  Any Movement Arrivals more than 28 days old will have been archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
+        PULL all Movement Arrivals.  Any Movement Arrivals more than 28 days old will have been archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
 
         You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
       is:
@@ -134,9 +134,9 @@ traits:
                 description: The URI to retrieve the Arrival Notification, including arrival ID
                 example: /customs/transits/movements/arrivals/{arrivalId}
       get:
-        displayName: Pull a Movement Arrival for an arrival ID
+        displayName: PULL a Movement Arrival for an arrival ID
         description: |
-          Pull a specific Movement Arrival. Any Movement Arrivals more than 28 days old will be haven archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
+          PULL a specific Movement Arrival. Any Movement Arrivals more than 28 days old will be haven archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
 
           You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
         is:
@@ -182,9 +182,9 @@ traits:
                   example: |
                     <IE044>...</IE044>
         get:
-          displayName: Pull all messages that relate to a Movement Arrival
+          displayName: PULL all messages that relate to a Movement Arrival
           description: |
-            Pull all the messages to do with a Movement Arrival. Any Movement Arrivals more than 28 days old will have been archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
+            PULL all the messages to do with a Movement Arrival. Any Movement Arrivals more than 28 days old will have been archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
 
             You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
           is:
@@ -227,9 +227,9 @@ traits:
               example: "1"
               required: true
           get:
-            displayName: Pull a message relating to a Movement Arrival and message ID
+            displayName: PULL a message relating to a Movement Arrival and message ID
             description: |
-              Pull all messages relating to a specific Movement Arrival and message ID. For example, this could include messages about route diversions or unloading permissions. Any Movement Arrivals more than 28 days old will have been archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
+              PULL all messages relating to a specific Movement Arrival and message ID. For example, this could include messages about route diversions or unloading permissions. Any Movement Arrivals more than 28 days old will have been archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
 
               You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
             is:
@@ -275,9 +275,9 @@ traits:
               example: |
                 <IE015>...</IE015>
     get:
-      displayName: Pull all Movement Departures
+      displayName: PULL all Movement Departures
       description: |
-        Pull all Movement Departures sent to the Office of Departures within 28 days of the goods being released at their final destination. Any Movement more than 28 days old will have been archived along with their related messages. Archived Movements will return an HTTP 404 Not Found status.
+        PULL all Movement Departures sent to the Office of Departures within 28 days of the goods being released at their final destination. Any Movement more than 28 days old will have been archived along with their related messages. Archived Movements will return an HTTP 404 Not Found status.
 
         You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
       is: 
@@ -305,9 +305,9 @@ traits:
                 }
     /{departureId}:
       get:
-        displayName: Pull a Movement Departure for a departure ID
+        displayName: PULL a Movement Departure for a departure ID
         description: |
-          Pull a specific Movement Departure  which was sent to the Office of Departure within 28 days of the goods being released at their final destination. Any Movements that are more than 28 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status. 
+          PULL a specific Movement Departure  which was sent to the Office of Departure within 28 days of the goods being released at their final destination. Any Movements that are more than 28 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status. 
 
           You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
         is: 
@@ -355,9 +355,9 @@ traits:
                   example: |
                     <IE0XX>...</IE0XX>
         get:
-          displayName: Pull all messages relating to a Movement Departure
+          displayName: PULL all messages relating to a Movement Departure
           description: |
-            Pull all messages sent within 28 days of the goods being released relating to a Movement Departure. Any Movements that are more than 28 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status. 
+            PULL all messages sent within 28 days of the goods being released relating to a Movement Departure. Any Movements that are more than 28 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status. 
 
             You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
           is: 
@@ -390,9 +390,9 @@ traits:
               description: When the Movement does not exist, has been archived or is not available to the EORI number.
         /{messageId}:
           get:
-            displayName: Pull a message relating to a Movement Departure and message ID
+            displayName: PULL a message relating to a Movement Departure and message ID
             description: |
-              Pull all messages relating to a specific Movement Departure and message ID. For example, this could include declaration rejected or Movement Reference Number (MRN) allocated messages. Any messages more than 28 days old will be archived. Archived notifications will be return an HTTP 404 Not Found status. 
+              PULL all messages relating to a specific Movement Departure and message ID. For example, this could include declaration rejected or Movement Reference Number (MRN) allocated messages. Any messages more than 28 days old will be archived. Archived notifications will be return an HTTP 404 Not Found status. 
 
               You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
             is:
