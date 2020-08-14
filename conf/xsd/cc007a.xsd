@@ -25,11 +25,6 @@
                     <xs:documentation />
                 </xs:annotation>
             </xs:element>
-            <xs:element name="MesSenMES3" type="Alphanumeric_Max35" minOccurs="1" maxOccurs="1">
-                <xs:annotation>
-                    <xs:documentation />
-                </xs:annotation>
-            </xs:element>
             <xs:element name="SenIdeCodQuaMES4" type="Alphanumeric_Min0Max4" minOccurs="0" maxOccurs="1">
                 <xs:annotation>
                     <xs:documentation />

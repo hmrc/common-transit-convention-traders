@@ -76,6 +76,13 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
      headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext)
    }
 
+   "must return BadRequest when containing MesSenMES3" in {
+     val request = fakeRequestArrivals(method = "POST", body = CC007AwithMesSenMES3)
+     val result = route(app, request).value
+
+     status(result) mustBe BAD_REQUEST
+   }
+
    "must return InternalServerError when unsuccessful" in {
      when(mockArrivalConnector.post(any())(any(), any(), any()))
        .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "")))
