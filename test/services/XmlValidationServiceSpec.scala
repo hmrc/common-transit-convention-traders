@@ -87,7 +87,6 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
        |<CC007A>
        |    <SynIdeMES1>UNOC</SynIdeMES1>
        |    <SynVerNumMES2>3</SynVerNumMES2>
-       |    <MesSenMES3>SYST17B-NCTS_EU_EXIT</MesSenMES3>
        |    <MesRecMES6>NCTS</MesRecMES6>
        |    <DatOfPreMES9>20190912</DatOfPreMES9>
        |    <TimOfPreMES10>1445</TimOfPreMES10>
