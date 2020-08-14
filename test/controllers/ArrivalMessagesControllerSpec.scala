@@ -141,6 +141,13 @@ class ArrivalMessagesControllerSpec extends AnyFreeSpec with Matchers with Guice
       headers(result) must contain (LOCATION -> routes.ArrivalMessagesController.getArrivalMessage("123", "1").urlWithContext)
     }
 
+    "must return BadRequest when xml includes MesSenMES3" in {
+      val request = fakeRequestMessages(method = "POST", uri = routes.ArrivalMessagesController.sendMessageDownstream("123").url, body = CC044AwithMesSenMES3)
+      val result = route(app, request).value
+
+      status(result) mustBe BAD_REQUEST
+    }
+
     "must return InternalServerError when unsuccessful" in {
       when(mockMessageConnector.post(any(), any())(any(), any(), any()))
         .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "")))
