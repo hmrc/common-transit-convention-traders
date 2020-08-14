@@ -29,15 +29,15 @@ class CC044ASpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks
 
   "validate" - {
 
-    "must be successful when validating a valid CC015B xml" in {
+    "must be successful when validating a valid CC044A xml" in {
         xmlValidationService.validate(CC044A.toString(), UnloadingRemarksXSD) mustBe a[Right[_, _]]
     }
 
-    "must fail when validating an invalid CC015B xml" in {
+    "must fail when validating an invalid CC044A xml" in {
        xmlValidationService.validate(InvalidCC044A.toString(), UnloadingRemarksXSD) mustBe a[Left[_, _]]
     }
 
-    "must reject a CC015B containing MesSenMES3" in {
+    "must reject a CC044A containing MesSenMES3" in {
       xmlValidationService.validate(CC044AwithMesSenMES3.toString(), UnloadingRemarksXSD) mustBe a[Left[_, _]]
     }
   }
