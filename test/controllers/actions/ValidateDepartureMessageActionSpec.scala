@@ -52,26 +52,26 @@ class ValidateDepartureMessageActionSpec extends AnyFreeSpec with Matchers with 
   }
 
   "ValidateDepartureMessageAction" - {
-    "must execute the block when passed in a valid IE054 xml request" in {
+    "must execute the block when passed in a valid IE014 xml request" in {
       val validateMessage = app.injector.instanceOf[ValidateDepartureMessageAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateMessage, cc)
 
-      val req: FakeRequest[NodeSeq] = FakeRequest(method = "", uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), CC054A)
+      val req: FakeRequest[NodeSeq] = FakeRequest(method = "", uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), CC014A)
 
       val result = controller.post()(req)
 
       status(result) mustEqual OK
     }
 
-    "must return BadRequest when passed in an invalid IE054  xml request " in {
+    "must return BadRequest when passed in an invalid IE014  xml request " in {
       val validateMessage = app.injector.instanceOf[ValidateDepartureMessageAction]
       val cc = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateMessage, cc)
 
-      val req: FakeRequest[NodeSeq] = FakeRequest(method = "", uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), InvalidCC054A)
+      val req: FakeRequest[NodeSeq] = FakeRequest(method = "", uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), InvalidCC014A)
 
       val result = controller.post()(req)
 
