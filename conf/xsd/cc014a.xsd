@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" version="1.00">
   <!--=========================================-->
-  <!--===== CC054A -->
+  <!--===== CC014A -->
   <!--===== XSD version v1.00  -->
   <!--=========================================-->
   <!--===== Includes =====-->
   <xs:include schemaLocation="doc.xsd" />
   <xs:include schemaLocation="simple_types.xsd" />
   <!--===== Root Element =====-->
-  <xs:element name="CC054A" type="CC054AType" />
+  <xs:element name="CC014A" type="CC014AType" />
   <!--===== MESSAGE Content =====-->
-  <xs:complexType name="CC054AType">
+  <xs:complexType name="CC014AType">
     <xs:annotation>
       <xs:documentation />
     </xs:annotation>
@@ -21,11 +21,6 @@
         </xs:annotation>
       </xs:element>
       <xs:element name="SynVerNumMES2" type="Numeric_1_-8" minOccurs="1" maxOccurs="1">
-        <xs:annotation>
-          <xs:documentation />
-        </xs:annotation>
-      </xs:element>
-      <xs:element name="MesSenMES3" type="Alphanumeric_Max35" minOccurs="1" maxOccurs="1">
         <xs:annotation>
           <xs:documentation />
         </xs:annotation>
@@ -147,12 +142,17 @@
           <xs:documentation />
         </xs:annotation>
       </xs:element>
-      <xs:element name="RelReqHEA105" type="Numeric_1" minOccurs="1" maxOccurs="1">
+      <xs:element name="DatOfCanReqHEA147" type="Numeric_8" minOccurs="1" maxOccurs="1">
         <xs:annotation>
           <xs:documentation />
         </xs:annotation>
       </xs:element>
-      <xs:element name="RelReqDatHEA154" type="Numeric_8" minOccurs="1" maxOccurs="1">
+      <xs:element name="CanReaHEA250" type="Alphanumeric_Max350" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation />
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="CanReaHEA250LNG" type="Alpha_2" minOccurs="0" maxOccurs="1">
         <xs:annotation>
           <xs:documentation />
         </xs:annotation>

@@ -177,7 +177,7 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
       when(mockMessageConnector.post(any(), any())(any(), any(), any()))
         .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/1"))) ))
 
-      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC054A)
+      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC014A)
       val result = route(app, request).value
 
       status(result) mustBe ACCEPTED
@@ -188,7 +188,7 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
       when(mockMessageConnector.post(any(), any())(any(), any(), any()))
         .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "")))
 
-      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC054A)
+      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC014A)
       val result = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
@@ -198,7 +198,7 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
       when(mockMessageConnector.post(any(), any())(any(), any(), any()))
         .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Headers.create().toMap) ))
 
-      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC054A)
+      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC014A)
       val result = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
@@ -208,7 +208,7 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
       when(mockMessageConnector.post(any(), any())(any(), any(), any()))
         .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/<>"))) ))
 
-      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC054A)
+      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC014A)
       val result = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
@@ -218,7 +218,7 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
       when(mockMessageConnector.post(any(), any())(any(), any(), any()))
         .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/123-@+*~-31@"))) ))
 
-      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC054A)
+      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC014A)
       val result = route(app, request).value
 
       status(result) mustBe ACCEPTED
@@ -229,7 +229,7 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
       when(mockMessageConnector.post(any(), any())(any(), any(), any()))
         .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/123?status=success"))) ))
 
-      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC054A)
+      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC014A)
       val result = route(app, request).value
 
       status(result) mustBe ACCEPTED
@@ -261,7 +261,7 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
     }
 
     "must return BadRequest when invalid XML payload is sent" in {
-      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = InvalidCC054A)
+      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = InvalidCC014A)
 
       val result = route(app, request).value
 

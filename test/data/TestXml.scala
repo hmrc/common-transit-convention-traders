@@ -112,6 +112,134 @@ trait TestXml {
     </CUSOFFPREOFFRES>
   </CC007A>
 
+  val CC014A = <CC014A>
+    <SynIdeMES1>tval</SynIdeMES1>
+    <SynVerNumMES2>1</SynVerNumMES2>
+    <!--Optional:-->
+    <SenIdeCodQuaMES4>1111</SenIdeCodQuaMES4>
+    <MesRecMES6>111111</MesRecMES6>
+    <!--Optional:-->
+    <RecIdeCodQuaMES7>1111</RecIdeCodQuaMES7>
+    <DatOfPreMES9>20001001</DatOfPreMES9>
+    <TimOfPreMES10>1111</TimOfPreMES10>
+    <IntConRefMES11>111111</IntConRefMES11>
+    <!--Optional:-->
+    <RecRefMES12>111111</RecRefMES12>
+    <!--Optional:-->
+    <RecRefQuaMES13>to</RecRefQuaMES13>
+    <!--Optional:-->
+    <AppRefMES14>token</AppRefMES14>
+    <!--Optional:-->
+    <PriMES15>t</PriMES15>
+    <!--Optional:-->
+    <AckReqMES16>1</AckReqMES16>
+    <!--Optional:-->
+    <ComAgrIdMES17>token</ComAgrIdMES17>
+    <!--Optional:-->
+    <TesIndMES18>1</TesIndMES18>
+    <MesIdeMES19>token</MesIdeMES19>
+    <MesTypMES20>token</MesTypMES20>
+    <!--Optional:-->
+    <ComAccRefMES21>token</ComAccRefMES21>
+    <!--Optional:-->
+    <MesSeqNumMES22>11</MesSeqNumMES22>
+    <!--Optional:-->
+    <FirAndLasTraMES23>t</FirAndLasTraMES23>
+    <HEAHEA>
+      <DocNumHEA5>default</DocNumHEA5>
+      <DatOfCanReqHEA147>20001001</DatOfCanReqHEA147>
+      <CanReaHEA250>default</CanReaHEA250>
+      <CanReaHEA250LNG>ab</CanReaHEA250LNG>
+    </HEAHEA>
+    <TRAPRIPC1>
+    </TRAPRIPC1>
+    <CUSOFFDEPEPT>
+      <RefNumEPT1>default1</RefNumEPT1>
+    </CUSOFFDEPEPT>
+  </CC014A>
+
+  val InvalidCC014A = <CC014A>
+    <SynIdeMES1>tval</SynIdeMES1>
+    <SynVerNumMES2>1</SynVerNumMES2>
+    <!--Optional:-->
+    <SenIdeCodQuaMES4>1111</SenIdeCodQuaMES4>
+    <MesRecMES6>111111</MesRecMES6>
+    <!--Optional:-->
+    <RecIdeCodQuaMES7>1111</RecIdeCodQuaMES7>
+    <DatOfPreMES9>20001001</DatOfPreMES9>
+    <TimOfPreMES10>1111</TimOfPreMES10>
+    <IntConRefMES11>111111</IntConRefMES11>
+    <!--Optional:-->
+    <RecRefMES12>111111</RecRefMES12>
+    <!--Optional:-->
+    <RecRefQuaMES13>to</RecRefQuaMES13>
+    <!--Optional:-->
+    <AppRefMES14>token</AppRefMES14>
+    <!--Optional:-->
+    <PriMES15>t</PriMES15>
+    <!--Optional:-->
+    <AckReqMES16>1</AckReqMES16>
+    <!--Optional:-->
+    <ComAgrIdMES17>token</ComAgrIdMES17>
+    <!--Optional:-->
+    <TesIndMES18>1</TesIndMES18>
+    <MesIdeMES19>token</MesIdeMES19>
+    <MesTypMES20>token</MesTypMES20>
+    <!--Optional:-->
+    <ComAccRefMES21>token</ComAccRefMES21>
+    <!--Optional:-->
+    <MesSeqNumMES22>11</MesSeqNumMES22>
+    <!--Optional:-->
+    <FirAndLasTraMES23>t</FirAndLasTraMES23>
+  </CC014A>
+
+  val CC014AwithMesSenMES3 = <CC014A>
+    <SynIdeMES1>tval</SynIdeMES1>
+    <SynVerNumMES2>1</SynVerNumMES2>
+    <MesSenMES3>111111</MesSenMES3>
+    <!--Optional:-->
+    <SenIdeCodQuaMES4>1111</SenIdeCodQuaMES4>
+    <MesRecMES6>111111</MesRecMES6>
+    <!--Optional:-->
+    <RecIdeCodQuaMES7>1111</RecIdeCodQuaMES7>
+    <DatOfPreMES9>20001001</DatOfPreMES9>
+    <TimOfPreMES10>1111</TimOfPreMES10>
+    <IntConRefMES11>111111</IntConRefMES11>
+    <!--Optional:-->
+    <RecRefMES12>111111</RecRefMES12>
+    <!--Optional:-->
+    <RecRefQuaMES13>to</RecRefQuaMES13>
+    <!--Optional:-->
+    <AppRefMES14>token</AppRefMES14>
+    <!--Optional:-->
+    <PriMES15>t</PriMES15>
+    <!--Optional:-->
+    <AckReqMES16>1</AckReqMES16>
+    <!--Optional:-->
+    <ComAgrIdMES17>token</ComAgrIdMES17>
+    <!--Optional:-->
+    <TesIndMES18>1</TesIndMES18>
+    <MesIdeMES19>token</MesIdeMES19>
+    <MesTypMES20>token</MesTypMES20>
+    <!--Optional:-->
+    <ComAccRefMES21>token</ComAccRefMES21>
+    <!--Optional:-->
+    <MesSeqNumMES22>11</MesSeqNumMES22>
+    <!--Optional:-->
+    <FirAndLasTraMES23>t</FirAndLasTraMES23>
+    <HEAHEA>
+      <DocNumHEA5>default</DocNumHEA5>
+      <DatOfCanReqHEA147>20001001</DatOfCanReqHEA147>
+      <CanReaHEA250>default</CanReaHEA250>
+      <CanReaHEA250LNG>ab</CanReaHEA250LNG>
+    </HEAHEA>
+    <TRAPRIPC1>
+    </TRAPRIPC1>
+    <CUSOFFDEPEPT>
+      <RefNumEPT1>default1</RefNumEPT1>
+    </CUSOFFDEPEPT>
+  </CC014A>
+
   val CC044A =
     <CC044A>
       <SynIdeMES1>tval</SynIdeMES1>
@@ -944,47 +1072,5 @@ trait TestXml {
     </GOOITEGDS>
   </CC015B>
 
-  val CC054A = <CC054A>
-    <SynIdeMES1>ABCD</SynIdeMES1>
-    <SynVerNumMES2>1</SynVerNumMES2>
-    <MesSenMES3>defaulta</MesSenMES3>
-    <MesRecMES6>defaultb</MesRecMES6>
-    <DatOfPreMES9>20190912</DatOfPreMES9>
-    <TimOfPreMES10>1222</TimOfPreMES10>
-    <IntConRefMES11>defaultc</IntConRefMES11>
-    <MesIdeMES19>defaultd</MesIdeMES19>
-    <MesTypMES20>sample</MesTypMES20>
-    <HEAHEA>
-      <DocNumHEA5>defaulte</DocNumHEA5>
-      <RelReqHEA105>1</RelReqHEA105>
-      <RelReqDatHEA154>20190912</RelReqDatHEA154>
-    </HEAHEA>
-    <TRAPRIPC1>
-    </TRAPRIPC1>
-    <CUSOFFDEPEPT>
-      <RefNumEPT1>defaultf</RefNumEPT1>
-    </CUSOFFDEPEPT>
-  </CC054A>
 
-  val InvalidCC054A = <CC054A>
-    <SynIdeMES1>ABCD</SynIdeMES1>
-    <!-- Missing field SynVerNumMES2 -->
-    <MesSenMES3>defaulta</MesSenMES3>
-    <MesRecMES6>defaultb</MesRecMES6>
-    <DatOfPreMES9>20190912</DatOfPreMES9>
-    <TimOfPreMES10>1222</TimOfPreMES10>
-    <IntConRefMES11>defaultc</IntConRefMES11>
-    <MesIdeMES19>defaultd</MesIdeMES19>
-    <MesTypMES20>sample</MesTypMES20>
-    <HEAHEA>
-      <DocNumHEA5>defaulte</DocNumHEA5>
-      <RelReqHEA105>1</RelReqHEA105>
-      <RelReqDatHEA154>20190912</RelReqDatHEA154>
-    </HEAHEA>
-    <TRAPRIPC1>
-    </TRAPRIPC1>
-    <CUSOFFDEPEPT>
-      <RefNumEPT1>defaultf</RefNumEPT1>
-    </CUSOFFDEPEPT>
-  </CC054A>
 }
