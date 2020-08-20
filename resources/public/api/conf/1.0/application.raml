@@ -47,7 +47,7 @@ traits:
     post:
       displayName: Send an Arrival Notification message
       description: |
-        Send a notification to let the Office of Destination know that the goods have arrived. This notification will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).
+        Send a notification to let the office at destination know that the goods have arrived. This notification will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).
 
         The location header in the response will contain a URI and arrival ID for the Arrival Notification. This will allow you to get the message status.
 
@@ -119,7 +119,7 @@ traits:
       put:
         displayName: Resubmit an Arrival Notification message
         description: |
-          Resubmit an Arrival Notification to let the Office of Destination know that the goods have arrived. This message will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).
+          Resubmit an Arrival Notification to let the office at destination know that the goods have arrived. This message will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).
 
           The location header in the response will contain an arrival ID for the Arrival Notification. This will allow you to get the message status.
 
@@ -164,7 +164,7 @@ traits:
         post:
           displayName: Send a message related to an Movement Arrival
           description: |
-            Send a message to the Office of Destination. For example, an Unloading Remarks message, otherwise known as E_ULD_REM (IE044), to let them know that the goods have been unloaded.
+            Send a message to the office at destination. For example, an Unloading Remarks message, otherwise known as E_ULD_REM (IE044), to let them know that the goods have been unloaded.
 
             If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive an HTTP 403 Forbidden status.
           is: [contentXmlHeader]
@@ -253,7 +253,7 @@ traits:
     post:
       displayName: Send a Declaration Data message
       description: |
-        Send a Declaration Data message, to let the Office of Destination know that the goods are on their way. This notification will be sent when the goods leave the Office of Departure. It is also called an E_DEC_DAT (IE015).
+        Send a Declaration Data message, to let the office at destination know that the goods are on their way. This notification will be sent when the goods leave the Office of Departure. It is also called an E_DEC_DAT (IE015).
         
         The location header in the response will contain a URI and departure ID for the Declaration Data. This will allow you to retrieve the submission status.
 
@@ -267,7 +267,7 @@ traits:
         202:
           headers:
             Location:
-              description: The URI to retrieve the departure notification, including departure ID
+              description: The URI to retrieve the Departure Notification, including departure ID
               example: /customs/transits/movements/departures/123456
           body:
             application/xml:
@@ -277,7 +277,7 @@ traits:
     get:
       displayName: PULL all Movement Departures
       description: |
-        PULL all Movement Departures sent to the Office of Departures within 28 days of the goods being released at their final destination. Any Movement more than 28 days old will have been archived along with their related messages. Archived Movements will return an HTTP 404 Not Found status.
+        PULL all Movement Departures sent to the office at departure within 28 days of the goods being released at their final destination. Any movement more than 28 days old will have been archived along with their related messages. Archived Movements will return an HTTP 404 Not Found status.
 
         You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
       is: 
@@ -307,7 +307,7 @@ traits:
       get:
         displayName: PULL a Movement Departure for a departure ID
         description: |
-          PULL a specific Movement Departure  which was sent to the Office of Departure within 28 days of the goods being released at their final destination. Any Movements that are more than 28 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status. 
+          PULL a specific Movement Departure which was sent to the office at departure within 28 days of the goods being released at their final destination. Any Movements that are more than 28 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status. 
 
           You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
         is: 
@@ -339,7 +339,8 @@ traits:
         post:
           displayName: Send a message related to a Movement Departure
           description: |
-            Send a message to the Office of Destination.
+            Send a message to the office at destination. For example, a Declaration Cancellation request message, otherwise known as E_DEC_CAN (IE014), to let them know that the trader wants to cancel their Declaration Data message (IE015).
+If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive an HTTP 
           is: [contentXmlHeader]
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -387,7 +388,7 @@ traits:
                        ]
                     }
             404:
-              description: When the Movement does not exist, has been archived or is not available to the EORI number.
+              description: When the movement does not exist, has been archived or is not available to the EORI number.
         /{messageId}:
           get:
             displayName: PULL a message relating to a Movement Departure and message ID
