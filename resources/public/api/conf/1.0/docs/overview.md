@@ -1,6 +1,8 @@
 This API will allow you to send departure and arrival movement notifications to the New Computerised Transit System (NCTS). It will also let you retrieve messages sent from the offices of departure and destination.
 
-__The API is presently deployed to the sandbox without the endpoints being enabled. We will be re-releasing the API, with working arrivals endpoints soon.__
+__We have now released the API with working arrivals endpoints. You can now run tests in HMRC's sandbox environment.__
+
+To review our progress and to see what you can test, take at look at our [Roadmap](https://developer.qa.tax.service.gov.uk/roadmaps/common-transit-convention-traders-roadmap)
 
 Further details of the User Restricted Authentication are given on the 
 [Authorisation](https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation) page.
