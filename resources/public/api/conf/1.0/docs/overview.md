@@ -2,7 +2,7 @@ This API will allow you to send departure and arrival movement notifications to 
 
 __We have now released the API with working arrivals endpoints. You can now run tests in HMRC's sandbox environment.__
 
-To review our progress and to see what you can test, take at look at our [Roadmap](https://developer.qa.tax.service.gov.uk/roadmaps/common-transit-convention-traders-roadmap)
+To review our progress and to see what you can test, take at look at our [Roadmap](https://developer.qa.tax.service.gov.uk/roadmaps/common-transit-convention-traders-roadmap).
 
 Further details of the User Restricted Authentication are given on the 
 [Authorisation](https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation) page.
