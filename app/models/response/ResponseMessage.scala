@@ -21,8 +21,8 @@ import java.time.LocalDateTime
 import models.domain.MovementMessage
 import play.api.libs.json.Json
 import play.api.mvc.Call
-import utils.NodeSeqFormat
 import utils.CallOps._
+import utils.NodeSeqFormat
 
 import scala.xml.NodeSeq
 

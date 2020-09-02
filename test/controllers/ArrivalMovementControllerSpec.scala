@@ -18,9 +18,9 @@ package controllers
 
 import java.time.LocalDateTime
 
-import controllers.actions.{AuthAction, FakeAuthAction}
 import akka.util.ByteString
 import connectors.ArrivalConnector
+import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
 import models.domain.{Arrival, Arrivals}
 import models.response.{ResponseArrival, ResponseArrivals}
@@ -29,16 +29,16 @@ import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames
-import play.api.mvc.{AnyContentAsEmpty, Headers}
-import play.api.test.{FakeHeaders, FakeRequest}
-import play.api.test.Helpers.{headers, _}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsNull, Json}
+import play.api.mvc.{AnyContentAsEmpty, Headers}
+import play.api.test.Helpers.{headers, _}
+import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.http.HttpResponse
 import utils.CallOps._
 

@@ -19,7 +19,7 @@ package models.response
 import java.time.LocalDateTime
 
 import controllers.routes
-import models.domain.{Arrival, Departure}
+import models.domain.Departure
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers

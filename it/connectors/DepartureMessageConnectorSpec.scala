@@ -2,7 +2,6 @@ package connectors
 
 import java.time.LocalDateTime
 
-import utils.CallOps._
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, urlEqualTo}
 import controllers.routes
 import models.domain.{Departure, DepartureWithMessages, MovementMessage}
@@ -15,6 +14,7 @@ import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK}
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.CallOps._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

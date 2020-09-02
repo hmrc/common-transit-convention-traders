@@ -21,14 +21,13 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.{HeaderNames, MimeTypes}
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
-import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.http.HeaderCarrier
-
-import org.scalatestplus.mockito.MockitoSugar
+import uk.gov.hmrc.http.logging.Authorization
 
 class BaseConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
   class Harness extends BaseConnector {

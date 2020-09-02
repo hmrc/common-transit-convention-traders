@@ -24,6 +24,7 @@ import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
 import models.domain.{ArrivalWithMessages, MovementMessage}
 import models.response.{ResponseArrivalWithMessages, ResponseMessage}
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -32,17 +33,16 @@ import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames
-import play.api.mvc.{AnyContentAsEmpty, Headers}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsNull, Json}
-import play.api.test.{FakeHeaders, FakeRequest}
+import play.api.mvc.{AnyContentAsEmpty, Headers}
 import play.api.test.Helpers.{headers, _}
+import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.http.HttpResponse
 import utils.CallOps._
 
 import scala.concurrent.Future
-import org.mockito.ArgumentMatchers.any
 
 class ArrivalMessagesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
   private val mockMessageConnector: ArrivalMessageConnector = mock[ArrivalMessageConnector]

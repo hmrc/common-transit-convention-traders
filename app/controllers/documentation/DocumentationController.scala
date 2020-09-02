@@ -17,7 +17,7 @@
 package controllers.documentation
 
 import controllers.Assets
-import javax.inject.{Inject}
+import javax.inject.Inject
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 

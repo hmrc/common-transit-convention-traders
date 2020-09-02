@@ -17,7 +17,7 @@
 package xml
 
 import data.TestXml
-import models.request.{ArrivalNotificationXSD, DepartureDeclarationXSD}
+import models.request.ArrivalNotificationXSD
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks

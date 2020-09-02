@@ -17,7 +17,7 @@
 package controllers.actions
 
 import com.google.inject.Inject
-import config.{AppConfig}
+import config.AppConfig
 import play.api.mvc._
 import uk.gov.hmrc.auth.core._
 

@@ -18,8 +18,8 @@ package controllers.actions
 
 import javax.inject.Inject
 import models.request.ArrivalNotificationXSD
-import play.api.mvc.{ActionRefiner, Request, Result}
 import play.api.mvc.Results.BadRequest
+import play.api.mvc.{ActionRefiner, Request, Result}
 import services.XmlValidationService
 
 import scala.concurrent.{ExecutionContext, Future}
