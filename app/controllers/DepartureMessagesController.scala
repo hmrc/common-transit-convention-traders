@@ -24,8 +24,8 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
-import utils.{ResponseHelper, Utils}
 import utils.CallOps._
+import utils.{ResponseHelper, Utils}
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq

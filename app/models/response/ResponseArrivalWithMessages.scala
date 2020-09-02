@@ -18,10 +18,10 @@ package models.response
 
 import java.time.LocalDateTime
 
-import utils.CallOps._
 import controllers.routes
 import models.domain.ArrivalWithMessages
 import play.api.libs.json.Json
+import utils.CallOps._
 import utils.Utils
 
 object ResponseArrivalWithMessages {

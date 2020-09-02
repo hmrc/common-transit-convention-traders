@@ -21,7 +21,7 @@ import models.request.DepartureDeclarationXSD
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import services.{FailedToValidateXml, XmlValidationService}
+import services.XmlValidationService
 
 class CC015BSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks with TestXml {
 

@@ -16,15 +16,15 @@
 
 package connectors.util
 
+import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
-import uk.gov.hmrc.http.HttpResponse
-import play.api.http.Status
-import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import play.api.http.Status
+import uk.gov.hmrc.http.HttpResponse
 
 class CustomHttpReaderSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar with ScalaCheckPropertyChecks {
 

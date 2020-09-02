@@ -19,9 +19,9 @@ package models.response
 import java.time.LocalDateTime
 
 import controllers.routes
-import utils.CallOps._
 import models.domain.DepartureWithMessages
 import play.api.libs.json.Json
+import utils.CallOps._
 import utils.Utils
 
 object ResponseDepartureWithMessages {

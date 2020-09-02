@@ -3,20 +3,20 @@ package connectors
 import java.time.LocalDateTime
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import controllers.routes
 import models.domain.Departure
+import models.response.ResponseDeparture
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
-import controllers.routes
-import models.response.ResponseDeparture
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers
 import utils.CallOps._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import play.api.test.Helpers._
 
 class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
   "post" - {

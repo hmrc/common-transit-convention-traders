@@ -17,7 +17,7 @@
 package xml
 
 import data.TestXml
-import models.request.{DeclarationCancellationRequestXSD, UnloadingRemarksXSD}
+import models.request.DeclarationCancellationRequestXSD
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks

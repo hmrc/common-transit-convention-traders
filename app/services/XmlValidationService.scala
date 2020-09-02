@@ -26,10 +26,8 @@ import org.xml.sax.InputSource
 import org.xml.sax.helpers.DefaultHandler
 import play.api.Logger
 
+import scala.xml.{Elem, SAXParseException, SAXParser}
 import scala.xml.factory.XMLLoader
-import scala.xml.Elem
-import scala.xml.SAXParseException
-import scala.xml.SAXParser
 
 class XmlValidationService {
 

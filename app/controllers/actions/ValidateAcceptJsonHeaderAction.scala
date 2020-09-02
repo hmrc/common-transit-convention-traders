@@ -18,9 +18,9 @@ package controllers.actions
 
 import config.Constants
 import javax.inject.Inject
+import play.api.http.Status.NOT_ACCEPTABLE
 import play.api.libs.json.Json
 import play.api.mvc.Results.NotAcceptable
-import play.api.http.Status.NOT_ACCEPTABLE
 import play.api.mvc.{ActionRefiner, Request, Result}
 import uk.gov.hmrc.play.bootstrap.http.ErrorResponse
 

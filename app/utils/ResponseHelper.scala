@@ -18,8 +18,8 @@ package utils
 
 import play.api.Logger
 import play.api.http.Status
-import uk.gov.hmrc.http.{HttpErrorFunctions, HttpResponse}
 import play.api.mvc.{Result, Results}
+import uk.gov.hmrc.http.{HttpErrorFunctions, HttpResponse}
 
 trait ResponseHelper extends Results with Status with HttpErrorFunctions {
   def handleNon2xx(response: HttpResponse): Result = {

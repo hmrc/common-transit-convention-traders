@@ -18,8 +18,8 @@ package controllers.actions
 
 import javax.inject.Inject
 import models.request.XSDFile
-import play.api.mvc.{ActionRefiner, Request, Result}
 import play.api.mvc.Results.{BadRequest, NotImplemented}
+import play.api.mvc.{ActionRefiner, Request, Result}
 import services.XmlValidationService
 
 import scala.concurrent.{ExecutionContext, Future}

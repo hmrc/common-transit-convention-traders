@@ -17,12 +17,13 @@
 package models.response
 
 import java.time.LocalDateTime
-import utils.CallOps._
+
 import controllers.routes
 import models.domain.{DepartureWithMessages, MovementMessage}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import utils.CallOps._
 
 class ResponseDepartureWithMessagesSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite {
 
