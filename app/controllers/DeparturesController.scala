@@ -17,7 +17,7 @@
 package controllers
 
 import connectors.DeparturesConnector
-import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateDepartureDeclarationAction}
+import controllers.actions.{AuthAction, EnsureGuaranteeAction, ValidateAcceptJsonHeaderAction, ValidateDepartureDeclarationAction}
 import javax.inject.Inject
 import models.response.ResponseDeparture
 import play.api.libs.json.Json
@@ -34,11 +34,12 @@ class DeparturesController @Inject()(cc: ControllerComponents,
                                      authAction: AuthAction,
                                      departuresConnector: DeparturesConnector,
                                      validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction,
-                                     validateDepartureDeclarationAction: ValidateDepartureDeclarationAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper {
+                                     validateDepartureDeclarationAction: ValidateDepartureDeclarationAction,
+                                     ensureGuaranteeAction: EnsureGuaranteeAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper {
 
-  def submitDeclaration(): Action[NodeSeq] = (authAction andThen validateDepartureDeclarationAction).async(parse.xml) {
+  def submitDeclaration(): Action[NodeSeq] = (authAction andThen validateDepartureDeclarationAction andThen ensureGuaranteeAction).async(parse.xml) {
     implicit request =>
-      departuresConnector.post(request.body.toString).map { response =>
+      departuresConnector.post(request.newXml.toString).map { response =>
         response.status match {
           case status if is2xx(status) =>
             response.header(LOCATION) match {
