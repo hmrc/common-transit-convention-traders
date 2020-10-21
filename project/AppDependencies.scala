@@ -3,8 +3,11 @@ import sbt._
 
 object AppDependencies {
 
+  private val catsVersion = "2.1.1"
+
   val compile = Seq(
-    "uk.gov.hmrc"       %% "bootstrap-play-26"   % "1.13.0"
+    "uk.gov.hmrc"       %% "bootstrap-play-26"   % "1.13.0",
+    "org.typelevel"     %% "cats-core"                 % catsVersion
   )
 
   val test = Seq(
@@ -18,5 +21,6 @@ object AppDependencies {
     "com.github.tomakehurst" % "wiremock-standalone"   % "2.27.1",
     "org.typelevel"          %% "discipline-scalatest" % "1.0.1",
     "com.vladsch.flexmark"   % "flexmark-all"          % "0.35.10"
+
   ).map(_ % "test, it")
 }
