@@ -16,4 +16,6 @@
 
 package models
 
-case class Guarantee(gType: Int, gReference: String)
+case class GooBlock(itemNumber: Int, specialMentions: Seq[SpecialMention]) {
+
+}

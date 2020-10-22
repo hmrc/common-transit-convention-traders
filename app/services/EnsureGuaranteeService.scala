@@ -1,10 +1,27 @@
+/*
+ * Copyright 2020 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package services
 
-import models.ParseError.{AdditionalInfoMissing, GuaranteeAmountZero, GuaranteeTypeInvalid, NoGuaranteeReferenceNumber, SpecialMentionNotFound}
-import models.{ChangeInstruction, GuaBlock, Guarantee, NoChangeInstruction, ParseError, SpecialMention, SpecialMentionGuarantee, SpecialMentionGuaranteeDetails, SpecialMentionOther, TransformInstruction, TransformInstructionSet}
+import models.ParseError.{AdditionalInfoMissing, GuaranteeAmountZero, GuaranteeNotFound, GuaranteeTypeInvalid, NoGuaranteeReferenceNumber, SpecialMentionNotFound}
+import models.{ChangeGuaranteeInstruction, GooBlock, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, SpecialMention, SpecialMentionGuarantee, SpecialMentionGuaranteeDetails, SpecialMentionOther, TransformInstruction, TransformInstructionSet}
 import cats.data.ReaderT
 import cats.implicits._
 
+import scala.annotation.tailrec
 import scala.util.{Success, Try}
 import scala.xml.{Elem, Node, NodeSeq}
 import scala.xml.transform.{RewriteRule, RuleTransformer}
@@ -15,66 +32,115 @@ class EnsureGuaranteeService {
 
   val concernedTypes = Seq[Int](0, 1, 2,4, 9)
 
-  def ensureGuarantee(xml: NodeSeq): Either[ParseError, NodeSeq] =
-    createRuleTransformer(xml) match {
-      case Right(transformer) => Right(transformer.transform(xml))
-      case _ => _
+  def ensureGuarantee(xml: NodeSeq): ParseHandler[NodeSeq] =
+    parseInstructionSets(xml) match {
+      case Left(error) => Left(error)
+      case Right(instructionSets) =>
+        Right(updateXml(prunedXml(xml), instructionSets))
     }
 
-
-  def createRuleTransformer(xml: NodeSeq): Either[ParseError, RuleTransformer] = {
-
-    parseSpecialMentions(xml).map { s =>
-      val others = filterByType[SpecialMention, SpecialMentionOther](s)
-      val smGuarantees = filterByType[SpecialMention, SpecialMentionGuarantee](s)
-
-      val instructionSets = guaBlock(xml).map { guaBlocks =>
-        guaBlocks.map {
-          block =>
-            getInstructionSet(block, smGuarantees).map {
-              instructionSet => instructionSet
-            }
+  def parseInstructionSets(xml: NodeSeq): ParseHandler[Seq[TransformInstructionSet]] =
+    parseGuarantees(xml) match {
+      case Left(error) => Left(error)
+      case Right(guarantees) =>
+        gooBlock(xml) match {
+          case Left(error) => Left(error)
+          case Right(gooBlocks) =>
+            liftParseError(gooBlocks.map {
+              block =>
+                getInstructionSet(block, guarantees).map {
+                  instructionSet => instructionSet
+                }
+            })
         }
-      }
-
-      instructionSets
     }
 
-
-
-
-
+  def prunedXml(xml: NodeSeq): NodeSeq = {
     new RuleTransformer(new RewriteRule {
       override def transform(node: Node): NodeSeq = {
+        node match {
+          case e: Elem if e.label == "SPEMENMT2" => NodeSeq.Empty
+          case _ => node
+        }
+      }
+    }).transform(xml)
+  }
 
+  def updateXml(prunedXml: NodeSeq, instructionSets: Seq[TransformInstructionSet]): NodeSeq = {
+    new RuleTransformer(new RewriteRule {
+      override def transform(node: Node): NodeSeq = {
+        node match {
+          case e: Elem if e.label == "GOOITEGDS" => {
+            gooBlock(e) match {
+              case Left(_) => throw new Exception()
+              case Right(blocks) => {
+                val currentBlock = blocks.head
+                val instructionSet = instructionSets.filter(set => set.gooBlock.itemNumber == currentBlock.itemNumber).head
+                val newXml = buildBlockXml(instructionSet)
+                e.child.last ++ newXml
+              }
+            }
+          }
+          case _ => node
+        }
+      }
+    }).transform(prunedXml)
+  }
+
+
+  private def mergeNewXml(xmls: Seq[NodeSeq]): NodeSeq = {
+    @tailrec
+    def mergeAggregator(xmls: Seq[NodeSeq], accum: NodeSeq): NodeSeq = {
+      xmls match {
+        case NodeSeq.Empty => accum
+        case x :: tail => mergeAggregator(tail, accum ++ x)
+      }
+    }
+    mergeAggregator(xmls, NodeSeq.Empty)
+  }
+
+  def buildBlockXml(instructionSet: TransformInstructionSet): NodeSeq = {
+    mergeNewXml(instructionSet.instructions.map {
+      instruction => instruction match {
+        case e: NoChangeInstruction => e.xml
+        case e: NoChangeGuaranteeInstruction => buildGuaranteeXml(e.mention)
+        case e: ChangeGuaranteeInstruction => buildGuaranteeXml(e.details.toSimple)
       }
     })
   }
 
-  def getInstructionSet(guaBlock: GuaBlock, smGuarantees: Seq[SpecialMentionGuarantee]): Either[ParseError, TransformInstructionSet] = {
-    liftParseError(guaBlock.guarantees.map {
-      guarantee =>
-        pair(guarantee, smGuarantees) match {
-          case Left(error) => Left(error)
-          case Right((g, s)) => buildInstruction(g, s) match {
-            case Left(error) => Left(error)
-            case Right(instruction) => Right(instruction)
+  def buildGuaranteeXml(mention: SpecialMentionGuarantee) =
+    <SPEMENMT2>
+      <AddInfCodMT21>{mention.additionalInfo}</AddInfCodMT21>
+      <AddInfCodMT23>CAL</AddInfCodMT23>
+    </SPEMENMT2>
+
+  def getInstructionSet(gooBlock: GooBlock, guarantees: Seq[Guarantee]): Either[ParseError, TransformInstructionSet] = {
+    liftParseError(gooBlock.specialMentions.map {
+      mention =>
+        mention match {
+          case m: SpecialMentionOther => Right(NoChangeInstruction(m.xml))
+          case m: SpecialMentionGuarantee => pair(m, guarantees) match {
+            case None => Left(GuaranteeNotFound("Guarantee not found"))
+            case Some((s, g)) => buildInstruction(g, s) match {
+              case Left(error) => Left(error)
+              case Right(instruction) => Right(instruction)
+            }
           }
         }
-    }) match {
-      case Left(error) => Left(error)
-      case Right(instructions) => Right(TransformInstructionSet(guaBlock, instructions))
+    }).map {
+      instructions => TransformInstructionSet(gooBlock, instructions)
     }
   }
 
   def buildInstruction(g: Guarantee, sm: SpecialMentionGuarantee): Either[ParseError, TransformInstruction] = {
     if(concernedTypes.contains(g.gType)) {
-      Right(NoChangeInstruction(sm, g.gReference))
+      Right(NoChangeGuaranteeInstruction(sm))
     }
     else
     {
       checkDetails(g, sm).map {
-        details => ChangeInstruction(details)
+        details => ChangeGuaranteeInstruction(details)
       }
     }
   }
@@ -91,12 +157,11 @@ class EnsureGuaranteeService {
     }
   }
 
-  def pair(guarantee: Guarantee, mentions: Seq[SpecialMentionGuarantee]): Either[ParseError, (Guarantee, SpecialMentionGuarantee)] = {
-    mentions.filter(s => s.additionalInfo.endsWith(guarantee.gReference)).headOption match {
-      case Some(s) => Right((guarantee, s))
-      case None => Left(SpecialMentionNotFound(s"No special mention for guarantee ref: ${guarantee.gReference}"))
+  def pair(mention: SpecialMentionGuarantee, guarantees: Seq[Guarantee]): Option[(SpecialMentionGuarantee, Guarantee)] =
+    guarantees.filter(g => mention.additionalInfo.endsWith(g.gReference)).headOption match {
+      case Some(guarantee) => Some(mention, guarantee)
+      case None => None
     }
-  }
 
   def parseGuarantees(xml: NodeSeq): ParseHandler[Seq[Guarantee]] = {
 
@@ -133,13 +198,14 @@ class EnsureGuaranteeService {
       })
     }
 
-  val guaBlock: ReaderT[ParseHandler, NodeSeq, Seq[GuaBlock]] =
-    ReaderT[ParseHandler, NodeSeq, Seq[GuaBlock]](xml => {
-      liftParseError((xml \ "GuaTypGUA1" ).map {
+  val gooBlock: ReaderT[ParseHandler, NodeSeq, Seq[GooBlock]] =
+    ReaderT[ParseHandler, NodeSeq, Seq[GooBlock]](xml => {
+      liftParseError((xml \ "GOOITEGDS" ).map {
         node => {
-          parseGuarantees(node) match {
+          val itemNumber = (xml \ "IteNumGDS7").text.toInt
+          parseSpecialMentions(node) match {
             case Left(error) => Left(error)
-            case Right(guarantees) => Right(GuaBlock(guarantees))
+            case Right(mentions) => Right(GooBlock(itemNumber, mentions))
           }
         }
       })
