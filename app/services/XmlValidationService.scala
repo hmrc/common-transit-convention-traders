@@ -38,6 +38,11 @@ class XmlValidationService {
     val saxParser: SAXParserFactory = javax.xml.parsers.SAXParserFactory.newInstance()
     saxParser.setNamespaceAware(true)
     saxParser.setSchema(schema)
+    saxParser.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+    saxParser.setFeature("http://xml.org/sax/features/external-general-entities", false)
+    saxParser.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
+    saxParser.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+    saxParser.setXIncludeAware(false)
     saxParser.newSAXParser()
   }
 
