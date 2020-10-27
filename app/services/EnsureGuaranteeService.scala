@@ -16,13 +16,13 @@
 
 package services
 
-import models.ParseError.{AdditionalInfoMissing, GuaranteeAmountZero, GuaranteeNotFound, GuaranteeTypeInvalid, NoGuaranteeReferenceNumber, SpecialMentionNotFound}
+import models.ParseError.{AdditionalInfoCodeMissing, AdditionalInfoMissing, GuaranteeAmountZero, GuaranteeNotFound, GuaranteeTypeInvalid, InvalidItemNumber, MissingItemNumber, NoGuaranteeReferenceNumber, SpecialMentionNotFound}
 import models.{ChangeGuaranteeInstruction, GooBlock, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, SpecialMention, SpecialMentionGuarantee, SpecialMentionGuaranteeDetails, SpecialMentionOther, TransformInstruction, TransformInstructionSet}
 import cats.data.ReaderT
 import cats.implicits._
 
 import scala.annotation.tailrec
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 import scala.xml.{Elem, Node, NodeSeq}
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
@@ -173,22 +173,8 @@ class EnsureGuaranteeService {
         }
       }
 
-    guaranteeEithers.filterNot(x => x.isRight).headOption match {
-      case Some(error) => Left(error.left.get)
-      case None => Right(guaranteeEithers.map { g => g.right.get } )
-    }
+    liftParseError(guaranteeEithers)
   }
-
-  def parseSpecialMentions(xml: NodeSeq): ParseHandler[Seq[SpecialMention]] =
-    liftParseError((xml \ "GOOITEGDS" \ "SPEMENMT2").map {
-      node => specialMention(node) match {
-        case Left(e) => Left(e)
-        case Right(s) => Right(s)
-      }
-    })
-
-  def filterByType[A, B](input: Seq[A]) : Seq[B] =
-    input.filter(x => x.isInstanceOf[B]).map { y => y.asInstanceOf[B] }
 
   def liftParseError[A](input: Seq[Either[ParseError, A]]): ParseHandler[Seq[A]] =
     input.filterNot(i => i.isRight).headOption match {
@@ -202,33 +188,64 @@ class EnsureGuaranteeService {
     ReaderT[ParseHandler, NodeSeq, Seq[GooBlock]](xml => {
       liftParseError((xml \ "GOOITEGDS" ).map {
         node => {
-          val itemNumber = (xml \ "IteNumGDS7").text.toInt
-          parseSpecialMentions(node) match {
-            case Left(error) => Left(error)
-            case Right(mentions) => Right(GooBlock(itemNumber, mentions))
+          val itemNumberNode = (node \ "IteNumGDS7")
+          if(!itemNumberNode.isEmpty)
+          {
+            val itemNumberString = itemNumberNode.text
+            if(!itemNumberString.isEmpty)
+            {
+              Try(itemNumberString.toInt) match {
+                case Failure(_) => Left(InvalidItemNumber("Invalid Item Number"))
+                case Success(itemNumber) =>
+                  parseSpecialMentions(node) match {
+                    case Left(error) => Left(error)
+                    case Right(mentions) => Right(GooBlock(itemNumber, mentions))
+                  }
+              }
+            }
+            else {
+              Left(MissingItemNumber("Missing Item Number"))
+            }
           }
+          else {
+            Left(MissingItemNumber("Missing Item Number"))
+          }
+
         }
       })
     })
 
+  def parseSpecialMentions(xml: NodeSeq): ParseHandler[Seq[SpecialMention]] = {
+  liftParseError((xml \ "SPEMENMT2").map {
+    node =>
+      specialMention(node) match {
+        case Left(e) => Left(e)
+        case Right(s) => Right(s)
+      }
+  })
+}
+
+  val specialMention: ReaderT[ParseHandler, Node, SpecialMention] = {
+    ReaderT[ParseHandler, Node, SpecialMention](xml => {
+      (xml \ "AddInfMT21").text match {
+        case additionalInfo if additionalInfo.isEmpty => Left(AdditionalInfoMissing("AddInfMT21 field is missing"))
+        case additionalInfo => (xml \ "AddInfCodMT23").text match {
+          case code if code.isEmpty => Left(AdditionalInfoCodeMissing("AddInfCodMT23 is missing"))
+          case "CAL" => Right(SpecialMentionGuarantee(additionalInfo))
+          case _ => Right(SpecialMentionOther(xml))
+        }
+      }})
+  }
+
   val guarantee: ReaderT[ParseHandler, Node, Guarantee] =
     ReaderT[ParseHandler, Node, Guarantee](xml => {
       (xml \ "GuaTypGUA1").text match {
+        case gType if gType.isEmpty => Left(GuaranteeTypeInvalid("GuaTypGUA1 was invalid"))
         case gType if !gType.isEmpty && Try(gType.toInt).toOption.isEmpty => Left(GuaranteeTypeInvalid("GuaTypGUA1 was invalid"))
         case gType if !gType.isEmpty && Try(gType.toInt).toOption.isDefined => {
           (xml \ "GUAREFREF" \ "GuaRefNumGRNREF1").text match {
             case gReference if !gReference.isEmpty => Right(Guarantee(gType.toInt, gReference))
             case _ => Left(NoGuaranteeReferenceNumber("GuaRefNumGRNREF1 was empty"))
           }}}})
-
-  val specialMention: ReaderT[ParseHandler, Node, SpecialMention] =
-    ReaderT[ParseHandler, Node, SpecialMention](xml => {
-      (xml \ "AddInfMT21").text match {
-        case additionalInfo if additionalInfo.isEmpty => Left(AdditionalInfoMissing("AddInfMT21 field is missing"))
-        case additionalInfo => (xml \ "AddInfCodMT23").text match {
-          case "CAL" => Right(SpecialMentionGuarantee(additionalInfo))
-          case _ => Right(SpecialMentionOther(xml))
-        }
-      }})
 
 }

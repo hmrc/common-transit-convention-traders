@@ -29,8 +29,11 @@ object ParseError {
   case class AdditionalInfoMissing(message: String)           extends ParseError
   case class AdditionalInfoTooLong(message: String)           extends ParseError
   case class AdditionalInfoInvalidCharacters(message: String) extends ParseError
+  case class AdditionalInfoCodeMissing(message: String)       extends ParseError
   case class CurrencyCodeInvalid(message: String)             extends ParseError
   case class AmountStringInvalid(message: String)             extends ParseError
   case class SpecialMentionNotFound(message: String)          extends ParseError
   case class GuaranteeNotFound(message: String)               extends ParseError
+  case class MissingItemNumber(message: String)               extends ParseError
+  case class InvalidItemNumber(message: String)               extends ParseError
 }
