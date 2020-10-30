@@ -27,7 +27,7 @@ case class SpecialMentionOther(xml: NodeSeq) extends SpecialMention
 case class SpecialMentionGuarantee(additionalInfo: String) extends SpecialMention {
   def toDetails(guaranteeReference: String) : Either[ParseError, SpecialMentionGuaranteeDetails] = {
     if(additionalInfo.length > 18) return Left(AdditionalInfoTooLong("AdditionalInfo is too long"))
-    if(additionalInfo.matches("[\\w.]+")) return Left(AdditionalInfoInvalidCharacters("invalid characters in additional info"))
+    if(additionalInfo.matches("'[a-zA-Z0-9_.]*'")) return Left(AdditionalInfoInvalidCharacters("invalid characters in additional info"))
 
     getCurrencyCode(additionalInfo, guaranteeReference) match {
       case Left(error) => Left(error)
@@ -41,13 +41,17 @@ case class SpecialMentionGuarantee(additionalInfo: String) extends SpecialMentio
   }
 
   private def getCurrencyCode(additionalInfo: String, guaranteeReference: String): Either[ParseError, Option[String]] = {
-    if(additionalInfo.length > (guaranteeReference.length + 3))
+    if(additionalInfo.length >= (guaranteeReference.length + 3))
     {
       val currencyStart = additionalInfo.length - guaranteeReference.length - 3
       val currencyEnd = currencyStart + 3
       val currencyCode = additionalInfo.substring(currencyStart, currencyEnd)
       if(currencyCode.matches("[A-Z]{3}"))
       Right(Some(currencyCode))
+      else if(additionalInfo.head.isDigit)
+      {
+        Right(None)
+      }
       else Left(CurrencyCodeInvalid(s"Invalid Currency Code: $currencyCode"))
     }
     else Right(None)
@@ -56,7 +60,7 @@ case class SpecialMentionGuarantee(additionalInfo: String) extends SpecialMentio
   private def getAmount(additionalInfo: String, guaranteeReference: String, currencyOpt: Option[String]): Either[ParseError, Option[BigDecimal]] = {
     val cutIndex = currencyOpt match {
       case None => additionalInfo.length - guaranteeReference.length
-      case Some(code) => additionalInfo.length - code.length - guaranteeReference.length
+      case Some(code) => additionalInfo.length - (code.length + guaranteeReference.length)
     }
     val amountString = additionalInfo.substring(0, cutIndex)
     if(amountString.isEmpty)
@@ -67,7 +71,7 @@ case class SpecialMentionGuarantee(additionalInfo: String) extends SpecialMentio
       Right(Some(BigDecimal(amountString)))
     }
     else {
-      Left(AmountStringInvalid("Invalid String for amount"))
+      Left(AmountStringInvalid(s"Invalid String for amount: $amountString $cutIndex $additionalInfo $guaranteeReference $currencyOpt"))
     }
   }
 }

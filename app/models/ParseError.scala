@@ -20,7 +20,7 @@ trait ParseError {
   def message: String
 }
 
-object ParseError {
+object ParseError extends ParseHandling {
   case class EmptyNodeSeq(message: String)                    extends ParseError
   case class NoGuaranteeType(message: String)                 extends ParseError
   case class GuaranteeTypeInvalid(message: String)            extends ParseError
@@ -36,4 +36,12 @@ object ParseError {
   case class GuaranteeNotFound(message: String)               extends ParseError
   case class MissingItemNumber(message: String)               extends ParseError
   case class InvalidItemNumber(message: String)               extends ParseError
+
+  def liftParseError[A](input: Seq[Either[ParseError, A]]): ParseHandler[Seq[A]] =
+    input.filterNot(i => i.isRight).headOption match {
+      case Some(error) => Left(error.left.get)
+      case None => Right(input.map {
+        x => x.right.get
+      })
+    }
 }

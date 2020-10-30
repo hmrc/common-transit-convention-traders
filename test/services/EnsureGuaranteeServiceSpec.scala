@@ -16,264 +16,218 @@
 
 package services
 
+import cats.data.ReaderT
+import models.{GooBlock, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, ParseHandling, SpecialMention, SpecialMentionGuarantee, SpecialMentionOther, TransformInstructionSet}
+import org.mockito.ArgumentMatchers.any
 import data.TestXml
-import models.ParseError.{AdditionalInfoCodeMissing, AdditionalInfoMissing, GuaranteeTypeInvalid, InvalidItemNumber, MissingItemNumber, NoGuaranteeReferenceNumber}
-import models.{GooBlock, Guarantee, ParseError, SpecialMention, SpecialMentionGuarantee, SpecialMentionOther}
+import models.ParseError.{GuaranteeNotFound, GuaranteeTypeInvalid, InvalidItemNumber}
+import org.mockito.Mockito._
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import play.api.inject.bind
+import play.api.inject.guice.GuiceApplicationBuilder
+import utils.guaranteeParsing.{GuaranteeXmlReaders, InstructionBuilder}
 
-class EnsureGuaranteeServiceSpec extends AnyFreeSpec with TestXml with Matchers with ScalaCheckPropertyChecks {
+import scala.xml.NodeSeq
 
-  val sut = new EnsureGuaranteeService()
+class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with MockitoSugar with BeforeAndAfterEach with TestXml with Matchers with ScalaCheckPropertyChecks {
 
-  "pair" - {
-    "returns Some((SpecialMentionGuarantee, Guarantee)) when "
+  private val mockXmlReaders: GuaranteeXmlReaders = mock[GuaranteeXmlReaders]
+  private val mockInstructionBuilder: InstructionBuilder = mock[InstructionBuilder]
+
+  override def beforeEach = {
+    super.beforeEach()
+    reset(mockXmlReaders)
+    reset(mockInstructionBuilder)
   }
 
-  "parseGuarantees" - {
-    "returns Seq[Guarantee] when no parse errors" in {
-      val example =
-        <example>
-          <GUAGUA>
-            <GuaTypGUA1>8</GuaTypGUA1>
-            <GUAREFREF>
-              <GuaRefNumGRNREF1>07IT00000100000Z3</GuaRefNumGRNREF1>
-            </GUAREFREF>
-          </GUAGUA>
-          <GUAGUA>
-            <GuaTypGUA1>8</GuaTypGUA1>
-            <GUAREFREF>
-              <GuaRefNumGRNREF1>07IT00000100000Z4</GuaRefNumGRNREF1>
-            </GUAREFREF>
-          </GUAGUA>
-        </example>
+  protected def baseApplicationBuilder: GuiceApplicationBuilder =
+    new GuiceApplicationBuilder()
+      .configure(
+        "metrics.jvm" -> false
+      )
 
-      val result = sut.parseGuarantees(example)
-      result mustBe a[Right[_, Seq[Guarantee]]]
-      result.right.get.length mustBe 2
-    }
+  def sut: EnsureGuaranteeService = {
+    val application = baseApplicationBuilder
+      .overrides(
+        bind[GuaranteeXmlReaders].toInstance(mockXmlReaders),
+        bind[InstructionBuilder].toInstance(mockInstructionBuilder)
+      )
+      .build()
 
-    "returns ParseError if any guarantees fail to parse" in {
-      val exampleInvalid =
-        <example>
-          <GUAGUA>
-            <GuaTypGUA1>8</GuaTypGUA1>
-            <GUAREFREF>
-              <GuaRefNumGRNREF1></GuaRefNumGRNREF1>
-            </GUAREFREF>
-          </GUAGUA>
-          <GUAGUA>
-            <GuaTypGUA1>8</GuaTypGUA1>
-            <GUAREFREF>
-              <GuaRefNumGRNREF1>07IT00000100000Z4</GuaRefNumGRNREF1>
-            </GUAREFREF>
-          </GUAGUA>
-        </example>
-
-      sut.parseGuarantees(exampleInvalid) mustBe a[Left[ParseError, _]]
-    }
+    application.injector.instanceOf[EnsureGuaranteeService]
   }
 
-  "liftParseError" - {
+  def fakeGooBlock(sms: Seq[SpecialMention]): GooBlock = GooBlock(1, sms)
 
-    val failedParse: Seq[Either[ParseError, String]] =
-      Seq(Left(InvalidItemNumber("Bad Item Number")),
-        Left(MissingItemNumber("Missing Item Number")),
-        Right("Good Result"))
+  "ensureGuarantee" - {
+    "returns parseError if parseInstructionSets has an error" in {
+      when(mockXmlReaders.parseGuarantees(any()))
+        .thenReturn(Left(GuaranteeTypeInvalid("test")))
 
-    val goodParse: Seq[Either[ParseError, String]] =
-      Seq(Right("Good Result"), Right("Other Result"))
-
-    "lifts the first parseError when there are parseErrors" in {
-      sut.liftParseError(failedParse) mustBe a[Left[InvalidItemNumber, _]]
+      val result = sut.ensureGuarantee(<example></example>)
+      result mustBe a[Left[GuaranteeTypeInvalid, _]]
     }
 
-    "returns the result sequence when there are no parseErrors" in {
-      val result = sut.liftParseError(goodParse)
-      result mustBe a[Right[Seq[String], _]]
-      result.right.get.length mustBe 2
+    "returns updatedNodeSeq if everything is ok" in {
+      when(mockXmlReaders.parseGuarantees(any()))
+        .thenReturn(Right(Seq(Guarantee(1, "test"))))
+
+      when(mockXmlReaders.parseSpecialMentions(any()))
+        .thenReturn(Right(Seq(SpecialMentionOther(<SPEMENMT2><test></test></SPEMENMT2>))))
+
+      when(mockXmlReaders.gooBlock)
+        .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GooBlock]](_ => Right(Seq(GooBlock(1, Seq(SpecialMentionOther(<test></test>)))))))
+
+      when(mockInstructionBuilder.buildInstruction(any(), any()))
+        .thenReturn(Right(NoChangeInstruction(<SPEMENMT2><test></test></SPEMENMT2>)))
+
+      val result = sut.ensureGuarantee(
+        //EXAMPLE XML
+        <example><GOOITEGDS><IteNumGDS7>1</IteNumGDS7><SPEMENMT2><test></test></SPEMENMT2></GOOITEGDS></example>
+      )
+      result mustBe a[Right[_, NodeSeq]]
+      result.right.get.toString() mustBe "<example><GOOITEGDS><IteNumGDS7>1</IteNumGDS7><SPEMENMT2><test></test></SPEMENMT2></GOOITEGDS></example>"
     }
   }
 
-  "gooBlock" - {
-    "returns Seq[GooBlock] when no parse errors" in {
-      val result = sut.gooBlock(exampleGOOITEGDSSequence)
-      result mustBe a[Right[_, Seq[GooBlock]]]
-      val gooBlocks = result.right.get
-      val gooBlock = gooBlocks.head
-      gooBlock.itemNumber mustBe 1
-      gooBlock.specialMentions.length mustBe 4
-      gooBlock.specialMentions.collect { case sm: SpecialMentionOther => sm }.length mustBe 1
-      gooBlock.specialMentions.collect { case sm: SpecialMentionGuarantee => sm}.length mustBe 3
+  "parseIntructionSets" - {
+    "returns parseError if parseGuarantees has an error" in {
+      when(mockXmlReaders.parseGuarantees(any()))
+        .thenReturn(Left(GuaranteeTypeInvalid("test")))
+
+      val result = sut.parseInstructionSets(<test></test>)
+      result mustBe a[Left[GuaranteeTypeInvalid, _]]
     }
 
-    "returns InvalidItemNumber when itemNumber is not an int" in {
-      val exampleGOOITEGDSSequenceInvalidItemNumber =
-        <example>
-          <GOOITEGDS>
-            <IteNumGDS7>A</IteNumGDS7>
-            <SPEMENMT2>
-              <AddInfMT21>7000.0EUR07IT00000100000Z1</AddInfMT21>
-              <AddInfCodMT23>CAL</AddInfCodMT23>
-            </SPEMENMT2>
-            <SPEMENMT2>
-              <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
-              <AddInfCodMT23>CAL</AddInfCodMT23>
-            </SPEMENMT2>
-            <SPEMENMT2>
-              <AddInfMT21>7000.0EUR07IT00000100000Z9</AddInfMT21>
-              <AddInfCodMT23>CAL</AddInfCodMT23>
-            </SPEMENMT2>
-            <SPEMENMT2>
-              <AddInfMT21>EU_EXIT</AddInfMT21>
-              <AddInfMT21LNG>EN</AddInfMT21LNG>
-              <AddInfCodMT23>DG1</AddInfCodMT23>
-              <ExpFroCouMT25>AD</ExpFroCouMT25>
-            </SPEMENMT2>
-          </GOOITEGDS>
-        </example>
+    "returns parseError if gooBlock has an error" in {
+      when(mockXmlReaders.parseGuarantees(any()))
+        .thenReturn(Right(Seq(Guarantee(1, "test"))))
 
-      sut.gooBlock(exampleGOOITEGDSSequenceInvalidItemNumber) mustBe a[Left[InvalidItemNumber, _]]
+      when(mockXmlReaders.gooBlock)
+        .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GooBlock]](_ => Left(InvalidItemNumber("test"))))
+
+      val result = sut.parseInstructionSets(<test><GOOITEGDS><IteNumGDS7>A</IteNumGDS7></GOOITEGDS></test>)
+      result mustBe a[Left[InvalidItemNumber,_]]
+
     }
 
-    "returns MissingItemNumber when itemNumber is missing" in {
-      val exampleGOOITEGDSSequenceMissingItemNumber =
-        <example>
-          <GOOITEGDS>
-            <IteNumGDS7></IteNumGDS7>
-            <SPEMENMT2>
-              <AddInfMT21>7000.0EUR07IT00000100000Z1</AddInfMT21>
-              <AddInfCodMT23>CAL</AddInfCodMT23>
-            </SPEMENMT2>
-            <SPEMENMT2>
-              <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
-              <AddInfCodMT23>CAL</AddInfCodMT23>
-            </SPEMENMT2>
-            <SPEMENMT2>
-              <AddInfMT21>7000.0EUR07IT00000100000Z9</AddInfMT21>
-              <AddInfCodMT23>CAL</AddInfCodMT23>
-            </SPEMENMT2>
-            <SPEMENMT2>
-              <AddInfMT21>EU_EXIT</AddInfMT21>
-              <AddInfMT21LNG>EN</AddInfMT21LNG>
-              <AddInfCodMT23>DG1</AddInfCodMT23>
-              <ExpFroCouMT25>AD</ExpFroCouMT25>
-            </SPEMENMT2>
-          </GOOITEGDS>
-        </example>
+    "returns parseError if getInstructionSet returns with an error" in {
+      when(mockXmlReaders.parseGuarantees(any()))
+        .thenReturn(Right(Seq(Guarantee(1, "test"))))
 
-      sut.gooBlock(exampleGOOITEGDSSequenceMissingItemNumber) mustBe a[Left[MissingItemNumber, _]]
+      when(mockXmlReaders.gooBlock)
+        .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GooBlock]](_ => Right(Seq(GooBlock(1, Seq(SpecialMentionOther(<test></test>)))))))
+
+      when(mockInstructionBuilder.buildInstruction(any(), any()))
+        .thenReturn(Left(GuaranteeNotFound("test")))
+
+      val result = sut.parseInstructionSets(<test></test>)
+      result mustBe a[Left[GuaranteeNotFound, _]]
     }
 
-    "returns MissingItemNumber when itemNumber ode is missing" in {
-      val exampleGOOITEGDSSequenceMissingItemNumberNode =
-        <example>
-          <GOOITEGDS>
-            <SPEMENMT2>
-              <AddInfMT21>7000.0EUR07IT00000100000Z1</AddInfMT21>
-              <AddInfCodMT23>CAL</AddInfCodMT23>
-            </SPEMENMT2>
-            <SPEMENMT2>
-              <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
-              <AddInfCodMT23>CAL</AddInfCodMT23>
-            </SPEMENMT2>
-            <SPEMENMT2>
-              <AddInfMT21>7000.0EUR07IT00000100000Z9</AddInfMT21>
-              <AddInfCodMT23>CAL</AddInfCodMT23>
-            </SPEMENMT2>
-            <SPEMENMT2>
-              <AddInfMT21>EU_EXIT</AddInfMT21>
-              <AddInfMT21LNG>EN</AddInfMT21LNG>
-              <AddInfCodMT23>DG1</AddInfCodMT23>
-              <ExpFroCouMT25>AD</ExpFroCouMT25>
-            </SPEMENMT2>
-          </GOOITEGDS>
-        </example>
+    "returns Seq[InstructionSet] if getInstructionSet returns with no error" in {
+      when(mockXmlReaders.parseGuarantees(any()))
+        .thenReturn(Right(Seq(Guarantee(1, "test"))))
 
-      sut.gooBlock(exampleGOOITEGDSSequenceMissingItemNumberNode) mustBe a[Left[MissingItemNumber, _]]
-    }
+      when(mockXmlReaders.gooBlock)
+        .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GooBlock]](_ => Right(Seq(GooBlock(1, Seq(SpecialMentionOther(<test></test>)))))))
 
-    "returns ParseError when special mention is invalid" in {
-      val exampleGOOITEGDSSequenceInvalidSpecialMention =
-        <example>
-          <GOOITEGDS>
-            <IteNumGDS7>1</IteNumGDS7>
-            <SPEMENMT2>
-              <AddInfMT21>7000.0EUR07IT00000100000Z1</AddInfMT21>
-            </SPEMENMT2>
-            <SPEMENMT2>
-              <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
-              <AddInfCodMT23>CAL</AddInfCodMT23>
-            </SPEMENMT2>
-            <SPEMENMT2>
-              <AddInfMT21>7000.0EUR07IT00000100000Z9</AddInfMT21>
-              <AddInfCodMT23>CAL</AddInfCodMT23>
-            </SPEMENMT2>
-            <SPEMENMT2>
-              <AddInfMT21>EU_EXIT</AddInfMT21>
-              <AddInfMT21LNG>EN</AddInfMT21LNG>
-              <AddInfCodMT23>DG1</AddInfCodMT23>
-              <ExpFroCouMT25>AD</ExpFroCouMT25>
-            </SPEMENMT2>
-          </GOOITEGDS>
-        </example>
+      when(mockInstructionBuilder.buildInstruction(any(), any()))
+        .thenReturn(Right(NoChangeInstruction(<test></test>)))
 
-      sut.gooBlock(exampleGOOITEGDSSequenceInvalidSpecialMention) mustBe a[Left[ParseError, _]]
-    }
+      val result = sut.parseInstructionSets(<test></test>)
+      result mustBe a[Right[_, TransformInstructionSet]]
+      result.right.get mustBe Seq(
+        TransformInstructionSet(GooBlock(1, Seq(SpecialMentionOther(<test></test>))), Seq(NoChangeInstruction(<test></test>))))
 
-    //TODO: Rest of these tests
-  }
-
-  "parseSpecialMentions" - {
-    "returns Seq[SpecialMention] when no parse errors" in {
-      val result = sut.parseSpecialMentions(exampleGOOITEGDS)
-      result mustBe a[Right[_, Seq[SpecialMention]]]
-      result.right.get.length mustBe 4
-    }
-
-    "returns ParseError when any of the special mentions would fail" in {
-      sut.parseSpecialMentions(exampleGOOITEGDSBadSpecial) mustBe a[Left[ParseError, _]]
     }
   }
 
-  "specialMention" - {
-    "returns SpecialMentionGuarantee when AddInfCodMT23 is CAL" in {
-      sut.specialMention(exampleGuaranteeSPEMENMT2) mustBe a[Right[_, SpecialMentionGuarantee]]
-    }
+  "updateXml" - {
 
-    "returns SpecialMentionOther when AddInfCodMT23 is not CAL" in {
-      sut.specialMention(exampleOtherSPEMENMT2) mustBe a[Right[_, SpecialMentionOther]]
-    }
+    "returns xml based on inserts" in {
+      val prunedXml =
+        <example><GOOITEGDS><IteNumGDS7>1</IteNumGDS7></GOOITEGDS></example>
 
-    "returns AdditionalInfoMissing when AddInfMT21 is empty" in {
-      sut.specialMention(exampleAdditionalInfoMissing) mustBe a[Left[AdditionalInfoMissing, _]]
-    }
+      val expectedOutput =
+        <example><GOOITEGDS><IteNumGDS7>1</IteNumGDS7><SPEMENMT2><test1></test1></SPEMENMT2></GOOITEGDS></example>
 
-    "returns AdditionalInfoCodeMissing when AddInfCodMT23 is empty" in {
-      sut.specialMention(exampleCodeMissing) mustBe a[Left[AdditionalInfoCodeMissing, _]]
+      val gooBlockSample = GooBlock(1, Seq(SpecialMentionOther(<SPEMENMT2><test1></test1></SPEMENMT2>)))
+
+      when(mockXmlReaders.gooBlock)
+        .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GooBlock]](_ => Right(Seq(gooBlockSample))))
+
+      sut.updateXml(prunedXml,
+        Seq(
+          TransformInstructionSet(gooBlockSample, Seq(NoChangeInstruction(<SPEMENMT2><test1></test1></SPEMENMT2>)))
+        )).toString() mustBe expectedOutput.toString()
     }
   }
 
-  "guarantee" - {
-    "returns Guarantee when given GuaRefNumGRNREF1 field" in {
-      val result = sut.guarantee(exampleGuaranteeGuaTypGUA1)
-      result mustBe a[Right[_, Guarantee]]
-      val item = result.right.get
-      item.gReference mustEqual "07IT00000100000Z3"
-      item.gType mustEqual 8
+  "prunedXml" - {
+    val input =
+    <example><PreservedNode></PreservedNode><SPEMENMT2><TestNode></TestNode></SPEMENMT2></example>
+
+    val expectedOutput =
+    <example><PreservedNode></PreservedNode></example>
+
+    "must clear out the entire SPEMENMT2 nodes and children" in {
+      val result = sut.prunedXml(input)
+      result.toString() mustBe expectedOutput.toString()
+
     }
 
-    "returns GuaranteeTypeInvalid if no GuaTypGUA1 value" in {
-      sut.guarantee(exampleGuaranteeGuaTypGUA1MissingGuaType) mustBe a[Left[GuaranteeTypeInvalid, _]]
-    }
+  }
 
-    "returns GuaranteeTypeInvalid if GuaTypGua1 is not an int" in {
-      sut.guarantee(exampleGuaranteeGuaTypGUA1BadGuaType) mustBe a[Left[GuaranteeTypeInvalid, _]]
-    }
+  "buildBlockBody" - {
 
-    "returns NoGuaranteeReferenceNumber if GuaRefNumGRNRef1 was empty" in {
-      sut.guarantee(exampleGuaranteeGuaTypGUA1EmptyReference) mustBe a[Left[NoGuaranteeReferenceNumber, _]]
+    "returns NodeSeq based on the inputted instructions" in {
+      val instructionSet = TransformInstructionSet(
+        fakeGooBlock(Seq(SpecialMentionOther(<example></example>))),
+        Seq(NoChangeInstruction(<example></example>), NoChangeInstruction(<example></example>)))
+
+
+      val result = sut.buildBlockBody(instructionSet).toString()
+      println(result)
+      result mustBe
+      "<example></example><example></example>"
     }
   }
+
+  "buildGuaranteeXml" - {
+    "returns xml with additionalInfo and CAL" in {
+      sut.buildGuaranteeXml(SpecialMentionGuarantee("testInfo")) mustBe
+      <SPEMENMT2><AddInfCodMT21>testInfo</AddInfCodMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>
+    }
+  }
+
+  "getInstructionSet" - {
+    "returns ParseError when instructionBuilder returns a parsing error" in {
+      when(mockInstructionBuilder.buildInstruction(any(), any()))
+        .thenReturn(Left(GuaranteeNotFound("test")))
+
+      val result = sut.getInstructionSet(fakeGooBlock(Seq(SpecialMentionOther(<example></example>))), Seq.empty[Guarantee])
+      result mustBe a[Left[ParseError, _]]
+    }
+
+    "return TransformInstructionSet if no ParseErrors found" in {
+      when(mockInstructionBuilder.buildInstruction(any(), any()))
+        .thenReturn(Right(NoChangeGuaranteeInstruction(SpecialMentionGuarantee("test"))))
+
+      val result = sut.getInstructionSet(fakeGooBlock(Seq(SpecialMentionOther(<example></example>))), Seq.empty[Guarantee])
+      result mustBe a[Right[_, TransformInstructionSet]]
+      result.right.get.instructions.length mustBe 1
+    }
+
+  }
+
+
+
+
+
+
 }
