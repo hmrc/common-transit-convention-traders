@@ -37,7 +37,7 @@ object ParseError extends ParseHandling {
   case class MissingItemNumber(message: String)               extends ParseError
   case class InvalidItemNumber(message: String)               extends ParseError
 
-  def liftParseError[A](input: Seq[Either[ParseError, A]]): ParseHandler[Seq[A]] =
+  def sequenceErrors[A](input: Seq[ParseHandler[A]]): ParseHandler[Seq[A]] =
     input.filterNot(i => i.isRight).headOption match {
       case Some(error) => Left(error.left.get)
       case None => Right(input.map {

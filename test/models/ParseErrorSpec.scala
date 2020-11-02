@@ -22,7 +22,7 @@ import org.scalatest.matchers.must.Matchers
 
 class ParseErrorSpec extends AnyFreeSpec with Matchers{
 
-  "liftParseError" - {
+  "sequenceErrors" - {
 
     val failedParse: Seq[Either[ParseError, String]] =
       Seq(Left(InvalidItemNumber("Bad Item Number")),
@@ -33,11 +33,11 @@ class ParseErrorSpec extends AnyFreeSpec with Matchers{
       Seq(Right("Good Result"), Right("Other Result"))
 
     "lifts the first parseError when there are parseErrors" in {
-      ParseError.liftParseError(failedParse) mustBe a[Left[InvalidItemNumber, _]]
+      ParseError.sequenceErrors(failedParse) mustBe a[Left[InvalidItemNumber, _]]
     }
 
     "returns the result sequence when there are no parseErrors" in {
-      val result = ParseError.liftParseError(goodParse)
+      val result = ParseError.sequenceErrors(goodParse)
       result mustBe a[Right[Seq[String], _]]
       result.right.get.length mustBe 2
     }

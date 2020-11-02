@@ -39,15 +39,15 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
     }
 
   def parseInstructionSets(xml: NodeSeq): ParseHandler[Seq[TransformInstructionSet]] = {
-    println("parseGuarantees"); xmlReaders.parseGuarantees(xml) match {
+    xmlReaders.parseGuarantees(xml) match {
       case Left(error) => Left(error)
       case Right(guarantees) =>
-        println("gooBlock"); xmlReaders.gooBlock(xml) match {
+        xmlReaders.gooBlock(xml) match {
           case Left(error) => Left(error)
           case Right(gooBlocks) =>
-            ParseError.liftParseError(gooBlocks.map {
+            ParseError.sequenceErrors(gooBlocks.map {
               block =>
-                println("getInstructionSet"); getInstructionSet(block, guarantees).map {
+                getInstructionSet(block, guarantees).map {
                   instructionSet => instructionSet
                 }
             })
@@ -63,11 +63,15 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
             xmlReaders.gooBlock(e) match {
               case Left(_) => throw new Exception()
               case Right(blocks) => {
-                val currentBlock = blocks.head
-                val instructionSet = instructionSets.filter(set => set.gooBlock.itemNumber == currentBlock.itemNumber).head
-                val newXml = buildBlockBody(instructionSet)
-                val newBody = e.child.last ++ newXml
-                e.copy(child = newBody)
+                val currentBlockOption = blocks.headOption
+                currentBlockOption match {
+                  case Some(currentBlock) =>
+                    val instructionSet = instructionSets.filter(set => set.gooBlock.itemNumber == currentBlock.itemNumber).head
+                    val newXml = buildBlockBody(instructionSet)
+                    val newBody = e.child.last ++ newXml
+                    e.copy(child = newBody)
+                  case _ => e
+                }
               }
             }
           }
@@ -114,11 +118,11 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
     <SPEMENMT2><AddInfCodMT21>{mention.additionalInfo}</AddInfCodMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>
 
   def getInstructionSet(gooBlock: GooBlock, guarantees: Seq[Guarantee]): Either[ParseError, TransformInstructionSet] = {
-    ParseError.liftParseError(gooBlock.specialMentions.map {
+    ParseError.sequenceErrors(gooBlock.specialMentions.map {
       mention =>
         instructionBuilder.buildInstruction(mention, guarantees)
     }).map {
-      instructions => println("build TIS"); TransformInstructionSet(gooBlock, instructions)
+      instructions => TransformInstructionSet(gooBlock, instructions)
     }
   }
 

@@ -16,12 +16,11 @@
 
 package models
 
-import scala.xml.NodeSeq
+final case class SpecialMentionGuaranteeDetails(guaranteeAmount: Option[BigDecimal], currencyCode: Option[String], reference: String) {
+  def toSimple: SpecialMentionGuarantee = {
+    val amount = guaranteeAmount.getOrElse(BigDecimal(10000.00)).toString()
+    val currency = currencyCode.getOrElse("EUR")
 
-sealed trait TransformInstruction
-
-final case class NoChangeInstruction(xml: NodeSeq)       extends TransformInstruction
-final case class NoChangeGuaranteeInstruction(mention: SpecialMentionGuarantee) extends TransformInstruction
-final case class ChangeGuaranteeInstruction(details: SpecialMentionGuaranteeDetails)  extends TransformInstruction
-
-final case class TransformInstructionSet(gooBlock: GooBlock, instructions: Seq[TransformInstruction])
+    SpecialMentionGuarantee(amount + currency + reference)
+  }
+}

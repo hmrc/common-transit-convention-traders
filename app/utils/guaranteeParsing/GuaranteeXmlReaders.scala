@@ -29,31 +29,25 @@ class GuaranteeXmlReaders extends ParseHandling {
 
     val guaranteeEithers: Seq[Either[ParseError, Guarantee]] =
       (xml \ "GUAGUA").map {
-        node => guarantee(node) match {
-          case Left(e) => Left(e)
-          case Right(g) => Right(g)
-        }
+        node => guarantee(node)
       }
 
-    ParseError.liftParseError(guaranteeEithers)
+    ParseError.sequenceErrors(guaranteeEithers)
   }
 
   def parseSpecialMentions(xml: NodeSeq): ParseHandler[Seq[SpecialMention]] = {
-    ParseError.liftParseError((xml \ "SPEMENMT2").map {
+    ParseError.sequenceErrors((xml \ "SPEMENMT2").map {
       node =>
-        specialMention(node) match {
-          case Left(e) => Left(e)
-          case Right(s) => Right(s)
-        }
+        specialMention(node)
     })
   }
 
   val gooBlock: ReaderT[ParseHandler, NodeSeq, Seq[GooBlock]] =
     ReaderT[ParseHandler, NodeSeq, Seq[GooBlock]](xml => {
-      ParseError.liftParseError((xml \ "GOOITEGDS" ).map {
+      ParseError.sequenceErrors((xml \ "GOOITEGDS" ).map {
         node => {
           val itemNumberNode = (node \ "IteNumGDS7")
-          if(!itemNumberNode.isEmpty)
+          if(itemNumberNode.nonEmpty)
           {
             val itemNumberString = itemNumberNode.text
             if(!itemNumberString.isEmpty)

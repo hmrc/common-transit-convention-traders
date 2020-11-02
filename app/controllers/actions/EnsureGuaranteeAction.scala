@@ -31,15 +31,11 @@ class EnsureGuaranteeAction @Inject()(ensureGuaranteeService: EnsureGuaranteeSer
 
   override protected def refine[A](request: Request[A]): Future[Either[Result, GuaranteedRequest[A]]] = {
     request.body match {
-      case body: NodeSeq =>
-        if (body.nonEmpty) {
+      case body: NodeSeq if body.nonEmpty =>
           ensureGuaranteeService.ensureGuarantee(body) match {
             case Left(error) => Future.successful(Left(BadRequest(error.message)))
             case Right(newBody) => Future.successful(Right(GuaranteedRequest[A](request, newBody)))
           }
-        } else {
-          Future.successful(Left(BadRequest))
-        }
       case _ =>
         Future.successful(Left(BadRequest))
     }

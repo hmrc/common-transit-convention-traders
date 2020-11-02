@@ -20,11 +20,11 @@ import models.ParseError.{AdditionalInfoInvalidCharacters, AdditionalInfoTooLong
 
 import scala.xml.NodeSeq
 
-trait SpecialMention
+sealed trait SpecialMention
 
-case class SpecialMentionOther(xml: NodeSeq) extends SpecialMention
+final case class SpecialMentionOther(xml: NodeSeq) extends SpecialMention
 
-case class SpecialMentionGuarantee(additionalInfo: String) extends SpecialMention {
+final case class SpecialMentionGuarantee(additionalInfo: String) extends SpecialMention {
   def toDetails(guaranteeReference: String) : Either[ParseError, SpecialMentionGuaranteeDetails] = {
     if(additionalInfo.length > 18) return Left(AdditionalInfoTooLong("AdditionalInfo is too long"))
     if(additionalInfo.matches("'[a-zA-Z0-9_.]*'")) return Left(AdditionalInfoInvalidCharacters("invalid characters in additional info"))
@@ -73,15 +73,5 @@ case class SpecialMentionGuarantee(additionalInfo: String) extends SpecialMentio
     else {
       Left(AmountStringInvalid(s"Invalid String for amount: $amountString $cutIndex $additionalInfo $guaranteeReference $currencyOpt"))
     }
-  }
-}
-
-
-case class SpecialMentionGuaranteeDetails(guaranteeAmount: Option[BigDecimal], currencyCode: Option[String], reference: String) {
-  def toSimple: SpecialMentionGuarantee = {
-    val amount = guaranteeAmount.getOrElse(BigDecimal(10000.00)).toString()
-    val currency = currencyCode.getOrElse("EUR")
-
-    SpecialMentionGuarantee(amount + currency + reference)
   }
 }
