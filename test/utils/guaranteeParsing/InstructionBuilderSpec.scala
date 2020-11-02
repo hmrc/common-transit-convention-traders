@@ -143,7 +143,7 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
 
     "returns ChangeGuaranteeInstruction if applyDefaultGuarantee is successful" in {
       when(mockDefaultApplier.applyDefaultGuarantee(any(), any()))
-        .thenReturn(Right(SpecialMentionGuaranteeDetails(Some(BigDecimal(100.00)), Some("EUR"), "test")))
+        .thenReturn(Right(SpecialMentionGuaranteeDetails(BigDecimal(100.00), "EUR", "test")))
 
       val result = sut.buildInstructionFromGuarantee(Guarantee(1, "alpha"), SpecialMentionGuarantee("alpha"))
       result mustBe a[Right[_, ChangeGuaranteeInstruction]]

@@ -16,7 +16,7 @@
 
 package models
 
-import models.ParseError.{AdditionalInfoInvalidCharacters, AdditionalInfoTooLong, AmountStringInvalid, CurrencyCodeInvalid}
+import models.ParseError.{AdditionalInfoInvalidCharacters, AdditionalInfoTooLong, AmountStringInvalid, AmountWithoutCurrency, CurrencyCodeInvalid}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
@@ -48,31 +48,28 @@ class SpecialMentionGuaranteeSpec extends AnyFreeSpec with MockitoSugar with Mat
       val result = SpecialMentionGuarantee("100.00EURtest")
         .toDetails("test")
       result mustBe a[Right[_,SpecialMentionGuaranteeDetails]]
-      result.right.get.currencyCode mustBe Some("EUR")
-      result.right.get.guaranteeAmount mustBe Some(BigDecimal(100.00))
+      result.right.get.currencyCode mustBe "EUR"
+      result.right.get.guaranteeAmount mustBe BigDecimal(100.00)
     }
-    "returns SpecialMentionGuaranteeDetails with no currency code when there is none" in {
+    "returns AmountWithoutCurrency parsing error when we have an amount but no currency" in {
       val result = SpecialMentionGuarantee("100.00test")
         .toDetails("test")
-      result mustBe a[Right[_,SpecialMentionGuaranteeDetails]]
-      result.right.get.currencyCode mustBe None
-      result.right.get.guaranteeAmount mustBe Some(BigDecimal(100.00))
-
+      result mustBe a[Left[AmountWithoutCurrency, _]]
     }
-    "returns SpecialMentionGuaranteeDetails with no amount when there is none" in {
-      val result = SpecialMentionGuarantee("EURtest")
+    "returns SpecialMentionGuaranteeDetails with an overwritten amount and currency when there is none" in {
+      val result = SpecialMentionGuarantee("GBRtest")
         .toDetails("test")
       result mustBe a[Right[_,SpecialMentionGuaranteeDetails]]
-      result.right.get.currencyCode mustBe Some("EUR")
-      result.right.get.guaranteeAmount mustBe None
+      result.right.get.currencyCode mustBe "EUR"
+      result.right.get.guaranteeAmount mustBe BigDecimal(10000.00)
 
     }
-    "returns SpecialMentionGuaranteeDetails with no amount or currency code if there are none" in {
+    "returns SpecialMentionGuaranteeDetails with default Amount and currency code if there are no values" in {
       val result = SpecialMentionGuarantee("test")
         .toDetails("test")
       result mustBe a[Right[_,SpecialMentionGuaranteeDetails]]
-      result.right.get.currencyCode mustBe None
-      result.right.get.guaranteeAmount mustBe None
+      result.right.get.currencyCode mustBe "EUR"
+      result.right.get.guaranteeAmount mustBe BigDecimal(10000.00)
 
     }
   }

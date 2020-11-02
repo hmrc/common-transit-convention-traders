@@ -16,6 +16,4 @@
 
 package models
 
-case class GooBlock(itemNumber: Int, specialMentions: Seq[SpecialMention]) {
-
-}
+case class GOOITEGDSNode(itemNumber: Int, specialMentions: Seq[SpecialMention])

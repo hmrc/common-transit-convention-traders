@@ -24,4 +24,4 @@ final case class NoChangeInstruction(xml: NodeSeq)       extends TransformInstru
 final case class NoChangeGuaranteeInstruction(mention: SpecialMentionGuarantee) extends TransformInstruction
 final case class ChangeGuaranteeInstruction(details: SpecialMentionGuaranteeDetails)  extends TransformInstruction
 
-final case class TransformInstructionSet(gooBlock: GooBlock, instructions: Seq[TransformInstruction])
+final case class TransformInstructionSet(gooNode: GOOITEGDSNode, instructions: Seq[TransformInstruction])

@@ -42,22 +42,22 @@ class GuaranteeXmlReaders extends ParseHandling {
     })
   }
 
-  val gooBlock: ReaderT[ParseHandler, NodeSeq, Seq[GooBlock]] =
-    ReaderT[ParseHandler, NodeSeq, Seq[GooBlock]](xml => {
+  val gOOITEGDSNode: ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]] =
+    ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](xml => {
       ParseError.sequenceErrors((xml \ "GOOITEGDS" ).map {
         node => {
           val itemNumberNode = (node \ "IteNumGDS7")
           if(itemNumberNode.nonEmpty)
           {
             val itemNumberString = itemNumberNode.text
-            if(!itemNumberString.isEmpty)
+            if(itemNumberString.nonEmpty)
             {
               Try(itemNumberString.toInt) match {
                 case Failure(_) => Left(InvalidItemNumber("Invalid Item Number"))
                 case Success(itemNumber) =>
                   parseSpecialMentions(node) match {
                     case Left(error) => Left(error)
-                    case Right(mentions) => Right(GooBlock(itemNumber, mentions))
+                    case Right(mentions) => Right(GOOITEGDSNode(itemNumber, mentions))
                   }
               }
             }

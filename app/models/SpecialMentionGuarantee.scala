@@ -16,7 +16,7 @@
 
 package models
 
-import models.ParseError.{AdditionalInfoInvalidCharacters, AdditionalInfoTooLong, AmountStringInvalid, CurrencyCodeInvalid}
+import models.ParseError.{AdditionalInfoInvalidCharacters, AdditionalInfoTooLong, AmountStringInvalid, AmountWithoutCurrency, CurrencyCodeInvalid}
 
 import scala.xml.NodeSeq
 
@@ -34,7 +34,15 @@ final case class SpecialMentionGuarantee(additionalInfo: String) extends Special
       case Right(currencyOpt) => {
         getAmount(additionalInfo, guaranteeReference, currencyOpt) match {
           case Left(error) => Left(error)
-          case Right(amountOpt) => Right(SpecialMentionGuaranteeDetails(amountOpt, currencyOpt, guaranteeReference))
+          case Right(amountOpt) =>
+            (amountOpt, currencyOpt) match {
+              case (Some(amount), Some(currency)) =>
+                Right(SpecialMentionGuaranteeDetails(amount, currency, guaranteeReference))
+              case (Some(_), None) =>
+                Left(AmountWithoutCurrency("Parsed Amount value without currency"))
+              case (None, _) =>
+                Right(SpecialMentionGuaranteeDetails(BigDecimal(10000.00), "EUR", guaranteeReference))
+            }
         }
       }
     }

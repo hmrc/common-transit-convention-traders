@@ -16,26 +16,27 @@
 
 package models
 
-trait ParseError {
+sealed trait ParseError {
   def message: String
 }
 
 object ParseError extends ParseHandling {
-  case class EmptyNodeSeq(message: String)                    extends ParseError
-  case class NoGuaranteeType(message: String)                 extends ParseError
-  case class GuaranteeTypeInvalid(message: String)            extends ParseError
-  case class NoGuaranteeReferenceNumber(message: String)      extends ParseError
-  case class GuaranteeAmountZero(message: String)             extends ParseError
-  case class AdditionalInfoMissing(message: String)           extends ParseError
-  case class AdditionalInfoTooLong(message: String)           extends ParseError
-  case class AdditionalInfoInvalidCharacters(message: String) extends ParseError
-  case class AdditionalInfoCodeMissing(message: String)       extends ParseError
-  case class CurrencyCodeInvalid(message: String)             extends ParseError
-  case class AmountStringInvalid(message: String)             extends ParseError
-  case class SpecialMentionNotFound(message: String)          extends ParseError
-  case class GuaranteeNotFound(message: String)               extends ParseError
-  case class MissingItemNumber(message: String)               extends ParseError
-  case class InvalidItemNumber(message: String)               extends ParseError
+  final case class EmptyNodeSeq(message: String)                    extends ParseError
+  final case class NoGuaranteeType(message: String)                 extends ParseError
+  final case class GuaranteeTypeInvalid(message: String)            extends ParseError
+  final case class NoGuaranteeReferenceNumber(message: String)      extends ParseError
+  final case class GuaranteeAmountZero(message: String)             extends ParseError
+  final case class AdditionalInfoMissing(message: String)           extends ParseError
+  final case class AdditionalInfoTooLong(message: String)           extends ParseError
+  final case class AdditionalInfoInvalidCharacters(message: String) extends ParseError
+  final case class AdditionalInfoCodeMissing(message: String)       extends ParseError
+  final case class CurrencyCodeInvalid(message: String)             extends ParseError
+  final case class AmountStringInvalid(message: String)             extends ParseError
+  final case class SpecialMentionNotFound(message: String)          extends ParseError
+  final case class GuaranteeNotFound(message: String)               extends ParseError
+  final case class MissingItemNumber(message: String)               extends ParseError
+  final case class InvalidItemNumber(message: String)               extends ParseError
+  final case class AmountWithoutCurrency(message: String)           extends ParseError
 
   def sequenceErrors[A](input: Seq[ParseHandler[A]]): ParseHandler[Seq[A]] =
     input.filterNot(i => i.isRight).headOption match {

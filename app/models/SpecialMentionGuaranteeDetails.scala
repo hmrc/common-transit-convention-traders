@@ -16,11 +16,8 @@
 
 package models
 
-final case class SpecialMentionGuaranteeDetails(guaranteeAmount: Option[BigDecimal], currencyCode: Option[String], reference: String) {
+final case class SpecialMentionGuaranteeDetails(guaranteeAmount: BigDecimal, currencyCode: String, reference: String) {
   def toSimple: SpecialMentionGuarantee = {
-    val amount = guaranteeAmount.getOrElse(BigDecimal(10000.00)).toString()
-    val currency = currencyCode.getOrElse("EUR")
-
-    SpecialMentionGuarantee(amount + currency + reference)
+    SpecialMentionGuarantee(guaranteeAmount + currencyCode + reference)
   }
 }

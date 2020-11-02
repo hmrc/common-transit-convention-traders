@@ -17,7 +17,7 @@
 package services
 
 import models.ParseError.{AdditionalInfoCodeMissing, AdditionalInfoMissing, GuaranteeAmountZero, GuaranteeNotFound, GuaranteeTypeInvalid, InvalidItemNumber, MissingItemNumber, NoGuaranteeReferenceNumber, SpecialMentionNotFound}
-import models.{ChangeGuaranteeInstruction, GooBlock, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, ParseHandling, SpecialMention, SpecialMentionGuarantee, SpecialMentionGuaranteeDetails, SpecialMentionOther, TransformInstruction, TransformInstructionSet}
+import models.{ChangeGuaranteeInstruction, GOOITEGDSNode, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, ParseHandling, SpecialMention, SpecialMentionGuarantee, SpecialMentionGuaranteeDetails, SpecialMentionOther, TransformInstruction, TransformInstructionSet}
 import cats.data.ReaderT
 import cats.implicits._
 import com.google.inject.Inject
@@ -42,7 +42,7 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
     xmlReaders.parseGuarantees(xml) match {
       case Left(error) => Left(error)
       case Right(guarantees) =>
-        xmlReaders.gooBlock(xml) match {
+        xmlReaders.gOOITEGDSNode(xml) match {
           case Left(error) => Left(error)
           case Right(gooBlocks) =>
             ParseError.sequenceErrors(gooBlocks.map {
@@ -60,13 +60,13 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
       override def transform(node: Node): NodeSeq = {
         node match {
           case e: Elem if e.label == "GOOITEGDS" => {
-            xmlReaders.gooBlock(e) match {
+            xmlReaders.gOOITEGDSNode(e) match {
               case Left(_) => throw new Exception()
               case Right(blocks) => {
                 val currentBlockOption = blocks.headOption
                 currentBlockOption match {
                   case Some(currentBlock) =>
-                    val instructionSet = instructionSets.filter(set => set.gooBlock.itemNumber == currentBlock.itemNumber).head
+                    val instructionSet = instructionSets.filter(set => set.gooNode.itemNumber == currentBlock.itemNumber).head
                     val newXml = buildBlockBody(instructionSet)
                     val newBody = e.child.last ++ newXml
                     e.copy(child = newBody)
@@ -117,12 +117,12 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
   def buildGuaranteeXml(mention: SpecialMentionGuarantee) =
     <SPEMENMT2><AddInfCodMT21>{mention.additionalInfo}</AddInfCodMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>
 
-  def getInstructionSet(gooBlock: GooBlock, guarantees: Seq[Guarantee]): Either[ParseError, TransformInstructionSet] = {
-    ParseError.sequenceErrors(gooBlock.specialMentions.map {
+  def getInstructionSet(gooNode: GOOITEGDSNode, guarantees: Seq[Guarantee]): Either[ParseError, TransformInstructionSet] = {
+    ParseError.sequenceErrors(gooNode.specialMentions.map {
       mention =>
         instructionBuilder.buildInstruction(mention, guarantees)
     }).map {
-      instructions => TransformInstructionSet(gooBlock, instructions)
+      instructions => TransformInstructionSet(gooNode, instructions)
     }
   }
 

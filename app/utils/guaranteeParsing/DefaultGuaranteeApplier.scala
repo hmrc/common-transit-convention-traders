@@ -25,11 +25,8 @@ class DefaultGuaranteeApplier {
     s.toDetails(g.gReference) match {
       case Left(error) => Left(error)
       case Right(details) => details.guaranteeAmount match {
-        case None => Right(details.copy(Some(BigDecimal(10000.00)), Some("EUR")))
-        case Some(amount) => amount match {
           case a if a.equals(BigDecimal(0)) => Left(GuaranteeAmountZero("GuaranteeAmount cannot be zero"))
           case _ => Right(details)
         }
       }
-    }
 }

@@ -26,10 +26,10 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers{
 
   val sut = new GuaranteeXmlReaders
 
-  "gooBlock" - {
-    "returns Seq[GooBlock] when no parse errors" in {
-      val result = sut.gooBlock(exampleGOOITEGDSSequence)
-      result mustBe a[Right[_, Seq[GooBlock]]]
+  "gOOITEGDSNode" - {
+    "returns Seq[GOOITEGDSNode] when no parse errors" in {
+      val result = sut.gOOITEGDSNode(exampleGOOITEGDSSequence)
+      result mustBe a[Right[_, Seq[GOOITEGDSNode]]]
       val gooBlocks = result.right.get
       val gooBlock = gooBlocks.head
       gooBlock.itemNumber mustBe 1
@@ -64,7 +64,7 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers{
           </GOOITEGDS>
         </example>
 
-      sut.gooBlock(exampleGOOITEGDSSequenceInvalidItemNumber) mustBe a[Left[InvalidItemNumber, _]]
+      sut.gOOITEGDSNode(exampleGOOITEGDSSequenceInvalidItemNumber) mustBe a[Left[InvalidItemNumber, _]]
     }
 
     "returns MissingItemNumber when itemNumber is missing" in {
@@ -93,7 +93,7 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers{
           </GOOITEGDS>
         </example>
 
-      sut.gooBlock(exampleGOOITEGDSSequenceMissingItemNumber) mustBe a[Left[MissingItemNumber, _]]
+      sut.gOOITEGDSNode(exampleGOOITEGDSSequenceMissingItemNumber) mustBe a[Left[MissingItemNumber, _]]
     }
 
     "returns MissingItemNumber when itemNumber ode is missing" in {
@@ -121,7 +121,7 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers{
           </GOOITEGDS>
         </example>
 
-      sut.gooBlock(exampleGOOITEGDSSequenceMissingItemNumberNode) mustBe a[Left[MissingItemNumber, _]]
+      sut.gOOITEGDSNode(exampleGOOITEGDSSequenceMissingItemNumberNode) mustBe a[Left[MissingItemNumber, _]]
     }
 
     "returns ParseError when special mention is invalid" in {
@@ -149,7 +149,7 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers{
           </GOOITEGDS>
         </example>
 
-      sut.gooBlock(exampleGOOITEGDSSequenceInvalidSpecialMention) mustBe a[Left[ParseErrorSpec, _]]
+      sut.gOOITEGDSNode(exampleGOOITEGDSSequenceInvalidSpecialMention) mustBe a[Left[ParseErrorSpec, _]]
     }
   }
 
