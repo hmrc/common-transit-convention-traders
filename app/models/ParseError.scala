@@ -16,6 +16,11 @@
 
 package models
 
+import cats.implicits._
+import cats.data._
+import cats._
+
+
 sealed trait ParseError {
   def message: String
 }
@@ -38,11 +43,7 @@ object ParseError extends ParseHandling {
   final case class InvalidItemNumber(message: String)               extends ParseError
   final case class AmountWithoutCurrency(message: String)           extends ParseError
 
-  def sequenceErrors[A](input: Seq[ParseHandler[A]]): ParseHandler[Seq[A]] =
-    input.filterNot(i => i.isRight).headOption match {
-      case Some(error) => Left(error.left.get)
-      case None => Right(input.map {
-        x => x.right.get
-      })
-    }
+  def sequenceErrors[A](input: Seq[ParseHandler[A]]): ParseHandler[Seq[A]] = {
+    input.toList.sequence.map { _.toSeq }
+  }
 }

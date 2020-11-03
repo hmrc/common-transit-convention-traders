@@ -22,9 +22,8 @@ import models.{Guarantee, ParseError, SpecialMentionGuarantee, SpecialMentionGua
 class DefaultGuaranteeApplier {
 
   def applyDefaultGuarantee(g: Guarantee, s: SpecialMentionGuarantee): Either[ParseError, SpecialMentionGuaranteeDetails] =
-    s.toDetails(g.gReference) match {
-      case Left(error) => Left(error)
-      case Right(details) => details.guaranteeAmount match {
+    s.toDetails(g.gReference).flatMap {
+       details => details.guaranteeAmount match {
           case a if a.equals(BigDecimal(0)) => Left(GuaranteeAmountZero("GuaranteeAmount cannot be zero"))
           case _ => Right(details)
         }
