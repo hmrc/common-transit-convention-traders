@@ -38,6 +38,7 @@ import play.api.libs.json.{JsNull, Json}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.Helpers.{headers, _}
 import play.api.test.{FakeHeaders, FakeRequest}
+import services.EnsureGuaranteeService
 import uk.gov.hmrc.http.HttpResponse
 import utils.CallOps._
 
@@ -45,10 +46,14 @@ import scala.concurrent.Future
 
 class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
   private val mockDepartureConnector: DeparturesConnector = mock[DeparturesConnector]
+  private val mockGuaranteeService: EnsureGuaranteeService = mock[EnsureGuaranteeService]
+
+  when(mockGuaranteeService.ensureGuarantee(any())).thenReturn(Right(CC015B))
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(bind[AuthAction].to[FakeAuthAction])
     .overrides(bind[DeparturesConnector].toInstance(mockDepartureConnector))
+    .overrides(bind[EnsureGuaranteeService].toInstance(mockGuaranteeService))
     .build()
 
   override def beforeEach(): Unit = {

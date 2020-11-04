@@ -1072,5 +1072,130 @@ trait TestXml {
     </GOOITEGDS>
   </CC015B>
 
+  val exampleGOOITEGDSSequence =
+    <example>
+      <GOOITEGDS>
+        <IteNumGDS7>1</IteNumGDS7>
+        <SPEMENMT2>
+          <AddInfMT21>7000.0EUR07IT00000100000Z1</AddInfMT21>
+          <AddInfCodMT23>CAL</AddInfCodMT23>
+        </SPEMENMT2>
+        <SPEMENMT2>
+          <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
+          <AddInfCodMT23>CAL</AddInfCodMT23>
+        </SPEMENMT2>
+        <SPEMENMT2>
+          <AddInfMT21>7000.0EUR07IT00000100000Z9</AddInfMT21>
+          <AddInfCodMT23>CAL</AddInfCodMT23>
+        </SPEMENMT2>
+        <SPEMENMT2>
+          <AddInfMT21>EU_EXIT</AddInfMT21>
+          <AddInfMT21LNG>EN</AddInfMT21LNG>
+          <AddInfCodMT23>DG1</AddInfCodMT23>
+          <ExpFroCouMT25>AD</ExpFroCouMT25>
+        </SPEMENMT2>
+      </GOOITEGDS>
+    </example>
+
+  val exampleGOOITEGDS = <GOOITEGDS>
+    <IteNumGDS7>1</IteNumGDS7>
+    <SPEMENMT2>
+      <AddInfMT21>7000.0EUR07IT00000100000Z1</AddInfMT21>
+      <AddInfCodMT23>CAL</AddInfCodMT23>
+    </SPEMENMT2>
+    <SPEMENMT2>
+      <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
+      <AddInfCodMT23>CAL</AddInfCodMT23>
+    </SPEMENMT2>
+    <SPEMENMT2>
+      <AddInfMT21>7000.0EUR07IT00000100000Z9</AddInfMT21>
+      <AddInfCodMT23>CAL</AddInfCodMT23>
+    </SPEMENMT2>
+    <SPEMENMT2>
+      <AddInfMT21>EU_EXIT</AddInfMT21>
+      <AddInfMT21LNG>EN</AddInfMT21LNG>
+      <AddInfCodMT23>DG1</AddInfCodMT23>
+      <ExpFroCouMT25>AD</ExpFroCouMT25>
+    </SPEMENMT2>
+  </GOOITEGDS>
+
+  val exampleGOOITEGDSBadSpecial =
+    <GOOITEGDS>
+      <IteNumGDS7>1</IteNumGDS7>
+      <SPEMENMT2>
+        <AddInfMT21>7000.0EUR07IT00000100000Z1</AddInfMT21>
+        <AddInfCodMT23>CAL</AddInfCodMT23>
+      </SPEMENMT2>
+      <SPEMENMT2>
+        <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
+        <AddInfCodMT23>CAL</AddInfCodMT23>
+      </SPEMENMT2>
+      <SPEMENMT2>
+        <AddInfMT21>7000.0EUR07IT00000100000Z9</AddInfMT21>
+      </SPEMENMT2>
+      <SPEMENMT2>
+        <AddInfMT21>EU_EXIT</AddInfMT21>
+        <AddInfMT21LNG>EN</AddInfMT21LNG>
+        <AddInfCodMT23>DG1</AddInfCodMT23>
+        <ExpFroCouMT25>AD</ExpFroCouMT25>
+      </SPEMENMT2>
+    </GOOITEGDS>
+
+  val exampleGuaranteeGuaTypGUA1 =
+    <GUAGUA>
+      <GuaTypGUA1>8</GuaTypGUA1>
+      <GUAREFREF>
+        <GuaRefNumGRNREF1>07IT00000100000Z3</GuaRefNumGRNREF1>
+      </GUAREFREF>
+    </GUAGUA>
+
+  val exampleGuaranteeGuaTypGUA1BadGuaType =
+    <GUAGUA>
+      <GuaTypGUA1>A</GuaTypGUA1>
+      <GUAREFREF>
+        <GuaRefNumGRNREF1>07IT00000100000Z3</GuaRefNumGRNREF1>
+      </GUAREFREF>
+    </GUAGUA>
+
+  val exampleGuaranteeGuaTypGUA1MissingGuaType =
+    <GUAGUA>
+      <GuaTypGUA1></GuaTypGUA1>
+      <GUAREFREF>
+        <GuaRefNumGRNREF1>07IT00000100000Z3</GuaRefNumGRNREF1>
+      </GUAREFREF>
+    </GUAGUA>
+
+  val exampleGuaranteeGuaTypGUA1EmptyReference =
+    <GUAGUA>
+      <GuaTypGUA1></GuaTypGUA1>
+      <GUAREFREF>
+        <GuaRefNumGRNREF1>07IT00000100000Z3</GuaRefNumGRNREF1>
+      </GUAREFREF>
+    </GUAGUA>
+
+  val exampleGuaranteeSPEMENMT2 =
+    <SPEMENMT2>
+    <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
+    <AddInfCodMT23>CAL</AddInfCodMT23>
+  </SPEMENMT2>
+
+  val exampleOtherSPEMENMT2 =
+    <SPEMENMT2>
+      <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
+      <AddInfCodMT23>Bleep</AddInfCodMT23>
+    </SPEMENMT2>
+
+  val exampleAdditionalInfoMissing =
+    <SPEMENMT2>
+      <AddInfMT21></AddInfMT21>
+      <AddInfCodMT23>Bleep</AddInfCodMT23>
+    </SPEMENMT2>
+
+  val exampleCodeMissing =
+    <SPEMENMT2>
+      <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
+      <AddInfCodMT23></AddInfCodMT23>
+    </SPEMENMT2>
+
 
 }
