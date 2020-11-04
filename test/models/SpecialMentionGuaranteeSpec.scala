@@ -16,7 +16,7 @@
 
 package models
 
-import models.ParseError.{AdditionalInfoInvalidCharacters, AdditionalInfoTooLong, AmountStringInvalid, AmountWithoutCurrency, CurrencyCodeInvalid}
+import models.ParseError.{AdditionalInfoInvalidCharacters, AmountStringTooLong, AmountStringInvalid, AmountWithoutCurrency, CurrencyCodeInvalid}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
@@ -24,11 +24,6 @@ import org.scalatestplus.mockito.MockitoSugar
 class SpecialMentionGuaranteeSpec extends AnyFreeSpec with MockitoSugar with Matchers{
 
   "toDetails" - {
-    "returns AdditionalInfoTooLong if is guaranteeReference is longer than 18 characters" in {
-      SpecialMentionGuarantee("testPrefixCODFarTooLong")
-        .toDetails("FarTooLong") mustBe a[Left[AdditionalInfoTooLong, _]]
-    }
-
     "returns AdditionalInfoInvalidCharacters if characters that aren't alphanumerical or a '.'" in {
       SpecialMentionGuarantee("abcdeabcde$$$$test")
         .toDetails("test") mustBe a[Left[AdditionalInfoInvalidCharacters, _]]
@@ -42,6 +37,11 @@ class SpecialMentionGuaranteeSpec extends AnyFreeSpec with MockitoSugar with Mat
     "returns AmountStringInvalid when amount is not to two decimal places" in {
       SpecialMentionGuarantee("100.0EURtest")
         .toDetails("test") mustBe a[Left[AmountStringInvalid,_]]
+    }
+
+    "returns AmountStringTooLong if is amount value is longer than 18 characters" in {
+      SpecialMentionGuarantee("12345678901234567890.00EURtest")
+        .toDetails("FarTooLong") mustBe a[Left[AmountStringTooLong, _]]
     }
 
     "returns SpecialMentionGuaranteeDetails with all details" in {
