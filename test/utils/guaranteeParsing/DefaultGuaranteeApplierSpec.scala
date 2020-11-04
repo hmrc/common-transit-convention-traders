@@ -50,8 +50,8 @@ class DefaultGuaranteeApplierSpec  extends AnyFreeSpec with MockitoSugar with Be
     "returns SpecialMentionGuaranteeDetails with overwritten guarantee value if there is no guarantee amount" in {
       val result = sut.applyDefaultGuarantee(Guarantee(1, "alpha"), SpecialMentionGuarantee("alpha"))
       result mustBe a[Right[_, SpecialMentionGuaranteeDetails]]
-      result.right.get.guaranteeAmount mustBe Some(BigDecimal(10000.00))
-      result.right.get.currencyCode mustBe Some("EUR")
+      result.right.get.guaranteeAmount mustBe BigDecimal(10000.00)
+      result.right.get.currencyCode mustBe "EUR"
     }
 
     "returns GuaranteeAmountZero parse error if amount is specified as zero" in {
@@ -62,8 +62,8 @@ class DefaultGuaranteeApplierSpec  extends AnyFreeSpec with MockitoSugar with Be
     "returns SpecialMentionGuarantee as SpecialMentionGuaranteeDetails is no change required" in {
       val result = sut.applyDefaultGuarantee(Guarantee(1, "alpha"), SpecialMentionGuarantee("100.00EURalpha"))
       result mustBe a[Right[_, SpecialMentionGuaranteeDetails]]
-      result.right.get.guaranteeAmount mustBe Some(BigDecimal(100.00))
-      result.right.get.currencyCode mustBe Some("EUR")
+      result.right.get.guaranteeAmount mustBe BigDecimal(100.00)
+      result.right.get.currencyCode mustBe "EUR"
     }
   }
 

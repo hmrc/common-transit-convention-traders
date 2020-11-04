@@ -52,7 +52,7 @@ class GuaranteeInstructionBuilder @Inject()(defaultGuaranteeApplier: DefaultGuar
 
 
   def buildInstructionFromGuarantee(g: Guarantee, sm: SpecialMentionGuarantee): Either[ParseError, TransformInstruction] = {
-    if(concernedTypes.contains(g.gType)) {
+    if(!concernedTypes.contains(g.gType)) {
       Right(NoChangeGuaranteeInstruction(sm))
     }
     else
