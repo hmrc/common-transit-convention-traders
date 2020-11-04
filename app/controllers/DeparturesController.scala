@@ -66,11 +66,9 @@ class DeparturesController @Inject()(cc: ControllerComponents,
   def getDeparturesForEori: Action[AnyContent] =
     (authAction andThen validateAcceptJsonHeaderAction).async {
       implicit request => {
-        departuresConnector.getForEori.map { result =>
-          result match {
-            case Right(departures) => Ok(Json.toJson(ResponseDepartures(departures.departures.map { departure => ResponseDeparture(departure) } ) ) )
-            case Left(invalidResponse) => handleNon2xx(invalidResponse)
-          }
+        departuresConnector.getForEori.map {
+          case Right(departures) => Ok(Json.toJson(ResponseDepartures(departures.departures.map { departure => ResponseDeparture(departure) })))
+          case Left(invalidResponse) => handleNon2xx(invalidResponse)
         }
       }
     }
