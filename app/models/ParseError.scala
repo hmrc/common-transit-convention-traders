@@ -32,10 +32,10 @@ object ParseError extends ParseHandling {
   final case class NoGuaranteeReferenceNumber(message: String)      extends ParseError
   final case class GuaranteeAmountZero(message: String)             extends ParseError
   final case class AdditionalInfoMissing(message: String)           extends ParseError
-  final case class AdditionalInfoTooLong(message: String)           extends ParseError
   final case class AdditionalInfoInvalidCharacters(message: String) extends ParseError
   final case class AdditionalInfoCodeMissing(message: String)       extends ParseError
   final case class CurrencyCodeInvalid(message: String)             extends ParseError
+  final case class AmountStringTooLong(message: String)             extends ParseError
   final case class AmountStringInvalid(message: String)             extends ParseError
   final case class SpecialMentionNotFound(message: String)          extends ParseError
   final case class GuaranteeNotFound(message: String)               extends ParseError

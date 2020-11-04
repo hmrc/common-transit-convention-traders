@@ -16,7 +16,7 @@
 
 package models
 
-import models.ParseError.{AdditionalInfoInvalidCharacters, AdditionalInfoTooLong, AmountStringInvalid, AmountWithoutCurrency, CurrencyCodeInvalid}
+import models.ParseError.{AdditionalInfoInvalidCharacters, AmountStringTooLong, AmountStringInvalid, AmountWithoutCurrency, CurrencyCodeInvalid}
 
 import scala.xml.NodeSeq
 
@@ -26,7 +26,6 @@ final case class SpecialMentionOther(xml: NodeSeq) extends SpecialMention
 
 final case class SpecialMentionGuarantee(additionalInfo: String) extends SpecialMention {
   def toDetails(guaranteeReference: String) : Either[ParseError, SpecialMentionGuaranteeDetails] = {
-    if(additionalInfo.length > 18) return Left(AdditionalInfoTooLong("AdditionalInfo is too long"))
     if(additionalInfo.matches("'[a-zA-Z0-9_.]*'")) return Left(AdditionalInfoInvalidCharacters("invalid characters in additional info"))
 
     getCurrencyCode(additionalInfo, guaranteeReference) match {
@@ -74,6 +73,9 @@ final case class SpecialMentionGuarantee(additionalInfo: String) extends Special
     if(amountString.isEmpty)
     {
       Right(None)
+    }
+    else if(amountString.length > 18) {
+      Left(AmountStringTooLong("Amount is longer than 18 characters"))
     }
     else if(amountString.matches("^[0-9]*\\.[0-9]{2}$")) {
       Right(Some(BigDecimal(amountString)))
