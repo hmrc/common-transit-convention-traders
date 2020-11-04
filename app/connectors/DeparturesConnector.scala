@@ -19,7 +19,7 @@ package connectors
 import config.AppConfig
 import connectors.util.CustomHttpReader
 import javax.inject.Inject
-import models.domain.Departure
+import models.domain.{Departure, Departures}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -40,6 +40,14 @@ class DeparturesConnector @Inject()(http: HttpClient, appConfig: AppConfig) exte
 
     http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response =>
       extractIfSuccessful[Departure](response)
+    }
+  }
+
+  def getForEori()(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departures]] = {
+    val url = appConfig.traderAtDeparturesUrl + departureRoute
+
+    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response =>
+      extractIfSuccessful[Departures](response)
     }
   }
 }
