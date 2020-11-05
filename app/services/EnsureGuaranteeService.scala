@@ -60,18 +60,13 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
       override def transform(node: Node): NodeSeq = {
         node match {
           case e: Elem if e.label == "GOOITEGDS" => {
-            xmlReaders.gOOITEGDSNode(e) match {
+            xmlReaders.gOOITEGDSNodeFromNode(e) match {
               case Left(_) => throw new Exception()
-              case Right(blocks) => {
-                val currentBlockOption = blocks.headOption
-                currentBlockOption match {
-                  case Some(currentBlock) =>
-                    val instructionSet = instructionSets.filter(set => set.gooNode.itemNumber == currentBlock.itemNumber).head
-                    val newXml = buildBlockBody(instructionSet)
-                    val newBody = e.child.last ++ newXml
-                    e.copy(child = newBody)
-                  case _ => e
-                }
+              case Right(currentBlock) => {
+                val instructionSet = instructionSets.filter(set => set.gooNode.itemNumber == currentBlock.itemNumber).head
+                val newXml = buildBlockBody(instructionSet)
+                val newBody = e.child.toList ++ newXml
+                e.copy(child = newBody)
               }
             }
           }
@@ -93,7 +88,7 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
   }
 
 
-  private def mergeNewXml(xmls: Seq[NodeSeq]): NodeSeq = {
+  def mergeNewXml(xmls: Seq[NodeSeq]): NodeSeq = {
     @tailrec
     def mergeAggregator(xmls: Seq[NodeSeq], accum: NodeSeq): NodeSeq = {
       xmls match {
@@ -115,7 +110,7 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
   }
 
   def buildGuaranteeXml(mention: SpecialMentionGuarantee) =
-    <SPEMENMT2><AddInfCodMT21>{mention.additionalInfo}</AddInfCodMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>
+    <SPEMENMT2><AddInfMT21>{mention.additionalInfo}</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>
 
   def getInstructionSet(gooNode: GOOITEGDSNode, guarantees: Seq[Guarantee]): Either[ParseError, TransformInstructionSet] = {
     ParseError.sequenceErrors(gooNode.specialMentions.map {

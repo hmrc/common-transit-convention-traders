@@ -200,7 +200,7 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
   "buildGuaranteeXml" - {
     "returns xml with additionalInfo and CAL" in {
       sut.buildGuaranteeXml(SpecialMentionGuarantee("testInfo")) mustBe
-      <SPEMENMT2><AddInfCodMT21>testInfo</AddInfCodMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>
+      <SPEMENMT2><AddInfMT21>testInfo</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>
     }
   }
 

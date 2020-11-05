@@ -153,6 +153,125 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers{
     }
   }
 
+  "gOOITEGDSNodeFromNode" - {
+    "returns GOOITEGDSNode when no parse errors" in {
+      val result = sut.gOOITEGDSNodeFromNode(exampleGOOITEGDS)
+      result mustBe a[Right[_, GOOITEGDSNode]]
+      val gooBlock = result.right.get
+      gooBlock.itemNumber mustBe 1
+      gooBlock.specialMentions.length mustBe 4
+      gooBlock.specialMentions.collect { case sm: SpecialMentionOther => sm }.length mustBe 1
+      gooBlock.specialMentions.collect { case sm: SpecialMentionGuarantee => sm}.length mustBe 3
+    }
+
+    "returns InvalidItemNumber when itemNumber is not an int" in {
+      val exampleGOOITEGDSSequenceInvalidItemNumber =
+          <GOOITEGDS>
+            <IteNumGDS7>A</IteNumGDS7>
+            <SPEMENMT2>
+              <AddInfMT21>7000.0EUR07IT00000100000Z1</AddInfMT21>
+              <AddInfCodMT23>CAL</AddInfCodMT23>
+            </SPEMENMT2>
+            <SPEMENMT2>
+              <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
+              <AddInfCodMT23>CAL</AddInfCodMT23>
+            </SPEMENMT2>
+            <SPEMENMT2>
+              <AddInfMT21>7000.0EUR07IT00000100000Z9</AddInfMT21>
+              <AddInfCodMT23>CAL</AddInfCodMT23>
+            </SPEMENMT2>
+            <SPEMENMT2>
+              <AddInfMT21>EU_EXIT</AddInfMT21>
+              <AddInfMT21LNG>EN</AddInfMT21LNG>
+              <AddInfCodMT23>DG1</AddInfCodMT23>
+              <ExpFroCouMT25>AD</ExpFroCouMT25>
+            </SPEMENMT2>
+          </GOOITEGDS>
+
+      sut.gOOITEGDSNodeFromNode(exampleGOOITEGDSSequenceInvalidItemNumber) mustBe a[Left[InvalidItemNumber, _]]
+    }
+
+    "returns MissingItemNumber when itemNumber is missing" in {
+      val exampleGOOITEGDSSequenceMissingItemNumber =
+          <GOOITEGDS>
+            <IteNumGDS7></IteNumGDS7>
+            <SPEMENMT2>
+              <AddInfMT21>7000.0EUR07IT00000100000Z1</AddInfMT21>
+              <AddInfCodMT23>CAL</AddInfCodMT23>
+            </SPEMENMT2>
+            <SPEMENMT2>
+              <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
+              <AddInfCodMT23>CAL</AddInfCodMT23>
+            </SPEMENMT2>
+            <SPEMENMT2>
+              <AddInfMT21>7000.0EUR07IT00000100000Z9</AddInfMT21>
+              <AddInfCodMT23>CAL</AddInfCodMT23>
+            </SPEMENMT2>
+            <SPEMENMT2>
+              <AddInfMT21>EU_EXIT</AddInfMT21>
+              <AddInfMT21LNG>EN</AddInfMT21LNG>
+              <AddInfCodMT23>DG1</AddInfCodMT23>
+              <ExpFroCouMT25>AD</ExpFroCouMT25>
+            </SPEMENMT2>
+          </GOOITEGDS>
+
+      sut.gOOITEGDSNodeFromNode(exampleGOOITEGDSSequenceMissingItemNumber) mustBe a[Left[MissingItemNumber, _]]
+    }
+
+    "returns MissingItemNumber when itemNumber ode is missing" in {
+      val exampleGOOITEGDSSequenceMissingItemNumberNode =
+          <GOOITEGDS>
+            <SPEMENMT2>
+              <AddInfMT21>7000.0EUR07IT00000100000Z1</AddInfMT21>
+              <AddInfCodMT23>CAL</AddInfCodMT23>
+            </SPEMENMT2>
+            <SPEMENMT2>
+              <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
+              <AddInfCodMT23>CAL</AddInfCodMT23>
+            </SPEMENMT2>
+            <SPEMENMT2>
+              <AddInfMT21>7000.0EUR07IT00000100000Z9</AddInfMT21>
+              <AddInfCodMT23>CAL</AddInfCodMT23>
+            </SPEMENMT2>
+            <SPEMENMT2>
+              <AddInfMT21>EU_EXIT</AddInfMT21>
+              <AddInfMT21LNG>EN</AddInfMT21LNG>
+              <AddInfCodMT23>DG1</AddInfCodMT23>
+              <ExpFroCouMT25>AD</ExpFroCouMT25>
+            </SPEMENMT2>
+          </GOOITEGDS>
+
+      sut.gOOITEGDSNodeFromNode(exampleGOOITEGDSSequenceMissingItemNumberNode) mustBe a[Left[MissingItemNumber, _]]
+    }
+
+    "returns ParseError when special mention is invalid" in {
+      val exampleGOOITEGDSSequenceInvalidSpecialMention =
+        <GOOITEGDS>
+          <IteNumGDS7>1</IteNumGDS7>
+          <SPEMENMT2>
+            <AddInfMT21>7000.0EUR07IT00000100000Z1</AddInfMT21>
+          </SPEMENMT2>
+          <SPEMENMT2>
+            <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
+            <AddInfCodMT23>CAL</AddInfCodMT23>
+          </SPEMENMT2>
+          <SPEMENMT2>
+            <AddInfMT21>7000.0EUR07IT00000100000Z9</AddInfMT21>
+            <AddInfCodMT23>CAL</AddInfCodMT23>
+          </SPEMENMT2>
+          <SPEMENMT2>
+            <AddInfMT21>EU_EXIT</AddInfMT21>
+            <AddInfMT21LNG>EN</AddInfMT21LNG>
+            <AddInfCodMT23>DG1</AddInfCodMT23>
+            <ExpFroCouMT25>AD</ExpFroCouMT25>
+          </SPEMENMT2>
+        </GOOITEGDS>
+
+      sut.gOOITEGDSNodeFromNode(exampleGOOITEGDSSequenceInvalidSpecialMention) mustBe a[Left[ParseErrorSpec, _]]
+    }
+  }
+
+
 
   "specialMention" - {
     "returns SpecialMentionGuarantee when AddInfCodMT23 is CAL" in {
