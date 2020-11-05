@@ -75,7 +75,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
     }
   }
   "get" - {
-    "must return Arrival when arrival is found" in {
+    "must return Departure when departure is found" in {
       val connector = app.injector.instanceOf[DeparturesConnector]
       val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "reference", "status", LocalDateTime.now, LocalDateTime.now)
 
