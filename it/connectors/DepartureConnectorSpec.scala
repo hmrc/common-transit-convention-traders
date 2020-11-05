@@ -4,8 +4,8 @@ import java.time.LocalDateTime
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import controllers.routes
-import models.domain.Departure
-import models.response.ResponseDeparture
+import models.domain.{Departure, Departures}
+import models.response.{ResponseDeparture, ResponseDepartures}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -151,6 +151,86 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
     }
+  }
+
+  "getForEori" - {
+    "must return Departure when departure is found" in {
+      val connector = app.injector.instanceOf[DeparturesConnector]
+      val departures = Departures(Seq(Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("1"), "MRN", "status", LocalDateTime.now, LocalDateTime.now)))
+
+      server.stubFor(get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/"))
+        .willReturn(aResponse().withStatus(OK)
+          .withBody(Json.toJson(departures).toString())))
+
+      implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
+
+      val result = connector.getForEori.futureValue
+
+      result mustEqual Right(departures)
+    }
+
+    "must return HttpResponse with an internal server error if there is a model mismatch" in {
+      val connector = app.injector.instanceOf[DeparturesConnector]
+      val departures = Departures(Seq(Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("1"), "MRN", "status", LocalDateTime.now, LocalDateTime.now)))
+
+      val response = ResponseDepartures(departures.departures.map { a => ResponseDeparture(a) })
+
+      server.stubFor(get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/"))
+        .willReturn(aResponse().withStatus(OK)
+          .withBody(Json.toJson(response).toString())))
+
+      implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
+
+      val result = connector.getForEori.futureValue
+
+      result.isLeft mustEqual true
+      result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
+    }
+
+    "must return HttpResponse with a not found if not found" in {
+      val connector = app.injector.instanceOf[DeparturesConnector]
+      server.stubFor(get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/"))
+        .willReturn(aResponse().withStatus(NOT_FOUND)))
+
+      implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
+
+      val result = connector.getForEori.futureValue
+
+      result.isLeft mustEqual true
+      result.left.map { x => x.status mustEqual NOT_FOUND }
+    }
+
+    "must return HttpResponse with a bad request if there is a bad request" in {
+      val connector = app.injector.instanceOf[DeparturesConnector]
+      server.stubFor(get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/"))
+        .willReturn(aResponse().withStatus(BAD_REQUEST)))
+
+      implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
+
+      val result = connector.getForEori.futureValue
+
+      result.isLeft mustEqual true
+      result.left.map { x => x.status mustEqual BAD_REQUEST }
+    }
+
+    "must return HttpResponse with an internal server if there is an internal server error" in {
+      val connector = app.injector.instanceOf[DeparturesConnector]
+      server.stubFor(get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/"))
+        .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR)))
+
+      implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
+
+      val result = connector.getForEori.futureValue
+
+      result.isLeft mustEqual true
+      result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
+    }
+
   }
 
   override protected def portConfigKey: String = "microservice.services.transits-movements-trader-at-departure.port"
