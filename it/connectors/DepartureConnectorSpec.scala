@@ -93,7 +93,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[DeparturesConnector]
-      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, Some("MRN"), "reference","status", LocalDateTime.now, LocalDateTime.now)
+      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "reference","status", LocalDateTime.now, LocalDateTime.now)
 
       val response = ResponseDeparture(departure)
 
