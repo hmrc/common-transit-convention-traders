@@ -21,8 +21,8 @@ import java.time.LocalDateTime
 import connectors.DeparturesConnector
 import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
-import models.domain.Departure
-import models.response.ResponseDeparture
+import models.domain.{Departure, Departures}
+import models.response.{ResponseDeparture, ResponseDepartures}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures
@@ -166,7 +166,7 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
   }
 
   "GET  /movements/departures/:departureId" - {
-    "return 200 with json body of arrival" in {
+    "return 200 with json body of departure" in {
       when(mockDepartureConnector.get(any())(any(), any(), any()))
         .thenReturn(Future.successful(Right(sourceDeparture)))
 
@@ -196,7 +196,41 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
 
       status(result) mustBe INTERNAL_SERVER_ERROR
     }
+  }
 
+  "GET /movements/departures/" - {
+
+    "return 200 with json body of a sequence of departures" in {
+      when(mockDepartureConnector.getForEori()(any(), any(), any()))
+        .thenReturn(Future.successful(Right(Departures(Seq(sourceDeparture, sourceDeparture, sourceDeparture)))))
+
+      val request = FakeRequest("GET", routes.DeparturesController.getDeparturesForEori.url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val result = route(app, request).value
+
+      status(result) mustBe OK
+      contentAsString(result) mustEqual Json.toJson(ResponseDepartures(Seq(expectedDeparture, expectedDeparture, expectedDeparture))).toString()
+    }
+
+    "return 200 with empty list if that is provided" in {
+      when(mockDepartureConnector.getForEori()(any(), any(), any()))
+        .thenReturn(Future.successful(Right(Departures(Nil))))
+
+      val request = FakeRequest("GET", routes.DeparturesController.getDeparturesForEori.url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val result = route(app, request).value
+
+      status(result) mustBe OK
+      contentAsString(result) mustEqual Json.toJson(ResponseDepartures(Nil)).toString()
+    }
+
+    "return 500 for downstream errors" in {
+      when(mockDepartureConnector.getForEori()(any(), any(), any()))
+        .thenReturn(Future.successful(Left(HttpResponse(INTERNAL_SERVER_ERROR, ""))))
+
+      val request = FakeRequest("GET", routes.DeparturesController.getDeparturesForEori.url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val result = route(app, request).value
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+    }
   }
 
 }

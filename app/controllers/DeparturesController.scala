@@ -19,7 +19,7 @@ package controllers
 import connectors.DeparturesConnector
 import controllers.actions.{AuthAction, EnsureGuaranteeAction, ValidateAcceptJsonHeaderAction, ValidateDepartureDeclarationAction}
 import javax.inject.Inject
-import models.response.ResponseDeparture
+import models.response.{ResponseDeparture, ResponseDepartures}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
@@ -60,6 +60,16 @@ class DeparturesController @Inject()(cc: ControllerComponents,
             case Right(departure) => Ok(Json.toJson(ResponseDeparture(departure)))
             case Left(invalidResponse) => handleNon2xx(invalidResponse)
           }
+        }
+      }
+    }
+
+  def getDeparturesForEori: Action[AnyContent] =
+    (authAction andThen validateAcceptJsonHeaderAction).async {
+      implicit request => {
+        departuresConnector.getForEori.map {
+          case Right(departures) => Ok(Json.toJson(ResponseDepartures(departures.departures.map { departure => ResponseDeparture(departure) })))
+          case Left(invalidResponse) => handleNon2xx(invalidResponse)
         }
       }
     }
