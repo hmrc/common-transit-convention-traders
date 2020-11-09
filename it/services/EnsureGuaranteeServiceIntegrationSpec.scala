@@ -1,6 +1,7 @@
 package services
 
 import connectors.WiremockSuite
+import models.request.{DepartureDeclarationXSD, XSDFile}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -36,7 +37,7 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
         <TotNumOfIteHEA305>1</TotNumOfIteHEA305>
         <TotNumOfPacHEA306>10</TotNumOfPacHEA306>
         <TotGroMasHEA307>1000</TotGroMasHEA307>
-        <DecDatHEA383>{{DecDatHEA383}}</DecDatHEA383>
+        <DecDatHEA383>20190912</DecDatHEA383>
         <DecPlaHEA394>Dover</DecPlaHEA394>
       </HEAHEA>
       <TRAPRIPC1>
@@ -133,7 +134,7 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
         <TotNumOfIteHEA305>1</TotNumOfIteHEA305>
         <TotNumOfPacHEA306>10</TotNumOfPacHEA306>
         <TotGroMasHEA307>1000</TotGroMasHEA307>
-        <DecDatHEA383>{{DecDatHEA383}}</DecDatHEA383>
+        <DecDatHEA383>20190912</DecDatHEA383>
         <DecPlaHEA394>Dover</DecPlaHEA394>
       </HEAHEA>
       <TRAPRIPC1>
@@ -193,22 +194,32 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
         <GooDesGDS23LNG>EN</GooDesGDS23LNG>
         <GroMasGDS46>1000</GroMasGDS46>
         <NetMasGDS48>950</NetMasGDS48>
-
-        <PACGS2>
+        <SPEMENMT2><AddInfMT21>10000.00EUR20GB0000010000GX1</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>
+      <PACGS2>
           <MarNumOfPacGS21>AB234</MarNumOfPacGS21>
           <KinOfPacGS23>BX</KinOfPacGS23>
           <NumOfPacGS24>10</NumOfPacGS24>
         </PACGS2>
-        <SPEMENMT2><AddInfMT21>10000.00EUR20GB0000010000GX1</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2></GOOITEGDS>
+      </GOOITEGDS>
     </CC015B>
 
-    "must default value correct in" in {
+    "must default value correct" in {
       val service = app.injector.instanceOf[EnsureGuaranteeService]
 
       val result = service.ensureGuarantee(inputXML)
 
+      println(result.right.get.toString().filter(_ > ' '))
       result.right.get.toString().filter(_ > ' ') mustEqual expectedXML.toString().filter(_ > ' ')
 
+    }
+
+    "result must pass standard validation" in {
+      val service = app.injector.instanceOf[EnsureGuaranteeService]
+      val validator = app.injector.instanceOf[XmlValidationService]
+
+      val result = service.ensureGuarantee(inputXML)
+
+      validator.validate(result.right.get.toString().filter(_ > ' '), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
     }
   }
 

@@ -35,7 +35,7 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
     parseInstructionSets(xml) match {
       case Left(error) => Left(error)
       case Right(instructionSets) =>
-        Right(updateXml(prunedXml(xml), instructionSets))
+        Right(updateXml(xml, instructionSets))
     }
 
   def parseInstructionSets(xml: NodeSeq): ParseHandler[Seq[TransformInstructionSet]] = {
@@ -55,58 +55,43 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
     }
   }
 
-  def updateXml(prunedXml: NodeSeq, instructionSets: Seq[TransformInstructionSet]): NodeSeq = {
+  def updateXml(originalXml: NodeSeq, instructionSets: Seq[TransformInstructionSet]): NodeSeq = {
     new RuleTransformer(new RewriteRule {
       override def transform(node: Node): NodeSeq = {
         node match {
           case e: Elem if e.label == "GOOITEGDS" => {
             xmlReaders.gOOITEGDSNodeFromNode(e) match {
-              case Left(_) => throw new Exception()
+              case Left(_) => throw new Exception("Unable to parse GOOITEGDSNode on update")
               case Right(currentBlock) => {
                 val instructionSet = instructionSets.filter(set => set.gooNode.itemNumber == currentBlock.itemNumber).head
-                val newXml = buildBlockBody(instructionSet)
-                val newBody = e.child.toList ++ newXml
-                e.copy(child = newBody)
+                val mentionInstructionPairs = e.child.filter(cNode => cNode.label == "SPEMENMT2").zip(instructionSet.instructions)
+                val newChildren = e.child.map {
+                  cNode => if(cNode.label == "SPEMENMT2") {
+                    mentionInstructionPairs.find(pair => pair._1 == cNode) match {
+                      case None => throw new Exception("Unable to match instruction with mention on update")
+                      case Some(matchedPair) => {
+                        val instruction = matchedPair._2
+                        buildFromInstruction(instruction)
+                      }
+                    }
+                  } else cNode
+                }
+                e.copy(child = newChildren)
               }
             }
           }
           case _ => node
         }
       }
-    }).transform(prunedXml)
+    }).transform(originalXml)
   }
 
-  def prunedXml(xml: NodeSeq): NodeSeq = {
-    new RuleTransformer(new RewriteRule {
-      override def transform(node: Node): NodeSeq = {
-        node match {
-          case e: Elem if e.label == "SPEMENMT2" => NodeSeq.Empty
-          case _ => node
-        }
-      }
-    }).transform(xml)
-  }
-
-
-  def mergeNewXml(xmls: Seq[NodeSeq]): NodeSeq = {
-    @tailrec
-    def mergeAggregator(xmls: Seq[NodeSeq], accum: NodeSeq): NodeSeq = {
-      xmls match {
-        case Nil => accum
-        case x :: tail => mergeAggregator(tail, accum ++ x)
-      }
+  def buildFromInstruction(instruction: TransformInstruction): Node = {
+    instruction match {
+      case e: NoChangeInstruction => e.xml.head
+      case e: NoChangeGuaranteeInstruction => buildGuaranteeXml(e.mention)
+      case e: ChangeGuaranteeInstruction => buildGuaranteeXml(e.details.toSimple)
     }
-    mergeAggregator(xmls, NodeSeq.Empty)
-  }
-
-  def buildBlockBody(instructionSet: TransformInstructionSet): NodeSeq = {
-    mergeNewXml(instructionSet.instructions.map {
-      instruction => instruction match {
-        case e: NoChangeInstruction => e.xml
-        case e: NoChangeGuaranteeInstruction => buildGuaranteeXml(e.mention)
-        case e: ChangeGuaranteeInstruction => buildGuaranteeXml(e.details.toSimple)
-      }
-    })
   }
 
   def buildGuaranteeXml(mention: SpecialMentionGuarantee) =
