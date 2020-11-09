@@ -31,7 +31,7 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import utils.guaranteeParsing.{GuaranteeXmlReaders, InstructionBuilder}
 
-import scala.xml.NodeSeq
+import scala.xml.{Node, NodeSeq}
 
 class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with MockitoSugar with BeforeAndAfterEach with TestXml with Matchers with ScalaCheckPropertyChecks {
 
@@ -81,6 +81,9 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
 
       when(mockXmlReaders.gOOITEGDSNode)
         .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](_ => Right(Seq(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>)))))))
+
+      when(mockXmlReaders.gOOITEGDSNodeFromNode)
+        .thenReturn(ReaderT[ParseHandler, Node, GOOITEGDSNode](_ => Right(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>))))))
 
       when(mockInstructionBuilder.buildInstruction(any(), any()))
         .thenReturn(Right(NoChangeInstruction(<SPEMENMT2><test></test></SPEMENMT2>)))
@@ -160,6 +163,9 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
 
       when(mockXmlReaders.gOOITEGDSNode)
         .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](_ => Right(Seq(gooBlockSample))))
+
+      when(mockXmlReaders.gOOITEGDSNodeFromNode)
+        .thenReturn(ReaderT[ParseHandler, Node, GOOITEGDSNode](_ => Right(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>))))))
 
       sut.updateXml(prunedXml,
         Seq(
