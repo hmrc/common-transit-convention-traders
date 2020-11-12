@@ -16,8 +16,15 @@
 
 package models
 
-final case class SpecialMentionGuaranteeDetails(guaranteeAmount: BigDecimal, currencyCode: String, reference: String) {
-  def toSimple: SpecialMentionGuarantee = {
-    SpecialMentionGuarantee(guaranteeAmount.setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString() + currencyCode + reference)
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
+
+class SpecialMentionGuaranteeDetailsSpec extends AnyFreeSpec with MockitoSugar with Matchers{
+
+  "toSimple" - {
+    "returns amount value formatted to two decimal places" in {
+      SpecialMentionGuaranteeDetails(BigDecimal(100), "EUR", "abc").toSimple mustBe SpecialMentionGuarantee("100.00EURabc")
+    }
   }
 }

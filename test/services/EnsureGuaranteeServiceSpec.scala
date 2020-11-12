@@ -17,7 +17,7 @@
 package services
 
 import cats.data.ReaderT
-import models.{GOOITEGDSNode, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, ParseHandling, SpecialMention, SpecialMentionGuarantee, SpecialMentionOther, TransformInstructionSet}
+import models.{ChangeGuaranteeInstruction, GOOITEGDSNode, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, ParseHandling, SpecialMention, SpecialMentionGuarantee, SpecialMentionGuaranteeDetails, SpecialMentionOther, TransformInstructionSet}
 import org.mockito.ArgumentMatchers.any
 import data.TestXml
 import models.ParseError.{GuaranteeNotFound, GuaranteeTypeInvalid, InvalidItemNumber}
@@ -31,7 +31,7 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import utils.guaranteeParsing.{GuaranteeXmlReaders, InstructionBuilder}
 
-import scala.xml.NodeSeq
+import scala.xml.{Node, NodeSeq}
 
 class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with MockitoSugar with BeforeAndAfterEach with TestXml with Matchers with ScalaCheckPropertyChecks {
 
@@ -81,6 +81,9 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
 
       when(mockXmlReaders.gOOITEGDSNode)
         .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](_ => Right(Seq(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>)))))))
+
+      when(mockXmlReaders.gOOITEGDSNodeFromNode)
+        .thenReturn(ReaderT[ParseHandler, Node, GOOITEGDSNode](_ => Right(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>))))))
 
       when(mockInstructionBuilder.buildInstruction(any(), any()))
         .thenReturn(Right(NoChangeInstruction(<SPEMENMT2><test></test></SPEMENMT2>)))
@@ -147,60 +150,30 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
     }
   }
 
-  "updateXml" - {
+  "buildFromInstruction" - {
+    "returns NodeSeq based on the inputted instruction" in {
+      val resultNoChange = sut.buildFromInstruction(NoChangeInstruction(<example></example>)).toString()
+      resultNoChange.toString().filter(_ > ' ') mustBe
+      "<example></example>".filter(_ > ' ')
 
-    "returns xml based on inserts" in {
-      val prunedXml =
-        <example><GOOITEGDS><IteNumGDS7>1</IteNumGDS7></GOOITEGDS></example>
-
-      val expectedOutput =
-        <example><GOOITEGDS><IteNumGDS7>1</IteNumGDS7><SPEMENMT2><test1></test1></SPEMENMT2></GOOITEGDS></example>
-
-      val gooBlockSample = GOOITEGDSNode(1, Seq(SpecialMentionOther(<SPEMENMT2><test1></test1></SPEMENMT2>)))
-
-      when(mockXmlReaders.gOOITEGDSNode)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](_ => Right(Seq(gooBlockSample))))
-
-      sut.updateXml(prunedXml,
-        Seq(
-          TransformInstructionSet(gooBlockSample, Seq(NoChangeInstruction(<SPEMENMT2><test1></test1></SPEMENMT2>)))
-        )).toString() mustBe expectedOutput.toString()
-    }
-  }
-
-  "prunedXml" - {
-    val input =
-    <example><PreservedNode></PreservedNode><SPEMENMT2><TestNode></TestNode></SPEMENMT2></example>
-
-    val expectedOutput =
-    <example><PreservedNode></PreservedNode></example>
-
-    "must clear out the entire SPEMENMT2 nodes and children" in {
-      val result = sut.prunedXml(input)
-      result.toString() mustBe expectedOutput.toString()
-
-    }
-
-  }
-
-  "buildBlockBody" - {
-
-    "returns NodeSeq based on the inputted instructions" in {
-      val instructionSet = TransformInstructionSet(
-        fakeGooBlock(Seq(SpecialMentionOther(<example></example>))),
-        Seq(NoChangeInstruction(<example></example>), NoChangeInstruction(<example></example>)))
+      val resultNoChangeGuarantee = sut.buildFromInstruction(NoChangeGuaranteeInstruction(SpecialMentionGuarantee("testInfo")))
+      resultNoChangeGuarantee.toString().filter(_ > ' ') mustBe
+        "<SPEMENMT2><AddInfMT21>testInfo</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>".filter(_ > ' ')
 
 
-      val result = sut.buildBlockBody(instructionSet).toString()
-      result mustBe
-      "<example></example><example></example>"
+      val resultChangeGuarantee = sut.buildFromInstruction(ChangeGuaranteeInstruction(
+        SpecialMentionGuaranteeDetails(BigDecimal(10000.00), "EUR", "testCode")
+      ))
+      resultChangeGuarantee.toString().filter(_ > ' ') mustBe
+        "<SPEMENMT2><AddInfMT21>10000.00EURtestCode</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>".filter(_ > ' ')
+
     }
   }
 
   "buildGuaranteeXml" - {
     "returns xml with additionalInfo and CAL" in {
       sut.buildGuaranteeXml(SpecialMentionGuarantee("testInfo")) mustBe
-      <SPEMENMT2><AddInfCodMT21>testInfo</AddInfCodMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>
+      <SPEMENMT2><AddInfMT21>testInfo</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>
     }
   }
 

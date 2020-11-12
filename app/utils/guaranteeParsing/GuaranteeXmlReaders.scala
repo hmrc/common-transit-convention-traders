@@ -73,6 +73,33 @@ class GuaranteeXmlReaders extends ParseHandling {
       })
     })
 
+  val gOOITEGDSNodeFromNode: ReaderT[ParseHandler, Node, GOOITEGDSNode] =
+    ReaderT[ParseHandler, Node, GOOITEGDSNode](node => {
+          val itemNumberNode = (node \ "IteNumGDS7")
+          if(itemNumberNode.nonEmpty)
+          {
+            val itemNumberString = itemNumberNode.text
+            if(itemNumberString.nonEmpty)
+            {
+              Try(itemNumberString.toInt) match {
+                case Failure(_) => Left(InvalidItemNumber("Invalid Item Number"))
+                case Success(itemNumber) =>
+                  parseSpecialMentions(node) match {
+                    case Left(error) => Left(error)
+                    case Right(mentions) => Right(GOOITEGDSNode(itemNumber, mentions))
+                  }
+              }
+            }
+            else {
+              Left(MissingItemNumber("Missing Item Number"))
+            }
+          }
+          else {
+            Left(MissingItemNumber("Missing Item Number"))
+          }
+    })
+
+
   val specialMention: ReaderT[ParseHandler, Node, SpecialMention] = {
     ReaderT[ParseHandler, Node, SpecialMention](xml => {
       (xml \ "AddInfMT21").text match {
