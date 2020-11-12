@@ -16,7 +16,7 @@
 
 package controllers.actions
 
-import config.AppConfig
+import config.{AppConfig, Constants}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.freespec.AnyFreeSpec
@@ -140,6 +140,8 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
       val result = controller.get()(FakeRequest())
 
       status(result) mustEqual FORBIDDEN
+      println(contentAsString(result))
+      contentAsString(result) mustEqual Constants.ErrorMessages.InsufficientEnrolments.format(Constants.EnrolmentIdentifierKey, config.enrolmentKey)
     }
   }
 

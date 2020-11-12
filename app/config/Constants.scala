@@ -22,4 +22,10 @@ object Constants {
   val AcceptHeaderMissing = "The accept header is missing or invalid"
 
   val Context = "/customs/transits"
+
+  val EnrolmentIdentifierKey: String = "VATRegNoTURN"
+
+  object ErrorMessages {
+    val InsufficientEnrolments = "Insufficient enrolments with specified credentials. The identifier '%s' needs to be added to the '%s' enrolment."
+  }
 }

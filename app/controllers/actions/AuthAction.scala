@@ -18,6 +18,7 @@ package controllers.actions
 
 import com.google.inject.Inject
 import config.AppConfig
+import config.Constants
 import play.api.Logger
 import play.api.mvc.Results._
 import play.api.mvc._
@@ -36,8 +37,6 @@ class AuthAction @Inject()(
   extends ActionBuilder[AuthRequest, AnyContent] with ActionFunction[Request, AuthRequest]
     with AuthorisedFunctions {
 
-  private val enrolmentIdentifierKey: String = "VATRegNoTURN"
-
   override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] = {
 
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers)
@@ -46,17 +45,19 @@ class AuthAction @Inject()(
       enrolments: Enrolments =>
         val eoriNumber: String = (for {
           enrolment  <- enrolments.enrolments.find(_.key.equals(config.enrolmentKey))
-          identifier <- enrolment.getIdentifier(enrolmentIdentifierKey)
-        } yield identifier.value).getOrElse(throw InsufficientEnrolments(s"Unable to retrieve enrolment for $enrolmentIdentifierKey"))
+          identifier <- enrolment.getIdentifier(Constants.EnrolmentIdentifierKey)
+        } yield identifier.value).getOrElse(
+          throw InsufficientEnrolments( Constants.ErrorMessages.InsufficientEnrolments.format(Constants.EnrolmentIdentifierKey, config.enrolmentKey) )
+        )
 
         block(AuthRequest(request, eoriNumber))
     }
   } recover {
-    case _: InsufficientEnrolments =>
-      Logger.logger.warn("insufficient enrolments")
-      Forbidden
+    case exception: InsufficientEnrolments =>
+      Logger.logger.warn("auth error: insufficient enrolments")
+      Forbidden(exception.reason)
     case _: AuthorisationException =>
-      Logger.logger.warn("auth issues")
+      Logger.logger.warn("auth error: unauthorized")
       Unauthorized
   }
 }
