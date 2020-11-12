@@ -140,7 +140,6 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
       val result = controller.get()(FakeRequest())
 
       status(result) mustEqual FORBIDDEN
-      println(contentAsString(result))
       contentAsString(result) mustEqual Constants.ErrorMessages.InsufficientEnrolments.format(Constants.EnrolmentIdentifierKey, config.enrolmentKey)
     }
   }
