@@ -18,7 +18,6 @@ package controllers.actions
 
 import com.google.inject.Inject
 import config.AppConfig
-import config.Constants
 import play.api.Logger
 import play.api.mvc.Results._
 import play.api.mvc._
@@ -30,12 +29,14 @@ import uk.gov.hmrc.play.HeaderCarrierConverter
 import scala.concurrent.{ExecutionContext, Future}
 
 class AuthAction @Inject()(
-                                               override val authConnector: AuthConnector,
-                                               config: AppConfig,
-                                               val parser: BodyParsers.Default
-                                             )(implicit val executionContext: ExecutionContext)
+                            override val authConnector: AuthConnector,
+                            config: AppConfig,
+                            val parser: BodyParsers.Default
+                          )(implicit val executionContext: ExecutionContext)
   extends ActionBuilder[AuthRequest, AnyContent] with ActionFunction[Request, AuthRequest]
     with AuthorisedFunctions {
+
+  private val enrolmentIdentifierKey: String = "VATRegNoTURN"
 
   override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] = {
 
@@ -45,19 +46,17 @@ class AuthAction @Inject()(
       enrolments: Enrolments =>
         val eoriNumber: String = (for {
           enrolment  <- enrolments.enrolments.find(_.key.equals(config.enrolmentKey))
-          identifier <- enrolment.getIdentifier(Constants.EnrolmentIdentifierKey)
-        } yield identifier.value).getOrElse(
-          throw InsufficientEnrolments( Constants.ErrorMessages.InsufficientEnrolments.format(Constants.EnrolmentIdentifierKey, config.enrolmentKey) )
-        )
+          identifier <- enrolment.getIdentifier(enrolmentIdentifierKey)
+        } yield identifier.value).getOrElse(throw InsufficientEnrolments("Current user doesn't have a valid EORI enrolment."))
 
         block(AuthRequest(request, eoriNumber))
     }
   } recover {
     case exception: InsufficientEnrolments =>
-      Logger.logger.warn("auth error: insufficient enrolments")
+      Logger.logger.warn("insufficient enrolments")
       Forbidden(exception.reason)
     case _: AuthorisationException =>
-      Logger.logger.warn("auth error: unauthorized")
+      Logger.logger.warn("auth issues")
       Unauthorized
   }
 }

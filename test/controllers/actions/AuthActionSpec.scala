@@ -16,7 +16,7 @@
 
 package controllers.actions
 
-import config.{AppConfig, Constants}
+import config.AppConfig
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.freespec.AnyFreeSpec
@@ -140,7 +140,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
       val result = controller.get()(FakeRequest())
 
       status(result) mustEqual FORBIDDEN
-      contentAsString(result) mustEqual Constants.ErrorMessages.InsufficientEnrolments.format(Constants.EnrolmentIdentifierKey, config.enrolmentKey)
+      contentAsString(result) mustEqual "Current user doesn't have a valid EORI enrolment."
     }
   }
 
