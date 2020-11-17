@@ -25,8 +25,10 @@ import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpResponse}
 
 class BaseConnector extends HttpErrorFunctions {
+
+  protected val channelHeader: (String, String) = ("channel", "api")
   protected val requestHeaders: Seq[(String, String)] =
-    Seq((HeaderNames.CONTENT_TYPE, MimeTypes.XML))
+    Seq((HeaderNames.CONTENT_TYPE, MimeTypes.XML), channelHeader)
 
   protected val responseHeaders: Seq[(String, String)] =
     Seq((HeaderNames.CONTENT_TYPE, MimeTypes.JSON))
