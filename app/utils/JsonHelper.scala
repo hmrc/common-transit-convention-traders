@@ -24,15 +24,17 @@ import play.api.libs.json.Json
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scala.xml.{NodeSeq}
 
 object JsonHelper {
 
-  def convertXmlToJson(xml: String): JsObject =
-    Try(Json.parse(XML.toJSONObject(xml).toString).as[JsObject]) match {
+  def convertXmlToJson(xml: NodeSeq): JsObject = {
+    Try(Json.parse(XML.toJSONObject(xml.toString).toString).as[JsObject]) match {
       case Success(data) => data
       case Failure(error) =>
         Logger.error(s"Failed to convert xml to json with error: ${error.getMessage}")
         Json.obj()
     }
+  }
 
 }
