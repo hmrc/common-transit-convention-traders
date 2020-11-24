@@ -16,6 +16,8 @@
 
 package controllers.actions
 
+import audit.{AuditService, AuditType}
+import audit.AuditType.TenThousandEuroGuaranteeAdded
 import com.google.inject.Inject
 import models.request.GuaranteedRequest
 import play.api.mvc.{ActionRefiner, Request, Result}
@@ -25,7 +27,7 @@ import scala.xml.NodeSeq
 import play.api.mvc.Results.BadRequest
 import services.EnsureGuaranteeService
 
-class EnsureGuaranteeAction @Inject()(ensureGuaranteeService: EnsureGuaranteeService)(
+class EnsureGuaranteeAction @Inject()(ensureGuaranteeService: EnsureGuaranteeService, auditService: AuditService)(
   implicit val executionContext: ExecutionContext)
   extends ActionRefiner[Request, GuaranteedRequest] {
 
