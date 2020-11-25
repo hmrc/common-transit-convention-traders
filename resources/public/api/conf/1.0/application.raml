@@ -81,33 +81,29 @@ traits:
         200:
           body:
             application/json:
-              description: JSON Payload
+              description: JSON payload
               example: |
                 {
-                     "arrivals":
-                       [
-                        {
-                          "arrival": "/customs/transits/movements/arrivals/123",
-                          "created": "2020-03-20",
-                          "updated": "2020-03-20",
-                          "movementReferenceNumber":"MRN",
-                          "status": "arrival notification received",
-                          "messages": "/customs/transits/movements/arrivals/123/messages"
-                        },
-                        {
-                          "arrival": "/customs/transits/movements/arrivals/987",
-                          "created": "2020-03-28",
-                          "updated": "2020-03-28",
-                          "movementReferenceNumber":"MRN",
-                          "status", "unloading permissions received",
-                          "messages": "/customs/transits/movements/arrivals/987/messages"
-                        }
-                       ]
+                  "arrivals": [
+                    {
+                      "arrival": "/customs/transits/movements/arrivals/1",
+                      "created": "2020-02-04T13:02:00",
+                      "updated": "2020-02-04T13:02:00",
+                      "movementReferenceNumber": "MRN",
+                      "status": "ArrivalSubmitted",
+                      "messages": "/customs/transits/movements/arrivals/1/messages"
+                    },
+                    {
+                      "arrival": "/customs/transits/movements/arrivals/2",
+                      "created": "2020-02-04T13:02:00",
+                      "updated": "2020-02-04T13:02:00",
+                      "movementReferenceNumber": "MRN",
+                      "status": "ArrivalSubmitted",
+                      "messages": "/customs/transits/movements/arrivals/2/messages"
+                    }
+                  ]
                 }
-            application/xml:
-              description: Valid XML Payload
-              example: |
-                <IE007>....</IE007>
+
     /{arrivalId}:
       uriParameters:
         arrivalId:
@@ -147,15 +143,15 @@ traits:
           200:
             body:
               application/json:
-                description: JSON Payload
+                description: JSON payload
                 example: |
                   {
-                    "arrival": "/customs/transits/movements/arrivals/123",
-                    "created": "2020-03-20",
-                    "updated": "2020-03-20",
-                    "movementReferenceNumber":"MRN",
-                    "status", "arrival notification received",
-                    "messages": "/customs/transits/movements/arrivals/123/messages"
+                    "arrival": "/customs/transits/movements/arrivals/1",
+                    "created": "2020-02-04T13:02:00",
+                    "updated": "2020-02-04T13:02:00",
+                    "movementReferenceNumber": "MRN",
+                    "status": "ArrivalSubmitted",
+                    "messages": "/customs/transits/movements/arrivals/1/messages"
                   }
           404:
             description: When a Movement Arrival does not exist, has been archived or is not available to the EORI number.
@@ -195,26 +191,28 @@ traits:
             200:
               body:
                 application/json:
-                  description: A JSON list containing messages with an XML body
+                  description: JSON payload
                   example: |
                     {
-                        "arrival": "/customs/transits/movements/arrivals/123",
-                        "created": "2020-03-20",
-                        "updated": "2020-03-20",
-                        "movementReferenceNumber":"MRN",
-                        "status", "Arrival Notification received"
-                        "messages": [
-                            {
-                                "message": "/customs/transits/movements/arrivals/1234/messages/456"
-                                "received": "2020-01-01",
-                                "body": "<CC025A>...</CC025A>"
-                            },
-                            {
-                                "message": "/customs/transits/movements/arrivals/1234/messages/789"
-                                "received": "2020-01-02",
-                                "body": "<CC043A>...</CC043A>"
-                            }
-                        ]
+                      "arrival": "/customs/transits/movements/arrivals/1",
+                      "created": "2020-02-04T13:02:00",
+                      "updated": "2020-02-04T13:02:00",
+                      "movementReferenceNumber": "MRN",
+                      "status": "ArrivalSubmitted",
+                      "messages": [
+                        {
+                          "message": "/customs/transits/movements/arrivals/1/messages/1",
+                          "received": "2020-02-04T13:02:00",
+                          "messageType": "IE007",
+                          "body": "<CC007A>...</CC007A>"
+                        },
+                        {
+                          "message": "/customs/transits/movements/arrivals/1/messages/2",
+                          "received": "2020-02-04T13:02:00",
+                          "messageType": "IE007",
+                          "body": "<CC007A>...</CC007A>"
+                        }
+                      ]
                     }
             404:
               description: When the Movement Arrival does not exist, has been archived or is not available to the EORI number.
@@ -239,12 +237,14 @@ traits:
             responses:
               200:
                 body:
-                  application/xml:
-                    description: Valid XML Payload
+                  application/json:
+                    description: JSON payload
                     example: |
                       {
-                        date: "2020-12-30",
-                        body: "<CC058A>....</CC058A>"
+                        "message": "/customs/transits/movements/arrivals/1/messages/1",
+                        "recieved": "2020-02-04T13:02:00",
+                        "messageType": "IE007",
+                        "body": "<CC007A>...</CC007A>"
                       }
               404:
                 description: When a message does not exist, has been archived or is not available to the EORI number.
@@ -288,19 +288,27 @@ traits:
         200:
           body:
             application/json:
-              description: JSON list of departures with XML body
+              description: JSON payload
               example: |
                 {
-                   "departures":[
-                      {
-                        "date": "2021-01-15",
-                         "body":"<IE015>....</IE015>"
-                      },
-                      {
-                        "date": "2021-01-16",
-                         "body":"<IE015>....</IE015>"
-                      }
-                   ]
+                  "departures": [
+                    {
+                      "departure": "/customs/transits/movements/departures/1",
+                      "created": "2019-09-12T12:22:00",
+                      "updated": "2019-09-12T12:22:00",
+                      "referenceNumber": "RN",
+                      "status": "DepartureSubmitted",
+                      "messages": "/customs/transits/movements/departures/1/messages"
+                    },
+                    {
+                      "departure": "/customs/transits/movements/departures/2",
+                      "created": "2019-09-12T12:22:00",
+                      "updated": "2019-09-12T12:22:00",
+                      "referenceNumber": "RN",
+                      "status": "DepartureSubmitted",
+                      "messages": "/customs/transits/movements/departures/2/messages"
+                    }
+                  ]
                 }
     /{departureId}:
       get:
@@ -316,22 +324,19 @@ traits:
         securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
         responses:
           200:
-            headers:
-              SubmissionStatus:
-                description: The status of the notification submission, either Pending or Success
-                example: Pending
             body:
-              application/xml:
-                description: Valid XML Payload
-                example: |
-                  <IE015></IE015>
               application/json:
                 description: JSON departure
                 example: |
                   {
-                    "date": "2028-01-15",
-                     "body":"<IE015>....</IE015>"
+                    "departure": "/customs/transits/movements/departures/1",
+                    "created": "2019-09-12T12:22:00",
+                    "updated": "2019-09-12T12:22:00",
+                    "referenceNumber": "RN",
+                    "status": "DepartureSubmitted",
+                    "messages": "/customs/transits/movements/departures/1/messages"
                   }
+
           404:
             description: When a Departure Movement does not exist, has been archived or is not available to the EORI number.
       /messages:
@@ -368,23 +373,29 @@ traits:
           responses:
             200:
               body:
-                application/xml:
-                  description: Valid XML Payload
-                  example: |
                 application/json:
-                  description: A json list containing messages with an XML body
+                  description: JSON payload
                   example: |
                     {
-                       "messages":[
-                          {
-                             "date":"2020-12-31",
-                             "body":"<CC0XXA>....</CC0XXA>"
-                          },
-                          {
-                             "date":"2020-12-30",
-                             "body":"<CC0XXA>....</CC0XXA>"
-                          }
-                       ]
+                      "departure": "/customs/transits/movements/departures/1",
+                      "created": "2019-09-12T12:22:00",
+                      "updated": "2019-09-12T12:22:00",
+                      "referenceNumber": "RN",
+                      "status": "DepartureSubmitted",
+                      "messages": [
+                        {
+                          "message": "/customs/transits/movements/departures/1/messages/1",
+                          "received": "2019-09-12T12:22:00",
+                          "messageType": "IE015",
+                          "body": "<CC015B>...</CC015B>"
+                        },
+                        {
+                          "message": "/customs/transits/movements/departures/1/messages/2",
+                          "received": "2019-09-12T12:22:00",
+                          "messageType": "IE015",
+                          "body": "<CC015B>...</CC015B>"
+                        }
+                      ]
                     }
             404:
               description: When the movement does not exist, has been archived or is not available to the EORI number.
@@ -407,8 +418,10 @@ traits:
                     description: JSON Payload
                     example: |
                       {
-                         "date":"2020-12-30",
-                         "body":"<CC0XXA>....</CC0XXA>"
+                        "message": "/customs/transits/movements/departures/1/messages/1",
+                        "received": "2019-09-12T12:22:00",
+                        "messageType": "IE015",
+                        "body": "<CC015B></CC015B>"
                       }
               404:
                 description: When message does not exist, has been archived or is not available to the EORI number.
