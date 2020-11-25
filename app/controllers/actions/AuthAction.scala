@@ -29,10 +29,10 @@ import uk.gov.hmrc.play.HeaderCarrierConverter
 import scala.concurrent.{ExecutionContext, Future}
 
 class AuthAction @Inject()(
-                                               override val authConnector: AuthConnector,
-                                               config: AppConfig,
-                                               val parser: BodyParsers.Default
-                                             )(implicit val executionContext: ExecutionContext)
+                            override val authConnector: AuthConnector,
+                            config: AppConfig,
+                            val parser: BodyParsers.Default
+                          )(implicit val executionContext: ExecutionContext)
   extends ActionBuilder[AuthRequest, AnyContent] with ActionFunction[Request, AuthRequest]
     with AuthorisedFunctions {
 
@@ -47,14 +47,14 @@ class AuthAction @Inject()(
         val eoriNumber: String = (for {
           enrolment  <- enrolments.enrolments.find(_.key.equals(config.enrolmentKey))
           identifier <- enrolment.getIdentifier(enrolmentIdentifierKey)
-        } yield identifier.value).getOrElse(throw InsufficientEnrolments(s"Unable to retrieve enrolment for $enrolmentIdentifierKey"))
+        } yield identifier.value).getOrElse(throw InsufficientEnrolments("Current user doesn't have a valid EORI enrolment."))
 
         block(AuthRequest(request, eoriNumber))
     }
   } recover {
-    case _: InsufficientEnrolments =>
+    case exception: InsufficientEnrolments =>
       Logger.logger.warn("insufficient enrolments")
-      Forbidden
+      Forbidden(exception.reason)
     case _: AuthorisationException =>
       Logger.logger.warn("auth issues")
       Unauthorized

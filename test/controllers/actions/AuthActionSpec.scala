@@ -140,6 +140,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
       val result = controller.get()(FakeRequest())
 
       status(result) mustEqual FORBIDDEN
+      contentAsString(result) mustEqual "Current user doesn't have a valid EORI enrolment."
     }
   }
 
