@@ -51,7 +51,6 @@ class GuaranteeInstructionBuilder @Inject()(defaultGuaranteeApplier: DefaultGuar
 
 
   def buildInstructionFromGuarantee(g: Guarantee, sm: SpecialMentionGuarantee): Either[ParseError, TransformInstruction] = {
-    //TODO: We need to check the origin and destination here, because we want to not change things if its GBtoGB
     if(!Guarantee.referenceTypes.contains(g.gType)) {
       Right(NoChangeGuaranteeInstruction(sm))
     }
