@@ -116,10 +116,21 @@ class GuaranteeXmlReaders extends ParseHandling {
     ReaderT[ParseHandler, Node, Guarantee](xml => {
       (xml \ "GuaTypGUA1").text match {
         case gType if gType.isEmpty => Left(GuaranteeTypeInvalid("GuaTypGUA1 was invalid"))
-        case gType if !gType.isEmpty && Try(gType.toInt).toOption.isEmpty => Left(GuaranteeTypeInvalid("GuaTypGUA1 was invalid"))
-        case gType if !gType.isEmpty && Try(gType.toInt).toOption.isDefined => {
-          (xml \ "GUAREFREF" \ "GuaRefNumGRNREF1").text match {
-            case gReference if !gReference.isEmpty => Right(Guarantee(gType.toInt, gReference))
-            case _ => Left(NoGuaranteeReferenceNumber("GuaRefNumGRNREF1 was empty"))
-          }}}})
+        case gType if !gType.isEmpty => Try(gType.toInt).toOption match {
+          case None => Left(GuaranteeTypeInvalid("GuaTypGUA1 was invalid"))
+          case Some(gInt) =>
+            if (Guarantee.isOther(gInt)) {
+              (xml \ "GUAREFREF" \ "OthGuaRefREF4").text match {
+                case gOther if !gOther.isEmpty => Right(Guarantee(gType.toInt, gOther))
+                case _ => Left(NoOtherGuaranteeField("OthGuaRefREF4 was empty"))
+              }
+            }
+            else {
+              (xml \ "GUAREFREF" \ "GuaRefNumGRNREF1").text match {
+                case gReference if !gReference.isEmpty => Right(Guarantee(gType.toInt, gReference))
+                case _ => Left(NoGuaranteeReferenceNumber("GuaRefNumGRNREF1 was empty"))
+              }
+            }}}})
+
+
 }

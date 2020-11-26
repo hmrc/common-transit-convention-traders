@@ -128,7 +128,7 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
   "buildInstructionFromGuarantee" - {
     "returns Right(NoChangeGuaranteeInstruction) if guarantee type is not in concernedTypes" in {
       val gTypes = Seq(1, 2, 3, 4, 5, 6, 7)
-      val excludedTypes = gTypes.diff(sut.concernedTypes)
+      val excludedTypes = gTypes.diff(Guarantee.referenceTypes)
 
       excludedTypes.foreach {
         typeNumber =>

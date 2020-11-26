@@ -30,6 +30,7 @@ object ParseError extends ParseHandling {
   final case class NoGuaranteeType(message: String)                 extends ParseError
   final case class GuaranteeTypeInvalid(message: String)            extends ParseError
   final case class NoGuaranteeReferenceNumber(message: String)      extends ParseError
+  final case class NoOtherGuaranteeField(message: String)           extends ParseError
   final case class GuaranteeAmountZero(message: String)             extends ParseError
   final case class AdditionalInfoMissing(message: String)           extends ParseError
   final case class AdditionalInfoInvalidCharacters(message: String) extends ParseError

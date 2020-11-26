@@ -19,10 +19,12 @@ package utils.guaranteeParsing
 import data.TestXml
 import models.ParseError._
 import models._
+import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers{
+class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers with ScalaCheckPropertyChecks{
 
   val sut = new GuaranteeXmlReaders
 
@@ -292,12 +294,43 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers{
   }
 
   "guarantee" - {
-    "returns Guarantee when given GuaRefNumGRNREF1 field" in {
-      val result = sut.guarantee(exampleGuaranteeGuaTypGUA1)
-      result mustBe a[Right[_, Guarantee]]
-      val item = result.right.get
-      item.gReference mustEqual "07IT00000100000Z3"
-      item.gType mustEqual 8
+    val referenceTypeGen = Gen.oneOf(Guarantee.referenceTypes)
+    val otherTypes = Gen.oneOf(3,5,6,7,8)
+    "returns Guarantee when given GuaRefNumGRNREF1 field and the Guarantee type is 0,1,2,4,9" in {
+      forAll(referenceTypeGen) {
+        gType => {
+          val result = sut.guarantee(exampleGuaranteeGuaTypGUA1(gType))
+          result mustBe a[Right[_, Guarantee]]
+          val item = result.right.get
+          item.gReference mustEqual "07IT00000100000Z3"
+          item.gType mustEqual gType
+        }
+
+      }
+
+    }
+
+    "returns Guarantee when given OthGuaRefREF4 field and the Guarantee type is not 0,1,2,4,9" in {
+      forAll(otherTypes) {
+        gType => {
+          val result = sut.guarantee(exampleOtherGuaranteeGuaTypGUA1(gType))
+          result mustBe a[Right[_, Guarantee]]
+          val item = result.right.get
+          item.gReference mustEqual "SomeValue"
+          item.gType mustEqual gType
+        }
+
+      }
+
+    }
+
+    "returns NoOtherGuaranteeField when not given OthGuaRefREF4 and the guarantee type is not 0,1,2,4,9" in {
+      forAll(otherTypes) {
+        gType => {
+          val result = sut.guarantee(exampleGuaranteeGuaTypGUA1(gType))
+          result mustBe a[Left[NoOtherGuaranteeField, _]]
+        }
+      }
     }
 
     "returns GuaranteeTypeInvalid if no GuaTypGUA1 value" in {
@@ -330,13 +363,13 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers{
       val example =
         <example>
           <GUAGUA>
-            <GuaTypGUA1>8</GuaTypGUA1>
+            <GuaTypGUA1>2</GuaTypGUA1>
             <GUAREFREF>
               <GuaRefNumGRNREF1>07IT00000100000Z3</GuaRefNumGRNREF1>
             </GUAREFREF>
           </GUAGUA>
           <GUAGUA>
-            <GuaTypGUA1>8</GuaTypGUA1>
+            <GuaTypGUA1>2</GuaTypGUA1>
             <GUAREFREF>
               <GuaRefNumGRNREF1>07IT00000100000Z4</GuaRefNumGRNREF1>
             </GUAREFREF>

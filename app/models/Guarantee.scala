@@ -17,3 +17,9 @@
 package models
 
 case class Guarantee(gType: Int, gReference: String)
+
+object Guarantee {
+  val referenceTypes = Seq[Int](0, 1, 2,4, 9)
+
+  def isOther(gType: Int) = !referenceTypes.contains(gType)
+}
