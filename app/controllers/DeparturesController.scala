@@ -16,6 +16,8 @@
 
 package controllers
 
+import audit.AuditService
+import audit.AuditType.TenThousandEuroGuaranteeAdded
 import connectors.DeparturesConnector
 import controllers.actions.{AuthAction, EnsureGuaranteeAction, ValidateAcceptJsonHeaderAction, ValidateDepartureDeclarationAction}
 import javax.inject.Inject
@@ -35,11 +37,13 @@ class DeparturesController @Inject()(cc: ControllerComponents,
                                      departuresConnector: DeparturesConnector,
                                      validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction,
                                      validateDepartureDeclarationAction: ValidateDepartureDeclarationAction,
+                                     auditService: AuditService,
                                      ensureGuaranteeAction: EnsureGuaranteeAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper {
 
   def submitDeclaration(): Action[NodeSeq] = (authAction andThen validateDepartureDeclarationAction andThen ensureGuaranteeAction).async(parse.xml) {
-    implicit request =>
-      departuresConnector.post(request.newXml.toString).map { response =>
+    implicit request => {
+      auditService.auditEvent(TenThousandEuroGuaranteeAdded, request.newXml)
+      departuresConnector.post(request.newXml.toString).map { response => {
         response.status match {
           case status if is2xx(status) =>
             response.header(LOCATION) match {
@@ -49,8 +53,10 @@ class DeparturesController @Inject()(cc: ControllerComponents,
             }
           case _ => handleNon2xx(response)
         }
+      }
 
       }
+    }
   }
 
   def getDeparture(departureId: String): Action[AnyContent] = (authAction andThen validateAcceptJsonHeaderAction).async {
