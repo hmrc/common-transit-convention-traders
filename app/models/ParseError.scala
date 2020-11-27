@@ -29,6 +29,7 @@ object ParseError extends ParseHandling {
   final case class EmptyNodeSeq(message: String)                    extends ParseError
   final case class NoGuaranteeType(message: String)                 extends ParseError
   final case class GuaranteeTypeInvalid(message: String)            extends ParseError
+  final case class GuaranteeTypeTooLong(message: String)            extends ParseError
   final case class NoGuaranteeReferenceNumber(message: String)      extends ParseError
   final case class NoOtherGuaranteeField(message: String)           extends ParseError
   final case class GuaranteeAmountZero(message: String)             extends ParseError

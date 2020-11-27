@@ -16,6 +16,8 @@
 
 package data
 
+import scala.xml.Elem
+
 trait TestXml {
 
   val CC007A = <CC007A>
@@ -1141,7 +1143,7 @@ trait TestXml {
       </SPEMENMT2>
     </GOOITEGDS>
 
-  def exampleGuaranteeGuaTypGUA1(gType: Int) =
+  def exampleGuaranteeGuaTypGUA1(gType: Char): Elem =
     <GUAGUA>
       <GuaTypGUA1>{gType}</GuaTypGUA1>
       <GUAREFREF>
@@ -1149,7 +1151,7 @@ trait TestXml {
       </GUAREFREF>
     </GUAGUA>
 
-  def exampleOtherGuaranteeGuaTypGUA1(gType: Int) =
+  def exampleOtherGuaranteeGuaTypGUA1(gType: Char): Elem =
     <GUAGUA>
       <GuaTypGUA1>{gType}</GuaTypGUA1>
       <GUAREFREF>

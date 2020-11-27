@@ -295,7 +295,7 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
 
   "guarantee" - {
     val referenceTypeGen = Gen.oneOf(Guarantee.referenceTypes)
-    val otherTypes = Gen.oneOf(3,5,6,7,8)
+    val otherTypes = Gen.oneOf(Guarantee.validTypes.diff(Guarantee.referenceTypes))
     "returns Guarantee when given GuaRefNumGRNREF1 field and the Guarantee type is 0,1,2,4,9" in {
       forAll(referenceTypeGen) {
         gType => {
@@ -305,9 +305,7 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
           item.gReference mustEqual "07IT00000100000Z3"
           item.gType mustEqual gType
         }
-
       }
-
     }
 
     "returns Guarantee when given OthGuaRefREF4 field and the Guarantee type is not 0,1,2,4,9" in {
