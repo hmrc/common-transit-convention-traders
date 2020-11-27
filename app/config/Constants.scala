@@ -22,6 +22,4 @@ object Constants {
   val AcceptHeaderMissing = "The accept header is missing or invalid"
 
   val Context = "/customs/transits"
-
-  val InvalidEORIEnrolmentMessage = "Current user doesn't have a valid EORI enrolment."
 }

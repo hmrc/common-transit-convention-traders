@@ -16,7 +16,7 @@
 
 package controllers.actions
 
-import config.{AppConfig, Constants}
+import config.AppConfig
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.freespec.AnyFreeSpec
@@ -200,7 +200,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
       val result = controller.get()(FakeRequest())
 
       status(result) mustEqual FORBIDDEN
-      contentAsString(result) mustEqual Constants.InvalidEORIEnrolmentMessage
+      contentAsString(result) mustEqual "Current user doesn't have a valid EORI enrolment."
     }
 
     "when the user is logged in and has no valid enrolment identifier" in {
@@ -220,14 +220,14 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
       val result = controller.get()(FakeRequest())
 
       status(result) mustEqual FORBIDDEN
-      contentAsString(result) mustEqual Constants.InvalidEORIEnrolmentMessage
+      contentAsString(result) mustEqual "Current user doesn't have a valid EORI enrolment."
     }
 
     "when the user is logged in and has no valid activated eori enrolments" in {
       val authConnector = mock[AuthConnector]
 
       when(authConnector.authorise[Enrolments](any(),any())(any(),any()))
-        .thenReturn(Future.successful(notActivatedEnrolments))
+        .thenReturn(Future.failed(InsufficientEnrolments()))
 
       val application = GuiceApplicationBuilder().build()
 
@@ -240,7 +240,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
       val result = controller.get()(FakeRequest())
 
       status(result) mustEqual FORBIDDEN
-      contentAsString(result) mustEqual Constants.InvalidEORIEnrolmentMessage
+      contentAsString(result) mustEqual "Current user doesn't have a valid EORI enrolment."
     }
   }
 

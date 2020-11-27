@@ -17,7 +17,7 @@
 package controllers.actions
 
 import com.google.inject.Inject
-import config.{AppConfig, Constants}
+import config.AppConfig
 import play.api.Logger
 import play.api.mvc.Results._
 import play.api.mvc._
@@ -44,18 +44,17 @@ class AuthAction @Inject()(
 
     authorised(Enrolment(config.enrolmentKey)).retrieve(Retrievals.authorisedEnrolments) {
       enrolments: Enrolments =>
-        enrolments.enrolments.find( item => item.key.equals(config.enrolmentKey) && item.isActivated ) match {
-          case Some(enrolment: Enrolment) =>
-            val identifier = enrolment.getIdentifier(enrolmentIdentifierKey).getOrElse(throw InsufficientEnrolments())
-            block(AuthRequest(request, identifier.value))
-          case None =>
-            throw InsufficientEnrolments()
-        }
+        val eoriNumber: String = (for {
+          enrolment  <- enrolments.enrolments.find(_.key.equals(config.enrolmentKey))
+          identifier <- enrolment.getIdentifier(enrolmentIdentifierKey)
+        } yield identifier.value).getOrElse(throw InsufficientEnrolments())
+
+        block(AuthRequest(request, eoriNumber))
     }
   } recover {
-    case _: InsufficientEnrolments =>
+    case exception: InsufficientEnrolments =>
       Logger.logger.warn("insufficient enrolments")
-      Forbidden(Constants.InvalidEORIEnrolmentMessage)
+      Forbidden("Current user doesn't have a valid EORI enrolment.")
     case _: AuthorisationException =>
       Logger.logger.warn("auth issues")
       Unauthorized
