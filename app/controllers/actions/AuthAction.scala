@@ -52,11 +52,11 @@ class AuthAction @Inject()(
         block(AuthRequest(request, eoriNumber))
     }
   } recover {
-    case exception: InsufficientEnrolments =>
-      Logger.logger.warn("insufficient enrolments")
+    case _: InsufficientEnrolments =>
+      Logger.warn("insufficient enrolments")
       Forbidden("Current user doesn't have a valid EORI enrolment.")
     case _: AuthorisationException =>
-      Logger.logger.warn("auth issues")
+      Logger.warn("auth issues")
       Unauthorized
   }
 }
