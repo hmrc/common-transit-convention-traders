@@ -12,7 +12,7 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
 
   "ensureGuarantee" - {
 
-    val inputXML = <CC015B>
+    val standardInputXML = <CC015B>
       <SynIdeMES1>UNOC</SynIdeMES1>
       <SynVerNumMES2>3</SynVerNumMES2>
       <MesRecMES6>NCTS</MesRecMES6>
@@ -109,7 +109,7 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
       </GOOITEGDS>
     </CC015B>
 
-    val expectedXML = <CC015B>
+    val standardExpectedXML = <CC015B>
       <SynIdeMES1>UNOC</SynIdeMES1>
       <SynVerNumMES2>3</SynVerNumMES2>
       <MesRecMES6>NCTS</MesRecMES6>
@@ -203,13 +203,95 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
       </GOOITEGDS>
     </CC015B>
 
+    val otherInputXML = <CC015B>
+      <SynIdeMES1>UNOC</SynIdeMES1>
+      <SynVerNumMES2>3</SynVerNumMES2>
+      <MesRecMES6>NCTS</MesRecMES6>
+      <DatOfPreMES9>{{DatOfPreMES9}}</DatOfPreMES9>
+      <TimOfPreMES10>{{TimOfPreMES10}}</TimOfPreMES10>
+      <IntConRefMES11>{{IntConRefMES11}}</IntConRefMES11>
+      <AppRefMES14>NCTS</AppRefMES14>
+      <MesIdeMES19>1</MesIdeMES19>
+      <MesTypMES20>GB015B</MesTypMES20>
+      <HEAHEA>
+        <RefNumHEA4>{{RefNumHEA4}}</RefNumHEA4>
+        <TypOfDecHEA24>T1</TypOfDecHEA24>
+        <CouOfDesCodHEA30>IT</CouOfDesCodHEA30>
+        <AgrLocOfGooHEA39>Pre-Lodged</AgrLocOfGooHEA39>
+        <CouOfDisCodHEA55>GB</CouOfDisCodHEA55>
+        <IdeOfMeaOfTraAtDHEA78>NC15 REG</IdeOfMeaOfTraAtDHEA78>
+        <NatOfMeaOfTraAtDHEA80>GB</NatOfMeaOfTraAtDHEA80>
+        <ConIndHEA96>0</ConIndHEA96>
+        <NCTSAccDocHEA601LNG>EN</NCTSAccDocHEA601LNG>
+        <TotNumOfIteHEA305>1</TotNumOfIteHEA305>
+        <TotNumOfPacHEA306>10</TotNumOfPacHEA306>
+        <TotGroMasHEA307>1000</TotGroMasHEA307>
+        <DecDatHEA383>{{DecDatHEA383}}</DecDatHEA383>
+        <DecPlaHEA394>Dover</DecPlaHEA394>
+        <DecPlaHEA394LNG>EN</DecPlaHEA394LNG>
+      </HEAHEA>
+      <TRAPRIPC1>
+        <NamPC17>NCTS UK TEST LAB HMCE</NamPC17>
+        <StrAndNumPC122>11TH FLOOR, ALEX HOUSE, VICTORIA AV</StrAndNumPC122>
+        <PosCodPC123>SS99 1AA</PosCodPC123>
+        <CitPC124>SOUTHEND-ON-SEA, ESSEX</CitPC124>
+        <CouPC125>GB</CouPC125>
+        <NADLNGPC>EN</NADLNGPC>
+        <TINPC159>GB954131533000</TINPC159>
+      </TRAPRIPC1>
+      <TRACONCO1>
+        <NamCO17>NCTS UK TEST LAB HMCE</NamCO17>
+        <StrAndNumCO122>11TH FLOOR, ALEX HOUSE, VICTORIA AV</StrAndNumCO122>
+        <PosCodCO123>SS99 1AA</PosCodCO123>
+        <CitCO124>SOUTHEND-ON-SEA, ESSEX</CitCO124>
+        <CouCO125>GB</CouCO125>
+        <TINCO159>GB954131533000</TINCO159>
+      </TRACONCO1>
+      <TRACONCE1>
+        <NamCE17>NCTS UK TEST LAB HMCE</NamCE17>
+        <StrAndNumCE122>ITALIAN OFFICE</StrAndNumCE122>
+        <PosCodCE123>IT99 1IT</PosCodCE123>
+        <CitCE124>MILAN</CitCE124>
+        <CouCE125>IT</CouCE125>
+        <TINCE159>IT11ITALIANC11</TINCE159>
+      </TRACONCE1>
+      <CUSOFFDEPEPT>
+        <RefNumEPT1>GB000060</RefNumEPT1>
+      </CUSOFFDEPEPT>
+      <CUSOFFTRARNS>
+        <RefNumRNS1>FR001260</RefNumRNS1>
+        <ArrTimTRACUS085>{{ArrTimTRACUS085}}</ArrTimTRACUS085>
+      </CUSOFFTRARNS>
+      <CUSOFFDESEST>
+        <RefNumEST1>IT018100</RefNumEST1>
+      </CUSOFFDESEST>
+      <GUAGUA>
+        <GuaTypGUA1>6</GuaTypGUA1>
+        <GUAREFREF>
+          <OthGuaRefREF4>Guarantee waiver</OthGuaRefREF4>
+        </GUAREFREF>
+      </GUAGUA>
+      <GOOITEGDS>
+        <IteNumGDS7>1</IteNumGDS7>
+        <GooDesGDS23>Tea</GooDesGDS23>
+        <GooDesGDS23LNG>EN</GooDesGDS23LNG>
+        <GroMasGDS46>1000</GroMasGDS46>
+        <NetMasGDS48>950</NetMasGDS48>
+        <PACGS2>
+          <MarNumOfPacGS21>AB234</MarNumOfPacGS21>
+          <MarNumOfPacGS21LNG>EN</MarNumOfPacGS21LNG>
+          <KinOfPacGS23>BX</KinOfPacGS23>
+          <NumOfPacGS24>10</NumOfPacGS24>
+        </PACGS2>
+      </GOOITEGDS>
+    </CC015B>
+
     "must default value correct" in {
       val service = app.injector.instanceOf[EnsureGuaranteeService]
 
-      val result = service.ensureGuarantee(inputXML)
+      val result = service.ensureGuarantee(standardInputXML)
 
-      println(result.right.get.toString().filter(_ > ' '))
-      result.right.get.toString().filter(_ > ' ') mustEqual expectedXML.toString().filter(_ > ' ')
+      result.right.get.toString().filter(_ > ' ') mustEqual standardExpectedXML.toString().filter(_ > ' ')
 
     }
 
@@ -217,9 +299,16 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
       val service = app.injector.instanceOf[EnsureGuaranteeService]
       val validator = app.injector.instanceOf[XmlValidationService]
 
-      val result = service.ensureGuarantee(inputXML)
+      val result = service.ensureGuarantee(standardInputXML)
 
       validator.validate(result.right.get.toString().filter(_ > ' '), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+    }
+
+    "result must not be changed if no standard guarantees" in {
+      val service = app.injector.instanceOf[EnsureGuaranteeService]
+      val result = service.ensureGuarantee(otherInputXML)
+
+      result.right.get.toString().filter(_ > ' ') mustEqual otherInputXML.toString().filter(_ > ' ')
     }
   }
 
