@@ -28,7 +28,7 @@ object ResponseDepartureWithMessages {
 
   implicit val format = Json.format[ResponseDepartureWithMessages]
 
-  def apply(d: DepartureWithMessages): ResponseDepartureWithMessages = ResponseDepartureWithMessages(routes.DeparturesController.getDeparture(d.departureId.toString).urlWithContext, d.created, d.updated, d.movementReferenceNumber, d.referenceNumber, d.status, d.messages.map { m => ResponseMessage(m, routes.DepartureMessagesController.getDepartureMessage(d.departureId.toString, Utils.lastFragment(m.location)))})
+  def apply(d: DepartureWithMessages): ResponseDepartureWithMessages = ResponseDepartureWithMessages(routes.DeparturesController.getDeparture(d.departureId.toString).urlWithContext, d.created, d.updated, d.movementReferenceNumber, d.status, d.messages.map { m => ResponseMessage(m, routes.DepartureMessagesController.getDepartureMessage(d.departureId.toString, Utils.lastFragment(m.location)))})
 }
 
-case class ResponseDepartureWithMessages(departure: String, created: LocalDateTime, updated: LocalDateTime, movementReferenceNumber: Option[String], referenceNumber: String, status: String, messages: Seq[ResponseMessage])
+case class ResponseDepartureWithMessages(departure: String, created: LocalDateTime, updated: LocalDateTime, movementReferenceNumber: Option[String], status: String, messages: Seq[ResponseMessage])

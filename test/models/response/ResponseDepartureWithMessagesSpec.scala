@@ -29,7 +29,7 @@ class ResponseDepartureWithMessagesSpec extends AnyFreeSpec with Matchers with G
 
   "ResponseDepartureWithMessages" - {
     "must have a valid public location" in {
-      val departure = DepartureWithMessages(3, "loc", "messageLoc", Some("mrn"), "ref", "status", LocalDateTime.now(), LocalDateTime.now(), Nil)
+      val departure = DepartureWithMessages(3, "loc", "messageLoc", Some("mrn"), "status", LocalDateTime.now(), LocalDateTime.now(), Nil)
 
       val result = ResponseDepartureWithMessages(departure)
 
@@ -37,7 +37,7 @@ class ResponseDepartureWithMessagesSpec extends AnyFreeSpec with Matchers with G
     }
 
     "messages must have valid public locations" in {
-      val departure = DepartureWithMessages(3, "loc", "messageLoc", Some("mrn"), "ref", "status", LocalDateTime.now(), LocalDateTime.now(), Seq(MovementMessage("/3", LocalDateTime.now(), "type", <test>default</test>)))
+      val departure = DepartureWithMessages(3, "loc", "messageLoc", Some("mrn"), "status", LocalDateTime.now(), LocalDateTime.now(), Seq(MovementMessage("/3", LocalDateTime.now(), "type", <test>default</test>)))
 
       val result = ResponseDepartureWithMessages(departure)
 

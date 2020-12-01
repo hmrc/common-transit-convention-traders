@@ -32,7 +32,7 @@ class ResponseDepartureSpec extends AnyFreeSpec with Matchers with GuiceOneAppPe
 
   "ResponseDeparture" - {
     "must have valid public location" in {
-      val departure = Departure(3, "loc", "messageLoc", Some("mrn"), "ref", "status", LocalDateTime.now(), LocalDateTime.now())
+      val departure = Departure(3, "loc", "messageLoc", Some("mrn"), "status", LocalDateTime.now(), LocalDateTime.now())
 
       val result = ResponseDeparture(departure)
 
@@ -40,7 +40,7 @@ class ResponseDepartureSpec extends AnyFreeSpec with Matchers with GuiceOneAppPe
     }
 
     "must have valid public messages location" in {
-      val departure = Departure(3, "loc", "messageLoc", Some("mrn"), "ref", "status", LocalDateTime.now(), LocalDateTime.now())
+      val departure = Departure(3, "loc", "messageLoc", Some("mrn"), "status", LocalDateTime.now(), LocalDateTime.now())
 
       val result = ResponseDeparture(departure)
 
