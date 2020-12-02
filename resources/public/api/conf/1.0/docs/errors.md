@@ -3,7 +3,7 @@ We use standard HTTP status codes to show whether an API request has succeeded o
 
 **POST**
 
-400 BadRequest: If `Content-Type` not specified as XML. Or, XML has failed validation. See response body for details.
+400 BadRequest: If `Content-Type` not specified as XML. Or, XML has failed validation - see response body for details
 
 401 Unauthorized: If client passes invalid auth credentials
 
