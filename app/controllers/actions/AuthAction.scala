@@ -47,16 +47,16 @@ class AuthAction @Inject()(
         val eoriNumber: String = (for {
           enrolment  <- enrolments.enrolments.find(_.key.equals(config.enrolmentKey))
           identifier <- enrolment.getIdentifier(enrolmentIdentifierKey)
-        } yield identifier.value).getOrElse(throw InsufficientEnrolments("Current user doesn't have a valid EORI enrolment."))
+        } yield identifier.value).getOrElse(throw InsufficientEnrolments())
 
         block(AuthRequest(request, eoriNumber))
     }
   } recover {
-    case exception: InsufficientEnrolments =>
-      Logger.logger.warn("insufficient enrolments")
-      Forbidden(exception.reason)
+    case _: InsufficientEnrolments =>
+      Logger.warn("insufficient enrolments")
+      Forbidden("Current user doesn't have a valid EORI enrolment.")
     case _: AuthorisationException =>
-      Logger.logger.warn("auth issues")
+      Logger.warn("auth issues")
       Unauthorized
   }
 }

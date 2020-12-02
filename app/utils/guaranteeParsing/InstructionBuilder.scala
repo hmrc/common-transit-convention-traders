@@ -48,11 +48,10 @@ class InstructionBuilder @Inject()(guaranteeInstructionBuilder: GuaranteeInstruc
 
 class GuaranteeInstructionBuilder @Inject()(defaultGuaranteeApplier: DefaultGuaranteeApplier) {
 
-  val concernedTypes = Seq[Int](0, 1, 2,4, 9)
 
 
   def buildInstructionFromGuarantee(g: Guarantee, sm: SpecialMentionGuarantee): Either[ParseError, TransformInstruction] = {
-    if(!concernedTypes.contains(g.gType)) {
+    if(!Guarantee.referenceTypes.contains(g.gType)) {
       Right(NoChangeGuaranteeInstruction(sm))
     }
     else

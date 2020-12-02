@@ -127,12 +127,12 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
 
   "buildInstructionFromGuarantee" - {
     "returns Right(NoChangeGuaranteeInstruction) if guarantee type is not in concernedTypes" in {
-      val gTypes = Seq(1, 2, 3, 4, 5, 6, 7)
-      val excludedTypes = gTypes.diff(sut.concernedTypes)
+      val gTypes = Seq('1', '2', '3', '4', '5', '6', '7')
+      val excludedTypes = gTypes.diff(Guarantee.referenceTypes)
 
       excludedTypes.foreach {
-        typeNumber =>
-          sut.buildInstructionFromGuarantee(Guarantee(typeNumber, "alpha"), SpecialMentionGuarantee("test alpha")) mustBe a[Right[_, NoChangeGuaranteeInstruction]]
+        typeChar =>
+          sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), SpecialMentionGuarantee("test alpha")) mustBe a[Right[_, NoChangeGuaranteeInstruction]]
       }
     }
 
@@ -140,7 +140,7 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
       when(mockDefaultApplier.applyDefaultGuarantee(any(), any()))
         .thenReturn(Left(GuaranteeAmountZero("test")))
 
-      val result = sut.buildInstructionFromGuarantee(Guarantee(0, "alpha"), SpecialMentionGuarantee("100.00EURalphabetacharliedeltaepsilon"))
+      val result = sut.buildInstructionFromGuarantee(Guarantee('0', "alpha"), SpecialMentionGuarantee("100.00EURalphabetacharliedeltaepsilon"))
       result mustBe a[Left[ParseErrorSpec, _]]
     }
 
@@ -148,7 +148,7 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
       when(mockDefaultApplier.applyDefaultGuarantee(any(), any()))
         .thenReturn(Right(SpecialMentionGuaranteeDetails(BigDecimal(100.00), "EUR", "test")))
 
-      val result = sut.buildInstructionFromGuarantee(Guarantee(1, "alpha"), SpecialMentionGuarantee("alpha"))
+      val result = sut.buildInstructionFromGuarantee(Guarantee('1', "alpha"), SpecialMentionGuarantee("alpha"))
       result mustBe a[Right[_, ChangeGuaranteeInstruction]]
     }
   }

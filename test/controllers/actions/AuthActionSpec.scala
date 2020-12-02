@@ -40,31 +40,6 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
     }
   }
 
-  val invalidEnrolments: Enrolments = Enrolments(
-    Set(
-      Enrolment(
-        key = "IR-SA",
-        identifiers = Seq(
-          EnrolmentIdentifier(
-            "UTR",
-            "123"
-          )
-        ),
-        state = "Activated"
-      ),
-      Enrolment(
-        key = "HMCE-NCTS-ORG2",
-        identifiers = Seq(
-          EnrolmentIdentifier(
-            "VATRegNoTURN",
-            "123"
-          )
-        ),
-        state = "NotYetActivated"
-      )
-    )
-  )
-
   val enrolmentsWithEori: Enrolments = Enrolments(
     Set(
       Enrolment(
@@ -100,9 +75,93 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
     )
   )
 
+  val noValidEnrolments: Enrolments = Enrolments(
+    Set(
+      Enrolment(
+        key = "IR-SA",
+        identifiers = Seq(
+          EnrolmentIdentifier(
+            "UTR",
+            "123"
+          )
+        ),
+        state = "Activated"
+      )
+    )
+  )
+
+  val noValidEnrolmentIdentifier: Enrolments = Enrolments(
+    Set(
+      Enrolment(
+        key = "IR-SA",
+        identifiers = Seq(
+          EnrolmentIdentifier(
+            "UTR",
+            "123"
+          )
+        ),
+        state = "Activated"
+      ),
+      Enrolment(
+        key = "IR-CT",
+        identifiers = Seq(
+          EnrolmentIdentifier(
+            "UTR",
+            "345"
+          )
+        ),
+        state = "Activated"
+      ),
+      Enrolment(
+        key = "HMCE-NCTS-ORG",
+        identifiers = Seq(
+          EnrolmentIdentifier(
+            "VATRegNoTURN2",
+            "456"
+          )
+        ),
+        state = "Activated"
+      )
+    )
+  )
+
+  val notActivatedEnrolments: Enrolments = Enrolments(
+    Set(
+      Enrolment(
+        key = "IR-SA",
+        identifiers = Seq(
+          EnrolmentIdentifier(
+            "UTR",
+            "123"
+          )
+        ),
+        state = "Activated"
+      ),
+      Enrolment(
+        key = "IR-CT",
+        identifiers = Seq(
+          EnrolmentIdentifier(
+            "UTR",
+            "345"
+          )
+        ),
+        state = "Activated"
+      ),
+      Enrolment(
+        key = "HMCE-NCTS-ORG",
+        identifiers = Seq(
+          EnrolmentIdentifier(
+            "VATRegNoTURN",
+            "456"
+          )
+        ),
+        state = "NotYetActivated"
+      )
+    )
+  )
+
   "must execute the block" - {
     "when the user is logged in and has the correct enrolment" in {
-
       val authConnector = mock[AuthConnector]
 
       when(authConnector.authorise[Enrolments](any(),any())(any(),any()))
@@ -121,13 +180,54 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
       status(result) mustEqual OK
       contentAsString(result) mustEqual "456"
     }
+  }
 
-    "when the user is logged in and doesn't have the correct enrolment" in {
-
+  "must return Forbidden" - {
+    "when the user is logged in and doesn't have any valid enrolments" in {
       val authConnector = mock[AuthConnector]
 
       when(authConnector.authorise[Enrolments](any(),any())(any(),any()))
-        .thenReturn(Future.successful(invalidEnrolments))
+        .thenReturn(Future.successful(noValidEnrolments))
+
+      val application = GuiceApplicationBuilder().build()
+
+      val config: AppConfig = application.injector.instanceOf[AppConfig]
+
+      val bodyParser = application.injector.instanceOf[BodyParsers.Default]
+
+      val authAction = new AuthAction(authConnector, config, bodyParser)
+      val controller = new Harness(authAction)
+      val result = controller.get()(FakeRequest())
+
+      status(result) mustEqual FORBIDDEN
+      contentAsString(result) mustEqual "Current user doesn't have a valid EORI enrolment."
+    }
+
+    "when the user is logged in and has no valid enrolment identifier" in {
+      val authConnector = mock[AuthConnector]
+
+      when(authConnector.authorise[Enrolments](any(),any())(any(),any()))
+        .thenReturn(Future.successful(noValidEnrolmentIdentifier))
+
+      val application = GuiceApplicationBuilder().build()
+
+      val config: AppConfig = application.injector.instanceOf[AppConfig]
+
+      val bodyParser = application.injector.instanceOf[BodyParsers.Default]
+
+      val authAction = new AuthAction(authConnector, config, bodyParser)
+      val controller = new Harness(authAction)
+      val result = controller.get()(FakeRequest())
+
+      status(result) mustEqual FORBIDDEN
+      contentAsString(result) mustEqual "Current user doesn't have a valid EORI enrolment."
+    }
+
+    "when the user is logged in and has no valid activated eori enrolments" in {
+      val authConnector = mock[AuthConnector]
+
+      when(authConnector.authorise[Enrolments](any(),any())(any(),any()))
+        .thenReturn(Future.failed(InsufficientEnrolments()))
 
       val application = GuiceApplicationBuilder().build()
 
@@ -146,7 +246,6 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
   "must return Unauthorized" - {
     "when the user hasn't logged in" in {
-
       val authConnector = mock[AuthConnector]
 
       when(authConnector.authorise[Enrolments](any(),any())(any(),any()))

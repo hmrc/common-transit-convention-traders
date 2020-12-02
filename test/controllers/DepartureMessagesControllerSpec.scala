@@ -63,13 +63,13 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
     "IE025",
     <test>default</test>)
 
-  val sourceDeparture = DepartureWithMessages(123, routes.DeparturesController.getDeparture("123").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("123").urlWithContext, Some("MRN"), "ref", "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2), Seq(sourceMovement, sourceMovement))
+  val sourceDeparture = DepartureWithMessages(123, routes.DeparturesController.getDeparture("123").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("123").urlWithContext, Some("MRN"), "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2), Seq(sourceMovement, sourceMovement))
 
   val json = Json.toJson[MovementMessage](sourceMovement)
 
   val expectedMessage = ResponseMessage(sourceMovement.location, sourceMovement.dateTime, sourceMovement.messageType, sourceMovement.message)
   val expectedMessageResult = Json.toJson[ResponseMessage](expectedMessage)
-  val expectedDeparture = ResponseDepartureWithMessages(sourceDeparture.location, sourceDeparture.created, sourceDeparture.updated, sourceDeparture.movementReferenceNumber, sourceDeparture.referenceNumber, sourceDeparture.status, Seq(expectedMessage, expectedMessage))
+  val expectedDeparture = ResponseDepartureWithMessages(sourceDeparture.location, sourceDeparture.created, sourceDeparture.updated, sourceDeparture.movementReferenceNumber, sourceDeparture.status, Seq(expectedMessage, expectedMessage))
   val expectedDepartureResult = Json.toJson[ResponseDepartureWithMessages](expectedDeparture)
 
   def fakeRequestMessages[A](method: String, headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), uri: String, body: A) =
