@@ -51,6 +51,7 @@ class AuditServiceSpec extends AnyFreeSpec with ScalaCheckPropertyChecks with Be
     "must audit notification message event" in {
 
       val requestXml = <xml>test</xml>
+      val requestedXmlToJson = Json.parse("{\"xml\":\"test\"}")
 
       val auditDetails = Json.toJson(AuditDetails(Json.obj("xml" -> "test")))
 
@@ -63,7 +64,7 @@ class AuditServiceSpec extends AnyFreeSpec with ScalaCheckPropertyChecks with Be
             running(application) {
               val auditService = application.injector.instanceOf[AuditService]
               auditService.auditEvent(auditType, requestXml)
-              verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(auditType.toString()), eqTo(auditDetails))(any(), any(), any())
+              verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(auditType.toString()), eqTo(requestedXmlToJson))(any(), any(), any())
               reset(mockAuditConnector)
             }
           }

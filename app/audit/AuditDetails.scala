@@ -21,5 +21,5 @@ import play.api.libs.json.{JsObject, Json, OWrites}
 case class AuditDetails(json: JsObject)
 
 object AuditDetails {
-  implicit val writes: OWrites[AuditDetails] = Json.writes[AuditDetails]
+  implicit val writes: OWrites[AuditDetails] = (details: AuditDetails) => details.json
 }
