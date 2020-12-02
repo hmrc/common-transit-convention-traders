@@ -53,8 +53,6 @@ class AuditServiceSpec extends AnyFreeSpec with ScalaCheckPropertyChecks with Be
       val requestXml = <xml>test</xml>
       val requestedXmlToJson = Json.parse("{\"channel\":\"api\",\"xml\":\"test\"}")
 
-      val auditDetails = Json.toJson(AuditDetails(Json.obj("xml" -> "test")))
-
       forAll(Gen.oneOf(AuditType.values)) {
         auditType =>
           {
