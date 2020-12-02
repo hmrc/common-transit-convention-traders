@@ -40,7 +40,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Wirem
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[DepartureMessageConnector]
-      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "ref", "status", LocalDateTime.now, LocalDateTime.now)
+      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now)
 
       val response = ResponseDeparture(departure)
       server.stubFor(
@@ -110,7 +110,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Wirem
   "getDepartureMessages" - {
     "must return Departure when departure is found" in {
       val connector = app.injector.instanceOf[DepartureMessageConnector]
-      val departure = DepartureWithMessages(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "ref", "status", LocalDateTime.now, LocalDateTime.now,
+      val departure = DepartureWithMessages(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now,
         Seq(
           MovementMessage(routes.DepartureMessagesController.getDepartureMessage("1","1").urlWithContext, LocalDateTime.now, "abc", <test>default</test>),
           MovementMessage(routes.DepartureMessagesController.getDepartureMessage("1","2").urlWithContext, LocalDateTime.now, "abc", <test>default</test>)
@@ -132,7 +132,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Wirem
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[DepartureMessageConnector]
-      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "ref", "status", LocalDateTime.now, LocalDateTime.now)
+      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now)
 
       val response = ResponseDeparture(departure)
       server.stubFor(

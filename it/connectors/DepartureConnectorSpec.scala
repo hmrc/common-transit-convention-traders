@@ -77,7 +77,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
   "get" - {
     "must return Departure when departure is found" in {
       val connector = app.injector.instanceOf[DeparturesConnector]
-      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "reference", "status", LocalDateTime.now, LocalDateTime.now)
+      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now)
 
       server.stubFor(get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/1"))
         .willReturn(aResponse().withStatus(OK)
@@ -93,7 +93,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[DeparturesConnector]
-      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "reference","status", LocalDateTime.now, LocalDateTime.now)
+      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now)
 
       val response = ResponseDeparture(departure)
 
@@ -156,7 +156,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
   "getForEori" - {
     "must return Departure when departure is found" in {
       val connector = app.injector.instanceOf[DeparturesConnector]
-      val departures = Departures(Seq(Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("1"), "MRN", "status", LocalDateTime.now, LocalDateTime.now)))
+      val departures = Departures(Seq(Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("1"), "status", LocalDateTime.now, LocalDateTime.now)))
 
       server.stubFor(get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/"))
         .willReturn(aResponse().withStatus(OK)
@@ -172,7 +172,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[DeparturesConnector]
-      val departures = Departures(Seq(Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("1"), "MRN", "status", LocalDateTime.now, LocalDateTime.now)))
+      val departures = Departures(Seq(Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("1"), "status", LocalDateTime.now, LocalDateTime.now)))
 
       val response = ResponseDepartures(departures.departures.map { a => ResponseDeparture(a) })
 
