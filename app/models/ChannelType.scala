@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package audit
+package models
 
-import models.ChannelType.api
-import play.api.libs.json.{JsObject, JsString, Json, OWrites}
+sealed trait ChannelType
 
-case class AuditDetails(json: JsObject)
+object ChannelType extends Enumerable.Implicits {
+  case object api extends ChannelType
 
-object AuditDetails {
-  implicit val writes: OWrites[AuditDetails] = (details: AuditDetails) => {
-    JsObject(Map("channel" -> JsString(api.toString)) ++ details.json.value)
-  }
+  val values: Seq[ChannelType] = Seq(api)
+
+  implicit val enumerable: Enumerable[ChannelType] =
+    Enumerable(values.map(v => v.toString -> v): _*)
+
 }
