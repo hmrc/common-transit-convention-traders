@@ -16,26 +16,26 @@
 
 package services
 
-import models.ParseError.{AdditionalInfoCodeMissing, AdditionalInfoMissing, GuaranteeAmountZero, GuaranteeNotFound, GuaranteeTypeInvalid, InvalidItemNumber, MissingItemNumber, NoGuaranteeReferenceNumber, SpecialMentionNotFound}
-import models.{ChangeGuaranteeInstruction, GOOITEGDSNode, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, ParseHandling, SpecialMention, SpecialMentionGuarantee, SpecialMentionGuaranteeDetails, SpecialMentionOther, TransformInstruction, TransformInstructionSet}
-import cats.data.ReaderT
-import cats.implicits._
+import models.{ChangeGuaranteeInstruction, GOOITEGDSNode, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, ParseHandling, SpecialMentionGuarantee, TransformInstruction, TransformInstructionSet}
 import com.google.inject.Inject
 import utils.guaranteeParsing.{GuaranteeXmlReaders, InstructionBuilder}
-
-import scala.annotation.tailrec
-import scala.util.{Failure, Success, Try}
+import utils.guaranteeParsing.RouteChecker
 import scala.xml.{Elem, Node, NodeSeq}
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
-class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instructionBuilder: InstructionBuilder) extends ParseHandling {
+class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instructionBuilder: InstructionBuilder, routeChecker: RouteChecker) extends ParseHandling {
 
 
   def ensureGuarantee(xml: NodeSeq): ParseHandler[NodeSeq] =
-    parseInstructionSets(xml) match {
+    routeChecker.gbOnlyCheck(xml) match {
       case Left(error) => Left(error)
-      case Right(instructionSets) =>
-        Right(updateXml(xml, instructionSets))
+      case Right(gbOnly) if gbOnly => Right(xml)
+      case _ =>
+        parseInstructionSets(xml) match {
+          case Left(error) => Left(error)
+          case Right(instructionSets) =>
+            Right(updateXml(xml, instructionSets))
+        }
     }
 
   def parseInstructionSets(xml: NodeSeq): ParseHandler[Seq[TransformInstructionSet]] = {
@@ -90,7 +90,7 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
     instruction match {
       case e: NoChangeInstruction => e.xml.head
       case e: NoChangeGuaranteeInstruction => buildGuaranteeXml(e.mention)
-      case e: ChangeGuaranteeInstruction => buildGuaranteeXml(e.details.toSimple)
+      case e: ChangeGuaranteeInstruction => buildGuaranteeXml(e.mention)
     }
   }
 

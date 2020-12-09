@@ -34,11 +34,6 @@ class SpecialMentionGuaranteeSpec extends AnyFreeSpec with MockitoSugar with Mat
         .toDetails("test") mustBe a[Left[CurrencyCodeInvalid, _]]
     }
 
-    "returns AmountStringInvalid when amount is not to two decimal places" in {
-      SpecialMentionGuarantee("100.0EURtest")
-        .toDetails("test") mustBe a[Left[AmountStringInvalid,_]]
-    }
-
     "returns AmountStringTooLong if is amount value is longer than 18 characters" in {
       SpecialMentionGuarantee("12345678901234567890.00EURtest")
         .toDetails("FarTooLong") mustBe a[Left[AmountStringTooLong, _]]
@@ -48,29 +43,8 @@ class SpecialMentionGuaranteeSpec extends AnyFreeSpec with MockitoSugar with Mat
       val result = SpecialMentionGuarantee("100.00EURtest")
         .toDetails("test")
       result mustBe a[Right[_,SpecialMentionGuaranteeDetails]]
-      result.right.get.currencyCode mustBe "EUR"
-      result.right.get.guaranteeAmount mustBe BigDecimal(100.00)
-    }
-    "returns AmountWithoutCurrency parsing error when we have an amount but no currency" in {
-      val result = SpecialMentionGuarantee("100.00test")
-        .toDetails("test")
-      result mustBe a[Left[AmountWithoutCurrency, _]]
-    }
-    "returns SpecialMentionGuaranteeDetails with an overwritten amount and currency when there is none" in {
-      val result = SpecialMentionGuarantee("GBRtest")
-        .toDetails("test")
-      result mustBe a[Right[_,SpecialMentionGuaranteeDetails]]
-      result.right.get.currencyCode mustBe "EUR"
-      result.right.get.guaranteeAmount mustBe BigDecimal(10000.00)
-
-    }
-    "returns SpecialMentionGuaranteeDetails with default Amount and currency code if there are no values" in {
-      val result = SpecialMentionGuarantee("test")
-        .toDetails("test")
-      result mustBe a[Right[_,SpecialMentionGuaranteeDetails]]
-      result.right.get.currencyCode mustBe "EUR"
-      result.right.get.guaranteeAmount mustBe BigDecimal(10000.00)
-
+      result.right.get.currencyCode mustBe Some("EUR")
+      result.right.get.guaranteeAmount mustBe Some(BigDecimal(100.00))
     }
   }
 
