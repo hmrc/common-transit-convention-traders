@@ -73,7 +73,7 @@ final case class SpecialMentionGuarantee(additionalInfo: String) extends Special
     else {
       Try(BigDecimal(amountString)) match {
         case Success(bigDecimal) => Right(Some(bigDecimal))
-        case Failure(_) =>  Left(AmountStringInvalid("Amount String Invalid"))
+        case Failure(_) =>  Left(AmountStringInvalid("The specified amount is not a valid representation of a decimal"))
       }
       }
   }
