@@ -16,8 +16,4 @@
 
 package models
 
-final case class SpecialMentionGuaranteeDetails(guaranteeAmount: BigDecimal, currencyCode: String, reference: String) {
-  def toSimple: SpecialMentionGuarantee = {
-    SpecialMentionGuarantee(guaranteeAmount.setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString() + currencyCode + reference)
-  }
-}
+final case class SpecialMentionGuaranteeDetails(guaranteeAmount: Option[BigDecimal], currencyCode: Option[String], reference: String)

@@ -44,6 +44,9 @@ object ParseError extends ParseHandling {
   final case class MissingItemNumber(message: String)               extends ParseError
   final case class InvalidItemNumber(message: String)               extends ParseError
   final case class AmountWithoutCurrency(message: String)           extends ParseError
+  final case class DestinationEmpty(message: String)                extends ParseError
+  final case class DepartureEmpty(message: String)                  extends ParseError
+  final case class InappropriateDepartureOffice(message: String)    extends ParseError
 
   def sequenceErrors[A](input: Seq[ParseHandler[A]]): ParseHandler[Seq[A]] = {
     input.toList.sequence.map { _.toSeq }

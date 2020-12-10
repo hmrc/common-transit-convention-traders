@@ -133,5 +133,19 @@ class GuaranteeXmlReaders extends ParseHandling {
               }
             }}}})
 
+  val officeOfDeparture: ReaderT[ParseHandler, NodeSeq, DepartureOffice] =
+    ReaderT[ParseHandler, NodeSeq, DepartureOffice](xml => {
+      (xml \ "CUSOFFDEPEPT" \ "RefNumEPT1").text match {
+        case departure if departure.isEmpty =>Left(DepartureEmpty("Departure Empty"))
+        case departure => Right(DepartureOffice(departure))
+      }
+    })
 
+  val officeOfDestination: ReaderT[ParseHandler, NodeSeq, DestinationOffice] =
+    ReaderT[ParseHandler, NodeSeq, DestinationOffice](xml => {
+      (xml \ "CUSOFFDESEST" \ "RefNumEST1").text match {
+        case destination if destination.isEmpty =>Left(DestinationEmpty("Destination Empty"))
+        case destination => Right(DestinationOffice(destination))
+      }
+    })
 }

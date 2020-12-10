@@ -16,8 +16,9 @@
 
 package models
 
-import models.ParseError.{AdditionalInfoInvalidCharacters, AmountStringTooLong, AmountStringInvalid, AmountWithoutCurrency, CurrencyCodeInvalid}
+import models.ParseError.{AdditionalInfoInvalidCharacters, AmountStringInvalid, AmountStringTooLong, CurrencyCodeInvalid}
 
+import scala.util.{Failure, Success, Try}
 import scala.xml.NodeSeq
 
 sealed trait SpecialMention
@@ -33,15 +34,7 @@ final case class SpecialMentionGuarantee(additionalInfo: String) extends Special
       case Right(currencyOpt) => {
         getAmount(additionalInfo, guaranteeReference, currencyOpt) match {
           case Left(error) => Left(error)
-          case Right(amountOpt) =>
-            (amountOpt, currencyOpt) match {
-              case (Some(amount), Some(currency)) =>
-                Right(SpecialMentionGuaranteeDetails(amount, currency, guaranteeReference))
-              case (Some(_), None) =>
-                Left(AmountWithoutCurrency("Parsed Amount value without currency"))
-              case (None, _) =>
-                Right(SpecialMentionGuaranteeDetails(BigDecimal(10000.00), "EUR", guaranteeReference))
-            }
+          case Right(amountOpt) => Right(SpecialMentionGuaranteeDetails(amountOpt, currencyOpt, guaranteeReference))
         }
       }
     }
@@ -75,13 +68,13 @@ final case class SpecialMentionGuarantee(additionalInfo: String) extends Special
       Right(None)
     }
     else if(amountString.length > 18) {
-      Left(AmountStringTooLong("Amount is longer than 18 characters"))
-    }
-    else if(amountString.matches("^[0-9]*\\.[0-9]{2}$")) {
-      Right(Some(BigDecimal(amountString)))
+      Left(AmountStringTooLong("Guarantee amount should be not be longer than 18 characters"))
     }
     else {
-      Left(AmountStringInvalid(s"Invalid String for amount: $amountString $cutIndex $additionalInfo $guaranteeReference $currencyOpt"))
-    }
+      Try(BigDecimal(amountString)) match {
+        case Success(bigDecimal) => Right(Some(bigDecimal))
+        case Failure(_) =>  Left(AmountStringInvalid("The specified amount is not a valid representation of a decimal"))
+      }
+      }
   }
 }

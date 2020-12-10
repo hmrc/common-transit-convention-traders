@@ -17,8 +17,8 @@
 package utils.guaranteeParsing
 
 import com.google.inject.Inject
-import models.ParseError.{GuaranteeAmountZero, GuaranteeNotFound}
-import models.{ChangeGuaranteeInstruction, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, SpecialMention, SpecialMentionGuarantee, SpecialMentionGuaranteeDetails, SpecialMentionOther, TransformInstruction}
+import models.ParseError.{AmountWithoutCurrency, GuaranteeNotFound}
+import models.{ChangeGuaranteeInstruction, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, SpecialMention, SpecialMentionGuarantee, SpecialMentionOther, TransformInstruction}
 
 class InstructionBuilder @Inject()(guaranteeInstructionBuilder: GuaranteeInstructionBuilder) {
 
@@ -38,7 +38,7 @@ class InstructionBuilder @Inject()(guaranteeInstructionBuilder: GuaranteeInstruc
 
   def pair(mention: SpecialMentionGuarantee, guarantees: Seq[Guarantee]): Option[(SpecialMentionGuarantee, Guarantee)] =
     guarantees.filter(g => mention.additionalInfo.endsWith(g.gReference)).headOption match {
-      case Some(guarantee) => Some(mention, guarantee)
+      case Some(guarantee) => Some((mention, guarantee))
       case None => None
     }
 
@@ -46,9 +46,7 @@ class InstructionBuilder @Inject()(guaranteeInstructionBuilder: GuaranteeInstruc
 
 }
 
-class GuaranteeInstructionBuilder @Inject()(defaultGuaranteeApplier: DefaultGuaranteeApplier) {
-
-
+class GuaranteeInstructionBuilder() {
 
   def buildInstructionFromGuarantee(g: Guarantee, sm: SpecialMentionGuarantee): Either[ParseError, TransformInstruction] = {
     if(!Guarantee.referenceTypes.contains(g.gType)) {
@@ -56,9 +54,20 @@ class GuaranteeInstructionBuilder @Inject()(defaultGuaranteeApplier: DefaultGuar
     }
     else
     {
-      defaultGuaranteeApplier.applyDefaultGuarantee(g, sm).map {
-        details => ChangeGuaranteeInstruction(details)
+      sm.toDetails(g.gReference).flatMap {
+        details => (details.guaranteeAmount, details.currencyCode) match {
+          case (Some(_), None) =>
+            Left(AmountWithoutCurrency("Parsed Amount value without currency"))
+          case (Some(_), Some(_)) =>
+            Right(NoChangeGuaranteeInstruction(sm))
+          case (None, _) =>{
+            val defaultGuaranteeAmount = BigDecimal(10000).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()
+            Right(ChangeGuaranteeInstruction(SpecialMentionGuarantee(defaultGuaranteeAmount ++ "EUR" ++ g.gReference)))
+          }
+        }
       }
+
+
     }
   }
 }

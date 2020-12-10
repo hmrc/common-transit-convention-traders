@@ -400,4 +400,34 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
     }
   }
 
+  "officeOfDeparture" - {
+    val emptySample = <example><CUSOFFDEPEPT><RefNumEPT1></RefNumEPT1></CUSOFFDEPEPT></example>
+    val completeSample = <example><CUSOFFDEPEPT><RefNumEPT1>value</RefNumEPT1></CUSOFFDEPEPT></example>
+    "returns DepartureEmpty if RefNumEPT1 is empty" in {
+      val result = sut.officeOfDeparture(emptySample)
+      result mustBe a[Left[DepartureEmpty, _]]
+    }
+
+    "returns the DepartureOffice if RefNumEPT1 has a value" in {
+      val result = sut.officeOfDeparture(completeSample)
+      result mustBe a[Right[_, DepartureOffice]]
+      result.right.get.value mustBe "value"
+    }
+  }
+
+  "officeOfDestination" - {
+    val emptySample = <example><CUSOFFDESEST><RefNumEST1></RefNumEST1></CUSOFFDESEST></example>
+    val completeSample = <example><CUSOFFDESEST><RefNumEST1>value</RefNumEST1></CUSOFFDESEST></example>
+    "returns DestinationEmpty if RefNumEPT1 is empty" in {
+      val result = sut.officeOfDestination(emptySample)
+      result mustBe a[Left[DepartureEmpty, _]]
+    }
+
+    "returns the DestinationOffice if RefNumEPT1 has a value" in {
+      val result = sut.officeOfDestination(completeSample)
+      result mustBe a[Right[_, DestinationOffice]]
+      result.right.get.value mustBe "value"
+    }
+  }
+
 }

@@ -1,12 +1,11 @@
 package services
 
 import connectors.WiremockSuite
-import models.request.{DepartureDeclarationXSD, XSDFile}
+import models.request.DepartureDeclarationXSD
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import utils.guaranteeParsing.GuaranteeXmlReaders
 
 class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks{
 

@@ -18,7 +18,7 @@ package utils.guaranteeParsing
 
 import org.mockito.ArgumentMatchers.any
 import data.TestXml
-import models.ParseError.{GuaranteeAmountZero, GuaranteeNotFound}
+import models.ParseError.{AmountWithoutCurrency, GuaranteeAmountZero, GuaranteeNotFound}
 import models.{ChangeGuaranteeInstruction, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, ParseErrorSpec, SpecialMention, SpecialMentionGuarantee, SpecialMentionGuaranteeDetails, SpecialMentionOther, TransformInstruction, TransformInstructionSet}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
@@ -28,6 +28,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import org.mockito.ArgumentMatchers.any
 
 class InstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAndAfterEach with TestXml with Matchers with ScalaCheckPropertyChecks {
 
@@ -102,8 +103,6 @@ class InstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAn
 
 class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAndAfterEach with TestXml with Matchers with ScalaCheckPropertyChecks {
 
-  val mockDefaultApplier = mock[DefaultGuaranteeApplier]
-
   protected def baseApplicationBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .configure(
@@ -112,21 +111,17 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
 
   override def beforeEach = {
     super.beforeEach()
-    reset(mockDefaultApplier)
   }
 
   def sut: GuaranteeInstructionBuilder = {
     val application = baseApplicationBuilder
-      .overrides(
-        bind[DefaultGuaranteeApplier].toInstance(mockDefaultApplier)
-      )
       .build()
 
     application.injector.instanceOf[GuaranteeInstructionBuilder]
   }
 
   "buildInstructionFromGuarantee" - {
-    "returns Right(NoChangeGuaranteeInstruction) if guarantee type is not in concernedTypes" in {
+    "returns Right(NoChangeGuaranteeInstruction) if guarantee type is not in referenceTypes" in {
       val gTypes = Seq('1', '2', '3', '4', '5', '6', '7')
       val excludedTypes = gTypes.diff(Guarantee.referenceTypes)
 
@@ -136,20 +131,39 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
       }
     }
 
-    "returns ParseError if applyDefaultGuarantee returns one" in {
-      when(mockDefaultApplier.applyDefaultGuarantee(any(), any()))
-        .thenReturn(Left(GuaranteeAmountZero("test")))
-
-      val result = sut.buildInstructionFromGuarantee(Guarantee('0', "alpha"), SpecialMentionGuarantee("100.00EURalphabetacharliedeltaepsilon"))
-      result mustBe a[Left[ParseErrorSpec, _]]
+    "returns Left(AmountWithoutCurrency) if guarantee type is in referenceTypes and there is no currency value" in {
+      Guarantee.referenceTypes.foreach {
+        typeChar =>
+          sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), SpecialMentionGuarantee("100.00alpha")) mustBe a[Left[AmountWithoutCurrency, _]]
+      }
     }
 
-    "returns ChangeGuaranteeInstruction if applyDefaultGuarantee is successful" in {
-      when(mockDefaultApplier.applyDefaultGuarantee(any(), any()))
-        .thenReturn(Right(SpecialMentionGuaranteeDetails(BigDecimal(100.00), "EUR", "test")))
-
-      val result = sut.buildInstructionFromGuarantee(Guarantee('1', "alpha"), SpecialMentionGuarantee("alpha"))
-      result mustBe a[Right[_, ChangeGuaranteeInstruction]]
+    "returns Right(NoChangeGuaranteeInstruction) if guarantee type is in referenceTypes and there is already an amount and currency" in {
+      Guarantee.referenceTypes.foreach {
+        typeChar =>
+          val result = sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), SpecialMentionGuarantee("100.00EURalpha"))
+          result mustBe a[Right[_, NoChangeGuaranteeInstruction]]
+          result.right.get.asInstanceOf[NoChangeGuaranteeInstruction].mention.additionalInfo mustBe "100.00EURalpha"
+      }
     }
+
+    "returns Right(ChangeGuaranteeInstruction) to apply the default guarantee value if guarantee type is in referenceTypes and there is no amount but a currency" in {
+      Guarantee.referenceTypes.foreach {
+        typeChar =>
+          val result = sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), SpecialMentionGuarantee("GBPalpha"))
+          result mustBe a[Right[_, ChangeGuaranteeInstruction]]
+          result.right.get.asInstanceOf[ChangeGuaranteeInstruction].mention.additionalInfo mustBe "10000.00EURalpha"
+      }
+    }
+
+    "returns Right(ChangeGuaranteeInstruction) to apply the default guarantee value if guarantee type is in referenceTypes and there is no amount and no currency" in {
+      Guarantee.referenceTypes.foreach {
+        typeChar =>
+          val result = sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), SpecialMentionGuarantee("alpha"))
+          result mustBe a[Right[_, ChangeGuaranteeInstruction]]
+          result.right.get.asInstanceOf[ChangeGuaranteeInstruction].mention.additionalInfo mustBe "10000.00EURalpha"
+      }
+    }
+
   }
 }
