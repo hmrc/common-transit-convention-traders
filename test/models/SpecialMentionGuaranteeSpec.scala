@@ -34,7 +34,7 @@ class SpecialMentionGuaranteeSpec extends AnyFreeSpec with MockitoSugar with Mat
         .toDetails("test") mustBe a[Left[CurrencyCodeInvalid, _]]
     }
 
-    "returns AmountStringTooLong if is amount value is longer than 15 characters" in {
+    "returns AmountStringTooLong if is amount value is longer than 18 characters" in {
       SpecialMentionGuarantee("12345678901234567890.00EURtest")
         .toDetails("test") mustBe a[Left[AmountStringTooLong, _]]
     }

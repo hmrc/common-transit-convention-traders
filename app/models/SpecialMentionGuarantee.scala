@@ -67,8 +67,8 @@ final case class SpecialMentionGuarantee(additionalInfo: String) extends Special
     {
       Right(None)
     }
-    else if(amountString.length >= 16) {
-      Left(AmountStringTooLong("Guarantee amount should be not be longer than 15 characters"))
+    else if(amountString.length > 18) {
+      Left(AmountStringTooLong("Guarantee amount should be not be longer than 18 characters"))
     }
     else {
       Try(BigDecimal(amountString)) match {
