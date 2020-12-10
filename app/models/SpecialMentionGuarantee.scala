@@ -16,7 +16,7 @@
 
 package models
 
-import models.ParseError.{AdditionalInfoInvalidCharacters, AmountStringTooLong, CurrencyCodeInvalid}
+import models.ParseError.{AdditionalInfoInvalidCharacters, AmountStringInvalid, AmountStringTooLong, CurrencyCodeInvalid}
 
 import scala.util.{Failure, Success, Try}
 import scala.xml.NodeSeq
@@ -68,12 +68,12 @@ final case class SpecialMentionGuarantee(additionalInfo: String) extends Special
       Right(None)
     }
     else if(amountString.length >= 16) {
-      Left(AmountStringTooLong("Amount is longer than 16 characters"))
+      Left(AmountStringTooLong("Guarantee amount should be not be longer than 15 characters"))
     }
     else {
       Try(BigDecimal(amountString)) match {
         case Success(bigDecimal) => Right(Some(bigDecimal))
-        case Failure(_) =>  Left(CurrencyCodeInvalid("Currency Code Invalid"))
+        case Failure(_) =>  Left(AmountStringInvalid("Amount String Invalid"))
       }
       }
   }

@@ -290,8 +290,6 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
 
       val result = service.ensureGuarantee(standardInputXML)
 
-      println(result)
-
       result.right.get.toString().filter(_ > ' ') mustEqual standardExpectedXML.toString().filter(_ > ' ')
 
     }
@@ -301,8 +299,6 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
       val validator = app.injector.instanceOf[XmlValidationService]
 
       val result = service.ensureGuarantee(standardInputXML)
-
-      println(result)
 
       validator.validate(result.right.get.toString().filter(_ > ' '), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
     }

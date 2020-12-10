@@ -30,7 +30,7 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
     routeChecker.gbOnlyCheck(xml) match {
       case Left(error) => Left(error)
       case Right(gbOnly) if gbOnly => Right(xml)
-      case _ =>
+      case Right(_) =>
         parseInstructionSets(xml) match {
           case Left(error) => Left(error)
           case Right(instructionSets) =>
