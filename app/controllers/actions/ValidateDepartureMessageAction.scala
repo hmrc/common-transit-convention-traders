@@ -20,7 +20,7 @@ import javax.inject.Inject
 import models.request.XSDFile
 import play.api.mvc.Results.{BadRequest, NotImplemented}
 import play.api.mvc.{ActionRefiner, Request, Result}
-import services.XmlValidationService
+import services.{XmlError, XmlValidationService}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
@@ -39,17 +39,17 @@ class ValidateDepartureMessageAction @Inject()(xmlValidationService: XmlValidati
               xmlValidationService.validate(body.toString, xsd) match {
                 case Right(_) =>
                   Future.successful(Right(request))
-                case Left(_) =>
-                  Future.successful(Left(BadRequest))
+                case Left(error: XmlError) =>
+                  Future.successful(Left(BadRequest(error.reason)))
               }
             case None =>
               Future.successful(Left(NotImplemented))
           }
         } else {
-          Future.successful(Left(BadRequest))
+          Future.successful(Left(BadRequest(XmlError.RequestBodyEmptyMessage)))
         }
       case _ =>
-        Future.successful(Left(BadRequest))
+        Future.successful(Left(BadRequest(XmlError.RequestBodyInvalidTypeMessage)))
     }
   }
 }
