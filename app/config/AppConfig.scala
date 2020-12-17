@@ -32,4 +32,6 @@ class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig)
   val traderAtDeparturesUrl     = servicesConfig.baseUrl("transits-movements-trader-at-departure")
 
   lazy val enrolmentKey: String = config.get[String]("security.enrolmentKey")
+
+  val messageTranslationFile: String = config.get[String]("message-translation-file")
 }
