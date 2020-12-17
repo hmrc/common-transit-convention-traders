@@ -20,7 +20,7 @@ import scala.xml.Elem
 
 trait TestXml {
 
-  val CC007A = <CC007A>
+  lazy val CC007A = <CC007A>
     <SynIdeMES1>UNOC</SynIdeMES1>
     <SynVerNumMES2>3</SynVerNumMES2>
     <MesRecMES6>NCTS</MesRecMES6>
@@ -54,7 +54,7 @@ trait TestXml {
     </CUSOFFPREOFFRES>
   </CC007A>
 
-  val InvalidCC007A = <CC007A>
+  lazy val InvalidCC007A = <CC007A>
     <SynIdeMES1>UNOC</SynIdeMES1>
     <SynVerNumMES2>3</SynVerNumMES2>
     <MesRecMES6>NCTS</MesRecMES6>
@@ -79,7 +79,7 @@ trait TestXml {
     </CUSOFFPREOFFRES>
   </CC007A>
 
-  val CC007AwithMesSenMES3 = <CC007A>
+  lazy val CC007AwithMesSenMES3 = <CC007A>
     <SynIdeMES1>UNOC</SynIdeMES1>
     <SynVerNumMES2>3</SynVerNumMES2>
     <MesSenMES3>LOCAL-eori</MesSenMES3>
@@ -114,7 +114,7 @@ trait TestXml {
     </CUSOFFPREOFFRES>
   </CC007A>
 
-  val CC014A = <CC014A>
+  lazy val CC014A = <CC014A>
     <SynIdeMES1>tval</SynIdeMES1>
     <SynVerNumMES2>1</SynVerNumMES2>
     <!--Optional:-->
@@ -160,7 +160,7 @@ trait TestXml {
     </CUSOFFDEPEPT>
   </CC014A>
 
-  val InvalidCC014A = <CC014A>
+  lazy val InvalidCC014A = <CC014A>
     <SynIdeMES1>tval</SynIdeMES1>
     <SynVerNumMES2>1</SynVerNumMES2>
     <!--Optional:-->
@@ -195,7 +195,7 @@ trait TestXml {
     <FirAndLasTraMES23>t</FirAndLasTraMES23>
   </CC014A>
 
-  val CC014AwithMesSenMES3 = <CC014A>
+  lazy val CC014AwithMesSenMES3 = <CC014A>
     <SynIdeMES1>tval</SynIdeMES1>
     <SynVerNumMES2>1</SynVerNumMES2>
     <MesSenMES3>111111</MesSenMES3>
@@ -242,7 +242,7 @@ trait TestXml {
     </CUSOFFDEPEPT>
   </CC014A>
 
-  val CC044A =
+  lazy val CC044A =
     <CC044A>
       <SynIdeMES1>tval</SynIdeMES1>
       <SynVerNumMES2>1</SynVerNumMES2>
@@ -402,7 +402,7 @@ trait TestXml {
       </GOOITEGDS>
     </CC044A>
 
-  val CC044AwithMesSenMES3 =
+  lazy val CC044AwithMesSenMES3 =
     <CC044A>
       <SynIdeMES1>tval</SynIdeMES1>
       <SynVerNumMES2>1</SynVerNumMES2>
@@ -563,7 +563,7 @@ trait TestXml {
       </GOOITEGDS>
     </CC044A>
 
-  val InvalidCC044A =
+  lazy val InvalidCC044A =
     <CC044A>
       <SynIdeMES1>tval</SynIdeMES1>
       <SynVerNumMES2>1</SynVerNumMES2>
@@ -713,7 +713,7 @@ trait TestXml {
     </CC044A>
 
 
-    val CC015B = <CC015B>
+    lazy val CC015B = <CC015B>
     <SynIdeMES1>UNOC</SynIdeMES1>
     <SynVerNumMES2>3</SynVerNumMES2>
     <MesRecMES6>NCTS</MesRecMES6>
@@ -833,7 +833,102 @@ trait TestXml {
     </GOOITEGDS>
   </CC015B>
 
-  val CC015BwithMesSenMES3 = <CC015B>
+  lazy val CC015BRequiringDefaultGuarantee = <CC015B>
+    <SynIdeMES1>UNOC</SynIdeMES1>
+    <SynVerNumMES2>3</SynVerNumMES2>
+    <MesRecMES6>NCTS</MesRecMES6>
+    <DatOfPreMES9>20201217</DatOfPreMES9>
+    <TimOfPreMES10>1340</TimOfPreMES10>
+    <IntConRefMES11>17712576475433</IntConRefMES11>
+    <AppRefMES14>NCTS</AppRefMES14>
+    <MesIdeMES19>1</MesIdeMES19>
+    <MesTypMES20>GB015B</MesTypMES20>
+    <HEAHEA>
+      <RefNumHEA4>GUATEST1201217134032</RefNumHEA4>
+      <TypOfDecHEA24>T1</TypOfDecHEA24>
+      <CouOfDesCodHEA30>IT</CouOfDesCodHEA30>
+      <AutLocOfGooCodHEA41>954131533-GB60DEP</AutLocOfGooCodHEA41>
+      <CouOfDisCodHEA55>GB</CouOfDisCodHEA55>
+      <IdeOfMeaOfTraAtDHEA78>NC15 REG</IdeOfMeaOfTraAtDHEA78>
+      <NatOfMeaOfTraAtDHEA80>GB</NatOfMeaOfTraAtDHEA80>
+      <ConIndHEA96>0</ConIndHEA96>
+      <NCTSAccDocHEA601LNG>EN</NCTSAccDocHEA601LNG>
+      <TotNumOfIteHEA305>1</TotNumOfIteHEA305>
+      <TotNumOfPacHEA306>10</TotNumOfPacHEA306>
+      <TotGroMasHEA307>1000</TotGroMasHEA307>
+      <DecDatHEA383>20201217</DecDatHEA383>
+      <DecPlaHEA394>Dover</DecPlaHEA394>
+    </HEAHEA>
+    <TRAPRIPC1>
+      <NamPC17>NCTS UK TEST LAB HMCE</NamPC17>
+      <StrAndNumPC122>11TH FLOOR, ALEX HOUSE, VICTORIA AV</StrAndNumPC122>
+      <PosCodPC123>SS99 1AA</PosCodPC123>
+      <CitPC124>SOUTHEND-ON-SEA, ESSEX</CitPC124>
+      <CouPC125>GB</CouPC125>
+      <TINPC159>GB954131533000</TINPC159>
+    </TRAPRIPC1>
+    <TRACONCO1>
+      <NamCO17>NCTS UK TEST LAB HMCE</NamCO17>
+      <StrAndNumCO122>11TH FLOOR, ALEX HOUSE, VICTORIA AV</StrAndNumCO122>
+      <PosCodCO123>SS99 1AA</PosCodCO123>
+      <CitCO124>SOUTHEND-ON-SEA, ESSEX</CitCO124>
+      <CouCO125>GB</CouCO125>
+      <TINCO159>GB954131533000</TINCO159>
+    </TRACONCO1>
+    <TRACONCE1>
+      <NamCE17>NCTS UK TEST LAB HMCE</NamCE17>
+      <StrAndNumCE122>ITALIAN OFFICE</StrAndNumCE122>
+      <PosCodCE123>IT99 1IT</PosCodCE123>
+      <CitCE124>MILAN</CitCE124>
+      <CouCE125>IT</CouCE125>
+      <TINCE159>IT11ITALIANC11</TINCE159>
+    </TRACONCE1>
+    <CUSOFFDEPEPT>
+      <RefNumEPT1>GB000060</RefNumEPT1>
+    </CUSOFFDEPEPT>
+    <CUSOFFTRARNS>
+      <RefNumRNS1>FR001260</RefNumRNS1>
+      <ArrTimTRACUS085>202012191340</ArrTimTRACUS085>
+    </CUSOFFTRARNS>
+    <CUSOFFDESEST>
+      <RefNumEST1>IT018100</RefNumEST1>
+    </CUSOFFDESEST>
+    <CONRESERS>
+      <ConResCodERS16>A3</ConResCodERS16>
+      <DatLimERS69>20201225</DatLimERS69>
+    </CONRESERS>
+    <SEAINFSLI>
+      <SeaNumSLI2>1</SeaNumSLI2>
+      <SEAIDSID>
+        <SeaIdeSID1>NCTS001</SeaIdeSID1>
+      </SEAIDSID>
+    </SEAINFSLI>
+    <GUAGUA>
+      <GuaTypGUA1>0</GuaTypGUA1>
+      <GUAREFREF>
+        <GuaRefNumGRNREF1>20GB0000010000H72</GuaRefNumGRNREF1>
+        <AccCodREF6>AC01</AccCodREF6>
+      </GUAREFREF>
+    </GUAGUA>
+    <GOOITEGDS>
+      <IteNumGDS7>1</IteNumGDS7>
+      <GooDesGDS23>Wheat</GooDesGDS23>
+      <GooDesGDS23LNG>EN</GooDesGDS23LNG>
+      <GroMasGDS46>1000</GroMasGDS46>
+      <NetMasGDS48>950</NetMasGDS48>
+      <SPEMENMT2>
+        <AddInfMT21>20GB0000010000H72</AddInfMT21>
+        <AddInfCodMT23>CAL</AddInfCodMT23>
+      </SPEMENMT2>
+      <PACGS2>
+        <MarNumOfPacGS21>AB234</MarNumOfPacGS21>
+        <KinOfPacGS23>BX</KinOfPacGS23>
+        <NumOfPacGS24>10</NumOfPacGS24>
+      </PACGS2>
+    </GOOITEGDS>
+  </CC015B>
+
+  lazy val CC015BwithMesSenMES3 = <CC015B>
     <SynIdeMES1>UNOC</SynIdeMES1>
     <SynVerNumMES2>3</SynVerNumMES2>
     <MesSenMES3>nope</MesSenMES3>
@@ -954,7 +1049,7 @@ trait TestXml {
     </GOOITEGDS>
   </CC015B>
 
-  val InvalidCC015B = <CC015B>
+  lazy val InvalidCC015B = <CC015B>
     <SynIdeMES1>UNOC</SynIdeMES1>
     <SynVerNumMES2>3</SynVerNumMES2>
     <MesRecMES6>NCTS</MesRecMES6>
@@ -1074,7 +1169,7 @@ trait TestXml {
     </GOOITEGDS>
   </CC015B>
 
-  val exampleGOOITEGDSSequence =
+  lazy val exampleGOOITEGDSSequence =
     <example>
       <GOOITEGDS>
         <IteNumGDS7>1</IteNumGDS7>
@@ -1099,7 +1194,7 @@ trait TestXml {
       </GOOITEGDS>
     </example>
 
-  val exampleGOOITEGDS = <GOOITEGDS>
+  lazy val exampleGOOITEGDS = <GOOITEGDS>
     <IteNumGDS7>1</IteNumGDS7>
     <SPEMENMT2>
       <AddInfMT21>7000.0EUR07IT00000100000Z1</AddInfMT21>
@@ -1121,7 +1216,7 @@ trait TestXml {
     </SPEMENMT2>
   </GOOITEGDS>
 
-  val exampleGOOITEGDSBadSpecial =
+  lazy val exampleGOOITEGDSBadSpecial =
     <GOOITEGDS>
       <IteNumGDS7>1</IteNumGDS7>
       <SPEMENMT2>
@@ -1159,7 +1254,7 @@ trait TestXml {
       </GUAREFREF>
     </GUAGUA>
 
-  val exampleGuaranteeGuaTypGUA1BadGuaType =
+  lazy val exampleGuaranteeGuaTypGUA1BadGuaType =
     <GUAGUA>
       <GuaTypGUA1>A</GuaTypGUA1>
       <GUAREFREF>
@@ -1167,7 +1262,7 @@ trait TestXml {
       </GUAREFREF>
     </GUAGUA>
 
-  val exampleGuaranteeGuaTypGUA1MissingGuaType =
+  lazy val exampleGuaranteeGuaTypGUA1MissingGuaType =
     <GUAGUA>
       <GuaTypGUA1></GuaTypGUA1>
       <GUAREFREF>
@@ -1175,7 +1270,7 @@ trait TestXml {
       </GUAREFREF>
     </GUAGUA>
 
-  val exampleGuaranteeGuaTypGUA1EmptyReference =
+  lazy val exampleGuaranteeGuaTypGUA1EmptyReference =
     <GUAGUA>
       <GuaTypGUA1></GuaTypGUA1>
       <GUAREFREF>
@@ -1183,25 +1278,25 @@ trait TestXml {
       </GUAREFREF>
     </GUAGUA>
 
-  val exampleGuaranteeSPEMENMT2 =
+  lazy val exampleGuaranteeSPEMENMT2 =
     <SPEMENMT2>
     <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
     <AddInfCodMT23>CAL</AddInfCodMT23>
   </SPEMENMT2>
 
-  val exampleOtherSPEMENMT2 =
+  lazy val exampleOtherSPEMENMT2 =
     <SPEMENMT2>
       <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
       <AddInfCodMT23>Bleep</AddInfCodMT23>
     </SPEMENMT2>
 
-  val exampleAdditionalInfoMissing =
+  lazy val exampleAdditionalInfoMissing =
     <SPEMENMT2>
       <AddInfMT21></AddInfMT21>
       <AddInfCodMT23>Bleep</AddInfCodMT23>
     </SPEMENMT2>
 
-  val exampleCodeMissing =
+  lazy val exampleCodeMissing =
     <SPEMENMT2>
       <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
       <AddInfCodMT23></AddInfCodMT23>

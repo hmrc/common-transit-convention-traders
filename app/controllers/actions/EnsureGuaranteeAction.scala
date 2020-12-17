@@ -18,12 +18,12 @@ package controllers.actions
 
 import com.google.inject.Inject
 import models.request.GuaranteedRequest
+import play.api.mvc.Results.BadRequest
 import play.api.mvc.{ActionRefiner, Request, Result}
+import services.EnsureGuaranteeService
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
-import play.api.mvc.Results.BadRequest
-import services.EnsureGuaranteeService
 
 class EnsureGuaranteeAction @Inject()(ensureGuaranteeService: EnsureGuaranteeService)(
   implicit val executionContext: ExecutionContext)
@@ -33,8 +33,10 @@ class EnsureGuaranteeAction @Inject()(ensureGuaranteeService: EnsureGuaranteeSer
     request.body match {
       case body: NodeSeq if body.nonEmpty =>
           ensureGuaranteeService.ensureGuarantee(body) match {
-            case Left(error) => Future.successful(Left(BadRequest(error.message)))
-            case Right(newBody) => Future.successful(Right(GuaranteedRequest[A](request, newBody)))
+            case Left(error) =>
+              Future.successful(Left(BadRequest(error.message)))
+            case Right(newBody) =>
+              Future.successful(Right(GuaranteedRequest[A](request, newBody, guaranteeAdded = newBody != body)))
           }
       case _ =>
         Future.successful(Left(BadRequest))

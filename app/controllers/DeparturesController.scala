@@ -16,8 +16,7 @@
 
 package controllers
 
-import audit.AuditService
-import audit.AuditType.TenThousandEuroGuaranteeAdded
+import audit.{AuditService, AuditType}
 import connectors.DeparturesConnector
 import controllers.actions.{AuthAction, EnsureGuaranteeAction, ValidateAcceptJsonHeaderAction, ValidateDepartureDeclarationAction}
 import javax.inject.Inject
@@ -37,17 +36,19 @@ class DeparturesController @Inject()(cc: ControllerComponents,
                                      departuresConnector: DeparturesConnector,
                                      validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction,
                                      validateDepartureDeclarationAction: ValidateDepartureDeclarationAction,
-                                     auditService: AuditService,
-                                     ensureGuaranteeAction: EnsureGuaranteeAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper {
+                                     ensureGuaranteeAction: EnsureGuaranteeAction,
+                                     auditService: AuditService)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper {
 
   def submitDeclaration(): Action[NodeSeq] = (authAction andThen validateDepartureDeclarationAction andThen ensureGuaranteeAction).async(parse.xml) {
     implicit request => {
-      auditService.auditEvent(TenThousandEuroGuaranteeAdded, request.newXml)
       departuresConnector.post(request.newXml.toString).map { response => {
         response.status match {
           case status if is2xx(status) =>
             response.header(LOCATION) match {
               case Some(locationValue) =>
+                if (request.guaranteeAdded) {
+                  auditService.auditEvent(AuditType.TenThousandEuroGuaranteeAdded, request.newXml)
+                }
                 Accepted.withHeaders(LOCATION -> routes.DeparturesController.getDeparture(Utils.lastFragment(locationValue)).urlWithContext)
               case _ => InternalServerError
             }
