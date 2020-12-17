@@ -26,10 +26,10 @@ import utils.JsonHelper
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
-class AuditService @Inject()(auditConnector: AuditConnector)(implicit ec: ExecutionContext) {
+class AuditService @Inject()(auditConnector: AuditConnector, jsonHelper: JsonHelper)(implicit ec: ExecutionContext) {
 
   def auditEvent(auditType: AuditType, xmlRequestBody: NodeSeq)(implicit hc: HeaderCarrier): Unit = {
-    val json: JsObject = JsonHelper.convertXmlToJson(xmlRequestBody)
+    val json: JsObject = jsonHelper.convertXmlToJson(xmlRequestBody)
 
     val details = AuditDetails(json)
     auditConnector.sendExplicitAudit(auditType.toString(), Json.toJson(details))
