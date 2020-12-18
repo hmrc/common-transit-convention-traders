@@ -18,13 +18,14 @@ package controllers
 
 import java.time.LocalDateTime
 
+import audit.AuditService
 import connectors.DeparturesConnector
 import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
 import models.domain.{Departure, Departures}
 import models.response.{ResponseDeparture, ResponseDepartures}
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{reset, when}
+import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -47,6 +48,7 @@ import scala.concurrent.Future
 class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
   private val mockDepartureConnector: DeparturesConnector = mock[DeparturesConnector]
   private val mockGuaranteeService: EnsureGuaranteeService = mock[EnsureGuaranteeService]
+  private val mockAuditService: AuditService = mock[AuditService]
 
   when(mockGuaranteeService.ensureGuarantee(any())).thenReturn(Right(CC015B))
 
@@ -54,11 +56,13 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
     .overrides(bind[AuthAction].to[FakeAuthAction])
     .overrides(bind[DeparturesConnector].toInstance(mockDepartureConnector))
     .overrides(bind[EnsureGuaranteeService].toInstance(mockGuaranteeService))
+    .overrides(bind[AuditService].toInstance(mockAuditService))
     .build()
 
   override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockDepartureConnector)
+    reset(mockAuditService)
   }
 
   val sourceDeparture = Departure(123, routes.DeparturesController.getDeparture("123").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("123").urlWithContext, Some("MRN"), "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2))
@@ -71,15 +75,33 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
 
   "POST /movements/departures" - {
 
-    "must return Accepted when successful" in {
-      when(mockDepartureConnector.post(any())(any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123"))) ))
+    "must return Accepted when successful" - {
 
-      val request = fakeRequestDepartures(method = "POST", body = CC015B)
-      val result = route(app, request).value
+      "and create an audit event if the guarantee was changed" in {
+        when(mockDepartureConnector.post(any())(any(), any(), any()))
+          .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123"))) ))
 
-      status(result) mustBe ACCEPTED
-      headers(result) must contain (LOCATION -> routes.DeparturesController.getDeparture("123").urlWithContext)
+        val request = fakeRequestDepartures(method = "POST", body = CC015BRequiringDefaultGuarantee)
+        val result = route(app, request).value
+
+        status(result) mustBe ACCEPTED
+        headers(result) must contain (LOCATION -> routes.DeparturesController.getDeparture("123").urlWithContext)
+
+        verify(mockAuditService, times(1)).auditEvent(any(), any())(any())
+      }
+
+      "and not create an audit event when the guarantee was not changed" in {
+        when(mockDepartureConnector.post(any())(any(), any(), any()))
+          .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123"))) ))
+
+        val request = fakeRequestDepartures(method = "POST", body = CC015B)
+        val result = route(app, request).value
+
+        status(result) mustBe ACCEPTED
+        headers(result) must contain (LOCATION -> routes.DeparturesController.getDeparture("123").urlWithContext)
+
+        verify(mockAuditService, times(0)).auditEvent(any(), any())(any())
+      }
     }
 
     "must return BadRequest when xml includes MesSenMES3" in {
