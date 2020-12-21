@@ -26,9 +26,11 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.{Action, ControllerComponents, DefaultActionBuilder}
+import play.api.libs.json.{JsValue, Json}
+import play.api.mvc.{Action, AnyContent, ControllerComponents, DefaultActionBuilder}
 import play.api.test.Helpers._
 import play.api.test.{FakeHeaders, FakeRequest}
+import services.XmlError
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -49,6 +51,11 @@ class ValidateDepartureMessageActionSpec extends AnyFreeSpec with Matchers with 
       _ =>
         Future.successful(Ok)
     }
+
+    def postContent: Action[AnyContent] = (DefaultActionBuilder.apply(cc.parsers.anyContent) andThen validateMessage).async({
+      _ =>
+        Future.successful(Ok)
+    })
   }
 
   "ValidateDepartureMessageAction" - {
@@ -75,7 +82,10 @@ class ValidateDepartureMessageActionSpec extends AnyFreeSpec with Matchers with 
 
       val result = controller.post()(req)
 
+      val expectedMessage = "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc014a.xsd'. Detailed error below:\ncvc-complex-type.2.4.b: The content of element 'CC014A' is not complete. One of '{HEAHEA}' is expected."
+
       status(result) mustEqual BAD_REQUEST
+      contentAsString(result) mustEqual expectedMessage
     }
 
     "must return BadRequest when passed in an empty request" in {
@@ -89,6 +99,29 @@ class ValidateDepartureMessageActionSpec extends AnyFreeSpec with Matchers with 
       val result = controller.post()(req)
 
       status(result) mustEqual BAD_REQUEST
+      contentAsString(result) mustEqual XmlError.RequestBodyEmptyMessage
+    }
+
+    "must return BadRequest when passed in incorrect request body" in {
+      val validateMessage = app.injector.instanceOf[ValidateDepartureMessageAction]
+      val cc = app.injector.instanceOf[ControllerComponents]
+
+      val controller = new Harness(validateMessage, cc)
+
+      val exampleRequest: JsValue = Json.parse(
+        """{
+          |     "data": {
+          |         "field": "value"
+          |     }
+          | }""".stripMargin
+      )
+
+      val req = FakeRequest(method = "", path = "").withHeaders(FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json"))).withJsonBody(exampleRequest)
+
+      val result = controller.postContent()(req)
+
+      status(result) mustEqual BAD_REQUEST
+      contentAsString(result) mustEqual XmlError.RequestBodyInvalidTypeMessage
     }
 
     "must return NotImplemented when passed in an incorrect XML request" in {

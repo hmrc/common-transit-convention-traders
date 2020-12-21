@@ -20,7 +20,7 @@ import javax.inject.Inject
 import models.request.ArrivalNotificationXSD
 import play.api.mvc.Results.BadRequest
 import play.api.mvc.{ActionRefiner, Request, Result}
-import services.XmlValidationService
+import services.{XmlError, XmlValidationService}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
@@ -36,14 +36,14 @@ class ValidateArrivalNotificationAction @Inject()(xmlValidationService: XmlValid
           xmlValidationService.validate(body.toString, ArrivalNotificationXSD) match {
             case Right(_) =>
               Future.successful(Right(request))
-            case Left(_) =>
-              Future.successful(Left(BadRequest))
+            case Left(error: XmlError) =>
+              Future.successful(Left(BadRequest(error.reason)))
           }
         } else {
-          Future.successful(Left(BadRequest))
+          Future.successful(Left(BadRequest(XmlError.RequestBodyEmptyMessage)))
         }
       case _ =>
-        Future.successful(Left(BadRequest))
+        Future.successful(Left(BadRequest(XmlError.RequestBodyInvalidTypeMessage)))
     }
   }
 }

@@ -50,7 +50,8 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
 
       "with missing mandatory elements" in {
         val xml             = "<CC007A></CC007A>"
-        val expectedMessage = "cvc-complex-type.2.4.b: The content of element 'CC007A' is not complete. One of '{SynIdeMES1}' is expected."
+
+        val expectedMessage = "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc007a.xsd'. Detailed error below:\ncvc-complex-type.2.4.b: The content of element 'CC007A' is not complete. One of '{SynIdeMES1}' is expected."
 
         xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
       }
@@ -64,7 +65,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
             |</CC007A>
           """.stripMargin
 
-        val expectedMessage = "cvc-pattern-valid: Value '11111111111111' is not facet-valid with respect to pattern '[a-zA-Z]{4}' for type 'Alpha_4'."
+        val expectedMessage = "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc007a.xsd'. Detailed error below:\ncvc-pattern-valid: Value '11111111111111' is not facet-valid with respect to pattern '[a-zA-Z]{4}' for type 'Alpha_4'."
 
         xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
       }

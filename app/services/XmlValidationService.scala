@@ -16,15 +16,17 @@
 
 package services
 
+import config.Constants
+
 import java.io._
 import java.net.URL
-
 import javax.xml.parsers.SAXParserFactory
 import javax.xml.validation.Schema
 import models.request.XSDFile
 import org.xml.sax.InputSource
 import org.xml.sax.helpers.DefaultHandler
 import play.api.Logger
+import utils.Utils
 
 import scala.xml.{Elem, SAXParseException, SAXParser}
 import scala.xml.factory.XMLLoader
@@ -75,15 +77,24 @@ class XmlValidationService {
     } catch {
       case e: Throwable =>
         logger.warn(e.getMessage)
-        Left(FailedToValidateXml(e.getMessage))
+        Left(FailedToValidateXml(XmlError.FailedSchemaValidationMessage format (Utils.lastFragment(xsdFile.FilePath), e.getMessage)))
     }
-
 }
 
 sealed trait XmlValid
 
 object XmlSuccessfullyValidated extends XmlValid
 
-sealed trait XmlError
+sealed trait XmlError {
+  val reason: String
+}
+
+object XmlError {
+  val FailedSchemaValidationMessage = "The request has failed schema validation. Please review the required message structure as specified by the XSD file '%s'. Detailed error below:\n%s"
+
+  val RequestBodyEmptyMessage = "The request cannot be processed as it does not contain a request body."
+
+  val RequestBodyInvalidTypeMessage = "The request cannot be processed as it does not contain an XML request body."
+}
 
 case class FailedToValidateXml(reason: String) extends XmlError
