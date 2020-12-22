@@ -19,8 +19,9 @@ package controllers
 import audit.{AuditService, AuditType}
 import connectors.DeparturesConnector
 import controllers.actions.{AuthAction, EnsureGuaranteeAction, ValidateAcceptJsonHeaderAction, ValidateDepartureDeclarationAction}
+
 import javax.inject.Inject
-import models.response.{ResponseDeparture, ResponseDepartures}
+import models.response.{HateaosResponseDeparture, HateaosResponseDepartures}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
@@ -41,7 +42,7 @@ class DeparturesController @Inject()(cc: ControllerComponents,
 
   def submitDeclaration(): Action[NodeSeq] = (authAction andThen validateDepartureDeclarationAction andThen ensureGuaranteeAction).async(parse.xml) {
     implicit request => {
-      departuresConnector.post(request.newXml.toString).map { response => {
+      departuresConnector.post(request.newXml.toString).map { response =>
         response.status match {
           case status if is2xx(status) =>
             response.header(LOCATION) match {
@@ -50,35 +51,35 @@ class DeparturesController @Inject()(cc: ControllerComponents,
                   auditService.auditEvent(AuditType.TenThousandEuroGuaranteeAdded, request.newXml)
                 }
                 Accepted.withHeaders(LOCATION -> routes.DeparturesController.getDeparture(Utils.lastFragment(locationValue)).urlWithContext)
-              case _ => InternalServerError
+              case _ =>
+                InternalServerError
             }
           case _ => handleNon2xx(response)
         }
-      }
-
       }
     }
   }
 
   def getDeparture(departureId: String): Action[AnyContent] = (authAction andThen validateAcceptJsonHeaderAction).async {
-      implicit request => {
-        departuresConnector.get(departureId).map { result =>
-          result match {
-            case Right(departure) => Ok(Json.toJson(ResponseDeparture(departure)))
-            case Left(invalidResponse) => handleNon2xx(invalidResponse)
-          }
-        }
+    implicit request => {
+      departuresConnector.get(departureId).map {
+        case Right(departure) =>
+          Ok(Json.toJson(HateaosResponseDeparture(departure)))
+        case Left(invalidResponse) =>
+          handleNon2xx(invalidResponse)
       }
     }
+  }
 
   def getDeparturesForEori: Action[AnyContent] =
     (authAction andThen validateAcceptJsonHeaderAction).async {
       implicit request => {
         departuresConnector.getForEori.map {
-          case Right(departures) => Ok(Json.toJson(ResponseDepartures(departures.departures.map { departure => ResponseDeparture(departure) })))
-          case Left(invalidResponse) => handleNon2xx(invalidResponse)
+          case Right(departures) =>
+            Ok(Json.toJson(HateaosResponseDepartures(departures)))
+          case Left(invalidResponse) =>
+            handleNon2xx(invalidResponse)
         }
       }
     }
-
 }

@@ -16,10 +16,25 @@
 
 package models.response
 
-import play.api.libs.json.Json
+import controllers.routes
 
-object ResponseArrivals {
-  implicit val format = Json.format[ResponseArrivals]
+import models.domain.Departures
+import play.api.libs.json.{JsObject, Json}
+
+import utils.CallOps._
+
+object HateaosResponseDepartures {
+
+  def apply(departures: Departures): JsObject = {
+    val departureUrl = routes.DeparturesController.getDeparturesForEori().urlWithContext
+
+    Json.obj(
+      "_links" -> Json.arr(
+        Json.obj("self"    -> Json.obj("href" -> departureUrl))
+      ),
+      "_embedded" -> Json.arr(
+        Json.obj("departures"    -> Json.arr(departures.departures.map { x => HateaosResponseDeparture(x)}))
+      )
+    )
+  }
 }
-
-case class ResponseArrivals(arrivals: Seq[ResponseArrival])

@@ -18,8 +18,9 @@ package controllers
 
 import connectors.DepartureMessageConnector
 import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateDepartureMessageAction}
+
 import javax.inject.Inject
-import models.response.{ResponseDepartureWithMessages, ResponseMessage}
+import models.response.{HateaosDepartureResponseMessage, HateaosResponseDepartureWithMessages}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
@@ -55,13 +56,12 @@ class DepartureMessagesController @Inject()(cc: ControllerComponents,
   def getDepartureMessages(departureId: String): Action[AnyContent] =
     (authAction andThen validateAcceptJsonHeaderAction).async {
       implicit request => {
-        messageConnector.getMessages(departureId).map { r =>
-          r match {
-            case Right(d) => {
-              Ok(Json.toJson(ResponseDepartureWithMessages(d)))
-            }
-            case Left(response) => handleNon2xx(response)
+        messageConnector.getMessages(departureId).map {
+          case Right(d) => {
+            Ok(Json.toJson(HateaosResponseDepartureWithMessages(d)))
           }
+          case Left(response) =>
+            handleNon2xx(response)
         }
       }
     }
@@ -69,11 +69,11 @@ class DepartureMessagesController @Inject()(cc: ControllerComponents,
   def getDepartureMessage(departureId: String, messageId: String): Action[AnyContent] =
     (authAction andThen validateAcceptJsonHeaderAction).async {
       implicit request => {
-        messageConnector.get(departureId, messageId).map { r =>
-          r match {
-            case Right(m) => Ok(Json.toJson(ResponseMessage(m, routes.DepartureMessagesController.getDepartureMessage(departureId, messageId))))
-            case Left(response) => handleNon2xx(response)
-          }
+        messageConnector.get(departureId, messageId).map {
+          case Right(m) =>
+            Ok(Json.toJson(HateaosDepartureResponseMessage(departureId, messageId, m)))
+          case Left(response) =>
+            handleNon2xx(response)
         }
       }
     }

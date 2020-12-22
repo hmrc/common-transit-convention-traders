@@ -1,11 +1,10 @@
 package connectors
 
 import java.time.LocalDateTime
-
 import com.github.tomakehurst.wiremock.client.WireMock._
 import controllers.routes
 import models.domain.{Arrival, ArrivalWithMessages, MovementMessage}
-import models.response.ResponseArrival
+import models.response.HateaosResponseArrival
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -42,7 +41,7 @@ class ArrivalMessageConnectorSpec extends AnyFreeSpec with Matchers with Wiremoc
       val connector = app.injector.instanceOf[ArrivalMessageConnector]
       val arrival = Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)
 
-      val response = ResponseArrival(arrival)
+      val response = HateaosResponseArrival(arrival)
       server.stubFor(
         get(
           urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1/messages/1")
@@ -134,7 +133,7 @@ class ArrivalMessageConnectorSpec extends AnyFreeSpec with Matchers with Wiremoc
       val connector = app.injector.instanceOf[ArrivalMessageConnector]
       val arrival = Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)
 
-      val response = ResponseArrival(arrival)
+      val response = HateaosResponseArrival(arrival)
       server.stubFor(
         get(
           urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1/messages")

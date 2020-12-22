@@ -23,7 +23,6 @@ import connectors.DepartureMessageConnector
 import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
 import models.domain.{DepartureWithMessages, MovementMessage}
-import models.response.{ResponseDepartureWithMessages, ResponseMessage}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures
@@ -67,25 +66,121 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
 
   val json = Json.toJson[MovementMessage](sourceMovement)
 
-  val expectedMessage = ResponseMessage(sourceMovement.location, sourceMovement.dateTime, sourceMovement.messageType, sourceMovement.message)
-  val expectedMessageResult = Json.toJson[ResponseMessage](expectedMessage)
-  val expectedDeparture = ResponseDepartureWithMessages(sourceDeparture.location, sourceDeparture.created, sourceDeparture.updated, sourceDeparture.movementReferenceNumber, sourceDeparture.status, Seq(expectedMessage, expectedMessage))
-  val expectedDepartureResult = Json.toJson[ResponseDepartureWithMessages](expectedDeparture)
+  val expectedMessageResult = Json.parse(
+    """
+      |{
+      |  "_links": [
+      |    {
+      |      "self": {
+      |        "href": "/customs/transits/movements/departures/123/messages/4"
+      |      }
+      |    },
+      |    {
+      |      "departure": {
+      |        "href": "/customs/transits/movements/departures/123"
+      |      }
+      |    }
+      |  ],
+      |  "departureId": "123",
+      |  "messageId": "4",
+      |  "received": "2020-02-02T02:02:02",
+      |  "messageType": "IE025",
+      |  "body": "<test>default</test>"
+      |}
+      |""".stripMargin)
+
+  val expectedDepartureResult = Json.parse(
+    """
+      |{
+      |  "_links": [
+      |    {
+      |      "self": {
+      |        "href": "/customs/transits/movements/departures/123/messages"
+      |      }
+      |    }
+      |  ],
+      |  "_embedded": [
+      |    {
+      |      "messages": [
+      |        [
+      |          {
+      |            "_links": [
+      |              {
+      |                "self": {
+      |                  "href": "/customs/transits/movements/departures/123/messages/4"
+      |                }
+      |              },
+      |              {
+      |                "departure": {
+      |                  "href": "/customs/transits/movements/departures/123"
+      |                }
+      |              }
+      |            ],
+      |            "departureId": "123",
+      |            "messageId": "4",
+      |            "received": "2020-02-02T02:02:02",
+      |            "messageType": "IE025",
+      |            "body": "<test>default</test>"
+      |          },
+      |          {
+      |            "_links": [
+      |              {
+      |                "self": {
+      |                  "href": "/customs/transits/movements/departures/123/messages/4"
+      |                }
+      |              },
+      |              {
+      |                "departure": {
+      |                  "href": "/customs/transits/movements/departures/123"
+      |                }
+      |              }
+      |            ],
+      |            "departureId": "123",
+      |            "messageId": "4",
+      |            "received": "2020-02-02T02:02:02",
+      |            "messageType": "IE025",
+      |            "body": "<test>default</test>"
+      |          }
+      |        ]
+      |      ]
+      |    }
+      |  ],
+      |  "departure": {
+      |    "id": "123",
+      |    "created": "2020-02-02T02:02:02",
+      |    "updated": "2020-02-02T02:02:02",
+      |    "movementReferenceNumber": "MRN",
+      |    "status": "status",
+      |    "_links": [
+      |      {
+      |        "self": {
+      |          "href": "/customs/transits/movements/departures/123"
+      |        }
+      |      },
+      |      {
+      |        "messages": {
+      |          "href": "/customs/transits/movements/departures/123/messages"
+      |        }
+      |      }
+      |    ]
+      |  }
+      |}
+      |""".stripMargin)
 
   def fakeRequestMessages[A](method: String, headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), uri: String, body: A) =
     FakeRequest(method = method, uri = uri, headers, body = body)
 
   "GET /movements/departures/:departureId/messages" - {
     "return 200 with body of departure and messages" in {
-        when(mockMessageConnector.getMessages(any())(any(), any(), any()))
-          .thenReturn(Future.successful(Right(sourceDeparture)))
+      when(mockMessageConnector.getMessages(any())(any(), any(), any()))
+        .thenReturn(Future.successful(Right(sourceDeparture)))
 
-        val request = FakeRequest("GET", routes.DepartureMessagesController.getDepartureMessages("123").url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
-        val result = route(app, request).value
+      val request = FakeRequest("GET", routes.DepartureMessagesController.getDepartureMessages("123").url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val result = route(app, request).value
 
-        contentAsString(result) mustEqual expectedDepartureResult.toString()
-        status(result) mustBe OK
-      }
+      contentAsString(result) mustEqual expectedDepartureResult.toString()
+      status(result) mustBe OK
+    }
 
     "return 404 if downstream returns 404" in {
       when(mockMessageConnector.getMessages(any())(any(), any(), any()))

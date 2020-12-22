@@ -23,7 +23,6 @@ import connectors.ArrivalMessageConnector
 import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
 import models.domain.{ArrivalWithMessages, MovementMessage}
-import models.response.{ResponseArrivalWithMessages, ResponseMessage}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures
@@ -67,10 +66,107 @@ class ArrivalMessagesControllerSpec extends AnyFreeSpec with Matchers with Guice
 
   val json = Json.toJson[MovementMessage](sourceMovement)
 
-  val expectedMessage = ResponseMessage(sourceMovement.location, sourceMovement.dateTime, sourceMovement.messageType, sourceMovement.message)
-  val expectedMessageResult = Json.toJson[ResponseMessage](expectedMessage)
-  val expectedArrival = ResponseArrivalWithMessages(sourceArrival.location, sourceArrival.created, sourceArrival.updated, sourceArrival.movementReferenceNumber, sourceArrival.status, Seq(expectedMessage, expectedMessage))
-  val expectedArrivalResult = Json.toJson[ResponseArrivalWithMessages](expectedArrival)
+  val expectedMessageResult = Json.parse(
+    """
+      |{
+      |  "_links": [
+      |    {
+      |      "self": {
+      |        "href": "/customs/transits/movements/arrivals/123/messages/4"
+      |      }
+      |    },
+      |    {
+      |      "arrival": {
+      |        "href": "/customs/transits/movements/arrivals/123"
+      |      }
+      |    }
+      |  ],
+      |  "arrivalId": "123",
+      |  "messageId": "4",
+      |  "received": "2020-02-02T02:02:02",
+      |  "messageType": "IE025",
+      |  "body": "<test>default</test>"
+      |}
+      |""".stripMargin)
+
+
+  val expectedArrivalResult = Json.parse(
+    """
+      |{
+      |  "_links": [
+      |    {
+      |      "self": {
+      |        "href": "/customs/transits/movements/arrivals/123/messages"
+      |      }
+      |    }
+      |  ],
+      |  "_embedded": [
+      |    {
+      |      "messages": [
+      |        [
+      |          {
+      |            "_links": [
+      |              {
+      |                "self": {
+      |                  "href": "/customs/transits/movements/arrivals/123/messages/4"
+      |                }
+      |              },
+      |              {
+      |                "arrival": {
+      |                  "href": "/customs/transits/movements/arrivals/123"
+      |                }
+      |              }
+      |            ],
+      |            "arrivalId": "123",
+      |            "messageId": "4",
+      |            "received": "2020-02-02T02:02:02",
+      |            "messageType": "IE025",
+      |            "body": "<test>default</test>"
+      |          },
+      |          {
+      |            "_links": [
+      |              {
+      |                "self": {
+      |                  "href": "/customs/transits/movements/arrivals/123/messages/4"
+      |                }
+      |              },
+      |              {
+      |                "arrival": {
+      |                  "href": "/customs/transits/movements/arrivals/123"
+      |                }
+      |              }
+      |            ],
+      |            "arrivalId": "123",
+      |            "messageId": "4",
+      |            "received": "2020-02-02T02:02:02",
+      |            "messageType": "IE025",
+      |            "body": "<test>default</test>"
+      |          }
+      |        ]
+      |      ]
+      |    }
+      |  ],
+      |  "arrival": {
+      |    "id": "123",
+      |    "created": "2020-02-02T02:02:02",
+      |    "updated": "2020-02-02T02:02:02",
+      |    "movementReferenceNumber": "MRN",
+      |    "status": "status",
+      |    "_links": [
+      |      {
+      |        "self": {
+      |          "href": "/customs/transits/movements/arrivals/123"
+      |        }
+      |      },
+      |      {
+      |        "messages": {
+      |          "href": "/customs/transits/movements/arrivals/123/messages"
+      |        }
+      |      }
+      |    ]
+      |  }
+      |}
+      |""".stripMargin)
 
   def fakeRequestMessages[A](method: String, headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), uri: String, body: A) =
     FakeRequest(method = method, uri = uri, headers, body = body)
@@ -235,15 +331,16 @@ class ArrivalMessagesControllerSpec extends AnyFreeSpec with Matchers with Guice
 
   "GET /movements/arrivals/:arrivalId/messages" - {
     "return 200 with body of arrival and messages" in {
-        when(mockMessageConnector.getMessages(any())(any(), any(), any()))
-          .thenReturn(Future.successful(Right(sourceArrival)))
+      when(mockMessageConnector.getMessages(any())(any(), any(), any()))
+        .thenReturn(Future.successful(Right(sourceArrival)))
 
-        val request = FakeRequest("GET", routes.ArrivalMessagesController.getArrivalMessages("123").url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
-        val result = route(app, request).value
+      val request = FakeRequest("GET", routes.ArrivalMessagesController.getArrivalMessages("123").url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
 
-        contentAsString(result) mustEqual expectedArrivalResult.toString()
-        status(result) mustBe OK
-      }
+      val result = route(app, request).value
+
+      contentAsString(result) mustEqual expectedArrivalResult.toString()
+      status(result) mustBe OK
+    }
 
     "return 404 if downstream returns 404" in {
       when(mockMessageConnector.getMessages(any())(any(), any(), any()))
