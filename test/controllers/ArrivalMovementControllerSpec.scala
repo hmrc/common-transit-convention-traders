@@ -23,7 +23,6 @@ import connectors.ArrivalConnector
 import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
 import models.domain.{Arrival, Arrivals}
-import models.response.{ResponseArrival, ResponseArrivals}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures
@@ -58,8 +57,29 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
   }
 
   val sourceArrival = Arrival(123, routes.ArrivalMovementController.getArrival("123").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("123").urlWithContext, "MRN", "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2))
-  val expectedArrival = ResponseArrival(sourceArrival)
-  val expectedArrivalResult = Json.toJson[ResponseArrival](expectedArrival)
+
+  val expectedArrivalResult = Json.parse(
+    """
+      |{
+      |  "id": "123",
+      |  "created": "2020-02-02T02:02:02",
+      |  "updated": "2020-02-02T02:02:02",
+      |  "movementReferenceNumber": "MRN",
+      |  "status": "status",
+      |  "_links": [
+      |    {
+      |      "self": {
+      |        "href": "/customs/transits/movements/arrivals/123"
+      |      }
+      |    },
+      |    {
+      |      "messages": {
+      |        "href": "/customs/transits/movements/arrivals/123/messages"
+      |      }
+      |    }
+      |  ]
+      |}
+      |""".stripMargin)
 
   def fakeRequestArrivals[A](method: String, headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), uri: String = routes.ArrivalMovementController.createArrivalNotification().url, body: A) =
     FakeRequest(method = method, uri = uri, headers, body = body)
@@ -305,8 +325,86 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
      val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori.url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value
 
+     val expectedJson = Json.parse(
+       """
+         |{
+         |  "_links": [
+         |    {
+         |      "self": {
+         |        "href": "/customs/transits/movements/arrivals"
+         |      }
+         |    }
+         |  ],
+         |  "_embedded": [
+         |    {
+         |      "arrivals": [
+         |        [
+         |          {
+         |            "id": "123",
+         |            "created": "2020-02-02T02:02:02",
+         |            "updated": "2020-02-02T02:02:02",
+         |            "movementReferenceNumber": "MRN",
+         |            "status": "status",
+         |            "_links": [
+         |              {
+         |                "self": {
+         |                  "href": "/customs/transits/movements/arrivals/123"
+         |                }
+         |              },
+         |              {
+         |                "messages": {
+         |                  "href": "/customs/transits/movements/arrivals/123/messages"
+         |                }
+         |              }
+         |            ]
+         |          },
+         |          {
+         |            "id": "123",
+         |            "created": "2020-02-02T02:02:02",
+         |            "updated": "2020-02-02T02:02:02",
+         |            "movementReferenceNumber": "MRN",
+         |            "status": "status",
+         |            "_links": [
+         |              {
+         |                "self": {
+         |                  "href": "/customs/transits/movements/arrivals/123"
+         |                }
+         |              },
+         |              {
+         |                "messages": {
+         |                  "href": "/customs/transits/movements/arrivals/123/messages"
+         |                }
+         |              }
+         |            ]
+         |          },
+         |          {
+         |            "id": "123",
+         |            "created": "2020-02-02T02:02:02",
+         |            "updated": "2020-02-02T02:02:02",
+         |            "movementReferenceNumber": "MRN",
+         |            "status": "status",
+         |            "_links": [
+         |              {
+         |                "self": {
+         |                  "href": "/customs/transits/movements/arrivals/123"
+         |                }
+         |              },
+         |              {
+         |                "messages": {
+         |                  "href": "/customs/transits/movements/arrivals/123/messages"
+         |                }
+         |              }
+         |            ]
+         |          }
+         |        ]
+         |      ]
+         |    }
+         |  ]
+         |}
+         |""".stripMargin)
+
      status(result) mustBe OK
-     contentAsString(result) mustEqual Json.toJson(ResponseArrivals(Seq(expectedArrival, expectedArrival, expectedArrival))).toString()
+     contentAsString(result) mustEqual expectedJson.toString()
    }
 
    "return 200 with empty list if that is provided" in {
@@ -316,8 +414,27 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
      val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori.url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value
 
+     val expectedJson = Json.parse(
+       """
+         |{
+         |  "_links": [
+         |    {
+         |      "self": {
+         |        "href": "/customs/transits/movements/arrivals"
+         |      }
+         |    }
+         |  ],
+         |  "_embedded": [
+         |    {
+         |      "arrivals": [
+         |        []
+         |      ]
+         |    }
+         |  ]
+         |}""".stripMargin)
+
      status(result) mustBe OK
-     contentAsString(result) mustEqual Json.toJson(ResponseArrivals(Nil)).toString()
+     contentAsString(result) mustEqual expectedJson.toString()
    }
 
    "return 500 for downstream errors" in {

@@ -18,8 +18,10 @@ package controllers
 
 import connectors.ArrivalConnector
 import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateArrivalNotificationAction}
+import models.domain.Arrivals
+
 import javax.inject.Inject
-import models.response.{ResponseArrival, ResponseArrivals}
+import models.response.{HateaosResponseArrival, HateaosResponseArrivals}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
@@ -43,7 +45,7 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
           case status if is2xx(status) =>
             response.header(LOCATION) match {
               case Some(locationValue) =>
-                  Accepted.withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(Utils.lastFragment(locationValue)).urlWithContext)
+                Accepted.withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(Utils.lastFragment(locationValue)).urlWithContext)
               case _ =>
                 InternalServerError
             }
@@ -63,33 +65,33 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
               case _ =>
                 InternalServerError
             }
-          case _ => handleNon2xx(response)
+          case _ =>
+            handleNon2xx(response)
         }
       }
   }
 
   def getArrival(arrivalId: String): Action[AnyContent] =
     (authAction andThen validateAcceptJsonHeaderAction).async {
-    implicit request => {
-      arrivalConnector.get(arrivalId).map { result =>
-          result match {
-            case Right(arrival) => Ok(Json.toJson(ResponseArrival(arrival)))
-            case Left(invalidResponse) => handleNon2xx(invalidResponse)
-          }
-      }
-    }
-  }
-
-  def getArrivalsForEori: Action[AnyContent] =
-    (authAction andThen validateAcceptJsonHeaderAction).async {
       implicit request => {
-        arrivalConnector.getForEori.map { result =>
-          result match {
-            case Right(arrivals) => Ok(Json.toJson(ResponseArrivals(arrivals.arrivals.map { arrival => ResponseArrival(arrival) } ) ) )
-            case Left(invalidResponse) => handleNon2xx(invalidResponse)
-          }
+        arrivalConnector.get(arrivalId).map {
+          case Right(arrival) =>
+            Ok(Json.toJson(HateaosResponseArrival(arrival)))
+          case Left(invalidResponse) =>
+            handleNon2xx(invalidResponse)
         }
       }
     }
 
-  }
+  def getArrivalsForEori: Action[AnyContent] =
+    (authAction andThen validateAcceptJsonHeaderAction).async {
+      implicit request => {
+        arrivalConnector.getForEori.map {
+          case Right(arrivals: Arrivals) =>
+            Ok(Json.toJson(HateaosResponseArrivals(arrivals)))
+          case Left(invalidResponse) =>
+            handleNon2xx(invalidResponse)
+        }
+      }
+    }
+}

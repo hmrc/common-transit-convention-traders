@@ -1,11 +1,10 @@
 package connectors
 
 import java.time.LocalDateTime
-
 import com.github.tomakehurst.wiremock.client.WireMock._
 import controllers.routes
 import models.domain.{Arrival, Arrivals}
-import models.response.{ResponseArrival, ResponseArrivals}
+import models.response.{HateaosResponseArrival, HateaosResponseArrivals}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -153,11 +152,11 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
       val connector = app.injector.instanceOf[ArrivalConnector]
       val arrival = Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)
 
-      val response = ResponseArrival(arrival)
+      val response = HateaosResponseArrival(arrival)
 
       server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1"))
         .willReturn(aResponse().withStatus(OK)
-          .withBody(Json.toJson(response).toString())))
+        .withBody(Json.toJson(response).toString())))
 
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
@@ -232,11 +231,11 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
       val connector = app.injector.instanceOf[ArrivalConnector]
       val arrival = Arrivals(Seq(Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)))
 
-      val response = ResponseArrivals(arrival.arrivals.map { a => ResponseArrival(a) })
+      val response = HateaosResponseArrivals(arrival)
 
       server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/"))
         .willReturn(aResponse().withStatus(OK)
-          .withBody(Json.toJson(response).toString())))
+        .withBody(Json.toJson(response).toString())))
 
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()

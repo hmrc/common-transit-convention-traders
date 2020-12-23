@@ -1,11 +1,10 @@
 package connectors
 
 import java.time.LocalDateTime
-
 import com.github.tomakehurst.wiremock.client.WireMock._
 import controllers.routes
 import models.domain.{Departure, Departures}
-import models.response.{ResponseDeparture, ResponseDepartures}
+import models.response.{HateaosResponseDeparture, HateaosResponseDepartures}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -95,11 +94,11 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
       val connector = app.injector.instanceOf[DeparturesConnector]
       val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now)
 
-      val response = ResponseDeparture(departure)
+      val response = HateaosResponseDeparture(departure)
 
       server.stubFor(get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/1"))
         .willReturn(aResponse().withStatus(OK)
-          .withBody(Json.toJson(response).toString())))
+        .withBody(Json.toJson(response).toString())))
 
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
@@ -174,11 +173,11 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
       val connector = app.injector.instanceOf[DeparturesConnector]
       val departures = Departures(Seq(Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("1"), "status", LocalDateTime.now, LocalDateTime.now)))
 
-      val response = ResponseDepartures(departures.departures.map { a => ResponseDeparture(a) })
+      val response = HateaosResponseDepartures(departures)
 
       server.stubFor(get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/"))
         .willReturn(aResponse().withStatus(OK)
-          .withBody(Json.toJson(response).toString())))
+        .withBody(Json.toJson(response).toString())))
 
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()

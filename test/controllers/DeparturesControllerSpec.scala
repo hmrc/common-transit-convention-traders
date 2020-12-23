@@ -23,7 +23,6 @@ import connectors.DeparturesConnector
 import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
 import models.domain.{Departure, Departures}
-import models.response.{ResponseDeparture, ResponseDepartures}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.concurrent.ScalaFutures
@@ -66,9 +65,106 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
   }
 
   val sourceDeparture = Departure(123, routes.DeparturesController.getDeparture("123").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("123").urlWithContext, Some("MRN"), "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2))
-  val expectedDeparture = ResponseDeparture(sourceDeparture)
-  val expectedDepartureResult = Json.toJson[ResponseDeparture](expectedDeparture)
 
+  val expectedDeparture = Json.parse(
+    """
+      |{
+      |  "_links": [
+      |    {
+      |      "self": {
+      |        "href": "/customs/transits/movements/departures"
+      |      }
+      |    }
+      |  ],
+      |  "_embedded": [
+      |    {
+      |      "departures": [
+      |        [
+      |          {
+      |            "id": "123",
+      |            "created": "2020-02-02T02:02:02",
+      |            "updated": "2020-02-02T02:02:02",
+      |            "movementReferenceNumber": "MRN",
+      |            "status": "status",
+      |            "_links": [
+      |              {
+      |                "self": {
+      |                  "href": "/customs/transits/movements/departures/123"
+      |                }
+      |              },
+      |              {
+      |                "messages": {
+      |                  "href": "/customs/transits/movements/departures/123/messages"
+      |                }
+      |              }
+      |            ]
+      |          },
+      |          {
+      |            "id": "123",
+      |            "created": "2020-02-02T02:02:02",
+      |            "updated": "2020-02-02T02:02:02",
+      |            "movementReferenceNumber": "MRN",
+      |            "status": "status",
+      |            "_links": [
+      |              {
+      |                "self": {
+      |                  "href": "/customs/transits/movements/departures/123"
+      |                }
+      |              },
+      |              {
+      |                "messages": {
+      |                  "href": "/customs/transits/movements/departures/123/messages"
+      |                }
+      |              }
+      |            ]
+      |          },
+      |          {
+      |            "id": "123",
+      |            "created": "2020-02-02T02:02:02",
+      |            "updated": "2020-02-02T02:02:02",
+      |            "movementReferenceNumber": "MRN",
+      |            "status": "status",
+      |            "_links": [
+      |              {
+      |                "self": {
+      |                  "href": "/customs/transits/movements/departures/123"
+      |                }
+      |              },
+      |              {
+      |                "messages": {
+      |                  "href": "/customs/transits/movements/departures/123/messages"
+      |                }
+      |              }
+      |            ]
+      |          }
+      |        ]
+      |      ]
+      |    }
+      |  ]
+      |}""".stripMargin)
+
+  val expectedDepartureResult = Json.parse(
+    """
+      |{
+      |  "id": "123",
+      |  "created": "2020-02-02T02:02:02",
+      |  "updated": "2020-02-02T02:02:02",
+      |  "movementReferenceNumber": "MRN",
+      |  "status": "status",
+      |  "_links": [
+      |    {
+      |      "self": {
+      |        "href": "/customs/transits/movements/departures/123"
+      |      }
+      |    },
+      |    {
+      |      "messages": {
+      |        "href": "/customs/transits/movements/departures/123/messages"
+      |      }
+      |    }
+      |  ]
+      |}
+      |""".stripMargin)
 
   def fakeRequestDepartures[A](method: String, headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), uri: String = routes.DeparturesController.submitDeclaration().url, body: A) =
     FakeRequest(method = method, uri = uri, headers, body = body)
@@ -230,7 +326,7 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
       val result = route(app, request).value
 
       status(result) mustBe OK
-      contentAsString(result) mustEqual Json.toJson(ResponseDepartures(Seq(expectedDeparture, expectedDeparture, expectedDeparture))).toString()
+      contentAsString(result) mustEqual expectedDeparture.toString()
     }
 
     "return 200 with empty list if that is provided" in {
@@ -240,8 +336,27 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
       val request = FakeRequest("GET", routes.DeparturesController.getDeparturesForEori.url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
       val result = route(app, request).value
 
+      val expectedJson = Json.parse(
+        """
+          |{
+          |  "_links": [
+          |    {
+          |      "self": {
+          |        "href": "/customs/transits/movements/departures"
+          |      }
+          |    }
+          |  ],
+          |  "_embedded": [
+          |    {
+          |      "departures": [
+          |        []
+          |      ]
+          |    }
+          |  ]
+          |}""".stripMargin)
+
       status(result) mustBe OK
-      contentAsString(result) mustEqual Json.toJson(ResponseDepartures(Nil)).toString()
+      contentAsString(result) mustEqual expectedJson.toString()
     }
 
     "return 500 for downstream errors" in {

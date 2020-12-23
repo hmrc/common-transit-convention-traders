@@ -16,19 +16,24 @@
 
 package models.response
 
-import java.time.LocalDateTime
-
 import controllers.routes
-import models.domain.Arrival
-import play.api.libs.json.Json
+import models.domain.Arrivals
+import play.api.libs.json.{JsObject, Json}
+
 import utils.CallOps._
-object ResponseArrival {
 
-  implicit val format = Json.format[ResponseArrival]
+object HateaosResponseArrivals {
 
-  def apply(a: Arrival): ResponseArrival = {
-    ResponseArrival(routes.ArrivalMovementController.getArrival(a.arrivalId.toString).urlWithContext, a.created, a.updated, a.movementReferenceNumber, a.status, routes.ArrivalMessagesController.getArrivalMessages(a.arrivalId.toString).urlWithContext)
+  def apply(arrivals: Arrivals): JsObject = {
+    val arrivalUrl = routes.ArrivalMovementController.getArrivalsForEori().urlWithContext
+
+    Json.obj(
+      "_links" -> Json.arr(
+        Json.obj("self"    -> Json.obj("href" -> arrivalUrl))
+      ),
+      "_embedded" -> Json.arr(
+        Json.obj("arrivals"    -> Json.arr(arrivals.arrivals.map { x => HateaosResponseArrival(x)}))
+      )
+    )
   }
 }
-
-case class ResponseArrival(arrival: String, created: LocalDateTime, updated: LocalDateTime, movementReferenceNumber: String, status: String, messages: String)

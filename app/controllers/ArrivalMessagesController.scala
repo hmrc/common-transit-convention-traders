@@ -18,8 +18,9 @@ package controllers
 
 import connectors.ArrivalMessageConnector
 import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateArrivalMessageAction}
+
 import javax.inject.Inject
-import models.response.{ResponseArrivalWithMessages, ResponseMessage}
+import models.response.{HateaosArrivalResponseMessage, HateaosResponseArrivalWithMessages}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
@@ -34,8 +35,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
                                           authAction: AuthAction,
                                           messageConnector: ArrivalMessageConnector,
                                           validateMessageAction: ValidateArrivalMessageAction,
-                                          validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper
-{
+                                          validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper {
 
   def sendMessageDownstream(arrivalId: String): Action[NodeSeq] = (authAction andThen validateMessageAction).async(parse.xml) {
     implicit request =>
@@ -44,7 +44,7 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
           case s if is2xx(s) =>
             response.header(LOCATION) match {
               case Some(locationValue) =>
-                  Accepted.withHeaders(LOCATION -> routes.ArrivalMessagesController.getArrivalMessage(arrivalId, Utils.lastFragment(locationValue)).urlWithContext)
+                Accepted.withHeaders(LOCATION -> routes.ArrivalMessagesController.getArrivalMessage(arrivalId, Utils.lastFragment(locationValue)).urlWithContext)
               case _ =>
                 InternalServerError
             }
@@ -55,26 +55,25 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
 
   def getArrivalMessage(arrivalId: String, messageId: String): Action[AnyContent] =
     (authAction andThen validateAcceptJsonHeaderAction).async {
-    implicit request => {
-      messageConnector.get(arrivalId, messageId).map { r =>
-        r match {
-          case Right(m) => Ok(Json.toJson(ResponseMessage(m, routes.ArrivalMessagesController.getArrivalMessage(arrivalId, messageId))))
-          case Left(response) => handleNon2xx(response)
+      implicit request => {
+        messageConnector.get(arrivalId, messageId).map {
+          case Right(m) =>
+            Ok(Json.toJson(HateaosArrivalResponseMessage(arrivalId, messageId, m)))
+          case Left(response) =>
+            handleNon2xx(response)
         }
       }
     }
-  }
 
   def getArrivalMessages(arrivalId: String): Action[AnyContent] =
     (authAction andThen validateAcceptJsonHeaderAction).async {
       implicit request => {
-          messageConnector.getMessages(arrivalId).map { r =>
-            r match {
-              case Right(a) => {
-                Ok(Json.toJson(ResponseArrivalWithMessages(a)))
-              }
-              case Left(response) => handleNon2xx(response)
+        messageConnector.getMessages(arrivalId).map {
+          case Right(a) => {
+            Ok(Json.toJson(HateaosResponseArrivalWithMessages(a)))
           }
+          case Left(response) =>
+            handleNon2xx(response)
         }
       }
     }
