@@ -32,7 +32,7 @@ class BaseConnector extends HttpErrorFunctions {
     Seq((HeaderNames.CONTENT_TYPE, MimeTypes.XML), channelHeader)
 
   protected val responseHeaders: Seq[(String, String)] =
-    Seq((HeaderNames.CONTENT_TYPE, MimeTypes.JSON))
+    Seq((HeaderNames.CONTENT_TYPE, MimeTypes.JSON), channelHeader)
 
   protected val arrivalRoute = "/transit-movements-trader-at-destination/movements/arrivals/"
 
