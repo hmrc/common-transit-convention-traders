@@ -18,14 +18,14 @@ package controllers
 
 import connectors.ArrivalMessageConnector
 import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateArrivalMessageAction}
+import models.MessageType
 
 import javax.inject.Inject
-import models.response.{HateaosArrivalResponseMessage, HateaosResponseArrivalWithMessages}
+import models.response.{HateaosArrivalMessagesPostResponseMessage, HateaosArrivalResponseMessage, HateaosResponseArrivalWithMessages}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
-import utils.CallOps._
 import utils.{ResponseHelper, Utils}
 
 import scala.concurrent.ExecutionContext
@@ -44,7 +44,17 @@ class ArrivalMessagesController @Inject()(cc: ControllerComponents,
           case s if is2xx(s) =>
             response.header(LOCATION) match {
               case Some(locationValue) =>
-                Accepted.withHeaders(LOCATION -> routes.ArrivalMessagesController.getArrivalMessage(arrivalId, Utils.lastFragment(locationValue)).urlWithContext)
+                MessageType.getMessageType(request.body) match {
+                  case Some(messageType: MessageType) =>
+                    Accepted(Json.toJson(HateaosArrivalMessagesPostResponseMessage(
+                      arrivalId,
+                      Utils.lastFragment(locationValue),
+                      messageType.code,
+                      request.body
+                    )))
+                  case None =>
+                    InternalServerError
+                }
               case _ =>
                 InternalServerError
             }

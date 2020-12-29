@@ -85,6 +85,22 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
     FakeRequest(method = method, uri = uri, headers, body = body)
 
  "POST /movements/arrivals" - {
+   val expectedJson = Json.parse(
+     """
+       |{
+       |  "_links": [
+       |    {
+       |      "self": {
+       |        "href": "/customs/transits/movements/arrivals/123"
+       |      }
+       |    }
+       |  ],
+       |  "arrivalId": "123",
+       |  "messageType": "IE007",
+       |  "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>"
+       |}
+       |""".stripMargin)
+
    "must return Accepted when successful" in {
      when(mockArrivalConnector.post(any())(any(), any(), any()))
        .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123"))) ))
@@ -93,7 +109,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext)
+     contentAsString(result) mustEqual expectedJson.toString()
    }
 
    "must return BadRequest when containing MesSenMES3" in {
@@ -140,8 +156,23 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
      val request = fakeRequestArrivals(method = "POST", body = CC007A)
      val result = route(app, request).value
 
+     val expectedJson = Json.parse(
+       """
+         |{
+         |  "_links": [
+         |    {
+         |      "self": {
+         |        "href": "/customs/transits/movements/arrivals/123-@+*~-31@"
+         |      }
+         |    }
+         |  ],
+         |  "arrivalId": "123-@+*~-31@",
+         |  "messageType": "IE007",
+         |  "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>"
+         |}""".stripMargin)
+
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123-@+*~-31@").urlWithContext)
+     contentAsString(result) mustEqual expectedJson.toString()
    }
 
    "must exclude query string if present in downstream Location header" in {
@@ -152,7 +183,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext)
+     contentAsString(result) mustEqual expectedJson.toString()
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {
@@ -190,6 +221,21 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
 
  "PUT /movements/arrivals/:arrivalId" - {
 
+   val expectedJson = Json.parse(
+     """
+       |{
+       |  "_links": [
+       |    {
+       |      "self": {
+       |        "href": "/customs/transits/movements/arrivals/123"
+       |      }
+       |    }
+       |  ],
+       |  "arrivalId": "123",
+       |  "messageType": "IE007",
+       |  "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>"
+       |}""".stripMargin)
+
    val request = fakeRequestArrivals(method = "PUT", uri = routes.ArrivalMovementController.resubmitArrivalNotification("123").url, body = CC007A)
 
    "must return Accepted when successful" in {
@@ -199,7 +245,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext)
+     contentAsString(result) mustEqual expectedJson.toString()
    }
 
    "must return InternalServerError when unsuccessful" in {
@@ -235,8 +281,24 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
 
      val result = route(app, request).value
 
+     val expectedJson = Json.parse(
+       """
+         |{
+         |  "_links": [
+         |    {
+         |      "self": {
+         |        "href": "/customs/transits/movements/arrivals/123-@+*~-31@"
+         |      }
+         |    }
+         |  ],
+         |  "arrivalId": "123-@+*~-31@",
+         |  "messageType": "IE007",
+         |  "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>"
+         |}
+         |""".stripMargin)
+
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123-@+*~-31@").urlWithContext)
+     contentAsString(result) mustEqual expectedJson.toString()
    }
 
    "must exclude query string if present in downstream Location header" in {
@@ -246,7 +308,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext)
+     contentAsString(result) mustEqual expectedJson.toString()
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {

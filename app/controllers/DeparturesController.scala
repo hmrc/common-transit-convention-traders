@@ -19,14 +19,14 @@ package controllers
 import audit.{AuditService, AuditType}
 import connectors.DeparturesConnector
 import controllers.actions.{AuthAction, EnsureGuaranteeAction, ValidateAcceptJsonHeaderAction, ValidateDepartureDeclarationAction}
+import models.MessageType
 
 import javax.inject.Inject
-import models.response.{HateaosResponseDeparture, HateaosResponseDepartures}
+import models.response.{HateaosDeparturePostResponseMessage, HateaosResponseDeparture, HateaosResponseDepartures}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
-import utils.CallOps._
 import utils.{ResponseHelper, Utils}
 
 import scala.concurrent.ExecutionContext
@@ -50,7 +50,16 @@ class DeparturesController @Inject()(cc: ControllerComponents,
                 if (request.guaranteeAdded) {
                   auditService.auditEvent(AuditType.TenThousandEuroGuaranteeAdded, request.newXml)
                 }
-                Accepted.withHeaders(LOCATION -> routes.DeparturesController.getDeparture(Utils.lastFragment(locationValue)).urlWithContext)
+                MessageType.getMessageType(request.body) match {
+                  case Some(messageType: MessageType) =>
+                    Accepted(Json.toJson(HateaosDeparturePostResponseMessage(
+                      Utils.lastFragment(locationValue),
+                      messageType.code,
+                      request.body
+                    )))
+                  case None =>
+                    InternalServerError
+                }
               case _ =>
                 InternalServerError
             }

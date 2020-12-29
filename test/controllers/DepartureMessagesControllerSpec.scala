@@ -268,6 +268,27 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
   }
 
   "POST /movements/departures/:departureId/messages" - {
+    val expectedJson = Json.parse(
+      """
+        |{
+        |  "_links": [
+        |    {
+        |      "self": {
+        |        "href": "/customs/transits/movements/departures/123/messages/1"
+        |      }
+        |    },
+        |    {
+        |      "departure": {
+        |        "href": "/customs/transits/movements/departures/123"
+        |      }
+        |    }
+        |  ],
+        |  "departureId": "123",
+        |  "messageId": "1",
+        |  "messageType": "IE014",
+        |  "body": "<CC014A>\n    <SynIdeMES1>tval</SynIdeMES1>\n    <SynVerNumMES2>1</SynVerNumMES2>\n    \n    <SenIdeCodQuaMES4>1111</SenIdeCodQuaMES4>\n    <MesRecMES6>111111</MesRecMES6>\n    \n    <RecIdeCodQuaMES7>1111</RecIdeCodQuaMES7>\n    <DatOfPreMES9>20001001</DatOfPreMES9>\n    <TimOfPreMES10>1111</TimOfPreMES10>\n    <IntConRefMES11>111111</IntConRefMES11>\n    \n    <RecRefMES12>111111</RecRefMES12>\n    \n    <RecRefQuaMES13>to</RecRefQuaMES13>\n    \n    <AppRefMES14>token</AppRefMES14>\n    \n    <PriMES15>t</PriMES15>\n    \n    <AckReqMES16>1</AckReqMES16>\n    \n    <ComAgrIdMES17>token</ComAgrIdMES17>\n    \n    <TesIndMES18>1</TesIndMES18>\n    <MesIdeMES19>token</MesIdeMES19>\n    <MesTypMES20>token</MesTypMES20>\n    \n    <ComAccRefMES21>token</ComAccRefMES21>\n    \n    <MesSeqNumMES22>11</MesSeqNumMES22>\n    \n    <FirAndLasTraMES23>t</FirAndLasTraMES23>\n    <HEAHEA>\n      <DocNumHEA5>default</DocNumHEA5>\n      <DatOfCanReqHEA147>20001001</DatOfCanReqHEA147>\n      <CanReaHEA250>default</CanReaHEA250>\n      <CanReaHEA250LNG>ab</CanReaHEA250LNG>\n    </HEAHEA>\n    <TRAPRIPC1>\n    </TRAPRIPC1>\n    <CUSOFFDEPEPT>\n      <RefNumEPT1>default1</RefNumEPT1>\n    </CUSOFFDEPEPT>\n  </CC014A>"
+        |}""".stripMargin)
+
     "must return Accepted when successful" in {
       when(mockMessageConnector.post(any(), any())(any(), any(), any()))
         .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/1"))) ))
@@ -276,7 +297,7 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
       val result = route(app, request).value
 
       status(result) mustBe ACCEPTED
-      headers(result) must contain (LOCATION -> routes.DepartureMessagesController.getDepartureMessage("123", "1").urlWithContext)
+      contentAsString(result) mustEqual expectedJson.toString()
     }
 
     "must return InternalServerError when unsuccessful" in {
@@ -316,19 +337,41 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
       val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC014A)
       val result = route(app, request).value
 
+      val expectedJson = Json.parse(
+        """
+          |{
+          |  "_links": [
+          |    {
+          |      "self": {
+          |        "href": "/customs/transits/movements/departures/123/messages/123-@+*~-31@"
+          |      }
+          |    },
+          |    {
+          |      "departure": {
+          |        "href": "/customs/transits/movements/departures/123"
+          |      }
+          |    }
+          |  ],
+          |  "departureId": "123",
+          |  "messageId": "123-@+*~-31@",
+          |  "messageType": "IE014",
+          |  "body": "<CC014A>\n    <SynIdeMES1>tval</SynIdeMES1>\n    <SynVerNumMES2>1</SynVerNumMES2>\n    \n    <SenIdeCodQuaMES4>1111</SenIdeCodQuaMES4>\n    <MesRecMES6>111111</MesRecMES6>\n    \n    <RecIdeCodQuaMES7>1111</RecIdeCodQuaMES7>\n    <DatOfPreMES9>20001001</DatOfPreMES9>\n    <TimOfPreMES10>1111</TimOfPreMES10>\n    <IntConRefMES11>111111</IntConRefMES11>\n    \n    <RecRefMES12>111111</RecRefMES12>\n    \n    <RecRefQuaMES13>to</RecRefQuaMES13>\n    \n    <AppRefMES14>token</AppRefMES14>\n    \n    <PriMES15>t</PriMES15>\n    \n    <AckReqMES16>1</AckReqMES16>\n    \n    <ComAgrIdMES17>token</ComAgrIdMES17>\n    \n    <TesIndMES18>1</TesIndMES18>\n    <MesIdeMES19>token</MesIdeMES19>\n    <MesTypMES20>token</MesTypMES20>\n    \n    <ComAccRefMES21>token</ComAccRefMES21>\n    \n    <MesSeqNumMES22>11</MesSeqNumMES22>\n    \n    <FirAndLasTraMES23>t</FirAndLasTraMES23>\n    <HEAHEA>\n      <DocNumHEA5>default</DocNumHEA5>\n      <DatOfCanReqHEA147>20001001</DatOfCanReqHEA147>\n      <CanReaHEA250>default</CanReaHEA250>\n      <CanReaHEA250LNG>ab</CanReaHEA250LNG>\n    </HEAHEA>\n    <TRAPRIPC1>\n    </TRAPRIPC1>\n    <CUSOFFDEPEPT>\n      <RefNumEPT1>default1</RefNumEPT1>\n    </CUSOFFDEPEPT>\n  </CC014A>"
+          |}
+          |""".stripMargin)
+
       status(result) mustBe ACCEPTED
-      headers(result) must contain (LOCATION -> routes.DepartureMessagesController.getDepartureMessage("123", "123-@+*~-31@").urlWithContext)
+      contentAsString(result) mustEqual expectedJson.toString()
     }
 
     "must exclude query string if present in downstream Location header" in {
       when(mockMessageConnector.post(any(), any())(any(), any(), any()))
-        .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/123?status=success"))) ))
+        .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/1?status=success"))) ))
 
       val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream("123").url, body = CC014A)
       val result = route(app, request).value
 
       status(result) mustBe ACCEPTED
-      headers(result) must contain (LOCATION -> routes.DepartureMessagesController.getDepartureMessage("123","123").urlWithContext)
+      contentAsString(result) mustEqual expectedJson.toString()
     }
 
     "must return UnsupportedMediaType when Content-Type is JSON" in {

@@ -18,15 +18,15 @@ package controllers
 
 import connectors.ArrivalConnector
 import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateArrivalNotificationAction}
+import models.MessageType
 import models.domain.Arrivals
 
 import javax.inject.Inject
-import models.response.{HateaosResponseArrival, HateaosResponseArrivals}
+import models.response.{HateaosArrivalMovementPostResponseMessage, HateaosResponseArrival, HateaosResponseArrivals}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
-import utils.CallOps._
 import utils.{ResponseHelper, Utils}
 
 import scala.concurrent.ExecutionContext
@@ -44,8 +44,17 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
         response.status match {
           case status if is2xx(status) =>
             response.header(LOCATION) match {
-              case Some(locationValue) =>
-                Accepted.withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(Utils.lastFragment(locationValue)).urlWithContext)
+              case Some(locationValue: String) =>
+                MessageType.getMessageType(request.body) match {
+                  case Some(messageType: MessageType) =>
+                    Accepted(Json.toJson(HateaosArrivalMovementPostResponseMessage(
+                      Utils.lastFragment(locationValue),
+                      messageType.code,
+                      request.body
+                    )))
+                  case None =>
+                    InternalServerError
+                }
               case _ =>
                 InternalServerError
             }
@@ -60,8 +69,17 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
         response.status match {
           case status if is2xx(status) =>
             response.header(LOCATION) match {
-              case Some(locationValue) =>
-                Accepted.withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(Utils.lastFragment(locationValue)).urlWithContext)
+              case Some(locationValue: String) =>
+                MessageType.getMessageType(request.body) match {
+                  case Some(messageType: MessageType) =>
+                    Accepted(Json.toJson(HateaosArrivalMovementPostResponseMessage(
+                      Utils.lastFragment(locationValue),
+                      messageType.code,
+                      request.body
+                    )))
+                  case None =>
+                    InternalServerError
+                }
               case _ =>
                 InternalServerError
             }

@@ -18,14 +18,14 @@ package controllers
 
 import connectors.DepartureMessageConnector
 import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateDepartureMessageAction}
+import models.MessageType
 
 import javax.inject.Inject
-import models.response.{HateaosDepartureResponseMessage, HateaosResponseDepartureWithMessages}
+import models.response.{HateaosDepartureMessagesPostResponseMessage, HateaosDepartureResponseMessage, HateaosResponseDepartureWithMessages}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
-import utils.CallOps._
 import utils.{ResponseHelper, Utils}
 
 import scala.concurrent.ExecutionContext
@@ -44,7 +44,17 @@ class DepartureMessagesController @Inject()(cc: ControllerComponents,
           case s if is2xx(s) =>
             response.header(LOCATION) match {
               case Some(locationValue) =>
-                Accepted.withHeaders(LOCATION -> routes.DepartureMessagesController.getDepartureMessage(departureId, Utils.lastFragment(locationValue)).urlWithContext)
+                MessageType.getMessageType(request.body) match {
+                  case Some(messageType: MessageType) =>
+                    Accepted(Json.toJson(HateaosDepartureMessagesPostResponseMessage(
+                      departureId,
+                      Utils.lastFragment(locationValue),
+                      messageType.code,
+                      request.body
+                    )))
+                  case None =>
+                    InternalServerError
+                }
               case _ =>
                 InternalServerError
             }
