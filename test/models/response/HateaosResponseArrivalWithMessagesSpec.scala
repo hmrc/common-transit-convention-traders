@@ -61,50 +61,51 @@ class HateaosResponseArrivalWithMessagesSpec extends AnyFreeSpec with Matchers w
           |  "_embedded": [
           |    {
           |      "messages": [
-          |        [
-          |          {
-          |            "_links": [
-          |              {
-          |                "self": {
-          |                  "href": "/customs/transits/movements/arrivals/3/messages/1"
-          |                }
-          |              },
-          |              {
-          |                "arrival": {
-          |                  "href": "/customs/transits/movements/arrivals/3"
-          |                }
+          |        {
+          |          "_links": [
+          |            {
+          |              "self": {
+          |                "href": "/customs/transits/movements/arrivals/3/messages/1"
           |              }
-          |            ],
-          |            "arrivalId": "3",
-          |            "messageId": "1",
-          |            "received": "2020-12-12T12:12:15",
-          |            "messageType": "IE007",
-          |            "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>"
+          |            },
+          |            {
+          |              "arrival": {
+          |                "href": "/customs/transits/movements/arrivals/3"
+          |              }
+          |            }
+          |          ],
+          |          "arrivalId": "3",
+          |          "messageId": "1",
+          |          "received": "2020-12-12T12:12:15",
+          |          "messageType": "IE007",
+          |          "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>"
+          |        }
+          |      ]
+          |    },
+          |    {
+          |      "arrival": {
+          |        "id": "3",
+          |        "created": "2020-10-10T10:10:10",
+          |        "updated": "2020-12-12T12:12:12",
+          |        "movementReferenceNumber": "mrn",
+          |        "status": "status",
+          |        "_links": [
+          |          {
+          |            "self": {
+          |              "href": "/customs/transits/movements/arrivals/3"
+          |            }
+          |          },
+          |          {
+          |            "messages": {
+          |              "href": "/customs/transits/movements/arrivals/3/messages"
+          |            }
           |          }
           |        ]
-          |      ]
-          |    }
-          |  ],
-          |  "arrival": {
-          |    "id": "3",
-          |    "created": "2020-10-10T10:10:10",
-          |    "updated": "2020-12-12T12:12:12",
-          |    "movementReferenceNumber": "mrn",
-          |    "status": "status",
-          |    "_links": [
-          |      {
-          |        "self": {
-          |          "href": "/customs/transits/movements/arrivals/3"
-          |        }
-          |      },
-          |      {
-          |        "messages": {
-          |          "href": "/customs/transits/movements/arrivals/3/messages"
-          |        }
           |      }
-          |    ]
-          |  }
-          |}""".stripMargin)
+          |    }
+          |  ]
+          |}
+          |""".stripMargin)
 
       expectedJson mustEqual Json.toJson(result)
     }
@@ -133,31 +134,32 @@ class HateaosResponseArrivalWithMessagesSpec extends AnyFreeSpec with Matchers w
           |  ],
           |  "_embedded": [
           |    {
-          |      "messages": [
-          |        []
-          |      ]
-          |    }
-          |  ],
-          |  "arrival": {
-          |    "id": "3",
-          |    "created": "2020-10-10T10:10:10",
-          |    "updated": "2020-12-12T12:12:12",
-          |    "movementReferenceNumber": "mrn",
-          |    "status": "status",
-          |    "_links": [
-          |      {
-          |        "self": {
-          |          "href": "/customs/transits/movements/arrivals/3"
-          |        }
-          |      },
-          |      {
-          |        "messages": {
-          |          "href": "/customs/transits/movements/arrivals/3/messages"
-          |        }
+          |      "messages": []
+          |    },
+          |    {
+          |      "arrival": {
+          |        "id": "3",
+          |        "created": "2020-10-10T10:10:10",
+          |        "updated": "2020-12-12T12:12:12",
+          |        "movementReferenceNumber": "mrn",
+          |        "status": "status",
+          |        "_links": [
+          |          {
+          |            "self": {
+          |              "href": "/customs/transits/movements/arrivals/3"
+          |            }
+          |          },
+          |          {
+          |            "messages": {
+          |              "href": "/customs/transits/movements/arrivals/3/messages"
+          |            }
+          |          }
+          |        ]
           |      }
-          |    ]
-          |  }
-          |}""".stripMargin)
+          |    }
+          |  ]
+          |}
+          |""".stripMargin)
 
       expectedJson mustEqual Json.toJson(result)
     }

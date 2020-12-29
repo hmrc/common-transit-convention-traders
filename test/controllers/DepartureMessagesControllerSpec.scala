@@ -102,70 +102,69 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
       |  "_embedded": [
       |    {
       |      "messages": [
-      |        [
-      |          {
-      |            "_links": [
-      |              {
-      |                "self": {
-      |                  "href": "/customs/transits/movements/departures/123/messages/4"
-      |                }
-      |              },
-      |              {
-      |                "departure": {
-      |                  "href": "/customs/transits/movements/departures/123"
-      |                }
+      |        {
+      |          "_links": [
+      |            {
+      |              "self": {
+      |                "href": "/customs/transits/movements/departures/123/messages/4"
       |              }
-      |            ],
-      |            "departureId": "123",
-      |            "messageId": "4",
-      |            "received": "2020-02-02T02:02:02",
-      |            "messageType": "IE025",
-      |            "body": "<test>default</test>"
+      |            },
+      |            {
+      |              "departure": {
+      |                "href": "/customs/transits/movements/departures/123"
+      |              }
+      |            }
+      |          ],
+      |          "departureId": "123",
+      |          "messageId": "4",
+      |          "received": "2020-02-02T02:02:02",
+      |          "messageType": "IE025",
+      |          "body": "<test>default</test>"
+      |        },
+      |        {
+      |          "_links": [
+      |            {
+      |              "self": {
+      |                "href": "/customs/transits/movements/departures/123/messages/4"
+      |              }
+      |            },
+      |            {
+      |              "departure": {
+      |                "href": "/customs/transits/movements/departures/123"
+      |              }
+      |            }
+      |          ],
+      |          "departureId": "123",
+      |          "messageId": "4",
+      |          "received": "2020-02-02T02:02:02",
+      |          "messageType": "IE025",
+      |          "body": "<test>default</test>"
+      |        }
+      |      ]
+      |    },
+      |    {
+      |      "departure": {
+      |        "id": "123",
+      |        "created": "2020-02-02T02:02:02",
+      |        "updated": "2020-02-02T02:02:02",
+      |        "movementReferenceNumber": "MRN",
+      |        "status": "status",
+      |        "_links": [
+      |          {
+      |            "self": {
+      |              "href": "/customs/transits/movements/departures/123"
+      |            }
       |          },
       |          {
-      |            "_links": [
-      |              {
-      |                "self": {
-      |                  "href": "/customs/transits/movements/departures/123/messages/4"
-      |                }
-      |              },
-      |              {
-      |                "departure": {
-      |                  "href": "/customs/transits/movements/departures/123"
-      |                }
-      |              }
-      |            ],
-      |            "departureId": "123",
-      |            "messageId": "4",
-      |            "received": "2020-02-02T02:02:02",
-      |            "messageType": "IE025",
-      |            "body": "<test>default</test>"
+      |            "messages": {
+      |              "href": "/customs/transits/movements/departures/123/messages"
+      |            }
       |          }
       |        ]
-      |      ]
-      |    }
-      |  ],
-      |  "departure": {
-      |    "id": "123",
-      |    "created": "2020-02-02T02:02:02",
-      |    "updated": "2020-02-02T02:02:02",
-      |    "movementReferenceNumber": "MRN",
-      |    "status": "status",
-      |    "_links": [
-      |      {
-      |        "self": {
-      |          "href": "/customs/transits/movements/departures/123"
-      |        }
-      |      },
-      |      {
-      |        "messages": {
-      |          "href": "/customs/transits/movements/departures/123/messages"
-      |        }
       |      }
-      |    ]
-      |  }
-      |}
-      |""".stripMargin)
+      |    }
+      |  ]
+      |}""".stripMargin)
 
   def fakeRequestMessages[A](method: String, headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), uri: String, body: A) =
     FakeRequest(method = method, uri = uri, headers, body = body)
