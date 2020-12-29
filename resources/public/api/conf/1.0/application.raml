@@ -47,9 +47,11 @@ traits:
     post:
       displayName: Send an Arrival Notification message
       description: |
-        Send a notification to let the office at destination know that the goods have arrived. This notification will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).
+        Send a notification to let the office at destination know that the goods have arrived.
 
-        The location header in the response will contain a URI and arrival ID for the Arrival Notification. This will allow you to get the message status.
+        This notification will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).
+
+        The response will contain a URI and arrival ID for the Arrival Notification. This will allow you to get the message status.
 
         If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive an HTTP 403 Forbidden status. 
       is: [contentXmlHeader]
@@ -57,21 +59,28 @@ traits:
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
         202:
-          headers:
-            Location:
-              description: The URI to get the Arrival Notification, including an arrival ID and message ID
-              example: /customs/transits/movements/arrivals/123456/messages/1
           body:
-            application/xml:
-              description: Valid XML Payload
+            application/json:
+              description: JSON Payload
               example: |
-                <IE007>
-                </IE007>
+                {
+                  "_links": [
+                    {
+                      "self": {
+                        "href": "/customs/transits/movements/arrivals/1"
+                      }
+                    }
+                  ],
+                  "arrivalId": "1",
+                  "messageType": "IE007",
+                  "body": "<CC007A>...</CC007A>"
+                }
     get:
       displayName: Get all Movement Arrivals
       description: |
-        Get all Movement Arrivals. Any Movement Arrivals more than 28 days old will have been archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
-        You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
+        Get all Movement Arrivals.
+
+        Any Movement Arrivals more than 28 days old will have been archived along with their related messages. Archived movements will return an HTTP 404 Not Found status. You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
       is:
         - headers.acceptHeader
         - acceptHeaderInvalid
@@ -84,22 +93,57 @@ traits:
               description: JSON Payload
               example: |
                 {
-                  "arrivals": [
+                  "_links": [
                     {
-                      "arrival": "/customs/transits/movements/arrivals/1",
-                      "created": "2020-02-04T13:02:00",
-                      "updated": "2020-02-04T13:02:00",
-                      "movementReferenceNumber": "MRN",
-                      "status": "ArrivalSubmitted",
-                      "messages": "/customs/transits/movements/arrivals/1/messages"
-                    },
+                      "self": {
+                        "href": "/customs/transits/movements/arrivals"
+                      }
+                    }
+                  ],
+                  "_embedded": [
                     {
-                      "arrival": "/customs/transits/movements/arrivals/2",
-                      "created": "2020-02-04T13:02:00",
-                      "updated": "2020-02-04T13:02:00",
-                      "movementReferenceNumber": "MRN",
-                      "status": "ArrivalSubmitted",
-                      "messages": "/customs/transits/movements/arrivals/2/messages"
+                      "arrivals": [
+                        [
+                          {
+                            "id": "1",
+                            "created": "2020-02-02T02:02:02",
+                            "updated": "2020-02-02T02:02:02",
+                            "movementReferenceNumber": "MRN",
+                            "status": "ArrivalSubmitted",
+                            "_links": [
+                              {
+                                "self": {
+                                  "href": "/customs/transits/movements/arrivals/1"
+                                }
+                              },
+                              {
+                                "messages": {
+                                  "href": "/customs/transits/movements/arrivals/1/messages"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "id": "2",
+                            "created": "2020-02-02T02:02:02",
+                            "updated": "2020-02-02T02:02:02",
+                            "movementReferenceNumber": "MRN",
+                            "status": "ArrivalSubmitted",
+                            "_links": [
+                              {
+                                "self": {
+                                  "href": "/customs/transits/movements/arrivals/2"
+                                }
+                              },
+                              {
+                                "messages": {
+                                  "href": "/customs/transits/movements/arrivals/2/messages"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      ]
                     }
                   ]
                 }
@@ -116,7 +160,7 @@ traits:
         description: |
           Resubmit an Arrival Notification to let the office at destination know that the goods have arrived. This message will be sent when the goods reach their final destination. It is also called an E_ARR_NOT (IE007).
 
-          The location header in the response will contain an arrival ID for the Arrival Notification. This will allow you to get the message status.
+          The response will contain an arrival ID for the Arrival Notification. This will allow you to get the message status.
 
           If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive an HTTP 403 Forbidden status.
         is: [contentXmlHeader]
@@ -124,10 +168,23 @@ traits:
         securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
         responses:
           202:
-            headers:
-              Location:
-                description: The URI to retrieve the Arrival Notification, including arrival ID
-                example: /customs/transits/movements/arrivals/{arrivalId}
+            body:
+              application/json:
+                description: JSON Payload
+                example: |
+                  {
+                    "_links": [
+                      {
+                        "self": {
+                          "href": "/customs/transits/movements/arrivals/1"
+                        }
+                      }
+                    ],
+                    "arrivalId": "1",
+                    "messageType": "IE007",
+                    "body": "<CC007A>...</CC007A>"
+                  }
+
       get:
         displayName: Get a Movement Arrival for an arrival ID
         description: |
@@ -146,12 +203,23 @@ traits:
                 description: JSON Payload
                 example: |
                   {
-                    "arrival": "/customs/transits/movements/arrivals/1",
-                    "created": "2020-02-04T13:02:00",
-                    "updated": "2020-02-04T13:02:00",
+                    "id": "1",
+                    "created": "2020-02-02T02:02:02",
+                    "updated": "2020-02-02T02:02:02",
                     "movementReferenceNumber": "MRN",
                     "status": "ArrivalSubmitted",
-                    "messages": "/customs/transits/movements/arrivals/1/messages"
+                    "_links": [
+                      {
+                        "self": {
+                          "href": "/customs/transits/movements/arrivals/1"
+                        }
+                      },
+                      {
+                        "messages": {
+                          "href": "/customs/transits/movements/arrivals/1/messages"
+                        }
+                      }
+                    ]
                   }
           404:
             description: When a Movement Arrival does not exist, has been archived or is not available to the EORI number.
@@ -161,21 +229,36 @@ traits:
           description: |
             Send a message to the office at destination. For example, an Unloading Remarks message, otherwise known as E_ULD_REM (IE044), to let them know that the goods have been unloaded.
 
+            The response will contain a URI and message ID for the message related to the Movement Arrival. This will allow you to get the message status.
+
             If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive an HTTP 403 Forbidden status.
           is: [contentXmlHeader]
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
             202:
-              headers:
-                Location:
-                  description: The URI to retrieve the Arrival Notification, including arrival ID
-                  example: /customs/transits/movements/arrivals/123456/messages
               body:
                 application/xml:
-                  description: Valid XML Payload
+                  description: JSON Payload
                   example: |
-                    <IE044>...</IE044>
+                    {
+                      "_links": [
+                        {
+                          "self": {
+                            "href": "/customs/transits/movements/arrivals/1/messages/2"
+                          }
+                        },
+                        {
+                          "arrival": {
+                            "href": "/customs/transits/movements/arrivals/1"
+                          }
+                        }
+                      ],
+                      "arrivalId": "1",
+                      "messageId": "2",
+                      "messageType": "IE044",
+                      "body": "<CC044A>...</CC044A>"
+                    }
         get:
           displayName: Get all messages that relate to a Movement Arrival
           description: |
@@ -194,25 +277,59 @@ traits:
                   description: JSON Payload
                   example: |
                     {
-                      "arrival": "/customs/transits/movements/arrivals/1",
-                      "created": "2020-02-04T13:02:00",
-                      "updated": "2020-02-04T13:02:00",
-                      "movementReferenceNumber": "MRN",
-                      "status": "ArrivalSubmitted",
-                      "messages": [
+                      "_links": [
                         {
-                          "message": "/customs/transits/movements/arrivals/1/messages/1",
-                          "received": "2020-02-04T13:02:00",
-                          "messageType": "IE007",
-                          "body": "<CC007A>...</CC007A>"
-                        },
-                        {
-                          "message": "/customs/transits/movements/arrivals/1/messages/2",
-                          "received": "2020-02-04T13:02:00",
-                          "messageType": "IE007",
-                          "body": "<CC007A>...</CC007A>"
+                          "self": {
+                            "href": "/customs/transits/movements/arrivals/1/messages"
+                          }
                         }
-                      ]
+                      ],
+                      "_embedded": [
+                        {
+                          "messages": [
+                            [
+                              {
+                                "_links": [
+                                  {
+                                    "self": {
+                                      "href": "/customs/transits/movements/arrivals/1/messages/1"
+                                    }
+                                  },
+                                  {
+                                    "arrival": {
+                                      "href": "/customs/transits/movements/arrivals/1"
+                                    }
+                                  }
+                                ],
+                                "arrivalId": "1",
+                                "messageId": "1",
+                                "received": "2020-02-02T02:02:02",
+                                "messageType": "IE007",
+                                "body": "<CC007A></CC007A>"
+                              }
+                            ]
+                          ]
+                        }
+                      ],
+                      "arrival": {
+                        "id": "1",
+                        "created": "2020-02-02T02:02:02",
+                        "updated": "2020-02-02T02:02:02",
+                        "movementReferenceNumber": "MRN",
+                        "status": "ArrivalSubmitted",
+                        "_links": [
+                          {
+                            "self": {
+                              "href": "/customs/transits/movements/arrivals/1"
+                            }
+                          },
+                          {
+                            "messages": {
+                              "href": "/customs/transits/movements/arrivals/1/messages"
+                            }
+                          }
+                        ]
+                      }
                     }
             404:
               description: When the Movement Arrival does not exist, has been archived or is not available to the EORI number.
@@ -241,8 +358,21 @@ traits:
                     description: JSON Payload
                     example: |
                       {
-                        "message": "/customs/transits/movements/arrivals/1/messages/1",
-                        "recieved": "2020-02-04T13:02:00",
+                        "_links": [
+                          {
+                            "self": {
+                              "href": "/customs/transits/movements/arrivals/1/messages/1"
+                            }
+                          },
+                          {
+                            "arrival": {
+                              "href": "/customs/transits/movements/arrivals/1"
+                            }
+                          }
+                        ],
+                        "arrivalId": "1",
+                        "messageId": "1",
+                        "received": "2020-02-02T02:02:02",
                         "messageType": "IE007",
                         "body": "<CC007A>...</CC007A>"
                       }
@@ -254,7 +384,7 @@ traits:
       description: |
         Send a Declaration Data message, to let the office at destination know that the goods are on their way. This notification will be sent when the goods leave the Office of Departure. It is also called an E_DEC_DAT (IE015).
         
-        The location header in the response will contain a URI and departure ID for the Declaration Data. This will allow you to retrieve the submission status.
+        The response will contain a URI and departure ID for the Declaration Data. This will allow you to retrieve the submission status.
 
         If the user is not enrolled for an EORI number, they will receive an HTTP Forbidden Status.
 
@@ -264,21 +394,28 @@ traits:
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
         202:
-          headers:
-            Location:
-              description: The URI to retrieve the Departure Notification, including departure ID
-              example: /customs/transits/movements/departures/123456
           body:
-            application/xml:
-              description: Valid XML Payload
+            application/json:
+              description: JSON Payload
               example: |
-                <IE015>...</IE015>
+                {
+                  "_links": [
+                    {
+                      "self": {
+                        "href": "/customs/transits/movements/departures/1"
+                      }
+                    }
+                  ],
+                  "departureId": "1",
+                  "messageType": "IE015",
+                  "body": "<CC015B>...</CC015B>"
+                }
     get:
       displayName: Get all Movement Departures
       description: |
         Get all Movement Departures sent to the office at departure within 28 days of the goods being released at their final destination. Any movement more than 28 days old will have been archived along with their related messages. Archived Movements will return an HTTP 404 Not Found status.
 
-        You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
+        You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Departure.
       is: 
         - headers.acceptHeader
         - acceptHeaderInvalid
@@ -291,22 +428,57 @@ traits:
               description: JSON Payload
               example: |
                 {
-                  "departures": [
+                  "_links": [
                     {
-                      "departure": "/customs/transits/movements/departures/1",
-                      "created": "2019-09-12T12:22:00",
-                      "updated": "2019-09-12T12:22:00",
-                      "referenceNumber": "RN",
-                      "status": "DepartureSubmitted",
-                      "messages": "/customs/transits/movements/departures/1/messages"
-                    },
+                      "self": {
+                        "href": "/customs/transits/movements/departures"
+                      }
+                    }
+                  ],
+                  "_embedded": [
                     {
-                      "departure": "/customs/transits/movements/departures/2",
-                      "created": "2019-09-12T12:22:00",
-                      "updated": "2019-09-12T12:22:00",
-                      "referenceNumber": "RN",
-                      "status": "DepartureSubmitted",
-                      "messages": "/customs/transits/movements/departures/2/messages"
+                      "departures": [
+                        [
+                          {
+                            "id": "1",
+                            "created": "2020-02-02T02:02:02",
+                            "updated": "2020-02-02T02:02:02",
+                            "referenceNumber": "RN",
+                            "status": "DepartureSubmitted",
+                            "_links": [
+                              {
+                                "self": {
+                                  "href": "/customs/transits/movements/departures/1"
+                                }
+                              },
+                              {
+                                "messages": {
+                                  "href": "/customs/transits/movements/departures/1/messages"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "id": "2",
+                            "created": "2020-02-02T02:02:02",
+                            "updated": "2020-02-02T02:02:02",
+                            "referenceNumber": "RN",
+                            "status": "DepartureSubmitted",
+                            "_links": [
+                              {
+                                "self": {
+                                  "href": "/customs/transits/movements/departures/2"
+                                }
+                              },
+                              {
+                                "messages": {
+                                  "href": "/customs/transits/movements/departures/2/messages"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      ]
                     }
                   ]
                 }
@@ -326,15 +498,26 @@ traits:
           200:
             body:
               application/json:
-                description: JSON departure
+                description: JSON Payload
                 example: |
                   {
-                    "departure": "/customs/transits/movements/departures/1",
-                    "created": "2019-09-12T12:22:00",
-                    "updated": "2019-09-12T12:22:00",
+                    "id": "1",
+                    "created": "2020-02-02T02:02:02",
+                    "updated": "2020-02-02T02:02:02",
                     "referenceNumber": "RN",
                     "status": "DepartureSubmitted",
-                    "messages": "/customs/transits/movements/departures/1/messages"
+                    "_links": [
+                      {
+                        "self": {
+                          "href": "/customs/transits/movements/departures/1"
+                        }
+                      },
+                      {
+                        "messages": {
+                          "href": "/customs/transits/movements/departures/1/messages"
+                        }
+                      }
+                    ]
                   }
 
           404:
@@ -344,21 +527,37 @@ traits:
           displayName: Send a message related to a Movement Departure
           description: |
             Send a message to the office at destination. For example, a Declaration Cancellation request message, otherwise known as E_DEC_CAN (IE014), to let them know that the trader wants to cancel their Declaration Data message (IE015).
-            If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive an HTTP 
+
+            The response will contain a URI and message ID for the message related to a Movement Departure. This will allow you to get the message status.
+
+            If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive an HTTP
           is: [contentXmlHeader]
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
             202:
-              headers:
-                Location:
-                  description: The URI to retrieve the Departure Notification, including arrival ID
-                  example: /customs/transits/movements/departures/123456/messages
               body:
-                application/xml:
-                  description: Valid XML Payload
+                application/json:
+                  description: JSON Payload
                   example: |
-                    <IE0XX>...</IE0XX>
+                    {
+                      "_links": [
+                        {
+                          "self": {
+                            "href": "/customs/transits/movements/departures/1/messages/2"
+                          }
+                        },
+                        {
+                          "departure": {
+                            "href": "/customs/transits/movements/departures/1"
+                          }
+                        }
+                      ],
+                      "departureId": "1",
+                      "messageId": "2",
+                      "messageType": "IE014",
+                      "body": "<CC014A>...</CC014A>"
+                    }
         get:
           displayName: Get all messages relating to a Movement Departure
           description: |
@@ -377,25 +576,59 @@ traits:
                   description: JSON Payload
                   example: |
                     {
-                      "departure": "/customs/transits/movements/departures/1",
-                      "created": "2019-09-12T12:22:00",
-                      "updated": "2019-09-12T12:22:00",
-                      "referenceNumber": "RN",
-                      "status": "DepartureSubmitted",
-                      "messages": [
+                      "_links": [
                         {
-                          "message": "/customs/transits/movements/departures/1/messages/1",
-                          "received": "2019-09-12T12:22:00",
-                          "messageType": "IE015",
-                          "body": "<CC015B>...</CC015B>"
-                        },
-                        {
-                          "message": "/customs/transits/movements/departures/1/messages/2",
-                          "received": "2019-09-12T12:22:00",
-                          "messageType": "IE015",
-                          "body": "<CC015B>...</CC015B>"
+                          "self": {
+                            "href": "/customs/transits/movements/departures/1/messages"
+                          }
                         }
-                      ]
+                      ],
+                      "_embedded": [
+                        {
+                          "messages": [
+                            [
+                              {
+                                "_links": [
+                                  {
+                                    "self": {
+                                      "href": "/customs/transits/movements/departures/1/messages/1"
+                                    }
+                                  },
+                                  {
+                                    "departure": {
+                                      "href": "/customs/transits/movements/departures/1"
+                                    }
+                                  }
+                                ],
+                                "departureId": "1",
+                                "messageId": "1",
+                                "received": "2020-02-02T02:02:02",
+                                "messageType": "IE015",
+                                "body": "<CC015B>...</CC015B>"
+                              }
+                            ]
+                          ]
+                        }
+                      ],
+                      "departure": {
+                        "id": "1",
+                        "created": "2020-02-02T02:02:02",
+                        "updated": "2020-02-02T02:02:02",
+                        "referenceNumber": "RN",
+                        "status": "DepartureSubmitted",
+                        "_links": [
+                          {
+                            "self": {
+                              "href": "/customs/transits/movements/departures/1"
+                            }
+                          },
+                          {
+                            "messages": {
+                              "href": "/customs/transits/movements/departures/1/messages"
+                            }
+                          }
+                        ]
+                      }
                     }
             404:
               description: When the movement does not exist, has been archived or is not available to the EORI number.
@@ -418,10 +651,23 @@ traits:
                     description: JSON Payload
                     example: |
                       {
-                        "message": "/customs/transits/movements/departures/1/messages/1",
-                        "received": "2019-09-12T12:22:00",
+                        "_links": [
+                          {
+                            "self": {
+                              "href": "/customs/transits/movements/departures/1/messages/1"
+                            }
+                          },
+                          {
+                            "departure": {
+                              "href": "/customs/transits/movements/departures/1"
+                            }
+                          }
+                        ],
+                        "departureId": "1",
+                        "messageId": "1",
+                        "received": "2020-02-02T02:02:02",
                         "messageType": "IE015",
-                        "body": "<CC015B></CC015B>"
+                        "body": "<CC015B>...</CC015B>"
                       }
               404:
                 description: When message does not exist, has been archived or is not available to the EORI number.
