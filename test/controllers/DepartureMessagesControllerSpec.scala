@@ -297,6 +297,7 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
 
       status(result) mustBe ACCEPTED
       contentAsString(result) mustEqual expectedJson.toString()
+      headers(result) must contain (LOCATION -> routes.DepartureMessagesController.getDepartureMessage("123", "1").urlWithContext)
     }
 
     "must return InternalServerError when unsuccessful" in {
@@ -360,6 +361,7 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
 
       status(result) mustBe ACCEPTED
       contentAsString(result) mustEqual expectedJson.toString()
+      headers(result) must contain (LOCATION -> routes.DepartureMessagesController.getDepartureMessage("123", "123-@+*~-31@").urlWithContext)
     }
 
     "must exclude query string if present in downstream Location header" in {
@@ -371,6 +373,7 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
 
       status(result) mustBe ACCEPTED
       contentAsString(result) mustEqual expectedJson.toString()
+      headers(result) must contain (LOCATION -> routes.DepartureMessagesController.getDepartureMessage("123","1").urlWithContext)
     }
 
     "must return UnsupportedMediaType when Content-Type is JSON" in {

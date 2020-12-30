@@ -110,6 +110,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
 
      status(result) mustBe ACCEPTED
      contentAsString(result) mustEqual expectedJson.toString()
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext)
    }
 
    "must return BadRequest when containing MesSenMES3" in {
@@ -173,6 +174,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
 
      status(result) mustBe ACCEPTED
      contentAsString(result) mustEqual expectedJson.toString()
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123-@+*~-31@").urlWithContext)
    }
 
    "must exclude query string if present in downstream Location header" in {
@@ -184,6 +186,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
 
      status(result) mustBe ACCEPTED
      contentAsString(result) mustEqual expectedJson.toString()
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext)
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {
@@ -246,6 +249,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
 
      status(result) mustBe ACCEPTED
      contentAsString(result) mustEqual expectedJson.toString()
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext)
    }
 
    "must return InternalServerError when unsuccessful" in {
@@ -299,6 +303,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
 
      status(result) mustBe ACCEPTED
      contentAsString(result) mustEqual expectedJson.toString()
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123-@+*~-31@").urlWithContext)
    }
 
    "must exclude query string if present in downstream Location header" in {
@@ -309,6 +314,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
 
      status(result) mustBe ACCEPTED
      contentAsString(result) mustEqual expectedJson.toString()
+     headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext)
    }
 
    "must return UnsupportedMediaType when Content-Type is JSON" in {
