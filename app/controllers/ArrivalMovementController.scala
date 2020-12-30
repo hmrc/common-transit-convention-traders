@@ -27,6 +27,7 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import utils.CallOps._
 import utils.{ResponseHelper, Utils}
 
 import scala.concurrent.ExecutionContext
@@ -47,11 +48,12 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
               case Some(locationValue: String) =>
                 MessageType.getMessageType(request.body) match {
                   case Some(messageType: MessageType) =>
+                    val arrivalId = Utils.lastFragment(locationValue)
                     Accepted(Json.toJson(HateaosArrivalMovementPostResponseMessage(
-                      Utils.lastFragment(locationValue),
+                      arrivalId,
                       messageType.code,
                       request.body
-                    )))
+                    ))).withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext)
                   case None =>
                     InternalServerError
                 }
@@ -72,11 +74,12 @@ class ArrivalMovementController @Inject()(cc: ControllerComponents,
               case Some(locationValue: String) =>
                 MessageType.getMessageType(request.body) match {
                   case Some(messageType: MessageType) =>
+                    val arrivalId = Utils.lastFragment(locationValue)
                     Accepted(Json.toJson(HateaosArrivalMovementPostResponseMessage(
-                      Utils.lastFragment(locationValue),
+                      arrivalId,
                       messageType.code,
                       request.body
-                    )))
+                    ))).withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext)
                   case None =>
                     InternalServerError
                 }

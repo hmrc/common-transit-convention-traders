@@ -255,6 +255,7 @@ class ArrivalMessagesControllerSpec extends AnyFreeSpec with Matchers with Guice
 
       status(result) mustBe ACCEPTED
       contentAsString(result) mustEqual expectedJson.toString()
+      headers(result) must contain (LOCATION -> routes.ArrivalMessagesController.getArrivalMessage("123", "1").urlWithContext)
     }
 
     "must return BadRequest when xml includes MesSenMES3" in {
@@ -325,6 +326,7 @@ class ArrivalMessagesControllerSpec extends AnyFreeSpec with Matchers with Guice
 
       status(result) mustBe ACCEPTED
       contentAsString(result) mustEqual expectedJson.toString()
+      headers(result) must contain (LOCATION -> routes.ArrivalMessagesController.getArrivalMessage("123", "123-@+*~-31@").urlWithContext)
     }
 
     "must exclude query string if present in downstream Location header" in {
@@ -357,6 +359,7 @@ class ArrivalMessagesControllerSpec extends AnyFreeSpec with Matchers with Guice
 
       status(result) mustBe ACCEPTED
       contentAsString(result) mustEqual expectedJson.toString()
+      headers(result) must contain (LOCATION -> routes.ArrivalMessagesController.getArrivalMessage("123","123").urlWithContext)
     }
 
     "must return UnsupportedMediaType when Content-Type is JSON" in {

@@ -196,6 +196,7 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
 
         status(result) mustBe ACCEPTED
         contentAsString(result) mustEqual expectedJson.toString()
+        headers(result) must contain (LOCATION -> routes.DeparturesController.getDeparture("123").urlWithContext)
 
         verify(mockAuditService, times(1)).auditEvent(any(), any())(any())
       }
@@ -224,6 +225,8 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
 
         status(result) mustBe ACCEPTED
         contentAsString(result) mustEqual expectedJson.toString()
+        headers(result) must contain (LOCATION -> routes.DeparturesController.getDeparture("123").urlWithContext)
+
         verify(mockAuditService, times(0)).auditEvent(any(), any())(any())
       }
     }
@@ -281,6 +284,7 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
 
       status(result) mustBe ACCEPTED
       contentAsString(result) mustEqual expectedJson.toString()
+      headers(result) must contain (LOCATION -> routes.DeparturesController.getDeparture("123-@+*~-31@").urlWithContext)
     }
 
     "must exclude query string if present in downstream location header" in {
@@ -307,6 +311,7 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
 
       status(result) mustBe ACCEPTED
       contentAsString(result) mustEqual expectedJson.toString()
+      headers(result) must contain (LOCATION -> routes.DeparturesController.getDeparture("123").urlWithContext)
     }
 
     "must return UnsupportedMediaType when Content-Type is JSON" in {
