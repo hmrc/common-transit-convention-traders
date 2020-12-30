@@ -79,69 +79,68 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
       |  "_embedded": [
       |    {
       |      "departures": [
-      |        [
-      |          {
-      |            "id": "123",
-      |            "created": "2020-02-02T02:02:02",
-      |            "updated": "2020-02-02T02:02:02",
-      |            "movementReferenceNumber": "MRN",
-      |            "status": "status",
-      |            "_links": [
-      |              {
-      |                "self": {
-      |                  "href": "/customs/transits/movements/departures/123"
-      |                }
-      |              },
-      |              {
-      |                "messages": {
-      |                  "href": "/customs/transits/movements/departures/123/messages"
-      |                }
+      |        {
+      |          "id": "123",
+      |          "created": "2020-02-02T02:02:02",
+      |          "updated": "2020-02-02T02:02:02",
+      |          "movementReferenceNumber": "MRN",
+      |          "status": "status",
+      |          "_links": [
+      |            {
+      |              "self": {
+      |                "href": "/customs/transits/movements/departures/123"
       |              }
-      |            ]
-      |          },
-      |          {
-      |            "id": "123",
-      |            "created": "2020-02-02T02:02:02",
-      |            "updated": "2020-02-02T02:02:02",
-      |            "movementReferenceNumber": "MRN",
-      |            "status": "status",
-      |            "_links": [
-      |              {
-      |                "self": {
-      |                  "href": "/customs/transits/movements/departures/123"
-      |                }
-      |              },
-      |              {
-      |                "messages": {
-      |                  "href": "/customs/transits/movements/departures/123/messages"
-      |                }
+      |            },
+      |            {
+      |              "messages": {
+      |                "href": "/customs/transits/movements/departures/123/messages"
       |              }
-      |            ]
-      |          },
-      |          {
-      |            "id": "123",
-      |            "created": "2020-02-02T02:02:02",
-      |            "updated": "2020-02-02T02:02:02",
-      |            "movementReferenceNumber": "MRN",
-      |            "status": "status",
-      |            "_links": [
-      |              {
-      |                "self": {
-      |                  "href": "/customs/transits/movements/departures/123"
-      |                }
-      |              },
-      |              {
-      |                "messages": {
-      |                  "href": "/customs/transits/movements/departures/123/messages"
-      |                }
+      |            }
+      |          ]
+      |        },
+      |        {
+      |          "id": "123",
+      |          "created": "2020-02-02T02:02:02",
+      |          "updated": "2020-02-02T02:02:02",
+      |          "movementReferenceNumber": "MRN",
+      |          "status": "status",
+      |          "_links": [
+      |            {
+      |              "self": {
+      |                "href": "/customs/transits/movements/departures/123"
       |              }
-      |            ]
-      |          }
-      |        ]
+      |            },
+      |            {
+      |              "messages": {
+      |                "href": "/customs/transits/movements/departures/123/messages"
+      |              }
+      |            }
+      |          ]
+      |        },
+      |        {
+      |          "id": "123",
+      |          "created": "2020-02-02T02:02:02",
+      |          "updated": "2020-02-02T02:02:02",
+      |          "movementReferenceNumber": "MRN",
+      |          "status": "status",
+      |          "_links": [
+      |            {
+      |              "self": {
+      |                "href": "/customs/transits/movements/departures/123"
+      |              }
+      |            },
+      |            {
+      |              "messages": {
+      |                "href": "/customs/transits/movements/departures/123/messages"
+      |              }
+      |            }
+      |          ]
+      |        }
       |      ]
       |    }
       |  ]
-      |}""".stripMargin)
+      |}
+      |""".stripMargin)
 
   val expectedDepartureResult = Json.parse(
     """
@@ -407,12 +406,11 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
           |  ],
           |  "_embedded": [
           |    {
-          |      "departures": [
-          |        []
-          |      ]
+          |      "departures": []
           |    }
           |  ]
-          |}""".stripMargin)
+          |}
+          |""".stripMargin)
 
       status(result) mustBe OK
       contentAsString(result) mustEqual expectedJson.toString()

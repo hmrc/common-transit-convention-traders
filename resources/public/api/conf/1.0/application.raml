@@ -103,46 +103,25 @@ traits:
                   "_embedded": [
                     {
                       "arrivals": [
-                        [
-                          {
-                            "id": "1",
-                            "created": "2020-02-02T02:02:02",
-                            "updated": "2020-02-02T02:02:02",
-                            "movementReferenceNumber": "MRN",
-                            "status": "ArrivalSubmitted",
-                            "_links": [
-                              {
-                                "self": {
-                                  "href": "/customs/transits/movements/arrivals/1"
-                                }
-                              },
-                              {
-                                "messages": {
-                                  "href": "/customs/transits/movements/arrivals/1/messages"
-                                }
+                        {
+                          "id": "1",
+                          "created": "2020-02-04T13:02",
+                          "updated": "2020-12-29T20:09",
+                          "movementReferenceNumber": "MRN",
+                          "status": "ArrivalSubmitted",
+                          "_links": [
+                            {
+                              "self": {
+                                "href": "/customs/transits/movements/arrivals/1"
                               }
-                            ]
-                          },
-                          {
-                            "id": "2",
-                            "created": "2020-02-02T02:02:02",
-                            "updated": "2020-02-02T02:02:02",
-                            "movementReferenceNumber": "MRN",
-                            "status": "ArrivalSubmitted",
-                            "_links": [
-                              {
-                                "self": {
-                                  "href": "/customs/transits/movements/arrivals/2"
-                                }
-                              },
-                              {
-                                "messages": {
-                                  "href": "/customs/transits/movements/arrivals/2/messages"
-                                }
+                            },
+                            {
+                              "messages": {
+                                "href": "/customs/transits/movements/arrivals/1/messages"
                               }
-                            ]
-                          }
-                        ]
+                            }
+                          ]
+                        }
                       ]
                     }
                   ]
@@ -238,7 +217,7 @@ traits:
           responses:
             202:
               body:
-                application/xml:
+                application/json:
                   description: JSON Payload
                   example: |
                     {
@@ -287,49 +266,49 @@ traits:
                       "_embedded": [
                         {
                           "messages": [
-                            [
-                              {
-                                "_links": [
-                                  {
-                                    "self": {
-                                      "href": "/customs/transits/movements/arrivals/1/messages/1"
-                                    }
-                                  },
-                                  {
-                                    "arrival": {
-                                      "href": "/customs/transits/movements/arrivals/1"
-                                    }
+                            {
+                              "_links": [
+                                {
+                                  "self": {
+                                    "href": "/customs/transits/movements/arrivals/1/messages/1"
                                   }
-                                ],
-                                "arrivalId": "1",
-                                "messageId": "1",
-                                "received": "2020-02-02T02:02:02",
-                                "messageType": "IE007",
-                                "body": "<CC007A></CC007A>"
+                                },
+                                {
+                                  "arrival": {
+                                    "href": "/customs/transits/movements/arrivals/1"
+                                  }
+                                }
+                              ],
+                              "arrivalId": "1",
+                              "messageId": "1",
+                              "received": "2020-02-04T13:02:00",
+                              "messageType": "IE007",
+                              "body": "<CC007A>...</CC007A>"
+                            }
+                          ]
+                        },
+                        {
+                          "arrival": {
+                            "id": "1",
+                            "created": "2020-02-04T13:02",
+                            "updated": "2020-12-29T20:09",
+                            "movementReferenceNumber": "MRN",
+                            "status": "ArrivalSubmitted",
+                            "_links": [
+                              {
+                                "self": {
+                                  "href": "/customs/transits/movements/arrivals/1"
+                                }
+                              },
+                              {
+                                "messages": {
+                                  "href": "/customs/transits/movements/arrivals/1/messages"
+                                }
                               }
                             ]
-                          ]
-                        }
-                      ],
-                      "arrival": {
-                        "id": "1",
-                        "created": "2020-02-02T02:02:02",
-                        "updated": "2020-02-02T02:02:02",
-                        "movementReferenceNumber": "MRN",
-                        "status": "ArrivalSubmitted",
-                        "_links": [
-                          {
-                            "self": {
-                              "href": "/customs/transits/movements/arrivals/1"
-                            }
-                          },
-                          {
-                            "messages": {
-                              "href": "/customs/transits/movements/arrivals/1/messages"
-                            }
                           }
-                        ]
-                      }
+                        }
+                      ]
                     }
             404:
               description: When the Movement Arrival does not exist, has been archived or is not available to the EORI number.
@@ -438,46 +417,25 @@ traits:
                   "_embedded": [
                     {
                       "departures": [
-                        [
-                          {
-                            "id": "1",
-                            "created": "2020-02-02T02:02:02",
-                            "updated": "2020-02-02T02:02:02",
-                            "referenceNumber": "RN",
-                            "status": "DepartureSubmitted",
-                            "_links": [
-                              {
-                                "self": {
-                                  "href": "/customs/transits/movements/departures/1"
-                                }
-                              },
-                              {
-                                "messages": {
-                                  "href": "/customs/transits/movements/departures/1/messages"
-                                }
+                        {
+                          "id": "1",
+                          "created": "2020-02-04T13:02",
+                          "updated": "2020-12-29T20:09",
+                          "referenceNumber": "RN",
+                          "status": "DepartureSubmitted",
+                          "_links": [
+                            {
+                              "self": {
+                                "href": "/customs/transits/movements/departures/1"
                               }
-                            ]
-                          },
-                          {
-                            "id": "2",
-                            "created": "2020-02-02T02:02:02",
-                            "updated": "2020-02-02T02:02:02",
-                            "referenceNumber": "RN",
-                            "status": "DepartureSubmitted",
-                            "_links": [
-                              {
-                                "self": {
-                                  "href": "/customs/transits/movements/departures/2"
-                                }
-                              },
-                              {
-                                "messages": {
-                                  "href": "/customs/transits/movements/departures/2/messages"
-                                }
+                            },
+                            {
+                              "messages": {
+                                "href": "/customs/transits/movements/departures/1/messages"
                               }
-                            ]
-                          }
-                        ]
+                            }
+                          ]
+                        }
                       ]
                     }
                   ]
@@ -586,49 +544,49 @@ traits:
                       "_embedded": [
                         {
                           "messages": [
-                            [
-                              {
-                                "_links": [
-                                  {
-                                    "self": {
-                                      "href": "/customs/transits/movements/departures/1/messages/1"
-                                    }
-                                  },
-                                  {
-                                    "departure": {
-                                      "href": "/customs/transits/movements/departures/1"
-                                    }
+                            {
+                              "_links": [
+                                {
+                                  "self": {
+                                    "href": "/customs/transits/movements/departures/1/messages/1"
                                   }
-                                ],
-                                "departureId": "1",
-                                "messageId": "1",
-                                "received": "2020-02-02T02:02:02",
-                                "messageType": "IE015",
-                                "body": "<CC015B>...</CC015B>"
+                                },
+                                {
+                                  "departure": {
+                                    "href": "/customs/transits/movements/departures/1"
+                                  }
+                                }
+                              ],
+                              "departureId": "1",
+                              "messageId": "1",
+                              "received": "2020-02-04T13:02:00",
+                              "messageType": "IE015",
+                              "body": "<CC015B>...</CC015B>"
+                            }
+                          ]
+                        },
+                        {
+                          "departure": {
+                            "id": "1",
+                            "created": "2020-02-04T13:02",
+                            "updated": "2020-12-29T20:09",
+                            "referenceNumber": "RN",
+                            "status": "DepartureSubmitted",
+                            "_links": [
+                              {
+                                "self": {
+                                  "href": "/customs/transits/movements/departures/1"
+                                }
+                              },
+                              {
+                                "messages": {
+                                  "href": "/customs/transits/movements/departures/1/messages"
+                                }
                               }
                             ]
-                          ]
-                        }
-                      ],
-                      "departure": {
-                        "id": "1",
-                        "created": "2020-02-02T02:02:02",
-                        "updated": "2020-02-02T02:02:02",
-                        "referenceNumber": "RN",
-                        "status": "DepartureSubmitted",
-                        "_links": [
-                          {
-                            "self": {
-                              "href": "/customs/transits/movements/departures/1"
-                            }
-                          },
-                          {
-                            "messages": {
-                              "href": "/customs/transits/movements/departures/1/messages"
-                            }
                           }
-                        ]
-                      }
+                        }
+                      ]
                     }
             404:
               description: When the movement does not exist, has been archived or is not available to the EORI number.

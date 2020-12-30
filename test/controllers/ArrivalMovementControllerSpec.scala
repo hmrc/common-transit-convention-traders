@@ -400,65 +400,63 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
          |  "_embedded": [
          |    {
          |      "arrivals": [
-         |        [
-         |          {
-         |            "id": "123",
-         |            "created": "2020-02-02T02:02:02",
-         |            "updated": "2020-02-02T02:02:02",
-         |            "movementReferenceNumber": "MRN",
-         |            "status": "status",
-         |            "_links": [
-         |              {
-         |                "self": {
-         |                  "href": "/customs/transits/movements/arrivals/123"
-         |                }
-         |              },
-         |              {
-         |                "messages": {
-         |                  "href": "/customs/transits/movements/arrivals/123/messages"
-         |                }
+         |        {
+         |          "id": "123",
+         |          "created": "2020-02-02T02:02:02",
+         |          "updated": "2020-02-02T02:02:02",
+         |          "movementReferenceNumber": "MRN",
+         |          "status": "status",
+         |          "_links": [
+         |            {
+         |              "self": {
+         |                "href": "/customs/transits/movements/arrivals/123"
          |              }
-         |            ]
-         |          },
-         |          {
-         |            "id": "123",
-         |            "created": "2020-02-02T02:02:02",
-         |            "updated": "2020-02-02T02:02:02",
-         |            "movementReferenceNumber": "MRN",
-         |            "status": "status",
-         |            "_links": [
-         |              {
-         |                "self": {
-         |                  "href": "/customs/transits/movements/arrivals/123"
-         |                }
-         |              },
-         |              {
-         |                "messages": {
-         |                  "href": "/customs/transits/movements/arrivals/123/messages"
-         |                }
+         |            },
+         |            {
+         |              "messages": {
+         |                "href": "/customs/transits/movements/arrivals/123/messages"
          |              }
-         |            ]
-         |          },
-         |          {
-         |            "id": "123",
-         |            "created": "2020-02-02T02:02:02",
-         |            "updated": "2020-02-02T02:02:02",
-         |            "movementReferenceNumber": "MRN",
-         |            "status": "status",
-         |            "_links": [
-         |              {
-         |                "self": {
-         |                  "href": "/customs/transits/movements/arrivals/123"
-         |                }
-         |              },
-         |              {
-         |                "messages": {
-         |                  "href": "/customs/transits/movements/arrivals/123/messages"
-         |                }
+         |            }
+         |          ]
+         |        },
+         |        {
+         |          "id": "123",
+         |          "created": "2020-02-02T02:02:02",
+         |          "updated": "2020-02-02T02:02:02",
+         |          "movementReferenceNumber": "MRN",
+         |          "status": "status",
+         |          "_links": [
+         |            {
+         |              "self": {
+         |                "href": "/customs/transits/movements/arrivals/123"
          |              }
-         |            ]
-         |          }
-         |        ]
+         |            },
+         |            {
+         |              "messages": {
+         |                "href": "/customs/transits/movements/arrivals/123/messages"
+         |              }
+         |            }
+         |          ]
+         |        },
+         |        {
+         |          "id": "123",
+         |          "created": "2020-02-02T02:02:02",
+         |          "updated": "2020-02-02T02:02:02",
+         |          "movementReferenceNumber": "MRN",
+         |          "status": "status",
+         |          "_links": [
+         |            {
+         |              "self": {
+         |                "href": "/customs/transits/movements/arrivals/123"
+         |              }
+         |            },
+         |            {
+         |              "messages": {
+         |                "href": "/customs/transits/movements/arrivals/123/messages"
+         |              }
+         |            }
+         |          ]
+         |        }
          |      ]
          |    }
          |  ]
@@ -488,9 +486,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
          |  ],
          |  "_embedded": [
          |    {
-         |      "arrivals": [
-         |        []
-         |      ]
+         |      "arrivals": []
          |    }
          |  ]
          |}""".stripMargin)

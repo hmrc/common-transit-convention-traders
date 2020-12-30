@@ -33,18 +33,17 @@ object HateaosResponseDepartureWithMessages {
         Json.obj("self" -> Json.obj("href" -> messagesUrl))
       ),
       "_embedded" -> Json.arr(
-        Json.obj("messages" -> Json.arr(departureWithMessages.messages.map {
+        Json.obj("messages" -> departureWithMessages.messages.map {
           x =>
             HateaosDepartureResponseMessage(departureId, Utils.lastFragment(x.location), x)
-        })
-        )
-      ),
-      "departure" -> HateaosResponseDeparture(
-        departureId,
-        departureWithMessages.created.toString,
-        departureWithMessages.updated.toString,
-        departureWithMessages.movementReferenceNumber,
-        departureWithMessages.status
+        }),
+        Json.obj("departure" -> HateaosResponseDeparture(
+          departureId,
+          departureWithMessages.created.toString,
+          departureWithMessages.updated.toString,
+          departureWithMessages.movementReferenceNumber,
+          departureWithMessages.status
+        ))
       )
     )
   }

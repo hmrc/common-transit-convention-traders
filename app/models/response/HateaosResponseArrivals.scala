@@ -32,7 +32,7 @@ object HateaosResponseArrivals {
         Json.obj("self"    -> Json.obj("href" -> arrivalUrl))
       ),
       "_embedded" -> Json.arr(
-        Json.obj("arrivals"    -> Json.arr(arrivals.arrivals.map { x => HateaosResponseArrival(x)}))
+        Json.obj("arrivals"    -> arrivals.arrivals.map { x => HateaosResponseArrival(x)})
       )
     )
   }
