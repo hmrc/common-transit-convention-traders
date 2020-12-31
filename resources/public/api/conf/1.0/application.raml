@@ -156,16 +156,16 @@ traits:
               application/json:
                 description: JSON Payload
                 example: |
-                {
-                  "_links": {
-                    "self": {
-                      "href": "/customs/transits/movements/arrivals/1"
-                    }
-                  },
-                  "arrivalId": "1",
-                  "messageType": "IE007",
-                  "body": "<CC007A>...</CC007A>"
-                }
+                  {
+                    "_links": {
+                      "self": {
+                        "href": "/customs/transits/movements/arrivals/1"
+                      }
+                    },
+                    "arrivalId": "1",
+                    "messageType": "IE007",
+                    "body": "<CC007A>...</CC007A>"
+                  }
 
       get:
         displayName: Get a Movement Arrival for an arrival ID
@@ -370,6 +370,8 @@ traits:
         Get all Movement Departures sent to the office at departure within 28 days of the goods being released at their final destination. Any movement more than 28 days old will have been archived along with their related messages. Archived Movements will return an HTTP 404 Not Found status.
 
         You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Departure.
+
+        **Note**: The 'movementReferenceNumber' field will only be populated when an MRN is allocated.
       is: 
         - headers.acceptHeader
         - acceptHeaderInvalid
@@ -429,6 +431,8 @@ traits:
           Get a specific Movement Departure which was sent to the office at departure within 28 days of the goods being released at their final destination. Any Movements that are more than 28 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status. 
 
           You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
+
+          **Note**: The 'movementReferenceNumber' field will only be populated when an MRN is allocated.
         is: 
           - headers.acceptHeader
           - acceptHeaderInvalid
@@ -496,6 +500,8 @@ traits:
             Get all messages sent within 28 days of the goods being released relating to a Movement Departure. Any Movements that are more than 28 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status. 
 
             You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
+
+            **Note**: The 'movementReferenceNumber' field will only be populated when an MRN is allocated.
           is: 
             - headers.acceptHeader
             - acceptHeaderInvalid
