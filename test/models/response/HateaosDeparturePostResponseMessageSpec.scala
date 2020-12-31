@@ -30,13 +30,11 @@ class HateaosDeparturePostResponseMessageSpec extends AnyFreeSpec with Matchers 
       val expectedJson = Json.parse(
         """
           |{
-          |  "_links": [
-          |    {
-          |      "self": {
-          |        "href": "/customs/transits/movements/departures/1"
-          |      }
+          |  "_links": {
+          |    "self": {
+          |      "href": "/customs/transits/movements/departures/1"
           |    }
-          |  ],
+          |  },
           |  "departureId": "1",
           |  "messageType": "IE015",
           |  "body": "<test>default</test>"

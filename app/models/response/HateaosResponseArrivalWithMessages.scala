@@ -29,21 +29,21 @@ object HateaosResponseArrivalWithMessages {
     val messagesUrl = routes.ArrivalMessagesController.getArrivalMessages(arrivalId).urlWithContext
 
     Json.obj(
-      "_links" -> Json.arr(
-        Json.obj("self" -> Json.obj("href" -> messagesUrl))
+      "_links" -> Json.obj(
+        "self" -> Json.obj("href" -> messagesUrl)
       ),
-      "_embedded" -> Json.arr(
-        Json.obj("messages" -> arrivalWithMessages.messages.map {
+      "_embedded" -> Json.obj(
+        "messages" -> arrivalWithMessages.messages.map {
           x =>
             HateaosArrivalResponseMessage(arrivalId, Utils.lastFragment(x.location), x)
-        }),
-        Json.obj("arrival" -> HateaosResponseArrival(
+        },
+        "arrival" -> HateaosResponseArrival(
           arrivalId,
           arrivalWithMessages.created.toString,
           arrivalWithMessages.updated.toString,
           arrivalWithMessages.movementReferenceNumber,
           arrivalWithMessages.status
-        ))
+        )
       )
     )
   }

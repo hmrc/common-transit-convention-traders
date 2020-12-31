@@ -39,25 +39,22 @@ class HateaosResponseArrivalSpec extends AnyFreeSpec with Matchers with GuiceOne
         LocalDateTime.of(2020, 12, 12, 12, 12, 12)
       )
 
-      val expectedJson = Json.parse("""
+      val expectedJson = Json.parse(
+        """
           |{
           |  "id": "3",
           |  "created": "2020-10-10T10:10:10",
           |  "updated": "2020-12-12T12:12:12",
           |  "movementReferenceNumber": "mrn",
           |  "status": "status",
-          |  "_links": [
-          |    {
-          |      "self": {
-          |        "href": "/customs/transits/movements/arrivals/3"
-          |      }
+          |  "_links": {
+          |    "self": {
+          |      "href": "/customs/transits/movements/arrivals/3"
           |    },
-          |    {
-          |      "messages": {
-          |        "href": "/customs/transits/movements/arrivals/3/messages"
-          |      }
+          |    "messages": {
+          |      "href": "/customs/transits/movements/arrivals/3/messages"
           |    }
-          |  ]
+          |  }
           |}""".stripMargin)
 
       val result = HateaosResponseArrival(arrival)

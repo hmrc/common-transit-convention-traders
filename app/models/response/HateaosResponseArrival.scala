@@ -33,9 +33,9 @@ object HateaosResponseArrival {
       "updated" -> updated,
       "movementReferenceNumber" -> movementReferenceNumber,
       "status" -> status,
-      "_links" -> Json.arr(
-        Json.obj("self"    -> Json.obj("href" -> arrivalUrl)),
-        Json.obj("messages"    -> Json.obj("href" -> messagesUrl))
+      "_links" -> Json.obj(
+        "self"    -> Json.obj("href" -> arrivalUrl),
+        "messages"    -> Json.obj("href" -> messagesUrl)
       )
     )
   }

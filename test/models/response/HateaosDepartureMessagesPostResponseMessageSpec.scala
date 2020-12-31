@@ -28,20 +28,15 @@ class HateaosDepartureMessagesPostResponseMessageSpec extends AnyFreeSpec with M
   "HateaosDepartureMessagesPostResponseMessage" - {
     "must have valid message structure" in {
       val expectedJson = Json.parse(
-        """
-          |{
-          |  "_links": [
-          |    {
-          |      "self": {
-          |        "href": "/customs/transits/movements/departures/1/messages/2"
-          |      }
+        """{
+          |  "_links": {
+          |    "self": {
+          |      "href": "/customs/transits/movements/departures/1/messages/2"
           |    },
-          |    {
-          |      "departure": {
-          |        "href": "/customs/transits/movements/departures/1"
-          |      }
+          |    "departure": {
+          |      "href": "/customs/transits/movements/departures/1"
           |    }
-          |  ],
+          |  },
           |  "departureId": "1",
           |  "messageId": "2",
           |  "messageType": "IE014",

@@ -28,8 +28,8 @@ object HateaosDeparturePostResponseMessage {
     val departureUrl = routes.DeparturesController.getDeparture(departureId).urlWithContext
 
     Json.obj(
-      "_links" -> Json.arr(
-        Json.obj("self"    -> Json.obj("href" -> departureUrl))
+      "_links" -> Json.obj(
+        "self"    -> Json.obj("href" -> departureUrl)
       ),
       "departureId" -> departureId,
       "messageType" -> messageType,

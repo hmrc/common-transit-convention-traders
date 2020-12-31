@@ -66,20 +66,15 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
       |  "updated": "2020-02-02T02:02:02",
       |  "movementReferenceNumber": "MRN",
       |  "status": "status",
-      |  "_links": [
-      |    {
-      |      "self": {
-      |        "href": "/customs/transits/movements/arrivals/123"
-      |      }
+      |  "_links": {
+      |    "self": {
+      |      "href": "/customs/transits/movements/arrivals/123"
       |    },
-      |    {
-      |      "messages": {
-      |        "href": "/customs/transits/movements/arrivals/123/messages"
-      |      }
+      |    "messages": {
+      |      "href": "/customs/transits/movements/arrivals/123/messages"
       |    }
-      |  ]
-      |}
-      |""".stripMargin)
+      |  }
+      |}""".stripMargin)
 
   def fakeRequestArrivals[A](method: String, headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), uri: String = routes.ArrivalMovementController.createArrivalNotification().url, body: A) =
     FakeRequest(method = method, uri = uri, headers, body = body)
@@ -88,18 +83,15 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
    val expectedJson = Json.parse(
      """
        |{
-       |  "_links": [
-       |    {
-       |      "self": {
-       |        "href": "/customs/transits/movements/arrivals/123"
-       |      }
+       |  "_links": {
+       |    "self": {
+       |      "href": "/customs/transits/movements/arrivals/123"
        |    }
-       |  ],
+       |  },
        |  "arrivalId": "123",
        |  "messageType": "IE007",
        |  "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>"
-       |}
-       |""".stripMargin)
+       |}""".stripMargin)
 
    "must return Accepted when successful" in {
      when(mockArrivalConnector.post(any())(any(), any(), any()))
@@ -160,13 +152,11 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
      val expectedJson = Json.parse(
        """
          |{
-         |  "_links": [
-         |    {
-         |      "self": {
-         |        "href": "/customs/transits/movements/arrivals/123-@+*~-31@"
-         |      }
+         |  "_links": {
+         |    "self": {
+         |      "href": "/customs/transits/movements/arrivals/123-@+*~-31@"
          |    }
-         |  ],
+         |  },
          |  "arrivalId": "123-@+*~-31@",
          |  "messageType": "IE007",
          |  "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>"
@@ -227,13 +217,11 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
    val expectedJson = Json.parse(
      """
        |{
-       |  "_links": [
-       |    {
-       |      "self": {
-       |        "href": "/customs/transits/movements/arrivals/123"
-       |      }
+       |  "_links": {
+       |    "self": {
+       |      "href": "/customs/transits/movements/arrivals/123"
        |    }
-       |  ],
+       |  },
        |  "arrivalId": "123",
        |  "messageType": "IE007",
        |  "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>"
@@ -288,18 +276,15 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
      val expectedJson = Json.parse(
        """
          |{
-         |  "_links": [
-         |    {
-         |      "self": {
-         |        "href": "/customs/transits/movements/arrivals/123-@+*~-31@"
-         |      }
+         |  "_links": {
+         |    "self": {
+         |      "href": "/customs/transits/movements/arrivals/123-@+*~-31@"
          |    }
-         |  ],
+         |  },
          |  "arrivalId": "123-@+*~-31@",
          |  "messageType": "IE007",
          |  "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>"
-         |}
-         |""".stripMargin)
+         |}""".stripMargin)
 
      status(result) mustBe ACCEPTED
      contentAsString(result) mustEqual expectedJson.toString()
@@ -396,78 +381,61 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
      val expectedJson = Json.parse(
        """
          |{
-         |  "_links": [
-         |    {
-         |      "self": {
-         |        "href": "/customs/transits/movements/arrivals"
-         |      }
+         |  "_links": {
+         |    "self": {
+         |      "href": "/customs/transits/movements/arrivals"
          |    }
-         |  ],
-         |  "_embedded": [
-         |    {
-         |      "arrivals": [
-         |        {
-         |          "id": "123",
-         |          "created": "2020-02-02T02:02:02",
-         |          "updated": "2020-02-02T02:02:02",
-         |          "movementReferenceNumber": "MRN",
-         |          "status": "status",
-         |          "_links": [
-         |            {
-         |              "self": {
-         |                "href": "/customs/transits/movements/arrivals/123"
-         |              }
-         |            },
-         |            {
-         |              "messages": {
-         |                "href": "/customs/transits/movements/arrivals/123/messages"
-         |              }
-         |            }
-         |          ]
-         |        },
-         |        {
-         |          "id": "123",
-         |          "created": "2020-02-02T02:02:02",
-         |          "updated": "2020-02-02T02:02:02",
-         |          "movementReferenceNumber": "MRN",
-         |          "status": "status",
-         |          "_links": [
-         |            {
-         |              "self": {
-         |                "href": "/customs/transits/movements/arrivals/123"
-         |              }
-         |            },
-         |            {
-         |              "messages": {
-         |                "href": "/customs/transits/movements/arrivals/123/messages"
-         |              }
-         |            }
-         |          ]
-         |        },
-         |        {
-         |          "id": "123",
-         |          "created": "2020-02-02T02:02:02",
-         |          "updated": "2020-02-02T02:02:02",
-         |          "movementReferenceNumber": "MRN",
-         |          "status": "status",
-         |          "_links": [
-         |            {
-         |              "self": {
-         |                "href": "/customs/transits/movements/arrivals/123"
-         |              }
-         |            },
-         |            {
-         |              "messages": {
-         |                "href": "/customs/transits/movements/arrivals/123/messages"
-         |              }
-         |            }
-         |          ]
+         |  },
+         |  "_embedded": {
+         |    "arrivals": [
+         |      {
+         |        "id": "123",
+         |        "created": "2020-02-02T02:02:02",
+         |        "updated": "2020-02-02T02:02:02",
+         |        "movementReferenceNumber": "MRN",
+         |        "status": "status",
+         |        "_links": {
+         |          "self": {
+         |            "href": "/customs/transits/movements/arrivals/123"
+         |          },
+         |          "messages": {
+         |            "href": "/customs/transits/movements/arrivals/123/messages"
+         |          }
          |        }
-         |      ]
-         |    }
-         |  ]
-         |}
-         |""".stripMargin)
+         |      },
+         |      {
+         |        "id": "123",
+         |        "created": "2020-02-02T02:02:02",
+         |        "updated": "2020-02-02T02:02:02",
+         |        "movementReferenceNumber": "MRN",
+         |        "status": "status",
+         |        "_links": {
+         |          "self": {
+         |            "href": "/customs/transits/movements/arrivals/123"
+         |          },
+         |          "messages": {
+         |            "href": "/customs/transits/movements/arrivals/123/messages"
+         |          }
+         |        }
+         |      },
+         |      {
+         |        "id": "123",
+         |        "created": "2020-02-02T02:02:02",
+         |        "updated": "2020-02-02T02:02:02",
+         |        "movementReferenceNumber": "MRN",
+         |        "status": "status",
+         |        "_links": {
+         |          "self": {
+         |            "href": "/customs/transits/movements/arrivals/123"
+         |          },
+         |          "messages": {
+         |            "href": "/customs/transits/movements/arrivals/123/messages"
+         |          }
+         |        }
+         |      }
+         |    ]
+         |  }
+         |}""".stripMargin)
 
      status(result) mustBe OK
      contentAsString(result) mustEqual expectedJson.toString()
@@ -483,18 +451,14 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
      val expectedJson = Json.parse(
        """
          |{
-         |  "_links": [
-         |    {
-         |      "self": {
-         |        "href": "/customs/transits/movements/arrivals"
-         |      }
+         |  "_links": {
+         |    "self": {
+         |      "href": "/customs/transits/movements/arrivals"
          |    }
-         |  ],
-         |  "_embedded": [
-         |    {
-         |      "arrivals": []
-         |    }
-         |  ]
+         |  },
+         |  "_embedded": {
+         |    "arrivals": []
+         |  }
          |}""".stripMargin)
 
      status(result) mustBe OK
