@@ -38,25 +38,20 @@ class HateaosArrivalResponseMessageSpec extends AnyFreeSpec with Matchers with G
       val expectedJson = Json.parse(
         """
           |{
-          |  "_links": [
-          |    {
-          |      "self": {
-          |        "href": "/customs/transits/movements/arrivals/1/messages/1"
-          |      }
+          |  "_links": {
+          |    "self": {
+          |      "href": "/customs/transits/movements/arrivals/1/messages/1"
           |    },
-          |    {
-          |      "arrival": {
-          |        "href": "/customs/transits/movements/arrivals/1"
-          |      }
+          |    "arrival": {
+          |      "href": "/customs/transits/movements/arrivals/1"
           |    }
-          |  ],
+          |  },
           |  "arrivalId": "1",
           |  "messageId": "1",
           |  "received": "2020-10-10T10:10:10",
           |  "messageType": "type",
           |  "body": "<test>default</test>"
-          |}
-          |""".stripMargin)
+          |}""".stripMargin)
 
       val result = HateaosArrivalResponseMessage("1", "1", message)
 

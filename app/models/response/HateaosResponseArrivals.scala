@@ -28,11 +28,11 @@ object HateaosResponseArrivals {
     val arrivalUrl = routes.ArrivalMovementController.getArrivalsForEori().urlWithContext
 
     Json.obj(
-      "_links" -> Json.arr(
-        Json.obj("self"    -> Json.obj("href" -> arrivalUrl))
+      "_links" -> Json.obj(
+        "self"    -> Json.obj("href" -> arrivalUrl)
       ),
-      "_embedded" -> Json.arr(
-        Json.obj("arrivals"    -> arrivals.arrivals.map { x => HateaosResponseArrival(x)})
+      "_embedded" -> Json.obj(
+        "arrivals"    -> arrivals.arrivals.map { x => HateaosResponseArrival(x)}
       )
     )
   }

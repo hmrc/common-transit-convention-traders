@@ -28,8 +28,8 @@ object HateaosArrivalMovementPostResponseMessage {
     val arrivalUrl = routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext
 
     Json.obj(
-      "_links" -> Json.arr(
-        Json.obj("self"    -> Json.obj("href" -> arrivalUrl))
+      "_links" -> Json.obj(
+        "self"    -> Json.obj("href" -> arrivalUrl)
       ),
       "arrivalId" -> arrivalId,
       "messageType" -> messageType,

@@ -34,9 +34,9 @@ object HateaosResponseDeparture {
       "updated" -> updated,
       "movementReferenceNumber" -> movementReferenceNumber,
       "status" -> status,
-      "_links" -> Json.arr(
-        Json.obj("self"    -> Json.obj("href" -> departureUrl)),
-        Json.obj("messages"    -> Json.obj("href" -> messagesUrl))
+      "_links" -> Json.obj(
+        "self"    -> Json.obj("href" -> departureUrl),
+        "messages"    -> Json.obj("href" -> messagesUrl)
       )
     ).fields.filter(t => t._2 != JsNull))
   }

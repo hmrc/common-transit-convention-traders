@@ -29,21 +29,21 @@ object HateaosResponseDepartureWithMessages {
     val messagesUrl = routes.DepartureMessagesController.getDepartureMessages(departureId).urlWithContext
 
     Json.obj(
-      "_links" -> Json.arr(
-        Json.obj("self" -> Json.obj("href" -> messagesUrl))
+      "_links" -> Json.obj(
+        "self" -> Json.obj("href" -> messagesUrl)
       ),
-      "_embedded" -> Json.arr(
-        Json.obj("messages" -> departureWithMessages.messages.map {
+      "_embedded" -> Json.obj(
+        "messages" -> departureWithMessages.messages.map {
           x =>
             HateaosDepartureResponseMessage(departureId, Utils.lastFragment(x.location), x)
-        }),
-        Json.obj("departure" -> HateaosResponseDeparture(
+        },
+        "departure" -> HateaosResponseDeparture(
           departureId,
           departureWithMessages.created.toString,
           departureWithMessages.updated.toString,
           departureWithMessages.movementReferenceNumber,
           departureWithMessages.status
-        ))
+        )
       )
     )
   }

@@ -49,19 +49,16 @@ class HateaosResponseDepartureSpec extends AnyFreeSpec with Matchers with GuiceO
           |  "updated": "2020-12-12T12:12:12",
           |  "movementReferenceNumber": "mrn",
           |  "status": "status",
-          |  "_links": [
-          |    {
-          |      "self": {
-          |        "href": "/customs/transits/movements/departures/3"
-          |      }
+          |  "_links": {
+          |    "self": {
+          |      "href": "/customs/transits/movements/departures/3"
           |    },
-          |    {
-          |      "messages": {
-          |        "href": "/customs/transits/movements/departures/3/messages"
-          |      }
+          |    "messages": {
+          |      "href": "/customs/transits/movements/departures/3/messages"
           |    }
-          |  ]
-          |}""".stripMargin)
+          |  }
+          |}
+          |""".stripMargin)
 
       expectedJson mustEqual Json.toJson(result)
     }

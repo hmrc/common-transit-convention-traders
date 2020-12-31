@@ -29,11 +29,11 @@ object HateaosResponseDepartures {
     val departureUrl = routes.DeparturesController.getDeparturesForEori().urlWithContext
 
     Json.obj(
-      "_links" -> Json.arr(
-        Json.obj("self"    -> Json.obj("href" -> departureUrl))
+      "_links" -> Json.obj(
+        "self"    -> Json.obj("href" -> departureUrl)
       ),
-      "_embedded" -> Json.arr(
-        Json.obj("departures"    -> departures.departures.map { x => HateaosResponseDeparture(x)})
+      "_embedded" -> Json.obj(
+        "departures"    -> departures.departures.map { x => HateaosResponseDeparture(x)}
       )
     )
   }
