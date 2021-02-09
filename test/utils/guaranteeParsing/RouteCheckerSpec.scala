@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ class RouteCheckerSpec  extends AnyFreeSpec with ParseHandling with MockitoSugar
       sut.gbOnlyCheck(<example></example>) mustBe a[Left[DestinationEmpty, _]]
     }
 
-    "returns InappropriateDepartureOffice if we DepartureOffice doesn't start with GB" in {
+    "returns InappropriateDepartureOffice if we DepartureOffice doesn't start with GB or XI" in {
       when(mockXmlReaders.officeOfDeparture)
         .thenReturn(ReaderT[ParseHandler, NodeSeq, DepartureOffice](_ => Right(DepartureOffice("UKabc"))))
       when(mockXmlReaders.officeOfDestination)
@@ -104,6 +104,18 @@ class RouteCheckerSpec  extends AnyFreeSpec with ParseHandling with MockitoSugar
       val result = sut.gbOnlyCheck(<example></example>)
       result mustBe a[Right[_ ,Boolean]]
       result.right.get mustBe true
+    }
+
+    "returns Right(false) if DepartureOffice starts with XI" in {
+      when(mockXmlReaders.officeOfDeparture)
+        .thenReturn(ReaderT[ParseHandler, NodeSeq, DepartureOffice](_ => Right(DepartureOffice("XIabc"))))
+      when(mockXmlReaders.officeOfDestination)
+        .thenReturn(ReaderT[ParseHandler, NodeSeq, DestinationOffice](_ => Right(DestinationOffice("ITabc"))))
+
+      val result = sut.gbOnlyCheck(<example></example>)
+      result mustBe a[Right[_ ,Boolean]]
+      result.right.get mustBe false
+
     }
   }
 
