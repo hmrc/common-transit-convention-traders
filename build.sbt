@@ -22,6 +22,11 @@ lazy val microservice = Project(appName, file("."))
   .settings(
     unmanagedResourceDirectories in Compile += baseDirectory.value / "resources"
   )
+  .settings(
+    javaOptions ++= Seq(
+      "-Djdk.xml.maxOccurLimit=10000"
+    )
+  )
 
 lazy val itSettings = Defaults.itSettings ++ Seq(
   unmanagedSourceDirectories := Seq(
