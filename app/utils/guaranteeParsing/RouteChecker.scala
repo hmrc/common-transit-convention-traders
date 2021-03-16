@@ -31,15 +31,13 @@ class RouteChecker @Inject()(xmlReaders: GuaranteeXmlReaders) {
         xmlReaders.officeOfDestination(xml) match {
           case Left(error) => Left(error)
           case Right(destination) => {
-            if(departure.value.startsWith("GB")){
-              Right(destination.value.startsWith("GB"))
-            }
-            else {
-              Left(InappropriateDepartureOffice("Inappropriate Departure Office"))
+            departure.prefix match {
+              case "GB" => Right(destination.value.startsWith("GB"))
+              case "XI" => Right(false)
+              case _ => Left(InappropriateDepartureOffice("Inappropriate Departure Office"))
             }
           }
         }
       }
     }
-
 }
