@@ -16,6 +16,7 @@
 
 package utils.guaranteeParsing
 
+import config.DefaultGuaranteeConfig
 import org.mockito.ArgumentMatchers.any
 import data.TestXml
 import models.ParseError.{AmountWithoutCurrency, GuaranteeAmountZero, GuaranteeNotFound}
@@ -113,8 +114,15 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
     super.beforeEach()
   }
 
+  val mockGuaranteeConfig = mock[DefaultGuaranteeConfig]
+  val mockCurrency = "XYZ"
+  val mockAmount = 11.00
+  when(mockGuaranteeConfig.currency).thenReturn(mockCurrency)
+  when(mockGuaranteeConfig.amount).thenReturn(mockAmount)
+
   def sut: GuaranteeInstructionBuilder = {
     val application = baseApplicationBuilder
+        .overrides(bind[DefaultGuaranteeConfig].toInstance(mockGuaranteeConfig))
       .build()
 
     application.injector.instanceOf[GuaranteeInstructionBuilder]
@@ -152,7 +160,7 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
         typeChar =>
           val result = sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), SpecialMentionGuarantee("GBPalpha"))
           result mustBe a[Right[_, ChangeGuaranteeInstruction]]
-          result.right.get.asInstanceOf[ChangeGuaranteeInstruction].mention.additionalInfo mustBe "10000.00EURalpha"
+          result.right.get.asInstanceOf[ChangeGuaranteeInstruction].mention.additionalInfo mustBe s"${BigDecimal(mockGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()}${mockCurrency}alpha"
       }
     }
 
@@ -161,7 +169,7 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
         typeChar =>
           val result = sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), SpecialMentionGuarantee("alpha"))
           result mustBe a[Right[_, ChangeGuaranteeInstruction]]
-          result.right.get.asInstanceOf[ChangeGuaranteeInstruction].mention.additionalInfo mustBe "10000.00EURalpha"
+          result.right.get.asInstanceOf[ChangeGuaranteeInstruction].mention.additionalInfo mustBe s"${BigDecimal(mockGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()}${mockCurrency}alpha"
       }
     }
 

@@ -17,6 +17,7 @@
 package utils.guaranteeParsing
 
 import com.google.inject.Inject
+import config.DefaultGuaranteeConfig
 import models.ParseError.{AmountWithoutCurrency, GuaranteeNotFound}
 import models.{ChangeGuaranteeInstruction, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, SpecialMention, SpecialMentionGuarantee, SpecialMentionOther, TransformInstruction}
 
@@ -46,7 +47,7 @@ class InstructionBuilder @Inject()(guaranteeInstructionBuilder: GuaranteeInstruc
 
 }
 
-class GuaranteeInstructionBuilder() {
+class GuaranteeInstructionBuilder @Inject() (defaultGuaranteeConfig: DefaultGuaranteeConfig){
 
   def buildInstructionFromGuarantee(g: Guarantee, sm: SpecialMentionGuarantee): Either[ParseError, TransformInstruction] = {
     if(!Guarantee.referenceTypes.contains(g.gType)) {
@@ -61,8 +62,9 @@ class GuaranteeInstructionBuilder() {
           case (Some(_), Some(_)) =>
             Right(NoChangeGuaranteeInstruction(sm))
           case (None, _) =>{
-            val defaultGuaranteeAmount = BigDecimal(10000).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()
-            Right(ChangeGuaranteeInstruction(SpecialMentionGuarantee(defaultGuaranteeAmount ++ "EUR" ++ g.gReference)))
+            val defaultGuaranteeAmount = BigDecimal(defaultGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()
+            val defaultGuaranteeCurrency = defaultGuaranteeConfig.currency
+            Right(ChangeGuaranteeInstruction(SpecialMentionGuarantee(defaultGuaranteeAmount ++ defaultGuaranteeCurrency ++ g.gReference)))
           }
         }
       }
