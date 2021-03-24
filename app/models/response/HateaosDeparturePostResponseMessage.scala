@@ -33,7 +33,10 @@ object HateaosDeparturePostResponseMessage {
       ),
       "departureId" -> departureId,
       "messageType" -> messageType,
-      "body" -> messageBody.toString
+      "body" -> messageBody.toString,
+      "_embedded" -> Json.obj(
+        "notifications" -> Json.obj("requestId" -> departureUrl)
+      )
     )
   }
 }
