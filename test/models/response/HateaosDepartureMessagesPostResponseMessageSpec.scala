@@ -40,7 +40,12 @@ class HateaosDepartureMessagesPostResponseMessageSpec extends AnyFreeSpec with M
           |  "departureId": "1",
           |  "messageId": "2",
           |  "messageType": "IE014",
-          |  "body": "<test>default</test>"
+          |  "body": "<test>default</test>",
+          |  "_embedded": {
+          |    "notifications": {
+          |      "requestId":  "/customs/transits/movements/departures/1"
+          |    }
+          |  }
           |}""".stripMargin)
 
       val result = HateaosDepartureMessagesPostResponseMessage(

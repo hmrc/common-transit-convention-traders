@@ -37,7 +37,12 @@ class HateaosDeparturePostResponseMessageSpec extends AnyFreeSpec with Matchers 
           |  },
           |  "departureId": "1",
           |  "messageType": "IE015",
-          |  "body": "<test>default</test>"
+          |  "body": "<test>default</test>",
+          |  "_embedded": {
+          |    "notifications": {
+          |      "requestId":  "/customs/transits/movements/departures/1"
+          |    }
+          |  }
           |}""".stripMargin)
 
       val result = HateaosDeparturePostResponseMessage(
