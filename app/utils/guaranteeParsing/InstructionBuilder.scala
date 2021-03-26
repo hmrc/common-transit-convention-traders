@@ -18,7 +18,7 @@ package utils.guaranteeParsing
 
 import com.google.inject.Inject
 import config.DefaultGuaranteeConfig
-import models.ParseError.{AmountWithoutCurrency, GuaranteeNotFound}
+import models.ParseError.{AmountWithoutCurrency, GuaranteeNotFound, InvalidAmount}
 import models.{ChangeGuaranteeInstruction, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, SpecialMention, SpecialMentionGuarantee, SpecialMentionOther, TransformInstruction}
 
 class InstructionBuilder @Inject()(guaranteeInstructionBuilder: GuaranteeInstructionBuilder) {
@@ -59,8 +59,10 @@ class GuaranteeInstructionBuilder @Inject() (defaultGuaranteeConfig: DefaultGuar
         details => (details.guaranteeAmount, details.currencyCode) match {
           case (Some(_), None) =>
             Left(AmountWithoutCurrency("Parsed Amount value without currency"))
-          case (Some(_), Some(_)) =>
+          case (Some(amount), Some(_)) if amount > 0 =>
             Right(NoChangeGuaranteeInstruction(sm))
+          case (Some(_), Some(_)) =>
+            Left(InvalidAmount("Amount cannot be equal to or less than 0"))
           case (None, _) =>{
             val defaultGuaranteeAmount = BigDecimal(defaultGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()
             val defaultGuaranteeCurrency = defaultGuaranteeConfig.currency
