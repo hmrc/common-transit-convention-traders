@@ -37,7 +37,12 @@ class HateaosArrivalMovementPostResponseMessageSpec extends AnyFreeSpec with Mat
           |  },
           |  "arrivalId": "1",
           |  "messageType": "IE007",
-          |  "body": "<test>default</test>"
+          |  "body": "<test>default</test>",
+          |  "_embedded": {
+          |    "notifications": {
+          |      "requestId": "/customs/transits/movements/arrivals/1"
+          |    }
+          |  }
           |}""".stripMargin)
 
       val result = HateaosArrivalMovementPostResponseMessage(

@@ -41,7 +41,12 @@ class HateaosArrivalMessagesPostResponseMessageSpec extends AnyFreeSpec with Mat
           |  "arrivalId": "1",
           |  "messageId": "2",
           |  "messageType": "IE044",
-          |  "body": "<test>default</test>"
+          |  "body": "<test>default</test>",
+          |  "_embedded": {
+          |    "notifications": {
+          |      "requestId": "/customs/transits/movements/arrivals/1"
+          |    }
+          |  }
           |}
           |""".stripMargin)
 

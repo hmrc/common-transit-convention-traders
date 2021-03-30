@@ -21,7 +21,7 @@ import models.domain.Departure
 import play.api.libs.json._
 import utils.CallOps._
 
-object HateaosResponseDeparture {
+object  HateaosResponseDeparture {
 
   def apply(departureId: String, created: String, updated: String, movementReferenceNumber: Option[String], status: String): JsObject = {
     val departureUrl = routes.DeparturesController.getDeparture(departureId).urlWithContext

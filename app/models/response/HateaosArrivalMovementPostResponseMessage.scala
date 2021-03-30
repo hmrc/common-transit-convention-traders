@@ -33,7 +33,10 @@ object HateaosArrivalMovementPostResponseMessage {
       ),
       "arrivalId" -> arrivalId,
       "messageType" -> messageType,
-      "body" -> message.toString
+      "body" -> message.toString,
+      "_embedded" -> Json.obj(
+        "notifications" -> Json.obj("requestId" -> arrivalUrl)
+      )
     )
   }
 }
