@@ -86,16 +86,19 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
         .thenReturn(Right(Seq(Guarantee(1, "test"))))
 
       when(mockXmlReaders.parseSpecialMentions(any()))
-        .thenReturn(Right(Seq(SpecialMentionOther(<SPEMENMT2><test></test></SPEMENMT2>))))
+        .thenReturn(Right(Seq(SpecialMentionGuarantee("test"))))
 
       when(mockXmlReaders.gOOITEGDSNode)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](_ => Right(Seq(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>)))))))
+        .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](_ => Right(Seq(GOOITEGDSNode(1, Seq(SpecialMentionGuarantee("test")))))))
 
       when(mockXmlReaders.gOOITEGDSNodeFromNode)
-        .thenReturn(ReaderT[ParseHandler, Node, GOOITEGDSNode](_ => Right(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>))))))
+        .thenReturn(ReaderT[ParseHandler, Node, GOOITEGDSNode](_ => Right(GOOITEGDSNode(1, Seq(SpecialMentionGuarantee("test"))))))
 
       when(mockInstructionBuilder.buildInstruction(any(), any()))
         .thenReturn(Right(NoChangeInstruction(<SPEMENMT2><test></test></SPEMENMT2>)))
+
+      when(mockInstructionBuilder.pair(any(), any()))
+        .thenReturn(Some((SpecialMentionGuarantee("test"), Guarantee(1, "test"))))
 
       val result = sut.ensureGuarantee(
         //EXAMPLE XML

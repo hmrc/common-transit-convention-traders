@@ -18,25 +18,64 @@ package services
 
 import models.{ChangeGuaranteeInstruction, GOOITEGDSNode, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, ParseHandling, SpecialMentionGuarantee, TransformInstruction, TransformInstructionSet}
 import com.google.inject.Inject
+import models.ParseError.UnpairedGuarantees
 import utils.guaranteeParsing.{GuaranteeXmlReaders, InstructionBuilder}
 import utils.guaranteeParsing.RouteChecker
+
 import scala.xml.{Elem, Node, NodeSeq}
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
 class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instructionBuilder: InstructionBuilder, routeChecker: RouteChecker) extends ParseHandling {
-
 
   def ensureGuarantee(xml: NodeSeq): ParseHandler[NodeSeq] =
     routeChecker.gbOnlyCheck(xml) match {
       case Left(error) => Left(error)
       case Right(gbOnly) if gbOnly => Right(xml)
       case Right(_) =>
-        parseInstructionSets(xml) match {
-          case Left(error) => Left(error)
-          case Right(instructionSets) =>
-            Right(updateXml(xml, instructionSets))
+        //TODO: A performance improvement could be to get the unpaired guarantees as an extra value here.
+        findUnpairedGuarantees(xml).flatMap {
+          unpaired =>
+            if(unpaired.length > 0)
+              Left(UnpairedGuarantees(s"${unpaired.length} guarantees found without special mentions"))
+            else parseInstructionSets(xml) match {
+              case Left(error) => Left(error)
+              case Right(instructionSets) =>
+                Right(updateXml(xml, instructionSets))
+            }
         }
     }
+
+  def findUnpairedGuarantees(xml: NodeSeq): Either[ParseError,Seq[Guarantee]] = {
+    xmlReaders.parseGuarantees(xml) match {
+      case Left(error) => Left(error)
+      case Right(guarantees) =>
+
+        val referenceGuarantees = guarantees.filter(g => Guarantee.referenceTypes.contains(g.gType))
+
+        xmlReaders.gOOITEGDSNode(xml).map {
+          goodsNodes => goodsNodes.map {
+            goodsItem => goodsItem.specialMentions
+          }
+        } match {
+          case Left(error) => Left(error)
+          case Right(seqseq) =>
+            val flattened = seqseq.flatMap(_.toList)
+            val mentionedOptGuarantees = flattened.filter(sm => sm.isInstanceOf[SpecialMentionGuarantee]).map {
+              m => val pairs = instructionBuilder.pair(m.asInstanceOf[SpecialMentionGuarantee], referenceGuarantees)
+                println(m.asInstanceOf[SpecialMentionGuarantee])
+                println(referenceGuarantees)
+                println(pairs)
+                pairs.map {
+                pair =>
+                  println(pair)
+                  pair._2
+              }
+            }
+            val mentionedGuarantees = mentionedOptGuarantees.filter(g => g.isDefined).map(g => g.get)
+            Right(referenceGuarantees.diff(mentionedGuarantees))
+        }
+    }
+  }
 
   def parseInstructionSets(xml: NodeSeq): ParseHandler[Seq[TransformInstructionSet]] = {
     xmlReaders.parseGuarantees(xml) match {
