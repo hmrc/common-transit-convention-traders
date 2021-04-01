@@ -61,13 +61,8 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
           case Right(seqseq) =>
             val flattened = seqseq.flatMap(_.toList)
             val mentionedOptGuarantees = flattened.filter(sm => sm.isInstanceOf[SpecialMentionGuarantee]).map {
-              m => val pairs = instructionBuilder.pair(m.asInstanceOf[SpecialMentionGuarantee], referenceGuarantees)
-                println(m.asInstanceOf[SpecialMentionGuarantee])
-                println(referenceGuarantees)
-                println(pairs)
-                pairs.map {
+              m => instructionBuilder.pair(m.asInstanceOf[SpecialMentionGuarantee], referenceGuarantees).map {
                 pair =>
-                  println(pair)
                   pair._2
               }
             }
