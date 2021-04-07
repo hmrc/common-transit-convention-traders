@@ -182,32 +182,4 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
 
     }
   }
-
-
-
-  "getInstructionSet" ignore {
-    "returns ParseError when instructionBuilder returns a parsing error" in {
-//      when(mockInstructionBuilder.buildInstruction(any(), any()))
-//        .thenReturn(Left(GuaranteeNotFound("test")))
-
-//      val result = sut.getInstructionSet(fakeGooBlock(Seq(SpecialMentionOther(<example></example>))), Seq.empty[Guarantee])
-//      result mustBe a[Left[ParseError, _]]
-    }
-
-    "return TransformInstructionSet if no ParseErrors found" in {
-//      when(mockInstructionBuilder.buildInstruction(any(), any()))
-//        .thenReturn(Right(NoChangeGuaranteeInstruction(SpecialMentionGuarantee("test"))))
-//
-//      val result = sut.getInstructionSet(fakeGooBlock(Seq(SpecialMentionOther(<example></example>))), Seq.empty[Guarantee])
-//      result mustBe a[Right[_, TransformInstructionSet]]
-//      result.right.get.instructions.length mustBe 1
-    }
-
-  }
-
-
-
-
-
-
 }

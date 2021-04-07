@@ -44,7 +44,6 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
       case Left(error) => Left(error)
       case Right(gbOnly) if gbOnly => Right(xml)
       case Right(_) =>
-        //TODO: A performance improvement could be to get the unpaired guarantees as an extra value here.
             parseInstructionSets(xml) match {
               case Left(error) => Left(error)
               case Right(instructionSets) =>
