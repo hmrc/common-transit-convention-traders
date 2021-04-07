@@ -17,10 +17,9 @@
 package utils.guaranteeParsing
 
 import config.DefaultGuaranteeConfig
-import org.mockito.ArgumentMatchers.any
 import data.TestXml
-import models.ParseError.{AmountWithoutCurrency, GuaranteeAmountZero, GuaranteeNotFound}
-import models.{ChangeGuaranteeInstruction, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, ParseErrorSpec, SpecialMention, SpecialMentionGuarantee, SpecialMentionGuaranteeDetails, SpecialMentionOther, TransformInstruction, TransformInstructionSet}
+import models.ParseError.{AmountWithoutCurrency, GuaranteeNotFound}
+import models.{AddSpecialMentionInstruction, ChangeGuaranteeInstruction, GOOITEGDSNode, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, SpecialMention, SpecialMentionGuarantee, SpecialMentionOther, TransformInstructionSet}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
@@ -56,47 +55,40 @@ class InstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAn
     application.injector.instanceOf[InstructionBuilder]
   }
 
-  "buildInstruction" - {
+  "buildInstructionSet" - {
 
-    "returns NoChangeInstruction when given a SpecialMentionOther" in {
-      val result = sut.buildInstruction(SpecialMentionOther(<example></example>), Seq.empty[Guarantee])
-      result mustBe a[Right[_, NoChangeInstruction]]
+    "returns TransformInstructionSet with no instructions if no defaulting guarantees provided" in {
+      val result = sut.buildInstructionSet(GOOITEGDSNode(1, Nil), Seq(Guarantee('A', "test")))
+      result.right.get mustBe TransformInstructionSet(GOOITEGDSNode(1, Nil), Nil)
     }
 
-    "returns GuaranteeNotFound when unable to find a matching guarantee" in {
-      val result = sut.buildInstruction(SpecialMentionGuarantee("test"), Seq.empty[Guarantee])
-      result mustBe a[Left[GuaranteeNotFound, _]]
+    "returns TransformInstructionSet with an AddInstruction if no special mentions but a guarantee" in {
+      when(mockGIB.buildInstructionFromGuarantee(any(), any())).thenReturn(Right(AddSpecialMentionInstruction(SpecialMentionGuarantee("test"))))
+
+      val result = sut.buildInstructionSet(GOOITEGDSNode(1, Nil),Seq(Guarantee('1',"test")))
+      result.right.get mustBe TransformInstructionSet(GOOITEGDSNode(1, Nil), Seq(AddSpecialMentionInstruction(SpecialMentionGuarantee("test"))))
     }
 
-    "returns ParseError when unable to build an instruction from the guarantee" in {
-      when(mockGIB.buildInstructionFromGuarantee(any(), any()))
-        .thenReturn(Left(GuaranteeAmountZero("test")))
+    "returns ParseError if the built instruction returns an error" in {
+      when(mockGIB.buildInstructionFromGuarantee(any(), any())).thenReturn(Left(AmountWithoutCurrency("test")))
 
-      val result = sut.buildInstruction(SpecialMentionGuarantee("test"), Seq(Guarantee(1, "test")))
-      result mustBe a[Left[ParseError, _]]
+      val result = sut.buildInstructionSet(GOOITEGDSNode(1, Nil),Seq(Guarantee('1',"test")))
+      result.left.get mustBe AmountWithoutCurrency("test")
     }
 
-    "returns TransformInstruction when one is produced by the GuaranteeInstructionBuilder" in {
-      val sm = SpecialMentionGuarantee("test")
 
-      when(mockGIB.buildInstructionFromGuarantee(any(), any()))
-        .thenReturn(Right(NoChangeGuaranteeInstruction(sm)))
-
-      val result = sut.buildInstruction(sm, Seq(Guarantee(1, "test")))
-      result mustBe a[Right[_, TransformInstruction]]
-    }
 
   }
 
   "pair" - {
-    val gSeq = Seq(Guarantee(1, "alpha"), Guarantee(2, "beta"), Guarantee(3, "charlie"))
+    val smSeq = Seq(SpecialMentionGuarantee("1alpha"), SpecialMentionGuarantee("2beta"), SpecialMentionGuarantee("3charlie"))
 
-    "returns Some((SpecialMentionGuarantee, Guarantee)) when a guarantee ends with the SpecialMention gReference value" in {
-      sut.pair(SpecialMentionGuarantee("test alpha"), gSeq) mustBe a[Some[SpecialMention]]
+    "returns (Some(SpecialMentionGuarantee), Guarantee) when a special mention ends with the guarantee gReference value" in {
+      sut.pair(Guarantee('1', "alpha"), smSeq) mustBe a[Tuple2[Some[SpecialMention], Guarantee]]
     }
 
-    "returns None when no guarantee ends with the reference value" in {
-      sut.pair(SpecialMentionGuarantee("test delta"), gSeq).isDefined mustBe false
+    "returns None when no special mention ends with the guarantee gReference value" in {
+      sut.pair(Guarantee('1', "delta"), smSeq) mustBe a[Tuple2[None.type, Guarantee]]
     }
   }
 
@@ -135,21 +127,21 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
 
       excludedTypes.foreach {
         typeChar =>
-          sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), SpecialMentionGuarantee("test alpha")) mustBe a[Right[_, NoChangeGuaranteeInstruction]]
+          sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), Some(SpecialMentionGuarantee("test alpha"))) mustBe a[Right[_, NoChangeGuaranteeInstruction]]
       }
     }
 
     "returns Left(AmountWithoutCurrency) if guarantee type is in referenceTypes and there is no currency value" in {
       Guarantee.referenceTypes.foreach {
         typeChar =>
-          sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), SpecialMentionGuarantee("100.00alpha")) mustBe a[Left[AmountWithoutCurrency, _]]
+          sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), Some(SpecialMentionGuarantee("100.00alpha"))) mustBe a[Left[AmountWithoutCurrency, _]]
       }
     }
 
     "returns Right(NoChangeGuaranteeInstruction) if guarantee type is in referenceTypes and there is already an amount and currency" in {
       Guarantee.referenceTypes.foreach {
         typeChar =>
-          val result = sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), SpecialMentionGuarantee("100.00EURalpha"))
+          val result = sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), Some(SpecialMentionGuarantee("100.00EURalpha")))
           result mustBe a[Right[_, NoChangeGuaranteeInstruction]]
           result.right.get.asInstanceOf[NoChangeGuaranteeInstruction].mention.additionalInfo mustBe "100.00EURalpha"
       }
@@ -158,7 +150,7 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
     "returns Right(ChangeGuaranteeInstruction) to apply the default guarantee value if guarantee type is in referenceTypes and there is no amount but a currency" in {
       Guarantee.referenceTypes.foreach {
         typeChar =>
-          val result = sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), SpecialMentionGuarantee("GBPalpha"))
+          val result = sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), Some(SpecialMentionGuarantee("GBPalpha")))
           result mustBe a[Right[_, ChangeGuaranteeInstruction]]
           result.right.get.asInstanceOf[ChangeGuaranteeInstruction].mention.additionalInfo mustBe s"${BigDecimal(mockGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()}${mockCurrency}alpha"
       }
@@ -167,7 +159,7 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
     "returns Right(ChangeGuaranteeInstruction) to apply the default guarantee value if guarantee type is in referenceTypes and there is no amount and no currency" in {
       Guarantee.referenceTypes.foreach {
         typeChar =>
-          val result = sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), SpecialMentionGuarantee("alpha"))
+          val result = sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), Some(SpecialMentionGuarantee("alpha")))
           result mustBe a[Right[_, ChangeGuaranteeInstruction]]
           result.right.get.asInstanceOf[ChangeGuaranteeInstruction].mention.additionalInfo mustBe s"${BigDecimal(mockGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()}${mockCurrency}alpha"
       }
