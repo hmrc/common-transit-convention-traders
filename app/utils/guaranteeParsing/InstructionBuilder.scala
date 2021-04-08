@@ -25,16 +25,22 @@ class InstructionBuilder @Inject()(guaranteeInstructionBuilder: GuaranteeInstruc
 
   def buildInstructionSet(gooNode: GOOITEGDSNode, guarantees: Seq[Guarantee]): Either[ParseError, TransformInstructionSet] = {
     val defaultingGuarantees = guarantees.filter(g => g.isDefaulting)
+
     val specialMentionGuarantees = gooNode.specialMentions.filter(sm => sm.isInstanceOf[SpecialMentionGuarantee]).map { sm => sm.asInstanceOf[SpecialMentionGuarantee] }
     val mentionedGuarantees = defaultingGuarantees.map {
       g => pair(g, specialMentionGuarantees)
+    }
+
+    val preserveInstructions = gooNode.specialMentions.filter(sm => sm.isInstanceOf[SpecialMentionOther]).map { sm =>
+      val smo = sm.asInstanceOf[SpecialMentionOther]
+      NoChangeInstruction(smo.xml)
     }
 
     ParseError.sequenceErrors(mentionedGuarantees.map {
       case (m, g) => guaranteeInstructionBuilder.buildInstructionFromGuarantee(g, m)
     }).map {
       instructions =>
-        TransformInstructionSet(gooNode, instructions)
+        TransformInstructionSet(gooNode, instructions ++ preserveInstructions)
     }
   }
 

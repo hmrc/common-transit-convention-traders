@@ -40,16 +40,16 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
     "SPEMENMT2")
 
   def ensureGuarantee(xml: NodeSeq): ParseHandler[NodeSeq] =
-    routeChecker.gbOnlyCheck(xml) match {
-      case Left(error) => Left(error)
-      case Right(gbOnly) if gbOnly => Right(xml)
-      case Right(_) =>
-            parseInstructionSets(xml) match {
-              case Left(error) => Left(error)
-              case Right(instructionSets) =>
-                Right(updateXml(xml, instructionSets))
-            }
-    }
+  routeChecker.gbOnlyCheck(xml) match {
+    case Left(error) => Left(error)
+    case Right(gbOnly) if gbOnly => Right(xml)
+    case Right(_) =>
+      parseInstructionSets(xml) match {
+        case Left(error) => Left(error)
+        case Right(instructionSets) =>
+          Right(updateXml(xml, instructionSets))
+      }
+  }
 
   def parseInstructionSets(xml: NodeSeq): ParseHandler[Seq[TransformInstructionSet]] = {
     xmlReaders.parseGuarantees(xml) match {

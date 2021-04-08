@@ -101,6 +101,10 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
           <AddInfMT21>20GB0000010000GX1</AddInfMT21>
           <AddInfCodMT23>CAL</AddInfCodMT23>
         </SPEMENMT2>
+        <SPEMENMT2>
+          <AddInfMT21>Placeholder</AddInfMT21>
+          <AddInfCodMT23>ABC</AddInfCodMT23>
+        </SPEMENMT2>
         <PACGS2>
           <MarNumOfPacGS21>AB234</MarNumOfPacGS21>
           <KinOfPacGS23>BX</KinOfPacGS23>
@@ -645,6 +649,10 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
         <GroMasGDS46>1000</GroMasGDS46>
         <NetMasGDS48>950</NetMasGDS48>
         <SPEMENMT2><AddInfMT21>1.00GBP20GB0000010000GX1</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>
+        <SPEMENMT2>
+          <AddInfMT21>Placeholder</AddInfMT21>
+          <AddInfCodMT23>ABC</AddInfCodMT23>
+        </SPEMENMT2>
       <PACGS2>
           <MarNumOfPacGS21>AB234</MarNumOfPacGS21>
           <KinOfPacGS23>BX</KinOfPacGS23>
