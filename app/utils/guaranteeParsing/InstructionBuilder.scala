@@ -19,59 +19,68 @@ package utils.guaranteeParsing
 import com.google.inject.Inject
 import config.DefaultGuaranteeConfig
 import models.ParseError.{AmountWithoutCurrency, GuaranteeNotFound, InvalidAmount}
-import models.{ChangeGuaranteeInstruction, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, SpecialMention, SpecialMentionGuarantee, SpecialMentionOther, TransformInstruction}
+import models.{AddSpecialMentionInstruction, ChangeGuaranteeInstruction, GOOITEGDSNode, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, SpecialMention, SpecialMentionGuarantee, SpecialMentionOther, TransformInstruction, TransformInstructionSet}
 
 class InstructionBuilder @Inject()(guaranteeInstructionBuilder: GuaranteeInstructionBuilder) {
 
+  def buildInstructionSet(gooNode: GOOITEGDSNode, guarantees: Seq[Guarantee]): Either[ParseError, TransformInstructionSet] = {
+    val defaultingGuarantees = guarantees.filter(g => g.isDefaulting)
 
-  def buildInstruction(sm: SpecialMention, guarantees: Seq[Guarantee]): Either[ParseError, TransformInstruction] = {
-    sm match {
-      case m: SpecialMentionOther => Right(NoChangeInstruction(m.xml))
-      case m: SpecialMentionGuarantee => pair(m, guarantees) match {
-        case None => Left(GuaranteeNotFound("Guarantee not found"))
-        case Some((s, g)) => guaranteeInstructionBuilder.buildInstructionFromGuarantee(g, s) match {
-          case Left(error) => Left(error)
-          case Right(instruction) => Right(instruction)
-        }
-      }
+    val specialMentionGuarantees = gooNode.specialMentions.filter(sm => sm.isInstanceOf[SpecialMentionGuarantee]).map { sm => sm.asInstanceOf[SpecialMentionGuarantee] }
+    val mentionedGuarantees = defaultingGuarantees.map {
+      g => pair(g, specialMentionGuarantees)
+    }
+
+    val preserveInstructions = gooNode.specialMentions.filter(sm => sm.isInstanceOf[SpecialMentionOther]).map { sm =>
+      val smo = sm.asInstanceOf[SpecialMentionOther]
+      NoChangeInstruction(smo.xml)
+    }
+
+    ParseError.sequenceErrors(mentionedGuarantees.map {
+      case (m, g) => guaranteeInstructionBuilder.buildInstructionFromGuarantee(g, m)
+    }).map {
+      instructions =>
+        TransformInstructionSet(gooNode, instructions ++ preserveInstructions)
     }
   }
 
-  def pair(mention: SpecialMentionGuarantee, guarantees: Seq[Guarantee]): Option[(SpecialMentionGuarantee, Guarantee)] =
-    guarantees.filter(g => mention.additionalInfo.endsWith(g.gReference)).headOption match {
-      case Some(guarantee) => Some((mention, guarantee))
-      case None => None
+  def pair(guarantee: Guarantee, specialMentionGuarantees: Seq[SpecialMentionGuarantee]): (Option[SpecialMentionGuarantee], Guarantee) =
+    specialMentionGuarantees.filter(sm => sm.additionalInfo.endsWith(guarantee.gReference)).headOption match {
+      case Some(mention) => (Some(mention), guarantee)
+      case None => (None, guarantee)
     }
-
-
-
 }
 
 class GuaranteeInstructionBuilder @Inject() (defaultGuaranteeConfig: DefaultGuaranteeConfig){
 
-  def buildInstructionFromGuarantee(g: Guarantee, sm: SpecialMentionGuarantee): Either[ParseError, TransformInstruction] = {
-    if(!Guarantee.referenceTypes.contains(g.gType)) {
-      Right(NoChangeGuaranteeInstruction(sm))
-    }
-    else
-    {
-      sm.toDetails(g.gReference).flatMap {
-        details => (details.guaranteeAmount, details.currencyCode) match {
-          case (Some(_), None) =>
-            Left(AmountWithoutCurrency("Parsed Amount value without currency"))
-          case (Some(amount), Some(_)) if amount > 0 =>
-            Right(NoChangeGuaranteeInstruction(sm))
-          case (Some(_), Some(_)) =>
-            Left(InvalidAmount("Amount cannot be equal to or less than 0"))
-          case (None, _) =>{
-            val defaultGuaranteeAmount = BigDecimal(defaultGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()
-            val defaultGuaranteeCurrency = defaultGuaranteeConfig.currency
-            Right(ChangeGuaranteeInstruction(SpecialMentionGuarantee(defaultGuaranteeAmount ++ defaultGuaranteeCurrency ++ g.gReference)))
+  def buildInstructionFromGuarantee(g: Guarantee, osm: Option[SpecialMentionGuarantee]): Either[ParseError, TransformInstruction] = {
+    val defaultGuaranteeAmount = BigDecimal(defaultGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()
+    val defaultGuaranteeCurrency = defaultGuaranteeConfig.currency
+    val defaultGuarantee = SpecialMentionGuarantee(defaultGuaranteeAmount ++ defaultGuaranteeCurrency ++ g.gReference)
+    osm match {
+      case Some(sm) =>
+        if(!Guarantee.referenceTypes.contains(g.gType)) {
+          Right(NoChangeGuaranteeInstruction(sm))
+        }
+        else
+        {
+          sm.toDetails(g.gReference).flatMap {
+            details => (details.guaranteeAmount, details.currencyCode) match {
+              case (Some(_), None) =>
+                Left(AmountWithoutCurrency("Parsed Amount value without currency"))
+              case (Some(amount), Some(_)) if amount > 0 =>
+                Right(NoChangeGuaranteeInstruction(sm))
+              case (Some(_), Some(_)) =>
+                Left(InvalidAmount("Amount cannot be equal to or less than 0"))
+              case (None, _) =>{
+                Right(ChangeGuaranteeInstruction(defaultGuarantee))
+              }
+            }
           }
         }
-      }
-
-
+      case None =>
+        Right(AddSpecialMentionInstruction(defaultGuarantee))
     }
+
   }
 }

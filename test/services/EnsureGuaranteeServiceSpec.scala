@@ -17,10 +17,10 @@
 package services
 
 import cats.data.ReaderT
-import models.{ChangeGuaranteeInstruction, GOOITEGDSNode, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, ParseHandling, SpecialMention, SpecialMentionGuarantee, SpecialMentionGuaranteeDetails, SpecialMentionOther, TransformInstructionSet}
+import models.{GOOITEGDSNode, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, ParseHandling, SpecialMention, SpecialMentionGuarantee, SpecialMentionGuaranteeDetails, SpecialMentionOther, TransformInstructionSet}
 import org.mockito.ArgumentMatchers.any
 import data.TestXml
-import models.ParseError.{DepartureEmpty, GuaranteeNotFound, GuaranteeTypeInvalid, InvalidItemNumber}
+import models.ParseError.{AmountWithoutCurrency, DepartureEmpty, GuaranteeNotFound, GuaranteeTypeInvalid, InvalidItemNumber}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
@@ -29,7 +29,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import utils.guaranteeParsing.{GuaranteeXmlReaders, InstructionBuilder, RouteChecker}
+import utils.guaranteeParsing.{GuaranteeXmlReaders, InstructionBuilder, RouteChecker, XmlBuilder}
 
 import scala.xml.{Node, NodeSeq}
 
@@ -38,12 +38,14 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
   private val mockXmlReaders: GuaranteeXmlReaders = mock[GuaranteeXmlReaders]
   private val mockInstructionBuilder: InstructionBuilder = mock[InstructionBuilder]
   private val mockRouteChecker: RouteChecker = mock[RouteChecker]
+  private val mockXmlBuilder: XmlBuilder = mock[XmlBuilder]
 
   override def beforeEach = {
     super.beforeEach()
     reset(mockXmlReaders)
     reset(mockInstructionBuilder)
     reset(mockRouteChecker)
+    reset(mockXmlBuilder)
   }
 
   protected def baseApplicationBuilder: GuiceApplicationBuilder =
@@ -57,7 +59,8 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
       .overrides(
         bind[GuaranteeXmlReaders].toInstance(mockXmlReaders),
         bind[InstructionBuilder].toInstance(mockInstructionBuilder),
-        bind[RouteChecker].toInstance(mockRouteChecker)
+        bind[RouteChecker].toInstance(mockRouteChecker),
+        bind[XmlBuilder].toInstance(mockXmlBuilder)
       )
       .build()
 
@@ -86,16 +89,17 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
         .thenReturn(Right(Seq(Guarantee(1, "test"))))
 
       when(mockXmlReaders.parseSpecialMentions(any()))
-        .thenReturn(Right(Seq(SpecialMentionOther(<SPEMENMT2><test></test></SPEMENMT2>))))
+        .thenReturn(Right(Seq(SpecialMentionGuarantee("test"))))
 
       when(mockXmlReaders.gOOITEGDSNode)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](_ => Right(Seq(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>)))))))
+        .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](_ => Right(Seq(GOOITEGDSNode(1, Seq(SpecialMentionGuarantee("test")))))))
 
       when(mockXmlReaders.gOOITEGDSNodeFromNode)
-        .thenReturn(ReaderT[ParseHandler, Node, GOOITEGDSNode](_ => Right(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>))))))
+        .thenReturn(ReaderT[ParseHandler, Node, GOOITEGDSNode](_ => Right(GOOITEGDSNode(1, Seq(SpecialMentionGuarantee("test"))))))
 
-      when(mockInstructionBuilder.buildInstruction(any(), any()))
-        .thenReturn(Right(NoChangeInstruction(<SPEMENMT2><test></test></SPEMENMT2>)))
+      when(mockInstructionBuilder.buildInstructionSet(any(), any())).thenReturn(Right(TransformInstructionSet(GOOITEGDSNode(1, Seq(SpecialMentionGuarantee("test"))),Seq(NoChangeGuaranteeInstruction(SpecialMentionGuarantee("test"))))))
+
+      when(mockXmlBuilder.buildFromInstruction(any())).thenReturn(<SPEMENMT2><test></test></SPEMENMT2>)
 
       val result = sut.ensureGuarantee(
         //EXAMPLE XML
@@ -154,11 +158,11 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
       when(mockXmlReaders.gOOITEGDSNode)
         .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](_ => Right(Seq(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>)))))))
 
-      when(mockInstructionBuilder.buildInstruction(any(), any()))
-        .thenReturn(Left(GuaranteeNotFound("test")))
+      when(mockInstructionBuilder.buildInstructionSet(any(), any()))
+        .thenReturn(Left(AmountWithoutCurrency("test")))
 
       val result = sut.parseInstructionSets(<test></test>)
-      result mustBe a[Left[GuaranteeNotFound, _]]
+      result mustBe a[Left[AmountWithoutCurrency, _]]
     }
 
     "returns Seq[InstructionSet] if getInstructionSet returns with no error" in {
@@ -168,8 +172,8 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
       when(mockXmlReaders.gOOITEGDSNode)
         .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](_ => Right(Seq(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>)))))))
 
-      when(mockInstructionBuilder.buildInstruction(any(), any()))
-        .thenReturn(Right(NoChangeInstruction(<test></test>)))
+      when(mockInstructionBuilder.buildInstructionSet(any(), any()))
+        .thenReturn(Right(TransformInstructionSet(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>))), Seq(NoChangeInstruction(<test></test>)))))
 
       val result = sut.parseInstructionSets(<test></test>)
       result mustBe a[Right[_, TransformInstructionSet]]
@@ -178,55 +182,4 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
 
     }
   }
-
-  "buildFromInstruction" - {
-    "returns NodeSeq based on the inputted instruction" in {
-      val resultNoChange = sut.buildFromInstruction(NoChangeInstruction(<example></example>)).toString()
-      resultNoChange.toString().filter(_ > ' ') mustBe
-      "<example></example>".filter(_ > ' ')
-
-      val resultNoChangeGuarantee = sut.buildFromInstruction(NoChangeGuaranteeInstruction(SpecialMentionGuarantee("testInfo")))
-      resultNoChangeGuarantee.toString().filter(_ > ' ') mustBe
-        "<SPEMENMT2><AddInfMT21>testInfo</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>".filter(_ > ' ')
-
-
-      val resultChangeGuarantee = sut.buildFromInstruction(ChangeGuaranteeInstruction(SpecialMentionGuarantee("10000.00EURtestCode")))
-      resultChangeGuarantee.toString().filter(_ > ' ') mustBe
-        "<SPEMENMT2><AddInfMT21>10000.00EURtestCode</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>".filter(_ > ' ')
-
-    }
-  }
-
-  "buildGuaranteeXml" - {
-    "returns xml with additionalInfo and CAL" in {
-      sut.buildGuaranteeXml(SpecialMentionGuarantee("testInfo")) mustBe
-      <SPEMENMT2><AddInfMT21>testInfo</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>
-    }
-  }
-
-  "getInstructionSet" - {
-    "returns ParseError when instructionBuilder returns a parsing error" in {
-      when(mockInstructionBuilder.buildInstruction(any(), any()))
-        .thenReturn(Left(GuaranteeNotFound("test")))
-
-      val result = sut.getInstructionSet(fakeGooBlock(Seq(SpecialMentionOther(<example></example>))), Seq.empty[Guarantee])
-      result mustBe a[Left[ParseError, _]]
-    }
-
-    "return TransformInstructionSet if no ParseErrors found" in {
-      when(mockInstructionBuilder.buildInstruction(any(), any()))
-        .thenReturn(Right(NoChangeGuaranteeInstruction(SpecialMentionGuarantee("test"))))
-
-      val result = sut.getInstructionSet(fakeGooBlock(Seq(SpecialMentionOther(<example></example>))), Seq.empty[Guarantee])
-      result mustBe a[Right[_, TransformInstructionSet]]
-      result.right.get.instructions.length mustBe 1
-    }
-
-  }
-
-
-
-
-
-
 }
