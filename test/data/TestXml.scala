@@ -1216,28 +1216,6 @@ trait TestXml {
     </SPEMENMT2>
   </GOOITEGDS>
 
-  lazy val exampleGOOITEGDSBadSpecial =
-    <GOOITEGDS>
-      <IteNumGDS7>1</IteNumGDS7>
-      <SPEMENMT2>
-        <AddInfMT21>7000.0EUR07IT00000100000Z1</AddInfMT21>
-        <AddInfCodMT23>CAL</AddInfCodMT23>
-      </SPEMENMT2>
-      <SPEMENMT2>
-        <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
-        <AddInfCodMT23>CAL</AddInfCodMT23>
-      </SPEMENMT2>
-      <SPEMENMT2>
-        <AddInfMT21>7000.0EUR07IT00000100000Z9</AddInfMT21>
-      </SPEMENMT2>
-      <SPEMENMT2>
-        <AddInfMT21>EU_EXIT</AddInfMT21>
-        <AddInfMT21LNG>EN</AddInfMT21LNG>
-        <AddInfCodMT23>DG1</AddInfCodMT23>
-        <ExpFroCouMT25>AD</ExpFroCouMT25>
-      </SPEMENMT2>
-    </GOOITEGDS>
-
   def exampleGuaranteeGuaTypGUA1(gType: Char): Elem =
     <GUAGUA>
       <GuaTypGUA1>{gType}</GuaTypGUA1>

@@ -126,7 +126,7 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
       sut.gOOITEGDSNode(exampleGOOITEGDSSequenceMissingItemNumberNode) mustBe a[Left[MissingItemNumber, _]]
     }
 
-    "returns ParseError when special mention is invalid" in {
+    "returns SpecialMentionOther (so it passes through to core) when special mention lacks AddInfCodMT23" in {
       val exampleGOOITEGDSSequenceInvalidSpecialMention =
         <example>
           <GOOITEGDS>
@@ -151,7 +151,16 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
           </GOOITEGDS>
         </example>
 
-      sut.gOOITEGDSNode(exampleGOOITEGDSSequenceInvalidSpecialMention) mustBe a[Left[ParseErrorSpec, _]]
+
+      val result = sut.gOOITEGDSNode(exampleGOOITEGDSSequenceInvalidSpecialMention)
+      result mustBe a[Right[_, Seq[GOOITEGDSNode]]]
+      val gooBlocks = result.right.get
+      val gooBlock = gooBlocks.head
+
+      gooBlock.specialMentions.length mustBe 4
+      gooBlock.specialMentions.collect { case sm: SpecialMentionOther => sm }.length mustBe 2
+      gooBlock.specialMentions.collect { case sm: SpecialMentionGuarantee => sm}.length mustBe 2
+
     }
   }
 
@@ -246,7 +255,7 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
       sut.gOOITEGDSNodeFromNode(exampleGOOITEGDSSequenceMissingItemNumberNode) mustBe a[Left[MissingItemNumber, _]]
     }
 
-    "returns ParseError when special mention is invalid" in {
+    "returns SpecialMentionOther (so it passes through to core) when special mention lacks AddInfCodMT23" in {
       val exampleGOOITEGDSSequenceInvalidSpecialMention =
         <GOOITEGDS>
           <IteNumGDS7>1</IteNumGDS7>
@@ -269,7 +278,12 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
           </SPEMENMT2>
         </GOOITEGDS>
 
-      sut.gOOITEGDSNodeFromNode(exampleGOOITEGDSSequenceInvalidSpecialMention) mustBe a[Left[ParseErrorSpec, _]]
+      val result = sut.gOOITEGDSNodeFromNode(exampleGOOITEGDSSequenceInvalidSpecialMention)
+      result mustBe a[Right[_, GOOITEGDSNode]]
+      val gooBlock = result.right.get
+      gooBlock.specialMentions.length mustBe 4
+      gooBlock.specialMentions.collect { case sm: SpecialMentionOther => sm }.length mustBe 2
+      gooBlock.specialMentions.collect { case sm: SpecialMentionGuarantee => sm}.length mustBe 2
     }
   }
 
@@ -284,12 +298,12 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
       sut.specialMention(exampleOtherSPEMENMT2) mustBe a[Right[_, SpecialMentionOther]]
     }
 
-    "returns AdditionalInfoMissing when AddInfMT21 is empty" in {
-      sut.specialMention(exampleAdditionalInfoMissing) mustBe a[Left[AdditionalInfoMissing, _]]
+    "returns SpecialMentionOther when AddInfMT21 is empty" in {
+      sut.specialMention(exampleAdditionalInfoMissing) mustBe a[Right[_, SpecialMentionOther]]
     }
 
-    "returns AdditionalInfoCodeMissing when AddInfCodMT23 is empty" in {
-      sut.specialMention(exampleCodeMissing) mustBe a[Left[AdditionalInfoCodeMissing, _]]
+    "returns SpecialMentionOther when AddInfCodMT23 is empty" in {
+      sut.specialMention(exampleCodeMissing) mustBe a[Right[_, SpecialMentionOther]]
     }
   }
 
@@ -349,10 +363,6 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
       val result = sut.parseSpecialMentions(exampleGOOITEGDS)
       result mustBe a[Right[_, Seq[SpecialMention]]]
       result.right.get.length mustBe 4
-    }
-
-    "returns ParseError when any of the special mentions would fail" in {
-      sut.parseSpecialMentions(exampleGOOITEGDSBadSpecial) mustBe a[Left[ParseErrorSpec, _]]
     }
   }
 
