@@ -1,5 +1,5 @@
-Here is the list error codes that we will keep updating.
-We use standard HTTP status codes to show whether an API request has succeeded or not: 
+Here is the list of error codes that we will keep updating.
+We use standard HTTP status codes to show whether an API request has succeeded or not:
 
 **POST**
 
@@ -44,5 +44,5 @@ We use standard HTTP status codes to show whether an API request has succeeded o
 500 Internal Server Error: If exception in code occurs
 
 
-Errors specific to each API are shown in the Endpoints section, under Response. 
+Errors specific to each API are shown in the Endpoints section, under Response.
 See our [reference guide](https://developer.service.hmrc.gov.uk/api-documentation/docs/reference-guide#errors) for more on errors.
