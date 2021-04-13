@@ -100,7 +100,6 @@ class GuaranteeXmlReaders extends ParseHandling {
     })
 
 
-  //TODO: Need to preserve Special Mentions that don't have AddInf or AddInfCodME23 codes
   val specialMention: ReaderT[ParseHandler, Node, SpecialMention] = {
     ReaderT[ParseHandler, Node, SpecialMention](xml => {
       val AddInfMT21 = (xml \ "AddInfMT21")
