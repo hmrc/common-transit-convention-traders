@@ -89,15 +89,15 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
         .thenReturn(Right(Seq(Guarantee(1, "test"))))
 
       when(mockXmlReaders.parseSpecialMentions(any()))
-        .thenReturn(Right(Seq(SpecialMentionGuarantee("test"))))
+        .thenReturn(Right(Seq(SpecialMentionGuarantee("test", Nil))))
 
       when(mockXmlReaders.gOOITEGDSNode)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](_ => Right(Seq(GOOITEGDSNode(1, Seq(SpecialMentionGuarantee("test")))))))
+        .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](_ => Right(Seq(GOOITEGDSNode(1, Seq(SpecialMentionGuarantee("test", Nil)))))))
 
       when(mockXmlReaders.gOOITEGDSNodeFromNode)
-        .thenReturn(ReaderT[ParseHandler, Node, GOOITEGDSNode](_ => Right(GOOITEGDSNode(1, Seq(SpecialMentionGuarantee("test"))))))
+        .thenReturn(ReaderT[ParseHandler, Node, GOOITEGDSNode](_ => Right(GOOITEGDSNode(1, Seq(SpecialMentionGuarantee("test", Nil))))))
 
-      when(mockInstructionBuilder.buildInstructionSet(any(), any())).thenReturn(Right(TransformInstructionSet(GOOITEGDSNode(1, Seq(SpecialMentionGuarantee("test"))),Seq(NoChangeGuaranteeInstruction(SpecialMentionGuarantee("test"))))))
+      when(mockInstructionBuilder.buildInstructionSet(any(), any())).thenReturn(Right(TransformInstructionSet(GOOITEGDSNode(1, Seq(SpecialMentionGuarantee("test", Nil))),Seq(NoChangeGuaranteeInstruction(SpecialMentionGuarantee("test", Nil))))))
 
       when(mockXmlBuilder.buildFromInstruction(any())).thenReturn(<SPEMENMT2><test></test></SPEMENMT2>)
 

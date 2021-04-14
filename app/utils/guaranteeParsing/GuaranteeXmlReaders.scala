@@ -106,7 +106,7 @@ class GuaranteeXmlReaders extends ParseHandling {
       val AddInfCodMT23 = (xml \ "AddInfCodMT23")
 
       (AddInfMT21.text.isEmpty, AddInfCodMT23.text.isEmpty) match {
-        case (false, false) if AddInfCodMT23.text.equals("CAL") => Right(SpecialMentionGuarantee(AddInfMT21.text))
+        case (false, false) if AddInfCodMT23.text.equals("CAL") => Right(SpecialMentionGuarantee(AddInfMT21.text, xml))
         case _ => Right(SpecialMentionOther(xml))
       }
     })

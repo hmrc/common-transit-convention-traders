@@ -63,10 +63,10 @@ class InstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAn
     }
 
     "returns TransformInstructionSet with an AddInstruction if no special mentions but a guarantee" in {
-      when(mockGIB.buildInstructionFromGuarantee(any(), any())).thenReturn(Right(AddSpecialMentionInstruction(SpecialMentionGuarantee("test"))))
+      when(mockGIB.buildInstructionFromGuarantee(any(), any())).thenReturn(Right(AddSpecialMentionInstruction(SpecialMentionGuarantee("test", Nil))))
 
       val result = sut.buildInstructionSet(GOOITEGDSNode(1, Nil),Seq(Guarantee('1',"test")))
-      result.right.get mustBe TransformInstructionSet(GOOITEGDSNode(1, Nil), Seq(AddSpecialMentionInstruction(SpecialMentionGuarantee("test"))))
+      result.right.get mustBe TransformInstructionSet(GOOITEGDSNode(1, Nil), Seq(AddSpecialMentionInstruction(SpecialMentionGuarantee("test", Nil))))
     }
 
     "returns ParseError if the built instruction returns an error" in {
@@ -81,7 +81,7 @@ class InstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAn
   }
 
   "pair" - {
-    val smSeq = Seq(SpecialMentionGuarantee("1alpha"), SpecialMentionGuarantee("2beta"), SpecialMentionGuarantee("3charlie"))
+    val smSeq = Seq(SpecialMentionGuarantee("1alpha"), SpecialMentionGuarantee("2beta", Nil), SpecialMentionGuarantee("3charlie"))
 
     "returns (Some(SpecialMentionGuarantee), Guarantee) when a special mention ends with the guarantee gReference value" in {
       sut.pair(Guarantee('1', "alpha"), smSeq) mustBe a[Tuple2[Some[SpecialMention], Guarantee]]
