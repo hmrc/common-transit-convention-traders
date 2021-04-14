@@ -32,7 +32,12 @@ class XmlBuilder @Inject()() {
     }
   }
 
-  def buildGuaranteeXml(mention: SpecialMentionGuarantee) =
-  <SPEMENMT2><AddInfMT21>{mention.additionalInfo}</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>
+  def buildGuaranteeXml(mention: SpecialMentionGuarantee) = {
+    val addInfMT21LNGText = (mention.xml \ "AddInfMT21LNG").text
+    val expFroECMT24Text = (mention.xml \ "ExpFroECMT24").text
+    val expFroCouMT25Text = (mention.xml \ "ExpFroCouMT25").text
+    <SPEMENMT2><AddInfMT21>{mention.additionalInfo}</AddInfMT21>{if(!addInfMT21LNGText.isEmpty) <AddInfMT21LNG>{addInfMT21LNGText}</AddInfMT21LNG>}<AddInfCodMT23>CAL</AddInfCodMT23>{if(!expFroECMT24Text.isEmpty) <ExpFroECMT24>{expFroECMT24Text}</ExpFroECMT24>}{if(!expFroCouMT25Text.isEmpty) <ExpFroCouMT25>{expFroCouMT25Text}</ExpFroCouMT25>}</SPEMENMT2>
+
+  }
 
 }

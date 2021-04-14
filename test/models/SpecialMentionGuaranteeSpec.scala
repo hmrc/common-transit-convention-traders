@@ -25,27 +25,27 @@ class SpecialMentionGuaranteeSpec extends AnyFreeSpec with MockitoSugar with Mat
 
   "toDetails" - {
     "returns AdditionalInfoInvalidCharacters if characters that aren't alphanumerical or a '.'" in {
-      SpecialMentionGuarantee("abcdeabcde$$$$test")
+      SpecialMentionGuarantee("abcdeabcde$$$$test", Nil)
         .toDetails("test") mustBe a[Left[AdditionalInfoInvalidCharacters, _]]
     }
 
     "returns CurrencyCodeInvalid when currency code is not a 3 letter alphabetical string" in {
-      SpecialMentionGuarantee("100.00ABtest")
+      SpecialMentionGuarantee("100.00ABtest", Nil)
         .toDetails("test") mustBe a[Left[CurrencyCodeInvalid, _]]
     }
 
     "returns AmountStringTooLong if is amount value is longer than 18 characters" in {
-      SpecialMentionGuarantee("12345678901234567890.00EURtest")
+      SpecialMentionGuarantee("12345678901234567890.00EURtest", Nil)
         .toDetails("test") mustBe a[Left[AmountStringTooLong, _]]
     }
 
     "returns AmountStringInvalid if amount value cannot be parsed as a big decimal" in {
-      SpecialMentionGuarantee("ABCEURtest")
+      SpecialMentionGuarantee("ABCEURtest", Nil)
         .toDetails("test") mustBe a[Left[AmountStringInvalid, _]]
     }
 
     "returns SpecialMentionGuaranteeDetails with all details" in {
-      val result = SpecialMentionGuarantee("100.00EURtest")
+      val result = SpecialMentionGuarantee("100.00EURtest", Nil)
         .toDetails("test")
       result mustBe a[Right[_,SpecialMentionGuaranteeDetails]]
       result.right.get.currencyCode mustBe Some("EUR")

@@ -25,7 +25,7 @@ sealed trait SpecialMention
 
 final case class SpecialMentionOther(xml: NodeSeq) extends SpecialMention
 
-final case class SpecialMentionGuarantee(additionalInfo: String) extends SpecialMention {
+final case class SpecialMentionGuarantee(additionalInfo: String, xml: NodeSeq = Nil) extends SpecialMention {
   def toDetails(guaranteeReference: String) : Either[ParseError, SpecialMentionGuaranteeDetails] = {
     if(additionalInfo.matches("'[a-zA-Z0-9_.]*'")) return Left(AdditionalInfoInvalidCharacters("invalid characters in additional info"))
 
@@ -34,7 +34,7 @@ final case class SpecialMentionGuarantee(additionalInfo: String) extends Special
       case Right(currencyOpt) => {
         getAmount(additionalInfo, guaranteeReference, currencyOpt) match {
           case Left(error) => Left(error)
-          case Right(amountOpt) => Right(SpecialMentionGuaranteeDetails(amountOpt, currencyOpt, guaranteeReference))
+          case Right(amountOpt) => Right(SpecialMentionGuaranteeDetails(amountOpt, currencyOpt, guaranteeReference, xml))
         }
       }
     }

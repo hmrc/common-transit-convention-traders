@@ -102,14 +102,14 @@ class GuaranteeXmlReaders extends ParseHandling {
 
   val specialMention: ReaderT[ParseHandler, Node, SpecialMention] = {
     ReaderT[ParseHandler, Node, SpecialMention](xml => {
-      (xml \ "AddInfMT21").text match {
-        case additionalInfo if additionalInfo.isEmpty => Left(AdditionalInfoMissing("AddInfMT21 field is missing"))
-        case additionalInfo => (xml \ "AddInfCodMT23").text match {
-          case code if code.isEmpty => Left(AdditionalInfoCodeMissing("AddInfCodMT23 is missing"))
-          case "CAL" => Right(SpecialMentionGuarantee(additionalInfo))
-          case _ => Right(SpecialMentionOther(xml))
-        }
-      }})
+      val AddInfMT21 = (xml \ "AddInfMT21")
+      val AddInfCodMT23 = (xml \ "AddInfCodMT23")
+
+      (AddInfMT21.text.isEmpty, AddInfCodMT23.text.isEmpty) match {
+        case (false, false) if AddInfCodMT23.text.equals("CAL") => Right(SpecialMentionGuarantee(AddInfMT21.text, xml))
+        case _ => Right(SpecialMentionOther(xml))
+      }
+    })
   }
 
   val guarantee: ReaderT[ParseHandler, Node, Guarantee] =

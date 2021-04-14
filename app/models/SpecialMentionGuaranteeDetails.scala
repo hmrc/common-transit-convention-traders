@@ -16,4 +16,6 @@
 
 package models
 
-final case class SpecialMentionGuaranteeDetails(guaranteeAmount: Option[BigDecimal], currencyCode: Option[String], reference: String)
+import scala.xml.NodeSeq
+
+final case class SpecialMentionGuaranteeDetails(guaranteeAmount: Option[BigDecimal], currencyCode: Option[String], reference: String, xml: NodeSeq)

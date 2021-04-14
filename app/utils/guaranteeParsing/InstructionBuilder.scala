@@ -56,7 +56,7 @@ class GuaranteeInstructionBuilder @Inject() (defaultGuaranteeConfig: DefaultGuar
   def buildInstructionFromGuarantee(g: Guarantee, osm: Option[SpecialMentionGuarantee]): Either[ParseError, TransformInstruction] = {
     val defaultGuaranteeAmount = BigDecimal(defaultGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()
     val defaultGuaranteeCurrency = defaultGuaranteeConfig.currency
-    val defaultGuarantee = SpecialMentionGuarantee(defaultGuaranteeAmount ++ defaultGuaranteeCurrency ++ g.gReference)
+    val defaultGuarantee = SpecialMentionGuarantee(defaultGuaranteeAmount ++ defaultGuaranteeCurrency ++ g.gReference, Nil)
     osm match {
       case Some(sm) =>
         if(!Guarantee.referenceTypes.contains(g.gType)) {
@@ -73,7 +73,7 @@ class GuaranteeInstructionBuilder @Inject() (defaultGuaranteeConfig: DefaultGuar
               case (Some(_), Some(_)) =>
                 Left(InvalidAmount("Amount cannot be equal to or less than 0"))
               case (None, _) =>{
-                Right(ChangeGuaranteeInstruction(defaultGuarantee))
+                Right(ChangeGuaranteeInstruction(SpecialMentionGuarantee(defaultGuaranteeAmount ++ defaultGuaranteeCurrency ++ g.gReference, sm.xml)))
               }
             }
           }
