@@ -21,7 +21,7 @@ import javax.inject.Inject
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import connectors.util.CustomHttpReader
-import metrics.HasMetrics
+import metrics.{HasMetrics, MetricsKeys}
 import models.domain.Departure
 import models.domain.Departures
 import play.api.mvc.RequestHeader
@@ -30,19 +30,21 @@ import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.Utils
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.Future
 
 class DeparturesConnector @Inject() (http: HttpClient, appConfig: AppConfig, val metrics: Metrics) extends BaseConnector with HasMetrics {
 
+  import MetricsKeys.DeparturesBackend._
+
   def post(message: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    withMetricsTimerResponse("departures-backend-post") {
+    withMetricsTimerResponse(Post) {
       val url = appConfig.traderAtDeparturesUrl + departureRoute
       http.POSTString(url, message)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
     }
 
   def get(departureId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departure]] =
-    withMetricsTimerAsync("departures-backend-get-by-id") {
+    withMetricsTimerAsync(GetById) {
       timer =>
         val url = appConfig.traderAtDeparturesUrl + departureRoute + Utils.urlEncode(departureId)
         http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
@@ -53,7 +55,7 @@ class DeparturesConnector @Inject() (http: HttpClient, appConfig: AppConfig, val
     }
 
   def getForEori()(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departures]] =
-    withMetricsTimerAsync("departures-backend-get-for-eori") {
+    withMetricsTimerAsync(GetForEori) {
       timer =>
         val url = appConfig.traderAtDeparturesUrl + departureRoute
 

@@ -23,7 +23,7 @@ import connectors.ArrivalConnector
 import controllers.actions.AuthAction
 import controllers.actions.ValidateAcceptJsonHeaderAction
 import controllers.actions.ValidateArrivalNotificationAction
-import metrics.HasActionMetrics
+import metrics.{HasActionMetrics, MetricsKeys}
 import models.MessageType
 import models.domain.Arrivals
 import models.response.HateaosArrivalMovementPostResponseMessage
@@ -55,8 +55,10 @@ class ArrivalMovementController @Inject() (
     with HttpErrorFunctions
     with ResponseHelper {
 
+  import MetricsKeys.Endpoints._
+
   def createArrivalNotification(): Action[NodeSeq] =
-    withMetricsTimerAction("create-arrival-notification") {
+    withMetricsTimerAction(CreateArrivalNotification) {
       (authAction andThen validateArrivalNotificationAction).async(parse.xml) {
         implicit request =>
           arrivalConnector.post(request.body.toString).map {
@@ -90,7 +92,7 @@ class ArrivalMovementController @Inject() (
     }
 
   def resubmitArrivalNotification(arrivalId: String): Action[NodeSeq] =
-    withMetricsTimerAction("resubmit-arrival-notification") {
+    withMetricsTimerAction(ResubmitArrivalNotification) {
       (authAction andThen validateArrivalNotificationAction).async(parse.xml) {
         implicit request =>
           arrivalConnector.put(request.body.toString, arrivalId).map {
@@ -125,7 +127,7 @@ class ArrivalMovementController @Inject() (
     }
 
   def getArrival(arrivalId: String): Action[AnyContent] =
-    withMetricsTimerAction("get-arrival") {
+    withMetricsTimerAction(GetArrival) {
       (authAction andThen validateAcceptJsonHeaderAction).async {
         implicit request =>
           arrivalConnector.get(arrivalId).map {
@@ -138,7 +140,7 @@ class ArrivalMovementController @Inject() (
     }
 
   def getArrivalsForEori: Action[AnyContent] =
-    withMetricsTimerAction("get-arrivals-for-eori") {
+    withMetricsTimerAction(GetArrivalsForEori) {
       (authAction andThen validateAcceptJsonHeaderAction).async {
         implicit request =>
           arrivalConnector.getForEori.map {

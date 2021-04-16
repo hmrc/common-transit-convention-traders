@@ -23,7 +23,7 @@ import connectors.ArrivalMessageConnector
 import controllers.actions.AuthAction
 import controllers.actions.ValidateAcceptJsonHeaderAction
 import controllers.actions.ValidateArrivalMessageAction
-import metrics.HasActionMetrics
+import metrics.{HasActionMetrics, MetricsKeys}
 import models.MessageType
 import models.response.HateaosArrivalMessagesPostResponseMessage
 import models.response.HateaosArrivalResponseMessage
@@ -54,8 +54,10 @@ class ArrivalMessagesController @Inject() (
     with HttpErrorFunctions
     with ResponseHelper {
 
+  import MetricsKeys.Endpoints._
+
   def sendMessageDownstream(arrivalId: String): Action[NodeSeq] =
-    withMetricsTimerAction("send-arrival-message") {
+    withMetricsTimerAction(SendArrivalMessage) {
       (authAction andThen validateMessageAction).async(parse.xml) {
         implicit request =>
           messageConnector.post(request.body.toString, arrivalId).map {
@@ -90,7 +92,7 @@ class ArrivalMessagesController @Inject() (
     }
 
   def getArrivalMessage(arrivalId: String, messageId: String): Action[AnyContent] =
-    withMetricsTimerAction("get-arrival-message") {
+    withMetricsTimerAction(GetArrivalMessage) {
       (authAction andThen validateAcceptJsonHeaderAction).async {
         implicit request =>
           messageConnector.get(arrivalId, messageId).map {
@@ -103,7 +105,7 @@ class ArrivalMessagesController @Inject() (
     }
 
   def getArrivalMessages(arrivalId: String): Action[AnyContent] =
-    withMetricsTimerAction("get-arrival-messages") {
+    withMetricsTimerAction(GetArrivalMessages) {
       (authAction andThen validateAcceptJsonHeaderAction).async {
         implicit request =>
           messageConnector.getMessages(arrivalId).map {

@@ -26,7 +26,7 @@ import controllers.actions.AuthAction
 import controllers.actions.EnsureGuaranteeAction
 import controllers.actions.ValidateAcceptJsonHeaderAction
 import controllers.actions.ValidateDepartureDeclarationAction
-import metrics.HasActionMetrics
+import metrics.{HasActionMetrics, MetricsKeys}
 import models.MessageType
 import models.response.HateaosDeparturePostResponseMessage
 import models.response.HateaosResponseDeparture
@@ -59,8 +59,10 @@ class DeparturesController @Inject() (
     with HttpErrorFunctions
     with ResponseHelper {
 
+  import MetricsKeys.Endpoints._
+
   def submitDeclaration(): Action[NodeSeq] =
-    withMetricsTimerAction("submit-departure-declaration") {
+    withMetricsTimerAction(SubmitDepartureDeclaration) {
       (authAction andThen validateDepartureDeclarationAction andThen ensureGuaranteeAction).async(parse.xml) {
         implicit request =>
           departuresConnector.post(request.newXml.toString).map {
@@ -97,7 +99,7 @@ class DeparturesController @Inject() (
     }
 
   def getDeparture(departureId: String): Action[AnyContent] =
-    withMetricsTimerAction("get-departure") {
+    withMetricsTimerAction(GetDeparture) {
       (authAction andThen validateAcceptJsonHeaderAction).async {
         implicit request =>
           departuresConnector.get(departureId).map {
@@ -110,7 +112,7 @@ class DeparturesController @Inject() (
     }
 
   def getDeparturesForEori: Action[AnyContent] =
-    withMetricsTimerAction("get-departures-for-eori") {
+    withMetricsTimerAction(GetDeparturesForEori) {
       (authAction andThen validateAcceptJsonHeaderAction).async {
         implicit request =>
           departuresConnector.getForEori.map {

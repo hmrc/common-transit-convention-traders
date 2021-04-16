@@ -21,7 +21,7 @@ import javax.inject.Inject
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import connectors.util.CustomHttpReader
-import metrics.HasMetrics
+import metrics.{HasMetrics, MetricsKeys}
 import models.domain.Arrival
 import models.domain.Arrivals
 import play.api.mvc.RequestHeader
@@ -33,20 +33,22 @@ import scala.concurrent.Future
 
 class ArrivalConnector @Inject() (http: HttpClient, appConfig: AppConfig, val metrics: Metrics) extends BaseConnector with HasMetrics {
 
+  import MetricsKeys.ArrivalBackend._
+
   def post(message: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    withMetricsTimerResponse("arrival-backend-post") {
+    withMetricsTimerResponse(Post) {
       val url = appConfig.traderAtDestinationUrl + arrivalRoute
       http.POSTString(url, message)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
     }
 
   def put(message: String, arrivalId: String)(implicit requestHeader: RequestHeader, headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    withMetricsTimerResponse("arrival-backend-put") {
+    withMetricsTimerResponse(Put) {
       val url = appConfig.traderAtDestinationUrl + arrivalRoute + Utils.urlEncode(arrivalId)
       http.PUTString(url, message)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
     }
 
   def get(arrivalId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] =
-    withMetricsTimerAsync("arrival-backend-get-by-id") {
+    withMetricsTimerAsync(GetById) {
       timer =>
         val url = appConfig.traderAtDestinationUrl + arrivalRoute + Utils.urlEncode(arrivalId)
         http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
@@ -57,7 +59,7 @@ class ArrivalConnector @Inject() (http: HttpClient, appConfig: AppConfig, val me
     }
 
   def getForEori()(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrivals]] =
-    withMetricsTimerAsync("arrival-backend-get-for-eori") {
+    withMetricsTimerAsync(GetForEori) {
       timer =>
         val url = appConfig.traderAtDestinationUrl + arrivalRoute
         http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
