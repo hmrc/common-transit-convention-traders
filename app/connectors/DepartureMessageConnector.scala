@@ -16,38 +16,57 @@
 
 package connectors
 
+import javax.inject.Inject
+
+import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import connectors.util.CustomHttpReader
-import javax.inject.Inject
-import models.domain.{DepartureWithMessages, MovementMessage}
+import metrics.HasMetrics
+import models.domain.DepartureWithMessages
+import models.domain.MovementMessage
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.Utils
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
-class DepartureMessageConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends BaseConnector {
+class DepartureMessageConnector @Inject() (http: HttpClient, appConfig: AppConfig, val metrics: Metrics) extends BaseConnector with HasMetrics {
 
-  def post(message: String, departureId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val url = appConfig.traderAtDeparturesUrl + s"$departureRoute${Utils.urlEncode(departureId)}/messages"
-
-    http.POSTString(url, message, requestHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
-  }
-
-  def getMessages(departureId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, DepartureWithMessages]] = {
-    val url = appConfig.traderAtDeparturesUrl + s"$departureRoute${Utils.urlEncode(departureId)}/messages"
-
-    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response => extractIfSuccessful[DepartureWithMessages](response)
+  def post(message: String, departureId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    withMetricsTimerResponse("departures-backend-post-message") {
+      val url = appConfig.traderAtDeparturesUrl + s"$departureRoute${Utils.urlEncode(departureId)}/messages"
+      http.POSTString(url, message, requestHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
     }
-  }
 
-  def get(departureId: String, messageId: String)(implicit request: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, MovementMessage]] = {
-    val url = appConfig.traderAtDeparturesUrl + s"$departureRoute${Utils.urlEncode(departureId)}/messages/${Utils.urlEncode(messageId)}"
-
-    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response =>
-      extractIfSuccessful[MovementMessage](response)
+  def getMessages(
+    departureId: String
+  )(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, DepartureWithMessages]] =
+    withMetricsTimerAsync("departures-backend-get-messages-for-departure") {
+      timer =>
+        val url = appConfig.traderAtDeparturesUrl + s"$departureRoute${Utils.urlEncode(departureId)}/messages"
+        http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
+          response =>
+            if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
+            extractIfSuccessful[DepartureWithMessages](response)
+        }
     }
-  }
+
+  def get(departureId: String, messageId: String)(implicit
+    request: RequestHeader,
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Either[HttpResponse, MovementMessage]] =
+    withMetricsTimerAsync("departures-backend-get-message-by-id") {
+      timer =>
+        val url = appConfig.traderAtDeparturesUrl + s"$departureRoute${Utils.urlEncode(departureId)}/messages/${Utils.urlEncode(messageId)}"
+        http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
+          response =>
+            if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
+            extractIfSuccessful[MovementMessage](response)
+        }
+    }
 
 }

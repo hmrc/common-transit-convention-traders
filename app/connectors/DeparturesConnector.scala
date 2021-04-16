@@ -16,38 +16,51 @@
 
 package connectors
 
+import javax.inject.Inject
+
+import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import connectors.util.CustomHttpReader
-import javax.inject.Inject
-import models.domain.{Departure, Departures}
+import metrics.HasMetrics
+import models.domain.Departure
+import models.domain.Departures
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.Utils
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
-class DeparturesConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends BaseConnector {
+class DeparturesConnector @Inject() (http: HttpClient, appConfig: AppConfig, val metrics: Metrics) extends BaseConnector with HasMetrics {
 
-  def post(message: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val url = appConfig.traderAtDeparturesUrl + departureRoute
-
-    http.POSTString(url, message)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
-  }
-
-  def get(departureId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departure]] = {
-    val url = appConfig.traderAtDeparturesUrl + departureRoute + Utils.urlEncode(departureId)
-
-    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response =>
-      extractIfSuccessful[Departure](response)
+  def post(message: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    withMetricsTimerResponse("departures-backend-post") {
+      val url = appConfig.traderAtDeparturesUrl + departureRoute
+      http.POSTString(url, message)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
     }
-  }
 
-  def getForEori()(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departures]] = {
-    val url = appConfig.traderAtDeparturesUrl + departureRoute
-
-    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response =>
-      extractIfSuccessful[Departures](response)
+  def get(departureId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departure]] =
+    withMetricsTimerAsync("departures-backend-get-by-id") {
+      timer =>
+        val url = appConfig.traderAtDeparturesUrl + departureRoute + Utils.urlEncode(departureId)
+        http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
+          response =>
+            if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
+            extractIfSuccessful[Departure](response)
+        }
     }
-  }
+
+  def getForEori()(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departures]] =
+    withMetricsTimerAsync("departures-backend-get-for-eori") {
+      timer =>
+        val url = appConfig.traderAtDeparturesUrl + departureRoute
+
+        http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
+          response =>
+            if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
+            extractIfSuccessful[Departures](response)
+        }
+    }
 }

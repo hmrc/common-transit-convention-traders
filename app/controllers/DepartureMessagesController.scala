@@ -16,77 +16,102 @@
 
 package controllers
 
-import connectors.DepartureMessageConnector
-import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateDepartureMessageAction}
-import models.MessageType
-
 import javax.inject.Inject
-import models.response.{HateaosDepartureMessagesPostResponseMessage, HateaosDepartureResponseMessage, HateaosResponseDepartureWithMessages}
+
+import com.kenshoo.play.metrics.Metrics
+import connectors.DepartureMessageConnector
+import controllers.actions.AuthAction
+import controllers.actions.ValidateAcceptJsonHeaderAction
+import controllers.actions.ValidateDepartureMessageAction
+import metrics.HasActionMetrics
+import models.MessageType
+import models.response.HateaosDepartureMessagesPostResponseMessage
+import models.response.HateaosDepartureResponseMessage
+import models.response.HateaosResponseDepartureWithMessages
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.http.HttpErrorFunctions
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.CallOps._
-import utils.{ResponseHelper, Utils}
+import utils.ResponseHelper
+import utils.Utils
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
-class DepartureMessagesController @Inject()(cc: ControllerComponents,
-                                            authAction: AuthAction,
-                                            messageConnector: DepartureMessageConnector,
-                                            validateMessageAction: ValidateDepartureMessageAction,
-                                            validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper {
+class DepartureMessagesController @Inject() (
+  cc: ControllerComponents,
+  authAction: AuthAction,
+  messageConnector: DepartureMessageConnector,
+  validateMessageAction: ValidateDepartureMessageAction,
+  validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction,
+  val metrics: Metrics
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc)
+    with HasActionMetrics
+    with HttpErrorFunctions
+    with ResponseHelper {
 
-  def sendMessageDownstream(departureId: String): Action[NodeSeq] = (authAction andThen validateMessageAction).async(parse.xml) {
-    implicit request =>
-      messageConnector.post(request.body.toString, departureId).map { response =>
-        response.status match {
-          case s if is2xx(s) =>
-            response.header(LOCATION) match {
-              case Some(locationValue) =>
-                MessageType.getMessageType(request.body) match {
-                  case Some(messageType: MessageType) =>
-                    val messageId = Utils.lastFragment(locationValue)
-                    Accepted(Json.toJson(HateaosDepartureMessagesPostResponseMessage(
-                      departureId,
-                      messageId,
-                      messageType.code,
-                      request.body
-                    ))).withHeaders(LOCATION -> routes.DepartureMessagesController.getDepartureMessage(departureId, messageId).urlWithContext)
-                  case None =>
-                    InternalServerError
-                }
-              case _ =>
-                InternalServerError
-            }
-          case _ => handleNon2xx(response)
-        }
+  def sendMessageDownstream(departureId: String): Action[NodeSeq] =
+    withMetricsTimerAction("send-departure-message") {
+      (authAction andThen validateMessageAction).async(parse.xml) {
+        implicit request =>
+          messageConnector.post(request.body.toString, departureId).map {
+            response =>
+              response.status match {
+                case s if is2xx(s) =>
+                  response.header(LOCATION) match {
+                    case Some(locationValue) =>
+                      MessageType.getMessageType(request.body) match {
+                        case Some(messageType: MessageType) =>
+                          val messageId = Utils.lastFragment(locationValue)
+                          Accepted(
+                            Json.toJson(
+                              HateaosDepartureMessagesPostResponseMessage(
+                                departureId,
+                                messageId,
+                                messageType.code,
+                                request.body
+                              )
+                            )
+                          ).withHeaders(LOCATION -> routes.DepartureMessagesController.getDepartureMessage(departureId, messageId).urlWithContext)
+                        case None =>
+                          InternalServerError
+                      }
+                    case _ =>
+                      InternalServerError
+                  }
+                case _ => handleNon2xx(response)
+              }
+          }
       }
-  }
+    }
 
   def getDepartureMessages(departureId: String): Action[AnyContent] =
-    (authAction andThen validateAcceptJsonHeaderAction).async {
-      implicit request => {
-        messageConnector.getMessages(departureId).map {
-          case Right(d) => {
-            Ok(Json.toJson(HateaosResponseDepartureWithMessages(d)))
+    withMetricsTimerAction("get-departure-messages") {
+      (authAction andThen validateAcceptJsonHeaderAction).async {
+        implicit request =>
+          messageConnector.getMessages(departureId).map {
+            case Right(d) =>
+              Ok(Json.toJson(HateaosResponseDepartureWithMessages(d)))
+            case Left(response) =>
+              handleNon2xx(response)
           }
-          case Left(response) =>
-            handleNon2xx(response)
-        }
       }
     }
 
   def getDepartureMessage(departureId: String, messageId: String): Action[AnyContent] =
-    (authAction andThen validateAcceptJsonHeaderAction).async {
-      implicit request => {
-        messageConnector.get(departureId, messageId).map {
-          case Right(m) =>
-            Ok(Json.toJson(HateaosDepartureResponseMessage(departureId, messageId, m)))
-          case Left(response) =>
-            handleNon2xx(response)
-        }
+    withMetricsTimerAction("get-departure-message") {
+      (authAction andThen validateAcceptJsonHeaderAction).async {
+        implicit request =>
+          messageConnector.get(departureId, messageId).map {
+            case Right(m) =>
+              Ok(Json.toJson(HateaosDepartureResponseMessage(departureId, messageId, m)))
+            case Left(response) =>
+              handleNon2xx(response)
+          }
       }
     }
 }

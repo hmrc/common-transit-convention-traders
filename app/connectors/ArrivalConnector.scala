@@ -16,44 +16,54 @@
 
 package connectors
 
+import javax.inject.Inject
+
+import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import connectors.util.CustomHttpReader
-import javax.inject.Inject
-import models.domain.{Arrival, Arrivals}
+import metrics.HasMetrics
+import models.domain.Arrival
+import models.domain.Arrivals
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.http.{HttpClient, HttpResponse, HeaderCarrier}
 import utils.Utils
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
-class ArrivalConnector @Inject()(http: HttpClient, appConfig: AppConfig) extends BaseConnector {
+class ArrivalConnector @Inject() (http: HttpClient, appConfig: AppConfig, val metrics: Metrics) extends BaseConnector with HasMetrics {
 
-  def post(message: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val url = appConfig.traderAtDestinationUrl + arrivalRoute
-
-    http.POSTString(url, message)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
-  }
-
-  def put(message: String, arrivalId: String)(implicit requestHeader: RequestHeader, headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val url = appConfig.traderAtDestinationUrl + arrivalRoute + Utils.urlEncode(arrivalId)
-
-    http.PUTString(url, message)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
-  }
-
-  def get(arrivalId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] = {
-    val url = appConfig.traderAtDestinationUrl + arrivalRoute + Utils.urlEncode(arrivalId)
-
-    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response =>
-      extractIfSuccessful[Arrival](response)
+  def post(message: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    withMetricsTimerResponse("arrival-backend-post") {
+      val url = appConfig.traderAtDestinationUrl + arrivalRoute
+      http.POSTString(url, message)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
     }
-  }
 
-  def getForEori()(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrivals]] = {
-    val url = appConfig.traderAtDestinationUrl + arrivalRoute
-
-    http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map { response =>
-      extractIfSuccessful[Arrivals](response)
+  def put(message: String, arrivalId: String)(implicit requestHeader: RequestHeader, headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    withMetricsTimerResponse("arrival-backend-put") {
+      val url = appConfig.traderAtDestinationUrl + arrivalRoute + Utils.urlEncode(arrivalId)
+      http.PUTString(url, message)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
     }
-  }
+
+  def get(arrivalId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] =
+    withMetricsTimerAsync("arrival-backend-get-by-id") {
+      timer =>
+        val url = appConfig.traderAtDestinationUrl + arrivalRoute + Utils.urlEncode(arrivalId)
+        http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
+          response =>
+            if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
+            extractIfSuccessful[Arrival](response)
+        }
+    }
+
+  def getForEori()(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrivals]] =
+    withMetricsTimerAsync("arrival-backend-get-for-eori") {
+      timer =>
+        val url = appConfig.traderAtDestinationUrl + arrivalRoute
+        http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
+          response =>
+            if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
+            extractIfSuccessful[Arrivals](response)
+        }
+    }
 }

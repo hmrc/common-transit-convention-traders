@@ -42,13 +42,18 @@ import uk.gov.hmrc.http.HttpResponse
 import utils.CallOps._
 
 import scala.concurrent.Future
+import com.kenshoo.play.metrics.Metrics
+import utils.TestMetrics
 
 class ArrivalMessagesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
   private val mockMessageConnector: ArrivalMessageConnector = mock[ArrivalMessageConnector]
 
   override lazy val app = GuiceApplicationBuilder()
-    .overrides(bind[AuthAction].to[FakeAuthAction])
-    .overrides(bind[ArrivalMessageConnector].toInstance(mockMessageConnector))
+    .overrides(
+      bind[Metrics].toInstance(new TestMetrics),
+      bind[AuthAction].to[FakeAuthAction],
+      bind[ArrivalMessageConnector].toInstance(mockMessageConnector)
+    )
     .build()
 
   override def beforeEach(): Unit = {

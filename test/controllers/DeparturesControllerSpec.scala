@@ -19,6 +19,7 @@ package controllers
 import java.time.LocalDateTime
 
 import audit.AuditService
+import com.kenshoo.play.metrics.Metrics
 import connectors.DeparturesConnector
 import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
@@ -41,6 +42,7 @@ import play.api.test.{FakeHeaders, FakeRequest}
 import services.EnsureGuaranteeService
 import uk.gov.hmrc.http.HttpResponse
 import utils.CallOps._
+import utils.TestMetrics
 
 import scala.concurrent.Future
 
@@ -52,10 +54,13 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
   when(mockGuaranteeService.ensureGuarantee(any())).thenReturn(Right(CC015B))
 
   override lazy val app = GuiceApplicationBuilder()
-    .overrides(bind[AuthAction].to[FakeAuthAction])
-    .overrides(bind[DeparturesConnector].toInstance(mockDepartureConnector))
-    .overrides(bind[EnsureGuaranteeService].toInstance(mockGuaranteeService))
-    .overrides(bind[AuditService].toInstance(mockAuditService))
+    .overrides(
+      bind[Metrics].toInstance(new TestMetrics),
+      bind[AuthAction].to[FakeAuthAction],
+      bind[DeparturesConnector].toInstance(mockDepartureConnector),
+      bind[EnsureGuaranteeService].toInstance(mockGuaranteeService),
+      bind[AuditService].toInstance(mockAuditService)
+    )
     .build()
 
   override def beforeEach(): Unit = {
