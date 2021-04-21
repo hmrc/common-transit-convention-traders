@@ -1,7 +1,6 @@
 package services
 
 import connectors.WiremockSuite
-import data.EnsureGuaranteeServiceTestData
 import models.request.DepartureDeclarationXSD
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
@@ -69,17 +68,33 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
   }
 
   "listed scenarios" - {
+
+    val addedSpecialMention =
+      <SPEMENMT2>
+        <AddInfMT21>1.00GBP21GB0000010000HU1</AddInfMT21>
+        <AddInfCodMT23>CAL</AddInfCodMT23>
+      </SPEMENMT2>
+
     "GB -> EU, type 1, CAL w/o Reference Number - SM Passes through to core unedited, new one added" in {
-      val insertXml = TestData.basicGuarantee ++ TestData.goodsWithCustomSpecialMention(<SPEMENMT2><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>)
+      val customSpecialMention =
+        <SPEMENMT2>
+          <AddInfCodMT23>CAL</AddInfCodMT23>
+        </SPEMENMT2>
+      val insertXml = TestData.basicGuarantee ++ TestData.goodsWithCustomSpecialMention(customSpecialMention)
       val xml = TestData.buildGBEUXml(insertXml)
-      val expectedXml = TestData.buildGBEUXml(TestData.basicGuarantee ++ TestData.goodsWithCustomSpecialMention(<SPEMENMT2><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2><SPEMENMT2><AddInfMT21>1.00GBP21GB0000010000HU1</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>))
+      val expectedXml = TestData.buildGBEUXml(TestData.basicGuarantee ++ TestData.goodsWithCustomSpecialMention(customSpecialMention ++ addedSpecialMention))
       val result = service.ensureGuarantee(xml)
       normalise(result.right.get) mustEqual normalise(expectedXml)
       validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
     }
 
     "GB -> EU, type 1, non-CAL Special Mentions - SM Passes through to core unedited, new one added" in {
-      val insertXml = TestData.basicGuarantee ++ TestData.goodsWithCustomSpecialMention(<SPEMENMT2><AddInfMT21>1.00GBP21GB0000010000HU1</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2><SPEMENMT2><ExpFroECMT24>4</ExpFroECMT24><ExpFroCouMT25>az</ExpFroCouMT25></SPEMENMT2>)
+      val customSpecialMention =
+        <SPEMENMT2>
+          <ExpFroECMT24>4</ExpFroECMT24>
+          <ExpFroCouMT25>az</ExpFroCouMT25>
+        </SPEMENMT2>
+      val insertXml = TestData.basicGuarantee ++ TestData.goodsWithCustomSpecialMention(addedSpecialMention ++ customSpecialMention)
       val xml = TestData.buildGBEUXml(insertXml)
       val result = service.ensureGuarantee(xml)
       normalise(result.right.get) mustEqual normalise(xml)
@@ -89,7 +104,7 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
     "GB -> EU, with Reference Type, Has Reference Number, CAL Special Mentions, Currency & Value > 0.01 - should pass through unedited" in {
       forAll(Gen.oneOf(Guarantee.referenceTypes)) {
         typeNum =>
-          val insertXml = TestData.guaranteeWithType(typeNum) ++ TestData.goodsWithCustomSpecialMention(<SPEMENMT2><AddInfMT21>1.00GBP21GB0000010000HU1</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>)
+          val insertXml = TestData.guaranteeWithType(typeNum) ++ TestData.goodsWithCustomSpecialMention(addedSpecialMention)
           val xml = TestData.buildGBEUXml(insertXml)
           val result = service.ensureGuarantee(xml)
           normalise(result.right.get) mustEqual normalise(xml)
@@ -102,7 +117,7 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
         typeNum =>
           val insertXml = TestData.guaranteeWithType(typeNum) ++ TestData.goodsWithCustomSpecialMention(Nil)
           val xml = TestData.buildGBEUXml(insertXml)
-          val expectedXml = TestData.buildGBEUXml(TestData.guaranteeWithType(typeNum) ++ TestData.goodsWithCustomSpecialMention(<SPEMENMT2><AddInfMT21>1.00GBP21GB0000010000HU1</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>))
+          val expectedXml = TestData.buildGBEUXml(TestData.guaranteeWithType(typeNum) ++ TestData.goodsWithCustomSpecialMention(addedSpecialMention))
           val result = service.ensureGuarantee(xml)
           normalise(result.right.get) mustEqual normalise(expectedXml)
           validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
@@ -112,9 +127,14 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
     "GB -> EU, with Reference Type, Has Reference Number, Non-CAL Special Mentions - should pass through adding a new Special Mention for the guarantee" in {
       forAll(Gen.oneOf(Guarantee.referenceTypes)) {
         typeNum =>
-          val insertXml = TestData.guaranteeWithType(typeNum) ++ TestData.goodsWithCustomSpecialMention(<SPEMENMT2><ExpFroECMT24>4</ExpFroECMT24><ExpFroCouMT25>az</ExpFroCouMT25></SPEMENMT2>)
+          val custom =
+            <SPEMENMT2>
+              <ExpFroECMT24>4</ExpFroECMT24>
+              <ExpFroCouMT25>az</ExpFroCouMT25>
+            </SPEMENMT2>
+          val insertXml = TestData.guaranteeWithType(typeNum) ++ TestData.goodsWithCustomSpecialMention(custom)
           val xml = TestData.buildGBEUXml(insertXml)
-          val expectedXml = TestData.buildGBEUXml(TestData.guaranteeWithType(typeNum) ++ TestData.goodsWithCustomSpecialMention(<SPEMENMT2><ExpFroECMT24>4</ExpFroECMT24><ExpFroCouMT25>az</ExpFroCouMT25></SPEMENMT2><SPEMENMT2><AddInfMT21>1.00GBP21GB0000010000HU1</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>))
+          val expectedXml = TestData.buildGBEUXml(TestData.guaranteeWithType(typeNum) ++ TestData.goodsWithCustomSpecialMention(custom ++ addedSpecialMention))
           val result = service.ensureGuarantee(xml)
           normalise(result.right.get) mustEqual normalise(expectedXml)
           validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
@@ -124,7 +144,7 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
     "GB -> GB, with Reference Type, Has Reference Number, CAL Special Mentions, Currency & Value > 0.01 - should pass through unedited" in {
       forAll(Gen.oneOf(Guarantee.referenceTypes)) {
         typeNum =>
-          val insertXml = TestData.guaranteeWithType(typeNum) ++ TestData.goodsWithCustomSpecialMention(<SPEMENMT2><AddInfMT21>1.00GBP21GB0000010000HU1</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>)
+          val insertXml = TestData.guaranteeWithType(typeNum) ++ TestData.goodsWithCustomSpecialMention(addedSpecialMention)
           val xml = TestData.buildGBGBXml(insertXml)
           val result = service.ensureGuarantee(xml)
           normalise(result.right.get) mustEqual normalise(xml)
@@ -146,7 +166,12 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
     "GB -> GB, with Reference Type, Has Reference Number, Non-CAL Special Mentions - should pass through unedited" in {
       forAll(Gen.oneOf(Guarantee.referenceTypes)) {
         typeNum =>
-          val insertXml = TestData.guaranteeWithType(typeNum) ++ TestData.goodsWithCustomSpecialMention(<SPEMENMT2><ExpFroECMT24>4</ExpFroECMT24><ExpFroCouMT25>az</ExpFroCouMT25></SPEMENMT2>)
+          val custom =
+            <SPEMENMT2>
+              <ExpFroECMT24>4</ExpFroECMT24>
+              <ExpFroCouMT25>az</ExpFroCouMT25>
+            </SPEMENMT2>
+          val insertXml = TestData.guaranteeWithType(typeNum) ++ TestData.goodsWithCustomSpecialMention(custom)
           val xml = TestData.buildGBGBXml(insertXml)
           val result = service.ensureGuarantee(xml)
           normalise(result.right.get) mustEqual normalise(xml)
@@ -159,7 +184,20 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
       typeNum => {
           val insertXml = TestData.guaranteeWithType(typeNum, 1) ++ TestData.guaranteeWithType(typeNum, 2) ++ TestData.guaranteeWithType(typeNum, 3) ++ TestData.goodsWithCustomSpecialMention(Nil)
           val xml = TestData.buildGBEUXml(insertXml)
-          val expectedXml = TestData.buildGBEUXml(TestData.guaranteeWithType(typeNum, 1) ++ TestData.guaranteeWithType(typeNum, 2) ++ TestData.guaranteeWithType(typeNum, 3) ++ TestData.goodsWithCustomSpecialMention(<SPEMENMT2><AddInfMT21>1.00GBP21GB0000010000HU1</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2><SPEMENMT2><AddInfMT21>1.00GBP21GB0000010000HU2</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2><SPEMENMT2><AddInfMT21>1.00GBP21GB0000010000HU3</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>))
+          val expectedSpecialMentions =
+            <SPEMENMT2>
+              <AddInfMT21>1.00GBP21GB0000010000HU1</AddInfMT21>
+              <AddInfCodMT23>CAL</AddInfCodMT23>
+            </SPEMENMT2>
+            <SPEMENMT2>
+              <AddInfMT21>1.00GBP21GB0000010000HU2</AddInfMT21>
+              <AddInfCodMT23>CAL</AddInfCodMT23>
+            </SPEMENMT2>
+            <SPEMENMT2>
+              <AddInfMT21>1.00GBP21GB0000010000HU3</AddInfMT21>
+              <AddInfCodMT23>CAL</AddInfCodMT23>
+            </SPEMENMT2>
+          val expectedXml = TestData.buildGBEUXml(TestData.guaranteeWithType(typeNum, 1) ++ TestData.guaranteeWithType(typeNum, 2) ++ TestData.guaranteeWithType(typeNum, 3) ++ TestData.goodsWithCustomSpecialMention(expectedSpecialMentions))
           val result = service.ensureGuarantee(xml)
           normalise(result.right.get) mustEqual normalise(expectedXml)
           validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
@@ -168,16 +206,25 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
     }
 
     "GB -> XI, type 1, CAL w/o Reference Number - SM Passes through to core unedited, new one added" in {
-      val insertXml = TestData.basicGuarantee ++ TestData.goodsWithCustomSpecialMention(<SPEMENMT2><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>)
+      val custom =
+        <SPEMENMT2>
+          <AddInfCodMT23>CAL</AddInfCodMT23>
+        </SPEMENMT2>
+      val insertXml = TestData.basicGuarantee ++ TestData.goodsWithCustomSpecialMention(custom)
       val xml = TestData.buildGBXIXml(insertXml)
-      val expectedXml = TestData.buildGBXIXml(TestData.basicGuarantee ++ TestData.goodsWithCustomSpecialMention(<SPEMENMT2><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2><SPEMENMT2><AddInfMT21>1.00GBP21GB0000010000HU1</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>))
+      val expectedXml = TestData.buildGBXIXml(TestData.basicGuarantee ++ TestData.goodsWithCustomSpecialMention(custom ++ addedSpecialMention))
       val result = service.ensureGuarantee(xml)
       normalise(result.right.get) mustEqual normalise(expectedXml)
       validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
     }
 
     "GB -> XI, type 1, non-CAL Special Mentions - SM Passes through to core unedited" in {
-      val insertXml = TestData.basicGuarantee ++ TestData.goodsWithCustomSpecialMention(<SPEMENMT2><AddInfMT21>1.00GBP21GB0000010000HU1</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2><SPEMENMT2><ExpFroECMT24>4</ExpFroECMT24><ExpFroCouMT25>az</ExpFroCouMT25></SPEMENMT2>)
+      val custom =
+        <SPEMENMT2>
+          <ExpFroECMT24>4</ExpFroECMT24>
+          <ExpFroCouMT25>az</ExpFroCouMT25>
+        </SPEMENMT2>
+      val insertXml = TestData.basicGuarantee ++ TestData.goodsWithCustomSpecialMention(addedSpecialMention ++ custom)
       val xml = TestData.buildGBXIXml(insertXml)
       val result = service.ensureGuarantee(xml)
       normalise(result.right.get) mustEqual normalise(xml)
