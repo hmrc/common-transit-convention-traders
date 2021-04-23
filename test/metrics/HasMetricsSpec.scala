@@ -16,6 +16,9 @@
 
 package metrics
 
+import com.codahale.metrics.Counter
+import com.codahale.metrics.Histogram
+import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
 import com.kenshoo.play.metrics.Metrics
 import org.mockito.Mockito
@@ -37,10 +40,19 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
 
   trait MockHasMetrics {
     self: HasMetrics =>
-    val timer                               = mock[Timer.Context]
-    val metrics                             = mock[Metrics]
-    override val localMetrics: LocalMetrics = mock[LocalMetrics]
-    when(localMetrics.startTimer(anyString())) thenReturn timer
+    val timerContext                           = mock[Timer.Context]
+    val timer                                  = mock[Timer]
+    val successCounter                         = mock[Counter]
+    val failureCounter                         = mock[Counter]
+    val histogram                              = mock[Histogram]
+    val metrics                                = mock[Metrics]
+    override lazy val registry: MetricRegistry = mock[MetricRegistry]
+    when(registry.timer(anyString())) thenReturn timer
+    when(registry.counter(endsWith("success-counter"))) thenReturn successCounter
+    when(registry.counter(endsWith("failed-counter"))) thenReturn failureCounter
+    when(registry.histogram(anyString())) thenReturn histogram
+    when(timer.time()) thenReturn timerContext
+    when(timerContext.stop()) thenReturn 0L
   }
 
   class TestHasMetrics extends HasMetrics with MockHasMetrics
@@ -54,22 +66,26 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
     test(new TestHasActionMetrics)
 
   def verifyCompletedWithSuccess(metricName: String, metrics: MockHasMetrics): Assertion = {
-    val inOrder = Mockito.inOrder(metrics.localMetrics, metrics.timer)
-    inOrder.verify(metrics.localMetrics, times(1)).startTimer(metricName)
-    inOrder.verify(metrics.localMetrics, times(1)).stopTimer(metrics.timer)
-    inOrder.verify(metrics.localMetrics, times(1)).incrementSuccessCounter(metricName)
-    verifyNoMoreInteractions(metrics.localMetrics)
+    val inOrder = Mockito.inOrder(metrics.timer, metrics.timerContext, metrics.successCounter)
+    inOrder.verify(metrics.timer, times(1)).time()
+    inOrder.verify(metrics.timerContext, times(1)).stop()
+    inOrder.verify(metrics.successCounter, times(1)).inc()
     verifyNoMoreInteractions(metrics.timer)
+    verifyNoMoreInteractions(metrics.timerContext)
+    verifyNoMoreInteractions(metrics.successCounter)
+    verifyNoInteractions(metrics.failureCounter)
     succeed
   }
 
   def verifyCompletedWithFailure(metricName: String, metrics: MockHasMetrics): Assertion = {
-    val inOrder = Mockito.inOrder(metrics.localMetrics, metrics.timer)
-    inOrder.verify(metrics.localMetrics, times(1)).startTimer(metricName)
-    inOrder.verify(metrics.localMetrics, times(1)).stopTimer(metrics.timer)
-    inOrder.verify(metrics.localMetrics, times(1)).incrementFailedCounter(metricName)
-    verifyNoMoreInteractions(metrics.localMetrics)
+    val inOrder = Mockito.inOrder(metrics.timer, metrics.timerContext, metrics.failureCounter)
+    inOrder.verify(metrics.timer, times(1)).time()
+    inOrder.verify(metrics.timerContext, times(1)).stop()
+    inOrder.verify(metrics.failureCounter, times(1)).inc()
     verifyNoMoreInteractions(metrics.timer)
+    verifyNoMoreInteractions(metrics.timerContext)
+    verifyNoMoreInteractions(metrics.failureCounter)
+    verifyNoInteractions(metrics.successCounter)
     succeed
   }
 
@@ -79,10 +95,14 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
     "withMetricsTimerAsync" should {
       "increment success counter for a successful future" in withTestMetrics {
         metrics =>
-          metrics.withMetricsTimerAsync(TestMetric)(_ => Future.successful(())).map {
-            _ =>
-              verifyCompletedWithSuccess(TestMetric, metrics)
-          }
+          metrics
+            .withMetricsTimerAsync(TestMetric)(
+              _ => Future.successful(())
+            )
+            .map {
+              _ =>
+                verifyCompletedWithSuccess(TestMetric, metrics)
+            }
       }
 
       "increment success counter for a successful future where completeWithSuccess is called explicitly" in withTestMetrics {
@@ -93,15 +113,21 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
                 timer.completeWithSuccess()
                 Future.successful(())
             }
-            .map(_ => verifyCompletedWithSuccess(TestMetric, metrics))
+            .map(
+              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+            )
       }
 
       "increment failure counter for a failed future" in withTestMetrics {
         metrics =>
-          metrics.withMetricsTimerAsync(TestMetric)(_ => Future.failed(new Exception)).recover {
-            case _ =>
-              verifyCompletedWithFailure(TestMetric, metrics)
-          }
+          metrics
+            .withMetricsTimerAsync(TestMetric)(
+              _ => Future.failed(new Exception)
+            )
+            .recover {
+              case _ =>
+                verifyCompletedWithFailure(TestMetric, metrics)
+            }
       }
 
       "increment failure counter for a successful future where completeWithFailure is called explicitly" in withTestMetrics {
@@ -112,7 +138,9 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
                 timer.completeWithFailure()
                 Future.successful(())
             }
-            .map(_ => verifyCompletedWithFailure(TestMetric, metrics))
+            .map(
+              _ => verifyCompletedWithFailure(TestMetric, metrics)
+            )
       }
 
       "only increment counters once regardless of how many times the user calls complete with success" in withTestMetrics {
@@ -126,7 +154,9 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
                 Future(timer.completeWithSuccess())
                 Future.successful(())
             }
-            .map(_ => verifyCompletedWithSuccess(TestMetric, metrics))
+            .map(
+              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+            )
       }
 
       "only increment counters once regardless of how many times the user calls complete with failure" in withTestMetrics {
@@ -141,13 +171,17 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
                 timer.completeWithFailure()
                 Future.successful(())
             }
-            .map(_ => verifyCompletedWithFailure(TestMetric, metrics))
+            .map(
+              _ => verifyCompletedWithFailure(TestMetric, metrics)
+            )
       }
 
       "increment failure counter when the user throws an exception constructing their code block" in withTestMetrics {
         metrics =>
           assertThrows[RuntimeException] {
-            metrics.withMetricsTimerAsync(TestMetric)(_ => Future.successful(throw new RuntimeException))
+            metrics.withMetricsTimerAsync(TestMetric)(
+              _ => Future.successful(throw new RuntimeException)
+            )
           }
 
           Future.successful(verifyCompletedWithFailure(TestMetric, metrics))
@@ -161,7 +195,9 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             .withMetricsTimerResult(TestMetric) {
               Future.successful(Results.Continue)
             }
-            .map(_ => verifyCompletedWithSuccess(TestMetric, metrics))
+            .map(
+              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+            )
       }
 
       "increment success counter for a successful future of a successful Result" in withTestMetrics {
@@ -170,7 +206,9 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             .withMetricsTimerResult(TestMetric) {
               Future.successful(Results.Ok)
             }
-            .map(_ => verifyCompletedWithSuccess(TestMetric, metrics))
+            .map(
+              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+            )
       }
 
       "increment success counter for a successful future of a redirect Result" in withTestMetrics {
@@ -179,7 +217,9 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             .withMetricsTimerResult(TestMetric) {
               Future.successful(Results.NotModified)
             }
-            .map(_ => verifyCompletedWithSuccess(TestMetric, metrics))
+            .map(
+              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+            )
       }
 
       "increment failure counter for a successful future of a client error Result" in withTestMetrics {
@@ -188,7 +228,9 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             .withMetricsTimerResult(TestMetric) {
               Future.successful(Results.EntityTooLarge)
             }
-            .map(_ => verifyCompletedWithFailure(TestMetric, metrics))
+            .map(
+              _ => verifyCompletedWithFailure(TestMetric, metrics)
+            )
       }
 
       "increment failure counter for a successful future of a server error Result" in withTestMetrics {
@@ -197,7 +239,9 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             .withMetricsTimerResult(TestMetric) {
               Future.successful(Results.BadGateway)
             }
-            .map(_ => verifyCompletedWithFailure(TestMetric, metrics))
+            .map(
+              _ => verifyCompletedWithFailure(TestMetric, metrics)
+            )
       }
 
       "increment failure counter for a failed future" in withTestMetrics {
@@ -234,7 +278,9 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
               metrics.Action(Results.SwitchingProtocols)
             }
             .apply(fakeRequest)
-            .map(_ => verifyCompletedWithSuccess(TestMetric, metrics))
+            .map(
+              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+            )
       }
 
       "increment success counter for a successful Result" in withTestActionMetrics {
@@ -244,7 +290,9 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
               metrics.Action(Results.Ok)
             }
             .apply(fakeRequest)
-            .map(_ => verifyCompletedWithSuccess(TestMetric, metrics))
+            .map(
+              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+            )
       }
 
       "increment success counter for a redirect Result" in withTestActionMetrics {
@@ -254,7 +302,9 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
               metrics.Action(Results.Found("https://wikipedia.org"))
             }
             .apply(fakeRequest)
-            .map(_ => verifyCompletedWithSuccess(TestMetric, metrics))
+            .map(
+              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+            )
       }
 
       "increment failure counter for a client error Result" in withTestActionMetrics {
@@ -264,7 +314,9 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
               metrics.Action(Results.Conflict)
             }
             .apply(fakeRequest)
-            .map(_ => verifyCompletedWithFailure(TestMetric, metrics))
+            .map(
+              _ => verifyCompletedWithFailure(TestMetric, metrics)
+            )
       }
 
       "increment failure counter for a server error Result" in withTestActionMetrics {
@@ -274,7 +326,9 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
               metrics.Action(Results.ServiceUnavailable)
             }
             .apply(fakeRequest)
-            .map(_ => verifyCompletedWithFailure(TestMetric, metrics))
+            .map(
+              _ => verifyCompletedWithFailure(TestMetric, metrics)
+            )
       }
     }
   }

@@ -61,6 +61,8 @@ class DeparturesController @Inject() (
 
   import MetricsKeys.Endpoints._
 
+  lazy val departuresCount = histo(GetDeparturesForEoriCount)
+
   def submitDeclaration(): Action[NodeSeq] =
     withMetricsTimerAction(SubmitDepartureDeclaration) {
       (authAction andThen validateDepartureDeclarationAction andThen ensureGuaranteeAction).async(parse.xml) {
@@ -117,6 +119,7 @@ class DeparturesController @Inject() (
         implicit request =>
           departuresConnector.getForEori.map {
             case Right(departures) =>
+              departuresCount.update(departures.departures.length)
               Ok(Json.toJson(HateaosResponseDepartures(departures)))
             case Left(invalidResponse) =>
               handleNon2xx(invalidResponse)

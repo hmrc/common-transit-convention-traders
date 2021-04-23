@@ -56,6 +56,8 @@ class ArrivalMessagesController @Inject() (
 
   import MetricsKeys.Endpoints._
 
+  lazy val messagesCount = histo(GetArrivalMessagesCount)
+
   def sendMessageDownstream(arrivalId: String): Action[NodeSeq] =
     withMetricsTimerAction(SendArrivalMessage) {
       (authAction andThen validateMessageAction).async(parse.xml) {
@@ -110,6 +112,7 @@ class ArrivalMessagesController @Inject() (
         implicit request =>
           messageConnector.getMessages(arrivalId).map {
             case Right(a) =>
+              messagesCount.update(a.messages.length)
               Ok(Json.toJson(HateaosResponseArrivalWithMessages(a)))
             case Left(response) =>
               handleNon2xx(response)

@@ -56,6 +56,8 @@ class DepartureMessagesController @Inject() (
 
   import MetricsKeys.Endpoints._
 
+  lazy val messagesCount = histo(GetDepartureMessagesCount)
+
   def sendMessageDownstream(departureId: String): Action[NodeSeq] =
     withMetricsTimerAction(SendDepartureMessage) {
       (authAction andThen validateMessageAction).async(parse.xml) {
@@ -97,6 +99,7 @@ class DepartureMessagesController @Inject() (
         implicit request =>
           messageConnector.getMessages(departureId).map {
             case Right(d) =>
+              messagesCount.update(d.messages.length)
               Ok(Json.toJson(HateaosResponseDepartureWithMessages(d)))
             case Left(response) =>
               handleNon2xx(response)

@@ -57,6 +57,8 @@ class ArrivalMovementController @Inject() (
 
   import MetricsKeys.Endpoints._
 
+  lazy val arrivalsCount = histo(GetArrivalsForEoriCount)
+
   def createArrivalNotification(): Action[NodeSeq] =
     withMetricsTimerAction(CreateArrivalNotification) {
       (authAction andThen validateArrivalNotificationAction).async(parse.xml) {
@@ -145,6 +147,7 @@ class ArrivalMovementController @Inject() (
         implicit request =>
           arrivalConnector.getForEori.map {
             case Right(arrivals: Arrivals) =>
+              arrivalsCount.update(arrivals.arrivals.length)
               Ok(Json.toJson(HateaosResponseArrivals(arrivals)))
             case Left(invalidResponse) =>
               handleNon2xx(invalidResponse)

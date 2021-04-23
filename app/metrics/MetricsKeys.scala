@@ -37,19 +37,24 @@ object MetricsKeys {
   }
 
   object Endpoints {
+    def count(metricKey: String) = s"$metricKey-count"
     // Arrivals
     val GetArrival = "get-arrival"
     val GetArrivalsForEori = "get-arrivals-for-eori"
+    val GetArrivalsForEoriCount = count(GetArrivalsForEori)
     val GetArrivalMessage ="get-arrival-message"
     val GetArrivalMessages = "get-arrival-messages"
+    val GetArrivalMessagesCount = count(GetArrivalMessages)
     val SendArrivalMessage = "send-arrival-message"
     val CreateArrivalNotification = "create-arrival-notification"
     val ResubmitArrivalNotification = "resubmit-arrival-notification"
     // Departures
     val GetDeparture = "get-departure"
     val GetDeparturesForEori = "get-departures-for-eori"
+    val GetDeparturesForEoriCount = count(GetDeparturesForEori)
     val GetDepartureMessage = "get-departure-message"
     val GetDepartureMessages = "get-departure-messages"
+    val GetDepartureMessagesCount = count(GetDepartureMessages)
     val SendDepartureMessage = "send-departure-message"
     val SubmitDepartureDeclaration = "submit-departure-declaration"
   }
