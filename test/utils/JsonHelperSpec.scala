@@ -28,7 +28,10 @@ class JsonHelperSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
   val appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
-      .configure("message-translation-file" -> "TestMessageTranslation.json")
+      .configure(
+        "message-translation-file" -> "TestMessageTranslation.json",
+        "metrics.jvm" -> false
+      )
 
   "JsonHelper" - {
 

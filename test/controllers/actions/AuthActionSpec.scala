@@ -167,7 +167,11 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
       when(authConnector.authorise[Enrolments](any(),any())(any(),any()))
         .thenReturn(Future.successful(enrolmentsWithEori))
 
-      val application = GuiceApplicationBuilder().build()
+      val application = GuiceApplicationBuilder()
+        .configure(
+          "metrics.jvm" -> false
+        )
+        .build()
 
       val config: AppConfig = application.injector.instanceOf[AppConfig]
 
@@ -189,7 +193,11 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
       when(authConnector.authorise[Enrolments](any(),any())(any(),any()))
         .thenReturn(Future.successful(noValidEnrolments))
 
-      val application = GuiceApplicationBuilder().build()
+      val application = GuiceApplicationBuilder()
+        .configure(
+          "metrics.jvm" -> false
+        )
+        .build()
 
       val config: AppConfig = application.injector.instanceOf[AppConfig]
 
@@ -209,7 +217,11 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
       when(authConnector.authorise[Enrolments](any(),any())(any(),any()))
         .thenReturn(Future.successful(noValidEnrolmentIdentifier))
 
-      val application = GuiceApplicationBuilder().build()
+      val application = GuiceApplicationBuilder()
+        .configure(
+          "metrics.jvm" -> false
+        )
+        .build()
 
       val config: AppConfig = application.injector.instanceOf[AppConfig]
 
@@ -229,7 +241,11 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
       when(authConnector.authorise[Enrolments](any(),any())(any(),any()))
         .thenReturn(Future.failed(InsufficientEnrolments()))
 
-      val application = GuiceApplicationBuilder().build()
+      val application = GuiceApplicationBuilder()
+        .configure(
+          "metrics.jvm" -> false
+        )
+        .build()
 
       val config: AppConfig = application.injector.instanceOf[AppConfig]
 
@@ -251,7 +267,11 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
       when(authConnector.authorise[Enrolments](any(),any())(any(),any()))
         .thenReturn(Future.failed(new MissingBearerToken()))
 
-      val application = GuiceApplicationBuilder().build()
+      val application = GuiceApplicationBuilder()
+        .configure(
+          "metrics.jvm" -> false
+        )
+        .build()
 
       val config: AppConfig = application.injector.instanceOf[AppConfig]
 

@@ -25,7 +25,11 @@ import play.api.test.Helpers.running
 class MessageTranslationSpec extends AnyFreeSpec with Matchers {
 
   val appBuilder: GuiceApplicationBuilder =
-    new GuiceApplicationBuilder().configure("message-translation-file" -> "TestMessageTranslation.json")
+    new GuiceApplicationBuilder()
+      .configure(
+        "message-translation-file" -> "TestMessageTranslation.json",
+        "metrics.jvm" -> false
+      )
 
   ".translate" - {
 
