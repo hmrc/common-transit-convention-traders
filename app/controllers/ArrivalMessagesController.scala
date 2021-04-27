@@ -16,77 +16,107 @@
 
 package controllers
 
-import connectors.ArrivalMessageConnector
-import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateArrivalMessageAction}
-import models.MessageType
-
 import javax.inject.Inject
-import models.response.{HateaosArrivalMessagesPostResponseMessage, HateaosArrivalResponseMessage, HateaosResponseArrivalWithMessages}
+
+import com.kenshoo.play.metrics.Metrics
+import connectors.ArrivalMessageConnector
+import controllers.actions.AuthAction
+import controllers.actions.ValidateAcceptJsonHeaderAction
+import controllers.actions.ValidateArrivalMessageAction
+import metrics.{HasActionMetrics, MetricsKeys}
+import models.MessageType
+import models.response.HateaosArrivalMessagesPostResponseMessage
+import models.response.HateaosArrivalResponseMessage
+import models.response.HateaosResponseArrivalWithMessages
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.http.HttpErrorFunctions
-import uk.gov.hmrc.play.bootstrap.controller.BackendController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.CallOps._
-import utils.{ResponseHelper, Utils}
+import utils.ResponseHelper
+import utils.Utils
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
-class ArrivalMessagesController @Inject()(cc: ControllerComponents,
-                                          authAction: AuthAction,
-                                          messageConnector: ArrivalMessageConnector,
-                                          validateMessageAction: ValidateArrivalMessageAction,
-                                          validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction)(implicit ec: ExecutionContext) extends BackendController(cc) with HttpErrorFunctions with ResponseHelper {
+class ArrivalMessagesController @Inject() (
+  cc: ControllerComponents,
+  authAction: AuthAction,
+  messageConnector: ArrivalMessageConnector,
+  validateMessageAction: ValidateArrivalMessageAction,
+  validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction,
+  val metrics: Metrics
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc)
+    with HasActionMetrics
+    with HttpErrorFunctions
+    with ResponseHelper {
 
-  def sendMessageDownstream(arrivalId: String): Action[NodeSeq] = (authAction andThen validateMessageAction).async(parse.xml) {
-    implicit request =>
-      messageConnector.post(request.body.toString, arrivalId).map { response =>
-        response.status match {
-          case s if is2xx(s) =>
-            response.header(LOCATION) match {
-              case Some(locationValue) =>
-                MessageType.getMessageType(request.body) match {
-                  case Some(messageType: MessageType) =>
-                    val messageId = Utils.lastFragment(locationValue)
-                    Accepted(Json.toJson(HateaosArrivalMessagesPostResponseMessage(
-                      arrivalId,
-                      messageId,
-                      messageType.code,
-                      request.body
-                    ))).withHeaders(LOCATION -> routes.ArrivalMessagesController.getArrivalMessage(arrivalId, messageId).urlWithContext)
-                  case None =>
-                    InternalServerError
-                }
-              case _ =>
-                InternalServerError
-            }
-          case _ => handleNon2xx(response)
-        }
+  import MetricsKeys.Endpoints._
+
+  lazy val messagesCount = histo(GetArrivalMessagesCount)
+
+  def sendMessageDownstream(arrivalId: String): Action[NodeSeq] =
+    withMetricsTimerAction(SendArrivalMessage) {
+      (authAction andThen validateMessageAction).async(parse.xml) {
+        implicit request =>
+          messageConnector.post(request.body.toString, arrivalId).map {
+            response =>
+              response.status match {
+                case s if is2xx(s) =>
+                  response.header(LOCATION) match {
+                    case Some(locationValue) =>
+                      MessageType.getMessageType(request.body) match {
+                        case Some(messageType: MessageType) =>
+                          val messageId = Utils.lastFragment(locationValue)
+                          Accepted(
+                            Json.toJson(
+                              HateaosArrivalMessagesPostResponseMessage(
+                                arrivalId,
+                                messageId,
+                                messageType.code,
+                                request.body
+                              )
+                            )
+                          ).withHeaders(LOCATION -> routes.ArrivalMessagesController.getArrivalMessage(arrivalId, messageId).urlWithContext)
+                        case None =>
+                          InternalServerError
+                      }
+                    case _ =>
+                      InternalServerError
+                  }
+                case _ => handleNon2xx(response)
+              }
+          }
       }
-  }
+    }
 
   def getArrivalMessage(arrivalId: String, messageId: String): Action[AnyContent] =
-    (authAction andThen validateAcceptJsonHeaderAction).async {
-      implicit request => {
-        messageConnector.get(arrivalId, messageId).map {
-          case Right(m) =>
-            Ok(Json.toJson(HateaosArrivalResponseMessage(arrivalId, messageId, m)))
-          case Left(response) =>
-            handleNon2xx(response)
-        }
+    withMetricsTimerAction(GetArrivalMessage) {
+      (authAction andThen validateAcceptJsonHeaderAction).async {
+        implicit request =>
+          messageConnector.get(arrivalId, messageId).map {
+            case Right(m) =>
+              Ok(Json.toJson(HateaosArrivalResponseMessage(arrivalId, messageId, m)))
+            case Left(response) =>
+              handleNon2xx(response)
+          }
       }
     }
 
   def getArrivalMessages(arrivalId: String): Action[AnyContent] =
-    (authAction andThen validateAcceptJsonHeaderAction).async {
-      implicit request => {
-        messageConnector.getMessages(arrivalId).map {
-          case Right(a) => {
-            Ok(Json.toJson(HateaosResponseArrivalWithMessages(a)))
+    withMetricsTimerAction(GetArrivalMessages) {
+      (authAction andThen validateAcceptJsonHeaderAction).async {
+        implicit request =>
+          messageConnector.getMessages(arrivalId).map {
+            case Right(a) =>
+              messagesCount.update(a.messages.length)
+              Ok(Json.toJson(HateaosResponseArrivalWithMessages(a)))
+            case Left(response) =>
+              handleNon2xx(response)
           }
-          case Left(response) =>
-            handleNon2xx(response)
-        }
       }
     }
 }

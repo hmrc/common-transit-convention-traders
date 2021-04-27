@@ -19,6 +19,7 @@ package controllers
 import java.time.LocalDateTime
 
 import akka.util.ByteString
+import com.kenshoo.play.metrics.Metrics
 import connectors.DepartureMessageConnector
 import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
@@ -40,6 +41,7 @@ import play.api.test.Helpers.{headers, _}
 import play.api.test.{FakeHeaders, FakeRequest}
 import uk.gov.hmrc.http.HttpResponse
 import utils.CallOps._
+import utils.TestMetrics
 
 import scala.concurrent.Future
 
@@ -47,8 +49,11 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
   private val mockMessageConnector: DepartureMessageConnector = mock[DepartureMessageConnector]
 
   override lazy val app = GuiceApplicationBuilder()
-    .overrides(bind[AuthAction].to[FakeAuthAction])
-    .overrides(bind[DepartureMessageConnector].toInstance(mockMessageConnector))
+    .overrides(
+      bind[Metrics].toInstance(new TestMetrics),
+      bind[AuthAction].to[FakeAuthAction],
+      bind[DepartureMessageConnector].toInstance(mockMessageConnector)
+    )
     .build()
 
   override def beforeEach(): Unit = {

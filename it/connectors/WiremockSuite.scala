@@ -18,10 +18,12 @@ package connectors
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
+import com.kenshoo.play.metrics.Metrics
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
 import play.api.Application
-import play.api.inject.Injector
+import play.api.inject.{bind, Injector}
 import play.api.inject.guice.{GuiceApplicationBuilder, GuiceableModule}
+import utils.TestMetrics
 
 trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
   this: Suite =>
@@ -39,7 +41,9 @@ trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
 
   protected lazy val injector: Injector = app.injector
 
-  protected def bindings: Seq[GuiceableModule] = Seq.empty
+  protected def bindings: Seq[GuiceableModule] = Seq(
+    bind[Metrics].toInstance(new TestMetrics)
+  )
 
   override def beforeAll(): Unit = {
     server.start()
