@@ -18,11 +18,10 @@ package services
 
 import models.{AddSpecialMentionInstruction, ParseError, ParseHandling, TransformInstructionSet}
 import com.google.inject.Inject
-import logging.Logging
 import models.ParseError.UnknownTransformationError
+import play.api.Logging
 import utils.guaranteeParsing.{GuaranteeInstructionBuilder, GuaranteeXmlReaders, InstructionBuilder, RouteChecker, XmlBuilder}
 
-import scala.util.control.Exception
 import scala.xml.{Elem, Node, NodeSeq}
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
