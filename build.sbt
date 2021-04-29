@@ -7,7 +7,7 @@ import sbt.Tests.SubProcess
 val appName = "common-transit-convention-traders"
 
 lazy val microservice = Project(appName, file("."))
-  .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory)
+  .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory, ScalaxbPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .configs(IntegrationTest)
   .settings(DefaultBuildSettings.integrationTestSettings())
@@ -31,6 +31,10 @@ lazy val microservice = Project(appName, file("."))
     javaOptions ++= Seq(
       "-Djdk.xml.maxOccurLimit=10000"
     )
+  ).settings(
+    Compile / scalaxb / scalaxbXsdSource := baseDirectory.value / "conf" / "xsd",
+    Compile / scalaxb / scalaxbPackageName := "models.schema",
+    Compile / scalaxb / scalaxbGenerateDispatchClient := false
   )
 
 // Settings for the whole build
