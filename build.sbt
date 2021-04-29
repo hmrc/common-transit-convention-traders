@@ -7,7 +7,7 @@ import sbt.Tests.SubProcess
 val appName = "common-transit-convention-traders"
 
 lazy val microservice = Project(appName, file("."))
-  .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory)
+  .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory, sbtdocker.DockerPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .configs(IntegrationTest)
   .settings(DefaultBuildSettings.integrationTestSettings())
@@ -30,7 +30,24 @@ lazy val microservice = Project(appName, file("."))
     ),
     javaOptions ++= Seq(
       "-Djdk.xml.maxOccurLimit=10000"
-    )
+    ),
+    docker / imageNames := Seq(
+      ImageName(s"${organizationName.value}/${appName}:latest"),
+      ImageName(s"${organizationName.value}/${appName}:${version.value}"),
+    ),
+    docker / dockerfile := {
+      (Compile / Keys.`package`).value
+      val tgzFile = SbtDistributablesPlugin.distTgzTask.value
+
+      new sbtdocker.Dockerfile {
+        from("adoptopenjdk/openjdk8:alpine-jre")
+        expose(PlayKeys.playDefaultPort.value)
+        run("apk", "add", "--no-cache", "bash")
+        add(tgzFile, "/")
+        workDir(s"/${appName}-${version.value}/bin")
+        cmd(s"./$appName", s"-Dhttp.port=${PlayKeys.playDefaultPort.value}")
+      }
+    }
   )
 
 // Settings for the whole build
