@@ -16,15 +16,16 @@
 
 package services
 
-import models.{AddSpecialMentionInstruction, ChangeGuaranteeInstruction, GOOITEGDSNode, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, ParseHandling, SpecialMentionGuarantee, SpecialMentionOther, TransformInstruction, TransformInstructionSet}
+import models.{AddSpecialMentionInstruction, ParseError, ParseHandling, TransformInstructionSet}
 import com.google.inject.Inject
-import models.ParseError.{GuaranteeNotFound, UnpairedGuarantees}
+import models.ParseError.UnknownTransformationError
+import play.api.Logging
 import utils.guaranteeParsing.{GuaranteeInstructionBuilder, GuaranteeXmlReaders, InstructionBuilder, RouteChecker, XmlBuilder}
 
 import scala.xml.{Elem, Node, NodeSeq}
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
-class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instructionBuilder: InstructionBuilder, routeChecker: RouteChecker, guaranteeInstructionBuilder: GuaranteeInstructionBuilder, xmlBuilder: XmlBuilder) extends ParseHandling {
+class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instructionBuilder: InstructionBuilder, routeChecker: RouteChecker, guaranteeInstructionBuilder: GuaranteeInstructionBuilder, xmlBuilder: XmlBuilder) extends ParseHandling with Logging {
 
   val specialMentionParents = Seq(
     "GooDesGDS23LNG",
@@ -47,7 +48,7 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
       parseInstructionSets(xml) match {
         case Left(error) => Left(error)
         case Right(instructionSets) =>
-          Right(updateXml(xml, instructionSets))
+          updateXml(xml, instructionSets)
       }
   }
 
@@ -66,45 +67,56 @@ class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instruct
     }
   }
 
-  def updateXml(originalXml: NodeSeq, instructionSets: Seq[TransformInstructionSet]): NodeSeq = {
-    new RuleTransformer(new RewriteRule {
-      override def transform(node: Node): NodeSeq = {
-        node match {
-          case e: Elem if e.label == "GOOITEGDS" => {
-            xmlReaders.gOOITEGDSNodeFromNode(e) match {
-              case Left(_) => throw new Exception("Unable to parse GOOITEGDSNode on update")
-              case Right(currentBlock) => {
-                val instructionSet = instructionSets.filter(set => set.gooNode.itemNumber == currentBlock.itemNumber).head
-                val modifyInstructions = instructionSet.instructions.filterNot(ti => ti.isInstanceOf[AddSpecialMentionInstruction])
-                val modifyInstructionPairs = e.child.filter(cNode => cNode.label == "SPEMENMT2").zip(modifyInstructions)
-                val modifiedChildren = e.child.map {
-                  cNode => if(cNode.label == "SPEMENMT2") {
-                    modifyInstructionPairs.find(pair => pair._1 == cNode) match {
-                      case None => throw new Exception("Unable to match instruction with mention on update")
-                      case Some(matchedPair) => {
-                        val instruction = matchedPair._2
-                        xmlBuilder.buildFromInstruction(instruction)
+  def updateXml(originalXml: NodeSeq, instructionSets: Seq[TransformInstructionSet]): ParseHandler[NodeSeq] = {
+    try {
+      val newXml = new RuleTransformer(new RewriteRule {
+        override def transform(node: Node): NodeSeq = {
+          node match {
+            case e: Elem if e.label == "GOOITEGDS" => {
+              xmlReaders.gOOITEGDSNodeFromNode(e) match {
+                case Left(_) => throw new Exception("Unable to parse GOOITEGDSNode on update")
+                case Right(currentBlock) => {
+                  val instructionSet = instructionSets.filter(set => set.gooNode.itemNumber == currentBlock.itemNumber).head
+                  val modifyInstructions = instructionSet.instructions.filterNot(ti => ti.isInstanceOf[AddSpecialMentionInstruction])
+                  val modifyInstructionPairs = e.child.filter(cNode => cNode.label == "SPEMENMT2").zip(modifyInstructions)
+                  val modifiedChildren = e.child.map {
+                    cNode => if(cNode.label == "SPEMENMT2") {
+                      modifyInstructionPairs.find(pair => pair._1 == cNode) match {
+                        case None => throw new Exception("Unable to match instruction with mention on update")
+                        case Some(matchedPair) => {
+                          val instruction = matchedPair._2
+                          xmlBuilder.buildFromInstruction(instruction)
+                        }
                       }
-                    }
-                  } else cNode
-                }
-                val last = modifiedChildren.filter(cNode => specialMentionParents.contains(cNode.label)).last
-                val addSpecialMentionInstructions = instructionSet.instructions.filter(ti => ti.isInstanceOf[AddSpecialMentionInstruction])
-                val toAppendXml = if(currentBlock.itemNumber == 1) {
-                  addSpecialMentionInstructions.map {
-                    sm => xmlBuilder.buildFromInstruction(sm)
+                    } else cNode
                   }
-                } else Nil
+                  val last = modifiedChildren.filter(cNode => specialMentionParents.contains(cNode.label)).last
+                  val addSpecialMentionInstructions = instructionSet.instructions.filter(ti => ti.isInstanceOf[AddSpecialMentionInstruction])
+                  val toAppendXml = if(currentBlock.itemNumber == 1) {
+                    addSpecialMentionInstructions.map {
+                      sm => xmlBuilder.buildFromInstruction(sm)
+                    }
+                  } else Nil
 
-                val division = modifiedChildren.splitAt(modifiedChildren.indexOf(last) +1)
-                val finalXml = (division._1 ++ toAppendXml ++ division._2)
-                e.copy(child = finalXml)
+                  val division = modifiedChildren.splitAt(modifiedChildren.indexOf(last) +1)
+                  val finalXml = (division._1 ++ toAppendXml ++ division._2)
+                  e.copy(child = finalXml)
+                }
               }
             }
+            case _ => node
           }
-          case _ => node
         }
+      }).transform(originalXml)
+      Right(newXml)
+    }
+    catch {
+      case e => {
+        logger.error(e.getMessage)
+        logger.debug(s"${e.getMessage} - provided xml ${originalXml}")
+        Left(UnknownTransformationError("Transformation impossible with provided xml"))
       }
-    }).transform(originalXml)
+    }
+
   }
 }
