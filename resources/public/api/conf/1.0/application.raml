@@ -53,7 +53,7 @@ traits:
 
         The response will contain a URI and arrival ID for the Arrival Notification. This will allow you to get the message status.
 
-        If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive an HTTP 403 Forbidden status. 
+        If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive an HTTP 403 Forbidden status.
       is: [contentXmlHeader]
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -78,10 +78,18 @@ traits:
       description: |
         Get all Movement Arrivals.
 
+        You may opt to filter this list of Arrivals so that you only receive Movement Arrivals that have been updated since a specified date and time.
+
         Any Movement Arrivals more than 28 days old will have been archived along with their related messages. Archived movements will return an HTTP 404 Not Found status. You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
       is:
         - headers.acceptHeader
         - acceptHeaderInvalid
+      queryParameters:
+        updated_since:
+          required: false
+          type: datetime
+          description: This is an optional filtering parameter. It allows you to request only the Movement Arrivals which have been updated since the date and time you have given us.
+          example: 2021-06-21T09:00+00:00
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
@@ -339,7 +347,7 @@ traits:
       displayName: Send a Declaration Data message
       description: |
         Send a Declaration Data message, to let the office at destination know that the goods are on their way. This notification will be sent when the goods leave the Office of Departure. It is also called an E_DEC_DAT (IE015).
-        
+
         The response will contain a URI and departure ID for the Declaration Data. This will allow you to retrieve the submission status.
 
         If the user is not enrolled for an EORI number, they will receive an HTTP Forbidden Status.
@@ -372,7 +380,7 @@ traits:
         You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Departure.
 
         **Note**: The 'movementReferenceNumber' field will only be populated when an MRN is allocated.
-      is: 
+      is:
         - headers.acceptHeader
         - acceptHeaderInvalid
       (annotations.scope): "common-transit-convention-traders"
@@ -428,12 +436,12 @@ traits:
       get:
         displayName: Get a Movement Departure for a departure ID
         description: |
-          Get a specific Movement Departure which was sent to the office at departure within 28 days of the goods being released at their final destination. Any Movements that are more than 28 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status. 
+          Get a specific Movement Departure which was sent to the office at departure within 28 days of the goods being released at their final destination. Any Movements that are more than 28 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status.
 
           You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
 
           **Note**: The 'movementReferenceNumber' field will only be populated when an MRN is allocated.
-        is: 
+        is:
           - headers.acceptHeader
           - acceptHeaderInvalid
         (annotations.scope): "common-transit-convention-traders"
@@ -497,12 +505,12 @@ traits:
         get:
           displayName: Get all messages relating to a Movement Departure
           description: |
-            Get all messages sent within 28 days of the goods being released relating to a Movement Departure. Any Movements that are more than 28 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status. 
+            Get all messages sent within 28 days of the goods being released relating to a Movement Departure. Any Movements that are more than 28 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status.
 
             You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
 
             **Note**: The 'movementReferenceNumber' field will only be populated when an MRN is allocated.
-          is: 
+          is:
             - headers.acceptHeader
             - acceptHeaderInvalid
           (annotations.scope): "common-transit-convention-traders"
@@ -560,7 +568,7 @@ traits:
           get:
             displayName: Get a message relating to a Movement Departure and message ID
             description: |
-              Get all messages relating to a specific Movement Departure and message ID. For example, this could include declaration rejected or Movement Reference Number (MRN) allocated messages. Any messages more than 28 days old will be archived. Archived notifications will be return an HTTP 404 Not Found status. 
+              Get all messages relating to a specific Movement Departure and message ID. For example, this could include declaration rejected or Movement Reference Number (MRN) allocated messages. Any messages more than 28 days old will be archived. Archived notifications will be return an HTTP 404 Not Found status.
 
               You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
             is:
