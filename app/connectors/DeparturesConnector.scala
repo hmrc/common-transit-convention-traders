@@ -16,17 +16,19 @@
 
 package connectors
 
-import javax.inject.Inject
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import connectors.util.CustomHttpReader
-import metrics.{HasMetrics, MetricsKeys}
+import metrics.HasMetrics
+import metrics.MetricsKeys
 import models.domain.Departure
 import models.domain.Departures
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
-import utils.Utils
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.HttpResponse
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -36,15 +38,15 @@ class DeparturesConnector @Inject() (http: HttpClient, appConfig: AppConfig, val
 
   def post(message: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     withMetricsTimerResponse(Post) {
-      val url = appConfig.traderAtDeparturesUrl + departureRoute
-      http.POSTString(url, message)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
+      val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute)
+      http.POSTString(url.toString, message)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
     }
 
   def get(departureId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departure]] =
     withMetricsTimerAsync(GetById) {
       timer =>
-        val url = appConfig.traderAtDeparturesUrl + departureRoute + Utils.urlEncode(departureId)
-        http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
+        val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute).addPathPart(departureId)
+        http.GET[HttpResponse](url.toString, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
           response =>
             if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
             extractIfSuccessful[Departure](response)
@@ -54,9 +56,9 @@ class DeparturesConnector @Inject() (http: HttpClient, appConfig: AppConfig, val
   def getForEori()(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departures]] =
     withMetricsTimerAsync(GetForEori) {
       timer =>
-        val url = appConfig.traderAtDeparturesUrl + departureRoute
+        val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute)
 
-        http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
+        http.GET[HttpResponse](url.toString, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
           response =>
             if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
             extractIfSuccessful[Departures](response)

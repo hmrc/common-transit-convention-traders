@@ -18,12 +18,18 @@ package connectors
 
 import connectors.util.CustomHttpReader
 import connectors.util.CustomHttpReader.INTERNAL_SERVER_ERROR
+import io.lemonlabs.uri.UrlPath
 import models.ChannelType.api
-import play.api.http.{HeaderNames, MimeTypes}
+import play.api.http.HeaderNames
+import play.api.http.MimeTypes
 import play.api.libs.json.Reads
 import play.api.mvc.RequestHeader
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpErrorFunctions
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpResponse}
+
+import java.time.format.DateTimeFormatter
 
 class BaseConnector extends HttpErrorFunctions {
 
@@ -34,9 +40,11 @@ class BaseConnector extends HttpErrorFunctions {
   protected val responseHeaders: Seq[(String, String)] =
     Seq((HeaderNames.CONTENT_TYPE, MimeTypes.JSON), channelHeader)
 
-  protected val arrivalRoute = "/transit-movements-trader-at-destination/movements/arrivals/"
+  protected val arrivalRoute = UrlPath.parse("/transit-movements-trader-at-destination/movements/arrivals")
 
-  protected val departureRoute = "/transits-movements-trader-at-departure/movements/departures/"
+  protected val departureRoute = UrlPath.parse("/transits-movements-trader-at-departure/movements/departures")
+
+  protected val queryDateFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
   protected def extractIfSuccessful[T](response: HttpResponse)(implicit reads: Reads[T]): Either[HttpResponse, T] =
     if(is2xx(response.status)) {

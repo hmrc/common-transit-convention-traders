@@ -40,7 +40,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
 
       server.stubFor(
         post(
-          urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/")
+          urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals")
         ).willReturn(aResponse().withStatus(ACCEPTED))
       )
 
@@ -58,7 +58,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
 
         server.stubFor(
           post(
-            urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/")
+            urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals")
           ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
         )
 
@@ -77,7 +77,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
 
       server.stubFor(
         post(
-          urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/")
+          urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals")
         ).willReturn(aResponse().withStatus(BAD_REQUEST))
       )
 
@@ -231,14 +231,14 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
       val connector = app.injector.instanceOf[ArrivalConnector]
       val arrivals = Arrivals(Seq(Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)))
 
-      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/"))
+      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals"))
         .willReturn(aResponse().withStatus(OK)
           .withBody(Json.toJson(arrivals).toString())))
 
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getForEori.futureValue
+      val result = connector.getForEori(None).futureValue
 
       result mustEqual Right(arrivals)
     }
@@ -249,14 +249,14 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
 
       val response = HateaosResponseArrivals(arrival)
 
-      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/"))
+      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals"))
         .willReturn(aResponse().withStatus(OK)
         .withBody(Json.toJson(response).toString())))
 
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getForEori.futureValue
+      val result = connector.getForEori(None).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
@@ -264,13 +264,13 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
 
     "must return HttpResponse with a not found if not found" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/"))
+      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals"))
         .willReturn(aResponse().withStatus(NOT_FOUND)))
 
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getForEori.futureValue
+      val result = connector.getForEori(None).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual NOT_FOUND }
@@ -278,13 +278,13 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
 
     "must return HttpResponse with a bad request if there is a bad request" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/"))
+      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals"))
         .willReturn(aResponse().withStatus(BAD_REQUEST)))
 
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getForEori.futureValue
+      val result = connector.getForEori(None).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual BAD_REQUEST }
@@ -292,13 +292,13 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
 
     "must return HttpResponse with an internal server if there is an internal server error" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/"))
+      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals"))
         .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR)))
 
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getForEori.futureValue
+      val result = connector.getForEori(None).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }

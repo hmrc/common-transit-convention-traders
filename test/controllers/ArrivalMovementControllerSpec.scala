@@ -397,10 +397,10 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
  "GET /movements/arrivals/" - {
 
    "return 200 with json body of a sequence of arrivals" in {
-     when(mockArrivalConnector.getForEori()(any(), any(), any()))
+     when(mockArrivalConnector.getForEori(any())(any(), any(), any()))
        .thenReturn(Future.successful(Right(Arrivals(Seq(sourceArrival, sourceArrival, sourceArrival)))))
 
-     val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori.url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+     val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori(None).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value
 
      val expectedJson = Json.parse(
@@ -467,10 +467,10 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
    }
 
    "return 200 with empty list if that is provided" in {
-     when(mockArrivalConnector.getForEori()(any(), any(), any()))
+     when(mockArrivalConnector.getForEori(any())(any(), any(), any()))
        .thenReturn(Future.successful(Right(Arrivals(Nil))))
 
-     val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori.url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+     val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori(None).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value
 
      val expectedJson = Json.parse(
@@ -491,10 +491,10 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
    }
 
    "return 500 for downstream errors" in {
-     when(mockArrivalConnector.getForEori()(any(), any(), any()))
+     when(mockArrivalConnector.getForEori(any())(any(), any(), any()))
        .thenReturn(Future.successful(Left(HttpResponse(INTERNAL_SERVER_ERROR, ""))))
 
-     val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori.url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+     val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori(None).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value
 
      status(result) mustBe INTERNAL_SERVER_ERROR
