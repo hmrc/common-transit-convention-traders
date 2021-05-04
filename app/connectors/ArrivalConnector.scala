@@ -64,7 +64,7 @@ class ArrivalConnector @Inject() (http: HttpClient, appConfig: AppConfig, val me
     withMetricsTimerAsync(GetForEori) {
       timer =>
         val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute)
-        val query = updatedSince.map(dt => Seq("updated_since" -> queryDateFormatter.format(dt))).getOrElse(Seq.empty)
+        val query = updatedSince.map(dt => Seq("updatedSince" -> queryDateFormatter.format(dt))).getOrElse(Seq.empty)
 
         http.GET[HttpResponse](url.toString, queryParams = query, responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
           response =>

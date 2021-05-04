@@ -245,12 +245,12 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
       result mustEqual Right(arrivals)
     }
 
-    "must render updated_since parameter into request URL" in {
+    "must render updatedSince parameter into request URL" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
       val arrivals = Arrivals(Seq(Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)))
       val dateTime = Some(OffsetDateTime.of(2021, 3, 14, 13, 15, 30, 0, ZoneOffset.ofHours(1)))
 
-      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals?updated_since=2021-03-14T13%3A15%3A30%2B01%3A00"))
+      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals?updatedSince=2021-03-14T13%3A15%3A30%2B01%3A00"))
         .willReturn(aResponse().withStatus(OK)
           .withBody(Json.toJson(arrivals).toString())))
 

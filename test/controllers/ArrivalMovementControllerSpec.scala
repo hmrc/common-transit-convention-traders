@@ -500,7 +500,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
      contentAsString(result) mustEqual expectedJson.toString()
    }
 
-   "pass updated_since parameter on to connector" in {
+   "pass updatedSince parameter on to connector" in {
     val argCaptor = ArgumentCaptor.forClass(classOf[Option[OffsetDateTime]])
     val dateTime = Some(OffsetDateTime.of(2021, 6, 23, 12, 1, 24, 0, ZoneOffset.UTC))
 
