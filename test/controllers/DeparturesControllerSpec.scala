@@ -16,7 +16,7 @@
 
 package controllers
 
-import java.time.LocalDateTime
+import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
 
 import audit.AuditService
 import com.kenshoo.play.metrics.Metrics
@@ -24,6 +24,7 @@ import connectors.DeparturesConnector
 import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
 import models.domain.{Departure, Departures}
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, times, verify, when}
 import org.scalatest.concurrent.ScalaFutures
@@ -379,10 +380,10 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
   "GET /movements/departures/" - {
 
     "return 200 with json body of a sequence of departures" in {
-      when(mockDepartureConnector.getForEori()(any(), any(), any()))
+      when(mockDepartureConnector.getForEori(any())(any(), any(), any()))
         .thenReturn(Future.successful(Right(Departures(Seq(sourceDeparture, sourceDeparture, sourceDeparture)))))
 
-      val request = FakeRequest("GET", routes.DeparturesController.getDeparturesForEori.url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val request = FakeRequest("GET", routes.DeparturesController.getDeparturesForEori(None).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
       val result = route(app, request).value
 
       status(result) mustBe OK
@@ -390,10 +391,10 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
     }
 
     "return 200 with empty list if that is provided" in {
-      when(mockDepartureConnector.getForEori()(any(), any(), any()))
+      when(mockDepartureConnector.getForEori(any())(any(), any(), any()))
         .thenReturn(Future.successful(Right(Departures(Nil))))
 
-      val request = FakeRequest("GET", routes.DeparturesController.getDeparturesForEori.url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val request = FakeRequest("GET", routes.DeparturesController.getDeparturesForEori(None).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
       val result = route(app, request).value
 
       val expectedJson = Json.parse(
@@ -413,11 +414,25 @@ class DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAp
       contentAsString(result) mustEqual expectedJson.toString()
     }
 
+    "pass updatedSince parameter on to connector" in {
+      val argCaptor = ArgumentCaptor.forClass(classOf[Option[OffsetDateTime]])
+      val dateTime = Some(OffsetDateTime.of(2021, 6, 23, 12, 1, 24, 0, ZoneOffset.UTC))
+
+      when(mockDepartureConnector.getForEori(argCaptor.capture())(any(), any(), any()))
+        .thenReturn(Future.successful(Right(Departures(Nil))))
+
+      val request = FakeRequest("GET", routes.DeparturesController.getDeparturesForEori(dateTime).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val result = route(app, request).value
+
+      status(result) mustBe OK
+      argCaptor.getValue() mustBe dateTime
+    }
+
     "return 500 for downstream errors" in {
-      when(mockDepartureConnector.getForEori()(any(), any(), any()))
+      when(mockDepartureConnector.getForEori(any())(any(), any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(INTERNAL_SERVER_ERROR, ""))))
 
-      val request = FakeRequest("GET", routes.DeparturesController.getDeparturesForEori.url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val request = FakeRequest("GET", routes.DeparturesController.getDeparturesForEori(None).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
       val result = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
