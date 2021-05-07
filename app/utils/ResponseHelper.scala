@@ -18,18 +18,30 @@ package utils
 
 import play.api.Logger
 import play.api.http.Status
-import play.api.mvc.{Result, Results}
-import uk.gov.hmrc.http.{HttpErrorFunctions, HttpResponse}
+import play.api.mvc.Result
+import play.api.mvc.Results
+import uk.gov.hmrc.http.HttpErrorFunctions
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.UpstreamErrorResponse
 
 trait ResponseHelper extends Results with Status with HttpErrorFunctions {
+
   def handleNon2xx(response: HttpResponse): Result = {
     Logger.debug(s"ResponseHelper Log\nstatus: ${response.status}\nbody: ${response.body}\nheaders: ${response.headers.map {
       x =>
         s"\n  ${x._1} : ${x._2}"
     }}")
     response.status match {
-      case s if is4xx(s) => if(response.body != null) Status(response.status)(response.body) else Status(response.status)
-      case _ => Status(response.status)
+      case s if is4xx(s) => if (response.body != null) Status(response.status)(response.body) else Status(response.status)
+      case _             => Status(response.status)
     }
+  }
+
+  def handleNon2xx(response: UpstreamErrorResponse): Result = {
+    Logger.debug(s"ResponseHelper Log\nstatus: ${response.statusCode}\nheaders: ${response.headers.map {
+      x =>
+        s"\n  ${x._1} : ${x._2}"
+    }}")
+    Status(response.statusCode)
   }
 }

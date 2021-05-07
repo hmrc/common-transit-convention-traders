@@ -19,15 +19,19 @@ package connectors
 import connectors.util.CustomHttpReader
 import connectors.util.CustomHttpReader.INTERNAL_SERVER_ERROR
 import models.ChannelType.api
-import play.api.http.{HeaderNames, MimeTypes}
+import play.api.http.HeaderNames
+import play.api.http.MimeTypes
 import play.api.libs.json.Reads
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpResponse}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpErrorFunctions
+import uk.gov.hmrc.http.HttpResponse
 
 class BaseConnector extends HttpErrorFunctions {
 
   protected val channelHeader: (String, String) = ("channel", api.toString)
+
   protected val requestHeaders: Seq[(String, String)] =
     Seq((HeaderNames.CONTENT_TYPE, MimeTypes.XML), channelHeader)
 
@@ -39,17 +43,27 @@ class BaseConnector extends HttpErrorFunctions {
   protected val departureRoute = "/transits-movements-trader-at-departure/movements/departures/"
 
   protected def extractIfSuccessful[T](response: HttpResponse)(implicit reads: Reads[T]): Either[HttpResponse, T] =
-    if(is2xx(response.status)) {
+    if (is2xx(response.status)) {
       response.json.asOpt[T] match {
         case Some(instance) => Right(instance)
-        case _ => Left(CustomHttpReader.recode(INTERNAL_SERVER_ERROR, response))
+        case _              => Left(CustomHttpReader.recode(INTERNAL_SERVER_ERROR, response))
       }
     } else Left(response)
 
-  protected def enforceAuthHeaderCarrier(extraHeaders: Seq[(String, String)])(implicit requestHeader: RequestHeader, headerCarrier: HeaderCarrier): HeaderCarrier = {
+  protected def enforceAuthHeaderCarrier(
+    extraHeaders: Seq[(String, String)]
+  )(implicit requestHeader: RequestHeader, headerCarrier: HeaderCarrier): HeaderCarrier = {
     val newHeaderCarrier = headerCarrier
       .copy(authorization = Some(Authorization(requestHeader.headers.get(HeaderNames.AUTHORIZATION).getOrElse(""))))
       .withExtraHeaders(extraHeaders: _*)
     newHeaderCarrier
   }
+
+  protected def addAuthHeaders(extraHeaders: Seq[(String, String)])(implicit requestHeader: RequestHeader): Seq[(String, String)] =
+    extraHeaders ++ requestHeader.headers
+      .get(HeaderNames.AUTHORIZATION)
+      .map(
+        auth => Seq(HeaderNames.AUTHORIZATION -> auth)
+      )
+      .getOrElse(Seq(HeaderNames.AUTHORIZATION -> ""))
 }

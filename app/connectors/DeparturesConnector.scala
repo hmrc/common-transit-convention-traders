@@ -20,11 +20,17 @@ import javax.inject.Inject
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import connectors.util.CustomHttpReader
-import metrics.{HasMetrics, MetricsKeys}
+import metrics.HasMetrics
+import metrics.MetricsKeys
 import models.domain.Departure
 import models.domain.Departures
+import models.Box
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.HttpReads.Implicits._
 import utils.Utils
 
 import scala.concurrent.ExecutionContext
@@ -34,13 +40,16 @@ class DeparturesConnector @Inject() (http: HttpClient, appConfig: AppConfig, val
 
   import MetricsKeys.DeparturesBackend._
 
-  def post(message: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    withMetricsTimerResponse(Post) {
-      val url = appConfig.traderAtDeparturesUrl + departureRoute
-      http.POSTString(url, message)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
+  def post(
+    message: String
+  )(implicit rh: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]] =
+    withMetricsTimerAsync(Post) {
+      _ =>
+        val url = appConfig.traderAtDeparturesUrl + departureRoute
+        http.POSTString[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]](url, message, addAuthHeaders(requestHeaders))
     }
 
-  def get(departureId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departure]] =
+  def get(departureId: String)(implicit rh: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departure]] =
     withMetricsTimerAsync(GetById) {
       timer =>
         val url = appConfig.traderAtDeparturesUrl + departureRoute + Utils.urlEncode(departureId)
@@ -51,7 +60,7 @@ class DeparturesConnector @Inject() (http: HttpClient, appConfig: AppConfig, val
         }
     }
 
-  def getForEori()(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departures]] =
+  def getForEori()(implicit rh: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departures]] =
     withMetricsTimerAsync(GetForEori) {
       timer =>
         val url = appConfig.traderAtDeparturesUrl + departureRoute
