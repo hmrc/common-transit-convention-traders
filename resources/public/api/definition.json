@@ -18,7 +18,31 @@
         "endpointsEnabled": true,
         "access": {
           "type": "PUBLIC"
-        }
+        },
+        "fieldDefinitions": [{
+          "name": "notificationUrl",
+          "description": "What is your notification web address for us to send push notifications to?",
+          "type": "PPNSField",
+          "hint": "You must only give us a web address that you own. Your application will use this address to listen to notifications from HMRC.",
+          "validation": {
+            "errorMessage": "notificationUrl must be a valid https URL",
+            "rules": [
+              {
+                "UrlValidationRule": {}
+              },
+              {
+                "RegexValidationRule": {
+                  "regex" : "^https.*"
+                }
+              }
+            ]
+          }
+        }, {
+          "name": "securityToken",
+          "description": "What is the content of the HTTP Authorization header for us to use when notifying you?",
+          "type": "SecureToken",
+          "hint": "This will be a piece of text for example Bearer cn389ncoiwuencr"
+        }]
       }
     ]
   }
