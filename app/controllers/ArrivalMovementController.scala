@@ -16,14 +16,13 @@
 
 package controllers
 
-import javax.inject.Inject
-
 import com.kenshoo.play.metrics.Metrics
 import connectors.ArrivalConnector
 import controllers.actions.AuthAction
 import controllers.actions.ValidateAcceptJsonHeaderAction
 import controllers.actions.ValidateArrivalNotificationAction
-import metrics.{HasActionMetrics, MetricsKeys}
+import metrics.HasActionMetrics
+import metrics.MetricsKeys
 import models.MessageType
 import models.domain.Arrivals
 import models.response.HateaosArrivalMovementPostResponseMessage
@@ -39,6 +38,8 @@ import utils.CallOps._
 import utils.ResponseHelper
 import utils.Utils
 
+import java.time.OffsetDateTime
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
@@ -141,11 +142,11 @@ class ArrivalMovementController @Inject() (
       }
     }
 
-  def getArrivalsForEori: Action[AnyContent] =
+  def getArrivalsForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent] =
     withMetricsTimerAction(GetArrivalsForEori) {
       (authAction andThen validateAcceptJsonHeaderAction).async {
         implicit request =>
-          arrivalConnector.getForEori.map {
+          arrivalConnector.getForEori(updatedSince).map {
             case Right(arrivals: Arrivals) =>
               arrivalsCount.update(arrivals.arrivals.length)
               Ok(Json.toJson(HateaosResponseArrivals(arrivals)))

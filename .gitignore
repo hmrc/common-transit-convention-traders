@@ -22,7 +22,6 @@ modules
 /out
 precompiled
 /.project
-project/project
 project/target
 /RUNNING_PID
 server.pid

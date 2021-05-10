@@ -19,14 +19,16 @@ lazy val microservice = Project(appName, file("."))
   .settings(scalacSettings)
   .settings(
     majorVersion := 0,
-    scalaVersion := "2.12.11",
+    scalaVersion := "2.12.13",
     resolvers += Resolver.jcenterRepo,
     PlayKeys.playDefaultPort := 9487,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
     unmanagedResourceDirectories in Compile += baseDirectory.value / "resources",
     // Import models by default in route files
     RoutesKeys.routesImport ++= Seq(
-      "models._"
+      "models._",
+      "models.Binders._",
+      "java.time.OffsetDateTime"
     ),
     javaOptions ++= Seq(
       "-Djdk.xml.maxOccurLimit=10000"
@@ -50,10 +52,10 @@ lazy val scalacSettings = Def.settings(
   Test / scalacOptions ~= {
     opts =>
       opts.filterNot(Set("-Ywarn-dead-code"))
-  }
+  },
   // Cannot be enabled yet - requires Scala 2.12.13 which suffers from https://github.com/scoverage/scalac-scoverage-plugin/issues/305
   // Disable warnings arising from generated routing code
-  // scalacOptions += "-Wconf:src=routes/.*:silent",
+  scalacOptions += "-Wconf:src=routes/.*:silent"
 )
 
 // Scoverage exclusions and minimums
@@ -84,24 +86,8 @@ lazy val scoverageSettings = Def.settings(
 lazy val itSettings = Seq(
   // Must fork so that config system properties are set
   fork := true,
+  unmanagedResourceDirectories += (baseDirectory.value / "it" / "resources"),
   javaOptions ++= Seq(
     "-Dlogger.resource=it.logback.xml"
-  ),
-  unmanagedResourceDirectories += (baseDirectory.value / "it" / "resources"),
-  // sbt-settings does not cause javaOptions to be passed to test groups by default
-  // needed unless / until this PR is merged and released: https://github.com/hmrc/sbt-settings/pull/19/files
-  testGrouping := {
-    val tests          = (IntegrationTest / definedTests).value
-    val forkJvmOptions = (IntegrationTest / javaOptions).value
-    tests.map {
-      test =>
-        Group(
-          test.name,
-          Seq(test),
-          SubProcess(
-            ForkOptions().withRunJVMOptions(forkJvmOptions.toVector :+ ("-Dtest.name=" + test.name))
-          )
-        )
-    }
-  }
+  )
 )
