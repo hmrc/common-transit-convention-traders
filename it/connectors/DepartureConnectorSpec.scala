@@ -46,7 +46,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
 
       server.stubFor(
         post(
-          urlEqualTo("/transits-movements-trader-at-departure/movements/departures/")
+          urlEqualTo("/transits-movements-trader-at-departure/movements/departures")
         ).willReturn(aResponse().withStatus(ACCEPTED))
       )
 
@@ -64,7 +64,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
 
         server.stubFor(
           post(
-            urlEqualTo("/transits-movements-trader-at-departure/movements/departures/")
+            urlEqualTo("/transits-movements-trader-at-departure/movements/departures")
           ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
         )
 
@@ -85,7 +85,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
 
       server.stubFor(
         post(
-          urlEqualTo("/transits-movements-trader-at-departure/movements/departures/")
+          urlEqualTo("/transits-movements-trader-at-departure/movements/departures")
         ).willReturn(aResponse().withStatus(BAD_REQUEST))
       )
 

@@ -16,33 +16,43 @@
 
 package controllers
 
-import java.time.LocalDateTime
-
 import akka.util.ByteString
 import com.kenshoo.play.metrics.Metrics
 import connectors.ArrivalConnector
-import controllers.actions.{AuthAction, FakeAuthAction}
+import controllers.actions.AuthAction
+import controllers.actions.FakeAuthAction
 import data.TestXml
-import models.domain.{Arrival, Arrivals}
+import models.domain.Arrival
+import models.domain.Arrivals
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{reset, when}
+import org.mockito.Mockito.reset
+import org.mockito.Mockito.when
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{JsNull, Json}
-import play.api.mvc.{AnyContentAsEmpty, Headers}
-import play.api.test.Helpers.{headers, _}
-import play.api.test.{FakeHeaders, FakeRequest}
+import play.api.libs.json.JsNull
+import play.api.libs.json.Json
+import play.api.mvc.AnyContentAsEmpty
+import play.api.mvc.Headers
+import play.api.test.FakeHeaders
+import play.api.test.FakeRequest
+import play.api.test.Helpers._
+import play.api.test.Helpers.headers
 import uk.gov.hmrc.http.HttpResponse
 import utils.CallOps._
 import utils.TestMetrics
 
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import scala.concurrent.Future
 
 class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
@@ -397,10 +407,10 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
  "GET /movements/arrivals/" - {
 
    "return 200 with json body of a sequence of arrivals" in {
-     when(mockArrivalConnector.getForEori()(any(), any(), any()))
+     when(mockArrivalConnector.getForEori(any())(any(), any(), any()))
        .thenReturn(Future.successful(Right(Arrivals(Seq(sourceArrival, sourceArrival, sourceArrival)))))
 
-     val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori.url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+     val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori(None).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value
 
      val expectedJson = Json.parse(
@@ -467,10 +477,10 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
    }
 
    "return 200 with empty list if that is provided" in {
-     when(mockArrivalConnector.getForEori()(any(), any(), any()))
+     when(mockArrivalConnector.getForEori(any())(any(), any(), any()))
        .thenReturn(Future.successful(Right(Arrivals(Nil))))
 
-     val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori.url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+     val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori(None).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value
 
      val expectedJson = Json.parse(
@@ -490,11 +500,25 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
      contentAsString(result) mustEqual expectedJson.toString()
    }
 
+   "pass updatedSince parameter on to connector" in {
+    val argCaptor = ArgumentCaptor.forClass(classOf[Option[OffsetDateTime]])
+    val dateTime = Some(OffsetDateTime.of(2021, 6, 23, 12, 1, 24, 0, ZoneOffset.UTC))
+
+    when(mockArrivalConnector.getForEori(argCaptor.capture())(any(), any(), any()))
+      .thenReturn(Future.successful(Right(Arrivals(Nil))))
+
+     val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori(dateTime).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+     val result = route(app, request).value
+
+     status(result) mustBe OK
+     argCaptor.getValue() mustBe dateTime
+   }
+
    "return 500 for downstream errors" in {
-     when(mockArrivalConnector.getForEori()(any(), any(), any()))
+     when(mockArrivalConnector.getForEori(any())(any(), any(), any()))
        .thenReturn(Future.successful(Left(HttpResponse(INTERNAL_SERVER_ERROR, ""))))
 
-     val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori.url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+     val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori(None).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value
 
      status(result) mustBe INTERNAL_SERVER_ERROR

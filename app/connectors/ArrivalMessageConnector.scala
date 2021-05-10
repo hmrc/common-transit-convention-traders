@@ -16,21 +16,21 @@
 
 package connectors
 
-import javax.inject.Inject
-
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import connectors.util.CustomHttpReader
-import metrics.{HasMetrics, MetricsKeys}
+import metrics.HasMetrics
+import metrics.MetricsKeys
 import models.domain.ArrivalWithMessages
 import models.domain.MovementMessage
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.http.HttpResponse
-import utils.Utils
 
-import scala.concurrent.{ExecutionContext, Future}
+import javax.inject.Inject
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 class ArrivalMessageConnector @Inject() (http: HttpClient, appConfig: AppConfig, val metrics: Metrics) extends BaseConnector with HasMetrics {
 
@@ -43,8 +43,8 @@ class ArrivalMessageConnector @Inject() (http: HttpClient, appConfig: AppConfig,
   ): Future[Either[HttpResponse, MovementMessage]] =
     withMetricsTimerAsync(GetMessageById) {
       timer =>
-        val url = appConfig.traderAtDestinationUrl + s"$arrivalRoute${Utils.urlEncode(arrivalId)}/messages/${Utils.urlEncode(messageId)}"
-        http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
+        val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathParts(arrivalId, "messages", messageId)
+        http.GET[HttpResponse](url.toString, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
           response =>
             if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
             extractIfSuccessful[MovementMessage](response)
@@ -53,8 +53,8 @@ class ArrivalMessageConnector @Inject() (http: HttpClient, appConfig: AppConfig,
 
   def post(message: String, arrivalId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     withMetricsTimerResponse(PostMessage) {
-      val url = appConfig.traderAtDestinationUrl + s"$arrivalRoute${Utils.urlEncode(arrivalId)}/messages"
-      http.POSTString(url, message, requestHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
+      val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathParts(arrivalId, "messages")
+      http.POSTString(url.toString, message, requestHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
     }
 
   def getMessages(
@@ -62,8 +62,8 @@ class ArrivalMessageConnector @Inject() (http: HttpClient, appConfig: AppConfig,
   )(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, ArrivalWithMessages]] =
     withMetricsTimerAsync(GetMessagesForArrival) {
       timer =>
-        val url = appConfig.traderAtDestinationUrl + s"$arrivalRoute${Utils.urlEncode(arrivalId)}/messages"
-        http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
+        val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathParts(arrivalId, "messages")
+        http.GET[HttpResponse](url.toString, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
           response =>
             if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
             extractIfSuccessful[ArrivalWithMessages](response)

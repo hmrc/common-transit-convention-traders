@@ -16,7 +16,6 @@
 
 package connectors
 
-import javax.inject.Inject
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import connectors.util.CustomHttpReader
@@ -33,6 +32,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import utils.Utils
 
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -52,8 +52,8 @@ class DeparturesConnector @Inject() (http: HttpClient, appConfig: AppConfig, val
   def get(departureId: String)(implicit rh: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departure]] =
     withMetricsTimerAsync(GetById) {
       timer =>
-        val url = appConfig.traderAtDeparturesUrl + departureRoute + Utils.urlEncode(departureId)
-        http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
+        val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute).addPathPart(departureId)
+        http.GET[HttpResponse](url.toString, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
           response =>
             if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
             extractIfSuccessful[Departure](response)
@@ -63,9 +63,9 @@ class DeparturesConnector @Inject() (http: HttpClient, appConfig: AppConfig, val
   def getForEori()(implicit rh: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departures]] =
     withMetricsTimerAsync(GetForEori) {
       timer =>
-        val url = appConfig.traderAtDeparturesUrl + departureRoute
+        val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute)
 
-        http.GET[HttpResponse](url, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
+        http.GET[HttpResponse](url.toString, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
           response =>
             if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
             extractIfSuccessful[Departures](response)
