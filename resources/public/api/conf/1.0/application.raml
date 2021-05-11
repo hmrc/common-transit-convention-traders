@@ -246,10 +246,18 @@ traits:
           description: |
             Get all the messages to do with a Movement Arrival. Any Movement Arrivals more than 28 days old will have been archived along with their related messages. Archived movements will return an HTTP 404 Not Found status.
 
+            You may opt to filter this list of messages so that you only receive messages that have been received since a specified date and time.
+
             You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
           is:
             - headers.acceptHeader
             - acceptHeaderInvalid
+          queryParameters:
+            receivedSince:
+              required: false
+              type: datetime
+              description: This is an optional filtering parameter. It allows you to request only the messages relating to a Movement Arrival which have been received since the date and time you have given us.
+              example: 2021-06-21T09:00+00:00
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
@@ -507,12 +515,20 @@ traits:
           description: |
             Get all messages sent within 28 days of the goods being released relating to a Movement Departure. Any Movements that are more than 28 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status.
 
+            You may opt to filter this list of messages so that you only receive messages that have been received since a specified date and time.
+
             You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
 
             **Note**: The 'movementReferenceNumber' field will only be populated when an MRN is allocated.
           is:
             - headers.acceptHeader
             - acceptHeaderInvalid
+          queryParameters:
+            receivedSince:
+              required: false
+              type: datetime
+              description: This is an optional filtering parameter. It allows you to request only the messages relating to a Movement Departure which have been received since the date and time you have given us.
+              example: 2021-06-21T09:00+00:00
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
