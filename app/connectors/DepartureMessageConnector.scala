@@ -28,6 +28,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.http.HttpResponse
 
+import java.time.OffsetDateTime
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -43,12 +44,14 @@ class DepartureMessageConnector @Inject() (http: HttpClient, appConfig: AppConfi
     }
 
   def getMessages(
-    departureId: String
+    departureId: String,
+    receivedSince: Option[OffsetDateTime]
   )(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, DepartureWithMessages]] =
     withMetricsTimerAsync(GetMessagesForDeparture) {
       timer =>
         val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute).addPathParts(departureId, "messages")
-        http.GET[HttpResponse](url.toString, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
+        val query = receivedSince.map(dt => Seq("receivedSince" -> queryDateFormatter.format(dt))).getOrElse(Seq.empty)
+        http.GET[HttpResponse](url.toString, queryParams = query, responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
           response =>
             if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
             extractIfSuccessful[DepartureWithMessages](response)

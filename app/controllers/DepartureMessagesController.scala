@@ -16,14 +16,13 @@
 
 package controllers
 
-import javax.inject.Inject
-
 import com.kenshoo.play.metrics.Metrics
 import connectors.DepartureMessageConnector
 import controllers.actions.AuthAction
 import controllers.actions.ValidateAcceptJsonHeaderAction
 import controllers.actions.ValidateDepartureMessageAction
-import metrics.{HasActionMetrics, MetricsKeys}
+import metrics.HasActionMetrics
+import metrics.MetricsKeys
 import models.MessageType
 import models.response.HateaosDepartureMessagesPostResponseMessage
 import models.response.HateaosDepartureResponseMessage
@@ -38,6 +37,8 @@ import utils.CallOps._
 import utils.ResponseHelper
 import utils.Utils
 
+import java.time.OffsetDateTime
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
@@ -93,11 +94,11 @@ class DepartureMessagesController @Inject() (
       }
     }
 
-  def getDepartureMessages(departureId: String): Action[AnyContent] =
+  def getDepartureMessages(departureId: String, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
     withMetricsTimerAction(GetDepartureMessages) {
       (authAction andThen validateAcceptJsonHeaderAction).async {
         implicit request =>
-          messageConnector.getMessages(departureId).map {
+          messageConnector.getMessages(departureId, receivedSince).map {
             case Right(d) =>
               messagesCount.update(d.messages.length)
               Ok(Json.toJson(HateaosResponseDepartureWithMessages(d)))

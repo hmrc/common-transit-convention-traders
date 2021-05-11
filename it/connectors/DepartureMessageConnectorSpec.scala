@@ -32,6 +32,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import utils.CallOps._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
 
@@ -140,7 +142,30 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Wirem
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getMessages("1").futureValue
+      val result = connector.getMessages("1", receivedSince = None).futureValue
+
+      result mustEqual Right(departure)
+    }
+
+    "must render receivedSince parameter into request URL" in {
+      val connector = app.injector.instanceOf[DepartureMessageConnector]
+      val dateTime = Some(OffsetDateTime.of(2021, 3, 14, 13, 15, 30, 0, ZoneOffset.ofHours(1)))
+      val departure = DepartureWithMessages(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now,
+        Seq(
+          MovementMessage(routes.DepartureMessagesController.getDepartureMessage("1","1").urlWithContext, LocalDateTime.now, "abc", <test>default</test>),
+          MovementMessage(routes.DepartureMessagesController.getDepartureMessage("1","2").urlWithContext, LocalDateTime.now, "abc", <test>default</test>)
+        ))
+
+      server.stubFor(
+        get(
+          urlEqualTo("/transits-movements-trader-at-departure/movements/departures/1/messages?receivedSince=2021-03-14T13%3A15%3A30%2B01%3A00")
+        ).willReturn(aResponse().withStatus(OK)
+          .withBody(Json.toJson(departure).toString())))
+
+      implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
+
+      val result = connector.getMessages("1", receivedSince = dateTime).futureValue
 
       result mustEqual Right(departure)
     }
@@ -159,7 +184,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Wirem
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getMessages("1").futureValue
+      val result = connector.getMessages("1", receivedSince = None).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
@@ -175,7 +200,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Wirem
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getMessages("1").futureValue
+      val result = connector.getMessages("1", receivedSince = None).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual NOT_FOUND }
@@ -191,7 +216,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Wirem
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getMessages("1").futureValue
+      val result = connector.getMessages("1", receivedSince = None).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual BAD_REQUEST }
@@ -207,7 +232,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Wirem
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getMessages("1").futureValue
+      val result = connector.getMessages("1", receivedSince = None).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
