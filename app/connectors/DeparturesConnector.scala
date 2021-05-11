@@ -30,7 +30,6 @@ import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import utils.Utils
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -45,8 +44,8 @@ class DeparturesConnector @Inject() (http: HttpClient, appConfig: AppConfig, val
   )(implicit rh: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]] =
     withMetricsTimerAsync(Post) {
       _ =>
-        val url = appConfig.traderAtDeparturesUrl + departureRoute
-        http.POSTString[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]](url, message, addAuthHeaders(requestHeaders))
+        val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute)
+        http.POSTString[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]](url.toString, message, addAuthHeaders(requestHeaders))
     }
 
   def get(departureId: String)(implicit rh: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departure]] =

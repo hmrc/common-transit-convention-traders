@@ -18,6 +18,7 @@ package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import controllers.routes
+import models.Box
 import models.domain.Departure
 import models.domain.Departures
 import models.response.HateaosResponseDeparture
@@ -34,9 +35,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import utils.CallOps._
 
 import java.time.LocalDateTime
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import scala.concurrent.ExecutionContext.Implicits.global
-import models.Box
+import models.BoxId
 
 class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
   "post" - {
@@ -44,10 +44,24 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
     "must return ACCEPTED when post is successful" in {
       val connector = app.injector.instanceOf[DeparturesConnector]
 
+      val testBoxId   = BoxId("testBoxId")
+      val testBoxName = "testBoxName"
+      val testBox     = Box(testBoxId, testBoxName)
+
       server.stubFor(
         post(
           urlEqualTo("/transits-movements-trader-at-departure/movements/departures")
-        ).willReturn(aResponse().withStatus(ACCEPTED))
+        ).willReturn(
+          aResponse()
+            .withStatus(ACCEPTED)
+            .withBody(
+              Json.stringify(
+                Json.toJson(
+                  Option(testBox)
+                )
+              )
+            )
+        )
       )
 
       implicit val hc            = HeaderCarrier()
@@ -55,7 +69,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
 
       val result = connector.post("<document></document>").futureValue
 
-      result mustEqual Right(Option.empty[Box])
+      result.right.get.responseData mustEqual Option(testBox)
     }
 
     "must return INTERNAL_SERVER_ERROR when post" - {
@@ -68,14 +82,12 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
           ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
         )
 
-        val errorMessage = "test error message"
-
         implicit val hc            = HeaderCarrier()
-        implicit val requestHeader = FakeRequest().withBody(errorMessage)
+        implicit val requestHeader = FakeRequest()
 
         val result = connector.post("<document></document>").futureValue
 
-        result mustEqual Left(UpstreamErrorResponse(errorMessage, INTERNAL_SERVER_ERROR))
+        result.left.get.statusCode mustEqual INTERNAL_SERVER_ERROR
       }
 
     }
@@ -89,14 +101,12 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
         ).willReturn(aResponse().withStatus(BAD_REQUEST))
       )
 
-      val errorMessage = "test error message"
-
       implicit val hc            = HeaderCarrier()
-      implicit val requestHeader = FakeRequest().withBody(errorMessage)
+      implicit val requestHeader = FakeRequest()
 
       val result = connector.post("<document></document>").futureValue
 
-      result mustEqual Left(UpstreamErrorResponse(errorMessage, BAD_REQUEST))
+      result.left.get.statusCode mustEqual BAD_REQUEST
     }
   }
   "get" - {
@@ -236,11 +246,11 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
       )
 
       server.stubFor(
-        get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/"))
+        get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures"))
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.toJson(departures).toString())
+              .withBody(Json.stringify(Json.toJson(departures)))
           )
       )
 
@@ -271,7 +281,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
       val response = HateaosResponseDepartures(departures)
 
       server.stubFor(
-        get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/"))
+        get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures"))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -293,7 +303,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
     "must return HttpResponse with a not found if not found" in {
       val connector = app.injector.instanceOf[DeparturesConnector]
       server.stubFor(
-        get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/"))
+        get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures"))
           .willReturn(aResponse().withStatus(NOT_FOUND))
       )
 
@@ -311,7 +321,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
     "must return HttpResponse with a bad request if there is a bad request" in {
       val connector = app.injector.instanceOf[DeparturesConnector]
       server.stubFor(
-        get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/"))
+        get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures"))
           .willReturn(aResponse().withStatus(BAD_REQUEST))
       )
 
@@ -329,7 +339,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
     "must return HttpResponse with an internal server if there is an internal server error" in {
       val connector = app.injector.instanceOf[DeparturesConnector]
       server.stubFor(
-        get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/"))
+        get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures"))
           .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
       )
 
