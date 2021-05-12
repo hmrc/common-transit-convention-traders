@@ -16,8 +16,9 @@
 
 package controllers
 
-import javax.inject.Inject
+import java.time.OffsetDateTime
 
+import javax.inject.Inject
 import audit.AuditService
 import audit.AuditType
 import com.kenshoo.play.metrics.Metrics
@@ -113,11 +114,11 @@ class DeparturesController @Inject() (
       }
     }
 
-  def getDeparturesForEori: Action[AnyContent] =
+  def getDeparturesForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent] =
     withMetricsTimerAction(GetDeparturesForEori) {
       (authAction andThen validateAcceptJsonHeaderAction).async {
         implicit request =>
-          departuresConnector.getForEori.map {
+          departuresConnector.getForEori(updatedSince).map {
             case Right(departures) =>
               departuresCount.update(departures.departures.length)
               Ok(Json.toJson(HateaosResponseDepartures(departures)))

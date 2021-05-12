@@ -16,7 +16,8 @@
 
 package connectors
 
-import java.time.LocalDateTime
+import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
+
 import com.github.tomakehurst.wiremock.client.WireMock._
 import controllers.routes
 import models.domain.{Departure, Departures}
@@ -180,7 +181,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getForEori.futureValue
+      val result = connector.getForEori(None).futureValue
 
       result mustEqual Right(departures)
     }
@@ -198,7 +199,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getForEori.futureValue
+      val result = connector.getForEori(None).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
@@ -212,7 +213,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getForEori.futureValue
+      val result = connector.getForEori(None).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual NOT_FOUND }
@@ -226,7 +227,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getForEori.futureValue
+      val result = connector.getForEori(None).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual BAD_REQUEST }
@@ -240,10 +241,27 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getForEori.futureValue
+      val result = connector.getForEori(None).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
+    }
+
+    "must render updatedSince parameter into request URL" in {
+      val connector = app.injector.instanceOf[DeparturesConnector]
+      val departures = Departures(Seq(Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now)))
+      val dateTime = Some(OffsetDateTime.of(2021, 3, 14, 13, 15, 30, 0, ZoneOffset.ofHours(1)))
+
+      server.stubFor(get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures?updatedSince=2021-03-14T13%3A15%3A30%2B01%3A00"))
+        .willReturn(aResponse().withStatus(OK)
+          .withBody(Json.toJson(departures).toString())))
+
+      implicit val hc = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
+
+      val result = connector.getForEori(dateTime).futureValue
+
+      result mustEqual Right(departures)
     }
 
   }
