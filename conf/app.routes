@@ -5,7 +5,7 @@ PUT        /movements/arrivals/:arrivalId                           controllers.
 GET        /movements/arrivals/:arrivalId                           controllers.ArrivalMovementController.getArrival(arrivalId: String)
 
 POST       /movements/arrivals/:arrivalId/messages                  controllers.ArrivalMessagesController.sendMessageDownstream(arrivalId: String)
-GET        /movements/arrivals/:arrivalId/messages                  controllers.ArrivalMessagesController.getArrivalMessages(arrivalId: String)
+GET        /movements/arrivals/:arrivalId/messages                  controllers.ArrivalMessagesController.getArrivalMessages(arrivalId: String, receivedSince: Option[OffsetDateTime] ?= None)
 
 GET        /movements/arrivals/:arrivalId/messages/:messageId       controllers.ArrivalMessagesController.getArrivalMessage(arrivalId: String, messageId: String)
 
@@ -17,6 +17,6 @@ POST       /movements/departures                                    controllers.
 GET        /movements/departures/:departureId                       controllers.DeparturesController.getDeparture(departureId: String)
 
 POST       /movements/departures/:departureId/messages              controllers.DepartureMessagesController.sendMessageDownstream(departureId: String)
-GET        /movements/departures/:departureId/messages              controllers.DepartureMessagesController.getDepartureMessages(departureId: String)
+GET        /movements/departures/:departureId/messages              controllers.DepartureMessagesController.getDepartureMessages(departureId: String, receivedSince: Option[OffsetDateTime] ?= None)
 
 GET        /movements/departures/:departureId/messages/:messageId   controllers.DepartureMessagesController.getDepartureMessage(departureId: String, messageId: String)
