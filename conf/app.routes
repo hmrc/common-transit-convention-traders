@@ -11,7 +11,7 @@ GET        /movements/arrivals/:arrivalId/messages/:messageId       controllers.
 
 
 
-GET        /movements/departures                                    controllers.DeparturesController.getDeparturesForEori()
+GET        /movements/departures                                    controllers.DeparturesController.getDeparturesForEori(updatedSince: Option[OffsetDateTime] ?= None)
 POST       /movements/departures                                    controllers.DeparturesController.submitDeclaration()
 
 GET        /movements/departures/:departureId                       controllers.DeparturesController.getDeparture(departureId: String)
