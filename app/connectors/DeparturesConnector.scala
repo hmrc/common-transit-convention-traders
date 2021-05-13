@@ -48,7 +48,7 @@ class DeparturesConnector @Inject() (http: HttpClient, appConfig: AppConfig, val
     withMetricsTimerAsync(Post) {
       _ =>
         val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute)
-        http.POSTString[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]](url.toString, message, addAuthHeaders(requestHeaders))
+        http.POSTString[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]](url.toString, message, (requestHeaders))
     }
 
   def get(departureId: String)(implicit rh: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departure]] =
