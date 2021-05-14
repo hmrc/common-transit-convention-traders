@@ -17,6 +17,7 @@
 package connectors
 
 import java.time.LocalDateTime
+
 import com.github.tomakehurst.wiremock.client.WireMock._
 import controllers.routes
 import models.domain.{Arrival, Arrivals}
@@ -35,7 +36,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
+import models.{Box, BoxId}
+
 class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
+  val testBoxId   = BoxId("testBoxId")
+  val testBoxName = "testBoxName"
+  val testBox     = Box(testBoxId, testBoxName)
+
   "post" - {
     "must return ACCEPTED when post is successful" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
@@ -43,7 +50,17 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
       server.stubFor(
         post(
           urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals")
-        ).willReturn(aResponse().withStatus(ACCEPTED))
+        ).willReturn(
+          aResponse()
+            .withStatus(ACCEPTED)
+            .withBody(
+              Json.stringify(
+                Json.toJson(
+                  Option(testBox)
+                )
+              )
+            )
+        )
       )
 
       implicit val hc = HeaderCarrier()
@@ -51,7 +68,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
 
       val result = connector.post("<document></document>").futureValue
 
-      result.status mustEqual ACCEPTED
+      result.right.get.responseData mustEqual Option(testBox)
     }
 
     "must return INTERNAL_SERVER_ERROR when post" - {
@@ -69,8 +86,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
 
         val result = connector.post("<document></document>").futureValue
 
-        result.status mustEqual INTERNAL_SERVER_ERROR
-      }
+        result.left.get.statusCode mustEqual INTERNAL_SERVER_ERROR      }
 
     }
 
@@ -88,7 +104,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
 
       val result = connector.post("<document></document>").futureValue
 
-      result.status mustEqual BAD_REQUEST
+      result.left.get.statusCode mustEqual BAD_REQUEST
     }
   }
 
@@ -99,7 +115,17 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
         server.stubFor(
           put(
             urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/2")
-          ).willReturn(aResponse().withStatus(ACCEPTED))
+          ).willReturn(
+            aResponse()
+              .withStatus(ACCEPTED)
+              .withBody(
+                Json.stringify(
+                  Json.toJson(
+                    Option(testBox)
+                  )
+                )
+              )
+          )
         )
 
         implicit val hc = HeaderCarrier()
@@ -107,7 +133,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
 
         val result = connector.put("<document></document>", "2").futureValue
 
-        result.status mustEqual ACCEPTED
+      result.right.get.responseData mustEqual Option(testBox)
     }
 
     "must return INTERNAL_SERVER_ERROR when put" - {
@@ -125,7 +151,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
 
         val result = connector.put("<document></document>", "2").futureValue
 
-        result.status mustEqual INTERNAL_SERVER_ERROR
+        result.left.get.statusCode mustEqual INTERNAL_SERVER_ERROR
       }
 
     }
@@ -144,7 +170,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
 
       val result = connector.put("<document></document>", "2").futureValue
 
-      result.status mustEqual BAD_REQUEST
+      result.left.get.statusCode mustEqual BAD_REQUEST
     }
 
   }

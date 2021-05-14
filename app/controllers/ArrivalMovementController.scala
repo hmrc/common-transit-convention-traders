@@ -65,66 +65,61 @@ class ArrivalMovementController @Inject() (
       (authAction andThen validateArrivalNotificationAction).async(parse.xml) {
         implicit request =>
           arrivalConnector.post(request.body.toString).map {
-            response =>
-              response.status match {
-                case status if is2xx(status) =>
-                  response.header(LOCATION) match {
-                    case Some(locationValue: String) =>
-                      MessageType.getMessageType(request.body) match {
-                        case Some(messageType: MessageType) =>
-                          val arrivalId = Utils.lastFragment(locationValue)
-                          Accepted(
-                            Json.toJson(
-                              HateaosArrivalMovementPostResponseMessage(
-                                arrivalId,
-                                messageType.code,
-                                request.body
-                              )
-                            )
-                          ).withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext)
-                        case None =>
-                          InternalServerError
-                      }
-                    case _ =>
+            case Right(response) =>
+              response.header(LOCATION) match {
+                case Some(locationValue: String) =>
+                  MessageType.getMessageType(request.body) match {
+                    case Some(messageType: MessageType) =>
+                      val arrivalId = Utils.lastFragment(locationValue)
+                      Accepted(
+                        Json.toJson(
+                          HateaosArrivalMovementPostResponseMessage(
+                            arrivalId,
+                            messageType.code,
+                            request.body,
+                            response.responseData
+                          )
+                        )
+                      ).withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext)
+                    case None =>
                       InternalServerError
                   }
-                case _ => handleNon2xx(response)
+                case _ =>
+                  InternalServerError
               }
+            case Left(response) => handleNon2xx(response)              }
           }
       }
-    }
 
   def resubmitArrivalNotification(arrivalId: String): Action[NodeSeq] =
     withMetricsTimerAction(ResubmitArrivalNotification) {
       (authAction andThen validateArrivalNotificationAction).async(parse.xml) {
         implicit request =>
           arrivalConnector.put(request.body.toString, arrivalId).map {
-            response =>
-              response.status match {
-                case status if is2xx(status) =>
-                  response.header(LOCATION) match {
-                    case Some(locationValue: String) =>
-                      MessageType.getMessageType(request.body) match {
-                        case Some(messageType: MessageType) =>
-                          val arrivalId = Utils.lastFragment(locationValue)
-                          Accepted(
-                            Json.toJson(
-                              HateaosArrivalMovementPostResponseMessage(
-                                arrivalId,
-                                messageType.code,
-                                request.body
-                              )
-                            )
-                          ).withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext)
-                        case None =>
-                          InternalServerError
-                      }
-                    case _ =>
+            case Right(response) =>
+              response.header(LOCATION) match {
+                case Some(locationValue: String) =>
+                  MessageType.getMessageType(request.body) match {
+                    case Some(messageType: MessageType) =>
+                      val arrivalId = Utils.lastFragment(locationValue)
+                      Accepted(
+                        Json.toJson(
+                          HateaosArrivalMovementPostResponseMessage(
+                            arrivalId,
+                            messageType.code,
+                            request.body,
+                            response.responseData
+                          )
+                        )
+                      ).withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext)
+                    case None =>
                       InternalServerError
                   }
                 case _ =>
-                  handleNon2xx(response)
+                  InternalServerError
               }
+            case Left(response) =>
+              handleNon2xx(response)
           }
       }
     }

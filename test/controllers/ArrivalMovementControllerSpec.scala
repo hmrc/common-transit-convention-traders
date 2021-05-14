@@ -18,7 +18,7 @@ package controllers
 
 import akka.util.ByteString
 import com.kenshoo.play.metrics.Metrics
-import connectors.ArrivalConnector
+import connectors.{ArrivalConnector, ResponseHeaders}
 import controllers.actions.AuthAction
 import controllers.actions.FakeAuthAction
 import data.TestXml
@@ -46,13 +46,15 @@ import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.test.Helpers.headers
-import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
 import utils.CallOps._
 import utils.TestMetrics
-
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+
+import models.Box
+
 import scala.concurrent.Future
 
 class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
@@ -94,7 +96,12 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
   def fakeRequestArrivals[A](method: String, headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), uri: String = routes.ArrivalMovementController.createArrivalNotification().url, body: A) =
     FakeRequest(method = method, uri = uri, headers, body = body)
 
- "POST /movements/arrivals" - {
+  def responseHeaders(location: String) = ResponseHeaders(Map(LOCATION -> Seq(location)), Option.empty[Box])
+  val emptyHeaders                      = ResponseHeaders(Map.empty, Option.empty[Box])
+
+
+  "POST /movements/arrivals" - {
+
    val expectedJson = Json.parse(
      """
        |{
@@ -105,23 +112,18 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
        |  },
        |  "arrivalId": "123",
        |  "messageType": "IE007",
-       |  "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>",
-       |  "_embedded": {
-       |    "notifications": {
-       |      "requestId": "/customs/transits/movements/arrivals/123"
-       |    }
-       |  }
+       |  "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>"
        |}""".stripMargin)
 
    "must return Accepted when successful" in {
      when(mockArrivalConnector.post(any())(any(), any(), any()))
-       .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123"))) ))
+       .thenReturn(Future.successful(Right(responseHeaders("/transit-movements-trader-at-destination/movements/arrivals/123"))))
 
      val request = fakeRequestArrivals(method = "POST", body = CC007A)
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     contentAsString(result) mustEqual expectedJson.toString()
+     contentAsJson(result) mustBe expectedJson
      headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext)
    }
 
@@ -133,8 +135,9 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
    }
 
    "must return InternalServerError when unsuccessful" in {
+     val errorResponse = UpstreamErrorResponse("test error message", INTERNAL_SERVER_ERROR)
      when(mockArrivalConnector.post(any())(any(), any(), any()))
-       .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "")))
+       .thenReturn(Future.successful(Left(errorResponse)))
 
      val request = fakeRequestArrivals(method = "POST", body = CC007A)
      val result = route(app, request).value
@@ -144,7 +147,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
 
    "must return InternalServerError when no Location in downstream response header" in {
      when(mockArrivalConnector.post(any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Headers.create().toMap) ))
+       .thenReturn(Future.successful(Right(emptyHeaders)))
 
      val request = fakeRequestArrivals(method = "POST", body = CC007A)
      val result = route(app, request).value
@@ -154,7 +157,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
 
    "must return InternalServerError when invalid Location value in downstream response header" ignore {
      when(mockArrivalConnector.post(any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/<>"))) ))
+       .thenReturn(Future.successful(Right(responseHeaders("/transit-movements-trader-at-destination/movements/arrivals/<>"))))
 
      val request = fakeRequestArrivals(method = "POST", body = CC007A)
      val result = route(app, request).value
@@ -164,7 +167,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
 
    "must escape arrival ID in Location response header" in {
      when(mockArrivalConnector.post(any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123-@+*~-31@"))) ))
+       .thenReturn(Future.successful(Right(responseHeaders("/transit-movements-trader-at-destination/movements/arrivals/123-@+*~-31@"))))
 
      val request = fakeRequestArrivals(method = "POST", body = CC007A)
      val result = route(app, request).value
@@ -179,28 +182,23 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
          |  },
          |  "arrivalId": "123-@+*~-31@",
          |  "messageType": "IE007",
-         |  "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>",
-         |  "_embedded": {
-         |    "notifications": {
-         |      "requestId": "/customs/transits/movements/arrivals/123-@+*~-31@"
-         |    }
-         |  }
+         |  "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>"
          |}""".stripMargin)
 
      status(result) mustBe ACCEPTED
-     contentAsString(result) mustEqual expectedJson.toString()
+     contentAsJson(result) mustBe expectedJson
      headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123-@+*~-31@").urlWithContext)
    }
 
    "must exclude query string if present in downstream Location header" in {
      when(mockArrivalConnector.post(any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123?status=success"))) ))
+       .thenReturn(Future.successful(Right(responseHeaders("/transit-movements-trader-at-destination/movements/arrivals/123?status=success"))))
 
      val request = fakeRequestArrivals(method = "POST", body = CC007A)
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     contentAsString(result) mustEqual expectedJson.toString()
+     contentAsJson(result) mustBe expectedJson
      headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext)
    }
 
@@ -249,30 +247,26 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
        |  },
        |  "arrivalId": "123",
        |  "messageType": "IE007",
-       |  "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>",
-       |  "_embedded": {
-       |    "notifications": {
-       |      "requestId": "/customs/transits/movements/arrivals/123"
-       |    }
-       |  }
+       |  "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>"
        |}""".stripMargin)
 
    val request = fakeRequestArrivals(method = "PUT", uri = routes.ArrivalMovementController.resubmitArrivalNotification("123").url, body = CC007A)
 
    "must return Accepted when successful" in {
      when(mockArrivalConnector.put(any(), any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123"))) ))
+       .thenReturn(Future.successful(Right(responseHeaders("/transit-movements-trader-at-destination/movements/arrivals/123"))))
 
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     contentAsString(result) mustEqual expectedJson.toString()
+     contentAsJson(result) mustBe expectedJson
      headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext)
    }
 
    "must return InternalServerError when unsuccessful" in {
+     val errorResponse = UpstreamErrorResponse("test error message", INTERNAL_SERVER_ERROR)
      when(mockArrivalConnector.put(any(), any())(any(), any(), any()))
-       .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "")))
+       .thenReturn(Future.successful(Left(errorResponse)))
 
      val result = route(app, request).value
 
@@ -281,7 +275,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
 
    "must return InternalServerError when no Location in downstream response header" in {
      when(mockArrivalConnector.put(any(), any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Headers.create().toMap) ))
+       .thenReturn(Future.successful(Right(emptyHeaders)))
 
      val result = route(app, request).value
 
@@ -290,7 +284,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
 
    "must return InternalServerError when invalid Location value in downstream response header" ignore {
      when(mockArrivalConnector.put(any(), any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/<>"))) ))
+       .thenReturn(Future.successful(Right(responseHeaders("/transit-movements-trader-at-destination/movements/arrivals/<>"))))
 
      val result = route(app, request).value
 
@@ -299,7 +293,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
 
    "must escape arrival ID in Location response header" in {
      when(mockArrivalConnector.put(any(), any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123-@+*~-31@"))) ))
+       .thenReturn(Future.successful(Right(responseHeaders("/transit-movements-trader-at-destination/movements/arrivals/123-@+*~-31@"))))
 
      val result = route(app, request).value
 
@@ -313,27 +307,22 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
          |  },
          |  "arrivalId": "123-@+*~-31@",
          |  "messageType": "IE007",
-         |  "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>",
-         |  "_embedded": {
-         |    "notifications": {
-         |      "requestId": "/customs/transits/movements/arrivals/123-@+*~-31@"
-         |    }
-         |  }
+         |  "body": "<CC007A>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20200204</DatOfPreMES9>\n    <TimOfPreMES10>1302</TimOfPreMES10>\n    <IntConRefMES11>WE202002046</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB007A</MesTypMES20>\n    <HEAHEA>\n      <DocNumHEA5>99IT9876AB88901209</DocNumHEA5>\n      <CusSubPlaHEA66>EXAMPLE1</CusSubPlaHEA66>\n      <ArrNotPlaHEA60>NW16XE</ArrNotPlaHEA60>\n      <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>\n      <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>\n      <SimProFlaHEA132>0</SimProFlaHEA132>\n      <ArrNotDatHEA141>20200204</ArrNotDatHEA141>\n    </HEAHEA>\n    <TRADESTRD>\n      <NamTRD7>EXAMPLE2</NamTRD7>\n      <StrAndNumTRD22>Baker Street</StrAndNumTRD22>\n      <PosCodTRD23>NW16XE</PosCodTRD23>\n      <CitTRD24>London</CitTRD24>\n      <CouTRD25>GB</CouTRD25>\n      <NADLNGRD>EN</NADLNGRD>\n      <TINTRD59>EXAMPLE3</TINTRD59>\n    </TRADESTRD>\n    <CUSOFFPREOFFRES>\n      <RefNumRES1>GB000128</RefNumRES1>\n    </CUSOFFPREOFFRES>\n  </CC007A>"
          |}""".stripMargin)
 
      status(result) mustBe ACCEPTED
-     contentAsString(result) mustEqual expectedJson.toString()
+     contentAsJson(result) mustBe expectedJson
      headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123-@+*~-31@").urlWithContext)
    }
 
    "must exclude query string if present in downstream Location header" in {
      when(mockArrivalConnector.put(any(), any())(any(), any(), any()))
-       .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123?status=success"))) ))
+       .thenReturn(Future.successful(Right(responseHeaders("/transit-movements-trader-at-destination/movements/arrivals/123?status=success"))))
 
      val result = route(app, request).value
 
      status(result) mustBe ACCEPTED
-     contentAsString(result) mustEqual expectedJson.toString()
+     contentAsJson(result) mustBe expectedJson
      headers(result) must contain (LOCATION -> routes.ArrivalMovementController.getArrival("123").urlWithContext)
    }
 

@@ -16,6 +16,7 @@
 
 package models.response
 
+import models.{Box, BoxId}
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -37,10 +38,38 @@ class HateaosArrivalMovementPostResponseMessageSpec extends AnyFreeSpec with Mat
           |  },
           |  "arrivalId": "1",
           |  "messageType": "IE007",
+          |  "body": "<test>default</test>"
+          |}""".stripMargin)
+
+      val result = HateaosArrivalMovementPostResponseMessage(
+        "1",
+        "IE007",
+        <test>default</test>,
+        None
+      )
+
+      expectedJson mustEqual Json.toJson(result)
+    }
+
+    "must have valid message structure when a notification box is present" in {
+      val testBoxId    = BoxId("testBoxId")
+      val testBoxName  = "testBoxName"
+      val testBox      = Box(testBoxId, testBoxName)
+      val expectedJson = Json.parse(s"""
+          |{
+          |  "_links": {
+          |    "self": {
+          |      "href": "/customs/transits/movements/arrivals/1"
+          |    }
+          |  },
+          |  "arrivalId": "1",
+          |  "messageType": "IE007",
           |  "body": "<test>default</test>",
           |  "_embedded": {
           |    "notifications": {
-          |      "requestId": "/customs/transits/movements/arrivals/1"
+          |      "requestId":  "/customs/transits/movements/arrivals/1",
+          |      "boxId": "${testBoxId.value}",
+          |      "boxName": "$testBoxName"
           |    }
           |  }
           |}""".stripMargin)
@@ -48,10 +77,12 @@ class HateaosArrivalMovementPostResponseMessageSpec extends AnyFreeSpec with Mat
       val result = HateaosArrivalMovementPostResponseMessage(
         "1",
         "IE007",
-        <test>default</test>
+        <test>default</test>,
+        Some(testBox)
       )
 
       expectedJson mustEqual Json.toJson(result)
+
     }
   }
 }
