@@ -16,19 +16,54 @@
 
 package models.response
 
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
+import models.Box
+import models.BoxId
 
-class HateaosDeparturePostResponseMessageSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
+class HateaosDeparturePostResponseMessageSpec
+    extends AnyFreeSpec
+    with Matchers
+    with GuiceOneAppPerSuite
+    with OptionValues
+    with ScalaFutures
+    with MockitoSugar
+    with BeforeAndAfterEach {
   "HateaosDeparturePostResponseMessage" - {
     "must have valid message structure" in {
-      val expectedJson = Json.parse(
-        """
+      val expectedJson = Json.parse("""
+          |{
+          |  "_links": {
+          |    "self": {
+          |      "href": "/customs/transits/movements/departures/1"
+          |    }
+          |  },
+          |  "departureId": "1",
+          |  "messageType": "IE015",
+          |  "body": "<test>default</test>"
+          |}""".stripMargin)
+
+      val result = HateaosDeparturePostResponseMessage(
+        "1",
+        "IE015",
+        <test>default</test>,
+        Option.empty
+      )
+
+      expectedJson mustEqual Json.toJson(result)
+    }
+
+    "must have valid message structure when a notification box is present" in {
+      val testBoxId    = BoxId("testBoxId")
+      val testBoxName  = "testBoxName"
+      val testBox      = Box(testBoxId, testBoxName)
+      val expectedJson = Json.parse(s"""
           |{
           |  "_links": {
           |    "self": {
@@ -40,7 +75,9 @@ class HateaosDeparturePostResponseMessageSpec extends AnyFreeSpec with Matchers 
           |  "body": "<test>default</test>",
           |  "_embedded": {
           |    "notifications": {
-          |      "requestId":  "/customs/transits/movements/departures/1"
+          |      "requestId":  "/customs/transits/movements/departures/1",
+          |      "boxId": "${testBoxId.value}",
+          |      "boxName": "$testBoxName"
           |    }
           |  }
           |}""".stripMargin)
@@ -48,7 +85,8 @@ class HateaosDeparturePostResponseMessageSpec extends AnyFreeSpec with Matchers 
       val result = HateaosDeparturePostResponseMessage(
         "1",
         "IE015",
-        <test>default</test>
+        <test>default</test>,
+        Some(testBox)
       )
 
       expectedJson mustEqual Json.toJson(result)

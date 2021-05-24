@@ -20,56 +20,107 @@ import data.TestXml
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.http.{HeaderNames, MimeTypes}
+import play.api.http.HeaderNames
+import play.api.http.MimeTypes
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.logging.Authorization
 
-class BaseConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
+class BaseConnectorSpec
+    extends AnyFreeSpec
+    with Matchers
+    with GuiceOneAppPerSuite
+    with OptionValues
+    with ScalaFutures
+    with MockitoSugar
+    with BeforeAndAfterEach
+    with TestXml {
+
   class Harness extends BaseConnector {
-    def enforceAuth(extraHeaders: Seq[(String, String)])(implicit requestHeader: RequestHeader, headerCarrier: HeaderCarrier): HeaderCarrier = {
+
+    def enforceAuth(extraHeaders: Seq[(String, String)])(implicit requestHeader: RequestHeader, headerCarrier: HeaderCarrier): HeaderCarrier =
       super.enforceAuthHeaderCarrier(extraHeaders)
-    }
+
+    def addHeaders(extraHeaders: Seq[(String, String)])(implicit requestHeader: RequestHeader): Seq[(String, String)] = super.addAuthHeaders(extraHeaders)
   }
 
   "BaseConnector" - {
-    "enforceAuthHeaderCarrier must enforce auth" in {
-      val harness = new Harness()
 
-      implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest().withHeaders(HeaderNames.AUTHORIZATION -> "a5sesqerTyi135/")
+    "enforceAuthHeaderCarrier" - {
 
-      val result: HeaderCarrier = harness.enforceAuth(Seq.empty)
+      "enforceAuthHeaderCarrier must enforce auth" in {
+        val harness = new Harness()
 
-      result.headers must contain(HeaderNames.AUTHORIZATION -> "a5sesqerTyi135/")
-      result.authorization mustBe Some(Authorization("a5sesqerTyi135/"))
+        implicit val hc            = HeaderCarrier()
+        implicit val requestHeader = FakeRequest().withHeaders(HeaderNames.AUTHORIZATION -> "a5sesqerTyi135/")
+
+        val result: HeaderCarrier = harness.enforceAuth(Seq.empty)
+
+        result.headers must contain(HeaderNames.AUTHORIZATION -> "a5sesqerTyi135/")
+        result.authorization mustBe Some(Authorization("a5sesqerTyi135/"))
+      }
+
+      "enforceAuthHeaderCarrier must add empty auth header if no auth header supplied in request" in {
+        val harness = new Harness()
+
+        implicit val hc            = HeaderCarrier()
+        implicit val requestHeader = FakeRequest()
+
+        val result: HeaderCarrier = harness.enforceAuth(Seq.empty)
+
+        result.headers must contain(HeaderNames.AUTHORIZATION -> "")
+        result.authorization mustBe Some(Authorization(""))
+      }
+
+      "enforceAuthHeaderCarrier must contain extra headers if supplied" in {
+        val harness = new Harness()
+
+        implicit val hc            = HeaderCarrier()
+        implicit val requestHeader = FakeRequest()
+
+        val result: HeaderCarrier = harness.enforceAuth(Seq(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON))
+
+        result.headers must contain(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
+      }
     }
 
-    "enforceAuthHeaderCarrier must add empty auth header if no auth header supplied in request" in {
-      val harness = new Harness()
+    "addAuthHeaders" - {
 
-      implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+      "addAuthHeaders must enforce auth" in {
+        val harness = new Harness()
 
-      val result: HeaderCarrier = harness.enforceAuth(Seq.empty)
+        implicit val requestHeader = FakeRequest().withHeaders(HeaderNames.AUTHORIZATION -> "a5sesqerTyi135/")
 
-      result.headers must contain(HeaderNames.AUTHORIZATION -> "")
-      result.authorization mustBe Some(Authorization(""))
-    }
+        val result: Seq[(String, String)] = harness.addHeaders(Seq.empty)
 
-    "enforceAuthHeaderCarrier must contain extra headers if supplied" in {
-      val harness = new Harness()
+        result must contain(HeaderNames.AUTHORIZATION -> "a5sesqerTyi135/")
+      }
 
-      implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+      "addAuthHeaders must add empty auth header if no auth header supplied in request" in {
+        val harness = new Harness()
 
-      val result: HeaderCarrier = harness.enforceAuth(Seq(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON))
+        implicit val requestHeader = FakeRequest()
 
-      result.headers must contain(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
+        val result: Seq[(String, String)] = harness.addHeaders(Seq.empty)
+
+        result must contain(HeaderNames.AUTHORIZATION -> "")
+      }
+
+      "addAuthHeaders must contain extra headers if supplied" in {
+        val harness = new Harness()
+
+        implicit val requestHeader = FakeRequest()
+
+        val result: Seq[(String, String)] = harness.addHeaders(Seq(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON))
+
+        result must contain(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
+      }
+
     }
   }
 }

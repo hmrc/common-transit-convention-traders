@@ -27,7 +27,8 @@ import controllers.actions.AuthAction
 import controllers.actions.EnsureGuaranteeAction
 import controllers.actions.ValidateAcceptJsonHeaderAction
 import controllers.actions.ValidateDepartureDeclarationAction
-import metrics.{HasActionMetrics, MetricsKeys}
+import metrics.HasActionMetrics
+import metrics.MetricsKeys
 import models.MessageType
 import models.response.HateaosDeparturePostResponseMessage
 import models.response.HateaosResponseDeparture
@@ -69,34 +70,32 @@ class DeparturesController @Inject() (
       (authAction andThen validateDepartureDeclarationAction andThen ensureGuaranteeAction).async(parse.xml) {
         implicit request =>
           departuresConnector.post(request.newXml.toString).map {
-            response =>
-              response.status match {
-                case status if is2xx(status) =>
-                  response.header(LOCATION) match {
-                    case Some(locationValue) =>
-                      if (request.guaranteeAdded) {
-                        auditService.auditEvent(AuditType.TenThousandEuroGuaranteeAdded, request.newXml)
-                      }
-                      MessageType.getMessageType(request.body) match {
-                        case Some(messageType: MessageType) =>
-                          val departureId = Utils.lastFragment(locationValue)
-                          Accepted(
-                            Json.toJson(
-                              HateaosDeparturePostResponseMessage(
-                                departureId,
-                                messageType.code,
-                                request.body
-                              )
-                            )
-                          ).withHeaders(LOCATION -> routes.DeparturesController.getDeparture(departureId).urlWithContext)
-                        case None =>
-                          InternalServerError
-                      }
-                    case _ =>
+            case Right(response) =>
+              response.header(LOCATION) match {
+                case Some(locationValue) =>
+                  if (request.guaranteeAdded) {
+                    auditService.auditEvent(AuditType.TenThousandEuroGuaranteeAdded, request.newXml)
+                  }
+                  MessageType.getMessageType(request.body) match {
+                    case Some(messageType: MessageType) =>
+                      val departureId = Utils.lastFragment(locationValue)
+                      Accepted(
+                        Json.toJson(
+                          HateaosDeparturePostResponseMessage(
+                            departureId,
+                            messageType.code,
+                            request.body,
+                            response.responseData
+                          )
+                        )
+                      ).withHeaders(LOCATION -> routes.DeparturesController.getDeparture(departureId).urlWithContext)
+                    case None =>
                       InternalServerError
                   }
-                case _ => handleNon2xx(response)
+                case _ =>
+                  InternalServerError
               }
+            case Left(response) => handleNon2xx(response)
           }
       }
     }
