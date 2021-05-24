@@ -16,9 +16,12 @@
 
 package connectors
 
+import cats.syntax.all._
 import uk.gov.hmrc.http.HttpReads
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.HttpResponse
+import play.api.libs.json.Reads
+import uk.gov.hmrc.http.UpstreamErrorResponse
 
 final case class ResponseHeaders[A](headers: Map[String, Seq[String]], responseData: A) {
 
@@ -27,12 +30,17 @@ final case class ResponseHeaders[A](headers: Map[String, Seq[String]], responseD
 }
 
 object ResponseHeaders {
-
-  implicit def responseHeadersHttpReads[A: HttpReads]: HttpReads[ResponseHeaders[A]] =
+  implicit def readOrError[A: Reads: Manifest]: HttpReads[Either[UpstreamErrorResponse, ResponseHeaders[A]]] =
     HttpReads[HttpResponse].flatMap {
       response =>
-        HttpReads[A].map(
-          a => ResponseHeaders(response.headers, a)
-        )
+        HttpReads[Either[UpstreamErrorResponse, Unit]].flatMap {
+          case err @ Left(_) =>
+            HttpReads.pure(err.rightCast[ResponseHeaders[A]])
+          case Right(_) =>
+            readFromJson[A].map {
+              a =>
+                Right(ResponseHeaders(response.headers, a))
+            }
+        }
     }
 }

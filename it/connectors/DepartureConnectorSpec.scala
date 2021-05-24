@@ -44,7 +44,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
   "post" - {
 
-    "must return ACCEPTED when post is successful" in {
+    "must return ACCEPTED when post is successful and subscribed for notifications" in {
       val connector = app.injector.instanceOf[DeparturesConnector]
 
       val testBoxId   = BoxId("testBoxId")
@@ -73,6 +73,27 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
       val result = connector.post("<document></document>").futureValue
 
       result.right.get.responseData mustEqual Option(testBox)
+    }
+
+    "must return ACCEPTED when post is successful and not subscribed for notifications" in {
+      val connector = app.injector.instanceOf[DeparturesConnector]
+
+      server.stubFor(
+        post(
+          urlEqualTo("/transits-movements-trader-at-departure/movements/departures")
+        ).willReturn(
+          aResponse()
+            .withStatus(ACCEPTED)
+            .withBody(Json.stringify(Json.toJson(Option.empty[Box])))
+        )
+      )
+
+      implicit val hc            = HeaderCarrier()
+      implicit val requestHeader = FakeRequest()
+
+      val result = connector.post("<document></document>").futureValue
+
+      result.right.get.responseData mustEqual Option.empty[Box]
     }
 
     "must return INTERNAL_SERVER_ERROR when post" - {
