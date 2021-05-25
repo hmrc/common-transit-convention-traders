@@ -17,6 +17,7 @@
 package models.response
 
 import controllers.routes
+import models.Box
 import play.api.libs.json.{JsObject, Json}
 import utils.CallOps._
 
@@ -24,8 +25,23 @@ import scala.xml.NodeSeq
 
 object HateaosArrivalMovementPostResponseMessage {
 
-  def apply(arrivalId: String, messageType: String, message: NodeSeq): JsObject = {
+  def apply(arrivalId: String, messageType: String, message: NodeSeq, notificationsBox: Option[Box]): JsObject = {
     val arrivalUrl = routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext
+
+    val embedded = notificationsBox
+      .map {
+        box =>
+          Json.obj(
+            "_embedded" -> Json.obj(
+              "notifications" -> Json.obj(
+                "requestId" -> arrivalUrl,
+                "boxId"     -> box.boxId.value,
+                "boxName"   -> box.boxName
+              )
+            )
+          )
+      }
+      .getOrElse(Json.obj())
 
     Json.obj(
       "_links" -> Json.obj(
@@ -33,10 +49,8 @@ object HateaosArrivalMovementPostResponseMessage {
       ),
       "arrivalId" -> arrivalId,
       "messageType" -> messageType,
-      "body" -> message.toString,
-      "_embedded" -> Json.obj(
-        "notifications" -> Json.obj("requestId" -> arrivalUrl)
-      )
-    )
+      "body" -> message.toString
+    ) ++ embedded
+
   }
 }
