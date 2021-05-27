@@ -25,9 +25,9 @@ import metrics.HasActionMetrics
 import metrics.MetricsKeys
 import models.MessageType
 import models.domain.Arrivals
-import models.response.HateaosArrivalMovementPostResponseMessage
-import models.response.HateaosResponseArrival
-import models.response.HateaosResponseArrivals
+import models.response.HateoasArrivalMovementPostResponseMessage
+import models.response.HateoasResponseArrival
+import models.response.HateoasResponseArrivals
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
@@ -73,7 +73,7 @@ class ArrivalMovementController @Inject() (
                       val arrivalId = Utils.lastFragment(locationValue)
                       Accepted(
                         Json.toJson(
-                          HateaosArrivalMovementPostResponseMessage(
+                          HateoasArrivalMovementPostResponseMessage(
                             arrivalId,
                             messageType.code,
                             request.body,
@@ -104,7 +104,7 @@ class ArrivalMovementController @Inject() (
                       val arrivalId = Utils.lastFragment(locationValue)
                       Accepted(
                         Json.toJson(
-                          HateaosArrivalMovementPostResponseMessage(
+                          HateoasArrivalMovementPostResponseMessage(
                             arrivalId,
                             messageType.code,
                             request.body,
@@ -130,7 +130,7 @@ class ArrivalMovementController @Inject() (
         implicit request =>
           arrivalConnector.get(arrivalId).map {
             case Right(arrival) =>
-              Ok(Json.toJson(HateaosResponseArrival(arrival)))
+              Ok(Json.toJson(HateoasResponseArrival(arrival)))
             case Left(invalidResponse) =>
               handleNon2xx(invalidResponse)
           }
@@ -144,7 +144,7 @@ class ArrivalMovementController @Inject() (
           arrivalConnector.getForEori(updatedSince).map {
             case Right(arrivals: Arrivals) =>
               arrivalsCount.update(arrivals.arrivals.length)
-              Ok(Json.toJson(HateaosResponseArrivals(arrivals)))
+              Ok(Json.toJson(HateoasResponseArrivals(arrivals)))
             case Left(invalidResponse) =>
               handleNon2xx(invalidResponse)
           }

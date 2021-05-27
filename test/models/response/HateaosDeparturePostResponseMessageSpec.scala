@@ -27,7 +27,7 @@ import play.api.libs.json.Json
 import models.Box
 import models.BoxId
 
-class HateaosDeparturePostResponseMessageSpec
+class HateoasDeparturePostResponseMessageSpec
     extends AnyFreeSpec
     with Matchers
     with GuiceOneAppPerSuite
@@ -35,7 +35,7 @@ class HateaosDeparturePostResponseMessageSpec
     with ScalaFutures
     with MockitoSugar
     with BeforeAndAfterEach {
-  "HateaosDeparturePostResponseMessage" - {
+  "HateoasDeparturePostResponseMessage" - {
     "must have valid message structure" in {
       val expectedJson = Json.parse("""
           |{
@@ -49,7 +49,7 @@ class HateaosDeparturePostResponseMessageSpec
           |  "body": "<test>default</test>"
           |}""".stripMargin)
 
-      val result = HateaosDeparturePostResponseMessage(
+      val result = HateoasDeparturePostResponseMessage(
         "1",
         "IE015",
         <test>default</test>,
@@ -82,7 +82,7 @@ class HateaosDeparturePostResponseMessageSpec
           |  }
           |}""".stripMargin)
 
-      val result = HateaosDeparturePostResponseMessage(
+      val result = HateoasDeparturePostResponseMessage(
         "1",
         "IE015",
         <test>default</test>,

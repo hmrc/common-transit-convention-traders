@@ -20,7 +20,7 @@ import java.time.LocalDateTime
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, urlEqualTo}
 import controllers.routes
 import models.domain.{Departure, DepartureWithMessages, MovementMessage}
-import models.response.HateaosResponseDeparture
+import models.response.HateoasResponseDeparture
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -59,7 +59,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Wirem
       val connector = app.injector.instanceOf[DepartureMessageConnector]
       val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now)
 
-      val response = HateaosResponseDeparture(departure)
+      val response = HateoasResponseDeparture(departure)
       server.stubFor(
         get(
           urlEqualTo("/transits-movements-trader-at-departure/movements/departures/1/messages/1")
@@ -174,7 +174,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Wirem
       val connector = app.injector.instanceOf[DepartureMessageConnector]
       val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now)
 
-      val response = HateaosResponseDeparture(departure)
+      val response = HateoasResponseDeparture(departure)
       server.stubFor(
         get(
           urlEqualTo("/transits-movements-trader-at-departure/movements/departures/1/messages")

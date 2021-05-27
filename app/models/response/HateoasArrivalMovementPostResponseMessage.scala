@@ -23,7 +23,7 @@ import utils.CallOps._
 
 import scala.xml.NodeSeq
 
-object HateaosArrivalMovementPostResponseMessage {
+object HateoasArrivalMovementPostResponseMessage {
 
   def apply(arrivalId: String, messageType: String, message: NodeSeq, notificationsBox: Option[Box]): JsObject = {
     val arrivalUrl = routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext
