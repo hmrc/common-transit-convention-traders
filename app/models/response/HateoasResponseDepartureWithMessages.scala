@@ -22,7 +22,7 @@ import play.api.libs.json.{JsObject, Json}
 import utils.CallOps._
 import utils.Utils
 
-object HateaosResponseDepartureWithMessages {
+object HateoasResponseDepartureWithMessages {
 
   def apply(departureWithMessages: DepartureWithMessages): JsObject = {
     val departureId = departureWithMessages.departureId.toString
@@ -35,9 +35,9 @@ object HateaosResponseDepartureWithMessages {
       "_embedded" -> Json.obj(
         "messages" -> departureWithMessages.messages.map {
           x =>
-            HateaosDepartureResponseMessage(departureId, Utils.lastFragment(x.location), x)
+            HateoasDepartureResponseMessage(departureId, Utils.lastFragment(x.location), x)
         },
-        "departure" -> HateaosResponseDeparture(
+        "departure" -> HateoasResponseDeparture(
           departureId,
           departureWithMessages.created.toString,
           departureWithMessages.updated.toString,

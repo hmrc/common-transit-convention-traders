@@ -17,30 +17,26 @@
 package models.response
 
 import controllers.routes
-import models.domain.Arrival
+import models.domain.MovementMessage
 import play.api.libs.json.{JsObject, Json}
 import utils.CallOps._
 
-object HateaosResponseArrival {
+object HateoasArrivalResponseMessage {
 
-  def apply(arrivalId: String, created: String, updated: String, movementReferenceNumber: String, status: String): JsObject = {
-    val arrivalUrl = routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext
-    val messagesUrl = routes.ArrivalMessagesController.getArrivalMessages(arrivalId).urlWithContext
+  def apply(arrivalId: String, messageId: String, m: MovementMessage): JsObject = {
+    val arrivalUrl = routes.ArrivalMessagesController.getArrivalMessage(arrivalId, messageId).urlWithContext
+    val messageUrl = routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext
 
     Json.obj(
-      "id" -> arrivalId,
-      "created" -> created,
-      "updated" -> updated,
-      "movementReferenceNumber" -> movementReferenceNumber,
-      "status" -> status,
       "_links" -> Json.obj(
         "self"    -> Json.obj("href" -> arrivalUrl),
-        "messages"    -> Json.obj("href" -> messagesUrl)
-      )
+        "arrival"    -> Json.obj("href" -> messageUrl)
+      ),
+      "arrivalId" -> arrivalId,
+      "messageId" -> messageId,
+      "received" -> m.dateTime,
+      "messageType" -> m.messageType,
+      "body" -> m.message.toString
     )
-  }
-
-  def apply(arrival: Arrival): JsObject = {
-    apply(arrival.arrivalId.toString, arrival.created.toString, arrival.updated.toString, arrival.movementReferenceNumber, arrival.status)
   }
 }

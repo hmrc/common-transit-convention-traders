@@ -28,9 +28,9 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 
-class HateaosResponseDepartureWithMessagesSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
+class HateoasResponseDepartureWithMessagesSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
 
-  "HateaosResponseDepartureWithMessages" - {
+  "HateoasResponseDepartureWithMessages" - {
     "must generate correct message structure for messages" in {
       val departureWithMessages = DepartureWithMessages(3,
         "loc",
@@ -90,7 +90,7 @@ class HateaosResponseDepartureWithMessagesSpec extends AnyFreeSpec with Matchers
           |  }
           |}""".stripMargin)
 
-      val result = HateaosResponseDepartureWithMessages(departureWithMessages)
+      val result = HateoasResponseDepartureWithMessages(departureWithMessages)
 
       expectedJson mustEqual Json.toJson(result)
     }
@@ -133,7 +133,7 @@ class HateaosResponseDepartureWithMessagesSpec extends AnyFreeSpec with Matchers
           |  }
           |}""".stripMargin)
 
-      val result = HateaosResponseDepartureWithMessages(departureWithMessages)
+      val result = HateoasResponseDepartureWithMessages(departureWithMessages)
 
       expectedJson mustEqual Json.toJson(result)
     }

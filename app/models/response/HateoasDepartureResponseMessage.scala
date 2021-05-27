@@ -17,24 +17,26 @@
 package models.response
 
 import controllers.routes
-
-import models.domain.Departures
+import models.domain.MovementMessage
 import play.api.libs.json.{JsObject, Json}
-
 import utils.CallOps._
 
-object HateaosResponseDepartures {
+object HateoasDepartureResponseMessage {
 
-  def apply(departures: Departures): JsObject = {
-    val departureUrl = routes.DeparturesController.getDeparturesForEori().urlWithContext
+  def apply(departureId: String, messageId: String, m: MovementMessage): JsObject = {
+    val departureUrl = routes.DepartureMessagesController.getDepartureMessage(departureId, messageId).urlWithContext
+    val messageUrl = routes.DeparturesController.getDeparture(departureId).urlWithContext
 
     Json.obj(
       "_links" -> Json.obj(
-        "self"    -> Json.obj("href" -> departureUrl)
+        "self"    -> Json.obj("href" -> departureUrl),
+        "departure"    -> Json.obj("href" -> messageUrl)
       ),
-      "_embedded" -> Json.obj(
-        "departures"    -> departures.departures.map { x => HateaosResponseDeparture(x)}
-      )
+      "departureId" -> departureId,
+      "messageId" -> messageId,
+      "received" -> m.dateTime,
+      "messageType" -> m.messageType,
+      "body" -> m.message.toString
     )
   }
 }

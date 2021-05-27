@@ -22,8 +22,8 @@ import models.Box
 import models.BoxId
 import models.domain.Departure
 import models.domain.Departures
-import models.response.HateaosResponseDeparture
-import models.response.HateaosResponseDepartures
+import models.response.HateoasResponseDeparture
+import models.response.HateoasResponseDepartures
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -175,7 +175,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
         LocalDateTime.now
       )
 
-      val response = HateaosResponseDeparture(departure)
+      val response = HateoasResponseDeparture(departure)
 
       server.stubFor(
         get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/1"))
@@ -302,7 +302,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
         )
       )
 
-      val response = HateaosResponseDepartures(departures)
+      val response = HateoasResponseDepartures(departures)
 
       server.stubFor(
         get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures"))

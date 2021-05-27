@@ -24,8 +24,8 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 
-class HateaosArrivalMessagesPostResponseMessageSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
-  "HateaosArrivalMessagesPostResponseMessage" - {
+class HateoasArrivalMessagesPostResponseMessageSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
+  "HateoasArrivalMessagesPostResponseMessage" - {
     "must have valid message structure" in {
       val expectedJson = Json.parse(
         """
@@ -50,7 +50,7 @@ class HateaosArrivalMessagesPostResponseMessageSpec extends AnyFreeSpec with Mat
           |}
           |""".stripMargin)
 
-      val result = HateaosArrivalMessagesPostResponseMessage(
+      val result = HateoasArrivalMessagesPostResponseMessage(
         "1",
         "2",
         "IE044",

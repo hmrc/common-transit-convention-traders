@@ -30,9 +30,9 @@ import controllers.actions.ValidateDepartureDeclarationAction
 import metrics.HasActionMetrics
 import metrics.MetricsKeys
 import models.MessageType
-import models.response.HateaosDeparturePostResponseMessage
-import models.response.HateaosResponseDeparture
-import models.response.HateaosResponseDepartures
+import models.response.HateoasDeparturePostResponseMessage
+import models.response.HateoasResponseDeparture
+import models.response.HateoasResponseDepartures
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
@@ -81,7 +81,7 @@ class DeparturesController @Inject() (
                       val departureId = Utils.lastFragment(locationValue)
                       Accepted(
                         Json.toJson(
-                          HateaosDeparturePostResponseMessage(
+                          HateoasDeparturePostResponseMessage(
                             departureId,
                             messageType.code,
                             request.body,
@@ -106,7 +106,7 @@ class DeparturesController @Inject() (
         implicit request =>
           departuresConnector.get(departureId).map {
             case Right(departure) =>
-              Ok(Json.toJson(HateaosResponseDeparture(departure)))
+              Ok(Json.toJson(HateoasResponseDeparture(departure)))
             case Left(invalidResponse) =>
               handleNon2xx(invalidResponse)
           }
@@ -120,7 +120,7 @@ class DeparturesController @Inject() (
           departuresConnector.getForEori(updatedSince).map {
             case Right(departures) =>
               departuresCount.update(departures.departures.length)
-              Ok(Json.toJson(HateaosResponseDepartures(departures)))
+              Ok(Json.toJson(HateoasResponseDepartures(departures)))
             case Left(invalidResponse) =>
               handleNon2xx(invalidResponse)
           }
