@@ -42,14 +42,14 @@ class ArrivalConnector @Inject() (http: HttpClient, appConfig: AppConfig, val me
     withMetricsTimerAsync(Post) {
       _ =>
       val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute)
-      http.POSTString[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]](url.toString, message, requestHeaders)
+      http.POSTString[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]](url.toString, message, requestHeaders(requestHeader))
     }
 
   def put(message: String, arrivalId: String)(implicit requestHeader: RequestHeader, headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]] =
     withMetricsTimerAsync(Put) {
       _ =>
       val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathPart(arrivalId)
-      http.PUTString[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]](url.toString, message, requestHeaders)
+      http.PUTString[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]](url.toString, message, requestHeaders(requestHeader))
     }
 
   def get(arrivalId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] =
