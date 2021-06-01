@@ -22,4 +22,6 @@ object Constants {
   val AcceptHeaderMissing = "The accept header is missing or invalid"
 
   val Context = "/customs/transits"
+
+  val ClientIdHeader = "X-Client-Id"
 }

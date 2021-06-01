@@ -55,7 +55,7 @@ class ArrivalMessageConnector @Inject() (http: HttpClient, appConfig: AppConfig,
   def post(message: String, arrivalId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     withMetricsTimerResponse(PostMessage) {
       val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathParts(arrivalId, "messages")
-      http.POSTString(url.toString, message, requestHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
+      http.POSTString(url.toString, message, requestHeaders(requestHeader))(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders(requestHeader)), ec)
     }
 
   def getMessages(
