@@ -153,7 +153,9 @@ class DeparturesControllerSpec
       |          }
       |        }
       |      }
-      |    ]
+      |    ],
+      |    "retrievedDepartures": 3,
+      |    "totalDepartures": 3
       |  }
       |}""".stripMargin)
 
@@ -423,7 +425,7 @@ class DeparturesControllerSpec
 
     "return 200 with json body of a sequence of departures" in {
       when(mockDepartureConnector.getForEori(any())(any(), any(), any()))
-        .thenReturn(Future.successful(Right(Departures(Seq(sourceDeparture, sourceDeparture, sourceDeparture)))))
+        .thenReturn(Future.successful(Right(Departures(Seq(sourceDeparture, sourceDeparture, sourceDeparture), 3, 3))))
 
       val request = FakeRequest(
         "GET",
@@ -439,7 +441,7 @@ class DeparturesControllerSpec
 
     "return 200 with empty list if that is provided" in {
       when(mockDepartureConnector.getForEori(any())(any(), any(), any()))
-        .thenReturn(Future.successful(Right(Departures(Nil))))
+        .thenReturn(Future.successful(Right(Departures(Nil, 0, 0))))
 
       val request = FakeRequest(
         "GET",
@@ -457,7 +459,9 @@ class DeparturesControllerSpec
           |    }
           |  },
           |  "_embedded": {
-          |    "departures": []
+          |    "departures": [],
+          |    "retrievedDepartures": 0,
+          |    "totalDepartures": 0
           |  }
           |}""".stripMargin)
 
@@ -470,7 +474,7 @@ class DeparturesControllerSpec
       val dateTime  = Some(OffsetDateTime.of(2021, 6, 23, 12, 1, 24, 0, ZoneOffset.UTC))
 
       when(mockDepartureConnector.getForEori(argCaptor.capture())(any(), any(), any()))
-        .thenReturn(Future.successful(Right(Departures(Nil))))
+        .thenReturn(Future.successful(Right(Departures(Nil, 0, 0))))
 
       val request = FakeRequest(
         "GET",

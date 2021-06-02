@@ -17,10 +17,9 @@
 package models.response
 
 import controllers.routes
-
 import models.domain.Departures
-import play.api.libs.json.{JsObject, Json}
-
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 import utils.CallOps._
 
 object HateoasResponseDepartures {
@@ -33,7 +32,9 @@ object HateoasResponseDepartures {
         "self"    -> Json.obj("href" -> departureUrl)
       ),
       "_embedded" -> Json.obj(
-        "departures"    -> departures.departures.map { x => HateoasResponseDeparture(x)}
+        "departures"    -> departures.departures.map { x => HateoasResponseDeparture(x) },
+        "retrievedDepartures" -> departures.retrievedDepartures,
+        "totalDepartures" -> departures.totalDepartures
       )
     )
   }

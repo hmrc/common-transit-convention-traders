@@ -397,7 +397,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
 
    "return 200 with json body of a sequence of arrivals" in {
      when(mockArrivalConnector.getForEori(any())(any(), any(), any()))
-       .thenReturn(Future.successful(Right(Arrivals(Seq(sourceArrival, sourceArrival, sourceArrival)))))
+       .thenReturn(Future.successful(Right(Arrivals(Seq(sourceArrival, sourceArrival, sourceArrival), 3, 3))))
 
      val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori(None).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value
@@ -457,7 +457,9 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
          |          }
          |        }
          |      }
-         |    ]
+         |    ],
+         |    "retrievedArrivals": 3,
+         |    "totalArrivals": 3
          |  }
          |}""".stripMargin)
 
@@ -467,7 +469,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
 
    "return 200 with empty list if that is provided" in {
      when(mockArrivalConnector.getForEori(any())(any(), any(), any()))
-       .thenReturn(Future.successful(Right(Arrivals(Nil))))
+       .thenReturn(Future.successful(Right(Arrivals(Nil, 0, 0))))
 
      val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori(None).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value
@@ -481,7 +483,9 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
          |    }
          |  },
          |  "_embedded": {
-         |    "arrivals": []
+         |    "arrivals": [],
+         |    "retrievedArrivals": 0,
+         |    "totalArrivals": 0
          |  }
          |}""".stripMargin)
 
@@ -494,7 +498,7 @@ class ArrivalMovementControllerSpec extends AnyFreeSpec with Matchers with Guice
     val dateTime = Some(OffsetDateTime.of(2021, 6, 23, 12, 1, 24, 0, ZoneOffset.UTC))
 
     when(mockArrivalConnector.getForEori(argCaptor.capture())(any(), any(), any()))
-      .thenReturn(Future.successful(Right(Arrivals(Nil))))
+      .thenReturn(Future.successful(Right(Arrivals(Nil, 0, 0))))
 
      val request = FakeRequest("GET", routes.ArrivalMovementController.getArrivalsForEori(dateTime).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
      val result = route(app, request).value
