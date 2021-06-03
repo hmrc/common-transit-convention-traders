@@ -17,28 +17,33 @@
 package models.response
 
 import controllers.routes
+import models.domain.ArrivalWithMessages
 import play.api.libs.json.{JsObject, Json}
 import utils.CallOps._
+import utils.Utils
 
-import scala.xml.NodeSeq
+object HateoasResponseArrivalWithMessages {
 
-object HateaosArrivalMessagesPostResponseMessage {
-
-  def apply(arrivalId: String, messageId: String, messageType: String, message: NodeSeq): JsObject = {
-    val messageUrl = routes.ArrivalMessagesController.getArrivalMessage(arrivalId, messageId).urlWithContext
-    val arrivalUrl = routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext
+  def apply(arrivalWithMessages: ArrivalWithMessages): JsObject = {
+    val arrivalId = arrivalWithMessages.arrivalId.toString
+    val messagesUrl = routes.ArrivalMessagesController.getArrivalMessages(arrivalId).urlWithContext
 
     Json.obj(
       "_links" -> Json.obj(
-        "self"    -> Json.obj("href" -> messageUrl),
-        "arrival"    -> Json.obj("href" -> arrivalUrl)
+        "self" -> Json.obj("href" -> messagesUrl)
       ),
-      "arrivalId" -> arrivalId,
-      "messageId" -> messageId,
-      "messageType" -> messageType,
-      "body" -> message.toString,
       "_embedded" -> Json.obj(
-        "notifications" -> Json.obj("requestId" -> arrivalUrl)
+        "messages" -> arrivalWithMessages.messages.map {
+          x =>
+            HateoasArrivalResponseMessage(arrivalId, Utils.lastFragment(x.location), x)
+        },
+        "arrival" -> HateoasResponseArrival(
+          arrivalId,
+          arrivalWithMessages.created.toString,
+          arrivalWithMessages.updated.toString,
+          arrivalWithMessages.movementReferenceNumber,
+          arrivalWithMessages.status
+        )
       )
     )
   }

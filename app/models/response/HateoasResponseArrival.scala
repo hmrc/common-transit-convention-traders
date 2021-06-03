@@ -17,26 +17,30 @@
 package models.response
 
 import controllers.routes
+import models.domain.Arrival
 import play.api.libs.json.{JsObject, Json}
 import utils.CallOps._
 
-import scala.xml.NodeSeq
+object HateoasResponseArrival {
 
-object HateaosArrivalMovementPostResponseMessage {
-
-  def apply(arrivalId: String, messageType: String, message: NodeSeq): JsObject = {
+  def apply(arrivalId: String, created: String, updated: String, movementReferenceNumber: String, status: String): JsObject = {
     val arrivalUrl = routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext
+    val messagesUrl = routes.ArrivalMessagesController.getArrivalMessages(arrivalId).urlWithContext
 
     Json.obj(
+      "id" -> arrivalId,
+      "created" -> created,
+      "updated" -> updated,
+      "movementReferenceNumber" -> movementReferenceNumber,
+      "status" -> status,
       "_links" -> Json.obj(
-        "self"    -> Json.obj("href" -> arrivalUrl)
-      ),
-      "arrivalId" -> arrivalId,
-      "messageType" -> messageType,
-      "body" -> message.toString,
-      "_embedded" -> Json.obj(
-        "notifications" -> Json.obj("requestId" -> arrivalUrl)
+        "self"    -> Json.obj("href" -> arrivalUrl),
+        "messages"    -> Json.obj("href" -> messagesUrl)
       )
     )
+  }
+
+  def apply(arrival: Arrival): JsObject = {
+    apply(arrival.arrivalId.toString, arrival.created.toString, arrival.updated.toString, arrival.movementReferenceNumber, arrival.status)
   }
 }

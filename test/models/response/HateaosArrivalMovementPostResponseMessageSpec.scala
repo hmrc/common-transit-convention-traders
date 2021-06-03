@@ -16,6 +16,7 @@
 
 package models.response
 
+import models.{Box, BoxId}
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -24,8 +25,8 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 
-class HateaosArrivalMovementPostResponseMessageSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
-  "HateaosArrivalMovementPostResponseMessage" - {
+class HateoasArrivalMovementPostResponseMessageSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
+  "HateoasArrivalMovementPostResponseMessage" - {
     "must have valid message structure" in {
       val expectedJson = Json.parse(
         """
@@ -37,21 +38,51 @@ class HateaosArrivalMovementPostResponseMessageSpec extends AnyFreeSpec with Mat
           |  },
           |  "arrivalId": "1",
           |  "messageType": "IE007",
+          |  "body": "<test>default</test>"
+          |}""".stripMargin)
+
+      val result = HateoasArrivalMovementPostResponseMessage(
+        "1",
+        "IE007",
+        <test>default</test>,
+        None
+      )
+
+      expectedJson mustEqual Json.toJson(result)
+    }
+
+    "must have valid message structure when a notification box is present" in {
+      val testBoxId    = BoxId("testBoxId")
+      val testBoxName  = "testBoxName"
+      val testBox      = Box(testBoxId, testBoxName)
+      val expectedJson = Json.parse(s"""
+          |{
+          |  "_links": {
+          |    "self": {
+          |      "href": "/customs/transits/movements/arrivals/1"
+          |    }
+          |  },
+          |  "arrivalId": "1",
+          |  "messageType": "IE007",
           |  "body": "<test>default</test>",
           |  "_embedded": {
           |    "notifications": {
-          |      "requestId": "/customs/transits/movements/arrivals/1"
+          |      "requestId":  "/customs/transits/movements/arrivals/1",
+          |      "boxId": "${testBoxId.value}",
+          |      "boxName": "$testBoxName"
           |    }
           |  }
           |}""".stripMargin)
 
-      val result = HateaosArrivalMovementPostResponseMessage(
+      val result = HateoasArrivalMovementPostResponseMessage(
         "1",
         "IE007",
-        <test>default</test>
+        <test>default</test>,
+        Some(testBox)
       )
 
       expectedJson mustEqual Json.toJson(result)
+
     }
   }
 }

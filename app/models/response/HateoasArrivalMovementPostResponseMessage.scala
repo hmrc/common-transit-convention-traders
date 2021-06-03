@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-package models
-package response
+package models.response
 
 import controllers.routes
-import play.api.libs.json.JsObject
-import play.api.libs.json.Json
+import models.Box
+import play.api.libs.json.{JsObject, Json}
 import utils.CallOps._
 
 import scala.xml.NodeSeq
 
-object HateaosDeparturePostResponseMessage {
+object HateoasArrivalMovementPostResponseMessage {
 
-  def apply(departureId: String, messageType: String, messageBody: NodeSeq, notificationsBox: Option[Box]): JsObject = {
-    val departureUrl = routes.DeparturesController.getDeparture(departureId).urlWithContext
+  def apply(arrivalId: String, messageType: String, message: NodeSeq, notificationsBox: Option[Box]): JsObject = {
+    val arrivalUrl = routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext
+
     val embedded = notificationsBox
       .map {
         box =>
           Json.obj(
             "_embedded" -> Json.obj(
               "notifications" -> Json.obj(
-                "requestId" -> departureUrl,
+                "requestId" -> arrivalUrl,
                 "boxId"     -> box.boxId.value,
                 "boxName"   -> box.boxName
               )
@@ -45,11 +45,12 @@ object HateaosDeparturePostResponseMessage {
 
     Json.obj(
       "_links" -> Json.obj(
-        "self" -> Json.obj("href" -> departureUrl)
+        "self"    -> Json.obj("href" -> arrivalUrl)
       ),
-      "departureId" -> departureId,
+      "arrivalId" -> arrivalId,
       "messageType" -> messageType,
-      "body"        -> messageBody.toString
+      "body" -> message.toString
     ) ++ embedded
+
   }
 }

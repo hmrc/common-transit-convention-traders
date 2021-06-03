@@ -24,9 +24,9 @@ import controllers.actions.ValidateDepartureMessageAction
 import metrics.HasActionMetrics
 import metrics.MetricsKeys
 import models.MessageType
-import models.response.HateaosDepartureMessagesPostResponseMessage
-import models.response.HateaosDepartureResponseMessage
-import models.response.HateaosResponseDepartureWithMessages
+import models.response.HateoasDepartureMessagesPostResponseMessage
+import models.response.HateoasDepartureResponseMessage
+import models.response.HateoasResponseDepartureWithMessages
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
@@ -74,7 +74,7 @@ class DepartureMessagesController @Inject() (
                           val messageId = Utils.lastFragment(locationValue)
                           Accepted(
                             Json.toJson(
-                              HateaosDepartureMessagesPostResponseMessage(
+                              HateoasDepartureMessagesPostResponseMessage(
                                 departureId,
                                 messageId,
                                 messageType.code,
@@ -101,7 +101,7 @@ class DepartureMessagesController @Inject() (
           messageConnector.getMessages(departureId, receivedSince).map {
             case Right(d) =>
               messagesCount.update(d.messages.length)
-              Ok(Json.toJson(HateaosResponseDepartureWithMessages(d)))
+              Ok(Json.toJson(HateoasResponseDepartureWithMessages(d)))
             case Left(response) =>
               handleNon2xx(response)
           }
@@ -114,7 +114,7 @@ class DepartureMessagesController @Inject() (
         implicit request =>
           messageConnector.get(departureId, messageId).map {
             case Right(m) =>
-              Ok(Json.toJson(HateaosDepartureResponseMessage(departureId, messageId, m)))
+              Ok(Json.toJson(HateoasDepartureResponseMessage(departureId, messageId, m)))
             case Left(response) =>
               handleNon2xx(response)
           }

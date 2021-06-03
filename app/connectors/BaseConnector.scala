@@ -31,15 +31,19 @@ import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.http.HttpResponse
+import config.Constants.ClientIdHeader
 
 import java.time.format.DateTimeFormatter
 
 class BaseConnector extends HttpErrorFunctions {
 
   protected val channelHeader: (String, String) = ("channel", api.toString)
+  protected def clientHeader(clientIdOpt: Option[String]): Seq[(String, String)] = clientIdOpt.map {
+    clientId => (ClientIdHeader, clientId)
+  }.toSeq
 
-  protected val requestHeaders: Seq[(String, String)] =
-    Seq((HeaderNames.CONTENT_TYPE, MimeTypes.XML), channelHeader)
+  protected def requestHeaders(requestHeader: RequestHeader): Seq[(String, String)] =
+    Seq((HeaderNames.CONTENT_TYPE, MimeTypes.XML), channelHeader) ++ clientHeader(requestHeader.headers.get(ClientIdHeader))
 
   protected val responseHeaders: Seq[(String, String)] =
     Seq((HeaderNames.CONTENT_TYPE, MimeTypes.JSON), channelHeader)

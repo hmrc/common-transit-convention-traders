@@ -24,12 +24,13 @@ import metrics.MetricsKeys
 import models.domain.Arrival
 import models.domain.Arrivals
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpClient
-import uk.gov.hmrc.http.HttpResponse
-
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, UpstreamErrorResponse}
 import java.time.OffsetDateTime
+
 import javax.inject.Inject
+import models.Box
+import uk.gov.hmrc.http.HttpReads.Implicits._
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -37,16 +38,18 @@ class ArrivalConnector @Inject() (http: HttpClient, appConfig: AppConfig, val me
 
   import MetricsKeys.ArrivalBackend._
 
-  def post(message: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    withMetricsTimerResponse(Post) {
+  def post(message: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]] =
+    withMetricsTimerAsync(Post) {
+      _ =>
       val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute)
-      http.POSTString(url.toString, message)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
+      http.POSTString[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]](url.toString, message, requestHeaders(requestHeader))
     }
 
-  def put(message: String, arrivalId: String)(implicit requestHeader: RequestHeader, headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    withMetricsTimerResponse(Put) {
+  def put(message: String, arrivalId: String)(implicit requestHeader: RequestHeader, headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]] =
+    withMetricsTimerAsync(Put) {
+      _ =>
       val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathPart(arrivalId)
-      http.PUTString(url.toString, message)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
+      http.PUTString[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]](url.toString, message, requestHeaders(requestHeader))
     }
 
   def get(arrivalId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] =

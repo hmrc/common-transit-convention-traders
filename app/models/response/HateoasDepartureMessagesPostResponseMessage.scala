@@ -17,26 +17,29 @@
 package models.response
 
 import controllers.routes
-import models.domain.MovementMessage
 import play.api.libs.json.{JsObject, Json}
 import utils.CallOps._
 
-object HateaosArrivalResponseMessage {
+import scala.xml.NodeSeq
 
-  def apply(arrivalId: String, messageId: String, m: MovementMessage): JsObject = {
-    val arrivalUrl = routes.ArrivalMessagesController.getArrivalMessage(arrivalId, messageId).urlWithContext
-    val messageUrl = routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext
+object HateoasDepartureMessagesPostResponseMessage {
+
+  def apply(departureId: String, messageId: String, messageType: String, message: NodeSeq): JsObject = {
+    val messageUrl = routes.DepartureMessagesController.getDepartureMessage(departureId, messageId).urlWithContext
+    val departureUrl = routes.DeparturesController.getDeparture(departureId).urlWithContext
 
     Json.obj(
       "_links" -> Json.obj(
-        "self"    -> Json.obj("href" -> arrivalUrl),
-        "arrival"    -> Json.obj("href" -> messageUrl)
+        "self"    -> Json.obj("href" -> messageUrl),
+        "departure"    -> Json.obj("href" -> departureUrl)
       ),
-      "arrivalId" -> arrivalId,
+      "departureId" -> departureId,
       "messageId" -> messageId,
-      "received" -> m.dateTime,
-      "messageType" -> m.messageType,
-      "body" -> m.message.toString
+      "messageType" -> messageType,
+      "body" -> message.toString,
+      "_embedded" -> Json.obj(
+        "notifications" -> Json.obj("requestId" -> departureUrl)
+      )
     )
   }
 }

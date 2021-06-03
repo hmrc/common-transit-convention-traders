@@ -40,7 +40,7 @@ class DepartureMessageConnector @Inject() (http: HttpClient, appConfig: AppConfi
   def post(message: String, departureId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     withMetricsTimerResponse(PostMessage) {
       val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute).addPathParts(departureId, "messages")
-      http.POSTString(url.toString, message, requestHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders), ec)
+      http.POSTString(url.toString, message, requestHeaders(requestHeader))(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders(requestHeader)), ec)
     }
 
   def getMessages(

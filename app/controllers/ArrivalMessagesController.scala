@@ -24,9 +24,9 @@ import controllers.actions.ValidateArrivalMessageAction
 import metrics.HasActionMetrics
 import metrics.MetricsKeys
 import models.MessageType
-import models.response.HateaosArrivalMessagesPostResponseMessage
-import models.response.HateaosArrivalResponseMessage
-import models.response.HateaosResponseArrivalWithMessages
+import models.response.HateoasArrivalMessagesPostResponseMessage
+import models.response.HateoasArrivalResponseMessage
+import models.response.HateoasResponseArrivalWithMessages
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
@@ -74,7 +74,7 @@ class ArrivalMessagesController @Inject() (
                           val messageId = Utils.lastFragment(locationValue)
                           Accepted(
                             Json.toJson(
-                              HateaosArrivalMessagesPostResponseMessage(
+                              HateoasArrivalMessagesPostResponseMessage(
                                 arrivalId,
                                 messageId,
                                 messageType.code,
@@ -100,7 +100,7 @@ class ArrivalMessagesController @Inject() (
         implicit request =>
           messageConnector.get(arrivalId, messageId).map {
             case Right(m) =>
-              Ok(Json.toJson(HateaosArrivalResponseMessage(arrivalId, messageId, m)))
+              Ok(Json.toJson(HateoasArrivalResponseMessage(arrivalId, messageId, m)))
             case Left(response) =>
               handleNon2xx(response)
           }
@@ -114,7 +114,7 @@ class ArrivalMessagesController @Inject() (
           messageConnector.getMessages(arrivalId, receivedSince).map {
             case Right(a) =>
               messagesCount.update(a.messages.length)
-              Ok(Json.toJson(HateaosResponseArrivalWithMessages(a)))
+              Ok(Json.toJson(HateoasResponseArrivalWithMessages(a)))
             case Left(response) =>
               handleNon2xx(response)
           }
