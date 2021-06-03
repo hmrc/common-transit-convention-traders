@@ -266,7 +266,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
             LocalDateTime.now,
             LocalDateTime.now
           )
-        )
+        ), 1, 1
       )
 
       server.stubFor(
@@ -299,7 +299,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
             LocalDateTime.now,
             LocalDateTime.now
           )
-        )
+        ), 1, 1
       )
 
       val response = HateoasResponseDepartures(departures)
@@ -391,7 +391,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
             LocalDateTime.now,
             LocalDateTime.now
           )
-        )
+        ), 1, 1
       )
       val dateTime = Some(OffsetDateTime.of(2021, 3, 14, 13, 15, 30, 0, ZoneOffset.ofHours(1)))
 

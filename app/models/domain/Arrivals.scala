@@ -22,4 +22,4 @@ object Arrivals {
   implicit val format = Json.format[Arrivals]
 }
 
-case class Arrivals(arrivals: Seq[Arrival])
+case class Arrivals(arrivals: Seq[Arrival], retrievedArrivals: Int, totalArrivals: Int)

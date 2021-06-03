@@ -257,7 +257,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
   "getForEori" - {
     "must return Arrival when arrival is found" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      val arrivals = Arrivals(Seq(Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)))
+      val arrivals = Arrivals(Seq(Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)), 1, 1)
 
       server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals"))
         .willReturn(aResponse().withStatus(OK)
@@ -273,7 +273,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
 
     "must render updatedSince parameter into request URL" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      val arrivals = Arrivals(Seq(Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)))
+      val arrivals = Arrivals(Seq(Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)), 1, 1)
       val dateTime = Some(OffsetDateTime.of(2021, 3, 14, 13, 15, 30, 0, ZoneOffset.ofHours(1)))
 
       server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals?updatedSince=2021-03-14T13%3A15%3A30%2B01%3A00"))
@@ -290,7 +290,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      val arrival = Arrivals(Seq(Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)))
+      val arrival = Arrivals(Seq(Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)), 1, 1)
 
       val response = HateoasResponseArrivals(arrival)
 
