@@ -16,26 +16,35 @@
 
 package connectors
 
-import java.time.LocalDateTime
-import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, urlEqualTo}
+import com.github.tomakehurst.wiremock.client.WireMock.aResponse
+import com.github.tomakehurst.wiremock.client.WireMock.get
+import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import controllers.routes
-import models.domain.{Departure, DepartureWithMessages, MovementMessage}
+import models.domain.Departure
+import models.domain.DepartureWithMessages
+import models.domain.MovementMessage
 import models.response.HateoasResponseDeparture
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatest.concurrent.IntegrationPatience
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
-import play.api.test.Helpers.{BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK}
+import play.api.test.Helpers.BAD_REQUEST
+import play.api.test.Helpers.INTERNAL_SERVER_ERROR
+import play.api.test.Helpers.NOT_FOUND
+import play.api.test.Helpers.OK
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CallOps._
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import scala.concurrent.ExecutionContext.Implicits.global
 
-class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
+class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with utils.WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
 
   "get" - {
     "must return MovementMessage when message is found" in {
@@ -240,5 +249,6 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Wirem
   }
 
   //TODO: Refactor this and other spec usages to a common trait
-  override protected def portConfigKey: String = "microservice.services.transits-movements-trader-at-departure.port"
+  override protected def portConfigKey: Seq[String] =
+    Seq("microservice.services.transits-movements-trader-at-departure.port")
 }

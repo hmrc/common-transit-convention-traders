@@ -16,19 +16,21 @@
 
 package services
 
-import connectors.WiremockSuite
-import models.request.DepartureDeclarationXSD
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import data.{EnsureGuaranteeServiceTestData => TestData}
 import models.Guarantee
-import org.scalacheck.{Gen, Shrink}
+import models.request.DepartureDeclarationXSD
+import org.scalacheck.Gen
+import org.scalacheck.Shrink
+import org.scalatest.concurrent.IntegrationPatience
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.xml.NodeSeq
 
-class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
+class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with utils.WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
 
   implicit def noShrink[A]: Shrink[A] = Shrink.shrinkAny[A]
 
@@ -251,7 +253,6 @@ class EnsureGuaranteeServiceIntegrationSpec extends AnyFreeSpec with Matchers wi
 
   }
 
-
-  override protected def portConfigKey: String = "microservice.services.transit-movement-trader-at-destination.port"
-
+  override protected def portConfigKey: Seq[String] =
+    Seq("microservice.services.transit-movement-trader-at-destination.port")
 }

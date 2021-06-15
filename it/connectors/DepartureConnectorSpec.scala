@@ -28,6 +28,7 @@ import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
@@ -38,10 +39,9 @@ import utils.CallOps._
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
-
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
+class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with utils.WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
   "post" - {
 
     "must return ACCEPTED when post is successful and subscribed for notifications" in {
@@ -414,5 +414,6 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuit
 
   }
 
-  override protected def portConfigKey: String = "microservice.services.transits-movements-trader-at-departure.port"
+  override protected def portConfigKey: Seq[String] =
+    Seq("microservice.services.transits-movements-trader-at-departure.port")
 }
