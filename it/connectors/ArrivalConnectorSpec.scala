@@ -16,15 +16,19 @@
 
 package connectors
 
-import java.time.LocalDateTime
-
 import com.github.tomakehurst.wiremock.client.WireMock._
 import controllers.routes
-import models.domain.{Arrival, Arrivals}
-import models.response.{HateoasResponseArrival, HateoasResponseArrivals}
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import models.Box
+import models.BoxId
+import models.domain.Arrival
+import models.domain.Arrivals
+import models.response.HateoasResponseArrival
+import models.response.HateoasResponseArrivals
+import org.scalatest.concurrent.IntegrationPatience
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
@@ -32,13 +36,12 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CallOps._
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import scala.concurrent.ExecutionContext.Implicits.global
 
-import models.{Box, BoxId}
-
-class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
+class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with utils.WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
   val testBoxId   = BoxId("testBoxId")
   val testBoxName = "testBoxName"
   val testBox     = Box(testBoxId, testBoxName)
@@ -351,5 +354,6 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite 
 
   }
 
-  override protected def portConfigKey: String = "microservice.services.transit-movement-trader-at-destination.port"
+  override protected def portConfigKey: Seq[String] =
+    Seq("microservice.services.transit-movement-trader-at-destination.port")
 }

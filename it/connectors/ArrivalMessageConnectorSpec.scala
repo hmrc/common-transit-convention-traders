@@ -16,14 +16,17 @@
 
 package connectors
 
-import java.time.LocalDateTime
 import com.github.tomakehurst.wiremock.client.WireMock._
 import controllers.routes
-import models.domain.{Arrival, ArrivalWithMessages, MovementMessage}
+import models.domain.Arrival
+import models.domain.ArrivalWithMessages
+import models.domain.MovementMessage
 import models.response.HateoasResponseArrival
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatest.concurrent.IntegrationPatience
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
@@ -31,11 +34,12 @@ import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CallOps._
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import scala.concurrent.ExecutionContext.Implicits.global
 
-class ArrivalMessageConnectorSpec extends AnyFreeSpec with Matchers with WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
+class ArrivalMessageConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with utils.WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
 
   "get" - {
     "must return MovementMessage when message is found" in {
@@ -240,5 +244,6 @@ class ArrivalMessageConnectorSpec extends AnyFreeSpec with Matchers with Wiremoc
   }
 
   //TODO: Refactor this and other spec usages to a common trait
-  override protected def portConfigKey: String = "microservice.services.transit-movement-trader-at-destination.port"
+  override protected def portConfigKey: Seq[String] =
+    Seq("microservice.services.transit-movement-trader-at-destination.port")
 }

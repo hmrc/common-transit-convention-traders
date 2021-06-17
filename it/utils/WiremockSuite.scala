@@ -14,32 +14,38 @@
  * limitations under the License.
  */
 
-package connectors
+package utils
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import com.kenshoo.play.metrics.Metrics
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.Suite
+import org.scalatestplus.play.guice.GuiceFakeApplicationFactory
 import play.api.Application
-import play.api.inject.{bind, Injector}
-import play.api.inject.guice.{GuiceApplicationBuilder, GuiceableModule}
-import utils.TestMetrics
+import play.api.inject.Injector
+import play.api.inject.bind
+import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.inject.guice.GuiceableModule
 
-trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
+trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach with GuiceFakeApplicationFactory {
   this: Suite =>
   protected val server: WireMockServer = new WireMockServer(wireMockConfig().dynamicPort())
 
-  protected def portConfigKey: String
+  protected def portConfigKey: Seq[String]
 
-  protected lazy val app: Application =
+  override lazy val fakeApplication: Application =
     new GuiceApplicationBuilder()
       .configure(
-        portConfigKey -> server.port().toString
+        portConfigKey.map { key =>
+          key -> server.port.toString()
+        }: _*
       )
       .overrides(bindings: _*)
       .build()
 
-  protected lazy val injector: Injector = app.injector
+  protected lazy val injector: Injector = fakeApplication.injector
 
   protected def bindings: Seq[GuiceableModule] = Seq(
     bind[Metrics].toInstance(new TestMetrics)
@@ -47,13 +53,13 @@ trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
 
   override def beforeAll(): Unit = {
     server.start()
-    app
+    fakeApplication
     super.beforeAll()
   }
 
   override def beforeEach(): Unit = {
     server.resetAll()
-    app
+    fakeApplication
     super.beforeEach()
   }
 
