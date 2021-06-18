@@ -16,28 +16,22 @@
 
 package utils.guaranteeParsing
 
-import com.google.inject.Inject
 import models.ParseError
 import models.ParseError.InappropriateDepartureOffice
 
+import javax.inject.Inject
 import scala.xml.NodeSeq
 
-class RouteChecker @Inject()(xmlReaders: GuaranteeXmlReaders) {
+class RouteChecker @Inject() (xmlReaders: GuaranteeXmlReaders) {
 
   def gbOnlyCheck(xml: NodeSeq): Either[ParseError, Boolean] =
-    xmlReaders.officeOfDeparture(xml) match {
-      case Left(error) => Left(error)
-      case Right(departure) => {
-        xmlReaders.officeOfDestination(xml) match {
-          case Left(error) => Left(error)
-          case Right(destination) => {
-            departure.prefix match {
-              case "GB" => Right(destination.value.startsWith("GB"))
-              case "XI" => Right(false)
-              case _ => Left(InappropriateDepartureOffice("Inappropriate Departure Office"))
-            }
-          }
-        }
+    for {
+      departure   <- xmlReaders.officeOfDeparture(xml)
+      destination <- xmlReaders.officeOfDestination(xml)
+      result <- departure.prefix match {
+        case "GB" => Right(destination.value.startsWith("GB"))
+        case "XI" => Right(false)
+        case _    => Left(InappropriateDepartureOffice("Inappropriate Departure Office"))
       }
-    }
+    } yield result
 }

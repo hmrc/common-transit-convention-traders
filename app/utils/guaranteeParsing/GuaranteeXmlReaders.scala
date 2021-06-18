@@ -16,136 +16,70 @@
 
 package utils.guaranteeParsing
 
-import cats.data.ReaderT
+import cats.syntax.all._
 import models.ParseError._
 import models._
 
-import scala.util.{Failure, Success, Try}
-import scala.xml.{Node, NodeSeq}
+import scala.xml.Node
+import scala.xml.NodeSeq
 
 class GuaranteeXmlReaders extends ParseHandling {
 
-  def parseGuarantees(xml: NodeSeq): ParseHandler[Seq[Guarantee]] = {
+  def parseGuarantees(xml: NodeSeq): ParseHandler[Seq[Guarantee]] =
+    (xml \ "GUAGUA").toList.traverse(guarantee(_))
 
-    val guaranteeEithers: Seq[Either[ParseError, Guarantee]] =
-      (xml \ "GUAGUA").map {
-        node => guarantee(node)
-      }
+  def parseSpecialMentions(xml: NodeSeq): ParseHandler[Seq[SpecialMention]] =
+    (xml \ "SPEMENMT2").toList.traverse(specialMention(_))
 
-    ParseError.sequenceErrors(guaranteeEithers)
+  def gOOITEGDSNode(xml: NodeSeq): ParseHandler[Seq[GOOITEGDSNode]] =
+    (xml \ "GOOITEGDS").toList.traverse(gOOITEGDSNodeFromNode(_))
+
+  def gOOITEGDSNodeFromNode(node: Node): ParseHandler[GOOITEGDSNode] =
+    for {
+      itemNumber <- Either
+        .catchOnly[NumberFormatException]((node \ "IteNumGDS7").text.toInt)
+        .leftMap(
+          _ => InvalidItemNumber("Invalid Item Number")
+        )
+
+      mentions <- parseSpecialMentions(node)
+
+    } yield GOOITEGDSNode(itemNumber, mentions)
+
+  def specialMention(xml: Node): ParseHandler[SpecialMention] = {
+    val addInfMT21    = xml \ "AddInfMT21"
+    val addInfCodMT23 = xml \ "AddInfCodMT23"
+    Right {
+      if (addInfMT21.nonEmpty && addInfCodMT23.text == "CAL")
+        SpecialMentionGuarantee(addInfMT21.text, xml)
+      else
+        SpecialMentionOther(xml)
+    }
   }
 
-  def parseSpecialMentions(xml: NodeSeq): ParseHandler[Seq[SpecialMention]] = {
-    ParseError.sequenceErrors((xml \ "SPEMENMT2").map {
-      node =>
-        specialMention(node)
-    })
-  }
-
-  val gOOITEGDSNode: ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]] =
-    ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](xml => {
-      ParseError.sequenceErrors((xml \ "GOOITEGDS" ).map {
-        node => {
-          val itemNumberNode = (node \ "IteNumGDS7")
-          if(itemNumberNode.nonEmpty)
-          {
-            val itemNumberString = itemNumberNode.text
-            if(itemNumberString.nonEmpty)
-            {
-              Try(itemNumberString.toInt) match {
-                case Failure(_) => Left(InvalidItemNumber("Invalid Item Number"))
-                case Success(itemNumber) =>
-                  parseSpecialMentions(node) match {
-                    case Left(error) => Left(error)
-                    case Right(mentions) => Right(GOOITEGDSNode(itemNumber, mentions))
-                  }
-              }
-            }
-            else {
-              Left(MissingItemNumber("Missing Item Number"))
-            }
-          }
-          else {
-            Left(MissingItemNumber("Missing Item Number"))
-          }
-
+  def guarantee(xml: Node): ParseHandler[Guarantee] =
+    (xml \ "GuaTypGUA1").text match {
+      case gType if gType.isEmpty                              => Left(GuaranteeTypeInvalid("GuaTypGUA1 was invalid"))
+      case gType if gType.length > 1                           => Left(GuaranteeTypeTooLong("GuaTypGUA1 was too long"))
+      case gType if !Guarantee.validTypes.contains(gType.head) => Left(GuaranteeTypeInvalid("GuaTypGUA1 was not a valid type"))
+      case gType if Guarantee.validTypes.contains(gType.head) =>
+        val gChar = gType.head
+        if (Guarantee.isOther(gChar)) {
+          val gOther = (xml \ "GUAREFREF" \ "OthGuaRefREF4").text
+          Either.cond(gOther.nonEmpty, Guarantee(gChar, gOther), NoOtherGuaranteeField("OthGuaRefREF4 was empty"))
+        } else {
+          val gReference = (xml \ "GUAREFREF" \ "GuaRefNumGRNREF1").text
+          Either.cond(gReference.nonEmpty, Guarantee(gChar, gReference), NoGuaranteeReferenceNumber("GuaRefNumGRNREF1 was empty"))
         }
-      })
-    })
+    }
 
-  val gOOITEGDSNodeFromNode: ReaderT[ParseHandler, Node, GOOITEGDSNode] =
-    ReaderT[ParseHandler, Node, GOOITEGDSNode](node => {
-          val itemNumberNode = (node \ "IteNumGDS7")
-          if(itemNumberNode.nonEmpty)
-          {
-            val itemNumberString = itemNumberNode.text
-            if(itemNumberString.nonEmpty)
-            {
-              Try(itemNumberString.toInt) match {
-                case Failure(_) => Left(InvalidItemNumber("Invalid Item Number"))
-                case Success(itemNumber) =>
-                  parseSpecialMentions(node) match {
-                    case Left(error) => Left(error)
-                    case Right(mentions) => Right(GOOITEGDSNode(itemNumber, mentions))
-                  }
-              }
-            }
-            else {
-              Left(MissingItemNumber("Missing Item Number"))
-            }
-          }
-          else {
-            Left(MissingItemNumber("Missing Item Number"))
-          }
-    })
-
-
-  val specialMention: ReaderT[ParseHandler, Node, SpecialMention] = {
-    ReaderT[ParseHandler, Node, SpecialMention](xml => {
-      val AddInfMT21 = (xml \ "AddInfMT21")
-      val AddInfCodMT23 = (xml \ "AddInfCodMT23")
-
-      (AddInfMT21.text.isEmpty, AddInfCodMT23.text.isEmpty) match {
-        case (false, false) if AddInfCodMT23.text.equals("CAL") => Right(SpecialMentionGuarantee(AddInfMT21.text, xml))
-        case _ => Right(SpecialMentionOther(xml))
-      }
-    })
+  def officeOfDeparture(xml: NodeSeq): ParseHandler[DepartureOffice] = {
+    val departure = (xml \ "CUSOFFDEPEPT" \ "RefNumEPT1").text
+    Either.cond(departure.nonEmpty, DepartureOffice(departure), DepartureEmpty("Departure Empty"))
   }
 
-  val guarantee: ReaderT[ParseHandler, Node, Guarantee] =
-    ReaderT[ParseHandler, Node, Guarantee](xml => {
-      (xml \ "GuaTypGUA1").text match {
-        case gType if gType.isEmpty => Left(GuaranteeTypeInvalid("GuaTypGUA1 was invalid"))
-        case gType if gType.length > 1 => Left(GuaranteeTypeTooLong("GuaTypGUA1 was too long"))
-        case gType if !Guarantee.validTypes.contains(gType.head) => Left(GuaranteeTypeInvalid("GuaTypGUA1 was not a valid type"))
-        case gType if Guarantee.validTypes.contains(gType.head) => {
-          val gChar = gType.head
-            if (Guarantee.isOther(gChar)) {
-              (xml \ "GUAREFREF" \ "OthGuaRefREF4").text match {
-                case gOther if !gOther.isEmpty => Right(Guarantee(gChar, gOther))
-                case _ => Left(NoOtherGuaranteeField("OthGuaRefREF4 was empty"))
-              }
-            }
-            else {
-              (xml \ "GUAREFREF" \ "GuaRefNumGRNREF1").text match {
-                case gReference if !gReference.isEmpty => Right(Guarantee(gChar, gReference))
-                case _ => Left(NoGuaranteeReferenceNumber("GuaRefNumGRNREF1 was empty"))
-              }
-            }}}})
-
-  val officeOfDeparture: ReaderT[ParseHandler, NodeSeq, DepartureOffice] =
-    ReaderT[ParseHandler, NodeSeq, DepartureOffice](xml => {
-      (xml \ "CUSOFFDEPEPT" \ "RefNumEPT1").text match {
-        case departure if departure.isEmpty =>Left(DepartureEmpty("Departure Empty"))
-        case departure => Right(DepartureOffice(departure))
-      }
-    })
-
-  val officeOfDestination: ReaderT[ParseHandler, NodeSeq, DestinationOffice] =
-    ReaderT[ParseHandler, NodeSeq, DestinationOffice](xml => {
-      (xml \ "CUSOFFDESEST" \ "RefNumEST1").text match {
-        case destination if destination.isEmpty =>Left(DestinationEmpty("Destination Empty"))
-        case destination => Right(DestinationOffice(destination))
-      }
-    })
+  def officeOfDestination(xml: NodeSeq): ParseHandler[DestinationOffice] = {
+    val destination = (xml \ "CUSOFFDESEST" \ "RefNumEST1").text
+    Either.cond(destination.nonEmpty, DestinationOffice(destination), DestinationEmpty("Destination Empty"))
+  }
 }
