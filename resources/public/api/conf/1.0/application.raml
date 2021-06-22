@@ -53,6 +53,8 @@ traits:
 
         The response will contain a URI and arrival ID for the Arrival Notification. This will allow you to get the message status.
 
+        The response will also contain an embedded requestId, boxId and boxName which will allow you to match this movement to any messages received via the Push Pull Notifications Service.
+
         If the user is not enrolled for an Economic Operator Registration and Identification number, they will receive an HTTP 403 Forbidden status.
       is: [contentXmlHeader]
       (annotations.scope): "common-transit-convention-traders"
@@ -71,7 +73,15 @@ traits:
                   },
                   "arrivalId": "1",
                   "messageType": "IE007",
-                  "body": "<CC007A>...</CC007A>"
+                  "body": "<CC007A>...</CC007A>",
+                  "_embedded":
+                  {
+                    "notifications":{
+                      "boxId":"1234-5678-abcd-def",
+                      "requestId":"/customs/transits/movements/arrivals/1",
+                      "boxName":"Arrival messages for 1"
+                    }
+                  }
                 }
     get:
       displayName: Get all Movement Arrivals
@@ -360,6 +370,8 @@ traits:
 
         The response will contain a URI and departure ID for the Declaration Data. This will allow you to retrieve the submission status.
 
+        The response will also contain an embedded requestId, boxId and boxName which will allow you to match this movement to any messages received via the Push Pull Notifications Service.
+
         If the user is not enrolled for an EORI number, they will receive an HTTP Forbidden Status.
 
 
@@ -380,7 +392,15 @@ traits:
                   },
                   "departureId": "1",
                   "messageType": "IE015",
-                  "body": "<CC015B>...</CC015B>"
+                  "body": "<CC015B>...</CC015B>",
+                  "_embedded":
+                  {
+                    "notifications":{
+                      "boxId":"1234-5678-abcd-def",
+                      "requestId":"/customs/transits/movements/departures/1",
+                      "boxName":"Departure messages for 1"
+                    }
+                  }
                 }
     get:
       displayName: Get all Movement Departures
