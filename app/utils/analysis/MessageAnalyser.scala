@@ -23,6 +23,8 @@ import metrics.MetricsKeys.Messages._
 import javax.inject.Inject
 import javax.inject.Singleton
 import metrics.HasMetrics
+import models.MessageType
+import models.MessageType._
 
 @Singleton
 class MessageAnalyser @Inject() (val metrics: Metrics) extends HasMetrics {
@@ -45,7 +47,7 @@ class MessageAnalyser @Inject() (val metrics: Metrics) extends HasMetrics {
   def trackNumberOfDocuments(xml: NodeSeq): Unit = (xml \ "GOOITEGDS")
     .foreach {
       node =>
-        val count = (node \ "DOCUMENTNAMETAGTHING").length
+        val count = (node \ "PRODOCDC2").length // TODO double check code
         numberOfDocuments.update(count)
     }
 
@@ -60,6 +62,16 @@ class MessageAnalyser @Inject() (val metrics: Metrics) extends HasMetrics {
     val count = (xml \ "SEAIDSID").length
     numberOfSeals.update(count)
   }
+
+  def trackMessageStats(xml: NodeSeq): Unit =
+    MessageType.getMessageType(xml).collect {
+      case DepartureDeclaration | UnloadingRemarks =>
+        trackMessageSize(xml)
+        trackNumberOfGoods(xml)
+        trackNumberOfDocuments(xml)
+        trackNumberOfSpecialMentions(xml)
+        trackNumberOfSeals(xml)
+    }
 }
 
 // TODO put all names in constants file

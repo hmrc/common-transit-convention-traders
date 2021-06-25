@@ -41,6 +41,7 @@ import java.time.OffsetDateTime
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
+import controllers.actions.AnalyseMessageActionProvider
 
 class ArrivalMessagesController @Inject() (
   cc: ControllerComponents,
@@ -48,6 +49,7 @@ class ArrivalMessagesController @Inject() (
   messageConnector: ArrivalMessageConnector,
   validateMessageAction: ValidateArrivalMessageAction,
   validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction,
+  messageAnalyser: AnalyseMessageActionProvider,
   val metrics: Metrics
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
@@ -61,7 +63,7 @@ class ArrivalMessagesController @Inject() (
 
   def sendMessageDownstream(arrivalId: String): Action[NodeSeq] =
     withMetricsTimerAction(SendArrivalMessage) {
-      (authAction andThen validateMessageAction).async(parse.xml) {
+      (authAction andThen validateMessageAction andThen messageAnalyser()).async(parse.xml) {
         implicit request =>
           messageConnector.post(request.body.toString, arrivalId).map {
             response =>
