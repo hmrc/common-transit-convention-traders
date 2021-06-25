@@ -42,6 +42,7 @@ import java.time.OffsetDateTime
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
+import controllers.actions.AnalyseMessageActionProvider
 
 class ArrivalMovementController @Inject() (
   cc: ControllerComponents,
@@ -49,6 +50,7 @@ class ArrivalMovementController @Inject() (
   arrivalConnector: ArrivalConnector,
   validateArrivalNotificationAction: ValidateArrivalNotificationAction,
   validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction,
+  messageAnalyser: AnalyseMessageActionProvider,
   val metrics: Metrics
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
@@ -62,7 +64,7 @@ class ArrivalMovementController @Inject() (
 
   def createArrivalNotification(): Action[NodeSeq] =
     withMetricsTimerAction(CreateArrivalNotification) {
-      (authAction andThen validateArrivalNotificationAction).async(parse.xml) {
+      (authAction andThen validateArrivalNotificationAction andThen messageAnalyser()).async(parse.xml) {
         implicit request =>
           arrivalConnector.post(request.body.toString).map {
             case Right(response) =>
@@ -87,13 +89,14 @@ class ArrivalMovementController @Inject() (
                 case _ =>
                   InternalServerError
               }
-            case Left(response) => handleNon2xx(response)              }
+            case Left(response) => handleNon2xx(response)
           }
       }
+    }
 
   def resubmitArrivalNotification(arrivalId: String): Action[NodeSeq] =
     withMetricsTimerAction(ResubmitArrivalNotification) {
-      (authAction andThen validateArrivalNotificationAction).async(parse.xml) {
+      (authAction andThen validateArrivalNotificationAction andThen messageAnalyser()).async(parse.xml) {
         implicit request =>
           arrivalConnector.put(request.body.toString, arrivalId).map {
             case Right(response) =>

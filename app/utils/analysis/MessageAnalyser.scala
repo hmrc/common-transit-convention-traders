@@ -34,43 +34,44 @@ class MessageAnalyser @Inject() (val metrics: Metrics) extends HasMetrics {
   lazy val numberOfSpecialMentions = histo(NumberOfSpecialMentions)
   lazy val numberOfSeals           = histo(NumberOfSeals)
 
-  def trackMessageSize(xml: NodeSeq): Unit = {
+  private def trackMessageSize(xml: NodeSeq): Unit = {
     val size = xml.toString.getBytes(StandardCharsets.UTF_8).length
     messageSize.update(size)
   }
 
-  def trackNumberOfGoods(xml: NodeSeq): Unit = {
+  private def trackNumberOfGoods(xml: NodeSeq): Unit = {
     val count = (xml \ "GOOITEGDS").length
     numberOfGoods.update(count)
   }
 
-  def trackNumberOfDocuments(xml: NodeSeq): Unit = (xml \ "GOOITEGDS")
+  private def trackNumberOfDocuments(xml: NodeSeq): Unit = (xml \ "GOOITEGDS")
     .foreach {
       node =>
         val count = (node \ "PRODOCDC2").length // TODO double check code
         numberOfDocuments.update(count)
     }
 
-  def trackNumberOfSpecialMentions(xml: NodeSeq): Unit = (xml \ "GOOITEGDS")
+  private def trackNumberOfSpecialMentions(xml: NodeSeq): Unit = (xml \ "GOOITEGDS")
     .foreach {
       node =>
         val count = (node \ "SPEMENMT2").length
         numberOfSpecialMentions.update(count)
     }
 
-  def trackNumberOfSeals(xml: NodeSeq): Unit = {
-    val count = (xml \ "SEAIDSID").length
+  private def trackNumberOfSeals(xml: NodeSeq): Unit = {
+    val count = (xml \ "SEAINFSLI" \ "SEAIDSID").length
     numberOfSeals.update(count)
   }
 
   def trackMessageStats(xml: NodeSeq): Unit =
-    MessageType.getMessageType(xml).collect {
+    MessageType.getMessageType(xml).foreach {
       case DepartureDeclaration | UnloadingRemarks =>
         trackMessageSize(xml)
         trackNumberOfGoods(xml)
         trackNumberOfDocuments(xml)
         trackNumberOfSpecialMentions(xml)
         trackNumberOfSeals(xml)
+      case _ => trackMessageSize(xml)
     }
 }
 
