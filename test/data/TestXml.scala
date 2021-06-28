@@ -402,6 +402,235 @@ trait TestXml {
       </GOOITEGDS>
     </CC044A>
 
+  lazy val CC044AWithMultipleGoodsItems =
+    <CC044A>
+      <SynIdeMES1>tval</SynIdeMES1>
+      <SynVerNumMES2>1</SynVerNumMES2>
+      <!--Optional:-->
+      <SenIdeCodQuaMES4>1111</SenIdeCodQuaMES4>
+      <MesRecMES6>111111</MesRecMES6>
+      <!--Optional:-->
+      <RecIdeCodQuaMES7>1111</RecIdeCodQuaMES7>
+      <DatOfPreMES9>20001001</DatOfPreMES9>
+      <TimOfPreMES10>1111</TimOfPreMES10>
+      <IntConRefMES11>111111</IntConRefMES11>
+      <!--Optional:-->
+      <RecRefMES12>111111</RecRefMES12>
+      <!--Optional:-->
+      <RecRefQuaMES13>to</RecRefQuaMES13>
+      <!--Optional:-->
+      <AppRefMES14>token</AppRefMES14>
+      <!--Optional:-->
+      <PriMES15>t</PriMES15>
+      <!--Optional:-->
+      <AckReqMES16>1</AckReqMES16>
+      <!--Optional:-->
+      <ComAgrIdMES17>token</ComAgrIdMES17>
+      <!--Optional:-->
+      <TesIndMES18>1</TesIndMES18>
+      <MesIdeMES19>token</MesIdeMES19>
+      <MesTypMES20>token</MesTypMES20>
+      <!--Optional:-->
+      <ComAccRefMES21>token</ComAccRefMES21>
+      <!--Optional:-->
+      <MesSeqNumMES22>11</MesSeqNumMES22>
+      <!--Optional:-->
+      <FirAndLasTraMES23>t</FirAndLasTraMES23>
+      <HEAHEA>
+        <DocNumHEA5>token</DocNumHEA5>
+        <!--Optional:-->
+        <IdeOfMeaOfTraAtDHEA78>token</IdeOfMeaOfTraAtDHEA78>
+        <!--Optional:-->
+        <IdeOfMeaOfTraAtDHEA78LNG>to</IdeOfMeaOfTraAtDHEA78LNG>
+        <!--Optional:-->
+        <NatOfMeaOfTraAtDHEA80>to</NatOfMeaOfTraAtDHEA80>
+        <TotNumOfIteHEA305>11</TotNumOfIteHEA305>
+        <!--Optional:-->
+        <TotNumOfPacHEA306>11</TotNumOfPacHEA306>
+        <TotGroMasHEA307>1.0</TotGroMasHEA307>
+      </HEAHEA>
+      <TRADESTRD>
+        <!--Optional:-->
+        <NamTRD7>token</NamTRD7>
+        <!--Optional:-->
+        <StrAndNumTRD22>token</StrAndNumTRD22>
+        <!--Optional:-->
+        <PosCodTRD23>token</PosCodTRD23>
+        <!--Optional:-->
+        <CitTRD24>token</CitTRD24>
+        <!--Optional:-->
+        <CouTRD25>to</CouTRD25>
+        <!--Optional:-->
+        <NADLNGRD>to</NADLNGRD>
+        <!--Optional:-->
+        <TINTRD59>token</TINTRD59>
+      </TRADESTRD>
+      <CUSOFFPREOFFRES>
+        <RefNumRES1>tokenval</RefNumRES1>
+      </CUSOFFPREOFFRES>
+      <UNLREMREM>
+        <!--Optional:-->
+        <StaOfTheSeaOKREM19>1</StaOfTheSeaOKREM19>
+        <!--Optional:-->
+        <UnlRemREM53>token</UnlRemREM53>
+        <!--Optional:-->
+        <UnlRemREM53LNG>to</UnlRemREM53LNG>
+        <ConREM65>1</ConREM65>
+        <UnlComREM66>1</UnlComREM66>
+        <UnlDatREM67>11010110</UnlDatREM67>
+      </UNLREMREM>
+      <!--0 to 9 repetitions:-->
+      <RESOFCON534>
+        <!--Optional:-->
+        <DesTOC2>token</DesTOC2>
+        <!--Optional:-->
+        <DesTOC2LNG>to</DesTOC2LNG>
+        <ConInd424>to</ConInd424>
+        <!--Optional:-->
+        <PoiToTheAttTOC5>token</PoiToTheAttTOC5>
+        <!--Optional:-->
+        <CorValTOC4>token</CorValTOC4>
+      </RESOFCON534>
+      <!--Optional:-->
+      <SEAINFSLI>
+        <SeaNumSLI2>tval</SeaNumSLI2>
+        <!--0 to 9999 repetitions:-->
+        <SEAIDSID>
+          <SeaIdeSID1>token</SeaIdeSID1>
+          <!--Optional:-->
+          <SeaIdeSID1LNG>to</SeaIdeSID1LNG>
+        </SEAIDSID>
+      </SEAINFSLI>
+      <!--0 to 9999 repetitions:-->
+      <GOOITEGDS>
+        <IteNumGDS7>1</IteNumGDS7>
+        <!--Optional:-->
+        <ComCodTarCodGDS10>token</ComCodTarCodGDS10>
+        <!--Optional:-->
+        <GooDesGDS23>token</GooDesGDS23>
+        <!--Optional:-->
+        <GooDesGDS23LNG>to</GooDesGDS23LNG>
+        <!--Optional:-->
+        <GroMasGDS46>1.0</GroMasGDS46>
+        <!--Optional:-->
+        <NetMasGDS48>1.0</NetMasGDS48>
+        <!--0 to 99 repetitions:-->
+        <PRODOCDC2>
+          <DocTypDC21>tval</DocTypDC21>
+          <!--Optional:-->
+          <DocRefDC23>token</DocRefDC23>
+          <!--Optional:-->
+          <DocRefDCLNG>to</DocRefDCLNG>
+          <!--Optional:-->
+          <ComOfInfDC25>token</ComOfInfDC25>
+          <!--Optional:-->
+          <ComOfInfDC25LNG>to</ComOfInfDC25LNG>
+        </PRODOCDC2>
+        <!--0 to 199 repetitions:-->
+        <RESOFCONROC>
+          <!--Optional:-->
+          <DesROC2>token</DesROC2>
+          <!--Optional:-->
+          <DesROC2LNG>to</DesROC2LNG>
+          <ConIndROC1>to</ConIndROC1>
+          <!--Optional:-->
+          <PoiToTheAttROC51>token</PoiToTheAttROC51>
+        </RESOFCONROC>
+        <!--0 to 99 repetitions:-->
+        <CONNR2>
+          <ConNumNR21>token</ConNumNR21>
+        </CONNR2>
+        <!--0 to 99 repetitions:-->
+        <PACGS2>
+          <!--Optional:-->
+          <MarNumOfPacGS21>token</MarNumOfPacGS21>
+          <!--Optional:-->
+          <MarNumOfPacGS21LNG>to</MarNumOfPacGS21LNG>
+          <KinOfPacGS23>val</KinOfPacGS23>
+          <!--Optional:-->
+          <NumOfPacGS24>token</NumOfPacGS24>
+          <!--Optional:-->
+          <NumOfPieGS25>token</NumOfPieGS25>
+        </PACGS2>
+        <!--0 to 9 repetitions:-->
+        <SGICODSD2>
+          <!--Optional:-->
+          <SenGooCodSD22>1</SenGooCodSD22>
+          <!--Optional:-->
+          <SenQuaSD23>1.0</SenQuaSD23>
+        </SGICODSD2>
+      </GOOITEGDS>
+      <GOOITEGDS>
+        <IteNumGDS7>2</IteNumGDS7>
+        <!--Optional:-->
+        <ComCodTarCodGDS10>token</ComCodTarCodGDS10>
+        <!--Optional:-->
+        <GooDesGDS23>token</GooDesGDS23>
+        <!--Optional:-->
+        <GooDesGDS23LNG>to</GooDesGDS23LNG>
+        <!--Optional:-->
+        <GroMasGDS46>1.0</GroMasGDS46>
+        <!--Optional:-->
+        <NetMasGDS48>1.0</NetMasGDS48>
+        <!--0 to 99 repetitions:-->
+        <PRODOCDC2>
+          <DocTypDC21>tval</DocTypDC21>
+          <!--Optional:-->
+          <DocRefDC23>token</DocRefDC23>
+          <!--Optional:-->
+          <DocRefDCLNG>to</DocRefDCLNG>
+          <!--Optional:-->
+          <ComOfInfDC25>token</ComOfInfDC25>
+          <!--Optional:-->
+          <ComOfInfDC25LNG>to</ComOfInfDC25LNG>
+        </PRODOCDC2>
+        <PRODOCDC2>
+          <DocTypDC21>tval</DocTypDC21>
+          <!--Optional:-->
+          <DocRefDC23>token</DocRefDC23>
+          <!--Optional:-->
+          <DocRefDCLNG>to</DocRefDCLNG>
+          <!--Optional:-->
+          <ComOfInfDC25>token</ComOfInfDC25>
+          <!--Optional:-->
+          <ComOfInfDC25LNG>to</ComOfInfDC25LNG>
+        </PRODOCDC2>
+        <!--0 to 199 repetitions:-->
+        <RESOFCONROC>
+          <!--Optional:-->
+          <DesROC2>token</DesROC2>
+          <!--Optional:-->
+          <DesROC2LNG>to</DesROC2LNG>
+          <ConIndROC1>to</ConIndROC1>
+          <!--Optional:-->
+          <PoiToTheAttROC51>token</PoiToTheAttROC51>
+        </RESOFCONROC>
+        <!--0 to 99 repetitions:-->
+        <CONNR2>
+          <ConNumNR21>token</ConNumNR21>
+        </CONNR2>
+        <!--0 to 99 repetitions:-->
+        <PACGS2>
+          <!--Optional:-->
+          <MarNumOfPacGS21>token</MarNumOfPacGS21>
+          <!--Optional:-->
+          <MarNumOfPacGS21LNG>to</MarNumOfPacGS21LNG>
+          <KinOfPacGS23>val</KinOfPacGS23>
+          <!--Optional:-->
+          <NumOfPacGS24>token</NumOfPacGS24>
+          <!--Optional:-->
+          <NumOfPieGS25>token</NumOfPieGS25>
+        </PACGS2>
+        <!--0 to 9 repetitions:-->
+        <SGICODSD2>
+          <!--Optional:-->
+          <SenGooCodSD22>1</SenGooCodSD22>
+          <!--Optional:-->
+          <SenQuaSD23>1.0</SenQuaSD23>
+        </SGICODSD2>
+      </GOOITEGDS>
+    </CC044A>
+
   lazy val CC044AwithMesSenMES3 =
     <CC044A>
       <SynIdeMES1>tval</SynIdeMES1>
@@ -712,8 +941,7 @@ trait TestXml {
       </GOOITEGDS>
     </CC044A>
 
-
-    lazy val CC015B = <CC015B>
+  lazy val CC015B = <CC015B>
     <SynIdeMES1>UNOC</SynIdeMES1>
     <SynVerNumMES2>3</SynVerNumMES2>
     <MesRecMES6>NCTS</MesRecMES6>
@@ -924,6 +1152,131 @@ trait TestXml {
         <MarNumOfPacGS21>AB234</MarNumOfPacGS21>
         <KinOfPacGS23>BX</KinOfPacGS23>
         <NumOfPacGS24>10</NumOfPacGS24>
+      </PACGS2>
+    </GOOITEGDS>
+  </CC015B>
+
+  lazy val CC015BWithMultipleGoodsItems = <CC015B>
+    <SynIdeMES1>UNOC</SynIdeMES1>
+    <SynVerNumMES2>3</SynVerNumMES2>
+    <MesRecMES6>NCTS</MesRecMES6>
+    <DatOfPreMES9>20201217</DatOfPreMES9>
+    <TimOfPreMES10>1340</TimOfPreMES10>
+    <IntConRefMES11>17712576475433</IntConRefMES11>
+    <AppRefMES14>NCTS</AppRefMES14>
+    <MesIdeMES19>1</MesIdeMES19>
+    <MesTypMES20>GB015B</MesTypMES20>
+    <HEAHEA>
+      <RefNumHEA4>GUATEST1201217134032</RefNumHEA4>
+      <TypOfDecHEA24>T1</TypOfDecHEA24>
+      <CouOfDesCodHEA30>IT</CouOfDesCodHEA30>
+      <AutLocOfGooCodHEA41>954131533-GB60DEP</AutLocOfGooCodHEA41>
+      <CouOfDisCodHEA55>GB</CouOfDisCodHEA55>
+      <IdeOfMeaOfTraAtDHEA78>NC15 REG</IdeOfMeaOfTraAtDHEA78>
+      <NatOfMeaOfTraAtDHEA80>GB</NatOfMeaOfTraAtDHEA80>
+      <ConIndHEA96>0</ConIndHEA96>
+      <NCTSAccDocHEA601LNG>EN</NCTSAccDocHEA601LNG>
+      <TotNumOfIteHEA305>1</TotNumOfIteHEA305>
+      <TotNumOfPacHEA306>10</TotNumOfPacHEA306>
+      <TotGroMasHEA307>1000</TotGroMasHEA307>
+      <DecDatHEA383>20201217</DecDatHEA383>
+      <DecPlaHEA394>Dover</DecPlaHEA394>
+    </HEAHEA>
+    <TRAPRIPC1>
+      <NamPC17>NCTS UK TEST LAB HMCE</NamPC17>
+      <StrAndNumPC122>11TH FLOOR, ALEX HOUSE, VICTORIA AV</StrAndNumPC122>
+      <PosCodPC123>SS99 1AA</PosCodPC123>
+      <CitPC124>SOUTHEND-ON-SEA, ESSEX</CitPC124>
+      <CouPC125>GB</CouPC125>
+      <TINPC159>GB954131533000</TINPC159>
+    </TRAPRIPC1>
+    <TRACONCO1>
+      <NamCO17>NCTS UK TEST LAB HMCE</NamCO17>
+      <StrAndNumCO122>11TH FLOOR, ALEX HOUSE, VICTORIA AV</StrAndNumCO122>
+      <PosCodCO123>SS99 1AA</PosCodCO123>
+      <CitCO124>SOUTHEND-ON-SEA, ESSEX</CitCO124>
+      <CouCO125>GB</CouCO125>
+      <TINCO159>GB954131533000</TINCO159>
+    </TRACONCO1>
+    <TRACONCE1>
+      <NamCE17>NCTS UK TEST LAB HMCE</NamCE17>
+      <StrAndNumCE122>ITALIAN OFFICE</StrAndNumCE122>
+      <PosCodCE123>IT99 1IT</PosCodCE123>
+      <CitCE124>MILAN</CitCE124>
+      <CouCE125>IT</CouCE125>
+      <TINCE159>IT11ITALIANC11</TINCE159>
+    </TRACONCE1>
+    <CUSOFFDEPEPT>
+      <RefNumEPT1>GB000060</RefNumEPT1>
+    </CUSOFFDEPEPT>
+    <CUSOFFTRARNS>
+      <RefNumRNS1>FR001260</RefNumRNS1>
+      <ArrTimTRACUS085>202012191340</ArrTimTRACUS085>
+    </CUSOFFTRARNS>
+    <CUSOFFDESEST>
+      <RefNumEST1>IT018100</RefNumEST1>
+    </CUSOFFDESEST>
+    <CONRESERS>
+      <ConResCodERS16>A3</ConResCodERS16>
+      <DatLimERS69>20201225</DatLimERS69>
+    </CONRESERS>
+    <SEAINFSLI>
+      <SeaNumSLI2>1</SeaNumSLI2>
+      <SEAIDSID>
+        <SeaIdeSID1>NCTS001</SeaIdeSID1>
+      </SEAIDSID>
+    </SEAINFSLI>
+    <GUAGUA>
+      <GuaTypGUA1>0</GuaTypGUA1>
+      <GUAREFREF>
+        <GuaRefNumGRNREF1>20GB0000010000H72</GuaRefNumGRNREF1>
+        <AccCodREF6>AC01</AccCodREF6>
+      </GUAREFREF>
+    </GUAGUA>
+    <GOOITEGDS>
+      <IteNumGDS7>1</IteNumGDS7>
+      <GooDesGDS23>Wheat</GooDesGDS23>
+      <GooDesGDS23LNG>EN</GooDesGDS23LNG>
+      <GroMasGDS46>1000</GroMasGDS46>
+      <NetMasGDS48>950</NetMasGDS48>
+      <SPEMENMT2>
+        <AddInfMT21>20GB0000010000H72</AddInfMT21>
+        <AddInfCodMT23>CAL</AddInfCodMT23>
+      </SPEMENMT2>
+      <PACGS2>
+        <MarNumOfPacGS21>AB234</MarNumOfPacGS21>
+        <KinOfPacGS23>BX</KinOfPacGS23>
+        <NumOfPacGS24>10</NumOfPacGS24>
+      </PACGS2>
+    </GOOITEGDS>
+    <GOOITEGDS>
+      <IteNumGDS7>2</IteNumGDS7>
+      <ComCodTarCodGDS10>default</ComCodTarCodGDS10>
+      <DecTypGDS15>default</DecTypGDS15>
+      <GooDesGDS23>Flowers</GooDesGDS23>
+      <GooDesGDS23LNG>EN</GooDesGDS23LNG>
+      <GroMasGDS46>1000</GroMasGDS46>
+      <NetMasGDS48>999</NetMasGDS48>
+      <CouOfDesGDS59>ex</CouOfDesGDS59>
+      <PREADMREFAR2>
+        <PreDocTypAR21>T2</PreDocTypAR21>
+        <PreDocRefAR26>EU_EXIT-T2</PreDocRefAR26>
+        <PreDocRefLNG>EN</PreDocRefLNG>
+        <ComOfInfAR29>default</ComOfInfAR29>
+        <ComOfInfAR29LNG>EN</ComOfInfAR29LNG>
+      </PREADMREFAR2>
+      <PRODOCDC2>
+        <DocTypDC21>720</DocTypDC21>
+        <DocRefDC23>EU_EXIT</DocRefDC23>
+        <DocRefDCLNG>EN</DocRefDCLNG>
+        <ComOfInfDC25>default</ComOfInfDC25>
+        <ComOfInfDC25LNG>EN</ComOfInfDC25LNG>
+      </PRODOCDC2>
+      <PACGS2>
+        <MarNumOfPacGS21>Bloomingales</MarNumOfPacGS21>
+        <MarNumOfPacGS21LNG>EN</MarNumOfPacGS21LNG>
+        <KinOfPacGS23>BX</KinOfPacGS23>
+        <NumOfPacGS24>1</NumOfPacGS24>
       </PACGS2>
     </GOOITEGDS>
   </CC015B>
@@ -1279,6 +1632,5 @@ trait TestXml {
       <AddInfMT21>7000.0EUR07IT00000100000Z3</AddInfMT21>
       <AddInfCodMT23></AddInfCodMT23>
     </SPEMENMT2>
-
 
 }

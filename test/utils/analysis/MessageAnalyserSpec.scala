@@ -19,6 +19,7 @@ package utils.analysis
 import com.codahale.metrics.Histogram
 import data.TestXml
 import org.mockito.ArgumentMatchers._
+import org.mockito.Mockito
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
@@ -36,8 +37,9 @@ class MessageAnalyserSpec extends AnyFreeSpec with Matchers with MockitoSugar wi
     override lazy val numberOfSeals: Histogram           = mock[Histogram]
   }
 
-  private val acceptedMovementTypes = Seq(CC015B, CC015BRequiringDefaultGuarantee, CC015BwithMesSenMES3, CC044A, CC044AwithMesSenMES3)
-  private val rejectedMovementTypes = Seq(CC007A, CC007AwithMesSenMES3, CC014A, CC014AwithMesSenMES3)
+  private val trackedXmlMovements =
+    Seq(CC015B, CC015BRequiringDefaultGuarantee, CC015BWithMultipleGoodsItems, CC015BwithMesSenMES3, CC044A, CC044AWithMultipleGoodsItems, CC044AwithMesSenMES3)
+  private val untrackedXmlMovements = Seq(CC007A, CC007AwithMesSenMES3, CC014A, CC014AwithMesSenMES3)
 
   def resetMocks()                          = reset(analyser.messageSize, analyser.numberOfGoods, analyser.numberOfDocuments, analyser.numberOfSpecialMentions, analyser.numberOfSeals)
   override protected def beforeEach(): Unit = resetMocks()
@@ -47,7 +49,7 @@ class MessageAnalyserSpec extends AnyFreeSpec with Matchers with MockitoSugar wi
     "trackMessageStats" - {
 
       "must only return size if message is not a DepartureDeclaration or UnloadingRemarks" in {
-        rejectedMovementTypes.foreach {
+        untrackedXmlMovements.foreach {
           xml =>
             resetMocks()
             analyser.trackMessageStats(xml)
@@ -70,6 +72,61 @@ class MessageAnalyserSpec extends AnyFreeSpec with Matchers with MockitoSugar wi
         verify(analyser.numberOfGoods, times(1)).update(1)
         verify(analyser.numberOfDocuments, times(1)).update(1)
         verify(analyser.numberOfSpecialMentions, times(1)).update(0)
+        verify(analyser.numberOfSeals, times(1)).update(1)
+
+      }
+
+      "must be called the appropriate number of times for a DepartureDeclaration with no documents (CC015BRequiringDefaultGuarantee)" in {
+        analyser.trackMessageStats(CC015BRequiringDefaultGuarantee)
+
+        verify(analyser.messageSize, times(1)).update(anyInt())
+        verify(analyser.numberOfGoods, times(1)).update(1)
+        verify(analyser.numberOfDocuments, times(1)).update(0)
+        verify(analyser.numberOfSpecialMentions, times(1)).update(1)
+        verify(analyser.numberOfSeals, times(1)).update(1)
+
+      }
+
+      "must be called the appropriate number of times for an UnloadingRemarks (CC044A)" in {
+        analyser.trackMessageStats(CC044A)
+
+        verify(analyser.messageSize, times(1)).update(anyInt())
+        verify(analyser.numberOfGoods, times(1)).update(1)
+        verify(analyser.numberOfDocuments, times(1)).update(1)
+        verify(analyser.numberOfSpecialMentions, times(1)).update(0)
+        verify(analyser.numberOfSeals, times(1)).update(1)
+
+      }
+
+      "must be called the appropriate number of times for an UnloadingRemarks (CC044AWithMultipleGoodsItems) with multiple goods items" in {
+        analyser.trackMessageStats(CC044AWithMultipleGoodsItems)
+
+        verify(analyser.messageSize, times(1)).update(anyInt())
+        verify(analyser.numberOfGoods, times(1)).update(2)
+
+        val numberOfDocuments = Mockito.inOrder(analyser.numberOfDocuments)
+        numberOfDocuments.verify(analyser.numberOfDocuments).update(1)
+        numberOfDocuments.verify(analyser.numberOfDocuments).update(2)
+
+        verify(analyser.numberOfSpecialMentions, times(2)).update(0)
+        verify(analyser.numberOfSeals, times(1)).update(1)
+
+      }
+
+      "must be called the appropriate number of times for a DepartureDeclaration with multiple goods items (CC015BWithMultipleGoodsItems)" in {
+        analyser.trackMessageStats(CC015BWithMultipleGoodsItems)
+
+        verify(analyser.messageSize, times(1)).update(anyInt())
+        verify(analyser.numberOfGoods, times(1)).update(2)
+
+        val numberOfDocuments = Mockito.inOrder(analyser.numberOfDocuments)
+        numberOfDocuments.verify(analyser.numberOfDocuments).update(0)
+        numberOfDocuments.verify(analyser.numberOfDocuments).update(1)
+
+        val numberOfSpecialMentions = Mockito.inOrder(analyser.numberOfSpecialMentions)
+        numberOfSpecialMentions.verify(analyser.numberOfSpecialMentions).update(1)
+        numberOfSpecialMentions.verify(analyser.numberOfSpecialMentions).update(0)
+
         verify(analyser.numberOfSeals, times(1)).update(1)
 
       }
