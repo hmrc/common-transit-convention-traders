@@ -16,66 +16,84 @@
 
 package utils.guaranteeParsing
 
-import com.google.inject.Inject
+import cats.syntax.all._
 import config.DefaultGuaranteeConfig
-import models.ParseError.{AmountWithoutCurrency, GuaranteeNotFound, InvalidAmount}
-import models.{AddSpecialMentionInstruction, ChangeGuaranteeInstruction, GOOITEGDSNode, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, SpecialMention, SpecialMentionGuarantee, SpecialMentionOther, TransformInstruction, TransformInstructionSet}
+import models.AddSpecialMentionInstruction
+import models.ChangeGuaranteeInstruction
+import models.GOOITEGDSNode
+import models.Guarantee
+import models.NoChangeGuaranteeInstruction
+import models.NoChangeInstruction
+import models.ParseError
+import models.ParseError.AmountWithoutCurrency
+import models.ParseError.InvalidAmount
+import models.SpecialMentionGuarantee
+import models.SpecialMentionOther
+import models.TransformInstruction
+import models.TransformInstructionSet
 
-class InstructionBuilder @Inject()(guaranteeInstructionBuilder: GuaranteeInstructionBuilder) {
+import javax.inject.Inject
+
+class InstructionBuilder @Inject() (guaranteeInstructionBuilder: GuaranteeInstructionBuilder) {
 
   def buildInstructionSet(gooNode: GOOITEGDSNode, guarantees: Seq[Guarantee]): Either[ParseError, TransformInstructionSet] = {
-    val defaultingGuarantees = guarantees.filter(g => g.isDefaulting)
+    val defaultingGuarantees = guarantees.filter(_.isDefaulting)
 
-    val specialMentionGuarantees = gooNode.specialMentions.filter(sm => sm.isInstanceOf[SpecialMentionGuarantee]).map { sm => sm.asInstanceOf[SpecialMentionGuarantee] }
+    val specialMentionGuarantees = gooNode.specialMentions.collect {
+      case smg: SpecialMentionGuarantee => smg
+    }
+
     val mentionedGuarantees = defaultingGuarantees.map {
-      g => pair(g, specialMentionGuarantees)
+      g => findMatchingMention(g, specialMentionGuarantees)
     }
 
-    val preserveInstructions = gooNode.specialMentions.filter(sm => sm.isInstanceOf[SpecialMentionOther]).map { sm =>
-      val smo = sm.asInstanceOf[SpecialMentionOther]
-      NoChangeInstruction(smo.xml)
+    val preserveInstructions = gooNode.specialMentions.collect {
+      case smo: SpecialMentionOther =>
+        NoChangeInstruction(smo.xml)
     }
 
-    ParseError.sequenceErrors(mentionedGuarantees.map {
-      case (m, g) => guaranteeInstructionBuilder.buildInstructionFromGuarantee(g, m)
-    }).map {
-      instructions =>
-        TransformInstructionSet(gooNode, instructions ++ preserveInstructions)
-    }
+    mentionedGuarantees.toList
+      .traverse {
+        case (m, g) =>
+          guaranteeInstructionBuilder.buildInstructionFromGuarantee(g, m)
+      }
+      .map {
+        instructions =>
+          TransformInstructionSet(gooNode, instructions ++ preserveInstructions)
+      }
   }
 
-  def pair(guarantee: Guarantee, specialMentionGuarantees: Seq[SpecialMentionGuarantee]): (Option[SpecialMentionGuarantee], Guarantee) =
-    specialMentionGuarantees.filter(sm => sm.additionalInfo.endsWith(guarantee.gReference)).headOption match {
-      case Some(mention) => (Some(mention), guarantee)
-      case None => (None, guarantee)
-    }
+  def findMatchingMention(guarantee: Guarantee, specialMentionGuarantees: Seq[SpecialMentionGuarantee]): (Option[SpecialMentionGuarantee], Guarantee) = {
+    val matchingMention = specialMentionGuarantees.find(
+      sm => sm.additionalInfo.endsWith(guarantee.gReference)
+    )
+    (matchingMention, guarantee)
+  }
 }
 
-class GuaranteeInstructionBuilder @Inject() (defaultGuaranteeConfig: DefaultGuaranteeConfig){
+class GuaranteeInstructionBuilder @Inject() (defaultGuaranteeConfig: DefaultGuaranteeConfig) {
 
   def buildInstructionFromGuarantee(g: Guarantee, osm: Option[SpecialMentionGuarantee]): Either[ParseError, TransformInstruction] = {
-    val defaultGuaranteeAmount = BigDecimal(defaultGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()
+    val defaultGuaranteeAmount   = BigDecimal(defaultGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()
     val defaultGuaranteeCurrency = defaultGuaranteeConfig.currency
-    val defaultGuarantee = SpecialMentionGuarantee(defaultGuaranteeAmount ++ defaultGuaranteeCurrency ++ g.gReference, Nil)
+    val defaultGuarantee         = SpecialMentionGuarantee(defaultGuaranteeAmount ++ defaultGuaranteeCurrency ++ g.gReference, Nil)
     osm match {
       case Some(sm) =>
-        if(!Guarantee.referenceTypes.contains(g.gType)) {
+        if (!Guarantee.referenceTypes.contains(g.gType)) {
           Right(NoChangeGuaranteeInstruction(sm))
-        }
-        else
-        {
+        } else {
           sm.toDetails(g.gReference).flatMap {
-            details => (details.guaranteeAmount, details.currencyCode) match {
-              case (Some(_), None) =>
-                Left(AmountWithoutCurrency("Parsed Amount value without currency"))
-              case (Some(amount), Some(_)) if amount > 0 =>
-                Right(NoChangeGuaranteeInstruction(sm))
-              case (Some(_), Some(_)) =>
-                Left(InvalidAmount("Amount cannot be equal to or less than 0"))
-              case (None, _) =>{
-                Right(ChangeGuaranteeInstruction(SpecialMentionGuarantee(defaultGuaranteeAmount ++ defaultGuaranteeCurrency ++ g.gReference, sm.xml)))
+            details =>
+              (details.guaranteeAmount, details.currencyCode) match {
+                case (Some(_), None) =>
+                  Left(AmountWithoutCurrency("Parsed Amount value without currency"))
+                case (Some(amount), Some(_)) if amount > 0 =>
+                  Right(NoChangeGuaranteeInstruction(sm))
+                case (Some(_), Some(_)) =>
+                  Left(InvalidAmount("Amount cannot be equal to or less than 0"))
+                case (None, _) =>
+                  Right(ChangeGuaranteeInstruction(SpecialMentionGuarantee(defaultGuaranteeAmount ++ defaultGuaranteeCurrency ++ g.gReference, sm.xml)))
               }
-            }
           }
         }
       case None =>

@@ -80,15 +80,15 @@ class InstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAn
 
   }
 
-  "pair" - {
+  "findMatchingMention" - {
     val smSeq = Seq(SpecialMentionGuarantee("1alpha"), SpecialMentionGuarantee("2beta", Nil), SpecialMentionGuarantee("3charlie"))
 
     "returns (Some(SpecialMentionGuarantee), Guarantee) when a special mention ends with the guarantee gReference value" in {
-      sut.pair(Guarantee('1', "alpha"), smSeq) mustBe a[Tuple2[Some[SpecialMention], Guarantee]]
+      sut.findMatchingMention(Guarantee('1', "alpha"), smSeq) mustBe a[Tuple2[Some[SpecialMention], Guarantee]]
     }
 
     "returns None when no special mention ends with the guarantee gReference value" in {
-      sut.pair(Guarantee('1', "delta"), smSeq) mustBe a[Tuple2[None.type, Guarantee]]
+      sut.findMatchingMention(Guarantee('1', "delta"), smSeq) mustBe a[Tuple2[None.type, Guarantee]]
     }
   }
 
