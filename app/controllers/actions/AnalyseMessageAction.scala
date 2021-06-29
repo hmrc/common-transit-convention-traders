@@ -43,7 +43,7 @@ class AnalyseMessageAction[F[_] <: Request[_]](analyser: MessageAnalyser, ec: Ex
 
   override protected def transform[A](request: F[A]): Future[F[A]] = {
     request.body match {
-      case body: NodeSeq if body.nonEmpty =>
+      case body: NodeSeq =>
         analyser.trackMessageStats(body)
       case _ =>
     }
