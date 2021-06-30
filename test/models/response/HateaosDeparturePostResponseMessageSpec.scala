@@ -26,6 +26,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 import models.Box
 import models.BoxId
+import models.domain.DepartureId
 
 class HateoasDeparturePostResponseMessageSpec
     extends AnyFreeSpec
@@ -50,7 +51,7 @@ class HateoasDeparturePostResponseMessageSpec
           |}""".stripMargin)
 
       val result = HateoasDeparturePostResponseMessage(
-        "1",
+        DepartureId(1),
         "IE015",
         <test>default</test>,
         Option.empty
@@ -83,7 +84,7 @@ class HateoasDeparturePostResponseMessageSpec
           |}""".stripMargin)
 
       val result = HateoasDeparturePostResponseMessage(
-        "1",
+        DepartureId(1),
         "IE015",
         <test>default</test>,
         Some(testBox)

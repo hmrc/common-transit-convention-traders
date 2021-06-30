@@ -16,6 +16,7 @@
 
 package models.response
 
+import models.domain.ArrivalId
 import models.{Box, BoxId}
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.ScalaFutures
@@ -42,7 +43,7 @@ class HateoasArrivalMovementPostResponseMessageSpec extends AnyFreeSpec with Mat
           |}""".stripMargin)
 
       val result = HateoasArrivalMovementPostResponseMessage(
-        "1",
+        ArrivalId(1),
         "IE007",
         <test>default</test>,
         None
@@ -75,7 +76,7 @@ class HateoasArrivalMovementPostResponseMessageSpec extends AnyFreeSpec with Mat
           |}""".stripMargin)
 
       val result = HateoasArrivalMovementPostResponseMessage(
-        "1",
+        ArrivalId(1),
         "IE007",
         <test>default</test>,
         Some(testBox)

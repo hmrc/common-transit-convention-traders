@@ -30,6 +30,7 @@ import controllers.actions.ValidateDepartureDeclarationAction
 import metrics.HasActionMetrics
 import metrics.MetricsKeys
 import models.MessageType
+import models.domain.DepartureId
 import models.response.HateoasDeparturePostResponseMessage
 import models.response.HateoasResponseDeparture
 import models.response.HateoasResponseDepartures
@@ -78,7 +79,7 @@ class DeparturesController @Inject() (
                   }
                   MessageType.getMessageType(request.body) match {
                     case Some(messageType: MessageType) =>
-                      val departureId = Utils.lastFragment(locationValue)
+                      val departureId = DepartureId(Utils.lastFragment(locationValue).toInt)
                       Accepted(
                         Json.toJson(
                           HateoasDeparturePostResponseMessage(
@@ -100,7 +101,7 @@ class DeparturesController @Inject() (
       }
     }
 
-  def getDeparture(departureId: String): Action[AnyContent] =
+  def getDeparture(departureId: DepartureId): Action[AnyContent] =
     withMetricsTimerAction(GetDeparture) {
       (authAction andThen validateAcceptJsonHeaderAction).async {
         implicit request =>

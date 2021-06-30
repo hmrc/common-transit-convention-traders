@@ -33,12 +33,14 @@ import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import utils.CallOps._
 import utils.ResponseHelper
 import utils.Utils
-
 import java.time.OffsetDateTime
+import utils.CallOps._
+
 import javax.inject.Inject
+import models.domain.{ArrivalId, MessageId}
+
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
@@ -59,7 +61,7 @@ class ArrivalMessagesController @Inject() (
 
   lazy val messagesCount = histo(GetArrivalMessagesCount)
 
-  def sendMessageDownstream(arrivalId: String): Action[NodeSeq] =
+  def sendMessageDownstream(arrivalId: ArrivalId): Action[NodeSeq] =
     withMetricsTimerAction(SendArrivalMessage) {
       (authAction andThen validateMessageAction).async(parse.xml) {
         implicit request =>
@@ -71,7 +73,7 @@ class ArrivalMessagesController @Inject() (
                     case Some(locationValue) =>
                       MessageType.getMessageType(request.body) match {
                         case Some(messageType: MessageType) =>
-                          val messageId = Utils.lastFragment(locationValue)
+                          val messageId = MessageId(Utils.lastFragment(locationValue).toInt)
                           Accepted(
                             Json.toJson(
                               HateoasArrivalMessagesPostResponseMessage(
@@ -94,7 +96,7 @@ class ArrivalMessagesController @Inject() (
       }
     }
 
-  def getArrivalMessage(arrivalId: String, messageId: String): Action[AnyContent] =
+  def getArrivalMessage(arrivalId: ArrivalId, messageId: MessageId): Action[AnyContent] =
     withMetricsTimerAction(GetArrivalMessage) {
       (authAction andThen validateAcceptJsonHeaderAction).async {
         implicit request =>
@@ -107,7 +109,7 @@ class ArrivalMessagesController @Inject() (
       }
     }
 
-  def getArrivalMessages(arrivalId: String, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
+  def getArrivalMessages(arrivalId: ArrivalId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
     withMetricsTimerAction(GetArrivalMessages) {
       (authAction andThen validateAcceptJsonHeaderAction).async {
         implicit request =>

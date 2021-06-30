@@ -17,18 +17,18 @@
 package models.response
 
 import controllers.routes
-import models.domain.Arrival
+import models.domain.{Arrival, ArrivalId}
 import play.api.libs.json.{JsObject, Json}
 import utils.CallOps._
 
 object HateoasResponseArrival {
 
-  def apply(arrivalId: String, created: String, updated: String, movementReferenceNumber: String, status: String): JsObject = {
+  def apply(arrivalId: ArrivalId, created: String, updated: String, movementReferenceNumber: String, status: String): JsObject = {
     val arrivalUrl = routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext
     val messagesUrl = routes.ArrivalMessagesController.getArrivalMessages(arrivalId).urlWithContext
 
     Json.obj(
-      "id" -> arrivalId,
+      "id" -> arrivalId.value.toString,
       "created" -> created,
       "updated" -> updated,
       "movementReferenceNumber" -> movementReferenceNumber,
@@ -41,6 +41,6 @@ object HateoasResponseArrival {
   }
 
   def apply(arrival: Arrival): JsObject = {
-    apply(arrival.arrivalId.toString, arrival.created.toString, arrival.updated.toString, arrival.movementReferenceNumber, arrival.status)
+    apply(arrival.arrivalId, arrival.created.toString, arrival.updated.toString, arrival.movementReferenceNumber, arrival.status)
   }
 }

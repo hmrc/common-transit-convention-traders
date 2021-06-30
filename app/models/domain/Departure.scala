@@ -25,7 +25,7 @@ object Departure {
 }
 
 trait BaseDeparture {
-  def departureId: Int
+  def departureId: DepartureId
   def location: String
   def messagesLocation: String
   def movementReferenceNumber: Option[String]
@@ -34,7 +34,7 @@ trait BaseDeparture {
   def updated: LocalDateTime
 }
 
-case class Departure(departureId: Int,
+case class Departure(departureId: DepartureId,
                      location: String,
                      messagesLocation: String,
                      movementReferenceNumber: Option[String],

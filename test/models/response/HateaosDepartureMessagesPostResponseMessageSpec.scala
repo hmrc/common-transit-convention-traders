@@ -16,6 +16,7 @@
 
 package models.response
 
+import models.domain.{DepartureId, MessageId}
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -49,8 +50,8 @@ class HateoasDepartureMessagesPostResponseMessageSpec extends AnyFreeSpec with M
           |}""".stripMargin)
 
       val result = HateoasDepartureMessagesPostResponseMessage(
-        "1",
-        "2",
+        DepartureId(1),
+        MessageId(2),
         "IE014",
         <test>default</test>
       )

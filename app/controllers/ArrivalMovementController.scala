@@ -24,7 +24,7 @@ import controllers.actions.ValidateArrivalNotificationAction
 import metrics.HasActionMetrics
 import metrics.MetricsKeys
 import models.MessageType
-import models.domain.Arrivals
+import models.domain.{ArrivalId, Arrivals}
 import models.response.HateoasArrivalMovementPostResponseMessage
 import models.response.HateoasResponseArrival
 import models.response.HateoasResponseArrivals
@@ -37,9 +37,10 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.CallOps._
 import utils.ResponseHelper
 import utils.Utils
-
 import java.time.OffsetDateTime
+
 import javax.inject.Inject
+
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
@@ -70,7 +71,7 @@ class ArrivalMovementController @Inject() (
                 case Some(locationValue: String) =>
                   MessageType.getMessageType(request.body) match {
                     case Some(messageType: MessageType) =>
-                      val arrivalId = Utils.lastFragment(locationValue)
+                      val arrivalId = ArrivalId(Utils.lastFragment(locationValue).toInt)
                       Accepted(
                         Json.toJson(
                           HateoasArrivalMovementPostResponseMessage(
@@ -91,7 +92,7 @@ class ArrivalMovementController @Inject() (
           }
       }
 
-  def resubmitArrivalNotification(arrivalId: String): Action[NodeSeq] =
+  def resubmitArrivalNotification(arrivalId: ArrivalId): Action[NodeSeq] =
     withMetricsTimerAction(ResubmitArrivalNotification) {
       (authAction andThen validateArrivalNotificationAction).async(parse.xml) {
         implicit request =>
@@ -101,7 +102,7 @@ class ArrivalMovementController @Inject() (
                 case Some(locationValue: String) =>
                   MessageType.getMessageType(request.body) match {
                     case Some(messageType: MessageType) =>
-                      val arrivalId = Utils.lastFragment(locationValue)
+                      val arrivalId = ArrivalId(Utils.lastFragment(locationValue).toInt)
                       Accepted(
                         Json.toJson(
                           HateoasArrivalMovementPostResponseMessage(
@@ -124,7 +125,7 @@ class ArrivalMovementController @Inject() (
       }
     }
 
-  def getArrival(arrivalId: String): Action[AnyContent] =
+  def getArrival(arrivalId: ArrivalId): Action[AnyContent] =
     withMetricsTimerAction(GetArrival) {
       (authAction andThen validateAcceptJsonHeaderAction).async {
         implicit request =>

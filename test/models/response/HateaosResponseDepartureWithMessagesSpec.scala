@@ -17,9 +17,9 @@
 package models.response
 
 import data.TestXml
-
 import java.time.LocalDateTime
-import models.domain.{DepartureWithMessages, MovementMessage}
+
+import models.domain.{DepartureId, DepartureWithMessages, MovementMessage}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -32,7 +32,7 @@ class HateoasResponseDepartureWithMessagesSpec extends AnyFreeSpec with Matchers
 
   "HateoasResponseDepartureWithMessages" - {
     "must generate correct message structure for messages" in {
-      val departureWithMessages = DepartureWithMessages(3,
+      val departureWithMessages = DepartureWithMessages(DepartureId(3),
         "loc",
         "messageLoc",
         Some("mrn"),
@@ -96,7 +96,7 @@ class HateoasResponseDepartureWithMessagesSpec extends AnyFreeSpec with Matchers
     }
 
     "must generate correct message structure for empty messages" in {
-      val departureWithMessages = DepartureWithMessages(3,
+      val departureWithMessages = DepartureWithMessages(DepartureId(3),
         "loc",
         "messageLoc",
         Some("mrn"),

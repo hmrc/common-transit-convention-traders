@@ -25,7 +25,7 @@ object Arrival {
 }
 
 trait BaseArrival {
-  def arrivalId: Int
+  def arrivalId: ArrivalId
   def location: String
   def messagesLocation: String
   def movementReferenceNumber: String
@@ -34,7 +34,7 @@ trait BaseArrival {
   def updated: LocalDateTime
 }
 
-case class Arrival(arrivalId: Int,
+case class Arrival(arrivalId: ArrivalId,
                    location: String,
                    messagesLocation: String,
                    movementReferenceNumber: String,

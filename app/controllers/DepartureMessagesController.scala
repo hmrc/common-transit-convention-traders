@@ -36,9 +36,11 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.CallOps._
 import utils.ResponseHelper
 import utils.Utils
-
 import java.time.OffsetDateTime
+
 import javax.inject.Inject
+import models.domain.{DepartureId, MessageId}
+
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
@@ -59,7 +61,7 @@ class DepartureMessagesController @Inject() (
 
   lazy val messagesCount = histo(GetDepartureMessagesCount)
 
-  def sendMessageDownstream(departureId: String): Action[NodeSeq] =
+  def sendMessageDownstream(departureId: DepartureId): Action[NodeSeq] =
     withMetricsTimerAction(SendDepartureMessage) {
       (authAction andThen validateMessageAction).async(parse.xml) {
         implicit request =>
@@ -71,7 +73,7 @@ class DepartureMessagesController @Inject() (
                     case Some(locationValue) =>
                       MessageType.getMessageType(request.body) match {
                         case Some(messageType: MessageType) =>
-                          val messageId = Utils.lastFragment(locationValue)
+                          val messageId = MessageId(Utils.lastFragment(locationValue).toInt)
                           Accepted(
                             Json.toJson(
                               HateoasDepartureMessagesPostResponseMessage(
@@ -94,7 +96,7 @@ class DepartureMessagesController @Inject() (
       }
     }
 
-  def getDepartureMessages(departureId: String, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
+  def getDepartureMessages(departureId: DepartureId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
     withMetricsTimerAction(GetDepartureMessages) {
       (authAction andThen validateAcceptJsonHeaderAction).async {
         implicit request =>
@@ -108,7 +110,7 @@ class DepartureMessagesController @Inject() (
       }
     }
 
-  def getDepartureMessage(departureId: String, messageId: String): Action[AnyContent] =
+  def getDepartureMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent] =
     withMetricsTimerAction(GetDepartureMessage) {
       (authAction andThen validateAcceptJsonHeaderAction).async {
         implicit request =>
