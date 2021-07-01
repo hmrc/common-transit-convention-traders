@@ -20,8 +20,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import controllers.routes
 import models.Box
 import models.BoxId
-import models.domain.Departure
-import models.domain.Departures
+import models.domain.{Departure, DepartureId, Departures}
 import models.response.HateoasResponseDeparture
 import models.response.HateoasResponseDepartures
 import org.scalatest.concurrent.IntegrationPatience
@@ -35,10 +34,10 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CallOps._
-
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with utils.WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
@@ -137,9 +136,9 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
     "must return Departure when departure is found" in {
       val connector = app.injector.instanceOf[DeparturesConnector]
       val departure = Departure(
-        1,
-        routes.DeparturesController.getDeparture("1").urlWithContext,
-        routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext,
+        DepartureId(1),
+        routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
+        routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
         Some("MRN"),
         "status",
         LocalDateTime.now,
@@ -158,7 +157,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
       implicit val hc            = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1").futureValue
+      val result = connector.get(DepartureId(1)).futureValue
 
       result mustEqual Right(departure)
     }
@@ -166,9 +165,9 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[DeparturesConnector]
       val departure = Departure(
-        1,
-        routes.DeparturesController.getDeparture("1").urlWithContext,
-        routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext,
+        DepartureId(1),
+        routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
+        routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
         Some("MRN"),
         "status",
         LocalDateTime.now,
@@ -189,7 +188,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
       implicit val hc            = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1").futureValue
+      val result = connector.get(DepartureId(1)).futureValue
 
       result.isLeft mustEqual true
       result.left.map {
@@ -207,7 +206,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
       implicit val hc            = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1").futureValue
+      val result = connector.get(DepartureId(1)).futureValue
 
       result.isLeft mustEqual true
       result.left.map {
@@ -225,7 +224,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
       implicit val hc            = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1").futureValue
+      val result = connector.get(DepartureId(1)).futureValue
 
       result.isLeft mustEqual true
       result.left.map {
@@ -243,7 +242,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
       implicit val hc            = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1").futureValue
+      val result = connector.get(DepartureId(1)).futureValue
 
       result.isLeft mustEqual true
       result.left.map {
@@ -258,9 +257,9 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
       val departures = Departures(
         Seq(
           Departure(
-            1,
-            routes.DeparturesController.getDeparture("1").urlWithContext,
-            routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext,
+            DepartureId(1),
+            routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
+            routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
             Some("1"),
             "status",
             LocalDateTime.now,
@@ -291,9 +290,9 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
       val departures = Departures(
         Seq(
           Departure(
-            1,
-            routes.DeparturesController.getDeparture("1").urlWithContext,
-            routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext,
+            DepartureId(1),
+            routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
+            routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
             Some("1"),
             "status",
             LocalDateTime.now,
@@ -383,9 +382,9 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
       val departures = Departures(
         Seq(
           Departure(
-            1,
-            routes.DeparturesController.getDeparture("1").urlWithContext,
-            routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext,
+            DepartureId(1),
+            routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
+            routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
             Some("MRN"),
             "status",
             LocalDateTime.now,

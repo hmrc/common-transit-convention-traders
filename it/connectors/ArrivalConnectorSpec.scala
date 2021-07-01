@@ -20,8 +20,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import controllers.routes
 import models.Box
 import models.BoxId
-import models.domain.Arrival
-import models.domain.Arrivals
+import models.domain.{Arrival, ArrivalId, Arrivals}
 import models.response.HateoasResponseArrival
 import models.response.HateoasResponseArrivals
 import org.scalatest.concurrent.IntegrationPatience
@@ -35,10 +34,10 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CallOps._
-
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with utils.WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
@@ -134,7 +133,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
         implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-        val result = connector.put("<document></document>", "2").futureValue
+        val result = connector.put("<document></document>", ArrivalId(2)).futureValue
 
       result.right.get.responseData mustEqual Option(testBox)
     }
@@ -152,7 +151,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
         implicit val hc = HeaderCarrier()
         implicit val requestHeader = FakeRequest()
 
-        val result = connector.put("<document></document>", "2").futureValue
+        val result = connector.put("<document></document>", ArrivalId(2)).futureValue
 
         result.left.get.statusCode mustEqual INTERNAL_SERVER_ERROR
       }
@@ -171,7 +170,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.put("<document></document>", "2").futureValue
+      val result = connector.put("<document></document>", ArrivalId(2)).futureValue
 
       result.left.get.statusCode mustEqual BAD_REQUEST
     }
@@ -181,7 +180,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
   "get" - {
     "must return Arrival when arrival is found" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      val arrival = Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)
+      val arrival = Arrival(ArrivalId(1), routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext, routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)
 
       server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1"))
         .willReturn(aResponse().withStatus(OK)
@@ -190,14 +189,14 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1").futureValue
+      val result = connector.get(ArrivalId(1)).futureValue
 
       result mustEqual Right(arrival)
     }
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      val arrival = Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)
+      val arrival = Arrival(ArrivalId(1), routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext, routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)
 
       val response = HateoasResponseArrival(arrival)
 
@@ -208,7 +207,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1").futureValue
+      val result = connector.get(ArrivalId(1)).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
@@ -222,7 +221,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1").futureValue
+      val result = connector.get(ArrivalId(1)).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual NOT_FOUND }
@@ -236,7 +235,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1").futureValue
+      val result = connector.get(ArrivalId(1)).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual BAD_REQUEST }
@@ -250,7 +249,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1").futureValue
+      val result = connector.get(ArrivalId(1)).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
@@ -260,7 +259,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
   "getForEori" - {
     "must return Arrival when arrival is found" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      val arrivals = Arrivals(Seq(Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)), 1, 1)
+      val arrivals = Arrivals(Seq(Arrival(ArrivalId(1), routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext, routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)), 1, 1)
 
       server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals"))
         .willReturn(aResponse().withStatus(OK)
@@ -276,7 +275,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
 
     "must render updatedSince parameter into request URL" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      val arrivals = Arrivals(Seq(Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)), 1, 1)
+      val arrivals = Arrivals(Seq(Arrival(ArrivalId(1), routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext, routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)), 1, 1)
       val dateTime = Some(OffsetDateTime.of(2021, 3, 14, 13, 15, 30, 0, ZoneOffset.ofHours(1)))
 
       server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals?updatedSince=2021-03-14T13%3A15%3A30%2B01%3A00"))
@@ -293,7 +292,7 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      val arrival = Arrivals(Seq(Arrival(1, routes.ArrivalMovementController.getArrival("1").urlWithContext, routes.ArrivalMessagesController.getArrivalMessages("1").urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)), 1, 1)
+      val arrival = Arrivals(Seq(Arrival(ArrivalId(1), routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext, routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)), 1, 1)
 
       val response = HateoasResponseArrivals(arrival)
 
