@@ -17,7 +17,8 @@
 package config
 
 import com.google.inject.AbstractModule
-import utils.{JsonHelper, MessageTranslation}
+import utils.JsonHelper
+import utils.MessageTranslation
 
 class Module extends AbstractModule {
 

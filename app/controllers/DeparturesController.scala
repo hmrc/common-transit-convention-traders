@@ -45,6 +45,7 @@ import utils.Utils
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
+import controllers.actions.AnalyseMessageActionProvider
 
 class DeparturesController @Inject() (
   cc: ControllerComponents,
@@ -54,6 +55,7 @@ class DeparturesController @Inject() (
   validateDepartureDeclarationAction: ValidateDepartureDeclarationAction,
   ensureGuaranteeAction: EnsureGuaranteeAction,
   auditService: AuditService,
+  messageAnalyser: AnalyseMessageActionProvider,
   val metrics: Metrics
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
@@ -67,7 +69,7 @@ class DeparturesController @Inject() (
 
   def submitDeclaration(): Action[NodeSeq] =
     withMetricsTimerAction(SubmitDepartureDeclaration) {
-      (authAction andThen validateDepartureDeclarationAction andThen ensureGuaranteeAction).async(parse.xml) {
+      (authAction andThen validateDepartureDeclarationAction andThen messageAnalyser() andThen ensureGuaranteeAction).async(parse.xml) {
         implicit request =>
           departuresConnector.post(request.newXml.toString).map {
             case Right(response) =>
