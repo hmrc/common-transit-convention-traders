@@ -16,22 +16,18 @@
 
 package connectors
 
+import java.time.OffsetDateTime
+
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import connectors.util.CustomHttpReader
-import metrics.HasMetrics
-import metrics.MetricsKeys
+import javax.inject.Inject
+import metrics.{HasMetrics, MetricsKeys}
 import models.domain.{DepartureId, DepartureWithMessages, MessageId, MovementMessage}
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpClient
-import uk.gov.hmrc.http.HttpResponse
-import java.time.OffsetDateTime
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 
-import javax.inject.Inject
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class DepartureMessageConnector @Inject() (http: HttpClient, appConfig: AppConfig, val metrics: Metrics) extends BaseConnector with HasMetrics {
 
@@ -39,7 +35,7 @@ class DepartureMessageConnector @Inject() (http: HttpClient, appConfig: AppConfi
 
   def post(message: String, departureId: DepartureId)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     withMetricsTimerResponse(PostMessage) {
-      val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute).addPathParts(departureId.value.toString, "messages")
+      val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute).addPathParts(departureId.toString, "messages")
       http.POSTString(url.toString, message, requestHeaders(requestHeader))(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders(requestHeader)), ec)
     }
 
@@ -49,7 +45,7 @@ class DepartureMessageConnector @Inject() (http: HttpClient, appConfig: AppConfi
   )(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, DepartureWithMessages]] =
     withMetricsTimerAsync(GetMessagesForDeparture) {
       timer =>
-        val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute).addPathParts(departureId.value.toString, "messages")
+        val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute).addPathParts(departureId.toString, "messages")
         val query = receivedSince.map(dt => Seq("receivedSince" -> queryDateFormatter.format(dt))).getOrElse(Seq.empty)
         http.GET[HttpResponse](url.toString, queryParams = query, responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
           response =>
@@ -65,7 +61,7 @@ class DepartureMessageConnector @Inject() (http: HttpClient, appConfig: AppConfi
   ): Future[Either[HttpResponse, MovementMessage]] =
     withMetricsTimerAsync(GetMessageById) {
       timer =>
-        val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute).addPathParts(departureId.value.toString, "messages", messageId.value.toString)
+        val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute).addPathParts(departureId.toString, "messages", messageId.toString)
         http.GET[HttpResponse](url.toString, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
           response =>
             if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()

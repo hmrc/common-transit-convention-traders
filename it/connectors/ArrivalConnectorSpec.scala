@@ -16,15 +16,14 @@
 
 package connectors
 
+import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
+
 import com.github.tomakehurst.wiremock.client.WireMock._
 import controllers.routes
-import models.Box
-import models.BoxId
+import models.{Box, BoxId}
 import models.domain.{Arrival, ArrivalId, Arrivals}
-import models.response.HateoasResponseArrival
-import models.response.HateoasResponseArrivals
-import org.scalatest.concurrent.IntegrationPatience
-import org.scalatest.concurrent.ScalaFutures
+import models.response.{HateoasResponseArrival, HateoasResponseArrivals}
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -34,9 +33,6 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CallOps._
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

@@ -17,11 +17,9 @@
 package config
 
 import io.lemonlabs.uri.Url
+import javax.inject.{Inject, Singleton}
 import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-
-import javax.inject.Inject
-import javax.inject.Singleton
 
 @Singleton
 class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig) {

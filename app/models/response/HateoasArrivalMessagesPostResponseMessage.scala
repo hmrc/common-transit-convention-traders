@@ -19,9 +19,9 @@ package models.response
 import controllers.routes
 import models.domain.{ArrivalId, MessageId}
 import play.api.libs.json.{JsObject, Json}
+import utils.CallOps._
 
 import scala.xml.NodeSeq
-import utils.CallOps._
 
 object HateoasArrivalMessagesPostResponseMessage {
 
@@ -34,8 +34,8 @@ object HateoasArrivalMessagesPostResponseMessage {
         "self"    -> Json.obj("href" -> messageUrl),
         "arrival"    -> Json.obj("href" -> arrivalUrl)
       ),
-      "arrivalId" -> arrivalId.value.toString,
-      "messageId" -> messageId.value.toString,
+      "arrivalId" -> arrivalId.toString,
+      "messageId" -> messageId.toString,
       "messageType" -> messageType,
       "body" -> message.toString,
       "_embedded" -> Json.obj(

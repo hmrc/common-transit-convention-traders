@@ -34,8 +34,8 @@ object HateoasDepartureMessagesPostResponseMessage {
         "self"    -> Json.obj("href" -> messageUrl),
         "departure"    -> Json.obj("href" -> departureUrl)
       ),
-      "departureId" -> departureId.value.toString,
-      "messageId" -> messageId.value.toString,
+      "departureId" -> departureId.toString,
+      "messageId" -> messageId.toString,
       "messageType" -> messageType,
       "body" -> message.toString,
       "_embedded" -> Json.obj(

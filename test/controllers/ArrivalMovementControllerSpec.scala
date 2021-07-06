@@ -16,19 +16,19 @@
 
 package controllers
 
+import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
+
 import akka.util.ByteString
 import com.kenshoo.play.metrics.Metrics
 import connectors.{ArrivalConnector, ResponseHeaders}
-import controllers.actions.AuthAction
-import controllers.actions.FakeAuthAction
+import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
+import models.Box
 import models.domain.{Arrival, ArrivalId, Arrivals}
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.reset
-import org.mockito.Mockito.when
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.OptionValues
+import org.mockito.Mockito.{reset, when}
+import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -37,22 +37,13 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.JsNull
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
-import play.api.mvc.Headers
-import play.api.test.FakeHeaders
-import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import play.api.test.Helpers.headers
+import play.api.test.{FakeHeaders, FakeRequest}
+import play.api.test.Helpers.{headers, _}
 import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
 import utils.CallOps._
 import utils.TestMetrics
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
-
-import models.Box
 
 import scala.concurrent.Future
 

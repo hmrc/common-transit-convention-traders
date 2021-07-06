@@ -16,9 +16,7 @@
 
 package models
 
-import play.api.libs.json.Format
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
+import play.api.libs.json.{Format, Json, OFormat}
 
 case class Box(boxId: BoxId, boxName: String)
 

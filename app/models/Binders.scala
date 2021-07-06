@@ -18,6 +18,7 @@ package models
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
+
 import play.api.mvc.QueryStringBindable
 
 object Binders {

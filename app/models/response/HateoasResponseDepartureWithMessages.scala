@@ -19,8 +19,8 @@ package models.response
 import controllers.routes
 import models.domain.{DepartureWithMessages, MessageId}
 import play.api.libs.json.{JsObject, Json}
-import utils.Utils
 import utils.CallOps._
+import utils.Utils
 
 object HateoasResponseDepartureWithMessages {
 

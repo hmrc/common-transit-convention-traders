@@ -16,29 +16,22 @@
 
 package connectors
 
-import com.github.tomakehurst.wiremock.client.WireMock.aResponse
-import com.github.tomakehurst.wiremock.client.WireMock.get
-import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
+import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
+
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, urlEqualTo}
 import controllers.routes
-import models.domain.{Departure, DepartureId, DepartureWithMessages, MessageId, MovementMessage}
+import models.domain._
 import models.response.HateoasResponseDeparture
-import org.scalatest.concurrent.IntegrationPatience
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
-import play.api.test.Helpers.BAD_REQUEST
-import play.api.test.Helpers.INTERNAL_SERVER_ERROR
-import play.api.test.Helpers.NOT_FOUND
-import play.api.test.Helpers.OK
+import play.api.test.Helpers.{BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK}
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CallOps._
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

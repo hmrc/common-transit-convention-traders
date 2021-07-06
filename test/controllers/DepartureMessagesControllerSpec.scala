@@ -16,7 +16,7 @@
 
 package controllers
 
-import java.time.LocalDateTime
+import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
 
 import akka.util.ByteString
 import com.kenshoo.play.metrics.Metrics
@@ -24,6 +24,7 @@ import connectors.DepartureMessageConnector
 import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
 import models.domain.{DepartureId, DepartureWithMessages, MessageId, MovementMessage}
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalatest.concurrent.ScalaFutures
@@ -44,9 +45,6 @@ import utils.CallOps._
 import utils.TestMetrics
 
 import scala.concurrent.Future
-import org.mockito.ArgumentCaptor
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
 
 class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
   private val mockMessageConnector: DepartureMessageConnector = mock[DepartureMessageConnector]

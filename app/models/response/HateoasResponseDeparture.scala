@@ -29,7 +29,7 @@ object  HateoasResponseDeparture {
 
     JsObject(
       Json.obj(
-      "id" -> departureId.value.toString,
+      "id" -> departureId.toString,
       "created" -> created,
       "updated" -> updated,
       "movementReferenceNumber" -> movementReferenceNumber,

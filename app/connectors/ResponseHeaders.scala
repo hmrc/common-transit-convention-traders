@@ -17,11 +17,9 @@
 package connectors
 
 import cats.syntax.all._
-import uk.gov.hmrc.http.HttpReads
-import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.HttpResponse
 import play.api.libs.json.Reads
-import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.{HttpReads, HttpResponse, UpstreamErrorResponse}
 
 final case class ResponseHeaders[A](headers: Map[String, Seq[String]], responseData: A) {
 

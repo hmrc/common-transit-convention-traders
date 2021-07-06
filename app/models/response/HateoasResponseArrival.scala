@@ -28,7 +28,7 @@ object HateoasResponseArrival {
     val messagesUrl = routes.ArrivalMessagesController.getArrivalMessages(arrivalId).urlWithContext
 
     Json.obj(
-      "id" -> arrivalId.value.toString,
+      "id" -> arrivalId.toString,
       "created" -> created,
       "updated" -> updated,
       "movementReferenceNumber" -> movementReferenceNumber,

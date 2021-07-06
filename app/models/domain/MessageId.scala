@@ -17,15 +17,15 @@
 package models.domain
 
 import play.api.libs.json._
-import play.api.mvc.PathBindable
 
-import scala.util.Try
+case class MessageId(value: Int) extends AnyVal {
 
-case class MessageId(value: Int) extends AnyVal {}
+  override def toString: String = value.toString
+
+}
 
 object MessageId {
 
   implicit val messageIdFormat = Json.valueFormat[MessageId]
 
-//  implicit lazy val pathBindable: PathBindable[MessageId] = implicitly[PathBindable[Int]].transform(i => MessageId(i), _.value)
 }

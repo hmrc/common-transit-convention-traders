@@ -16,19 +16,18 @@
 
 package controllers
 
+import java.util.UUID
+
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.domain.Departures
 import models.response.HateoasResponseDepartures
-import org.scalatest.concurrent.IntegrationPatience
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.http.Status._
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
-
-import java.util.UUID
 
 class CustomJsonErrorHandlerSpec
     extends AnyFreeSpec

@@ -16,22 +16,19 @@
 
 package connectors
 
+import java.time.OffsetDateTime
+
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import connectors.util.CustomHttpReader
-import metrics.HasMetrics
-import metrics.MetricsKeys
+import javax.inject.Inject
+import metrics.{HasMetrics, MetricsKeys}
+import models.Box
 import models.domain.{Arrival, ArrivalId, Arrivals}
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, UpstreamErrorResponse}
-import java.time.OffsetDateTime
 
-import javax.inject.Inject
-import models.Box
-import uk.gov.hmrc.http.HttpReads.Implicits._
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class ArrivalConnector @Inject() (http: HttpClient, appConfig: AppConfig, val metrics: Metrics) extends BaseConnector with HasMetrics {
 
@@ -47,14 +44,14 @@ class ArrivalConnector @Inject() (http: HttpClient, appConfig: AppConfig, val me
   def put(message: String, arrivalId: ArrivalId)(implicit requestHeader: RequestHeader, headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]] =
     withMetricsTimerAsync(Put) {
       _ =>
-      val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathPart(arrivalId.value.toString)
+      val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathPart(arrivalId.toString)
       http.PUTString[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]](url.toString, message, requestHeaders(requestHeader))
     }
 
   def get(arrivalId: ArrivalId)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] =
     withMetricsTimerAsync(GetById) {
       timer =>
-        val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathPart(arrivalId.value.toString)
+        val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathPart(arrivalId.toString)
         http.GET[HttpResponse](url.toString, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
           response =>
             if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()

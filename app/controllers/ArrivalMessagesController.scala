@@ -16,30 +16,22 @@
 
 package controllers
 
+import java.time.OffsetDateTime
+
 import com.kenshoo.play.metrics.Metrics
 import connectors.ArrivalMessageConnector
-import controllers.actions.AuthAction
-import controllers.actions.ValidateAcceptJsonHeaderAction
-import controllers.actions.ValidateArrivalMessageAction
-import metrics.HasActionMetrics
-import metrics.MetricsKeys
+import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateArrivalMessageAction}
+import javax.inject.Inject
+import metrics.{HasActionMetrics, MetricsKeys}
 import models.MessageType
-import models.response.HateoasArrivalMessagesPostResponseMessage
-import models.response.HateoasArrivalResponseMessage
-import models.response.HateoasResponseArrivalWithMessages
+import models.domain.{ArrivalId, MessageId}
+import models.response.{HateoasArrivalMessagesPostResponseMessage, HateoasArrivalResponseMessage, HateoasResponseArrivalWithMessages}
 import play.api.libs.json.Json
-import play.api.mvc.Action
-import play.api.mvc.AnyContent
-import play.api.mvc.ControllerComponents
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import utils.ResponseHelper
-import utils.Utils
-import java.time.OffsetDateTime
 import utils.CallOps._
-
-import javax.inject.Inject
-import models.domain.{ArrivalId, MessageId}
+import utils.{ResponseHelper, Utils}
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq

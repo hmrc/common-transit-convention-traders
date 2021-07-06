@@ -18,8 +18,7 @@ package models.response
 
 import controllers.routes
 import models.domain.Arrivals
-import play.api.libs.json.JsObject
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, Json}
 import utils.CallOps._
 
 object HateoasResponseArrivals {

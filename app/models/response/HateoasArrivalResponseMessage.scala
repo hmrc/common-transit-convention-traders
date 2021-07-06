@@ -32,8 +32,8 @@ object HateoasArrivalResponseMessage {
         "self"    -> Json.obj("href" -> arrivalUrl),
         "arrival"    -> Json.obj("href" -> messageUrl)
       ),
-      "arrivalId" -> arrivalId.value.toString,
-      "messageId" -> messageId.value.toString,
+      "arrivalId" -> arrivalId.toString,
+      "messageId" -> messageId.toString,
       "received" -> m.dateTime,
       "messageType" -> m.messageType,
       "body" -> m.message.toString

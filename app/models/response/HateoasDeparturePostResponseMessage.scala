@@ -19,8 +19,7 @@ package response
 
 import controllers.routes
 import models.domain.DepartureId
-import play.api.libs.json.JsObject
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, Json}
 import utils.CallOps._
 
 import scala.xml.NodeSeq
@@ -48,7 +47,7 @@ object HateoasDeparturePostResponseMessage {
       "_links" -> Json.obj(
         "self" -> Json.obj("href" -> departureUrl)
       ),
-      "departureId" -> departureId.value.toString,
+      "departureId" -> departureId.toString,
       "messageType" -> messageType,
       "body"        -> messageBody.toString
     ) ++ embedded

@@ -16,9 +16,9 @@
 
 package models.response
 
-import data.TestXml
 import java.time.LocalDateTime
 
+import data.TestXml
 import models.domain.{DepartureId, DepartureWithMessages, MovementMessage}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec

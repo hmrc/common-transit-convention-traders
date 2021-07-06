@@ -48,7 +48,7 @@ object HateoasArrivalMovementPostResponseMessage {
       "_links" -> Json.obj(
         "self"    -> Json.obj("href" -> arrivalUrl)
       ),
-      "arrivalId" -> arrivalId.value.toString,
+      "arrivalId" -> arrivalId.toString,
       "messageType" -> messageType,
       "body" -> message.toString
     ) ++ embedded
