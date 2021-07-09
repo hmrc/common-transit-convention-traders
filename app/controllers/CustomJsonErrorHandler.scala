@@ -16,20 +16,17 @@
 
 package controllers
 
+import javax.inject.Inject
 import play.api.Configuration
 import play.api.http.Status._
 import play.api.libs.json.Json
-import play.api.mvc.RequestHeader
-import play.api.mvc.Result
+import play.api.mvc.{RequestHeader, Result}
 import play.api.mvc.Results._
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
-import uk.gov.hmrc.play.bootstrap.backend.http.JsonErrorHandler
+import uk.gov.hmrc.play.bootstrap.backend.http.{ErrorResponse, JsonErrorHandler}
 import uk.gov.hmrc.play.bootstrap.config.HttpAuditEvent
 
-import javax.inject.Inject
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class CustomJsonErrorHandler @Inject() (
   auditConnector: AuditConnector,

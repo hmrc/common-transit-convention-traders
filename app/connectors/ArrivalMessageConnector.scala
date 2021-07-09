@@ -16,35 +16,31 @@
 
 package connectors
 
+import java.time.OffsetDateTime
+
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import connectors.util.CustomHttpReader
-import metrics.HasMetrics
-import metrics.MetricsKeys
-import models.domain.ArrivalWithMessages
-import models.domain.MovementMessage
-import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpClient
-import uk.gov.hmrc.http.HttpResponse
-
-import java.time.OffsetDateTime
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import metrics.{HasMetrics, MetricsKeys}
+import models.domain.{ArrivalId, ArrivalWithMessages, MessageId, MovementMessage}
+import play.api.mvc.RequestHeader
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
+
+import scala.concurrent.{ExecutionContext, Future}
 
 class ArrivalMessageConnector @Inject() (http: HttpClient, appConfig: AppConfig, val metrics: Metrics) extends BaseConnector with HasMetrics {
 
   import MetricsKeys.ArrivalBackend._
 
-  def get(arrivalId: String, messageId: String)(implicit
+  def get(arrivalId: ArrivalId, messageId: MessageId)(implicit
     requestHeader: RequestHeader,
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Either[HttpResponse, MovementMessage]] =
     withMetricsTimerAsync(GetMessageById) {
       timer =>
-        val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathParts(arrivalId, "messages", messageId)
+        val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathParts(arrivalId.toString, "messages", messageId.toString)
         http.GET[HttpResponse](url.toString, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
           response =>
             if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
@@ -52,19 +48,19 @@ class ArrivalMessageConnector @Inject() (http: HttpClient, appConfig: AppConfig,
         }
     }
 
-  def post(message: String, arrivalId: String)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+  def post(message: String, arrivalId: ArrivalId)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     withMetricsTimerResponse(PostMessage) {
-      val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathParts(arrivalId, "messages")
+      val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathParts(arrivalId.toString, "messages")
       http.POSTString(url.toString, message, requestHeaders(requestHeader))(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders(requestHeader)), ec)
     }
 
   def getMessages(
-    arrivalId: String,
+    arrivalId: ArrivalId,
     receivedSince: Option[OffsetDateTime]
   )(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, ArrivalWithMessages]] =
     withMetricsTimerAsync(GetMessagesForArrival) {
       timer =>
-        val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathParts(arrivalId, "messages")
+        val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathParts(arrivalId.toString, "messages")
         val query = receivedSince.map(dt => Seq("receivedSince" -> queryDateFormatter.format(dt))).getOrElse(Seq.empty)
         http.GET[HttpResponse](url.toString, queryParams = query, responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
           response =>

@@ -16,11 +16,12 @@
 
 package models.response
 
+import models.domain.ArrivalId
 import models.{Box, BoxId}
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
@@ -42,7 +43,7 @@ class HateoasArrivalMovementPostResponseMessageSpec extends AnyFreeSpec with Mat
           |}""".stripMargin)
 
       val result = HateoasArrivalMovementPostResponseMessage(
-        "1",
+        ArrivalId(1),
         "IE007",
         <test>default</test>,
         None
@@ -75,7 +76,7 @@ class HateoasArrivalMovementPostResponseMessageSpec extends AnyFreeSpec with Mat
           |}""".stripMargin)
 
       val result = HateoasArrivalMovementPostResponseMessage(
-        "1",
+        ArrivalId(1),
         "IE007",
         <test>default</test>,
         Some(testBox)

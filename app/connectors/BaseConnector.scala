@@ -16,24 +16,18 @@
 
 package connectors
 
+import java.time.format.DateTimeFormatter
+
+import config.Constants.ClientIdHeader
 import connectors.util.CustomHttpReader
 import connectors.util.CustomHttpReader.INTERNAL_SERVER_ERROR
 import io.lemonlabs.uri.UrlPath
 import models.ChannelType.api
-import play.api.http.HeaderNames
-import play.api.http.MimeTypes
+import play.api.http.{HeaderNames, MimeTypes}
 import play.api.libs.json.Reads
 import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpErrorFunctions
-import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.{HeaderCarrier, HttpErrorFunctions, HttpResponse}
 import uk.gov.hmrc.http.logging.Authorization
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpErrorFunctions
-import uk.gov.hmrc.http.HttpResponse
-import config.Constants.ClientIdHeader
-
-import java.time.format.DateTimeFormatter
 
 class BaseConnector extends HttpErrorFunctions {
 

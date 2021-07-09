@@ -19,10 +19,8 @@ package services
 import data.{EnsureGuaranteeServiceTestData => TestData}
 import models.Guarantee
 import models.request.DepartureDeclarationXSD
-import org.scalacheck.Gen
-import org.scalacheck.Shrink
-import org.scalatest.concurrent.IntegrationPatience
-import org.scalatest.concurrent.ScalaFutures
+import org.scalacheck.{Gen, Shrink}
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite

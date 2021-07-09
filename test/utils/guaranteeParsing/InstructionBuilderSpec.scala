@@ -18,8 +18,9 @@ package utils.guaranteeParsing
 
 import config.DefaultGuaranteeConfig
 import data.TestXml
-import models.ParseError.{AmountWithoutCurrency, GuaranteeNotFound}
-import models.{AddSpecialMentionInstruction, ChangeGuaranteeInstruction, GOOITEGDSNode, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, SpecialMention, SpecialMentionGuarantee, SpecialMentionOther, TransformInstructionSet}
+import models.ParseError.AmountWithoutCurrency
+import models._
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
@@ -28,7 +29,6 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import org.mockito.ArgumentMatchers.any
 
 class InstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAndAfterEach with TestXml with Matchers with ScalaCheckPropertyChecks {
 

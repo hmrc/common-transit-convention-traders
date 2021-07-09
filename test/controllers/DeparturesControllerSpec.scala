@@ -16,27 +16,22 @@
 
 package controllers
 
+import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
+
 import audit.AuditService
 import com.kenshoo.play.metrics.Metrics
-import connectors.DeparturesConnector
-import connectors.ResponseHeaders
-import controllers.actions.AuthAction
-import controllers.actions.FakeAuthAction
+import connectors.{DeparturesConnector, ResponseHeaders}
+import controllers.actions.{AuthAction, FakeAuthAction}
 import data.TestXml
 import models.Box
-import models.domain.Departure
-import models.domain.Departures
+import models.domain.{Departure, DepartureId, Departures}
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.reset
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.when
-import org.scalatest.BeforeAndAfterEach
+import org.mockito.Mockito.{reset, times, verify, when}
+import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames
@@ -44,18 +39,13 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
-import play.api.test.FakeHeaders
-import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import play.api.test.Helpers.headers
+import play.api.test.{FakeHeaders, FakeRequest}
+import play.api.test.Helpers.{headers, _}
 import services.EnsureGuaranteeService
-import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
 import utils.CallOps._
 import utils.TestMetrics
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
+
 import scala.concurrent.Future
 
 class DeparturesControllerSpec
@@ -90,9 +80,9 @@ class DeparturesControllerSpec
   }
 
   val sourceDeparture = Departure(
-    123,
-    routes.DeparturesController.getDeparture("123").urlWithContext,
-    routes.DepartureMessagesController.getDepartureMessages("123").urlWithContext,
+    DepartureId(123),
+    routes.DeparturesController.getDeparture(DepartureId(123)).urlWithContext,
+    routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).urlWithContext,
     Some("MRN"),
     "status",
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
@@ -212,7 +202,7 @@ class DeparturesControllerSpec
 
         status(result) mustBe ACCEPTED
         contentAsJson(result) mustBe expectedJson
-        headers(result) must contain(LOCATION -> routes.DeparturesController.getDeparture("123").urlWithContext)
+        headers(result) must contain(LOCATION -> routes.DeparturesController.getDeparture(DepartureId(123)).urlWithContext)
 
         verify(mockAuditService, times(1)).auditEvent(any(), any())(any())
       }
@@ -240,7 +230,7 @@ class DeparturesControllerSpec
 
         status(result) mustBe ACCEPTED
         contentAsJson(result) mustEqual expectedJson
-        headers(result) must contain(LOCATION -> routes.DeparturesController.getDeparture("123").urlWithContext)
+        headers(result) must contain(LOCATION -> routes.DeparturesController.getDeparture(DepartureId(123)).urlWithContext)
 
         verify(mockAuditService, times(0)).auditEvent(any(), any())(any())
       }
@@ -275,33 +265,6 @@ class DeparturesControllerSpec
       status(result) mustBe INTERNAL_SERVER_ERROR
     }
 
-    "must return InternalServerError when invalid Location value in downstream response header" ignore {}
-
-    "must escape departureId in location response header" in {
-      when(mockDepartureConnector.post(any())(any(), any(), any()))
-        .thenReturn(
-          Future.successful(Right(responseHeaders("/transits-movements-trader-at-departure/movements/departures/123-@+*~-31@")))
-        )
-
-      val request = fakeRequestDepartures(method = "POST", body = CC015B)
-      val result  = route(app, request).value
-
-      val expectedJson = Json.parse("""{
-          |  "_links": {
-          |    "self": {
-          |      "href": "/customs/transits/movements/departures/123-@+*~-31@"
-          |    }
-          |  },
-          |  "departureId": "123-@+*~-31@",
-          |  "messageType": "IE015",
-          |  "body": "<CC015B>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20190912</DatOfPreMES9>\n    <TimOfPreMES10>1222</TimOfPreMES10>\n    <IntConRefMES11>WE190912102530</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <TesIndMES18>0</TesIndMES18>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB015B</MesTypMES20>\n    <HEAHEA>\n      <RefNumHEA4>01CTC201909121215</RefNumHEA4>\n      <TypOfDecHEA24>T2</TypOfDecHEA24>\n      <CouOfDesCodHEA30>IT</CouOfDesCodHEA30>\n      <AgrLocOfGooCodHEA38>default</AgrLocOfGooCodHEA38>\n      <AgrLocOfGooHEA39>default</AgrLocOfGooHEA39>\n      <AgrLocOfGooHEA39LNG>EN</AgrLocOfGooHEA39LNG>\n      <AutLocOfGooCodHEA41>default</AutLocOfGooCodHEA41>\n      <PlaOfLoaCodHEA46>DOVER</PlaOfLoaCodHEA46>\n      <CouOfDisCodHEA55>GB</CouOfDisCodHEA55>\n      <CusSubPlaHEA66>default</CusSubPlaHEA66>\n      <InlTraModHEA75>20</InlTraModHEA75>\n      <IdeOfMeaOfTraAtDHEA78>EU_EXIT</IdeOfMeaOfTraAtDHEA78>\n      <IdeOfMeaOfTraAtDHEA78LNG>EN</IdeOfMeaOfTraAtDHEA78LNG>\n      <IdeOfMeaOfTraCroHEA85>EU_EXIT</IdeOfMeaOfTraCroHEA85>\n      <IdeOfMeaOfTraCroHEA85LNG>EN</IdeOfMeaOfTraCroHEA85LNG>\n      <ConIndHEA96>0</ConIndHEA96>\n      <DiaLanIndAtDepHEA254>EN</DiaLanIndAtDepHEA254>\n      <NCTSAccDocHEA601LNG>EN</NCTSAccDocHEA601LNG>\n      <TotNumOfIteHEA305>1</TotNumOfIteHEA305>\n      <TotNumOfPacHEA306>1</TotNumOfPacHEA306>\n      <TotGroMasHEA307>1000</TotGroMasHEA307>\n      <DecDatHEA383>20190912</DecDatHEA383>\n      <DecPlaHEA394>DOVER</DecPlaHEA394>\n      <DecPlaHEA394LNG>EN</DecPlaHEA394LNG>\n    </HEAHEA>\n    <TRAPRIPC1>\n      <NamPC17>CITY WATCH SHIPPING</NamPC17>\n      <StrAndNumPC122>125 Psuedopolis Yard</StrAndNumPC122>\n      <PosCodPC123>SS99 1AA</PosCodPC123>\n      <CitPC124>Ank-Morpork</CitPC124>\n      <CouPC125>GB</CouPC125>\n      <NADLNGPC>EN</NADLNGPC>\n      <TINPC159>GB652420267000</TINPC159>\n    </TRAPRIPC1>\n    <TRACONCO1>\n      <NamCO17>QUIRM ENGINEERING</NamCO17>\n      <StrAndNumCO122>125 Psuedopolis Yard</StrAndNumCO122>\n      <PosCodCO123>SS99 1AA</PosCodCO123>\n      <CitCO124>Ank-Morpork</CitCO124>\n      <CouCO125>GB</CouCO125>\n      <TINCO159>GB602070107000</TINCO159>\n    </TRACONCO1>\n    <TRACONCE1>\n      <NamCE17>DROFL POTTERY</NamCE17>\n      <StrAndNumCE122>125 Psuedopolis Yard</StrAndNumCE122>\n      <PosCodCE123>SS99 1AA</PosCodCE123>\n      <CitCE124>Ank-Morpork</CitCE124>\n      <CouCE125>GB</CouCE125>\n      <NADLNGCE>EN</NADLNGCE>\n      <TINCE159>GB658120050000</TINCE159>\n    </TRACONCE1>\n    <CUSOFFDEPEPT>\n      <RefNumEPT1>GB000060</RefNumEPT1>\n    </CUSOFFDEPEPT>\n    <CUSOFFTRARNS>\n      <RefNumRNS1>FR001260</RefNumRNS1>\n      <ArrTimTRACUS085>201909160100</ArrTimTRACUS085>\n    </CUSOFFTRARNS>\n    <CUSOFFDESEST>\n      <RefNumEST1>IT021100</RefNumEST1>\n    </CUSOFFDESEST>\n    <SEAINFSLI>\n      <SeaNumSLI2>1</SeaNumSLI2>\n      <SEAIDSID>\n        <SeaIdeSID1>Seal001</SeaIdeSID1>\n        <SeaIdeSID1LNG>EN</SeaIdeSID1LNG>\n      </SEAIDSID>\n    </SEAINFSLI>\n    <GUAGUA>\n      <GuaTypGUA1>3</GuaTypGUA1>\n      <GUAREFREF>\n        <GuaRefNumGRNREF1>default</GuaRefNumGRNREF1>\n        <OthGuaRefREF4>EU_EXIT</OthGuaRefREF4>\n        <AccCodREF6>test</AccCodREF6>\n      </GUAREFREF>\n    </GUAGUA>\n    <GOOITEGDS>\n      <IteNumGDS7>1</IteNumGDS7>\n      <ComCodTarCodGDS10>default</ComCodTarCodGDS10>\n      <DecTypGDS15>default</DecTypGDS15>\n      <GooDesGDS23>Flowers</GooDesGDS23>\n      <GooDesGDS23LNG>EN</GooDesGDS23LNG>\n      <GroMasGDS46>1000</GroMasGDS46>\n      <NetMasGDS48>999</NetMasGDS48>\n      <CouOfDesGDS59>ex</CouOfDesGDS59>\n      <PREADMREFAR2>\n        <PreDocTypAR21>T2</PreDocTypAR21>\n        <PreDocRefAR26>EU_EXIT-T2</PreDocRefAR26>\n        <PreDocRefLNG>EN</PreDocRefLNG>\n        <ComOfInfAR29>default</ComOfInfAR29>\n        <ComOfInfAR29LNG>EN</ComOfInfAR29LNG>\n      </PREADMREFAR2>\n      <PRODOCDC2>\n        <DocTypDC21>720</DocTypDC21>\n        <DocRefDC23>EU_EXIT</DocRefDC23>\n        <DocRefDCLNG>EN</DocRefDCLNG>\n        <ComOfInfDC25>default</ComOfInfDC25>\n        <ComOfInfDC25LNG>EN</ComOfInfDC25LNG>\n      </PRODOCDC2>\n      <PACGS2>\n        <MarNumOfPacGS21>Bloomingales</MarNumOfPacGS21>\n        <MarNumOfPacGS21LNG>EN</MarNumOfPacGS21LNG>\n        <KinOfPacGS23>BX</KinOfPacGS23>\n        <NumOfPacGS24>1</NumOfPacGS24>\n      </PACGS2>\n    </GOOITEGDS>\n  </CC015B>"
-          |}""".stripMargin)
-
-      status(result) mustBe ACCEPTED
-      contentAsJson(result) mustEqual expectedJson
-      headers(result) must contain(LOCATION -> routes.DeparturesController.getDeparture("123-@+*~-31@").urlWithContext)
-    }
-
     "must exclude query string if present in downstream location header" in {
       when(mockDepartureConnector.post(any())(any(), any(), any()))
         .thenReturn(
@@ -327,7 +290,7 @@ class DeparturesControllerSpec
 
       status(result) mustBe ACCEPTED
       contentAsJson(result) mustEqual expectedJson
-      headers(result) must contain(LOCATION -> routes.DeparturesController.getDeparture("123").urlWithContext)
+      headers(result) must contain(LOCATION -> routes.DeparturesController.getDeparture(DepartureId(123)).urlWithContext)
     }
 
     "must return UnsupportedMediaType when Content-Type is JSON" in {
@@ -375,12 +338,12 @@ class DeparturesControllerSpec
 
   "GET  /movements/departures/:departureId" - {
     "return 200 with json body of departure" in {
-      when(mockDepartureConnector.get(any())(any(), any(), any()))
+      when(mockDepartureConnector.get(DepartureId(any()))(any(), any(), any()))
         .thenReturn(Future.successful(Right(sourceDeparture)))
 
       val request = FakeRequest(
         "GET",
-        routes.DeparturesController.getDeparture("123").url,
+        routes.DeparturesController.getDeparture(DepartureId(123)).url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -391,12 +354,12 @@ class DeparturesControllerSpec
     }
 
     "return 404 if downstream return 404" in {
-      when(mockDepartureConnector.get(any())(any(), any(), any()))
+      when(mockDepartureConnector.get(DepartureId(any()))(any(), any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(404, ""))))
 
       val request = FakeRequest(
         "GET",
-        routes.DeparturesController.getDeparture("123").url,
+        routes.DeparturesController.getDeparture(DepartureId(123)).url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -406,12 +369,12 @@ class DeparturesControllerSpec
     }
 
     "return 500 for other downstream errors" in {
-      when(mockDepartureConnector.get(any())(any(), any(), any()))
+      when(mockDepartureConnector.get(DepartureId(any()))(any(), any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(INTERNAL_SERVER_ERROR, ""))))
 
       val request = FakeRequest(
         "GET",
-        routes.DeparturesController.getDeparture("123").url,
+        routes.DeparturesController.getDeparture(DepartureId(123)).url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )

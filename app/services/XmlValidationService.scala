@@ -16,10 +16,9 @@
 
 package services
 
-import config.Constants
-
 import java.io._
 import java.net.URL
+
 import javax.xml.parsers.SAXParserFactory
 import javax.xml.validation.Schema
 import models.request.XSDFile
@@ -28,8 +27,8 @@ import org.xml.sax.helpers.DefaultHandler
 import play.api.Logger
 import utils.Utils
 
-import scala.xml.{Elem, SAXParseException, SAXParser}
 import scala.xml.factory.XMLLoader
+import scala.xml.{Elem, SAXParseException, SAXParser}
 
 class XmlValidationService {
 

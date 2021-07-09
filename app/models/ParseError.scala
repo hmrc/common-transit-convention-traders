@@ -17,8 +17,6 @@
 package models
 
 import cats.implicits._
-import cats.data._
-import cats._
 
 
 sealed trait ParseError {

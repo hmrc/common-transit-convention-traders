@@ -17,7 +17,7 @@
 package models.response
 
 import controllers.routes
-import models.domain.DepartureWithMessages
+import models.domain.{DepartureWithMessages, MessageId}
 import play.api.libs.json.{JsObject, Json}
 import utils.CallOps._
 import utils.Utils
@@ -25,7 +25,7 @@ import utils.Utils
 object HateoasResponseDepartureWithMessages {
 
   def apply(departureWithMessages: DepartureWithMessages): JsObject = {
-    val departureId = departureWithMessages.departureId.toString
+    val departureId = departureWithMessages.departureId
     val messagesUrl = routes.DepartureMessagesController.getDepartureMessages(departureId).urlWithContext
 
     Json.obj(
@@ -35,7 +35,7 @@ object HateoasResponseDepartureWithMessages {
       "_embedded" -> Json.obj(
         "messages" -> departureWithMessages.messages.map {
           x =>
-            HateoasDepartureResponseMessage(departureId, Utils.lastFragment(x.location), x)
+            HateoasDepartureResponseMessage(departureId, MessageId(Utils.lastFragment(x.location).toInt), x)
         },
         "departure" -> HateoasResponseDeparture(
           departureId,

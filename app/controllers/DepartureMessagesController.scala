@@ -16,29 +16,23 @@
 
 package controllers
 
+import java.time.OffsetDateTime
+
 import com.kenshoo.play.metrics.Metrics
 import connectors.DepartureMessageConnector
-import controllers.actions.AuthAction
-import controllers.actions.ValidateAcceptJsonHeaderAction
-import controllers.actions.ValidateDepartureMessageAction
-import metrics.HasActionMetrics
-import metrics.MetricsKeys
+import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateDepartureMessageAction}
+import javax.inject.Inject
+import metrics.{HasActionMetrics, MetricsKeys}
 import models.MessageType
-import models.response.HateoasDepartureMessagesPostResponseMessage
-import models.response.HateoasDepartureResponseMessage
-import models.response.HateoasResponseDepartureWithMessages
+import models.domain.{DepartureId, MessageId}
+import models.response.{HateoasDepartureMessagesPostResponseMessage, HateoasDepartureResponseMessage, HateoasResponseDepartureWithMessages}
 import play.api.libs.json.Json
-import play.api.mvc.Action
-import play.api.mvc.AnyContent
-import play.api.mvc.ControllerComponents
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.CallOps._
-import utils.ResponseHelper
-import utils.Utils
+import utils.{ResponseHelper, Utils}
 
-import java.time.OffsetDateTime
-import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 import controllers.actions.AnalyseMessageActionProvider
@@ -61,7 +55,7 @@ class DepartureMessagesController @Inject() (
 
   lazy val messagesCount = histo(GetDepartureMessagesCount)
 
-  def sendMessageDownstream(departureId: String): Action[NodeSeq] =
+  def sendMessageDownstream(departureId: DepartureId): Action[NodeSeq] =
     withMetricsTimerAction(SendDepartureMessage) {
       (authAction andThen validateMessageAction andThen messageAnalyser()).async(parse.xml) {
         implicit request =>
@@ -73,7 +67,7 @@ class DepartureMessagesController @Inject() (
                     case Some(locationValue) =>
                       MessageType.getMessageType(request.body) match {
                         case Some(messageType: MessageType) =>
-                          val messageId = Utils.lastFragment(locationValue)
+                          val messageId = MessageId(Utils.lastFragment(locationValue).toInt)
                           Accepted(
                             Json.toJson(
                               HateoasDepartureMessagesPostResponseMessage(
@@ -96,7 +90,7 @@ class DepartureMessagesController @Inject() (
       }
     }
 
-  def getDepartureMessages(departureId: String, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
+  def getDepartureMessages(departureId: DepartureId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
     withMetricsTimerAction(GetDepartureMessages) {
       (authAction andThen validateAcceptJsonHeaderAction).async {
         implicit request =>
@@ -110,7 +104,7 @@ class DepartureMessagesController @Inject() (
       }
     }
 
-  def getDepartureMessage(departureId: String, messageId: String): Action[AnyContent] =
+  def getDepartureMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent] =
     withMetricsTimerAction(GetDepartureMessage) {
       (authAction andThen validateAcceptJsonHeaderAction).async {
         implicit request =>
