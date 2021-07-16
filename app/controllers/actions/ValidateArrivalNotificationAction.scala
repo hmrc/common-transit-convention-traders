@@ -19,17 +19,22 @@ package controllers.actions
 import javax.inject.Inject
 import models.request.ArrivalNotificationXSD
 import play.api.mvc.Results.BadRequest
-import play.api.mvc.{ActionRefiner, Request, Result}
-import services.{XmlError, XmlValidationService}
+import play.api.mvc.ActionRefiner
+import play.api.mvc.Request
+import play.api.mvc.Result
+import services.XmlError
+import services.XmlValidationService
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.xml.NodeSeq
+import models.response.XmlParseJsonErrorResponse
+import play.api.libs.json.Json
 
-class ValidateArrivalNotificationAction @Inject()(xmlValidationService: XmlValidationService)(
-  implicit val executionContext: ExecutionContext)
-  extends ActionRefiner[Request, Request] {
+class ValidateArrivalNotificationAction @Inject() (xmlValidationService: XmlValidationService)(implicit val executionContext: ExecutionContext)
+    extends ActionRefiner[Request, Request] {
 
-  override protected def refine[A](request: Request[A]): Future[Either[Result, Request[A]]] = {
+  override protected def refine[A](request: Request[A]): Future[Either[Result, Request[A]]] =
     request.body match {
       case body: NodeSeq =>
         if (body.nonEmpty) {
@@ -37,13 +42,15 @@ class ValidateArrivalNotificationAction @Inject()(xmlValidationService: XmlValid
             case Right(_) =>
               Future.successful(Right(request))
             case Left(error: XmlError) =>
-              Future.successful(Left(BadRequest(error.reason)))
+              val errorResponse = XmlParseJsonErrorResponse.fromXmlError(error)
+              Future.successful(Left(BadRequest(Json.toJson(errorResponse))))
           }
         } else {
-          Future.successful(Left(BadRequest(XmlError.RequestBodyEmptyMessage)))
+          val errorResponse = XmlParseJsonErrorResponse(XmlError.RequestBodyEmptyMessage)
+          Future.successful(Left(BadRequest(Json.toJson(errorResponse))))
         }
       case _ =>
-        Future.successful(Left(BadRequest(XmlError.RequestBodyInvalidTypeMessage)))
+        val errorResponse = XmlParseJsonErrorResponse(XmlError.RequestBodyInvalidTypeMessage)
+        Future.successful(Left(BadRequest(Json.toJson(errorResponse))))
     }
-  }
 }
