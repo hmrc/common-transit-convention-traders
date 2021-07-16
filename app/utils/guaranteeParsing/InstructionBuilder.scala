@@ -18,8 +18,8 @@ package utils.guaranteeParsing
 
 import com.google.inject.Inject
 import config.DefaultGuaranteeConfig
-import models.ParseError.{AmountWithoutCurrency, GuaranteeNotFound, InvalidAmount}
-import models.{AddSpecialMentionInstruction, ChangeGuaranteeInstruction, GOOITEGDSNode, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, SpecialMention, SpecialMentionGuarantee, SpecialMentionOther, TransformInstruction, TransformInstructionSet}
+import models.ParseError.{AmountWithoutCurrency, InvalidAmount}
+import models._
 
 class InstructionBuilder @Inject()(guaranteeInstructionBuilder: GuaranteeInstructionBuilder) {
 

@@ -24,7 +24,7 @@ object DepartureWithMessages {
   implicit val format = Json.format[DepartureWithMessages]
 }
 
-case class DepartureWithMessages(departureId: Int,
+case class DepartureWithMessages(departureId: DepartureId,
                                  location: String,
                                  messagesLocation: String,
                                  movementReferenceNumber: Option[String],

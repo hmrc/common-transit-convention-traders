@@ -16,10 +16,11 @@
 
 package models.response
 
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import models.domain.{ArrivalId, MessageId}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
@@ -51,8 +52,8 @@ class HateoasArrivalMessagesPostResponseMessageSpec extends AnyFreeSpec with Mat
           |""".stripMargin)
 
       val result = HateoasArrivalMessagesPostResponseMessage(
-        "1",
-        "2",
+        ArrivalId(1),
+        MessageId(2),
         "IE044",
         <test>default</test>
       )

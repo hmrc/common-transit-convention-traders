@@ -16,10 +16,10 @@
 
 package models.response
 
-import data.TestXml
-
 import java.time.LocalDateTime
-import models.domain.{ArrivalWithMessages, MovementMessage}
+
+import data.TestXml
+import models.domain.{ArrivalId, ArrivalWithMessages, MovementMessage}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -32,7 +32,7 @@ class HateoasResponseArrivalWithMessagesSpec extends AnyFreeSpec with Matchers w
 
   "HateoasResponseArrivalWithMessages" - {
     "must generate correct message structure for messages" in {
-      val arrivalWithMessages = ArrivalWithMessages(3,
+      val arrivalWithMessages = ArrivalWithMessages(ArrivalId(3),
         "loc",
         "messageLoc",
         "mrn",
@@ -96,7 +96,7 @@ class HateoasResponseArrivalWithMessagesSpec extends AnyFreeSpec with Matchers w
     }
 
     "must generate correct message structure for no messages" in {
-      val arrivalWithMessages = ArrivalWithMessages(3,
+      val arrivalWithMessages = ArrivalWithMessages(ArrivalId(3),
         "loc",
         "messageLoc",
         "mrn",

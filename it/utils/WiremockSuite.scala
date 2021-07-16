@@ -19,15 +19,11 @@ package utils
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import com.kenshoo.play.metrics.Metrics
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.Suite
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
 import org.scalatestplus.play.guice.GuiceFakeApplicationFactory
 import play.api.Application
-import play.api.inject.Injector
-import play.api.inject.bind
-import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.inject.guice.GuiceableModule
+import play.api.inject.{Injector, bind}
+import play.api.inject.guice.{GuiceApplicationBuilder, GuiceableModule}
 
 trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach with GuiceFakeApplicationFactory {
   this: Suite =>

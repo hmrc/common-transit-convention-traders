@@ -17,7 +17,7 @@
 package models.response
 
 import controllers.routes
-import models.domain.ArrivalWithMessages
+import models.domain.{ArrivalWithMessages, MessageId}
 import play.api.libs.json.{JsObject, Json}
 import utils.CallOps._
 import utils.Utils
@@ -25,7 +25,7 @@ import utils.Utils
 object HateoasResponseArrivalWithMessages {
 
   def apply(arrivalWithMessages: ArrivalWithMessages): JsObject = {
-    val arrivalId = arrivalWithMessages.arrivalId.toString
+    val arrivalId = arrivalWithMessages.arrivalId
     val messagesUrl = routes.ArrivalMessagesController.getArrivalMessages(arrivalId).urlWithContext
 
     Json.obj(
@@ -35,7 +35,7 @@ object HateoasResponseArrivalWithMessages {
       "_embedded" -> Json.obj(
         "messages" -> arrivalWithMessages.messages.map {
           x =>
-            HateoasArrivalResponseMessage(arrivalId, Utils.lastFragment(x.location), x)
+            HateoasArrivalResponseMessage(arrivalId, MessageId(Utils.lastFragment(x.location).toInt), x)
         },
         "arrival" -> HateoasResponseArrival(
           arrivalId,

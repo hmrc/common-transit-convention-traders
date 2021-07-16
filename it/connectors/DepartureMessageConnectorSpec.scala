@@ -16,32 +16,23 @@
 
 package connectors
 
-import com.github.tomakehurst.wiremock.client.WireMock.aResponse
-import com.github.tomakehurst.wiremock.client.WireMock.get
-import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
+import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
+
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, urlEqualTo}
 import controllers.routes
-import models.domain.Departure
-import models.domain.DepartureWithMessages
-import models.domain.MovementMessage
+import models.domain._
 import models.response.HateoasResponseDeparture
-import org.scalatest.concurrent.IntegrationPatience
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
-import play.api.test.Helpers.BAD_REQUEST
-import play.api.test.Helpers.INTERNAL_SERVER_ERROR
-import play.api.test.Helpers.NOT_FOUND
-import play.api.test.Helpers.OK
+import play.api.test.Helpers.{BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK}
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CallOps._
 
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with utils.WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
@@ -49,7 +40,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Guice
   "get" - {
     "must return MovementMessage when message is found" in {
       val connector = app.injector.instanceOf[DepartureMessageConnector]
-      val movement = MovementMessage(routes.DepartureMessagesController.getDepartureMessage("1","1").urlWithContext, LocalDateTime.now, "abc", <test>default</test>)
+      val movement = MovementMessage(routes.DepartureMessagesController.getDepartureMessage(DepartureId(1), MessageId(1)).urlWithContext, LocalDateTime.now, "abc", <test>default</test>)
       server.stubFor(
         get(
           urlEqualTo("/transits-movements-trader-at-departure/movements/departures/1/messages/1")
@@ -59,14 +50,14 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Guice
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1", "1").futureValue
+      val result = connector.get(DepartureId(1), MessageId(1)).futureValue
 
       result mustEqual Right(movement)
     }
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[DepartureMessageConnector]
-      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now)
+      val departure = Departure(DepartureId(1), routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext, routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now)
 
       val response = HateoasResponseDeparture(departure)
       server.stubFor(
@@ -78,7 +69,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Guice
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1", "1").futureValue
+      val result = connector.get(DepartureId(1), MessageId(1)).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
@@ -94,7 +85,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Guice
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1", "1").futureValue
+      val result = connector.get(DepartureId(1), MessageId(1)).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual NOT_FOUND }
@@ -110,7 +101,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Guice
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1", "1").futureValue
+      val result = connector.get(DepartureId(1), MessageId(1)).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual BAD_REQUEST }
@@ -126,7 +117,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Guice
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.get("1", "1").futureValue
+      val result = connector.get(DepartureId(1), MessageId(1)).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
@@ -136,10 +127,10 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Guice
   "getDepartureMessages" - {
     "must return Departure when departure is found" in {
       val connector = app.injector.instanceOf[DepartureMessageConnector]
-      val departure = DepartureWithMessages(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now,
+      val departure = DepartureWithMessages(DepartureId(1), routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext, routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now,
         Seq(
-          MovementMessage(routes.DepartureMessagesController.getDepartureMessage("1","1").urlWithContext, LocalDateTime.now, "abc", <test>default</test>),
-          MovementMessage(routes.DepartureMessagesController.getDepartureMessage("1","2").urlWithContext, LocalDateTime.now, "abc", <test>default</test>)
+          MovementMessage(routes.DepartureMessagesController.getDepartureMessage(DepartureId(1), MessageId(1)).urlWithContext, LocalDateTime.now, "abc", <test>default</test>),
+          MovementMessage(routes.DepartureMessagesController.getDepartureMessage(DepartureId(1), MessageId(2)).urlWithContext, LocalDateTime.now, "abc", <test>default</test>)
         ))
 
       server.stubFor(
@@ -151,7 +142,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Guice
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getMessages("1", receivedSince = None).futureValue
+      val result = connector.getMessages(DepartureId(1), receivedSince = None).futureValue
 
       result mustEqual Right(departure)
     }
@@ -159,10 +150,10 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Guice
     "must render receivedSince parameter into request URL" in {
       val connector = app.injector.instanceOf[DepartureMessageConnector]
       val dateTime = Some(OffsetDateTime.of(2021, 3, 14, 13, 15, 30, 0, ZoneOffset.ofHours(1)))
-      val departure = DepartureWithMessages(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now,
+      val departure = DepartureWithMessages(DepartureId(1), routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext, routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now,
         Seq(
-          MovementMessage(routes.DepartureMessagesController.getDepartureMessage("1","1").urlWithContext, LocalDateTime.now, "abc", <test>default</test>),
-          MovementMessage(routes.DepartureMessagesController.getDepartureMessage("1","2").urlWithContext, LocalDateTime.now, "abc", <test>default</test>)
+          MovementMessage(routes.DepartureMessagesController.getDepartureMessage(DepartureId(1), MessageId(1)).urlWithContext, LocalDateTime.now, "abc", <test>default</test>),
+          MovementMessage(routes.DepartureMessagesController.getDepartureMessage(DepartureId(1), MessageId(2)).urlWithContext, LocalDateTime.now, "abc", <test>default</test>)
         ))
 
       server.stubFor(
@@ -174,14 +165,14 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Guice
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getMessages("1", receivedSince = dateTime).futureValue
+      val result = connector.getMessages(DepartureId(1), receivedSince = dateTime).futureValue
 
       result mustEqual Right(departure)
     }
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[DepartureMessageConnector]
-      val departure = Departure(1, routes.DeparturesController.getDeparture("1").urlWithContext, routes.DepartureMessagesController.getDepartureMessages("1").urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now)
+      val departure = Departure(DepartureId(1), routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext, routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext, Some("MRN"), "status", LocalDateTime.now, LocalDateTime.now)
 
       val response = HateoasResponseDeparture(departure)
       server.stubFor(
@@ -193,7 +184,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Guice
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getMessages("1", receivedSince = None).futureValue
+      val result = connector.getMessages(DepartureId(1), receivedSince = None).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
@@ -209,7 +200,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Guice
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getMessages("1", receivedSince = None).futureValue
+      val result = connector.getMessages(DepartureId(1), receivedSince = None).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual NOT_FOUND }
@@ -225,7 +216,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Guice
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getMessages("1", receivedSince = None).futureValue
+      val result = connector.getMessages(DepartureId(1), receivedSince = None).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual BAD_REQUEST }
@@ -241,7 +232,7 @@ class DepartureMessageConnectorSpec extends AnyFreeSpec with Matchers with Guice
       implicit val hc = HeaderCarrier()
       implicit val requestHeader = FakeRequest()
 
-      val result = connector.getMessages("1", receivedSince = None).futureValue
+      val result = connector.getMessages(DepartureId(1), receivedSince = None).futureValue
 
       result.isLeft mustEqual true
       result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }

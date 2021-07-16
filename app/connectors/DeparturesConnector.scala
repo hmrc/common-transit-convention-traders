@@ -21,22 +21,14 @@ import java.time.OffsetDateTime
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import connectors.util.CustomHttpReader
-import metrics.HasMetrics
-import metrics.MetricsKeys
-import models.domain.Departure
-import models.domain.Departures
-import models.Box
-import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpClient
-import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.http.UpstreamErrorResponse
-import uk.gov.hmrc.http.HttpReads.Implicits._
-
 import javax.inject.Inject
+import metrics.{HasMetrics, MetricsKeys}
+import models.Box
+import models.domain.{Departure, DepartureId, Departures}
+import play.api.mvc.RequestHeader
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse, UpstreamErrorResponse}
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class DeparturesConnector @Inject() (http: HttpClient, appConfig: AppConfig, val metrics: Metrics) extends BaseConnector with HasMetrics {
 
@@ -51,10 +43,10 @@ class DeparturesConnector @Inject() (http: HttpClient, appConfig: AppConfig, val
         http.POSTString[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]](url.toString, message, requestHeaders(rh))
     }
 
-  def get(departureId: String)(implicit rh: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departure]] =
+  def get(departureId: DepartureId)(implicit rh: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departure]] =
     withMetricsTimerAsync(GetById) {
       timer =>
-        val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute).addPathPart(departureId)
+        val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute).addPathPart(departureId.toString)
         http.GET[HttpResponse](url.toString, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
           response =>
             if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()

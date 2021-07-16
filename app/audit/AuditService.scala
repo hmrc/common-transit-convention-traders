@@ -16,7 +16,6 @@
 
 package audit
 
-import audit.AuditType._
 import javax.inject.Inject
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.HeaderCarrier

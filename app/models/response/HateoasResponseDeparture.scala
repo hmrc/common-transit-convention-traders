@@ -17,19 +17,19 @@
 package models.response
 
 import controllers.routes
-import models.domain.Departure
+import models.domain.{Departure, DepartureId}
 import play.api.libs.json._
 import utils.CallOps._
 
 object  HateoasResponseDeparture {
 
-  def apply(departureId: String, created: String, updated: String, movementReferenceNumber: Option[String], status: String): JsObject = {
+  def apply(departureId: DepartureId, created: String, updated: String, movementReferenceNumber: Option[String], status: String): JsObject = {
     val departureUrl = routes.DeparturesController.getDeparture(departureId).urlWithContext
     val messagesUrl = routes.DepartureMessagesController.getDepartureMessages(departureId).urlWithContext
 
     JsObject(
       Json.obj(
-      "id" -> departureId,
+      "id" -> departureId.toString,
       "created" -> created,
       "updated" -> updated,
       "movementReferenceNumber" -> movementReferenceNumber,
@@ -42,6 +42,6 @@ object  HateoasResponseDeparture {
   }
 
   def apply(departure: Departure): JsObject = {
-    apply(departure.departureId.toString, departure.created.toString, departure.updated.toString, departure.movementReferenceNumber, departure.status)
+    apply(departure.departureId, departure.created.toString, departure.updated.toString, departure.movementReferenceNumber, departure.status)
   }
 }

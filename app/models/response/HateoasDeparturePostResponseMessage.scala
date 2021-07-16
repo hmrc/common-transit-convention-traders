@@ -18,15 +18,15 @@ package models
 package response
 
 import controllers.routes
-import play.api.libs.json.JsObject
-import play.api.libs.json.Json
+import models.domain.DepartureId
+import play.api.libs.json.{JsObject, Json}
 import utils.CallOps._
 
 import scala.xml.NodeSeq
 
 object HateoasDeparturePostResponseMessage {
 
-  def apply(departureId: String, messageType: String, messageBody: NodeSeq, notificationsBox: Option[Box]): JsObject = {
+  def apply(departureId: DepartureId, messageType: String, messageBody: NodeSeq, notificationsBox: Option[Box]): JsObject = {
     val departureUrl = routes.DeparturesController.getDeparture(departureId).urlWithContext
     val embedded = notificationsBox
       .map {
@@ -47,7 +47,7 @@ object HateoasDeparturePostResponseMessage {
       "_links" -> Json.obj(
         "self" -> Json.obj("href" -> departureUrl)
       ),
-      "departureId" -> departureId,
+      "departureId" -> departureId.toString,
       "messageType" -> messageType,
       "body"        -> messageBody.toString
     ) ++ embedded
