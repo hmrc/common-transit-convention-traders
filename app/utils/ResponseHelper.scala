@@ -18,11 +18,8 @@ package utils
 
 import play.api.Logger
 import play.api.http.Status
-import play.api.mvc.Result
-import play.api.mvc.Results
-import uk.gov.hmrc.http.HttpErrorFunctions
-import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.http.UpstreamErrorResponse
+import play.api.mvc.{Result, Results}
+import uk.gov.hmrc.http.{HttpErrorFunctions, HttpResponse, UpstreamErrorResponse}
 
 trait ResponseHelper extends Results with Status with HttpErrorFunctions {
 

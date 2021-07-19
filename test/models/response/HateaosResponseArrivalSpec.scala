@@ -17,7 +17,8 @@
 package models.response
 
 import java.time.LocalDateTime
-import models.domain.Arrival
+
+import models.domain.{Arrival, ArrivalId}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -30,7 +31,7 @@ class HateoasResponseArrivalSpec extends AnyFreeSpec with Matchers with GuiceOne
 
   "HateoasResponseArrival" - {
     "must generate correct message structure" in {
-      val arrival = Arrival(3,
+      val arrival = Arrival(ArrivalId(3),
         "loc",
         "messageLoc",
         "mrn",

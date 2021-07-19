@@ -17,18 +17,16 @@
 package utils.guaranteeParsing
 
 import cats.data.ReaderT
-import models.{DepartureOffice, DestinationOffice, ParseHandling}
 import models.ParseError.{DepartureEmpty, DestinationEmpty, InappropriateDepartureOffice}
-import org.mockito.Mockito.reset
+import models.{DepartureOffice, DestinationOffice, ParseHandling}
+import org.mockito.Mockito.{reset, _}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import org.mockito.Mockito._
-import org.scalatest.matchers.must.Matchers
-import org.scalatestplus.mockito.MockitoSugar
-import org.mockito.ArgumentMatchers.any
 
 import scala.xml.NodeSeq
 

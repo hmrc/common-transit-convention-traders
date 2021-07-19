@@ -17,7 +17,7 @@
 package utils.guaranteeParsing
 
 import javax.inject.Inject
-import models.{AddSpecialMentionInstruction, ChangeGuaranteeInstruction, NoChangeGuaranteeInstruction, NoChangeInstruction, SpecialMentionGuarantee, TransformInstruction}
+import models._
 
 import scala.xml.Node
 

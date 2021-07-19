@@ -17,15 +17,13 @@
 package connectors
 
 import data.TestXml
+import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.http.HeaderNames
-import play.api.http.MimeTypes
+import play.api.http.{HeaderNames, MimeTypes}
 import play.api.mvc.RequestHeader
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier

@@ -16,14 +16,14 @@
 
 package services
 
-import models.{AddSpecialMentionInstruction, ParseError, ParseHandling, TransformInstructionSet}
 import com.google.inject.Inject
 import models.ParseError.UnknownTransformationError
+import models.{AddSpecialMentionInstruction, ParseError, ParseHandling, TransformInstructionSet}
 import play.api.Logging
-import utils.guaranteeParsing.{GuaranteeInstructionBuilder, GuaranteeXmlReaders, InstructionBuilder, RouteChecker, XmlBuilder}
+import utils.guaranteeParsing._
 
-import scala.xml.{Elem, Node, NodeSeq}
 import scala.xml.transform.{RewriteRule, RuleTransformer}
+import scala.xml.{Elem, Node, NodeSeq}
 
 class EnsureGuaranteeService @Inject()(xmlReaders: GuaranteeXmlReaders, instructionBuilder: InstructionBuilder, routeChecker: RouteChecker, guaranteeInstructionBuilder: GuaranteeInstructionBuilder, xmlBuilder: XmlBuilder) extends ParseHandling with Logging {
 

@@ -17,7 +17,8 @@
 package models.response
 
 import java.time.LocalDateTime
-import models.domain.MovementMessage
+
+import models.domain.{DepartureId, MessageId, MovementMessage}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -53,7 +54,7 @@ class HateoasDepartureResponseMessageSpec extends AnyFreeSpec with Matchers with
           |  "body": "<test>default</test>"
           |}""".stripMargin)
 
-      val result = HateoasDepartureResponseMessage("1", "1", message)
+      val result = HateoasDepartureResponseMessage(DepartureId(1), MessageId(1), message)
 
       expectedJson mustEqual Json.toJson(result)
     }

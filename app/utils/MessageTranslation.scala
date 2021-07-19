@@ -19,9 +19,7 @@ package utils
 import config.AppConfig
 import javax.inject.Inject
 import play.api.Environment
-import play.api.libs.json.JsObject
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
+import play.api.libs.json.{JsObject, Json, OFormat}
 
 import scala.io.Source
 import scala.util.matching.Regex

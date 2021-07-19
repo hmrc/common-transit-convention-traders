@@ -24,7 +24,7 @@ object ArrivalWithMessages {
   implicit val format = Json.format[ArrivalWithMessages]
 }
 
-case class ArrivalWithMessages(arrivalId: Int,
+case class ArrivalWithMessages(arrivalId: ArrivalId,
                                location: String,
                                messagesLocation: String,
                                movementReferenceNumber: String,

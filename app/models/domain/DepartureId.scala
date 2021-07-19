@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-package models
+package models.domain
 
-import java.time.OffsetDateTime
-import java.time.format.DateTimeFormatter
+import play.api.libs.json._
 
-import play.api.mvc.QueryStringBindable
+case class DepartureId(value: Int) extends AnyVal {
 
-object Binders {
-  implicit val offsetDateTimeQueryStringBindable: QueryStringBindable[OffsetDateTime] = {
-    val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
-    new QueryStringBindable.Parsing[OffsetDateTime](
-      OffsetDateTime.parse(_),
-      dt => formatter.format(dt),
-      (param, _) => s"Cannot parse parameter $param as a valid ISO 8601 timestamp, e.g. 2015-09-08T01:55:28+00:00"
-    )
-  }
+  override def toString: String = value.toString
+
+}
+
+object DepartureId {
+
+  implicit val departureIdFormat = Json.valueFormat[DepartureId]
+
 }

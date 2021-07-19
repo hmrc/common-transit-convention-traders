@@ -17,10 +17,10 @@
 package services
 
 import cats.data.ReaderT
-import models.{GOOITEGDSNode, Guarantee, NoChangeGuaranteeInstruction, NoChangeInstruction, ParseError, ParseHandling, SpecialMention, SpecialMentionGuarantee, SpecialMentionGuaranteeDetails, SpecialMentionOther, TransformInstructionSet}
-import org.mockito.ArgumentMatchers.any
 import data.TestXml
-import models.ParseError.{AmountWithoutCurrency, DepartureEmpty, GuaranteeNotFound, GuaranteeTypeInvalid, InvalidItemNumber}
+import models.ParseError.{AmountWithoutCurrency, DepartureEmpty, GuaranteeTypeInvalid, InvalidItemNumber}
+import models._
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
