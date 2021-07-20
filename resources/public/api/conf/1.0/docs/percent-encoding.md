@@ -1,11 +1,11 @@
-When writing code to use date filters in request URLs, you must always percent-encoding. This is because some common characters used in dates and timestamps are not allowed to be used in URLs.
+When writing code to use date filters in request URLs, you must always use percent-encoding. This is because some common characters used in dates and timestamps are not allowed to be used in URLs.
 
 If you do not use percent-encoding you will get a 400 Bad Request as a default response.
 
 For example:
  - the timestamp `2021-06-21T09:00+00:00` should be encoded as `2021-06-21T09%3A00%2B00%3A00`
  
-When formatting query parameters into the request URL for date and time filtering functionality, you must only use the date and time format as specified in [Developer Hub](https://developer.service.hmrc.gov.uk/api-documentation/docs/reference-guide#common-data-types). You’ll then be using the common ISO 8601 standard `2021-06-21T09:00+00:00` that is compatible with our CTC API.
+When formatting query parameters into the request URL for date and time filtering functionality, you must only use the date and time format as specified in [Developer Hub](https://developer.service.hmrc.gov.uk/api-documentation/docs/reference-guide#common-data-types). You’ll then be using the common ISO 8601 standard `2021-06-21T09:00+00:00` that is compatible with our CTC Traders API.
 
 Here are more examples in different programming languages:
 
@@ -30,7 +30,7 @@ When sending requests to HMRC APIs you must always use percent-encoding within t
 
 You should also note:
  - some common data types described in the [Reference Guide](https://developer.service.hmrc.gov.uk/api-documentation/docs/reference-guide#common-data-types) on Developer Hub contain characters that are not valid for use in URLs
- - some software libraries do the percent-encoding for you automatically when you develop software using their facilities. Your web framework might also do this automatically for you.
+ - some software libraries do the percent-encoding for you automatically when you develop software using their facilities. Your web framework might also do this automatically for you
 
 ### Find out more
 There are many frameworks and libraries that can handle percent-encoding for you. For background information about percent-encoding, we recommend you read (all links open in a new window):
