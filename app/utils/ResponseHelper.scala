@@ -18,8 +18,13 @@ package utils
 
 import play.api.Logger
 import play.api.http.Status
-import play.api.mvc.{Result, Results}
-import uk.gov.hmrc.http.{HttpErrorFunctions, HttpResponse, UpstreamErrorResponse}
+import play.api.mvc.Result
+import play.api.mvc.Results
+import uk.gov.hmrc.http.HttpErrorFunctions
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.UpstreamErrorResponse
+import models.response.JsonClientErrorResponse
+import play.api.libs.json.Json
 
 trait ResponseHelper extends Results with Status with HttpErrorFunctions {
 
@@ -29,8 +34,9 @@ trait ResponseHelper extends Results with Status with HttpErrorFunctions {
         s"\n  ${x._1} : ${x._2}"
     }}")
     response.status match {
-      case s if is4xx(s) => if (response.body != null) Status(response.status)(response.body) else Status(response.status)
-      case _             => Status(response.status)
+      case s if is4xx(s) =>
+        if (response.body != null) Status(response.status)(Json.toJson(JsonClientErrorResponse(response.status, response.body))) else Status(response.status)
+      case _ => Status(response.status)
     }
   }
 
@@ -39,6 +45,11 @@ trait ResponseHelper extends Results with Status with HttpErrorFunctions {
       x =>
         s"\n  ${x._1} : ${x._2}"
     }}")
-    Status(response.statusCode)
+    response.statusCode match {
+      case s if is4xx(s) =>
+        if (response.message != null) Status(response.statusCode)(Json.toJson(JsonClientErrorResponse(response.statusCode, response.message)))
+        else Status(response.statusCode)
+      case _ => Status(response.statusCode)
+    }
   }
 }
