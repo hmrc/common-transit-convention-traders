@@ -16,37 +16,58 @@
 
 package controllers
 
-import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 import akka.util.ByteString
 import com.kenshoo.play.metrics.Metrics
 import connectors.DepartureMessageConnector
-import controllers.actions.{AuthAction, FakeAuthAction}
+import controllers.actions.AuthAction
+import controllers.actions.FakeAuthAction
 import data.TestXml
-import models.domain.{DepartureId, DepartureWithMessages, MessageId, MovementMessage}
+import models.domain.DepartureId
+import models.domain.DepartureWithMessages
+import models.domain.MessageId
+import models.domain.MovementMessage
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{reset, when}
+import org.mockito.Mockito.reset
+import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{JsNull, Json}
-import play.api.mvc.{AnyContentAsEmpty, Headers}
-import play.api.test.Helpers.{headers, _}
-import play.api.test.{FakeHeaders, FakeRequest}
+import play.api.libs.json.JsNull
+import play.api.libs.json.Json
+import play.api.mvc.AnyContentAsEmpty
+import play.api.mvc.Headers
+import play.api.test.Helpers.headers
+import play.api.test.Helpers._
+import play.api.test.FakeHeaders
+import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HttpResponse
 import utils.CallOps._
 import utils.TestMetrics
 
 import scala.concurrent.Future
+import models.response.JsonClientErrorResponse
 
-class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
+class DepartureMessagesControllerSpec
+    extends AnyFreeSpec
+    with Matchers
+    with GuiceOneAppPerSuite
+    with OptionValues
+    with ScalaFutures
+    with MockitoSugar
+    with BeforeAndAfterEach
+    with TestXml {
   private val mockMessageConnector: DepartureMessageConnector = mock[DepartureMessageConnector]
 
   override lazy val app = GuiceApplicationBuilder()
@@ -63,17 +84,26 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
   }
 
   val sourceMovement = MovementMessage(
-    routes.DepartureMessagesController.getDepartureMessage(DepartureId(123),MessageId(4)).urlWithContext,
+    routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), MessageId(4)).urlWithContext,
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
     "IE025",
-    <test>default</test>)
+    <test>default</test>
+  )
 
-  val sourceDeparture = DepartureWithMessages(DepartureId(123), routes.DeparturesController.getDeparture(DepartureId(123)).urlWithContext, routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).urlWithContext, Some("MRN"), "status", LocalDateTime.of(2020, 2, 2, 2, 2, 2), LocalDateTime.of(2020, 2, 2, 2, 2, 2), Seq(sourceMovement, sourceMovement))
+  val sourceDeparture = DepartureWithMessages(
+    DepartureId(123),
+    routes.DeparturesController.getDeparture(DepartureId(123)).urlWithContext,
+    routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).urlWithContext,
+    Some("MRN"),
+    "status",
+    LocalDateTime.of(2020, 2, 2, 2, 2, 2),
+    LocalDateTime.of(2020, 2, 2, 2, 2, 2),
+    Seq(sourceMovement, sourceMovement)
+  )
 
   val json = Json.toJson[MovementMessage](sourceMovement)
 
-  val expectedMessageResult = Json.parse(
-    """
+  val expectedMessageResult = Json.parse("""
       |{
       |  "_links": {
       |    "self": {
@@ -90,8 +120,7 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
       |  "body": "<test>default</test>"
       |}""".stripMargin)
 
-  val expectedDepartureResult = Json.parse(
-    """
+  val expectedDepartureResult = Json.parse("""
       |{
       |  "_links": {
       |    "self": {
@@ -157,7 +186,12 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
       when(mockMessageConnector.getMessages(DepartureId(any()), any())(any(), any(), any()))
         .thenReturn(Future.successful(Right(sourceDeparture)))
 
-      val request = FakeRequest("GET", routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val request = FakeRequest(
+        "GET",
+        routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
       val result = route(app, request).value
 
       status(result) mustBe OK
@@ -166,12 +200,17 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
 
     "pass receivedSince parameter on to connector" in {
       val argCaptor = ArgumentCaptor.forClass(classOf[Option[OffsetDateTime]])
-      val dateTime = Some(OffsetDateTime.of(2021, 6, 23, 12, 1, 24, 0, ZoneOffset.UTC))
+      val dateTime  = Some(OffsetDateTime.of(2021, 6, 23, 12, 1, 24, 0, ZoneOffset.UTC))
 
       when(mockMessageConnector.getMessages(DepartureId(any()), argCaptor.capture())(any(), any(), any()))
         .thenReturn(Future.successful(Right(sourceDeparture)))
 
-      val request = FakeRequest("GET", routes.DepartureMessagesController.getDepartureMessages(DepartureId(123), dateTime).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val request = FakeRequest(
+        "GET",
+        routes.DepartureMessagesController.getDepartureMessages(DepartureId(123), dateTime).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
       val result = route(app, request).value
 
       status(result) mustBe OK
@@ -182,7 +221,12 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
       when(mockMessageConnector.getMessages(DepartureId(any()), any())(any(), any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(404, ""))))
 
-      val request = FakeRequest("GET", routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val request = FakeRequest(
+        "GET",
+        routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
       val result = route(app, request).value
 
       status(result) mustBe NOT_FOUND
@@ -190,9 +234,14 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
 
     "return 500 for other downstream errors" in {
       when(mockMessageConnector.getMessages(DepartureId(any()), any())(any(), any(), any()))
-        .thenReturn(Future.successful(Left(HttpResponse(INTERNAL_SERVER_ERROR, json, Headers.create().toMap) )))
+        .thenReturn(Future.successful(Left(HttpResponse(INTERNAL_SERVER_ERROR, json, Headers.create().toMap))))
 
-      val request = FakeRequest("GET", routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val request = FakeRequest(
+        "GET",
+        routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
       val result = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
@@ -200,9 +249,18 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
 
     "return 500 if downstream provides an unsafe message header" ignore {
       when(mockMessageConnector.getMessages(DepartureId(any()), any())(any(), any(), any()))
-        .thenReturn(Future.successful(Right(sourceDeparture.copy(messages = Seq(sourceMovement.copy(location = "/transits-movements-trader-at-departure/movements/departures/<>"))))))
+        .thenReturn(
+          Future.successful(
+            Right(sourceDeparture.copy(messages = Seq(sourceMovement.copy(location = "/transits-movements-trader-at-departure/movements/departures/<>"))))
+          )
+        )
 
-      val request = FakeRequest("GET", routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val request = FakeRequest(
+        "GET",
+        routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
       val result = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
@@ -214,7 +272,12 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
       when(mockMessageConnector.get(DepartureId(any()), MessageId(any()))(any(), any(), any()))
         .thenReturn(Future.successful(Right(sourceMovement)))
 
-      val request = FakeRequest("GET", routes.DepartureMessagesController.getDepartureMessage(DepartureId(123),MessageId(4)).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val request = FakeRequest(
+        "GET",
+        routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), MessageId(4)).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
       val result = route(app, request).value
 
       status(result) mustBe OK
@@ -225,28 +288,52 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
       when(mockMessageConnector.get(DepartureId(any()), MessageId(any()))(any(), any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(400, ""))))
 
-      val request = FakeRequest("GET", routes.DepartureMessagesController.getDepartureMessage(DepartureId(123),MessageId(4)).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val request = FakeRequest(
+        "GET",
+        routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), MessageId(4)).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
       val result = route(app, request).value
 
       status(result) mustBe BAD_REQUEST
     }
 
     "return 400 with body if the downstream returns 400 with body" in {
-      when(mockMessageConnector.get(DepartureId(any()), MessageId(any()))(any(), any(), any()))
-        .thenReturn(Future.successful(Left(HttpResponse(400, "abc"))))
+      val testMessage    = "abc"
+      val testStatusCode = 400
 
-      val request = FakeRequest("GET", routes.DepartureMessagesController.getDepartureMessage(DepartureId(123),MessageId(4)).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      when(mockMessageConnector.get(DepartureId(any()), MessageId(any()))(any(), any(), any()))
+        .thenReturn(Future.successful(Left(HttpResponse(testStatusCode, testMessage))))
+
+      val request = FakeRequest(
+        "GET",
+        routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), MessageId(4)).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
       val result = route(app, request).value
 
+      val expectedResult = Json.obj(
+        "code"       -> JsonClientErrorResponse.errorCode,
+        "message"    -> testMessage,
+        "statusCode" -> testStatusCode
+      )
+
       status(result) mustBe BAD_REQUEST
-      contentAsString(result) mustBe "abc"
+      contentAsJson(result) mustBe expectedResult
     }
 
     "return 404 if the downstream returns 404" in {
       when(mockMessageConnector.get(DepartureId(any()), MessageId(any()))(any(), any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(404, ""))))
 
-      val request = FakeRequest("GET", routes.DepartureMessagesController.getDepartureMessage(DepartureId(123),MessageId(4)).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val request = FakeRequest(
+        "GET",
+        routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), MessageId(4)).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
       val result = route(app, request).value
 
       status(result) mustBe NOT_FOUND
@@ -254,9 +341,14 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
 
     "return 500 for other downstream errors" in {
       when(mockMessageConnector.get(DepartureId(any()), MessageId(any()))(any(), any(), any()))
-        .thenReturn(Future.successful(Left(HttpResponse.apply(INTERNAL_SERVER_ERROR, json, Headers.create().toMap) )))
+        .thenReturn(Future.successful(Left(HttpResponse.apply(INTERNAL_SERVER_ERROR, json, Headers.create().toMap))))
 
-      val request = FakeRequest("GET", routes.DepartureMessagesController.getDepartureMessage(DepartureId(123),MessageId(4)).url, headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")), AnyContentAsEmpty)
+      val request = FakeRequest(
+        "GET",
+        routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), MessageId(4)).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
       val result = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
@@ -264,8 +356,7 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
   }
 
   "POST /movements/departures/:departureId/messages" - {
-    val expectedJson = Json.parse(
-      """
+    val expectedJson = Json.parse("""
         |{
         |  "_links": {
         |    "self": {
@@ -288,14 +379,18 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
 
     "must return Accepted when successful" in {
       when(mockMessageConnector.post(any(), DepartureId(any()))(any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/1"))) ))
+        .thenReturn(
+          Future.successful(
+            HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/1")))
+          )
+        )
 
       val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream(DepartureId(123)).url, body = CC014A)
-      val result = route(app, request).value
+      val result  = route(app, request).value
 
       status(result) mustBe ACCEPTED
       contentAsString(result) mustEqual expectedJson.toString()
-      headers(result) must contain (LOCATION -> routes.DepartureMessagesController.getDepartureMessage(DepartureId(123),MessageId(1)).urlWithContext)
+      headers(result) must contain(LOCATION -> routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), MessageId(1)).urlWithContext)
     }
 
     "must return InternalServerError when unsuccessful" in {
@@ -303,45 +398,58 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
         .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "")))
 
       val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream(DepartureId(123)).url, body = CC014A)
-      val result = route(app, request).value
+      val result  = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
     }
 
     "must return InternalServerError when no Location in downstream response header" in {
       when(mockMessageConnector.post(any(), DepartureId(any()))(any(), any(), any()))
-        .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Headers.create().toMap) ))
+        .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Headers.create().toMap)))
 
       val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream(DepartureId(123)).url, body = CC014A)
-      val result = route(app, request).value
+      val result  = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
     }
 
     "must return InternalServerError when invalid Location value in downstream response header" ignore {
       when(mockMessageConnector.post(any(), DepartureId(any()))(any(), any(), any()))
-        .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/<>"))) ))
+        .thenReturn(
+          Future.successful(
+            HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/<>")))
+          )
+        )
 
       val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream(DepartureId(123)).url, body = CC014A)
-      val result = route(app, request).value
+      val result  = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
     }
 
     "must exclude query string if present in downstream Location header" in {
       when(mockMessageConnector.post(any(), DepartureId(any()))(any(), any(), any()))
-        .thenReturn(Future.successful( HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/1?status=success"))) ))
+        .thenReturn(
+          Future.successful(
+            HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/1?status=success")))
+          )
+        )
 
       val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream(DepartureId(123)).url, body = CC014A)
-      val result = route(app, request).value
+      val result  = route(app, request).value
 
       status(result) mustBe ACCEPTED
       contentAsString(result) mustEqual expectedJson.toString()
-      headers(result) must contain (LOCATION -> routes.DepartureMessagesController.getDepartureMessage(DepartureId(123),MessageId(1)).urlWithContext)
+      headers(result) must contain(LOCATION -> routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), MessageId(1)).urlWithContext)
     }
 
     "must return UnsupportedMediaType when Content-Type is JSON" in {
-      val request = FakeRequest(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream(DepartureId(123)).url, headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")), body = AnyContentAsEmpty)
+      val request = FakeRequest(
+        method = "POST",
+        uri = routes.DepartureMessagesController.sendMessageDownstream(DepartureId(123)).url,
+        headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")),
+        body = AnyContentAsEmpty
+      )
 
       val result = route(app, request).value
 
@@ -349,7 +457,12 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
     }
 
     "must return UnsupportedMediaType when no Content-Type specified" in {
-      val request = fakeRequestMessages(method = "POST", headers = FakeHeaders(), uri = routes.DepartureMessagesController.sendMessageDownstream(DepartureId(123)).url, body = ByteString("body"))
+      val request = fakeRequestMessages(
+        method = "POST",
+        headers = FakeHeaders(),
+        uri = routes.DepartureMessagesController.sendMessageDownstream(DepartureId(123)).url,
+        body = ByteString("body")
+      )
 
       val result = route(app, request).value
 
@@ -357,7 +470,12 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
     }
 
     "must return UnsupportedMediaType when empty XML payload is sent" in {
-      val request = fakeRequestMessages(method = "POST", headers = FakeHeaders(), uri = routes.DepartureMessagesController.sendMessageDownstream(DepartureId(123)).url, body = AnyContentAsEmpty)
+      val request = fakeRequestMessages(
+        method = "POST",
+        headers = FakeHeaders(),
+        uri = routes.DepartureMessagesController.sendMessageDownstream(DepartureId(123)).url,
+        body = AnyContentAsEmpty
+      )
 
       val result = route(app, request).value
 
@@ -365,7 +483,8 @@ class DepartureMessagesControllerSpec extends AnyFreeSpec with Matchers with Gui
     }
 
     "must return BadRequest when invalid XML payload is sent" in {
-      val request = fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream(DepartureId(123)).url, body = InvalidCC014A)
+      val request =
+        fakeRequestMessages(method = "POST", uri = routes.DepartureMessagesController.sendMessageDownstream(DepartureId(123)).url, body = InvalidCC014A)
 
       val result = route(app, request).value
 
