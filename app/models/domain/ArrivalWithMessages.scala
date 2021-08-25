@@ -24,12 +24,13 @@ object ArrivalWithMessages {
   implicit val format = Json.format[ArrivalWithMessages]
 }
 
-case class ArrivalWithMessages(arrivalId: ArrivalId,
-                               location: String,
-                               messagesLocation: String,
-                               movementReferenceNumber: String,
-                               status: String,
-                               created: LocalDateTime,
-                               updated: LocalDateTime,
-                               messages: Seq[MovementMessage])
-                               extends BaseArrival
+case class ArrivalWithMessages(
+  arrivalId: ArrivalId,
+  location: String,
+  messagesLocation: String,
+  movementReferenceNumber: String,
+  status: String,
+  created: LocalDateTime,
+  updated: LocalDateTime,
+  messages: Seq[MovementMessage]
+) extends BaseArrival

@@ -28,7 +28,9 @@ import play.api.Logger
 import utils.Utils
 
 import scala.xml.factory.XMLLoader
-import scala.xml.{Elem, SAXParseException, SAXParser}
+import scala.xml.Elem
+import scala.xml.SAXParseException
+import scala.xml.SAXParser
 
 class XmlValidationService {
 
@@ -89,7 +91,9 @@ sealed trait XmlError {
 }
 
 object XmlError {
-  val FailedSchemaValidationMessage = "The request has failed schema validation. Please review the required message structure as specified by the XSD file '%s'. Detailed error below:\n%s"
+
+  val FailedSchemaValidationMessage =
+    "The request has failed schema validation. Please review the required message structure as specified by the XSD file '%s'. Detailed error below:\n%s"
 
   val RequestBodyEmptyMessage = "The request cannot be processed as it does not contain a request body."
 

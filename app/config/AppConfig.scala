@@ -17,20 +17,21 @@
 package config
 
 import io.lemonlabs.uri.Url
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
+import javax.inject.Singleton
 import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 @Singleton
-class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig) {
+class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig) {
 
   val authBaseUrl: String = servicesConfig.baseUrl("auth")
 
-  val auditingEnabled: Boolean  = config.get[Boolean]("auditing.enabled")
-  val graphiteHost: String      = config.get[String]("microservice.metrics.graphite.host")
+  val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
+  val graphiteHost: String     = config.get[String]("microservice.metrics.graphite.host")
 
-  val traderAtDestinationUrl    = Url.parse(servicesConfig.baseUrl("transit-movement-trader-at-destination"))
-  val traderAtDeparturesUrl     = Url.parse(servicesConfig.baseUrl("transits-movements-trader-at-departure"))
+  val traderAtDestinationUrl = Url.parse(servicesConfig.baseUrl("transit-movement-trader-at-destination"))
+  val traderAtDeparturesUrl  = Url.parse(servicesConfig.baseUrl("transits-movements-trader-at-departure"))
 
   lazy val enrolmentKey: String = config.get[String]("security.enrolmentKey")
 

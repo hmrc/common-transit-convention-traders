@@ -17,7 +17,8 @@
 package audit
 
 import javax.inject.Inject
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import utils.JsonHelper
@@ -25,7 +26,7 @@ import utils.JsonHelper
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 
-class AuditService @Inject()(auditConnector: AuditConnector, jsonHelper: JsonHelper)(implicit ec: ExecutionContext) {
+class AuditService @Inject() (auditConnector: AuditConnector, jsonHelper: JsonHelper)(implicit ec: ExecutionContext) {
 
   def auditEvent(auditType: AuditType, xmlRequestBody: NodeSeq)(implicit hc: HeaderCarrier): Unit = {
     val json: JsObject = jsonHelper.convertXmlToJson(xmlRequestBody)

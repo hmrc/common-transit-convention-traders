@@ -30,11 +30,11 @@ class CC015BSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks
   "validate" - {
 
     "must be successful when validating a valid CC015B xml" in {
-        xmlValidationService.validate(CC015B.toString(), DepartureDeclarationXSD) mustBe a[Right[_, _]]
+      xmlValidationService.validate(CC015B.toString(), DepartureDeclarationXSD) mustBe a[Right[_, _]]
     }
 
     "must fail when validating an invalid CC015B xml" in {
-       xmlValidationService.validate(InvalidCC015B.toString(), DepartureDeclarationXSD) mustBe a[Left[_, _]]
+      xmlValidationService.validate(InvalidCC015B.toString(), DepartureDeclarationXSD) mustBe a[Left[_, _]]
     }
 
     "must reject a CC015B containing MesSenMES3" in {

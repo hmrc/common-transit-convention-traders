@@ -27,10 +27,10 @@ sealed trait MessageType extends IeMetadata {
 
 object MessageType extends Enumerable.Implicits {
 
-  case object ArrivalNotification             extends IeMetadata("IE007", "CC007A") with MessageType
-  case object UnloadingRemarks                extends IeMetadata("IE044", "CC044A") with MessageType
-  case object DepartureDeclaration            extends IeMetadata("IE015", "CC015B") with MessageType
-  case object DeclarationCancellationRequest  extends IeMetadata("IE014", "CC014A") with MessageType
+  case object ArrivalNotification            extends IeMetadata("IE007", "CC007A") with MessageType
+  case object UnloadingRemarks               extends IeMetadata("IE044", "CC044A") with MessageType
+  case object DepartureDeclaration           extends IeMetadata("IE015", "CC015B") with MessageType
+  case object DeclarationCancellationRequest extends IeMetadata("IE014", "CC014A") with MessageType
 
   val values: Seq[MessageType] = Seq(
     ArrivalNotification,
@@ -46,5 +46,9 @@ object MessageType extends Enumerable.Implicits {
     }
 
   implicit val enumerable: Enumerable[MessageType] =
-    Enumerable(values.map(v => v.code -> v): _*)
+    Enumerable(
+      values.map(
+        v => v.code -> v
+      ): _*
+    )
 }

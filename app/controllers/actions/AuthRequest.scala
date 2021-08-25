@@ -16,6 +16,7 @@
 
 package controllers.actions
 
-import play.api.mvc.{Request, WrappedRequest}
+import play.api.mvc.Request
+import play.api.mvc.WrappedRequest
 
 case class AuthRequest[A](request: Request[A], eori: String) extends WrappedRequest[A](request)

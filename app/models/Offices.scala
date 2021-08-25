@@ -17,8 +17,8 @@
 package models
 
 abstract class Office(value: String) {
-  def prefix = value.substring(0,2)
+  def prefix = value.substring(0, 2)
 }
 
-final case class DepartureOffice(value: String) extends Office(value: String)
+final case class DepartureOffice(value: String)   extends Office(value: String)
 final case class DestinationOffice(value: String) extends Office(value: String)

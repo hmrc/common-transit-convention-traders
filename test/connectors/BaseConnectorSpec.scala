@@ -16,109 +16,188 @@
 
 package connectors
 
-import data.TestXml
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
-import org.scalatest.concurrent.ScalaFutures
+import config.Constants
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.http.{HeaderNames, MimeTypes}
-import play.api.mvc.RequestHeader
+import play.api.http.ContentTypes
+import play.api.http.HeaderNames
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.logging.Authorization
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
-class BaseConnectorSpec
-    extends AnyFreeSpec
-    with Matchers
-    with GuiceOneAppPerSuite
-    with OptionValues
-    with ScalaFutures
-    with MockitoSugar
-    with BeforeAndAfterEach
-    with TestXml {
+class BaseConnectorSpec extends AnyFreeSpec with Matchers {
 
   class Harness extends BaseConnector {
 
-    def enforceAuth(extraHeaders: Seq[(String, String)])(implicit requestHeader: RequestHeader, headerCarrier: HeaderCarrier): HeaderCarrier =
-      super.enforceAuthHeaderCarrier(extraHeaders)
+    def enforceAuth(implicit headerCarrier: HeaderCarrier): Seq[(String, String)] =
+      super.enforceAuthHeader
 
-    def addHeaders(extraHeaders: Seq[(String, String)])(implicit requestHeader: RequestHeader): Seq[(String, String)] = super.addAuthHeaders(extraHeaders)
+    def jsonHeaders(implicit headerCarrier: HeaderCarrier): Seq[(String, String)] =
+      super.getJsonHeaders
+
+    def xmlHeaders(implicit headerCarrier: HeaderCarrier): Seq[(String, String)] =
+      super.postPutXmlHeaders
   }
 
   "BaseConnector" - {
 
-    "enforceAuthHeaderCarrier" - {
+    "enforceAuthHeader" - {
 
-      "enforceAuthHeaderCarrier must enforce auth" in {
+      "must not add auth header if auth header already supplied in the request" in {
         val harness = new Harness()
 
-        implicit val hc            = HeaderCarrier()
-        implicit val requestHeader = FakeRequest().withHeaders(HeaderNames.AUTHORIZATION -> "a5sesqerTyi135/")
+        implicit val rh = FakeRequest().withHeaders(HeaderNames.AUTHORIZATION -> "a5sesqerTyi135/")
+        implicit val hc = HeaderCarrierConverter.fromRequest(rh)
 
-        val result: HeaderCarrier = harness.enforceAuth(Seq.empty)
+        val headers = harness.enforceAuth
 
-        result.headers must contain(HeaderNames.AUTHORIZATION -> "a5sesqerTyi135/")
-        result.authorization mustBe Some(Authorization("a5sesqerTyi135/"))
+        headers must not contain (HeaderNames.AUTHORIZATION -> "a5sesqerTyi135/")
       }
 
-      "enforceAuthHeaderCarrier must add empty auth header if no auth header supplied in request" in {
+      "must add empty auth header if no auth header supplied in request" in {
         val harness = new Harness()
 
-        implicit val hc            = HeaderCarrier()
-        implicit val requestHeader = FakeRequest()
+        implicit val rh = FakeRequest()
+        implicit val hc = HeaderCarrierConverter.fromRequest(rh)
 
-        val result: HeaderCarrier = harness.enforceAuth(Seq.empty)
+        val headers = harness.enforceAuth
 
-        result.headers must contain(HeaderNames.AUTHORIZATION -> "")
-        result.authorization mustBe Some(Authorization(""))
-      }
-
-      "enforceAuthHeaderCarrier must contain extra headers if supplied" in {
-        val harness = new Harness()
-
-        implicit val hc            = HeaderCarrier()
-        implicit val requestHeader = FakeRequest()
-
-        val result: HeaderCarrier = harness.enforceAuth(Seq(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON))
-
-        result.headers must contain(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
+        headers must contain(HeaderNames.AUTHORIZATION -> "")
       }
     }
 
-    "addAuthHeaders" - {
+    "postPutXmlHeaders" - {
+      "must add required headers for POST/PUT requests" - {
+        "when client ID present" in {
+          val harness = new Harness()
 
-      "addAuthHeaders must enforce auth" in {
-        val harness = new Harness()
+          implicit val rh = FakeRequest().withHeaders(Constants.ClientIdHeader -> "foo")
+          implicit val hc = HeaderCarrierConverter.fromRequest(rh)
 
-        implicit val requestHeader = FakeRequest().withHeaders(HeaderNames.AUTHORIZATION -> "a5sesqerTyi135/")
+          val headers = harness.xmlHeaders
 
-        val result: Seq[(String, String)] = harness.addHeaders(Seq.empty)
+          headers must contain theSameElementsAs (
+            Seq(
+              HeaderNames.AUTHORIZATION -> "",
+              HeaderNames.ACCEPT        -> ContentTypes.JSON,
+              HeaderNames.CONTENT_TYPE  -> ContentTypes.XML,
+              Constants.ChannelHeader   -> "api",
+              Constants.ClientIdHeader  -> "foo"
+            )
+          )
+        }
 
-        result must contain(HeaderNames.AUTHORIZATION -> "a5sesqerTyi135/")
+        "when client ID missing" in {
+          val harness = new Harness()
+
+          implicit val rh = FakeRequest()
+          implicit val hc = HeaderCarrierConverter.fromRequest(rh)
+
+          val headers = harness.xmlHeaders
+
+          headers must contain theSameElementsAs (Seq(
+            HeaderNames.AUTHORIZATION -> "",
+            HeaderNames.ACCEPT        -> ContentTypes.JSON,
+            HeaderNames.CONTENT_TYPE  -> ContentTypes.XML,
+            Constants.ChannelHeader   -> "api"
+          ))
+        }
+
+        "when auth header present" in {
+          val harness = new Harness()
+
+          implicit val rh = FakeRequest().withHeaders(HeaderNames.AUTHORIZATION -> "a5sesqerTyi135/")
+          implicit val hc = HeaderCarrierConverter.fromRequest(rh)
+
+          val headers = harness.xmlHeaders
+
+          headers must contain theSameElementsAs (Seq(
+            HeaderNames.ACCEPT       -> ContentTypes.JSON,
+            HeaderNames.CONTENT_TYPE -> ContentTypes.XML,
+            Constants.ChannelHeader  -> "api"
+          ))
+        }
+
+        "when auth header missing" in {
+          val harness = new Harness()
+
+          implicit val rh = FakeRequest()
+          implicit val hc = HeaderCarrierConverter.fromRequest(rh)
+
+          val headers = harness.xmlHeaders
+
+          headers must contain theSameElementsAs (Seq(
+            HeaderNames.AUTHORIZATION -> "",
+            HeaderNames.ACCEPT        -> ContentTypes.JSON,
+            HeaderNames.CONTENT_TYPE  -> ContentTypes.XML,
+            Constants.ChannelHeader   -> "api"
+          ))
+        }
       }
+    }
 
-      "addAuthHeaders must add empty auth header if no auth header supplied in request" in {
-        val harness = new Harness()
+    "getJsonHeaders" - {
+      "must add required headers for GET requests" - {
+        "when client ID present" in {
+          val harness = new Harness()
 
-        implicit val requestHeader = FakeRequest()
+          implicit val rh = FakeRequest().withHeaders(Constants.ClientIdHeader -> "foo")
+          implicit val hc = HeaderCarrierConverter.fromRequest(rh)
 
-        val result: Seq[(String, String)] = harness.addHeaders(Seq.empty)
+          val headers = harness.jsonHeaders
 
-        result must contain(HeaderNames.AUTHORIZATION -> "")
+          headers must contain theSameElementsAs (Seq(
+            HeaderNames.AUTHORIZATION -> "",
+            HeaderNames.ACCEPT        -> ContentTypes.JSON,
+            Constants.ChannelHeader   -> "api",
+            Constants.ClientIdHeader  -> "foo"
+          ))
+        }
+
+        "when client ID missing" in {
+          val harness = new Harness()
+
+          implicit val rh = FakeRequest()
+          implicit val hc = HeaderCarrierConverter.fromRequest(rh)
+
+          val headers = harness.jsonHeaders
+
+          headers must contain theSameElementsAs (Seq(
+            HeaderNames.AUTHORIZATION -> "",
+            HeaderNames.ACCEPT        -> ContentTypes.JSON,
+            Constants.ChannelHeader   -> "api"
+          ))
+        }
+
+        "when auth header present" in {
+          val harness = new Harness()
+
+          implicit val rh = FakeRequest().withHeaders(HeaderNames.AUTHORIZATION -> "a5sesqerTyi135/")
+          implicit val hc = HeaderCarrierConverter.fromRequest(rh)
+
+          val headers = harness.jsonHeaders
+
+          headers must contain theSameElementsAs (Seq(
+            HeaderNames.ACCEPT      -> ContentTypes.JSON,
+            Constants.ChannelHeader -> "api"
+          ))
+        }
+
+        "when auth header missing" in {
+          val harness = new Harness()
+
+          implicit val rh = FakeRequest()
+          implicit val hc = HeaderCarrierConverter.fromRequest(rh)
+
+          val headers = harness.jsonHeaders
+
+          headers must contain theSameElementsAs (Seq(
+            HeaderNames.AUTHORIZATION -> "",
+            HeaderNames.ACCEPT        -> ContentTypes.JSON,
+            Constants.ChannelHeader   -> "api"
+          ))
+        }
       }
-
-      "addAuthHeaders must contain extra headers if supplied" in {
-        val harness = new Harness()
-
-        implicit val requestHeader = FakeRequest()
-
-        val result: Seq[(String, String)] = harness.addHeaders(Seq(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON))
-
-        result must contain(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
-      }
-
     }
   }
 }

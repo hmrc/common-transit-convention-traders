@@ -22,22 +22,20 @@ import models.ParseError.InappropriateDepartureOffice
 
 import scala.xml.NodeSeq
 
-class RouteChecker @Inject()(xmlReaders: GuaranteeXmlReaders) {
+class RouteChecker @Inject() (xmlReaders: GuaranteeXmlReaders) {
 
   def gbOnlyCheck(xml: NodeSeq): Either[ParseError, Boolean] =
     xmlReaders.officeOfDeparture(xml) match {
       case Left(error) => Left(error)
-      case Right(departure) => {
+      case Right(departure) =>
         xmlReaders.officeOfDestination(xml) match {
           case Left(error) => Left(error)
-          case Right(destination) => {
+          case Right(destination) =>
             departure.prefix match {
               case "GB" => Right(destination.value.startsWith("GB"))
               case "XI" => Right(false)
-              case _ => Left(InappropriateDepartureOffice("Inappropriate Departure Office"))
+              case _    => Left(InappropriateDepartureOffice("Inappropriate Departure Office"))
             }
-          }
         }
-      }
     }
 }

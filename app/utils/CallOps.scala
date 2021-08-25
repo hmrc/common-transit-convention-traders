@@ -15,11 +15,14 @@
  */
 
 package utils
+
 import config.Constants
 import play.api.mvc.Call
 
 object CallOps {
+
   implicit class CallOps(c: Call) {
+
     def urlWithContext: String =
       Constants.Context + c.url
   }

@@ -17,8 +17,10 @@
 package models.response
 
 import controllers.routes
-import models.domain.{DepartureWithMessages, MessageId}
-import play.api.libs.json.{JsObject, Json}
+import models.domain.DepartureWithMessages
+import models.domain.MessageId
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 import utils.CallOps._
 import utils.Utils
 

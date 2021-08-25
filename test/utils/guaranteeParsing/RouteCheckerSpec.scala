@@ -17,9 +17,14 @@
 package utils.guaranteeParsing
 
 import cats.data.ReaderT
-import models.ParseError.{DepartureEmpty, DestinationEmpty, InappropriateDepartureOffice}
-import models.{DepartureOffice, DestinationOffice, ParseHandling}
-import org.mockito.Mockito.{reset, _}
+import models.ParseError.DepartureEmpty
+import models.ParseError.DestinationEmpty
+import models.ParseError.InappropriateDepartureOffice
+import models.DepartureOffice
+import models.DestinationOffice
+import models.ParseHandling
+import org.mockito.Mockito.reset
+import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -30,7 +35,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 
 import scala.xml.NodeSeq
 
-class RouteCheckerSpec  extends AnyFreeSpec with ParseHandling with MockitoSugar with BeforeAndAfterEach with Matchers with ScalaCheckPropertyChecks{
+class RouteCheckerSpec extends AnyFreeSpec with ParseHandling with MockitoSugar with BeforeAndAfterEach with Matchers with ScalaCheckPropertyChecks {
 
   val mockXmlReaders = mock[GuaranteeXmlReaders]
 
@@ -58,65 +63,107 @@ class RouteCheckerSpec  extends AnyFreeSpec with ParseHandling with MockitoSugar
   "gbOnlyCheck" - {
     "returns parseError if officeOfDeparture fails to parse" in {
       when(mockXmlReaders.officeOfDeparture)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, DepartureOffice](_ => Left(DepartureEmpty("test"))))
+        .thenReturn(
+          ReaderT[ParseHandler, NodeSeq, DepartureOffice](
+            _ => Left(DepartureEmpty("test"))
+          )
+        )
 
       sut.gbOnlyCheck(<example></example>) mustBe a[Left[DepartureEmpty, _]]
     }
 
     "returns parseError if officeOfDestination fails to parse" in {
       when(mockXmlReaders.officeOfDeparture)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, DepartureOffice](_ => Right(DepartureOffice("test"))))
+        .thenReturn(
+          ReaderT[ParseHandler, NodeSeq, DepartureOffice](
+            _ => Right(DepartureOffice("test"))
+          )
+        )
 
       when(mockXmlReaders.officeOfDestination)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, DestinationOffice](_ => Left(DestinationEmpty("test"))))
+        .thenReturn(
+          ReaderT[ParseHandler, NodeSeq, DestinationOffice](
+            _ => Left(DestinationEmpty("test"))
+          )
+        )
 
       sut.gbOnlyCheck(<example></example>) mustBe a[Left[DestinationEmpty, _]]
     }
 
     "returns InappropriateDepartureOffice if we DepartureOffice doesn't start with GB or XI" in {
       when(mockXmlReaders.officeOfDeparture)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, DepartureOffice](_ => Right(DepartureOffice("UKabc"))))
+        .thenReturn(
+          ReaderT[ParseHandler, NodeSeq, DepartureOffice](
+            _ => Right(DepartureOffice("UKabc"))
+          )
+        )
       when(mockXmlReaders.officeOfDestination)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, DestinationOffice](_ => Right(DestinationOffice("ITabc"))))
+        .thenReturn(
+          ReaderT[ParseHandler, NodeSeq, DestinationOffice](
+            _ => Right(DestinationOffice("ITabc"))
+          )
+        )
 
       sut.gbOnlyCheck(<example></example>) mustBe a[Left[InappropriateDepartureOffice, _]]
     }
 
     "returns Right(false) if DepartureOffice starts with GB and DestinationOffice doesn't start with GB" in {
       when(mockXmlReaders.officeOfDeparture)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, DepartureOffice](_ => Right(DepartureOffice("GBabc"))))
+        .thenReturn(
+          ReaderT[ParseHandler, NodeSeq, DepartureOffice](
+            _ => Right(DepartureOffice("GBabc"))
+          )
+        )
       when(mockXmlReaders.officeOfDestination)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, DestinationOffice](_ => Right(DestinationOffice("ITabc"))))
+        .thenReturn(
+          ReaderT[ParseHandler, NodeSeq, DestinationOffice](
+            _ => Right(DestinationOffice("ITabc"))
+          )
+        )
 
       val result = sut.gbOnlyCheck(<example></example>)
-      result mustBe a[Right[_ ,Boolean]]
+      result mustBe a[Right[_, Boolean]]
       result.right.get mustBe false
     }
 
     "returns Right(true) if DepartureOffice starts with GB and DestinationOffice starts with GB" in {
       when(mockXmlReaders.officeOfDeparture)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, DepartureOffice](_ => Right(DepartureOffice("GBabc"))))
+        .thenReturn(
+          ReaderT[ParseHandler, NodeSeq, DepartureOffice](
+            _ => Right(DepartureOffice("GBabc"))
+          )
+        )
       when(mockXmlReaders.officeOfDestination)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, DestinationOffice](_ => Right(DestinationOffice("GBabc"))))
+        .thenReturn(
+          ReaderT[ParseHandler, NodeSeq, DestinationOffice](
+            _ => Right(DestinationOffice("GBabc"))
+          )
+        )
 
       val result = sut.gbOnlyCheck(<example></example>)
-      result mustBe a[Right[_ ,Boolean]]
+      result mustBe a[Right[_, Boolean]]
       result.right.get mustBe true
     }
 
     "returns Right(false) if DepartureOffice starts with XI" in {
       when(mockXmlReaders.officeOfDeparture)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, DepartureOffice](_ => Right(DepartureOffice("XIabc"))))
+        .thenReturn(
+          ReaderT[ParseHandler, NodeSeq, DepartureOffice](
+            _ => Right(DepartureOffice("XIabc"))
+          )
+        )
       when(mockXmlReaders.officeOfDestination)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, DestinationOffice](_ => Right(DestinationOffice("ITabc"))))
+        .thenReturn(
+          ReaderT[ParseHandler, NodeSeq, DestinationOffice](
+            _ => Right(DestinationOffice("ITabc"))
+          )
+        )
 
       val result = sut.gbOnlyCheck(<example></example>)
-      result mustBe a[Right[_ ,Boolean]]
+      result mustBe a[Right[_, Boolean]]
       result.right.get mustBe false
 
     }
   }
-
-
 
 }

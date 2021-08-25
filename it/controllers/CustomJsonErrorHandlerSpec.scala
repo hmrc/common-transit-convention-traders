@@ -21,7 +21,8 @@ import java.util.UUID
 import com.github.tomakehurst.wiremock.client.WireMock._
 import models.domain.Departures
 import models.response.HateoasResponseDepartures
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatest.concurrent.IntegrationPatience
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
@@ -78,8 +79,8 @@ class CustomJsonErrorHandlerSpec
       val response = httpClient
         .url(s"http://localhost:$port/movements/departures?updatedSince=15-06-2021")
         .withHttpHeaders(
-          "Accept" -> "application/vnd.hmrc.1.0+json",
-          "channel" -> "api",
+          "Accept"       -> "application/vnd.hmrc.1.0+json",
+          "channel"      -> "api",
           "X-Request-ID" -> requestId
         )
         .get()
@@ -128,8 +129,8 @@ class CustomJsonErrorHandlerSpec
       val response = httpClient
         .url(s"http://localhost:$port/movements/departures?updatedSince=2021-06-15T10:13:05+00:00")
         .withHttpHeaders(
-          "Accept" -> "application/vnd.hmrc.1.0+json",
-          "channel" -> "api",
+          "Accept"       -> "application/vnd.hmrc.1.0+json",
+          "channel"      -> "api",
           "X-Request-ID" -> requestId
         )
         .get()
@@ -179,8 +180,8 @@ class CustomJsonErrorHandlerSpec
       val response = httpClient
         .url(s"http://localhost:$port/movements/departures?updatedSince=2021-06-15T10%3A13%3A05%2B00%3A00")
         .withHttpHeaders(
-          "Accept" -> "application/vnd.hmrc.1.0+json",
-          "channel" -> "api",
+          "Accept"       -> "application/vnd.hmrc.1.0+json",
+          "channel"      -> "api",
           "X-Request-ID" -> requestId
         )
         .get()

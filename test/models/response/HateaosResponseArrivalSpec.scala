@@ -18,30 +18,32 @@ package models.response
 
 import java.time.LocalDateTime
 
-import models.domain.{Arrival, ArrivalId}
+import models.domain.Arrival
+import models.domain.ArrivalId
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 
-class HateoasResponseArrivalSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
+class HateoasResponseArrivalSpec
+    extends AnyFreeSpec
+    with Matchers
+    with GuiceOneAppPerSuite
+    with OptionValues
+    with ScalaFutures
+    with MockitoSugar
+    with BeforeAndAfterEach {
 
   "HateoasResponseArrival" - {
     "must generate correct message structure" in {
-      val arrival = Arrival(ArrivalId(3),
-        "loc",
-        "messageLoc",
-        "mrn",
-        "status",
-        LocalDateTime.of(2020, 10, 10, 10, 10, 10),
-        LocalDateTime.of(2020, 12, 12, 12, 12, 12)
-      )
+      val arrival =
+        Arrival(ArrivalId(3), "loc", "messageLoc", "mrn", "status", LocalDateTime.of(2020, 10, 10, 10, 10, 10), LocalDateTime.of(2020, 12, 12, 12, 12, 12))
 
-      val expectedJson = Json.parse(
-        """
+      val expectedJson = Json.parse("""
           |{
           |  "id": "3",
           |  "created": "2020-10-10T10:10:10",

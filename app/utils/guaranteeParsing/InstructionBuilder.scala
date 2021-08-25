@@ -18,64 +18,84 @@ package utils.guaranteeParsing
 
 import com.google.inject.Inject
 import config.DefaultGuaranteeConfig
-import models.ParseError.{AmountWithoutCurrency, InvalidAmount}
+import models.ParseError.AmountWithoutCurrency
+import models.ParseError.InvalidAmount
 import models._
 
-class InstructionBuilder @Inject()(guaranteeInstructionBuilder: GuaranteeInstructionBuilder) {
+class InstructionBuilder @Inject() (guaranteeInstructionBuilder: GuaranteeInstructionBuilder) {
 
   def buildInstructionSet(gooNode: GOOITEGDSNode, guarantees: Seq[Guarantee]): Either[ParseError, TransformInstructionSet] = {
-    val defaultingGuarantees = guarantees.filter(g => g.isDefaulting)
+    val defaultingGuarantees = guarantees.filter(
+      g => g.isDefaulting
+    )
 
-    val specialMentionGuarantees = gooNode.specialMentions.filter(sm => sm.isInstanceOf[SpecialMentionGuarantee]).map { sm => sm.asInstanceOf[SpecialMentionGuarantee] }
+    val specialMentionGuarantees = gooNode.specialMentions
+      .filter(
+        sm => sm.isInstanceOf[SpecialMentionGuarantee]
+      )
+      .map {
+        sm =>
+          sm.asInstanceOf[SpecialMentionGuarantee]
+      }
     val mentionedGuarantees = defaultingGuarantees.map {
-      g => pair(g, specialMentionGuarantees)
+      g =>
+        pair(g, specialMentionGuarantees)
     }
 
-    val preserveInstructions = gooNode.specialMentions.filter(sm => sm.isInstanceOf[SpecialMentionOther]).map { sm =>
-      val smo = sm.asInstanceOf[SpecialMentionOther]
-      NoChangeInstruction(smo.xml)
-    }
+    val preserveInstructions = gooNode.specialMentions
+      .filter(
+        sm => sm.isInstanceOf[SpecialMentionOther]
+      )
+      .map {
+        sm =>
+          val smo = sm.asInstanceOf[SpecialMentionOther]
+          NoChangeInstruction(smo.xml)
+      }
 
-    ParseError.sequenceErrors(mentionedGuarantees.map {
-      case (m, g) => guaranteeInstructionBuilder.buildInstructionFromGuarantee(g, m)
-    }).map {
-      instructions =>
-        TransformInstructionSet(gooNode, instructions ++ preserveInstructions)
-    }
+    ParseError
+      .sequenceErrors(mentionedGuarantees.map {
+        case (m, g) => guaranteeInstructionBuilder.buildInstructionFromGuarantee(g, m)
+      })
+      .map {
+        instructions =>
+          TransformInstructionSet(gooNode, instructions ++ preserveInstructions)
+      }
   }
 
   def pair(guarantee: Guarantee, specialMentionGuarantees: Seq[SpecialMentionGuarantee]): (Option[SpecialMentionGuarantee], Guarantee) =
-    specialMentionGuarantees.filter(sm => sm.additionalInfo.endsWith(guarantee.gReference)).headOption match {
+    specialMentionGuarantees
+      .filter(
+        sm => sm.additionalInfo.endsWith(guarantee.gReference)
+      )
+      .headOption match {
       case Some(mention) => (Some(mention), guarantee)
-      case None => (None, guarantee)
+      case None          => (None, guarantee)
     }
 }
 
-class GuaranteeInstructionBuilder @Inject() (defaultGuaranteeConfig: DefaultGuaranteeConfig){
+class GuaranteeInstructionBuilder @Inject() (defaultGuaranteeConfig: DefaultGuaranteeConfig) {
 
   def buildInstructionFromGuarantee(g: Guarantee, osm: Option[SpecialMentionGuarantee]): Either[ParseError, TransformInstruction] = {
-    val defaultGuaranteeAmount = BigDecimal(defaultGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()
+    val defaultGuaranteeAmount   = BigDecimal(defaultGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()
     val defaultGuaranteeCurrency = defaultGuaranteeConfig.currency
-    val defaultGuarantee = SpecialMentionGuarantee(defaultGuaranteeAmount ++ defaultGuaranteeCurrency ++ g.gReference, Nil)
+    val defaultGuarantee         = SpecialMentionGuarantee(defaultGuaranteeAmount ++ defaultGuaranteeCurrency ++ g.gReference, Nil)
     osm match {
       case Some(sm) =>
-        if(!Guarantee.referenceTypes.contains(g.gType)) {
+        if (!Guarantee.referenceTypes.contains(g.gType)) {
           Right(NoChangeGuaranteeInstruction(sm))
-        }
-        else
-        {
+        } else {
           sm.toDetails(g.gReference).flatMap {
-            details => (details.guaranteeAmount, details.currencyCode) match {
-              case (Some(_), None) =>
-                Left(AmountWithoutCurrency("Parsed Amount value without currency"))
-              case (Some(amount), Some(_)) if amount > 0 =>
-                Right(NoChangeGuaranteeInstruction(sm))
-              case (Some(_), Some(_)) =>
-                Left(InvalidAmount("Amount cannot be equal to or less than 0"))
-              case (None, _) =>{
-                Right(ChangeGuaranteeInstruction(SpecialMentionGuarantee(defaultGuaranteeAmount ++ defaultGuaranteeCurrency ++ g.gReference, sm.xml)))
+            details =>
+              (details.guaranteeAmount, details.currencyCode) match {
+                case (Some(_), None) =>
+                  Left(AmountWithoutCurrency("Parsed Amount value without currency"))
+                case (Some(amount), Some(_)) if amount > 0 =>
+                  Right(NoChangeGuaranteeInstruction(sm))
+                case (Some(_), Some(_)) =>
+                  Left(InvalidAmount("Amount cannot be equal to or less than 0"))
+                case (None, _) =>
+                  Right(ChangeGuaranteeInstruction(SpecialMentionGuarantee(defaultGuaranteeAmount ++ defaultGuaranteeCurrency ++ g.gReference, sm.xml)))
               }
-            }
           }
         }
       case None =>

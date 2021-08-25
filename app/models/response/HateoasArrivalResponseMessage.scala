@@ -17,8 +17,11 @@
 package models.response
 
 import controllers.routes
-import models.domain.{ArrivalId, MessageId, MovementMessage}
-import play.api.libs.json.{JsObject, Json}
+import models.domain.ArrivalId
+import models.domain.MessageId
+import models.domain.MovementMessage
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 import utils.CallOps._
 
 object HateoasArrivalResponseMessage {
@@ -30,13 +33,13 @@ object HateoasArrivalResponseMessage {
     Json.obj(
       "_links" -> Json.obj(
         "self"    -> Json.obj("href" -> arrivalUrl),
-        "arrival"    -> Json.obj("href" -> messageUrl)
+        "arrival" -> Json.obj("href" -> messageUrl)
       ),
-      "arrivalId" -> arrivalId.toString,
-      "messageId" -> messageId.toString,
-      "received" -> m.dateTime,
+      "arrivalId"   -> arrivalId.toString,
+      "messageId"   -> messageId.toString,
+      "received"    -> m.dateTime,
       "messageType" -> m.messageType,
-      "body" -> m.message.toString
+      "body"        -> m.message.toString
     )
   }
 }

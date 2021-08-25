@@ -30,11 +30,11 @@ class CC007ASpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks
   "validate" - {
 
     "must be successful when validating a valid CC007A xml" in {
-        xmlValidationService.validate(CC007A.toString(), ArrivalNotificationXSD) mustBe a[Right[_, _]]
+      xmlValidationService.validate(CC007A.toString(), ArrivalNotificationXSD) mustBe a[Right[_, _]]
     }
 
     "must fail when validating an invalid CC007A xml" in {
-       xmlValidationService.validate(InvalidCC007A.toString(), ArrivalNotificationXSD) mustBe a[Left[_, _]]
+      xmlValidationService.validate(InvalidCC007A.toString(), ArrivalNotificationXSD) mustBe a[Left[_, _]]
     }
 
     "must reject a CC007A containing MesSenMES3" in {

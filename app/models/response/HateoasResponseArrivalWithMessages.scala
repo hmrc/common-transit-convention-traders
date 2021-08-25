@@ -17,15 +17,17 @@
 package models.response
 
 import controllers.routes
-import models.domain.{ArrivalWithMessages, MessageId}
-import play.api.libs.json.{JsObject, Json}
+import models.domain.ArrivalWithMessages
+import models.domain.MessageId
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 import utils.CallOps._
 import utils.Utils
 
 object HateoasResponseArrivalWithMessages {
 
   def apply(arrivalWithMessages: ArrivalWithMessages): JsObject = {
-    val arrivalId = arrivalWithMessages.arrivalId
+    val arrivalId   = arrivalWithMessages.arrivalId
     val messagesUrl = routes.ArrivalMessagesController.getArrivalMessages(arrivalId).urlWithContext
 
     Json.obj(

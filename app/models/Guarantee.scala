@@ -21,8 +21,8 @@ case class Guarantee(gType: Char, gReference: String) {
 }
 
 object Guarantee {
-  val referenceTypes = Seq[Char]('0', '1', '2','4', '9')
-  val validTypes = Seq[Char]('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B')
+  val referenceTypes = Seq[Char]('0', '1', '2', '4', '9')
+  val validTypes     = Seq[Char]('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B')
 
   def isOther(gType: Char) = !referenceTypes.contains(gType)
 }

@@ -16,18 +16,17 @@
 
 package models
 
-import models.ParseError.{InvalidItemNumber, MissingItemNumber}
+import models.ParseError.InvalidItemNumber
+import models.ParseError.MissingItemNumber
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
-class ParseErrorSpec extends AnyFreeSpec with Matchers{
+class ParseErrorSpec extends AnyFreeSpec with Matchers {
 
   "sequenceErrors" - {
 
     val failedParse: Seq[Either[ParseError, String]] =
-      Seq(Left(InvalidItemNumber("Bad Item Number")),
-        Left(MissingItemNumber("Missing Item Number")),
-        Right("Good Result"))
+      Seq(Left(InvalidItemNumber("Bad Item Number")), Left(MissingItemNumber("Missing Item Number")), Right("Good Result"))
 
     val goodParse: Seq[Either[ParseError, String]] =
       Seq(Right("Good Result"), Right("Other Result"))
@@ -42,6 +41,5 @@ class ParseErrorSpec extends AnyFreeSpec with Matchers{
       result.right.get.length mustBe 2
     }
   }
-
 
 }

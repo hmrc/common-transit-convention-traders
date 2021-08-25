@@ -16,27 +16,43 @@
 
 package connectors
 
-import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
-
 import com.github.tomakehurst.wiremock.client.WireMock._
+import config.Constants
 import controllers.routes
-import models.{Box, BoxId}
-import models.domain.{Arrival, ArrivalId, Arrivals}
-import models.response.{HateoasResponseArrival, HateoasResponseArrivals}
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import models.Box
+import models.BoxId
+import models.domain.Arrival
+import models.domain.ArrivalId
+import models.domain.Arrivals
+import models.response.HateoasResponseArrival
+import models.response.HateoasResponseArrivals
+import org.scalatest.concurrent.IntegrationPatience
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import play.api.http.ContentTypes
+import play.api.http.HeaderNames
 import play.api.libs.json.Json
-import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import uk.gov.hmrc.http.Authorization
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CallOps._
 
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with utils.WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
+class ArrivalConnectorSpec
+    extends AnyFreeSpec
+    with Matchers
+    with GuiceOneAppPerSuite
+    with utils.WiremockSuite
+    with ScalaFutures
+    with IntegrationPatience
+    with ScalaCheckPropertyChecks {
   val testBoxId   = BoxId("testBoxId")
   val testBoxName = "testBoxName"
   val testBox     = Box(testBoxId, testBoxName)
@@ -48,21 +64,28 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
       server.stubFor(
         post(
           urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals")
-        ).willReturn(
-          aResponse()
-            .withStatus(ACCEPTED)
-            .withBody(
-              Json.stringify(
-                Json.toJson(
-                  Option(testBox)
+        )
+          .withHeader(HeaderNames.AUTHORIZATION, equalTo("a5sesqerTyi135/"))
+          .withHeader(HeaderNames.ACCEPT, equalTo(ContentTypes.JSON))
+          .withHeader(HeaderNames.CONTENT_TYPE, equalTo(ContentTypes.XML))
+          .withHeader(Constants.ChannelHeader, equalTo("api"))
+          .withHeader(Constants.ClientIdHeader, equalTo("foo"))
+          .willReturn(
+            aResponse()
+              .withStatus(ACCEPTED)
+              .withBody(
+                Json.stringify(
+                  Json.toJson(
+                    Option(testBox)
+                  )
                 )
               )
-            )
-        )
+          )
       )
 
       implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+        .copy(authorization = Some(Authorization("a5sesqerTyi135/")))
+        .withExtraHeaders(Constants.ClientIdHeader -> "foo")
 
       val result = connector.post("<document></document>").futureValue
 
@@ -80,11 +103,11 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
         )
 
         implicit val hc = HeaderCarrier()
-        implicit val requestHeader = FakeRequest()
 
         val result = connector.post("<document></document>").futureValue
 
-        result.left.get.statusCode mustEqual INTERNAL_SERVER_ERROR      }
+        result.left.get.statusCode mustEqual INTERNAL_SERVER_ERROR
+      }
 
     }
 
@@ -98,7 +121,6 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
       )
 
       implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
 
       val result = connector.post("<document></document>").futureValue
 
@@ -108,12 +130,18 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
 
   "put" - {
     "must return ACCEPTED when put is successful" in {
-        val connector = app.injector.instanceOf[ArrivalConnector]
+      val connector = app.injector.instanceOf[ArrivalConnector]
 
-        server.stubFor(
-          put(
-            urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/2")
-          ).willReturn(
+      server.stubFor(
+        put(
+          urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/2")
+        )
+          .withHeader(HeaderNames.AUTHORIZATION, equalTo("a5sesqerTyi135/"))
+          .withHeader(HeaderNames.ACCEPT, equalTo(ContentTypes.JSON))
+          .withHeader(HeaderNames.CONTENT_TYPE, equalTo(ContentTypes.XML))
+          .withHeader(Constants.ChannelHeader, equalTo("api"))
+          .withHeader(Constants.ClientIdHeader, equalTo("foo"))
+          .willReturn(
             aResponse()
               .withStatus(ACCEPTED)
               .withBody(
@@ -124,12 +152,13 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
                 )
               )
           )
-        )
+      )
 
-        implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+      implicit val hc = HeaderCarrier()
+        .copy(authorization = Some(Authorization("a5sesqerTyi135/")))
+        .withExtraHeaders(Constants.ClientIdHeader -> "foo")
 
-        val result = connector.put("<document></document>", ArrivalId(2)).futureValue
+      val result = connector.put("<document></document>", ArrivalId(2)).futureValue
 
       result.right.get.responseData mustEqual Option(testBox)
     }
@@ -145,7 +174,6 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
         )
 
         implicit val hc = HeaderCarrier()
-        implicit val requestHeader = FakeRequest()
 
         val result = connector.put("<document></document>", ArrivalId(2)).futureValue
 
@@ -164,7 +192,6 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
       )
 
       implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
 
       val result = connector.put("<document></document>", ArrivalId(2)).futureValue
 
@@ -176,14 +203,32 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
   "get" - {
     "must return Arrival when arrival is found" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      val arrival = Arrival(ArrivalId(1), routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext, routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)
+      val arrival = Arrival(
+        ArrivalId(1),
+        routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
+        routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+        "MRN",
+        "status",
+        LocalDateTime.now,
+        LocalDateTime.now
+      )
 
-      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1"))
-        .willReturn(aResponse().withStatus(OK)
-        .withBody(Json.toJson(arrival).toString())))
+      server.stubFor(
+        get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1"))
+          .withHeader(HeaderNames.AUTHORIZATION, equalTo("a5sesqerTyi135/"))
+          .withHeader(HeaderNames.ACCEPT, equalTo(ContentTypes.JSON))
+          .withHeader(Constants.ChannelHeader, equalTo("api"))
+          .withHeader(Constants.ClientIdHeader, equalTo("foo"))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.toJson(arrival).toString())
+          )
+      )
 
       implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+        .copy(authorization = Some(Authorization("a5sesqerTyi135/")))
+        .withExtraHeaders(Constants.ClientIdHeader -> "foo")
 
       val result = connector.get(ArrivalId(1)).futureValue
 
@@ -192,77 +237,124 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      val arrival = Arrival(ArrivalId(1), routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext, routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)
+      val arrival = Arrival(
+        ArrivalId(1),
+        routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
+        routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+        "MRN",
+        "status",
+        LocalDateTime.now,
+        LocalDateTime.now
+      )
 
       val response = HateoasResponseArrival(arrival)
 
-      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1"))
-        .willReturn(aResponse().withStatus(OK)
-        .withBody(Json.toJson(response).toString())))
+      server.stubFor(
+        get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1"))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.toJson(response).toString())
+          )
+      )
 
       implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
 
       val result = connector.get(ArrivalId(1)).futureValue
 
       result.isLeft mustEqual true
-      result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
+      result.left.map {
+        x => x.status mustEqual INTERNAL_SERVER_ERROR
+      }
     }
 
     "must return HttpResponse with a not found if not found" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1"))
-        .willReturn(aResponse().withStatus(NOT_FOUND)))
+      server.stubFor(
+        get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1"))
+          .willReturn(aResponse().withStatus(NOT_FOUND))
+      )
 
       implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
 
       val result = connector.get(ArrivalId(1)).futureValue
 
       result.isLeft mustEqual true
-      result.left.map { x => x.status mustEqual NOT_FOUND }
+      result.left.map {
+        x => x.status mustEqual NOT_FOUND
+      }
     }
 
     "must return HttpResponse with a bad request if there is a bad request" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1"))
-        .willReturn(aResponse().withStatus(BAD_REQUEST)))
+      server.stubFor(
+        get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1"))
+          .willReturn(aResponse().withStatus(BAD_REQUEST))
+      )
 
       implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
 
       val result = connector.get(ArrivalId(1)).futureValue
 
       result.isLeft mustEqual true
-      result.left.map { x => x.status mustEqual BAD_REQUEST }
+      result.left.map {
+        x => x.status mustEqual BAD_REQUEST
+      }
     }
 
     "must return HttpResponse with an internal server if there is an internal server error" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1"))
-        .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR)))
+      server.stubFor(
+        get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals/1"))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
+      )
 
       implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
 
       val result = connector.get(ArrivalId(1)).futureValue
 
       result.isLeft mustEqual true
-      result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
+      result.left.map {
+        x => x.status mustEqual INTERNAL_SERVER_ERROR
+      }
     }
   }
 
   "getForEori" - {
     "must return Arrival when arrival is found" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      val arrivals = Arrivals(Seq(Arrival(ArrivalId(1), routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext, routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)), 1, 1)
+      val arrivals = Arrivals(
+        Seq(
+          Arrival(
+            ArrivalId(1),
+            routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
+            routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+            "MRN",
+            "status",
+            LocalDateTime.now,
+            LocalDateTime.now
+          )
+        ),
+        1,
+        1
+      )
 
-      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals"))
-        .willReturn(aResponse().withStatus(OK)
-          .withBody(Json.toJson(arrivals).toString())))
+      server.stubFor(
+        get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals"))
+          .withHeader(HeaderNames.AUTHORIZATION, equalTo("a5sesqerTyi135/"))
+          .withHeader(HeaderNames.ACCEPT, equalTo(ContentTypes.JSON))
+          .withHeader(Constants.ChannelHeader, equalTo("api"))
+          .withHeader(Constants.ClientIdHeader, equalTo("foo"))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.toJson(arrivals).toString())
+          )
+      )
 
       implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+        .copy(authorization = Some(Authorization("a5sesqerTyi135/")))
+        .withExtraHeaders(Constants.ClientIdHeader -> "foo")
 
       val result = connector.getForEori(None).futureValue
 
@@ -271,15 +363,39 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
 
     "must render updatedSince parameter into request URL" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      val arrivals = Arrivals(Seq(Arrival(ArrivalId(1), routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext, routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)), 1, 1)
+      val arrivals = Arrivals(
+        Seq(
+          Arrival(
+            ArrivalId(1),
+            routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
+            routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+            "MRN",
+            "status",
+            LocalDateTime.now,
+            LocalDateTime.now
+          )
+        ),
+        1,
+        1
+      )
       val dateTime = Some(OffsetDateTime.of(2021, 3, 14, 13, 15, 30, 0, ZoneOffset.ofHours(1)))
 
-      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals?updatedSince=2021-03-14T13%3A15%3A30%2B01%3A00"))
-        .willReturn(aResponse().withStatus(OK)
-          .withBody(Json.toJson(arrivals).toString())))
+      server.stubFor(
+        get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals?updatedSince=2021-03-14T13%3A15%3A30%2B01%3A00"))
+          .withHeader(HeaderNames.AUTHORIZATION, equalTo("a5sesqerTyi135/"))
+          .withHeader(HeaderNames.ACCEPT, equalTo(ContentTypes.JSON))
+          .withHeader(Constants.ChannelHeader, equalTo("api"))
+          .withHeader(Constants.ClientIdHeader, equalTo("foo"))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.toJson(arrivals).toString())
+          )
+      )
 
       implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+        .copy(authorization = Some(Authorization("a5sesqerTyi135/")))
+        .withExtraHeaders(Constants.ClientIdHeader -> "foo")
 
       val result = connector.getForEori(dateTime).futureValue
 
@@ -288,63 +404,92 @@ class ArrivalConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
 
     "must return HttpResponse with an internal server error if there is a model mismatch" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      val arrival = Arrivals(Seq(Arrival(ArrivalId(1), routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext, routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext, "MRN", "status", LocalDateTime.now, LocalDateTime.now)), 1, 1)
+      val arrival = Arrivals(
+        Seq(
+          Arrival(
+            ArrivalId(1),
+            routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
+            routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+            "MRN",
+            "status",
+            LocalDateTime.now,
+            LocalDateTime.now
+          )
+        ),
+        1,
+        1
+      )
 
       val response = HateoasResponseArrivals(arrival)
 
-      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals"))
-        .willReturn(aResponse().withStatus(OK)
-        .withBody(Json.toJson(response).toString())))
+      server.stubFor(
+        get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals"))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.toJson(response).toString())
+          )
+      )
 
       implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
 
       val result = connector.getForEori(None).futureValue
 
       result.isLeft mustEqual true
-      result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
+      result.left.map {
+        x => x.status mustEqual INTERNAL_SERVER_ERROR
+      }
     }
 
     "must return HttpResponse with a not found if not found" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals"))
-        .willReturn(aResponse().withStatus(NOT_FOUND)))
+      server.stubFor(
+        get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals"))
+          .willReturn(aResponse().withStatus(NOT_FOUND))
+      )
 
       implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
 
       val result = connector.getForEori(None).futureValue
 
       result.isLeft mustEqual true
-      result.left.map { x => x.status mustEqual NOT_FOUND }
+      result.left.map {
+        x => x.status mustEqual NOT_FOUND
+      }
     }
 
     "must return HttpResponse with a bad request if there is a bad request" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals"))
-        .willReturn(aResponse().withStatus(BAD_REQUEST)))
+      server.stubFor(
+        get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals"))
+          .willReturn(aResponse().withStatus(BAD_REQUEST))
+      )
 
       implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
 
       val result = connector.getForEori(None).futureValue
 
       result.isLeft mustEqual true
-      result.left.map { x => x.status mustEqual BAD_REQUEST }
+      result.left.map {
+        x => x.status mustEqual BAD_REQUEST
+      }
     }
 
     "must return HttpResponse with an internal server if there is an internal server error" in {
       val connector = app.injector.instanceOf[ArrivalConnector]
-      server.stubFor(get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals"))
-        .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR)))
+      server.stubFor(
+        get(urlEqualTo("/transit-movements-trader-at-destination/movements/arrivals"))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
+      )
 
       implicit val hc = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
 
       val result = connector.getForEori(None).futureValue
 
       result.isLeft mustEqual true
-      result.left.map { x => x.status mustEqual INTERNAL_SERVER_ERROR }
+      result.left.map {
+        x => x.status mustEqual INTERNAL_SERVER_ERROR
+      }
     }
 
   }

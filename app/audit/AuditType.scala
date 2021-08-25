@@ -25,9 +25,8 @@ object AuditType extends Enumerable.Implicits {
   // User
   case object TenThousandEuroGuaranteeAdded extends AuditType
 
-
   val values: Seq[AuditType] =
     Seq(
-      TenThousandEuroGuaranteeAdded,
+      TenThousandEuroGuaranteeAdded
     )
 }

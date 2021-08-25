@@ -18,7 +18,10 @@ package services
 
 import cats.data.ReaderT
 import data.TestXml
-import models.ParseError.{AmountWithoutCurrency, DepartureEmpty, GuaranteeTypeInvalid, InvalidItemNumber}
+import models.ParseError.AmountWithoutCurrency
+import models.ParseError.DepartureEmpty
+import models.ParseError.GuaranteeTypeInvalid
+import models.ParseError.InvalidItemNumber
 import models._
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
@@ -29,16 +32,27 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import utils.guaranteeParsing.{GuaranteeXmlReaders, InstructionBuilder, RouteChecker, XmlBuilder}
+import utils.guaranteeParsing.GuaranteeXmlReaders
+import utils.guaranteeParsing.InstructionBuilder
+import utils.guaranteeParsing.RouteChecker
+import utils.guaranteeParsing.XmlBuilder
 
-import scala.xml.{Node, NodeSeq}
+import scala.xml.Node
+import scala.xml.NodeSeq
 
-class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with MockitoSugar with BeforeAndAfterEach with TestXml with Matchers with ScalaCheckPropertyChecks {
+class EnsureGuaranteeServiceSpec
+    extends AnyFreeSpec
+    with ParseHandling
+    with MockitoSugar
+    with BeforeAndAfterEach
+    with TestXml
+    with Matchers
+    with ScalaCheckPropertyChecks {
 
-  private val mockXmlReaders: GuaranteeXmlReaders = mock[GuaranteeXmlReaders]
+  private val mockXmlReaders: GuaranteeXmlReaders        = mock[GuaranteeXmlReaders]
   private val mockInstructionBuilder: InstructionBuilder = mock[InstructionBuilder]
-  private val mockRouteChecker: RouteChecker = mock[RouteChecker]
-  private val mockXmlBuilder: XmlBuilder = mock[XmlBuilder]
+  private val mockRouteChecker: RouteChecker             = mock[RouteChecker]
+  private val mockXmlBuilder: XmlBuilder                 = mock[XmlBuilder]
 
   override def beforeEach = {
     super.beforeEach()
@@ -92,12 +106,27 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
         .thenReturn(Right(Seq(SpecialMentionGuarantee("test", Nil))))
 
       when(mockXmlReaders.gOOITEGDSNode)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](_ => Right(Seq(GOOITEGDSNode(1, Seq(SpecialMentionGuarantee("test", Nil)))))))
+        .thenReturn(
+          ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](
+            _ => Right(Seq(GOOITEGDSNode(1, Seq(SpecialMentionGuarantee("test", Nil)))))
+          )
+        )
 
       when(mockXmlReaders.gOOITEGDSNodeFromNode)
-        .thenReturn(ReaderT[ParseHandler, Node, GOOITEGDSNode](_ => Right(GOOITEGDSNode(1, Seq(SpecialMentionGuarantee("test", Nil))))))
+        .thenReturn(
+          ReaderT[ParseHandler, Node, GOOITEGDSNode](
+            _ => Right(GOOITEGDSNode(1, Seq(SpecialMentionGuarantee("test", Nil))))
+          )
+        )
 
-      when(mockInstructionBuilder.buildInstructionSet(any(), any())).thenReturn(Right(TransformInstructionSet(GOOITEGDSNode(1, Seq(SpecialMentionGuarantee("test", Nil))),Seq(NoChangeGuaranteeInstruction(SpecialMentionGuarantee("test", Nil))))))
+      when(mockInstructionBuilder.buildInstructionSet(any(), any())).thenReturn(
+        Right(
+          TransformInstructionSet(
+            GOOITEGDSNode(1, Seq(SpecialMentionGuarantee("test", Nil))),
+            Seq(NoChangeGuaranteeInstruction(SpecialMentionGuarantee("test", Nil)))
+          )
+        )
+      )
 
       when(mockXmlBuilder.buildFromInstruction(any())).thenReturn(<SPEMENMT2><test></test></SPEMENMT2>)
 
@@ -144,10 +173,14 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
         .thenReturn(Right(Seq(Guarantee(1, "test"))))
 
       when(mockXmlReaders.gOOITEGDSNode)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](_ => Left(InvalidItemNumber("test"))))
+        .thenReturn(
+          ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](
+            _ => Left(InvalidItemNumber("test"))
+          )
+        )
 
       val result = sut.parseInstructionSets(<test><GOOITEGDS><IteNumGDS7>A</IteNumGDS7></GOOITEGDS></test>)
-      result mustBe a[Left[InvalidItemNumber,_]]
+      result mustBe a[Left[InvalidItemNumber, _]]
 
     }
 
@@ -156,7 +189,11 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
         .thenReturn(Right(Seq(Guarantee(1, "test"))))
 
       when(mockXmlReaders.gOOITEGDSNode)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](_ => Right(Seq(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>)))))))
+        .thenReturn(
+          ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](
+            _ => Right(Seq(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>)))))
+          )
+        )
 
       when(mockInstructionBuilder.buildInstructionSet(any(), any()))
         .thenReturn(Left(AmountWithoutCurrency("test")))
@@ -170,15 +207,18 @@ class EnsureGuaranteeServiceSpec extends AnyFreeSpec with ParseHandling with Moc
         .thenReturn(Right(Seq(Guarantee(1, "test"))))
 
       when(mockXmlReaders.gOOITEGDSNode)
-        .thenReturn(ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](_ => Right(Seq(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>)))))))
+        .thenReturn(
+          ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]](
+            _ => Right(Seq(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>)))))
+          )
+        )
 
       when(mockInstructionBuilder.buildInstructionSet(any(), any()))
         .thenReturn(Right(TransformInstructionSet(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>))), Seq(NoChangeInstruction(<test></test>)))))
 
       val result = sut.parseInstructionSets(<test></test>)
       result mustBe a[Right[_, TransformInstructionSet]]
-      result.right.get mustBe Seq(
-        TransformInstructionSet(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>))), Seq(NoChangeInstruction(<test></test>))))
+      result.right.get mustBe Seq(TransformInstructionSet(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>))), Seq(NoChangeInstruction(<test></test>))))
 
     }
   }

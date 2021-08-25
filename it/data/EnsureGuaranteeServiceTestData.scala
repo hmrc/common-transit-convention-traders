@@ -607,7 +607,6 @@ object EnsureGuaranteeServiceTestData {
       </GUAREFREF>
     </GUAGUA>
 
-
   def goodsWithCustomSpecialMention(nodeSeq: NodeSeq) =
     <GOOITEGDS>
       <IteNumGDS7>1</IteNumGDS7>

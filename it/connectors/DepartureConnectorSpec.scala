@@ -16,27 +16,43 @@
 
 package connectors
 
-import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
-
 import com.github.tomakehurst.wiremock.client.WireMock._
+import config.Constants
 import controllers.routes
-import models.{Box, BoxId}
-import models.domain.{Departure, DepartureId, Departures}
-import models.response.{HateoasResponseDeparture, HateoasResponseDepartures}
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import models.Box
+import models.BoxId
+import models.domain.Departure
+import models.domain.DepartureId
+import models.domain.Departures
+import models.response.HateoasResponseDeparture
+import models.response.HateoasResponseDepartures
+import org.scalatest.concurrent.IntegrationPatience
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import play.api.http.ContentTypes
+import play.api.http.HeaderNames
 import play.api.libs.json.Json
-import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import uk.gov.hmrc.http.Authorization
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.CallOps._
 
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with utils.WiremockSuite with ScalaFutures with IntegrationPatience with ScalaCheckPropertyChecks {
+class DepartureConnectorSpec
+    extends AnyFreeSpec
+    with Matchers
+    with GuiceOneAppPerSuite
+    with utils.WiremockSuite
+    with ScalaFutures
+    with IntegrationPatience
+    with ScalaCheckPropertyChecks {
   "post" - {
 
     "must return ACCEPTED when post is successful and subscribed for notifications" in {
@@ -49,21 +65,28 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
       server.stubFor(
         post(
           urlEqualTo("/transits-movements-trader-at-departure/movements/departures")
-        ).willReturn(
-          aResponse()
-            .withStatus(ACCEPTED)
-            .withBody(
-              Json.stringify(
-                Json.toJson(
-                  Option(testBox)
+        )
+          .withHeader(HeaderNames.AUTHORIZATION, equalTo("a5sesqerTyi135/"))
+          .withHeader(HeaderNames.ACCEPT, equalTo(ContentTypes.JSON))
+          .withHeader(HeaderNames.CONTENT_TYPE, equalTo(ContentTypes.XML))
+          .withHeader(Constants.ChannelHeader, equalTo("api"))
+          .withHeader(Constants.ClientIdHeader, equalTo("foo"))
+          .willReturn(
+            aResponse()
+              .withStatus(ACCEPTED)
+              .withBody(
+                Json.stringify(
+                  Json.toJson(
+                    Option(testBox)
+                  )
                 )
               )
-            )
-        )
+          )
       )
 
-      implicit val hc            = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+      implicit val hc = HeaderCarrier()
+        .copy(authorization = Some(Authorization("a5sesqerTyi135/")))
+        .withExtraHeaders(Constants.ClientIdHeader -> "foo")
 
       val result = connector.post("<document></document>").futureValue
 
@@ -76,15 +99,22 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
       server.stubFor(
         post(
           urlEqualTo("/transits-movements-trader-at-departure/movements/departures")
-        ).willReturn(
-          aResponse()
-            .withStatus(ACCEPTED)
-            .withBody(Json.stringify(Json.toJson(Option.empty[Box])))
         )
+          .withHeader(HeaderNames.AUTHORIZATION, equalTo("a5sesqerTyi135/"))
+          .withHeader(HeaderNames.ACCEPT, equalTo(ContentTypes.JSON))
+          .withHeader(HeaderNames.CONTENT_TYPE, equalTo(ContentTypes.XML))
+          .withHeader(Constants.ChannelHeader, equalTo("api"))
+          .withHeader(Constants.ClientIdHeader, equalTo("foo"))
+          .willReturn(
+            aResponse()
+              .withStatus(ACCEPTED)
+              .withBody(Json.stringify(Json.toJson(Option.empty[Box])))
+          )
       )
 
-      implicit val hc            = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+      implicit val hc = HeaderCarrier()
+        .copy(authorization = Some(Authorization("a5sesqerTyi135/")))
+        .withExtraHeaders(Constants.ClientIdHeader -> "foo")
 
       val result = connector.post("<document></document>").futureValue
 
@@ -101,8 +131,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
           ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
         )
 
-        implicit val hc            = HeaderCarrier()
-        implicit val requestHeader = FakeRequest()
+        implicit val hc = HeaderCarrier()
 
         val result = connector.post("<document></document>").futureValue
 
@@ -120,8 +149,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
         ).willReturn(aResponse().withStatus(BAD_REQUEST))
       )
 
-      implicit val hc            = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+      implicit val hc = HeaderCarrier()
 
       val result = connector.post("<document></document>").futureValue
 
@@ -143,6 +171,10 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
 
       server.stubFor(
         get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/1"))
+          .withHeader(HeaderNames.AUTHORIZATION, equalTo("a5sesqerTyi135/"))
+          .withHeader(HeaderNames.ACCEPT, equalTo(ContentTypes.JSON))
+          .withHeader(Constants.ChannelHeader, equalTo("api"))
+          .withHeader(Constants.ClientIdHeader, equalTo("foo"))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -150,8 +182,9 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
           )
       )
 
-      implicit val hc            = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+      implicit val hc = HeaderCarrier()
+        .copy(authorization = Some(Authorization("a5sesqerTyi135/")))
+        .withExtraHeaders(Constants.ClientIdHeader -> "foo")
 
       val result = connector.get(DepartureId(1)).futureValue
 
@@ -181,8 +214,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
           )
       )
 
-      implicit val hc            = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+      implicit val hc = HeaderCarrier()
 
       val result = connector.get(DepartureId(1)).futureValue
 
@@ -199,8 +231,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
           .willReturn(aResponse().withStatus(NOT_FOUND))
       )
 
-      implicit val hc            = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+      implicit val hc = HeaderCarrier()
 
       val result = connector.get(DepartureId(1)).futureValue
 
@@ -217,8 +248,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
           .willReturn(aResponse().withStatus(BAD_REQUEST))
       )
 
-      implicit val hc            = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+      implicit val hc = HeaderCarrier()
 
       val result = connector.get(DepartureId(1)).futureValue
 
@@ -235,8 +265,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
           .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
       )
 
-      implicit val hc            = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+      implicit val hc = HeaderCarrier()
 
       val result = connector.get(DepartureId(1)).futureValue
 
@@ -261,11 +290,17 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
             LocalDateTime.now,
             LocalDateTime.now
           )
-        ), 1, 1
+        ),
+        1,
+        1
       )
 
       server.stubFor(
         get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures"))
+          .withHeader(HeaderNames.AUTHORIZATION, equalTo("a5sesqerTyi135/"))
+          .withHeader(HeaderNames.ACCEPT, equalTo(ContentTypes.JSON))
+          .withHeader(Constants.ChannelHeader, equalTo("api"))
+          .withHeader(Constants.ClientIdHeader, equalTo("foo"))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -273,8 +308,9 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
           )
       )
 
-      implicit val hc            = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+      implicit val hc = HeaderCarrier()
+        .copy(authorization = Some(Authorization("a5sesqerTyi135/")))
+        .withExtraHeaders(Constants.ClientIdHeader -> "foo")
 
       val result = connector.getForEori(None).futureValue
 
@@ -294,7 +330,9 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
             LocalDateTime.now,
             LocalDateTime.now
           )
-        ), 1, 1
+        ),
+        1,
+        1
       )
 
       val response = HateoasResponseDepartures(departures)
@@ -308,8 +346,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
           )
       )
 
-      implicit val hc            = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+      implicit val hc = HeaderCarrier()
 
       val result = connector.getForEori(None).futureValue
 
@@ -326,8 +363,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
           .willReturn(aResponse().withStatus(NOT_FOUND))
       )
 
-      implicit val hc            = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+      implicit val hc = HeaderCarrier()
 
       val result = connector.getForEori(None).futureValue
 
@@ -344,8 +380,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
           .willReturn(aResponse().withStatus(BAD_REQUEST))
       )
 
-      implicit val hc            = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+      implicit val hc = HeaderCarrier()
 
       val result = connector.getForEori(None).futureValue
 
@@ -362,8 +397,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
           .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
       )
 
-      implicit val hc            = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+      implicit val hc = HeaderCarrier()
 
       val result = connector.getForEori(None).futureValue
 
@@ -386,7 +420,9 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
             LocalDateTime.now,
             LocalDateTime.now
           )
-        ), 1, 1
+        ),
+        1,
+        1
       )
       val dateTime = Some(OffsetDateTime.of(2021, 3, 14, 13, 15, 30, 0, ZoneOffset.ofHours(1)))
 
@@ -399,8 +435,7 @@ class DepartureConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppP
           )
       )
 
-      implicit val hc            = HeaderCarrier()
-      implicit val requestHeader = FakeRequest()
+      implicit val hc = HeaderCarrier()
 
       val result = connector.getForEori(dateTime).futureValue
 

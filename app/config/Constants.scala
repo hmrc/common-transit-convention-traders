@@ -24,4 +24,5 @@ object Constants {
   val Context = "/customs/transits"
 
   val ClientIdHeader = "X-Client-Id"
+  val ChannelHeader  = "channel"
 }

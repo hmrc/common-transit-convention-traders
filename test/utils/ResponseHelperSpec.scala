@@ -23,9 +23,9 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.http.Status
 import uk.gov.hmrc.http.HttpResponse
 
-class ResponseHelperSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks{
+class ResponseHelperSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks {
 
-  class Harness extends ResponseHelper { }
+  class Harness extends ResponseHelper {}
 
   val clientErrorGenerator: Gen[Int] = Gen.oneOf(Seq(Status.UNAUTHORIZED, Status.FORBIDDEN, Status.NOT_FOUND, Status.BAD_REQUEST))
   val serverErrorGenerator: Gen[Int] = Gen.oneOf(Seq(Status.INTERNAL_SERVER_ERROR, Status.NOT_IMPLEMENTED, Status.SERVICE_UNAVAILABLE, Status.GATEWAY_TIMEOUT))
@@ -44,7 +44,7 @@ class ResponseHelperSpec extends AnyFreeSpec with Matchers with ScalaCheckProper
     "if status is 4xx and there is no body, returns a status without a body" in {
       forAll(clientErrorGenerator) {
         code =>
-          val result = new Harness().handleNon2xx(HttpResponse(code))
+          val result = new Harness().handleNon2xx(HttpResponse(code, null))
 
           result.body.isKnownEmpty mustBe true
       }
@@ -53,7 +53,7 @@ class ResponseHelperSpec extends AnyFreeSpec with Matchers with ScalaCheckProper
     "if status is not a 4xx, return a simple status code" in {
       forAll(serverErrorGenerator) {
         code =>
-          val result = new Harness().handleNon2xx(HttpResponse(code))
+          val result = new Harness().handleNon2xx(HttpResponse(code, null))
 
           result.body.isKnownEmpty mustBe true
       }

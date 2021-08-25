@@ -49,9 +49,10 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
     "must fail when validating an invalid ArrivalNotification xml" - {
 
       "with missing mandatory elements" in {
-        val xml             = "<CC007A></CC007A>"
+        val xml = "<CC007A></CC007A>"
 
-        val expectedMessage = "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc007a.xsd'. Detailed error below:\ncvc-complex-type.2.4.b: The content of element 'CC007A' is not complete. One of '{SynIdeMES1}' is expected."
+        val expectedMessage =
+          "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc007a.xsd'. Detailed error below:\ncvc-complex-type.2.4.b: The content of element 'CC007A' is not complete. One of '{SynIdeMES1}' is expected."
 
         xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
       }
@@ -65,18 +66,21 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
             |</CC007A>
           """.stripMargin
 
-        val expectedMessage = "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc007a.xsd'. Detailed error below:\ncvc-pattern-valid: Value '11111111111111' is not facet-valid with respect to pattern '[a-zA-Z]{4}' for type 'Alpha_4'."
+        val expectedMessage =
+          "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc007a.xsd'. Detailed error below:\ncvc-pattern-valid: Value '11111111111111' is not facet-valid with respect to pattern '[a-zA-Z]{4}' for type 'Alpha_4'."
 
         xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
       }
     }
   }
 
-  private def buildXml(withEnrouteEvent: Boolean,
-                       withIncident: Boolean = false,
-                       withContainerTranshipment: Boolean = false,
-                       withVehicularTranshipment: Boolean = false,
-                       withSeals: Boolean = false): String = {
+  private def buildXml(
+    withEnrouteEvent: Boolean,
+    withIncident: Boolean = false,
+    withContainerTranshipment: Boolean = false,
+    withVehicularTranshipment: Boolean = false,
+    withSeals: Boolean = false
+  ): String = {
 
     val enrouteEvent = {
       if (withEnrouteEvent)
@@ -113,7 +117,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
         """.stripMargin
   }
 
-  private val buildIncident: String = {
+  private val buildIncident: String =
     """
       |<INCINC>
       | <IncFlaINC3>1</IncFlaINC3>
@@ -127,9 +131,8 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
       | <EndCouINC12>GB</EndCouINC12>
       |</INCINC>
       |""".stripMargin
-  }
 
-  private val buildContainerTranshipment: String = {
+  private val buildContainerTranshipment: String =
     """
       |<TRASHP>
       | <EndDatSHP60>20191110</EndDatSHP60>
@@ -143,9 +146,8 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
       | </CONNR3>
       |</TRASHP>
       |""".stripMargin
-  }
 
-  private val buildVehicularTranshipment: String = {
+  private val buildVehicularTranshipment: String =
     """
       |<TRASHP>
       | <NewTraMeaIdeSHP26>Transport identity</NewTraMeaIdeSHP26>
@@ -162,19 +164,20 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
       | </CONNR3>
       |</TRASHP>
       |""".stripMargin
-  }
 
   def transhipment(isVehicular: Boolean, hasContainer: Boolean) =
     s"""
       |<TRASHP>
-      | ${if (isVehicular) { vehicular } else ""}
+      | ${if (isVehicular) { vehicular }
+    else ""}
       | <EndDatSHP60>20191110</EndDatSHP60>
       | <EndAutSHP61>Authority</EndAutSHP61>
       | <EndAutSHP61LNG>GB</EndAutSHP61LNG>
       | <EndPlaSHP63>Endorsement place</EndPlaSHP63>
       | <EndPlaSHP63LNG>GB</EndPlaSHP63LNG>
       | <EndCouSHP65>GB</EndCouSHP65>
-      | ${if (hasContainer) { container } else ""}
+      | ${if (hasContainer) { container }
+    else ""}
       |</TRASHP>
       |""".stripMargin
 

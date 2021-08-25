@@ -18,7 +18,8 @@ package models.response
 
 import controllers.routes
 import models.domain.Arrivals
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 import utils.CallOps._
 
 object HateoasResponseArrivals {
@@ -28,12 +29,15 @@ object HateoasResponseArrivals {
 
     Json.obj(
       "_links" -> Json.obj(
-        "self"    -> Json.obj("href" -> arrivalUrl)
+        "self" -> Json.obj("href" -> arrivalUrl)
       ),
       "_embedded" -> Json.obj(
-        "arrivals"    -> arrivals.arrivals.map { x => HateoasResponseArrival(x) },
+        "arrivals" -> arrivals.arrivals.map {
+          x =>
+            HateoasResponseArrival(x)
+        },
         "retrievedArrivals" -> arrivals.retrievedArrivals,
-        "totalArrivals" -> arrivals.totalArrivals
+        "totalArrivals"     -> arrivals.totalArrivals
       )
     )
   }

@@ -19,23 +19,31 @@ package utils
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import com.kenshoo.play.metrics.Metrics
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.Suite
 import org.scalatestplus.play.guice.GuiceFakeApplicationFactory
 import play.api.Application
-import play.api.inject.{Injector, bind}
-import play.api.inject.guice.{GuiceApplicationBuilder, GuiceableModule}
+import play.api.inject.Injector
+import play.api.inject.bind
+import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.inject.guice.GuiceableModule
+import com.github.tomakehurst.wiremock.common.ConsoleNotifier
 
 trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach with GuiceFakeApplicationFactory {
   this: Suite =>
-  protected val server: WireMockServer = new WireMockServer(wireMockConfig().dynamicPort())
+  protected val wiremockConfig = wireMockConfig().dynamicPort().notifier(new ConsoleNotifier(false))
+
+  protected val server: WireMockServer = new WireMockServer(wiremockConfig)
 
   protected def portConfigKey: Seq[String]
 
   override lazy val fakeApplication: Application =
     new GuiceApplicationBuilder()
       .configure(
-        portConfigKey.map { key =>
-          key -> server.port.toString()
+        portConfigKey.map {
+          key =>
+            key -> server.port.toString()
         }: _*
       )
       .overrides(bindings: _*)

@@ -16,53 +16,69 @@
 
 package connectors
 
-import java.time.OffsetDateTime
-
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import connectors.util.CustomHttpReader
-import javax.inject.Inject
-import metrics.{HasMetrics, MetricsKeys}
-import models.domain.{ArrivalId, ArrivalWithMessages, MessageId, MovementMessage}
-import play.api.mvc.RequestHeader
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
+import metrics.HasMetrics
+import metrics.MetricsKeys
+import models.domain.ArrivalId
+import models.domain.ArrivalWithMessages
+import models.domain.MessageId
+import models.domain.MovementMessage
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.HttpReads
+import uk.gov.hmrc.http.HttpResponse
 
-import scala.concurrent.{ExecutionContext, Future}
+import java.time.OffsetDateTime
+import javax.inject.Inject
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 class ArrivalMessageConnector @Inject() (http: HttpClient, appConfig: AppConfig, val metrics: Metrics) extends BaseConnector with HasMetrics {
 
   import MetricsKeys.ArrivalBackend._
 
-  def get(arrivalId: ArrivalId, messageId: MessageId)(implicit
-    requestHeader: RequestHeader,
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[Either[HttpResponse, MovementMessage]] =
+  def get(arrivalId: ArrivalId, messageId: MessageId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, MovementMessage]] =
     withMetricsTimerAsync(GetMessageById) {
       timer =>
+        implicit val customResponseReads: HttpReads[HttpResponse] = CustomHttpReader
+
         val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathParts(arrivalId.toString, "messages", messageId.toString)
-        http.GET[HttpResponse](url.toString, queryParams = Seq(), responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
+
+        http.GET[HttpResponse](url.toString, headers = getJsonHeaders).map {
           response =>
             if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
             extractIfSuccessful[MovementMessage](response)
         }
     }
 
-  def post(message: String, arrivalId: ArrivalId)(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+  def post(message: String, arrivalId: ArrivalId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     withMetricsTimerResponse(PostMessage) {
+      implicit val customResponseReads: HttpReads[HttpResponse] = CustomHttpReader
+
       val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathParts(arrivalId.toString, "messages")
-      http.POSTString(url.toString, message, requestHeaders(requestHeader))(CustomHttpReader, enforceAuthHeaderCarrier(requestHeaders(requestHeader)), ec)
+
+      http.POSTString[HttpResponse](url.toString, message, postPutXmlHeaders)
     }
 
-  def getMessages(
-    arrivalId: ArrivalId,
-    receivedSince: Option[OffsetDateTime]
-  )(implicit requestHeader: RequestHeader, hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, ArrivalWithMessages]] =
+  def getMessages(arrivalId: ArrivalId, receivedSince: Option[OffsetDateTime])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Either[HttpResponse, ArrivalWithMessages]] =
     withMetricsTimerAsync(GetMessagesForArrival) {
       timer =>
+        implicit val customResponseReads: HttpReads[HttpResponse] = CustomHttpReader
+
         val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathParts(arrivalId.toString, "messages")
-        val query = receivedSince.map(dt => Seq("receivedSince" -> queryDateFormatter.format(dt))).getOrElse(Seq.empty)
-        http.GET[HttpResponse](url.toString, queryParams = query, responseHeaders)(CustomHttpReader, enforceAuthHeaderCarrier(responseHeaders), ec).map {
+
+        val query = receivedSince
+          .map(
+            dt => Seq("receivedSince" -> queryDateFormatter.format(dt))
+          )
+          .getOrElse(Seq.empty)
+
+        http.GET[HttpResponse](url.toString, queryParams = query, headers = getJsonHeaders).map {
           response =>
             if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
             extractIfSuccessful[ArrivalWithMessages](response)

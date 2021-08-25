@@ -24,7 +24,9 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Results.Ok
-import play.api.mvc.{Action, AnyContent, BodyParsers}
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.BodyParsers
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core._
@@ -33,7 +35,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
+
   class Harness(authAction: AuthAction) {
+
     def get(): Action[AnyContent] = authAction {
       authedRequest =>
         Ok(authedRequest.eori)
@@ -164,7 +168,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
     "when the user is logged in and has the correct enrolment" in {
       val authConnector = mock[AuthConnector]
 
-      when(authConnector.authorise[Enrolments](any(),any())(any(),any()))
+      when(authConnector.authorise[Enrolments](any(), any())(any(), any()))
         .thenReturn(Future.successful(enrolmentsWithEori))
 
       val application = GuiceApplicationBuilder()
@@ -179,7 +183,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
       val authAction = new AuthAction(authConnector, config, bodyParser)
       val controller = new Harness(authAction)
-      val result = controller.get()(FakeRequest())
+      val result     = controller.get()(FakeRequest())
 
       status(result) mustEqual OK
       contentAsString(result) mustEqual "456"
@@ -190,7 +194,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
     "when the user is logged in and doesn't have any valid enrolments" in {
       val authConnector = mock[AuthConnector]
 
-      when(authConnector.authorise[Enrolments](any(),any())(any(),any()))
+      when(authConnector.authorise[Enrolments](any(), any())(any(), any()))
         .thenReturn(Future.successful(noValidEnrolments))
 
       val application = GuiceApplicationBuilder()
@@ -205,7 +209,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
       val authAction = new AuthAction(authConnector, config, bodyParser)
       val controller = new Harness(authAction)
-      val result = controller.get()(FakeRequest())
+      val result     = controller.get()(FakeRequest())
 
       status(result) mustEqual FORBIDDEN
       contentAsString(result) mustEqual "Current user doesn't have a valid EORI enrolment."
@@ -214,7 +218,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
     "when the user is logged in and has no valid enrolment identifier" in {
       val authConnector = mock[AuthConnector]
 
-      when(authConnector.authorise[Enrolments](any(),any())(any(),any()))
+      when(authConnector.authorise[Enrolments](any(), any())(any(), any()))
         .thenReturn(Future.successful(noValidEnrolmentIdentifier))
 
       val application = GuiceApplicationBuilder()
@@ -229,7 +233,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
       val authAction = new AuthAction(authConnector, config, bodyParser)
       val controller = new Harness(authAction)
-      val result = controller.get()(FakeRequest())
+      val result     = controller.get()(FakeRequest())
 
       status(result) mustEqual FORBIDDEN
       contentAsString(result) mustEqual "Current user doesn't have a valid EORI enrolment."
@@ -238,7 +242,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
     "when the user is logged in and has no valid activated eori enrolments" in {
       val authConnector = mock[AuthConnector]
 
-      when(authConnector.authorise[Enrolments](any(),any())(any(),any()))
+      when(authConnector.authorise[Enrolments](any(), any())(any(), any()))
         .thenReturn(Future.failed(InsufficientEnrolments()))
 
       val application = GuiceApplicationBuilder()
@@ -253,7 +257,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
       val authAction = new AuthAction(authConnector, config, bodyParser)
       val controller = new Harness(authAction)
-      val result = controller.get()(FakeRequest())
+      val result     = controller.get()(FakeRequest())
 
       status(result) mustEqual FORBIDDEN
       contentAsString(result) mustEqual "Current user doesn't have a valid EORI enrolment."
@@ -264,7 +268,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
     "when the user hasn't logged in" in {
       val authConnector = mock[AuthConnector]
 
-      when(authConnector.authorise[Enrolments](any(),any())(any(),any()))
+      when(authConnector.authorise[Enrolments](any(), any())(any(), any()))
         .thenReturn(Future.failed(new MissingBearerToken()))
 
       val application = GuiceApplicationBuilder()
@@ -279,7 +283,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
       val authAction = new AuthAction(authConnector, config, bodyParser)
       val controller = new Harness(authAction)
-      val result = controller.get()(FakeRequest())
+      val result     = controller.get()(FakeRequest())
 
       status(result) mustEqual UNAUTHORIZED
     }

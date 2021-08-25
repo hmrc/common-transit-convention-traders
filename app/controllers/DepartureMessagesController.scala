@@ -20,18 +20,27 @@ import java.time.OffsetDateTime
 
 import com.kenshoo.play.metrics.Metrics
 import connectors.DepartureMessageConnector
-import controllers.actions.{AuthAction, ValidateAcceptJsonHeaderAction, ValidateDepartureMessageAction}
+import controllers.actions.AuthAction
+import controllers.actions.ValidateAcceptJsonHeaderAction
+import controllers.actions.ValidateDepartureMessageAction
 import javax.inject.Inject
-import metrics.{HasActionMetrics, MetricsKeys}
+import metrics.HasActionMetrics
+import metrics.MetricsKeys
 import models.MessageType
-import models.domain.{DepartureId, MessageId}
-import models.response.{HateoasDepartureMessagesPostResponseMessage, HateoasDepartureResponseMessage, HateoasResponseDepartureWithMessages}
+import models.domain.DepartureId
+import models.domain.MessageId
+import models.response.HateoasDepartureMessagesPostResponseMessage
+import models.response.HateoasDepartureResponseMessage
+import models.response.HateoasResponseDepartureWithMessages
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.CallOps._
-import utils.{ResponseHelper, Utils}
+import utils.ResponseHelper
+import utils.Utils
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
