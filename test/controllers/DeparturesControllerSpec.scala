@@ -16,19 +16,29 @@
 
 package controllers
 
-import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 import audit.AuditService
 import com.kenshoo.play.metrics.Metrics
-import connectors.{DeparturesConnector, ResponseHeaders}
-import controllers.actions.{AuthAction, FakeAuthAction}
+import connectors.DeparturesConnector
+import connectors.ResponseHeaders
+import controllers.actions.AuthAction
+import controllers.actions.FakeAuthAction
 import data.TestXml
 import models.Box
-import models.domain.{Departure, DepartureId, Departures}
+import models.domain.Departure
+import models.domain.DepartureId
+import models.domain.Departures
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{reset, times, verify, when}
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import org.mockito.Mockito.reset
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.when
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -39,10 +49,13 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
-import play.api.test.{FakeHeaders, FakeRequest}
-import play.api.test.Helpers.{headers, _}
+import play.api.test.FakeHeaders
+import play.api.test.FakeRequest
+import play.api.test.Helpers.headers
+import play.api.test.Helpers._
 import services.EnsureGuaranteeService
-import uk.gov.hmrc.http.{HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.CallOps._
 import utils.TestMetrics
 
@@ -182,7 +195,7 @@ class DeparturesControllerSpec
     "must return Accepted when successful" - {
 
       "and create an audit event if the guarantee was changed" in {
-        when(mockDepartureConnector.post(any())(any(), any(), any()))
+        when(mockDepartureConnector.post(any())(any(), any()))
           .thenReturn(Future.successful(Right(responseHeaders("/transits-movements-trader-at-departure/movements/departures/123"))))
 
         val request = fakeRequestDepartures(method = "POST", body = CC015BRequiringDefaultGuarantee)
@@ -208,7 +221,7 @@ class DeparturesControllerSpec
       }
 
       "and not create an audit event when the guarantee was not changed" in {
-        when(mockDepartureConnector.post(any())(any(), any(), any()))
+        when(mockDepartureConnector.post(any())(any(), any()))
           .thenReturn(
             Future.successful(Right(responseHeaders("/transits-movements-trader-at-departure/movements/departures/123")))
           )
@@ -246,7 +259,7 @@ class DeparturesControllerSpec
     "must return InternalServerError when unsuccessful" in {
       val errorResponse = UpstreamErrorResponse("test error message", INTERNAL_SERVER_ERROR)
 
-      when(mockDepartureConnector.post(any())(any(), any(), any()))
+      when(mockDepartureConnector.post(any())(any(), any()))
         .thenReturn(Future.successful(Left(errorResponse)))
 
       val request = fakeRequestDepartures(method = "POST", body = CC015B)
@@ -256,7 +269,7 @@ class DeparturesControllerSpec
     }
 
     "must return InternalServerError when no location in downstream response header" in {
-      when(mockDepartureConnector.post(any())(any(), any(), any()))
+      when(mockDepartureConnector.post(any())(any(), any()))
         .thenReturn(Future.successful(Right(emptyHeaders)))
 
       val request = fakeRequestDepartures(method = "POST", body = CC015B)
@@ -266,7 +279,7 @@ class DeparturesControllerSpec
     }
 
     "must exclude query string if present in downstream location header" in {
-      when(mockDepartureConnector.post(any())(any(), any(), any()))
+      when(mockDepartureConnector.post(any())(any(), any()))
         .thenReturn(
           Future.successful(
             Right(responseHeaders("/transits-movements-trader-at-departure/movements/departures/123?status=success"))
@@ -294,7 +307,7 @@ class DeparturesControllerSpec
     }
 
     "must return UnsupportedMediaType when Content-Type is JSON" in {
-      when(mockDepartureConnector.post(any())(any(), any(), any()))
+      when(mockDepartureConnector.post(any())(any(), any()))
         .thenReturn(
           Future.successful(Right(responseHeaders("/transits-movements-trader-at-departure/movements/departures/123")))
         )
@@ -311,7 +324,7 @@ class DeparturesControllerSpec
     }
 
     "must return UnsupportedMediaType when no Content-Type specified" in {
-      when(mockDepartureConnector.post(any())(any(), any(), any()))
+      when(mockDepartureConnector.post(any())(any(), any()))
         .thenReturn(
           Future.successful(Right(responseHeaders("/transits-movements-trader-at-departure/movements/departures/123")))
         )
@@ -324,7 +337,7 @@ class DeparturesControllerSpec
     }
 
     "must return UnsupportedMediaType when empty XML payload is sent" in {
-      when(mockDepartureConnector.post(any())(any(), any(), any()))
+      when(mockDepartureConnector.post(any())(any(), any()))
         .thenReturn(
           Future.successful(Right(responseHeaders("/transits-movements-trader-at-departure/movements/departures/123")))
         )
@@ -338,7 +351,7 @@ class DeparturesControllerSpec
 
   "GET  /movements/departures/:departureId" - {
     "return 200 with json body of departure" in {
-      when(mockDepartureConnector.get(DepartureId(any()))(any(), any(), any()))
+      when(mockDepartureConnector.get(DepartureId(any()))(any(), any()))
         .thenReturn(Future.successful(Right(sourceDeparture)))
 
       val request = FakeRequest(
@@ -354,7 +367,7 @@ class DeparturesControllerSpec
     }
 
     "return 404 if downstream return 404" in {
-      when(mockDepartureConnector.get(DepartureId(any()))(any(), any(), any()))
+      when(mockDepartureConnector.get(DepartureId(any()))(any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(404, ""))))
 
       val request = FakeRequest(
@@ -369,7 +382,7 @@ class DeparturesControllerSpec
     }
 
     "return 500 for other downstream errors" in {
-      when(mockDepartureConnector.get(DepartureId(any()))(any(), any(), any()))
+      when(mockDepartureConnector.get(DepartureId(any()))(any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(INTERNAL_SERVER_ERROR, ""))))
 
       val request = FakeRequest(
@@ -387,7 +400,7 @@ class DeparturesControllerSpec
   "GET /movements/departures/" - {
 
     "return 200 with json body of a sequence of departures" in {
-      when(mockDepartureConnector.getForEori(any())(any(), any(), any()))
+      when(mockDepartureConnector.getForEori(any())(any(), any()))
         .thenReturn(Future.successful(Right(Departures(Seq(sourceDeparture, sourceDeparture, sourceDeparture), 3, 3))))
 
       val request = FakeRequest(
@@ -403,7 +416,7 @@ class DeparturesControllerSpec
     }
 
     "return 200 with empty list if that is provided" in {
-      when(mockDepartureConnector.getForEori(any())(any(), any(), any()))
+      when(mockDepartureConnector.getForEori(any())(any(), any()))
         .thenReturn(Future.successful(Right(Departures(Nil, 0, 0))))
 
       val request = FakeRequest(
@@ -436,7 +449,7 @@ class DeparturesControllerSpec
       val argCaptor = ArgumentCaptor.forClass(classOf[Option[OffsetDateTime]])
       val dateTime  = Some(OffsetDateTime.of(2021, 6, 23, 12, 1, 24, 0, ZoneOffset.UTC))
 
-      when(mockDepartureConnector.getForEori(argCaptor.capture())(any(), any(), any()))
+      when(mockDepartureConnector.getForEori(argCaptor.capture())(any(), any()))
         .thenReturn(Future.successful(Right(Departures(Nil, 0, 0))))
 
       val request = FakeRequest(
@@ -452,7 +465,7 @@ class DeparturesControllerSpec
     }
 
     "return 500 for downstream errors" in {
-      when(mockDepartureConnector.getForEori(any())(any(), any(), any()))
+      when(mockDepartureConnector.getForEori(any())(any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(INTERNAL_SERVER_ERROR, ""))))
 
       val request = FakeRequest(

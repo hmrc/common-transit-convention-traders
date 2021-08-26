@@ -23,7 +23,7 @@ import utils.NodeSeqFormat
 
 import scala.xml.NodeSeq
 
-object MovementMessage extends NodeSeqFormat{
+object MovementMessage extends NodeSeqFormat {
   implicit val format = Json.format[MovementMessage]
 }
 

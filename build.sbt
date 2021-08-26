@@ -7,20 +7,19 @@ import sbt.Tests.SubProcess
 val appName = "common-transit-convention-traders"
 
 lazy val microservice = Project(appName, file("."))
-  .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory)
+  .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .configs(IntegrationTest)
   .settings(DefaultBuildSettings.integrationTestSettings())
   .settings(SbtDistributablesPlugin.publishingSettings)
   .settings(inConfig(IntegrationTest)(itSettings))
-  .settings(inConfig(IntegrationTest)(scalafmtSettings))
+  .settings(inConfig(IntegrationTest)(ScalafmtPlugin.scalafmtConfigSettings))
   .settings(inThisBuild(buildSettings))
   .settings(scoverageSettings)
   .settings(scalacSettings)
-  .settings(addCompilerPlugin("io.tryp" % "splain" % "0.5.8" cross CrossVersion.patch))
   .settings(
     majorVersion := 0,
-    scalaVersion := "2.12.13",
+    scalaVersion := "2.12.14",
     resolvers += Resolver.jcenterRepo,
     PlayKeys.playDefaultPort := 9487,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
@@ -55,15 +54,14 @@ lazy val scalacSettings = Def.settings(
     opts =>
       opts.filterNot(Set("-Ywarn-dead-code"))
   },
-  // Cannot be enabled yet - requires Scala 2.12.13 which suffers from https://github.com/scoverage/scalac-scoverage-plugin/issues/305
   // Disable warnings arising from generated routing code
   scalacOptions += "-Wconf:src=routes/.*:silent"
 )
 
 // Scoverage exclusions and minimums
 lazy val scoverageSettings = Def.settings(
-  parallelExecution in Test := false,
-  ScoverageKeys.coverageMinimum := 90.00,
+  Test / parallelExecution := false,
+  ScoverageKeys.coverageMinimumStmtTotal := 90,
   ScoverageKeys.coverageFailOnMinimum := true,
   ScoverageKeys.coverageHighlighting := true,
   ScoverageKeys.coverageExcludedPackages := Seq(

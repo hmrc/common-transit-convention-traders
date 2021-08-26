@@ -16,9 +16,11 @@
 
 package utils
 
-import java.net.{URI, URLEncoder}
+import java.net.URI
+import java.net.URLEncoder
 
 object Utils {
+
   def lastFragment(location: String): String =
     URI.create(location).getPath.split("/").last
 

@@ -19,35 +19,49 @@ package models.response
 import java.time.LocalDateTime
 
 import data.TestXml
-import models.domain.{DepartureId, DepartureWithMessages, MovementMessage}
+import models.domain.DepartureId
+import models.domain.DepartureWithMessages
+import models.domain.MovementMessage
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 
-class HateoasResponseDepartureWithMessagesSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
+class HateoasResponseDepartureWithMessagesSpec
+    extends AnyFreeSpec
+    with Matchers
+    with GuiceOneAppPerSuite
+    with OptionValues
+    with ScalaFutures
+    with MockitoSugar
+    with BeforeAndAfterEach
+    with TestXml {
 
   "HateoasResponseDepartureWithMessages" - {
     "must generate correct message structure for messages" in {
-      val departureWithMessages = DepartureWithMessages(DepartureId(3),
+      val departureWithMessages = DepartureWithMessages(
+        DepartureId(3),
         "loc",
         "messageLoc",
         Some("mrn"),
         "status",
         LocalDateTime.of(2020, 10, 10, 10, 10, 10),
         LocalDateTime.of(2020, 12, 12, 12, 12, 12),
-        Seq(MovementMessage(
-          "//customs/transits/movements/departures/1/messages/1",
-          LocalDateTime.of(2020, 12, 12, 12, 12, 15),
-          "IE015",
-          CC015B
-        )))
+        Seq(
+          MovementMessage(
+            "//customs/transits/movements/departures/1/messages/1",
+            LocalDateTime.of(2020, 12, 12, 12, 12, 15),
+            "IE015",
+            CC015B
+          )
+        )
+      )
 
-      val expectedJson = Json.parse(
-        """
+      val expectedJson = Json.parse("""
           |{
           |  "_links": {
           |    "self": {
@@ -96,17 +110,18 @@ class HateoasResponseDepartureWithMessagesSpec extends AnyFreeSpec with Matchers
     }
 
     "must generate correct message structure for empty messages" in {
-      val departureWithMessages = DepartureWithMessages(DepartureId(3),
+      val departureWithMessages = DepartureWithMessages(
+        DepartureId(3),
         "loc",
         "messageLoc",
         Some("mrn"),
         "status",
         LocalDateTime.of(2020, 10, 10, 10, 10, 10),
         LocalDateTime.of(2020, 12, 12, 12, 12, 12),
-        Nil)
+        Nil
+      )
 
-      val expectedJson = Json.parse(
-        """
+      val expectedJson = Json.parse("""
           |{
           |  "_links": {
           |    "self": {

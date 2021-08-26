@@ -20,9 +20,9 @@ import scala.xml.NodeSeq
 
 sealed trait TransformInstruction
 
-final case class NoChangeInstruction(xml: NodeSeq)       extends TransformInstruction
+final case class NoChangeInstruction(xml: NodeSeq)                              extends TransformInstruction
 final case class NoChangeGuaranteeInstruction(mention: SpecialMentionGuarantee) extends TransformInstruction
-final case class ChangeGuaranteeInstruction(mention: SpecialMentionGuarantee)  extends TransformInstruction
+final case class ChangeGuaranteeInstruction(mention: SpecialMentionGuarantee)   extends TransformInstruction
 final case class AddSpecialMentionInstruction(mention: SpecialMentionGuarantee) extends TransformInstruction
 
 final case class TransformInstructionSet(gooNode: GOOITEGDSNode, instructions: Seq[TransformInstruction])

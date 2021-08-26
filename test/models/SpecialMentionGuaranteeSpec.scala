@@ -16,12 +16,15 @@
 
 package models
 
-import models.ParseError.{AdditionalInfoInvalidCharacters, AmountStringInvalid, AmountStringTooLong, CurrencyCodeInvalid}
+import models.ParseError.AdditionalInfoInvalidCharacters
+import models.ParseError.AmountStringInvalid
+import models.ParseError.AmountStringTooLong
+import models.ParseError.CurrencyCodeInvalid
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 
-class SpecialMentionGuaranteeSpec extends AnyFreeSpec with MockitoSugar with Matchers{
+class SpecialMentionGuaranteeSpec extends AnyFreeSpec with MockitoSugar with Matchers {
 
   "toDetails" - {
     "returns AdditionalInfoInvalidCharacters if characters that aren't alphanumerical or a '.'" in {
@@ -47,7 +50,7 @@ class SpecialMentionGuaranteeSpec extends AnyFreeSpec with MockitoSugar with Mat
     "returns SpecialMentionGuaranteeDetails with all details" in {
       val result = SpecialMentionGuarantee("100.00EURtest", Nil)
         .toDetails("test")
-      result mustBe a[Right[_,SpecialMentionGuaranteeDetails]]
+      result mustBe a[Right[_, SpecialMentionGuaranteeDetails]]
       result.right.get.currencyCode mustBe Some("EUR")
       result.right.get.guaranteeAmount mustBe Some(BigDecimal(100.00))
     }

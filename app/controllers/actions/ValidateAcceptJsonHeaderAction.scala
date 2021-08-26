@@ -21,16 +21,17 @@ import javax.inject.Inject
 import play.api.http.Status.NOT_ACCEPTABLE
 import play.api.libs.json.Json
 import play.api.mvc.Results.NotAcceptable
-import play.api.mvc.{ActionRefiner, Request, Result}
+import play.api.mvc.ActionRefiner
+import play.api.mvc.Request
+import play.api.mvc.Result
 import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
-class ValidateAcceptJsonHeaderAction @Inject()()(
-  implicit val executionContext: ExecutionContext)
-  extends ActionRefiner[Request, Request] {
+class ValidateAcceptJsonHeaderAction @Inject() ()(implicit val executionContext: ExecutionContext) extends ActionRefiner[Request, Request] {
 
-  override protected def refine[A](request: Request[A]): Future[Either[Result, Request[A]]] = {
+  override protected def refine[A](request: Request[A]): Future[Either[Result, Request[A]]] =
     request.headers.get("Accept") match {
       case Some(value) =>
         value match {
@@ -50,5 +51,4 @@ class ValidateAcceptJsonHeaderAction @Inject()()(
         val response = ErrorResponse(NOT_ACCEPTABLE, Constants.AcceptHeaderMissing)
         Future.successful(Left(NotAcceptable(Json.toJson(response))))
     }
-  }
 }

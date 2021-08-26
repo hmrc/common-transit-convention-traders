@@ -19,12 +19,14 @@ package utils
 import config.AppConfig
 import javax.inject.Inject
 import play.api.Environment
-import play.api.libs.json.{JsObject, Json, OFormat}
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 
 import scala.io.Source
 import scala.util.matching.Regex
 
-class MessageTranslation @Inject()(env: Environment, config: AppConfig) {
+class MessageTranslation @Inject() (env: Environment, config: AppConfig) {
 
   private val nodes: List[NodeMap] = {
     val json =

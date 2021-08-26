@@ -17,31 +17,37 @@
 package models.response
 
 import controllers.routes
-import models.domain.{Departure, DepartureId}
+import models.domain.Departure
+import models.domain.DepartureId
 import play.api.libs.json._
 import utils.CallOps._
 
-object  HateoasResponseDeparture {
+object HateoasResponseDeparture {
 
   def apply(departureId: DepartureId, created: String, updated: String, movementReferenceNumber: Option[String], status: String): JsObject = {
     val departureUrl = routes.DeparturesController.getDeparture(departureId).urlWithContext
-    val messagesUrl = routes.DepartureMessagesController.getDepartureMessages(departureId).urlWithContext
+    val messagesUrl  = routes.DepartureMessagesController.getDepartureMessages(departureId).urlWithContext
 
     JsObject(
-      Json.obj(
-      "id" -> departureId.toString,
-      "created" -> created,
-      "updated" -> updated,
-      "movementReferenceNumber" -> movementReferenceNumber,
-      "status" -> status,
-      "_links" -> Json.obj(
-        "self"    -> Json.obj("href" -> departureUrl),
-        "messages"    -> Json.obj("href" -> messagesUrl)
-      )
-    ).fields.filter(t => t._2 != JsNull))
+      Json
+        .obj(
+          "id"                      -> departureId.toString,
+          "created"                 -> created,
+          "updated"                 -> updated,
+          "movementReferenceNumber" -> movementReferenceNumber,
+          "status"                  -> status,
+          "_links" -> Json.obj(
+            "self"     -> Json.obj("href" -> departureUrl),
+            "messages" -> Json.obj("href" -> messagesUrl)
+          )
+        )
+        .fields
+        .filter(
+          t => t._2 != JsNull
+        )
+    )
   }
 
-  def apply(departure: Departure): JsObject = {
+  def apply(departure: Departure): JsObject =
     apply(departure.departureId, departure.created.toString, departure.updated.toString, departure.movementReferenceNumber, departure.status)
-  }
 }

@@ -17,8 +17,10 @@
 package models.response
 
 import controllers.routes
-import models.domain.{DepartureId, MessageId}
-import play.api.libs.json.{JsObject, Json}
+import models.domain.DepartureId
+import models.domain.MessageId
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 import utils.CallOps._
 
 import scala.xml.NodeSeq
@@ -26,18 +28,18 @@ import scala.xml.NodeSeq
 object HateoasDepartureMessagesPostResponseMessage {
 
   def apply(departureId: DepartureId, messageId: MessageId, messageType: String, message: NodeSeq): JsObject = {
-    val messageUrl = routes.DepartureMessagesController.getDepartureMessage(departureId, messageId).urlWithContext
+    val messageUrl   = routes.DepartureMessagesController.getDepartureMessage(departureId, messageId).urlWithContext
     val departureUrl = routes.DeparturesController.getDeparture(departureId).urlWithContext
 
     Json.obj(
       "_links" -> Json.obj(
-        "self"    -> Json.obj("href" -> messageUrl),
-        "departure"    -> Json.obj("href" -> departureUrl)
+        "self"      -> Json.obj("href" -> messageUrl),
+        "departure" -> Json.obj("href" -> departureUrl)
       ),
       "departureId" -> departureId.toString,
-      "messageId" -> messageId.toString,
+      "messageId"   -> messageId.toString,
       "messageType" -> messageType,
-      "body" -> message.toString,
+      "body"        -> message.toString,
       "_embedded" -> Json.obj(
         "notifications" -> Json.obj("requestId" -> departureUrl)
       )

@@ -18,20 +18,30 @@ package models.response
 
 import java.time.LocalDateTime
 
-import models.domain.{Departure, DepartureId}
+import models.domain.Departure
+import models.domain.DepartureId
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 
-class HateoasResponseDepartureSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
+class HateoasResponseDepartureSpec
+    extends AnyFreeSpec
+    with Matchers
+    with GuiceOneAppPerSuite
+    with OptionValues
+    with ScalaFutures
+    with MockitoSugar
+    with BeforeAndAfterEach {
 
   "HateoasResponseDeparture" - {
     "must generate correct message structure" in {
-      val departure = Departure(DepartureId(3),
+      val departure = Departure(
+        DepartureId(3),
         "loc",
         "messageLoc",
         Some("mrn"),
@@ -42,8 +52,7 @@ class HateoasResponseDepartureSpec extends AnyFreeSpec with Matchers with GuiceO
 
       val result = HateoasResponseDeparture(departure)
 
-      val expectedJson = Json.parse(
-        """
+      val expectedJson = Json.parse("""
           |{
           |  "id": "3",
           |  "created": "2020-10-10T10:10:10",

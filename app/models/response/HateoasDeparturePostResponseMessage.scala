@@ -15,11 +15,13 @@
  */
 
 package models
+
 package response
 
 import controllers.routes
 import models.domain.DepartureId
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 import utils.CallOps._
 
 import scala.xml.NodeSeq

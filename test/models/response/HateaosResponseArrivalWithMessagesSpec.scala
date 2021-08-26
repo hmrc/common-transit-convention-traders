@@ -19,37 +19,51 @@ package models.response
 import java.time.LocalDateTime
 
 import data.TestXml
-import models.domain.{ArrivalId, ArrivalWithMessages, MovementMessage}
+import models.domain.ArrivalId
+import models.domain.ArrivalWithMessages
+import models.domain.MovementMessage
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 
-class HateoasResponseArrivalWithMessagesSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach with TestXml {
+class HateoasResponseArrivalWithMessagesSpec
+    extends AnyFreeSpec
+    with Matchers
+    with GuiceOneAppPerSuite
+    with OptionValues
+    with ScalaFutures
+    with MockitoSugar
+    with BeforeAndAfterEach
+    with TestXml {
 
   "HateoasResponseArrivalWithMessages" - {
     "must generate correct message structure for messages" in {
-      val arrivalWithMessages = ArrivalWithMessages(ArrivalId(3),
+      val arrivalWithMessages = ArrivalWithMessages(
+        ArrivalId(3),
         "loc",
         "messageLoc",
         "mrn",
         "status",
         LocalDateTime.of(2020, 10, 10, 10, 10, 10),
         LocalDateTime.of(2020, 12, 12, 12, 12, 12),
-        Seq(MovementMessage(
-          "//customs/transits/movements/departures/1/messages/1",
-          LocalDateTime.of(2020, 12, 12, 12, 12, 15),
-          "IE007",
-          CC007A
-        )))
+        Seq(
+          MovementMessage(
+            "//customs/transits/movements/departures/1/messages/1",
+            LocalDateTime.of(2020, 12, 12, 12, 12, 15),
+            "IE007",
+            CC007A
+          )
+        )
+      )
 
       val result = HateoasResponseArrivalWithMessages(arrivalWithMessages)
 
-      val expectedJson = Json.parse(
-        """
+      val expectedJson = Json.parse("""
           |{
           |  "_links": {
           |    "self": {
@@ -96,19 +110,20 @@ class HateoasResponseArrivalWithMessagesSpec extends AnyFreeSpec with Matchers w
     }
 
     "must generate correct message structure for no messages" in {
-      val arrivalWithMessages = ArrivalWithMessages(ArrivalId(3),
+      val arrivalWithMessages = ArrivalWithMessages(
+        ArrivalId(3),
         "loc",
         "messageLoc",
         "mrn",
         "status",
         LocalDateTime.of(2020, 10, 10, 10, 10, 10),
         LocalDateTime.of(2020, 12, 12, 12, 12, 12),
-        Nil)
+        Nil
+      )
 
       val result = HateoasResponseArrivalWithMessages(arrivalWithMessages)
 
-      val expectedJson = Json.parse(
-        """
+      val expectedJson = Json.parse("""
           |{
           |  "_links": {
           |    "self": {

@@ -19,7 +19,9 @@ package connectors
 import cats.syntax.all._
 import play.api.libs.json.Reads
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{HttpReads, HttpResponse, UpstreamErrorResponse}
+import uk.gov.hmrc.http.HttpReads
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.UpstreamErrorResponse
 
 final case class ResponseHeaders[A](headers: Map[String, Seq[String]], responseData: A) {
 
@@ -28,6 +30,7 @@ final case class ResponseHeaders[A](headers: Map[String, Seq[String]], responseD
 }
 
 object ResponseHeaders {
+
   implicit def readOrError[A: Reads: Manifest]: HttpReads[Either[UpstreamErrorResponse, ResponseHeaders[A]]] =
     HttpReads[HttpResponse].flatMap {
       response =>

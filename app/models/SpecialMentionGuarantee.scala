@@ -16,9 +16,14 @@
 
 package models
 
-import models.ParseError.{AdditionalInfoInvalidCharacters, AmountStringInvalid, AmountStringTooLong, CurrencyCodeInvalid}
+import models.ParseError.AdditionalInfoInvalidCharacters
+import models.ParseError.AmountStringInvalid
+import models.ParseError.AmountStringTooLong
+import models.ParseError.CurrencyCodeInvalid
 
-import scala.util.{Failure, Success, Try}
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 import scala.xml.NodeSeq
 
 sealed trait SpecialMention
@@ -26,55 +31,47 @@ sealed trait SpecialMention
 final case class SpecialMentionOther(xml: NodeSeq) extends SpecialMention
 
 final case class SpecialMentionGuarantee(additionalInfo: String, xml: NodeSeq = Nil) extends SpecialMention {
-  def toDetails(guaranteeReference: String) : Either[ParseError, SpecialMentionGuaranteeDetails] = {
-    if(additionalInfo.matches("'[a-zA-Z0-9_.]*'")) return Left(AdditionalInfoInvalidCharacters("invalid characters in additional info"))
+
+  def toDetails(guaranteeReference: String): Either[ParseError, SpecialMentionGuaranteeDetails] = {
+    if (additionalInfo.matches("'[a-zA-Z0-9_.]*'")) return Left(AdditionalInfoInvalidCharacters("invalid characters in additional info"))
 
     getCurrencyCode(additionalInfo, guaranteeReference) match {
       case Left(error) => Left(error)
-      case Right(currencyOpt) => {
+      case Right(currencyOpt) =>
         getAmount(additionalInfo, guaranteeReference, currencyOpt) match {
-          case Left(error) => Left(error)
+          case Left(error)      => Left(error)
           case Right(amountOpt) => Right(SpecialMentionGuaranteeDetails(amountOpt, currencyOpt, guaranteeReference, xml))
         }
-      }
     }
   }
 
-  private def getCurrencyCode(additionalInfo: String, guaranteeReference: String): Either[ParseError, Option[String]] = {
-    if(additionalInfo.length >= (guaranteeReference.length + 3))
-    {
+  private def getCurrencyCode(additionalInfo: String, guaranteeReference: String): Either[ParseError, Option[String]] =
+    if (additionalInfo.length >= (guaranteeReference.length + 3)) {
       val currencyStart = additionalInfo.length - guaranteeReference.length - 3
-      val currencyEnd = currencyStart + 3
-      val currencyCode = additionalInfo.substring(currencyStart, currencyEnd)
-      if(currencyCode.matches("[A-Z]{3}"))
-      Right(Some(currencyCode))
-      else if(additionalInfo.head.isDigit)
-      {
+      val currencyEnd   = currencyStart + 3
+      val currencyCode  = additionalInfo.substring(currencyStart, currencyEnd)
+      if (currencyCode.matches("[A-Z]{3}"))
+        Right(Some(currencyCode))
+      else if (additionalInfo.head.isDigit) {
         Right(None)
-      }
-      else Left(CurrencyCodeInvalid(s"Invalid Currency Code: $currencyCode"))
-    }
-    else Right(None)
-  }
+      } else Left(CurrencyCodeInvalid(s"Invalid Currency Code: $currencyCode"))
+    } else Right(None)
 
   private def getAmount(additionalInfo: String, guaranteeReference: String, currencyOpt: Option[String]): Either[ParseError, Option[BigDecimal]] = {
     val cutIndex = currencyOpt match {
-      case None => additionalInfo.length - guaranteeReference.length
+      case None       => additionalInfo.length - guaranteeReference.length
       case Some(code) => additionalInfo.length - (code.length + guaranteeReference.length)
     }
     val amountString = additionalInfo.substring(0, cutIndex)
-    if(amountString.isEmpty)
-    {
+    if (amountString.isEmpty) {
       Right(None)
-    }
-    else if(amountString.length > 18) {
+    } else if (amountString.length > 18) {
       Left(AmountStringTooLong("Guarantee amount should be not be longer than 18 characters"))
-    }
-    else {
+    } else {
       Try(BigDecimal(amountString)) match {
         case Success(bigDecimal) => Right(Some(bigDecimal))
-        case Failure(_) =>  Left(AmountStringInvalid("The specified amount is not a valid representation of a decimal"))
+        case Failure(_)          => Left(AmountStringInvalid("The specified amount is not a valid representation of a decimal"))
       }
-      }
+    }
   }
 }

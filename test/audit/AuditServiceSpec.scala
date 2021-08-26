@@ -16,8 +16,11 @@
 
 package audit
 
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{reset, times, verify}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{eq => eqTo}
+import org.mockito.Mockito.reset
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
@@ -30,7 +33,7 @@ import play.api.test.Helpers.running
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
-class AuditServiceSpec extends AnyFreeSpec with ScalaCheckPropertyChecks with BeforeAndAfterEach  with MockitoSugar {
+class AuditServiceSpec extends AnyFreeSpec with ScalaCheckPropertyChecks with BeforeAndAfterEach with MockitoSugar {
 
   protected def baseApplicationBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
@@ -50,21 +53,19 @@ class AuditServiceSpec extends AnyFreeSpec with ScalaCheckPropertyChecks with Be
   "AuditService" - {
     "must audit notification message event" in {
 
-      val requestXml = <xml>test</xml>
+      val requestXml         = <xml>test</xml>
       val requestedXmlToJson = Json.parse("{\"channel\":\"api\",\"xml\":\"test\"}")
 
       forAll(Gen.oneOf(AuditType.values)) {
         auditType =>
-          {
-            val application = baseApplicationBuilder
-              .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
-              .build()
-            running(application) {
-              val auditService = application.injector.instanceOf[AuditService]
-              auditService.auditEvent(auditType, requestXml)
-              verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(auditType.toString()), eqTo(requestedXmlToJson))(any(), any(), any())
-              reset(mockAuditConnector)
-            }
+          val application = baseApplicationBuilder
+            .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
+            .build()
+          running(application) {
+            val auditService = application.injector.instanceOf[AuditService]
+            auditService.auditEvent(auditType, requestXml)
+            verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(auditType.toString()), eqTo(requestedXmlToJson))(any(), any(), any())
+            reset(mockAuditConnector)
           }
       }
     }

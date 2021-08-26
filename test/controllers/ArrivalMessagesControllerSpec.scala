@@ -184,7 +184,7 @@ class ArrivalMessagesControllerSpec
 
   "GET /movements/arrivals/:arrivalId/messages/:messageId" - {
     "return 200 and Message" in {
-      when(mockMessageConnector.get(ArrivalId(any()), MessageId(any()))(any(), any(), any()))
+      when(mockMessageConnector.get(ArrivalId(any()), MessageId(any()))(any(), any()))
         .thenReturn(Future.successful(Right(sourceMovement)))
 
       val request = FakeRequest(
@@ -200,7 +200,7 @@ class ArrivalMessagesControllerSpec
     }
 
     "return 400 if the downstream returns 400" in {
-      when(mockMessageConnector.get(ArrivalId(any()), MessageId(any()))(any(), any(), any()))
+      when(mockMessageConnector.get(ArrivalId(any()), MessageId(any()))(any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(400, ""))))
 
       val request = FakeRequest(
@@ -218,7 +218,7 @@ class ArrivalMessagesControllerSpec
       val testStatusCode = 400
       val testMessage    = "abc"
 
-      when(mockMessageConnector.get(ArrivalId(any()), MessageId(any()))(any(), any(), any()))
+      when(mockMessageConnector.get(ArrivalId(any()), MessageId(any()))(any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(testStatusCode, testMessage))))
 
       val request = FakeRequest(
@@ -240,7 +240,7 @@ class ArrivalMessagesControllerSpec
     }
 
     "return 404 if the downstream returns 404" in {
-      when(mockMessageConnector.get(ArrivalId(any()), MessageId(any()))(any(), any(), any()))
+      when(mockMessageConnector.get(ArrivalId(any()), MessageId(any()))(any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(404, ""))))
 
       val request = FakeRequest(
@@ -255,7 +255,7 @@ class ArrivalMessagesControllerSpec
     }
 
     "return 500 for other downstream errors" in {
-      when(mockMessageConnector.get(ArrivalId(any()), MessageId(any()))(any(), any(), any()))
+      when(mockMessageConnector.get(ArrivalId(any()), MessageId(any()))(any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse.apply(INTERNAL_SERVER_ERROR, json, Headers.create().toMap))))
 
       val request = FakeRequest(
@@ -272,7 +272,7 @@ class ArrivalMessagesControllerSpec
 
   "POST /movements/arrivals/:arrivalId/messages" - {
     "must return Accepted when successful" in {
-      when(mockMessageConnector.post(any(), ArrivalId(any()))(any(), any(), any()))
+      when(mockMessageConnector.post(any(), ArrivalId(any()))(any(), any()))
         .thenReturn(
           Future.successful(
             HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123/messages/1")))
@@ -317,7 +317,7 @@ class ArrivalMessagesControllerSpec
     }
 
     "must return InternalServerError when unsuccessful" in {
-      when(mockMessageConnector.post(any(), ArrivalId(any()))(any(), any(), any()))
+      when(mockMessageConnector.post(any(), ArrivalId(any()))(any(), any()))
         .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "")))
 
       val request = fakeRequestMessages(method = "POST", uri = routes.ArrivalMessagesController.sendMessageDownstream(ArrivalId(123)).url, body = CC044A)
@@ -327,7 +327,7 @@ class ArrivalMessagesControllerSpec
     }
 
     "must return InternalServerError when no Location in downstream response header" in {
-      when(mockMessageConnector.post(any(), ArrivalId(any()))(any(), any(), any()))
+      when(mockMessageConnector.post(any(), ArrivalId(any()))(any(), any()))
         .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Headers.create().toMap)))
 
       val request = fakeRequestMessages(method = "POST", uri = routes.ArrivalMessagesController.sendMessageDownstream(ArrivalId(123)).url, body = CC044A)
@@ -337,7 +337,7 @@ class ArrivalMessagesControllerSpec
     }
 
     "must return InternalServerError when invalid Location value in downstream response header" ignore {
-      when(mockMessageConnector.post(any(), ArrivalId(any()))(any(), any(), any()))
+      when(mockMessageConnector.post(any(), ArrivalId(any()))(any(), any()))
         .thenReturn(
           Future.successful(
             HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123/messages/<>")))
@@ -351,7 +351,7 @@ class ArrivalMessagesControllerSpec
     }
 
     "must exclude query string if present in downstream Location header" in {
-      when(mockMessageConnector.post(any(), ArrivalId(any()))(any(), any(), any()))
+      when(mockMessageConnector.post(any(), ArrivalId(any()))(any(), any()))
         .thenReturn(
           Future.successful(
             HttpResponse(
@@ -441,7 +441,7 @@ class ArrivalMessagesControllerSpec
 
   "GET /movements/arrivals/:arrivalId/messages" - {
     "return 200 with body of arrival and messages" in {
-      when(mockMessageConnector.getMessages(ArrivalId(any()), any())(any(), any(), any()))
+      when(mockMessageConnector.getMessages(ArrivalId(any()), any())(any(), any()))
         .thenReturn(Future.successful(Right(sourceArrival)))
 
       val request = FakeRequest(
@@ -461,7 +461,7 @@ class ArrivalMessagesControllerSpec
       val argCaptor = ArgumentCaptor.forClass(classOf[Option[OffsetDateTime]])
       val dateTime  = Some(OffsetDateTime.of(2021, 6, 23, 12, 1, 24, 0, ZoneOffset.UTC))
 
-      when(mockMessageConnector.getMessages(ArrivalId(any()), argCaptor.capture())(any(), any(), any()))
+      when(mockMessageConnector.getMessages(ArrivalId(any()), argCaptor.capture())(any(), any()))
         .thenReturn(Future.successful(Right(sourceArrival)))
 
       val request = FakeRequest(
@@ -477,7 +477,7 @@ class ArrivalMessagesControllerSpec
     }
 
     "return 404 if downstream returns 404" in {
-      when(mockMessageConnector.getMessages(ArrivalId(any()), any())(any(), any(), any()))
+      when(mockMessageConnector.getMessages(ArrivalId(any()), any())(any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(404, ""))))
 
       val request = FakeRequest(
@@ -492,7 +492,7 @@ class ArrivalMessagesControllerSpec
     }
 
     "return 500 for other downstream errors" in {
-      when(mockMessageConnector.getMessages(ArrivalId(any()), any())(any(), any(), any()))
+      when(mockMessageConnector.getMessages(ArrivalId(any()), any())(any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(INTERNAL_SERVER_ERROR, json, Headers.create().toMap))))
 
       val request = FakeRequest(
@@ -507,7 +507,7 @@ class ArrivalMessagesControllerSpec
     }
 
     "return 500 if downstream provides an unsafe message header" ignore {
-      when(mockMessageConnector.getMessages(ArrivalId(any()), any())(any(), any(), any()))
+      when(mockMessageConnector.getMessages(ArrivalId(any()), any())(any(), any()))
         .thenReturn(
           Future.successful(
             Right(sourceArrival.copy(messages = Seq(sourceMovement.copy(location = "/transit-movements-trader-at-destination/movements/arrivals/<>"))))

@@ -20,20 +20,22 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 
-class GuaranteeSpec extends AnyFreeSpec with MockitoSugar with Matchers{
+class GuaranteeSpec extends AnyFreeSpec with MockitoSugar with Matchers {
 
   "isDefaulting" - {
     "returns false when guarantee type is not a reference type" in {
       val nonReferenceTypes = Guarantee.validTypes.diff(Guarantee.referenceTypes)
 
       nonReferenceTypes.foreach {
-        typeChar => Guarantee(typeChar, "test").isDefaulting mustBe false
+        typeChar =>
+          Guarantee(typeChar, "test").isDefaulting mustBe false
       }
     }
 
     "returns true when guarantee type is a reference type" in {
       Guarantee.referenceTypes.foreach {
-        typeChar => Guarantee(typeChar, "test").isDefaulting mustBe true
+        typeChar =>
+          Guarantee(typeChar, "test").isDefaulting mustBe true
       }
     }
   }

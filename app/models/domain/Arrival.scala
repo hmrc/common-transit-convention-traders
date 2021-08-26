@@ -34,12 +34,12 @@ trait BaseArrival {
   def updated: LocalDateTime
 }
 
-case class Arrival(arrivalId: ArrivalId,
-                   location: String,
-                   messagesLocation: String,
-                   movementReferenceNumber: String,
-                   status: String,
-                   created: LocalDateTime,
-                   updated: LocalDateTime) extends BaseArrival {
-
-}
+case class Arrival(
+  arrivalId: ArrivalId,
+  location: String,
+  messagesLocation: String,
+  movementReferenceNumber: String,
+  status: String,
+  created: LocalDateTime,
+  updated: LocalDateTime
+) extends BaseArrival {}

@@ -16,7 +16,10 @@
 
 package utils.guaranteeParsing
 
-import models.{ChangeGuaranteeInstruction, NoChangeGuaranteeInstruction, NoChangeInstruction, SpecialMentionGuarantee}
+import models.ChangeGuaranteeInstruction
+import models.NoChangeGuaranteeInstruction
+import models.NoChangeInstruction
+import models.SpecialMentionGuarantee
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -45,7 +48,6 @@ class XmlBuilderSpec extends AnyFreeSpec with Matchers {
       val resultNoChangeGuarantee = sut.buildFromInstruction(NoChangeGuaranteeInstruction(SpecialMentionGuarantee("testInfo")))
       resultNoChangeGuarantee.toString().filter(_ > ' ') mustBe
         "<SPEMENMT2><AddInfMT21>testInfo</AddInfMT21><AddInfCodMT23>CAL</AddInfCodMT23></SPEMENMT2>".filter(_ > ' ')
-
 
       val resultChangeGuarantee = sut.buildFromInstruction(ChangeGuaranteeInstruction(SpecialMentionGuarantee("10000.00EURtestCode")))
       resultChangeGuarantee.toString().filter(_ > ' ') mustBe

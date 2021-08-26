@@ -16,20 +16,28 @@
 
 package models.response
 
-import models.domain.{DepartureId, MessageId}
+import models.domain.DepartureId
+import models.domain.MessageId
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 
-class HateoasDepartureMessagesPostResponseMessageSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
+class HateoasDepartureMessagesPostResponseMessageSpec
+    extends AnyFreeSpec
+    with Matchers
+    with GuiceOneAppPerSuite
+    with OptionValues
+    with ScalaFutures
+    with MockitoSugar
+    with BeforeAndAfterEach {
   "HateoasDepartureMessagesPostResponseMessage" - {
     "must have valid message structure" in {
-      val expectedJson = Json.parse(
-        """{
+      val expectedJson = Json.parse("""{
           |  "_links": {
           |    "self": {
           |      "href": "/customs/transits/movements/departures/1/messages/2"

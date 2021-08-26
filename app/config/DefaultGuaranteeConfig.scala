@@ -16,13 +16,14 @@
 
 package config
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
+import javax.inject.Singleton
 import play.api.Configuration
 
 @Singleton
-class DefaultGuaranteeConfig  @Inject()(config: Configuration){
+class DefaultGuaranteeConfig @Inject() (config: Configuration) {
 
   val currency: String = config.getOptional[String]("defaultGuarantee.currency").getOrElse("GBP")
-  val amount: Double = config.getOptional[Double]("defaultGuarantee.amount").getOrElse(1.00)
+  val amount: Double   = config.getOptional[Double]("defaultGuarantee.amount").getOrElse(1.00)
 
 }

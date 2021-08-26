@@ -44,19 +44,21 @@ class MessageAnalyser @Inject() (val metrics: Metrics) extends HasMetrics {
     numberOfGoods.update(count)
   }
 
-  private def trackNumberOfDocuments(xml: NodeSeq): Unit = (xml \ "GOOITEGDS")
-    .foreach {
-      node =>
-        val count = (node \ "PRODOCDC2").length // TODO double check code
-        numberOfDocuments.update(count)
-    }
+  private def trackNumberOfDocuments(xml: NodeSeq): Unit =
+    (xml \ "GOOITEGDS")
+      .foreach {
+        node =>
+          val count = (node \ "PRODOCDC2").length // TODO double check code
+          numberOfDocuments.update(count)
+      }
 
-  private def trackNumberOfSpecialMentions(xml: NodeSeq): Unit = (xml \ "GOOITEGDS")
-    .foreach {
-      node =>
-        val count = (node \ "SPEMENMT2").length
-        numberOfSpecialMentions.update(count)
-    }
+  private def trackNumberOfSpecialMentions(xml: NodeSeq): Unit =
+    (xml \ "GOOITEGDS")
+      .foreach {
+        node =>
+          val count = (node \ "SPEMENMT2").length
+          numberOfSpecialMentions.update(count)
+      }
 
   private def trackNumberOfSeals(xml: NodeSeq): Unit = {
     val count = (xml \ "SEAINFSLI" \ "SEAIDSID").length

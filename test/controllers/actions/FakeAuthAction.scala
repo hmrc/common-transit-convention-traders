@@ -21,16 +21,16 @@ import config.AppConfig
 import play.api.mvc._
 import uk.gov.hmrc.auth.core._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
-case class FakeAuthAction @Inject()(
-                                override val authConnector: AuthConnector,
-                                config: AppConfig,
-                                override val parser: BodyParsers.Default
-                          )(implicit override val executionContext: ExecutionContext)
-  extends AuthAction(authConnector, config, parser) {
+case class FakeAuthAction @Inject() (
+  override val authConnector: AuthConnector,
+  config: AppConfig,
+  override val parser: BodyParsers.Default
+)(implicit override val executionContext: ExecutionContext)
+    extends AuthAction(authConnector, config, parser) {
 
-  override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] =
     block(AuthRequest(request, "id"))
-  }
 }

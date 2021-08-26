@@ -24,7 +24,7 @@ class XSDFileSpec extends AnyFreeSpec with Matchers with MockitoSugar {
   "XSDFile" - {
     "Arrival" - {
       "supported messages must contain only UnloadingRemarksXSD" in {
-        XSDFile.Arrival.SupportedMessages must contain ("CC044A" -> UnloadingRemarksXSD)
+        XSDFile.Arrival.SupportedMessages must contain("CC044A" -> UnloadingRemarksXSD)
         XSDFile.Arrival.SupportedMessages.size mustBe 1
       }
     }

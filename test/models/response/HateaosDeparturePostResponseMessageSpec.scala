@@ -16,9 +16,11 @@
 
 package models.response
 
-import models.{Box, BoxId}
+import models.Box
+import models.BoxId
 import models.domain.DepartureId
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers

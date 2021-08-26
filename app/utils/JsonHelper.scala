@@ -19,12 +19,15 @@ package utils
 import javax.inject.Inject
 import org.json.XML
 import play.api.Logger
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 
-import scala.util.{Failure, Success, Try}
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 import scala.xml.NodeSeq
 
-class JsonHelper @Inject()(messageTranslation: MessageTranslation) {
+class JsonHelper @Inject() (messageTranslation: MessageTranslation) {
 
   def convertXmlToJson(xml: NodeSeq): JsObject =
     Try(translateMessage(xml.toString)) match {

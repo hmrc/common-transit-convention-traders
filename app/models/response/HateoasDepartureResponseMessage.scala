@@ -17,26 +17,29 @@
 package models.response
 
 import controllers.routes
-import models.domain.{DepartureId, MessageId, MovementMessage}
-import play.api.libs.json.{JsObject, Json}
+import models.domain.DepartureId
+import models.domain.MessageId
+import models.domain.MovementMessage
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 import utils.CallOps._
 
 object HateoasDepartureResponseMessage {
 
   def apply(departureId: DepartureId, messageId: MessageId, m: MovementMessage): JsObject = {
     val departureUrl = routes.DepartureMessagesController.getDepartureMessage(departureId, messageId).urlWithContext
-    val messageUrl = routes.DeparturesController.getDeparture(departureId).urlWithContext
+    val messageUrl   = routes.DeparturesController.getDeparture(departureId).urlWithContext
 
     Json.obj(
       "_links" -> Json.obj(
-        "self"    -> Json.obj("href" -> departureUrl),
-        "departure"    -> Json.obj("href" -> messageUrl)
+        "self"      -> Json.obj("href" -> departureUrl),
+        "departure" -> Json.obj("href" -> messageUrl)
       ),
       "departureId" -> departureId.toString,
-      "messageId" -> messageId.toString,
-      "received" -> m.dateTime,
+      "messageId"   -> messageId.toString,
+      "received"    -> m.dateTime,
       "messageType" -> m.messageType,
-      "body" -> m.message.toString
+      "body"        -> m.message.toString
     )
   }
 }

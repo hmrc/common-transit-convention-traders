@@ -17,30 +17,31 @@
 package models.response
 
 import controllers.routes
-import models.domain.{Arrival, ArrivalId}
-import play.api.libs.json.{JsObject, Json}
+import models.domain.Arrival
+import models.domain.ArrivalId
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 import utils.CallOps._
 
 object HateoasResponseArrival {
 
   def apply(arrivalId: ArrivalId, created: String, updated: String, movementReferenceNumber: String, status: String): JsObject = {
-    val arrivalUrl = routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext
+    val arrivalUrl  = routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext
     val messagesUrl = routes.ArrivalMessagesController.getArrivalMessages(arrivalId).urlWithContext
 
     Json.obj(
-      "id" -> arrivalId.toString,
-      "created" -> created,
-      "updated" -> updated,
+      "id"                      -> arrivalId.toString,
+      "created"                 -> created,
+      "updated"                 -> updated,
       "movementReferenceNumber" -> movementReferenceNumber,
-      "status" -> status,
+      "status"                  -> status,
       "_links" -> Json.obj(
-        "self"    -> Json.obj("href" -> arrivalUrl),
-        "messages"    -> Json.obj("href" -> messagesUrl)
+        "self"     -> Json.obj("href" -> arrivalUrl),
+        "messages" -> Json.obj("href" -> messagesUrl)
       )
     )
   }
 
-  def apply(arrival: Arrival): JsObject = {
+  def apply(arrival: Arrival): JsObject =
     apply(arrival.arrivalId, arrival.created.toString, arrival.updated.toString, arrival.movementReferenceNumber, arrival.status)
-  }
 }

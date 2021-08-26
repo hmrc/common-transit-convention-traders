@@ -17,8 +17,10 @@
 package models.response
 
 import controllers.routes
-import models.domain.{ArrivalId, MessageId}
-import play.api.libs.json.{JsObject, Json}
+import models.domain.ArrivalId
+import models.domain.MessageId
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 import utils.CallOps._
 
 import scala.xml.NodeSeq
@@ -32,12 +34,12 @@ object HateoasArrivalMessagesPostResponseMessage {
     Json.obj(
       "_links" -> Json.obj(
         "self"    -> Json.obj("href" -> messageUrl),
-        "arrival"    -> Json.obj("href" -> arrivalUrl)
+        "arrival" -> Json.obj("href" -> arrivalUrl)
       ),
-      "arrivalId" -> arrivalId.toString,
-      "messageId" -> messageId.toString,
+      "arrivalId"   -> arrivalId.toString,
+      "messageId"   -> messageId.toString,
       "messageType" -> messageType,
-      "body" -> message.toString,
+      "body"        -> message.toString,
       "_embedded" -> Json.obj(
         "notifications" -> Json.obj("requestId" -> arrivalUrl)
       )

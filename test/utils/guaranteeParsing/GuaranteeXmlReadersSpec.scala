@@ -24,7 +24,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers with ScalaCheckPropertyChecks{
+class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers with ScalaCheckPropertyChecks {
 
   val sut = new GuaranteeXmlReaders
 
@@ -33,11 +33,15 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
       val result = sut.gOOITEGDSNode(exampleGOOITEGDSSequence)
       result mustBe a[Right[_, Seq[GOOITEGDSNode]]]
       val gooBlocks = result.right.get
-      val gooBlock = gooBlocks.head
+      val gooBlock  = gooBlocks.head
       gooBlock.itemNumber mustBe 1
       gooBlock.specialMentions.length mustBe 4
-      gooBlock.specialMentions.collect { case sm: SpecialMentionOther => sm }.length mustBe 1
-      gooBlock.specialMentions.collect { case sm: SpecialMentionGuarantee => sm}.length mustBe 3
+      gooBlock.specialMentions.collect {
+        case sm: SpecialMentionOther => sm
+      }.length mustBe 1
+      gooBlock.specialMentions.collect {
+        case sm: SpecialMentionGuarantee => sm
+      }.length mustBe 3
     }
 
     "returns InvalidItemNumber when itemNumber is not an int" in {
@@ -151,15 +155,18 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
           </GOOITEGDS>
         </example>
 
-
       val result = sut.gOOITEGDSNode(exampleGOOITEGDSSequenceInvalidSpecialMention)
       result mustBe a[Right[_, Seq[GOOITEGDSNode]]]
       val gooBlocks = result.right.get
-      val gooBlock = gooBlocks.head
+      val gooBlock  = gooBlocks.head
 
       gooBlock.specialMentions.length mustBe 4
-      gooBlock.specialMentions.collect { case sm: SpecialMentionOther => sm }.length mustBe 2
-      gooBlock.specialMentions.collect { case sm: SpecialMentionGuarantee => sm}.length mustBe 2
+      gooBlock.specialMentions.collect {
+        case sm: SpecialMentionOther => sm
+      }.length mustBe 2
+      gooBlock.specialMentions.collect {
+        case sm: SpecialMentionGuarantee => sm
+      }.length mustBe 2
 
     }
   }
@@ -171,13 +178,17 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
       val gooBlock = result.right.get
       gooBlock.itemNumber mustBe 1
       gooBlock.specialMentions.length mustBe 4
-      gooBlock.specialMentions.collect { case sm: SpecialMentionOther => sm }.length mustBe 1
-      gooBlock.specialMentions.collect { case sm: SpecialMentionGuarantee => sm}.length mustBe 3
+      gooBlock.specialMentions.collect {
+        case sm: SpecialMentionOther => sm
+      }.length mustBe 1
+      gooBlock.specialMentions.collect {
+        case sm: SpecialMentionGuarantee => sm
+      }.length mustBe 3
     }
 
     "returns InvalidItemNumber when itemNumber is not an int" in {
       val exampleGOOITEGDSSequenceInvalidItemNumber =
-          <GOOITEGDS>
+        <GOOITEGDS>
             <IteNumGDS7>A</IteNumGDS7>
             <SPEMENMT2>
               <AddInfMT21>7000.0EUR07IT00000100000Z1</AddInfMT21>
@@ -204,7 +215,7 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
 
     "returns MissingItemNumber when itemNumber is missing" in {
       val exampleGOOITEGDSSequenceMissingItemNumber =
-          <GOOITEGDS>
+        <GOOITEGDS>
             <IteNumGDS7></IteNumGDS7>
             <SPEMENMT2>
               <AddInfMT21>7000.0EUR07IT00000100000Z1</AddInfMT21>
@@ -231,7 +242,7 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
 
     "returns MissingItemNumber when itemNumber ode is missing" in {
       val exampleGOOITEGDSSequenceMissingItemNumberNode =
-          <GOOITEGDS>
+        <GOOITEGDS>
             <SPEMENMT2>
               <AddInfMT21>7000.0EUR07IT00000100000Z1</AddInfMT21>
               <AddInfCodMT23>CAL</AddInfCodMT23>
@@ -282,12 +293,14 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
       result mustBe a[Right[_, GOOITEGDSNode]]
       val gooBlock = result.right.get
       gooBlock.specialMentions.length mustBe 4
-      gooBlock.specialMentions.collect { case sm: SpecialMentionOther => sm }.length mustBe 2
-      gooBlock.specialMentions.collect { case sm: SpecialMentionGuarantee => sm}.length mustBe 2
+      gooBlock.specialMentions.collect {
+        case sm: SpecialMentionOther => sm
+      }.length mustBe 2
+      gooBlock.specialMentions.collect {
+        case sm: SpecialMentionGuarantee => sm
+      }.length mustBe 2
     }
   }
-
-
 
   "specialMention" - {
     "returns SpecialMentionGuarantee when AddInfCodMT23 is CAL" in {
@@ -309,28 +322,26 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
 
   "guarantee" - {
     val referenceTypeGen = Gen.oneOf(Guarantee.referenceTypes)
-    val otherTypes = Gen.oneOf(Guarantee.validTypes.diff(Guarantee.referenceTypes))
+    val otherTypes       = Gen.oneOf(Guarantee.validTypes.diff(Guarantee.referenceTypes))
     "returns Guarantee when given GuaRefNumGRNREF1 field and the Guarantee type is 0,1,2,4,9" in {
       forAll(referenceTypeGen) {
-        gType => {
+        gType =>
           val result = sut.guarantee(exampleGuaranteeGuaTypGUA1(gType))
           result mustBe a[Right[_, Guarantee]]
           val item = result.right.get
           item.gReference mustEqual "07IT00000100000Z3"
           item.gType mustEqual gType
-        }
       }
     }
 
     "returns Guarantee when given OthGuaRefREF4 field and the Guarantee type is not 0,1,2,4,9" in {
       forAll(otherTypes) {
-        gType => {
+        gType =>
           val result = sut.guarantee(exampleOtherGuaranteeGuaTypGUA1(gType))
           result mustBe a[Right[_, Guarantee]]
           val item = result.right.get
           item.gReference mustEqual "SomeValue"
           item.gType mustEqual gType
-        }
 
       }
 
@@ -338,10 +349,9 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
 
     "returns NoOtherGuaranteeField when not given OthGuaRefREF4 and the guarantee type is not 0,1,2,4,9" in {
       forAll(otherTypes) {
-        gType => {
+        gType =>
           val result = sut.guarantee(exampleGuaranteeGuaTypGUA1(gType))
           result mustBe a[Left[NoOtherGuaranteeField, _]]
-        }
       }
     }
 
@@ -411,7 +421,7 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
   }
 
   "officeOfDeparture" - {
-    val emptySample = <example><CUSOFFDEPEPT><RefNumEPT1></RefNumEPT1></CUSOFFDEPEPT></example>
+    val emptySample    = <example><CUSOFFDEPEPT><RefNumEPT1></RefNumEPT1></CUSOFFDEPEPT></example>
     val completeSample = <example><CUSOFFDEPEPT><RefNumEPT1>value</RefNumEPT1></CUSOFFDEPEPT></example>
     "returns DepartureEmpty if RefNumEPT1 is empty" in {
       val result = sut.officeOfDeparture(emptySample)
@@ -426,7 +436,7 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
   }
 
   "officeOfDestination" - {
-    val emptySample = <example><CUSOFFDESEST><RefNumEST1></RefNumEST1></CUSOFFDESEST></example>
+    val emptySample    = <example><CUSOFFDESEST><RefNumEST1></RefNumEST1></CUSOFFDESEST></example>
     val completeSample = <example><CUSOFFDESEST><RefNumEST1>value</RefNumEST1></CUSOFFDESEST></example>
     "returns DestinationEmpty if RefNumEPT1 is empty" in {
       val result = sut.officeOfDestination(emptySample)

@@ -27,6 +27,7 @@ object Enumerable {
 
   def apply[A](entries: (String, A)*): Enumerable[A] =
     new Enumerable[A] {
+
       override def withName(str: String): Option[A] =
         entries.toMap.get(str)
     }
@@ -47,7 +48,9 @@ object Enumerable {
       }
 
     implicit def writes[A: Enumerable]: Writes[A] =
-      Writes(value => JsString(value.toString))
+      Writes(
+        value => JsString(value.toString)
+      )
   }
 
 }

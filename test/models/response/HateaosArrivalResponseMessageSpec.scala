@@ -18,26 +18,33 @@ package models.response
 
 import java.time.LocalDateTime
 
-import models.domain.{ArrivalId, MessageId, MovementMessage}
+import models.domain.ArrivalId
+import models.domain.MessageId
+import models.domain.MovementMessage
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 
-class HateoasArrivalResponseMessageSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
+class HateoasArrivalResponseMessageSpec
+    extends AnyFreeSpec
+    with Matchers
+    with GuiceOneAppPerSuite
+    with OptionValues
+    with ScalaFutures
+    with MockitoSugar
+    with BeforeAndAfterEach {
 
   "HateoasArrivalResponseMessage" - {
     "must have valid message structure" in {
-      val message = MovementMessage("/customs/transits/movements/arrivals/1/messages/1",
-        LocalDateTime.of(2020, 10, 10, 10, 10, 10),
-        "type",
-        <test>default</test>)
+      val message =
+        MovementMessage("/customs/transits/movements/arrivals/1/messages/1", LocalDateTime.of(2020, 10, 10, 10, 10, 10), "type", <test>default</test>)
 
-      val expectedJson = Json.parse(
-        """
+      val expectedJson = Json.parse("""
           |{
           |  "_links": {
           |    "self": {

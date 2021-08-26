@@ -18,18 +18,22 @@ package controllers.actions
 
 import javax.inject.Inject
 import models.request.XSDFile
-import play.api.mvc.Results.{BadRequest, NotImplemented}
-import play.api.mvc.{ActionRefiner, Request, Result}
-import services.{XmlError, XmlValidationService}
+import play.api.mvc.Results.BadRequest
+import play.api.mvc.Results.NotImplemented
+import play.api.mvc.ActionRefiner
+import play.api.mvc.Request
+import play.api.mvc.Result
+import services.XmlError
+import services.XmlValidationService
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class ValidateDepartureMessageAction @Inject()(xmlValidationService: XmlValidationService)(
-  implicit val executionContext: ExecutionContext)
-  extends ActionRefiner[Request, Request] {
+class ValidateDepartureMessageAction @Inject() (xmlValidationService: XmlValidationService)(implicit val executionContext: ExecutionContext)
+    extends ActionRefiner[Request, Request] {
 
-  override protected def refine[A](request: Request[A]): Future[Either[Result, Request[A]]] = {
+  override protected def refine[A](request: Request[A]): Future[Either[Result, Request[A]]] =
     request.body match {
       case body: NodeSeq =>
         if (body.nonEmpty) {
@@ -51,5 +55,4 @@ class ValidateDepartureMessageAction @Inject()(xmlValidationService: XmlValidati
       case _ =>
         Future.successful(Left(BadRequest(XmlError.RequestBodyInvalidTypeMessage)))
     }
-  }
 }

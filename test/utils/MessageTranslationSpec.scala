@@ -28,7 +28,7 @@ class MessageTranslationSpec extends AnyFreeSpec with Matchers {
     new GuiceApplicationBuilder()
       .configure(
         "message-translation-file" -> "TestMessageTranslation.json",
-        "metrics.jvm" -> false
+        "metrics.jvm"              -> false
       )
 
   ".translate" - {

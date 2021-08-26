@@ -65,18 +65,16 @@ class InstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAn
     "returns TransformInstructionSet with an AddInstruction if no special mentions but a guarantee" in {
       when(mockGIB.buildInstructionFromGuarantee(any(), any())).thenReturn(Right(AddSpecialMentionInstruction(SpecialMentionGuarantee("test", Nil))))
 
-      val result = sut.buildInstructionSet(GOOITEGDSNode(1, Nil),Seq(Guarantee('1',"test")))
+      val result = sut.buildInstructionSet(GOOITEGDSNode(1, Nil), Seq(Guarantee('1', "test")))
       result.right.get mustBe TransformInstructionSet(GOOITEGDSNode(1, Nil), Seq(AddSpecialMentionInstruction(SpecialMentionGuarantee("test", Nil))))
     }
 
     "returns ParseError if the built instruction returns an error" in {
       when(mockGIB.buildInstructionFromGuarantee(any(), any())).thenReturn(Left(AmountWithoutCurrency("test")))
 
-      val result = sut.buildInstructionSet(GOOITEGDSNode(1, Nil),Seq(Guarantee('1',"test")))
+      val result = sut.buildInstructionSet(GOOITEGDSNode(1, Nil), Seq(Guarantee('1', "test")))
       result.left.get mustBe AmountWithoutCurrency("test")
     }
-
-
 
   }
 
@@ -102,19 +100,18 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
         "metrics.jvm" -> false
       )
 
-  override def beforeEach = {
+  override def beforeEach =
     super.beforeEach()
-  }
 
   val mockGuaranteeConfig = mock[DefaultGuaranteeConfig]
-  val mockCurrency = "XYZ"
-  val mockAmount = 11.00
+  val mockCurrency        = "XYZ"
+  val mockAmount          = 11.00
   when(mockGuaranteeConfig.currency).thenReturn(mockCurrency)
   when(mockGuaranteeConfig.amount).thenReturn(mockAmount)
 
   def sut: GuaranteeInstructionBuilder = {
     val application = baseApplicationBuilder
-        .overrides(bind[DefaultGuaranteeConfig].toInstance(mockGuaranteeConfig))
+      .overrides(bind[DefaultGuaranteeConfig].toInstance(mockGuaranteeConfig))
       .build()
 
     application.injector.instanceOf[GuaranteeInstructionBuilder]
@@ -122,12 +119,14 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
 
   "buildInstructionFromGuarantee" - {
     "returns Right(NoChangeGuaranteeInstruction) if guarantee type is not in referenceTypes" in {
-      val gTypes = Seq('1', '2', '3', '4', '5', '6', '7')
+      val gTypes        = Seq('1', '2', '3', '4', '5', '6', '7')
       val excludedTypes = gTypes.diff(Guarantee.referenceTypes)
 
       excludedTypes.foreach {
         typeChar =>
-          sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), Some(SpecialMentionGuarantee("test alpha"))) mustBe a[Right[_, NoChangeGuaranteeInstruction]]
+          sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), Some(SpecialMentionGuarantee("test alpha"))) mustBe a[
+            Right[_, NoChangeGuaranteeInstruction]
+          ]
       }
     }
 
@@ -152,7 +151,10 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
         typeChar =>
           val result = sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), Some(SpecialMentionGuarantee("GBPalpha")))
           result mustBe a[Right[_, ChangeGuaranteeInstruction]]
-          result.right.get.asInstanceOf[ChangeGuaranteeInstruction].mention.additionalInfo mustBe s"${BigDecimal(mockGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()}${mockCurrency}alpha"
+          result.right.get
+            .asInstanceOf[ChangeGuaranteeInstruction]
+            .mention
+            .additionalInfo mustBe s"${BigDecimal(mockGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()}${mockCurrency}alpha"
       }
     }
 
@@ -161,7 +163,10 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
         typeChar =>
           val result = sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), Some(SpecialMentionGuarantee("alpha")))
           result mustBe a[Right[_, ChangeGuaranteeInstruction]]
-          result.right.get.asInstanceOf[ChangeGuaranteeInstruction].mention.additionalInfo mustBe s"${BigDecimal(mockGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()}${mockCurrency}alpha"
+          result.right.get
+            .asInstanceOf[ChangeGuaranteeInstruction]
+            .mention
+            .additionalInfo mustBe s"${BigDecimal(mockGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()}${mockCurrency}alpha"
       }
     }
 
