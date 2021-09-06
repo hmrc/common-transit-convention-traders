@@ -95,7 +95,6 @@ class DepartureMessagesControllerSpec
     routes.DeparturesController.getDeparture(DepartureId(123)).urlWithContext,
     routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).urlWithContext,
     Some("MRN"),
-    "status",
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
     Seq(sourceMovement, sourceMovement)
@@ -165,7 +164,6 @@ class DepartureMessagesControllerSpec
       |      "created": "2020-02-02T02:02:02",
       |      "updated": "2020-02-02T02:02:02",
       |      "movementReferenceNumber": "MRN",
-      |      "status": "status",
       |      "_links": {
       |        "self": {
       |          "href": "/customs/transits/movements/departures/123"

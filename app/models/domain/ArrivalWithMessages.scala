@@ -29,7 +29,6 @@ case class ArrivalWithMessages(
   location: String,
   messagesLocation: String,
   movementReferenceNumber: String,
-  status: String,
   created: LocalDateTime,
   updated: LocalDateTime,
   messages: Seq[MovementMessage]

@@ -94,7 +94,6 @@ class DepartureMessageConnectorSpec
         routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
         routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
         Some("MRN"),
-        "status",
         LocalDateTime.now,
         LocalDateTime.now
       )
@@ -183,7 +182,6 @@ class DepartureMessageConnectorSpec
         routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
         routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
         Some("MRN"),
-        "status",
         LocalDateTime.now,
         LocalDateTime.now,
         Seq(
@@ -234,7 +232,6 @@ class DepartureMessageConnectorSpec
         routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
         routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
         Some("MRN"),
-        "status",
         LocalDateTime.now,
         LocalDateTime.now,
         Seq(
@@ -284,7 +281,6 @@ class DepartureMessageConnectorSpec
         routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
         routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
         Some("MRN"),
-        "status",
         LocalDateTime.now,
         LocalDateTime.now
       )

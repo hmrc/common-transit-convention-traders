@@ -45,7 +45,6 @@ class HateoasResponseDepartureSpec
         "loc",
         "messageLoc",
         Some("mrn"),
-        "status",
         LocalDateTime.of(2020, 10, 10, 10, 10, 10),
         LocalDateTime.of(2020, 12, 12, 12, 12, 12)
       )
@@ -58,7 +57,6 @@ class HateoasResponseDepartureSpec
           |  "created": "2020-10-10T10:10:10",
           |  "updated": "2020-12-12T12:12:12",
           |  "movementReferenceNumber": "mrn",
-          |  "status": "status",
           |  "_links": {
           |    "self": {
           |      "href": "/customs/transits/movements/departures/3"

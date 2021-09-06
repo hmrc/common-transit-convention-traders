@@ -89,7 +89,6 @@ class ArrivalMessageConnectorSpec
         routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
         routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
         "MRN",
-        "status",
         LocalDateTime.now,
         LocalDateTime.now
       )
@@ -178,7 +177,6 @@ class ArrivalMessageConnectorSpec
         routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
         routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
         "MRN",
-        "status",
         LocalDateTime.now,
         LocalDateTime.now,
         Seq(
@@ -229,7 +227,6 @@ class ArrivalMessageConnectorSpec
         routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
         routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
         "MRN",
-        "status",
         LocalDateTime.now,
         LocalDateTime.now,
         Seq(
@@ -279,7 +276,6 @@ class ArrivalMessageConnectorSpec
         routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
         routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
         "MRN",
-        "status",
         LocalDateTime.now,
         LocalDateTime.now
       )

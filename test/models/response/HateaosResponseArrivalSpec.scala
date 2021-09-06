@@ -41,7 +41,7 @@ class HateoasResponseArrivalSpec
   "HateoasResponseArrival" - {
     "must generate correct message structure" in {
       val arrival =
-        Arrival(ArrivalId(3), "loc", "messageLoc", "mrn", "status", LocalDateTime.of(2020, 10, 10, 10, 10, 10), LocalDateTime.of(2020, 12, 12, 12, 12, 12))
+        Arrival(ArrivalId(3), "loc", "messageLoc", "mrn", LocalDateTime.of(2020, 10, 10, 10, 10, 10), LocalDateTime.of(2020, 12, 12, 12, 12, 12))
 
       val expectedJson = Json.parse("""
           |{
@@ -49,7 +49,6 @@ class HateoasResponseArrivalSpec
           |  "created": "2020-10-10T10:10:10",
           |  "updated": "2020-12-12T12:12:12",
           |  "movementReferenceNumber": "mrn",
-          |  "status": "status",
           |  "_links": {
           |    "self": {
           |      "href": "/customs/transits/movements/arrivals/3"

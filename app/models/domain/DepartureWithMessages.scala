@@ -29,7 +29,6 @@ case class DepartureWithMessages(
   location: String,
   messagesLocation: String,
   movementReferenceNumber: Option[String],
-  status: String,
   created: LocalDateTime,
   updated: LocalDateTime,
   messages: Seq[MovementMessage]

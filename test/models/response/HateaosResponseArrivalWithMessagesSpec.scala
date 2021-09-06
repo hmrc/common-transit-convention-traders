@@ -48,7 +48,6 @@ class HateoasResponseArrivalWithMessagesSpec
         "loc",
         "messageLoc",
         "mrn",
-        "status",
         LocalDateTime.of(2020, 10, 10, 10, 10, 10),
         LocalDateTime.of(2020, 12, 12, 12, 12, 12),
         Seq(
@@ -93,7 +92,6 @@ class HateoasResponseArrivalWithMessagesSpec
           |      "created": "2020-10-10T10:10:10",
           |      "updated": "2020-12-12T12:12:12",
           |      "movementReferenceNumber": "mrn",
-          |      "status": "status",
           |      "_links": {
           |        "self": {
           |          "href": "/customs/transits/movements/arrivals/3"
@@ -115,7 +113,6 @@ class HateoasResponseArrivalWithMessagesSpec
         "loc",
         "messageLoc",
         "mrn",
-        "status",
         LocalDateTime.of(2020, 10, 10, 10, 10, 10),
         LocalDateTime.of(2020, 12, 12, 12, 12, 12),
         Nil
@@ -137,7 +134,6 @@ class HateoasResponseArrivalWithMessagesSpec
           |      "created": "2020-10-10T10:10:10",
           |      "updated": "2020-12-12T12:12:12",
           |      "movementReferenceNumber": "mrn",
-          |      "status": "status",
           |      "_links": {
           |        "self": {
           |          "href": "/customs/transits/movements/arrivals/3"

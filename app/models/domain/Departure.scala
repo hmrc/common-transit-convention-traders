@@ -29,7 +29,6 @@ trait BaseDeparture {
   def location: String
   def messagesLocation: String
   def movementReferenceNumber: Option[String]
-  def status: String
   def created: LocalDateTime
   def updated: LocalDateTime
 }
@@ -39,7 +38,6 @@ case class Departure(
   location: String,
   messagesLocation: String,
   movementReferenceNumber: Option[String],
-  status: String,
   created: LocalDateTime,
   updated: LocalDateTime
 ) extends BaseDeparture

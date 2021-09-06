@@ -43,8 +43,7 @@ object HateoasResponseArrivalWithMessages {
           arrivalId,
           arrivalWithMessages.created.toString,
           arrivalWithMessages.updated.toString,
-          arrivalWithMessages.movementReferenceNumber,
-          arrivalWithMessages.status
+          arrivalWithMessages.movementReferenceNumber
         )
       )
     )
