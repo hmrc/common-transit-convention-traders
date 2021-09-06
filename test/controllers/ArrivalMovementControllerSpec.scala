@@ -87,7 +87,6 @@ class ArrivalMovementControllerSpec
     routes.ArrivalMovementController.getArrival(ArrivalId(123)).urlWithContext,
     routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(123)).urlWithContext,
     "MRN",
-    "status",
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
     LocalDateTime.of(2020, 2, 2, 2, 2, 2)
   )
@@ -98,7 +97,6 @@ class ArrivalMovementControllerSpec
       |  "created": "2020-02-02T02:02:02",
       |  "updated": "2020-02-02T02:02:02",
       |  "movementReferenceNumber": "MRN",
-      |  "status": "status",
       |  "_links": {
       |    "self": {
       |      "href": "/customs/transits/movements/arrivals/123"
@@ -426,7 +424,6 @@ class ArrivalMovementControllerSpec
          |        "created": "2020-02-02T02:02:02",
          |        "updated": "2020-02-02T02:02:02",
          |        "movementReferenceNumber": "MRN",
-         |        "status": "status",
          |        "_links": {
          |          "self": {
          |            "href": "/customs/transits/movements/arrivals/123"
@@ -441,7 +438,6 @@ class ArrivalMovementControllerSpec
          |        "created": "2020-02-02T02:02:02",
          |        "updated": "2020-02-02T02:02:02",
          |        "movementReferenceNumber": "MRN",
-         |        "status": "status",
          |        "_links": {
          |          "self": {
          |            "href": "/customs/transits/movements/arrivals/123"
@@ -456,7 +452,6 @@ class ArrivalMovementControllerSpec
          |        "created": "2020-02-02T02:02:02",
          |        "updated": "2020-02-02T02:02:02",
          |        "movementReferenceNumber": "MRN",
-         |        "status": "status",
          |        "_links": {
          |          "self": {
          |            "href": "/customs/transits/movements/arrivals/123"

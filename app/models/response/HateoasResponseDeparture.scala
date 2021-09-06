@@ -24,7 +24,7 @@ import utils.CallOps._
 
 object HateoasResponseDeparture {
 
-  def apply(departureId: DepartureId, created: String, updated: String, movementReferenceNumber: Option[String], status: String): JsObject = {
+  def apply(departureId: DepartureId, created: String, updated: String, movementReferenceNumber: Option[String]): JsObject = {
     val departureUrl = routes.DeparturesController.getDeparture(departureId).urlWithContext
     val messagesUrl  = routes.DepartureMessagesController.getDepartureMessages(departureId).urlWithContext
 
@@ -35,7 +35,6 @@ object HateoasResponseDeparture {
           "created"                 -> created,
           "updated"                 -> updated,
           "movementReferenceNumber" -> movementReferenceNumber,
-          "status"                  -> status,
           "_links" -> Json.obj(
             "self"     -> Json.obj("href" -> departureUrl),
             "messages" -> Json.obj("href" -> messagesUrl)
@@ -49,5 +48,5 @@ object HateoasResponseDeparture {
   }
 
   def apply(departure: Departure): JsObject =
-    apply(departure.departureId, departure.created.toString, departure.updated.toString, departure.movementReferenceNumber, departure.status)
+    apply(departure.departureId, departure.created.toString, departure.updated.toString, departure.movementReferenceNumber)
 }
