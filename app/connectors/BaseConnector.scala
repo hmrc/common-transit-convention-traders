@@ -60,7 +60,7 @@ class BaseConnector extends HttpErrorFunctions {
     * @return the explicit headers to use in a downstream request
     */
   protected def postPutXmlHeaders(implicit hc: HeaderCarrier): Seq[(String, String)] =
-    enforceAuthHeader ++ hc.headers(Seq(ClientIdHeader)) ++ Seq(
+    enforceAuthHeader ++ hc.headers(Seq(XClientIdHeader)) ++ Seq(
       HeaderNames.ACCEPT       -> ContentTypes.JSON,
       HeaderNames.CONTENT_TYPE -> ContentTypes.XML,
       ChannelHeader            -> api.name
@@ -80,7 +80,7 @@ class BaseConnector extends HttpErrorFunctions {
     * @return the explicit headers to use in a downstream request
     */
   protected def getJsonHeaders(implicit hc: HeaderCarrier): Seq[(String, String)] =
-    enforceAuthHeader ++ hc.headers(Seq(ClientIdHeader)) ++ Seq(
+    enforceAuthHeader ++ hc.headers(Seq(XClientIdHeader)) ++ Seq(
       HeaderNames.ACCEPT -> ContentTypes.JSON,
       ChannelHeader      -> api.name
     )

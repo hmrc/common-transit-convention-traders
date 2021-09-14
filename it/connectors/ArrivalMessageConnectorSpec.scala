@@ -65,7 +65,7 @@ class ArrivalMessageConnectorSpec
           .withHeader(HeaderNames.AUTHORIZATION, equalTo("a5sesqerTyi135/"))
           .withHeader(HeaderNames.ACCEPT, equalTo(ContentTypes.JSON))
           .withHeader(Constants.ChannelHeader, equalTo("api"))
-          .withHeader(Constants.ClientIdHeader, equalTo("foo"))
+          .withHeader(Constants.XClientIdHeader, equalTo("foo"))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -75,7 +75,7 @@ class ArrivalMessageConnectorSpec
 
       implicit val hc = HeaderCarrier()
         .copy(authorization = Some(Authorization("a5sesqerTyi135/")))
-        .withExtraHeaders(Constants.ClientIdHeader -> "foo")
+        .withExtraHeaders(Constants.XClientIdHeader -> "foo")
 
       val result = connector.get(ArrivalId(1), MessageId(1)).futureValue
 
@@ -202,7 +202,7 @@ class ArrivalMessageConnectorSpec
           .withHeader(HeaderNames.AUTHORIZATION, equalTo("a5sesqerTyi135/"))
           .withHeader(HeaderNames.ACCEPT, equalTo(ContentTypes.JSON))
           .withHeader(Constants.ChannelHeader, equalTo("api"))
-          .withHeader(Constants.ClientIdHeader, equalTo("foo"))
+          .withHeader(Constants.XClientIdHeader, equalTo("foo"))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -212,7 +212,7 @@ class ArrivalMessageConnectorSpec
 
       implicit val hc = HeaderCarrier()
         .copy(authorization = Some(Authorization("a5sesqerTyi135/")))
-        .withExtraHeaders(Constants.ClientIdHeader -> "foo")
+        .withExtraHeaders(Constants.XClientIdHeader -> "foo")
 
       val result = connector.getMessages(ArrivalId(1), receivedSince = None).futureValue
 
@@ -252,7 +252,7 @@ class ArrivalMessageConnectorSpec
           .withHeader(HeaderNames.AUTHORIZATION, equalTo("a5sesqerTyi135/"))
           .withHeader(HeaderNames.ACCEPT, equalTo(ContentTypes.JSON))
           .withHeader(Constants.ChannelHeader, equalTo("api"))
-          .withHeader(Constants.ClientIdHeader, equalTo("foo"))
+          .withHeader(Constants.XClientIdHeader, equalTo("foo"))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -262,7 +262,7 @@ class ArrivalMessageConnectorSpec
 
       implicit val hc = HeaderCarrier()
         .copy(authorization = Some(Authorization("a5sesqerTyi135/")))
-        .withExtraHeaders(Constants.ClientIdHeader -> "foo")
+        .withExtraHeaders(Constants.XClientIdHeader -> "foo")
 
       val result = connector.getMessages(ArrivalId(1), receivedSince = dateTime).futureValue
 
