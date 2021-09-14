@@ -36,4 +36,6 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig
   lazy val enrolmentKey: String = config.get[String]("security.enrolmentKey")
 
   val messageTranslationFile: String = config.get[String]("message-translation-file")
+
+  val pushPullUrl = Url.parse(servicesConfig.baseUrl("push-pull-notifications-api"))
 }

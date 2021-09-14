@@ -38,16 +38,18 @@ trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach with Guice
 
   protected def portConfigKey: Seq[String]
 
-  override lazy val fakeApplication: Application =
+  lazy val applicationBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
-      .configure(
-        portConfigKey.map {
-          key =>
-            key -> server.port.toString()
-        }: _*
-      )
-      .overrides(bindings: _*)
-      .build()
+    .configure(
+      portConfigKey.map {
+        key =>
+          key -> server.port.toString()
+      }: _*
+    )
+    .overrides(bindings: _*)
+
+  override lazy val fakeApplication: Application =
+    applicationBuilder.build()
 
   protected lazy val injector: Injector = fakeApplication.injector
 

@@ -18,18 +18,15 @@ package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.Constants
-import models.Box
-import models.BoxId
-import org.scalatest.concurrent.IntegrationPatience
-import org.scalatest.concurrent.ScalaFutures
+import models.{Box, BoxId}
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
+import utils.WiremockSuite
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
-import utils.WiremockSuite
 
 class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite with ScalaFutures with Matchers with IntegrationPatience {
   override protected def portConfigKey: Seq[String] = Seq("microservice.services.push-pull-notifications-api.port")
@@ -65,7 +62,7 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
           )
         }
 
-        val app = fakeApplication
+        val app = applicationBuilder.build()
 
         running(app) {
           val connector = app.injector.instanceOf[PushPullNotificationConnector]
@@ -84,7 +81,7 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
           )
         }
 
-        val app = fakeApplication
+        val app = applicationBuilder.build()
 
         running(app) {
           val connector    = app.injector.instanceOf[PushPullNotificationConnector]
@@ -104,7 +101,7 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite w
           )
         }
 
-        val app = fakeApplication
+        val app = applicationBuilder.build()
 
         running(app) {
           val connector    = app.injector.instanceOf[PushPullNotificationConnector]
