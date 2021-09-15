@@ -20,6 +20,7 @@ import config.Constants
 import connectors.PushPullNotificationConnector
 import controllers.actions.AuthAction
 import javax.inject.Inject
+import models.response.{JsonClientErrorResponse, JsonSystemErrorResponse}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
@@ -42,12 +43,12 @@ class PushPullNotificationController @Inject() (cc: ControllerComponents,
         case Some(clientId) => pushPullNotificationConnector.getBox(clientId).map {
           response =>
           response match {
-            case Left(error) if(error.statusCode == NOT_FOUND) => NotFound("No box found for your client id")
-            case Left(_) => InternalServerError("Unexpected Error")
+            case Left(error) if(error.statusCode == NOT_FOUND) => NotFound(Json.toJson(JsonClientErrorResponse(NOT_FOUND, "No box found for your client id")))
+            case Left(_) => InternalServerError(Json.toJson(JsonSystemErrorResponse(INTERNAL_SERVER_ERROR, "Unexpected Error")))
             case Right(box) => Ok(Json.toJson(box))
           }
         }
-        case None =>  Future.successful(BadRequest("Client Id Required"))
+        case None =>  Future.successful(BadRequest(Json.toJson(JsonClientErrorResponse(BAD_REQUEST, "Client Id Required"))))
       }
     }
   }
