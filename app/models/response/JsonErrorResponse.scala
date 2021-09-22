@@ -28,16 +28,24 @@ sealed abstract class JsonErrorResponse {
   def message: String
 }
 
+case class JsonSystemErrorResponse(statusCode: Int, message: String) extends JsonErrorResponse {
+  val code = "SYSTEM"
+}
+
 case class XmlParseJsonErrorResponse(message: String) extends JsonErrorResponse {
   val code = "PARSE_ERROR"
 }
 
 case class JsonClientErrorResponse(statusCode: Int, message: String) {
-  val code = "CLIENT_ERROR"
+  val code = JsonClientErrorResponse.errorCode
 }
 
 object JsonErrorResponse {
   implicit val jsonErrorResponseFormat: OFormat[JsonErrorResponse] = Json.format[JsonErrorResponse]
+}
+
+object JsonSystemErrorResponse {
+  implicit val jsonSystemErrorResponse: OFormat[JsonSystemErrorResponse] = Json.format[JsonSystemErrorResponse]
 }
 
 object XmlParseJsonErrorResponse {

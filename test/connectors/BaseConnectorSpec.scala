@@ -71,7 +71,7 @@ class BaseConnectorSpec extends AnyFreeSpec with Matchers {
         "when client ID present" in {
           val harness = new Harness()
 
-          implicit val rh = FakeRequest().withHeaders(Constants.ClientIdHeader -> "foo")
+          implicit val rh = FakeRequest().withHeaders(Constants.XClientIdHeader -> "foo")
           implicit val hc = HeaderCarrierConverter.fromRequest(rh)
 
           val headers = harness.xmlHeaders
@@ -82,7 +82,7 @@ class BaseConnectorSpec extends AnyFreeSpec with Matchers {
               HeaderNames.ACCEPT        -> ContentTypes.JSON,
               HeaderNames.CONTENT_TYPE  -> ContentTypes.XML,
               Constants.ChannelHeader   -> "api",
-              Constants.ClientIdHeader  -> "foo"
+              Constants.XClientIdHeader  -> "foo"
             )
           )
         }
@@ -141,7 +141,7 @@ class BaseConnectorSpec extends AnyFreeSpec with Matchers {
         "when client ID present" in {
           val harness = new Harness()
 
-          implicit val rh = FakeRequest().withHeaders(Constants.ClientIdHeader -> "foo")
+          implicit val rh = FakeRequest().withHeaders(Constants.XClientIdHeader -> "foo")
           implicit val hc = HeaderCarrierConverter.fromRequest(rh)
 
           val headers = harness.jsonHeaders
@@ -150,7 +150,7 @@ class BaseConnectorSpec extends AnyFreeSpec with Matchers {
             HeaderNames.AUTHORIZATION -> "",
             HeaderNames.ACCEPT        -> ContentTypes.JSON,
             Constants.ChannelHeader   -> "api",
-            Constants.ClientIdHeader  -> "foo"
+            Constants.XClientIdHeader  -> "foo"
           ))
         }
 

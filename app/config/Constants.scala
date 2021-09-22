@@ -21,8 +21,11 @@ object Constants {
 
   val AcceptHeaderMissing = "The accept header is missing or invalid"
 
+  val BoxName          = "customs/transits##1.0##notificationUrl"
+
   val Context = "/customs/transits"
 
-  val ClientIdHeader = "X-Client-Id"
+  val XClientIdHeader = "X-Client-Id"
+
   val ChannelHeader  = "channel"
 }

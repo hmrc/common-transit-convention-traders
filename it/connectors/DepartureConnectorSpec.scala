@@ -70,7 +70,7 @@ class DepartureConnectorSpec
           .withHeader(HeaderNames.ACCEPT, equalTo(ContentTypes.JSON))
           .withHeader(HeaderNames.CONTENT_TYPE, equalTo(ContentTypes.XML))
           .withHeader(Constants.ChannelHeader, equalTo("api"))
-          .withHeader(Constants.ClientIdHeader, equalTo("foo"))
+          .withHeader(Constants.XClientIdHeader, equalTo("foo"))
           .willReturn(
             aResponse()
               .withStatus(ACCEPTED)
@@ -86,7 +86,7 @@ class DepartureConnectorSpec
 
       implicit val hc = HeaderCarrier()
         .copy(authorization = Some(Authorization("a5sesqerTyi135/")))
-        .withExtraHeaders(Constants.ClientIdHeader -> "foo")
+        .withExtraHeaders(Constants.XClientIdHeader -> "foo")
 
       val result = connector.post("<document></document>").futureValue
 
@@ -104,7 +104,7 @@ class DepartureConnectorSpec
           .withHeader(HeaderNames.ACCEPT, equalTo(ContentTypes.JSON))
           .withHeader(HeaderNames.CONTENT_TYPE, equalTo(ContentTypes.XML))
           .withHeader(Constants.ChannelHeader, equalTo("api"))
-          .withHeader(Constants.ClientIdHeader, equalTo("foo"))
+          .withHeader(Constants.XClientIdHeader, equalTo("foo"))
           .willReturn(
             aResponse()
               .withStatus(ACCEPTED)
@@ -114,7 +114,7 @@ class DepartureConnectorSpec
 
       implicit val hc = HeaderCarrier()
         .copy(authorization = Some(Authorization("a5sesqerTyi135/")))
-        .withExtraHeaders(Constants.ClientIdHeader -> "foo")
+        .withExtraHeaders(Constants.XClientIdHeader -> "foo")
 
       val result = connector.post("<document></document>").futureValue
 
@@ -173,7 +173,7 @@ class DepartureConnectorSpec
           .withHeader(HeaderNames.AUTHORIZATION, equalTo("a5sesqerTyi135/"))
           .withHeader(HeaderNames.ACCEPT, equalTo(ContentTypes.JSON))
           .withHeader(Constants.ChannelHeader, equalTo("api"))
-          .withHeader(Constants.ClientIdHeader, equalTo("foo"))
+          .withHeader(Constants.XClientIdHeader, equalTo("foo"))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -183,7 +183,7 @@ class DepartureConnectorSpec
 
       implicit val hc = HeaderCarrier()
         .copy(authorization = Some(Authorization("a5sesqerTyi135/")))
-        .withExtraHeaders(Constants.ClientIdHeader -> "foo")
+        .withExtraHeaders(Constants.XClientIdHeader -> "foo")
 
       val result = connector.get(DepartureId(1)).futureValue
 
@@ -297,7 +297,7 @@ class DepartureConnectorSpec
           .withHeader(HeaderNames.AUTHORIZATION, equalTo("a5sesqerTyi135/"))
           .withHeader(HeaderNames.ACCEPT, equalTo(ContentTypes.JSON))
           .withHeader(Constants.ChannelHeader, equalTo("api"))
-          .withHeader(Constants.ClientIdHeader, equalTo("foo"))
+          .withHeader(Constants.XClientIdHeader, equalTo("foo"))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -307,7 +307,7 @@ class DepartureConnectorSpec
 
       implicit val hc = HeaderCarrier()
         .copy(authorization = Some(Authorization("a5sesqerTyi135/")))
-        .withExtraHeaders(Constants.ClientIdHeader -> "foo")
+        .withExtraHeaders(Constants.XClientIdHeader -> "foo")
 
       val result = connector.getForEori(None).futureValue
 
