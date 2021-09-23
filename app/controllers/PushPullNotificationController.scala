@@ -26,6 +26,7 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ResponseHelper
+import models.response.HateoasResponseBox
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -45,7 +46,7 @@ class PushPullNotificationController @Inject() (cc: ControllerComponents,
           response match {
             case Left(error) if(error.statusCode == NOT_FOUND) => NotFound(Json.toJson(JsonClientErrorResponse(NOT_FOUND, "No box found for your client id")))
             case Left(_) => InternalServerError(Json.toJson(JsonSystemErrorResponse(INTERNAL_SERVER_ERROR, "Unexpected Error")))
-            case Right(box) => Ok(Json.toJson(box))
+            case Right(box) => Ok(Json.toJson(HateoasResponseBox(box)))
           }
         }
         case None =>  Future.successful(BadRequest(Json.toJson(JsonClientErrorResponse(BAD_REQUEST, "Client Id Required"))))
