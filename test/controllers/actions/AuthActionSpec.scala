@@ -16,17 +16,16 @@
 
 package controllers.actions
 
-import config.AppConfig
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.Results.Ok
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.BodyParsers
+import play.api.mvc.Results.Ok
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core._
@@ -44,7 +43,42 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
     }
   }
 
-  val enrolmentsWithEori: Enrolments = Enrolments(
+  val newEnrolmentWithEori: Enrolments = Enrolments(
+    Set(
+      Enrolment(
+        key = "IR-SA",
+        identifiers = Seq(
+          EnrolmentIdentifier(
+            "UTR",
+            "123"
+          )
+        ),
+        state = "Activated"
+      ),
+      Enrolment(
+        key = "IR-CT",
+        identifiers = Seq(
+          EnrolmentIdentifier(
+            "UTR",
+            "345"
+          )
+        ),
+        state = "Activated"
+      ),
+      Enrolment(
+        key = "HMRC-CTC-ORG",
+        identifiers = Seq(
+          EnrolmentIdentifier(
+            "EORINumber",
+            "789"
+          )
+        ),
+        state = "Activated"
+      )
+    )
+  )
+
+  val legacyEnrolmentWithEori: Enrolments = Enrolments(
     Set(
       Enrolment(
         key = "IR-SA",
@@ -129,47 +163,12 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
     )
   )
 
-  val notActivatedEnrolments: Enrolments = Enrolments(
-    Set(
-      Enrolment(
-        key = "IR-SA",
-        identifiers = Seq(
-          EnrolmentIdentifier(
-            "UTR",
-            "123"
-          )
-        ),
-        state = "Activated"
-      ),
-      Enrolment(
-        key = "IR-CT",
-        identifiers = Seq(
-          EnrolmentIdentifier(
-            "UTR",
-            "345"
-          )
-        ),
-        state = "Activated"
-      ),
-      Enrolment(
-        key = "HMCE-NCTS-ORG",
-        identifiers = Seq(
-          EnrolmentIdentifier(
-            "VATRegNoTURN",
-            "456"
-          )
-        ),
-        state = "NotYetActivated"
-      )
-    )
-  )
-
   "must execute the block" - {
-    "when the user is logged in and has the correct enrolment" in {
+    "when the user is logged in and has the new enrolment" in {
       val authConnector = mock[AuthConnector]
 
       when(authConnector.authorise[Enrolments](any(), any())(any(), any()))
-        .thenReturn(Future.successful(enrolmentsWithEori))
+        .thenReturn(Future.successful(newEnrolmentWithEori))
 
       val application = GuiceApplicationBuilder()
         .configure(
@@ -177,11 +176,31 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
         )
         .build()
 
-      val config: AppConfig = application.injector.instanceOf[AppConfig]
+      val bodyParser = application.injector.instanceOf[BodyParsers.Default]
+
+      val authAction = new AuthAction(authConnector, bodyParser)
+      val controller = new Harness(authAction)
+      val result     = controller.get()(FakeRequest())
+
+      status(result) mustEqual OK
+      contentAsString(result) mustEqual "789"
+    }
+
+    "when the user is logged in and has the legacy enrolment" in {
+      val authConnector = mock[AuthConnector]
+
+      when(authConnector.authorise[Enrolments](any(), any())(any(), any()))
+        .thenReturn(Future.successful(legacyEnrolmentWithEori))
+
+      val application = GuiceApplicationBuilder()
+        .configure(
+          "metrics.jvm" -> false
+        )
+        .build()
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
-      val authAction = new AuthAction(authConnector, config, bodyParser)
+      val authAction = new AuthAction(authConnector, bodyParser)
       val controller = new Harness(authAction)
       val result     = controller.get()(FakeRequest())
 
@@ -203,11 +222,9 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
         )
         .build()
 
-      val config: AppConfig = application.injector.instanceOf[AppConfig]
-
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
-      val authAction = new AuthAction(authConnector, config, bodyParser)
+      val authAction = new AuthAction(authConnector, bodyParser)
       val controller = new Harness(authAction)
       val result     = controller.get()(FakeRequest())
 
@@ -227,11 +244,9 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
         )
         .build()
 
-      val config: AppConfig = application.injector.instanceOf[AppConfig]
-
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
-      val authAction = new AuthAction(authConnector, config, bodyParser)
+      val authAction = new AuthAction(authConnector, bodyParser)
       val controller = new Harness(authAction)
       val result     = controller.get()(FakeRequest())
 
@@ -251,11 +266,9 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
         )
         .build()
 
-      val config: AppConfig = application.injector.instanceOf[AppConfig]
-
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
-      val authAction = new AuthAction(authConnector, config, bodyParser)
+      val authAction = new AuthAction(authConnector, bodyParser)
       val controller = new Harness(authAction)
       val result     = controller.get()(FakeRequest())
 
@@ -277,11 +290,9 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
         )
         .build()
 
-      val config: AppConfig = application.injector.instanceOf[AppConfig]
-
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
-      val authAction = new AuthAction(authConnector, config, bodyParser)
+      val authAction = new AuthAction(authConnector, bodyParser)
       val controller = new Harness(authAction)
       val result     = controller.get()(FakeRequest())
 

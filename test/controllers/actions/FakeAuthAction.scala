@@ -29,7 +29,7 @@ case class FakeAuthAction @Inject() (
   config: AppConfig,
   override val parser: BodyParsers.Default
 )(implicit override val executionContext: ExecutionContext)
-    extends AuthAction(authConnector, config, parser) {
+    extends AuthAction(authConnector, parser) {
 
   override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] =
     block(AuthRequest(request, "id"))
