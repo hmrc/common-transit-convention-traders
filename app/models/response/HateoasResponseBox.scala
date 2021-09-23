@@ -27,7 +27,6 @@ object HateoasResponseBox {
 
     val boxUrl = routes.PushPullNotificationController.getBoxInfo().urlWithContext
 
-    JsObject(
       Json
         .obj(
           "boxId"                      -> box.boxId,
@@ -36,10 +35,5 @@ object HateoasResponseBox {
             "self"     -> Json.obj("href" -> boxUrl),
           )
         )
-        .fields
-        .filter(
-          t => t._2 != JsNull
-        )
-    )
   }
 }
