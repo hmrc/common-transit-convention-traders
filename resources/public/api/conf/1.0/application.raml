@@ -643,3 +643,23 @@ traits:
                       }
               404:
                 description: When message does not exist, has been archived or is not available to the EORI number.
+  /push-pull-notifications/box:
+    get:
+      displayName: Get Box Info
+      description: |
+        Get Box Information for your application if there is a push-pull-notification box
+      is:
+        - headers.acceptHeader
+        - acceptHeaderInvalid
+      (annotations.scope): "common-transit-convention-traders"
+      securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+      responses:
+        200:
+          body:
+            application/json:
+              description: JSON Payload
+              example: |
+                {
+                    "boxId": "5fb4b568-b5ff-4475-bd29-0a3e70abb6d6",
+                    "boxName": "customs/transits##1.0##notificationUrl"
+                }
