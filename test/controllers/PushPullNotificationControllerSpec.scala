@@ -59,7 +59,7 @@ import utils.CallOps._
 import utils.TestMetrics
 
 import scala.concurrent.Future
-import models.response.JsonClientErrorResponse
+import models.response.{HateoasResponseBox, JsonClientErrorResponse}
 
 class PushPullNotificationControllerSpec
   extends AnyFreeSpec
@@ -104,7 +104,7 @@ class PushPullNotificationControllerSpec
       val result = route(app, request).value
 
       status(result) mustBe OK
-      contentAsJson(result) mustEqual Json.toJson(box)
+      contentAsJson(result) mustEqual Json.toJson(HateoasResponseBox(box))
 
     }
 
