@@ -67,4 +67,10 @@ object MetricsKeys {
     val NumberOfSpecialMentions = "number-of-special-mentions"
     val NumberOfSeals           = "number-of-seals"
   }
+
+  object Guarantee {
+    val EnsureGuarantee          = "ensure-guarantee"
+    val EnsureGuaranteeParseXml  = "ensure-guarantee-parse-xml"
+    val EnsureGuaranteeUpdateXml = "ensure-guarantee-update-xml"
+  }
 }
