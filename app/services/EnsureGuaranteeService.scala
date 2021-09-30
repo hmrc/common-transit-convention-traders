@@ -17,6 +17,9 @@
 package services
 
 import com.google.inject.Inject
+import com.kenshoo.play.metrics.Metrics
+import metrics.HasMetrics
+import metrics.MetricsKeys
 import models.AddSpecialMentionInstruction
 import models.ParseError
 import models.ParseError.UnknownTransformationError
@@ -36,10 +39,13 @@ class EnsureGuaranteeService @Inject() (
   xmlReaders: GuaranteeXmlReaders,
   instructionBuilder: InstructionBuilder,
   routeChecker: RouteChecker,
-  guaranteeInstructionBuilder: GuaranteeInstructionBuilder,
-  xmlBuilder: XmlBuilder
+  xmlBuilder: XmlBuilder,
+  val metrics: Metrics
 ) extends ParseHandling
-    with Logging {
+    with Logging
+    with HasMetrics {
+
+  import MetricsKeys.Guarantee._
 
   val specialMentionParents = Seq(
     "GooDesGDS23LNG",
@@ -56,94 +62,104 @@ class EnsureGuaranteeService @Inject() (
   )
 
   def ensureGuarantee(xml: NodeSeq): ParseHandler[NodeSeq] =
-    routeChecker.gbOnlyCheck(xml) match {
-      case Left(error)             => Left(error)
-      case Right(gbOnly) if gbOnly => Right(xml)
-      case Right(_) =>
-        parseInstructionSets(xml) match {
-          case Left(error) => Left(error)
-          case Right(instructionSets) =>
-            updateXml(xml, instructionSets)
+    withMetricsTimer(EnsureGuarantee) {
+      _ =>
+        routeChecker.gbOnlyCheck(xml) match {
+          case Left(error)             => Left(error)
+          case Right(gbOnly) if gbOnly => Right(xml)
+          case Right(_) =>
+            parseInstructionSets(xml) match {
+              case Left(error) => Left(error)
+              case Right(instructionSets) =>
+                updateXml(xml, instructionSets)
+            }
         }
     }
 
   def parseInstructionSets(xml: NodeSeq): ParseHandler[Seq[TransformInstructionSet]] =
-    xmlReaders.parseGuarantees(xml) match {
-      case Left(error) => Left(error)
-      case Right(guarantees) =>
-        xmlReaders.gOOITEGDSNode(xml) match {
+    withMetricsTimer(EnsureGuaranteeParseXml) {
+      _ =>
+        xmlReaders.parseGuarantees(xml) match {
           case Left(error) => Left(error)
-          case Right(gooBlocks) =>
-            ParseError.sequenceErrors(gooBlocks.map {
-              block =>
-                instructionBuilder.buildInstructionSet(block, guarantees)
-            })
+          case Right(guarantees) =>
+            xmlReaders.gOOITEGDSNode(xml) match {
+              case Left(error) => Left(error)
+              case Right(gooBlocks) =>
+                ParseError.sequenceErrors(gooBlocks.map {
+                  block =>
+                    instructionBuilder.buildInstructionSet(block, guarantees)
+                })
+            }
         }
     }
 
   def updateXml(originalXml: NodeSeq, instructionSets: Seq[TransformInstructionSet]): ParseHandler[NodeSeq] =
-    try {
-      val newXml = new RuleTransformer(new RewriteRule {
-        override def transform(node: Node): NodeSeq =
-          node match {
-            case e: Elem if e.label == "GOOITEGDS" =>
-              xmlReaders.gOOITEGDSNodeFromNode(e) match {
-                case Left(_) => throw new Exception("Unable to parse GOOITEGDSNode on update")
-                case Right(currentBlock) =>
-                  val instructionSet = instructionSets
-                    .filter(
-                      set => set.gooNode.itemNumber == currentBlock.itemNumber
-                    )
-                    .head
-                  val modifyInstructions = instructionSet.instructions.filterNot(
-                    ti => ti.isInstanceOf[AddSpecialMentionInstruction]
-                  )
-                  val modifyInstructionPairs = e.child
-                    .filter(
-                      cNode => cNode.label == "SPEMENMT2"
-                    )
-                    .zip(modifyInstructions)
-                  val modifiedChildren = e.child.map {
-                    cNode =>
-                      if (cNode.label == "SPEMENMT2") {
-                        modifyInstructionPairs.find(
-                          pair => pair._1 == cNode
-                        ) match {
-                          case None => throw new Exception("Unable to match instruction with mention on update")
-                          case Some(matchedPair) =>
-                            val instruction = matchedPair._2
-                            xmlBuilder.buildFromInstruction(instruction)
+    withMetricsTimer(EnsureGuaranteeUpdateXml) {
+      timer =>
+        try {
+          val newXml = new RuleTransformer(new RewriteRule {
+            override def transform(node: Node): NodeSeq =
+              node match {
+                case e: Elem if e.label == "GOOITEGDS" =>
+                  xmlReaders.gOOITEGDSNodeFromNode(e) match {
+                    case Left(_) => throw new Exception("Unable to parse GOOITEGDSNode on update")
+                    case Right(currentBlock) =>
+                      val instructionSet = instructionSets
+                        .filter(
+                          set => set.gooNode.itemNumber == currentBlock.itemNumber
+                        )
+                        .head
+                      val modifyInstructions = instructionSet.instructions.filterNot(
+                        ti => ti.isInstanceOf[AddSpecialMentionInstruction]
+                      )
+                      val modifyInstructionPairs = e.child
+                        .filter(
+                          cNode => cNode.label == "SPEMENMT2"
+                        )
+                        .zip(modifyInstructions)
+                      val modifiedChildren = e.child.map {
+                        cNode =>
+                          if (cNode.label == "SPEMENMT2") {
+                            modifyInstructionPairs.find(
+                              pair => pair._1 == cNode
+                            ) match {
+                              case None => throw new Exception("Unable to match instruction with mention on update")
+                              case Some(matchedPair) =>
+                                val instruction = matchedPair._2
+                                xmlBuilder.buildFromInstruction(instruction)
+                            }
+                          } else cNode
+                      }
+                      val last = modifiedChildren
+                        .filter(
+                          cNode => specialMentionParents.contains(cNode.label)
+                        )
+                        .last
+                      val addSpecialMentionInstructions = instructionSet.instructions.filter(
+                        ti => ti.isInstanceOf[AddSpecialMentionInstruction]
+                      )
+                      val toAppendXml = if (currentBlock.itemNumber == 1) {
+                        addSpecialMentionInstructions.map {
+                          sm =>
+                            xmlBuilder.buildFromInstruction(sm)
                         }
-                      } else cNode
-                  }
-                  val last = modifiedChildren
-                    .filter(
-                      cNode => specialMentionParents.contains(cNode.label)
-                    )
-                    .last
-                  val addSpecialMentionInstructions = instructionSet.instructions.filter(
-                    ti => ti.isInstanceOf[AddSpecialMentionInstruction]
-                  )
-                  val toAppendXml = if (currentBlock.itemNumber == 1) {
-                    addSpecialMentionInstructions.map {
-                      sm =>
-                        xmlBuilder.buildFromInstruction(sm)
-                    }
-                  } else Nil
+                      } else Nil
 
-                  val division = modifiedChildren.splitAt(modifiedChildren.indexOf(last) + 1)
-                  val finalXml = division._1 ++ toAppendXml ++ division._2
-                  e.copy(child = finalXml)
+                      val division = modifiedChildren.splitAt(modifiedChildren.indexOf(last) + 1)
+                      val finalXml = division._1 ++ toAppendXml ++ division._2
+                      e.copy(child = finalXml)
+                  }
+                case _ => node
               }
-            case _ => node
-          }
-      }).transform(originalXml)
-      Right(newXml)
-    } catch {
-      case NonFatal(e) =>
-        logger.error(e.getMessage)
-        logger.debug(s"${e.getMessage} - provided xml $originalXml")
-        Left(UnknownTransformationError("Transformation impossible with provided xml"))
+          }).transform(originalXml)
+          Right(newXml)
+        } catch {
+          case NonFatal(e) =>
+            timer.completeWithFailure()
+            logger.error(e.getMessage)
+            logger.debug(s"${e.getMessage} - provided xml $originalXml")
+            Left(UnknownTransformationError("Transformation impossible with provided xml"))
+        }
     }
 
 }

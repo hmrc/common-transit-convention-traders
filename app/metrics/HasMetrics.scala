@@ -85,30 +85,23 @@ trait HasMetrics {
   def withMetricsTimerResponse(metricKey: String)(block: => Future[HttpResponse])(implicit ec: ExecutionContext): Future[HttpResponse] =
     withMetricsTimer(metricKey) {
       timer =>
-        try {
-          val response = block
+        val response = block
 
-          // Clean up timer according to server response
-          response.foreach {
-            response =>
-              if (isFailureStatus(response.status))
-                timer.completeWithFailure()
-              else
-                timer.completeWithSuccess()
-          }
-
-          // Clean up timer for unhandled exceptions
-          response.failed.foreach(
-            _ => timer.completeWithFailure()
-          )
-
-          response
-
-        } catch {
-          case NonFatal(e) =>
-            timer.completeWithFailure()
-            throw e
+        // Clean up timer according to server response
+        response.foreach {
+          response =>
+            if (isFailureStatus(response.status))
+              timer.completeWithFailure()
+            else
+              timer.completeWithSuccess()
         }
+
+        // Clean up timer for unhandled exceptions
+        response.failed.foreach(
+          _ => timer.completeWithFailure()
+        )
+
+        response
     }
 
   /** Execute a block of code with a metrics timer.
@@ -122,30 +115,23 @@ trait HasMetrics {
   def withMetricsTimerResult(metricKey: String)(block: => Future[Result])(implicit ec: ExecutionContext): Future[Result] =
     withMetricsTimer(metricKey) {
       timer =>
-        try {
-          val result = block
+        val result = block
 
-          // Clean up timer according to server response
-          result.foreach {
-            result =>
-              if (isFailureStatus(result.header.status))
-                timer.completeWithFailure()
-              else
-                timer.completeWithSuccess()
-          }
-
-          // Clean up timer for unhandled exceptions
-          result.failed.foreach(
-            _ => timer.completeWithFailure()
-          )
-
-          result
-
-        } catch {
-          case NonFatal(e) =>
-            timer.completeWithFailure()
-            throw e
+        // Clean up timer according to server response
+        result.foreach {
+          result =>
+            if (isFailureStatus(result.header.status))
+              timer.completeWithFailure()
+            else
+              timer.completeWithSuccess()
         }
+
+        // Clean up timer for unhandled exceptions
+        result.failed.foreach(
+          _ => timer.completeWithFailure()
+        )
+
+        result
     }
 
   /** Execute a block of code with a metrics timer.
@@ -169,30 +155,31 @@ trait HasMetrics {
   )(block: MetricsTimer => Future[T])(implicit ec: ExecutionContext): Future[T] =
     withMetricsTimer(metricKey) {
       timer =>
-        try {
-          val result = block(timer)
+        val result = block(timer)
 
-          // Clean up timer if the user doesn't
-          result.foreach(
-            _ => timer.completeWithSuccess()
-          )
+        // Clean up timer if the user doesn't
+        result.foreach(
+          _ => timer.completeWithSuccess()
+        )
 
-          // Clean up timer on unhandled exceptions
-          result.failed.foreach(
-            _ => timer.completeWithFailure()
-          )
+        // Clean up timer on unhandled exceptions
+        result.failed.foreach(
+          _ => timer.completeWithFailure()
+        )
 
-          result
-
-        } catch {
-          case NonFatal(e) =>
-            timer.completeWithFailure()
-            throw e
-        }
+        result
     }
 
-  private def withMetricsTimer[T](metricKey: String)(block: MetricsTimer => T): T =
-    block(new MetricsTimer(metricKey))
+  def withMetricsTimer[T](metricKey: String)(block: MetricsTimer => T): T = {
+    val timer = new MetricsTimer(metricKey)
+
+    try block(timer)
+    catch {
+      case NonFatal(e) =>
+        timer.completeWithFailure()
+        throw e
+    }
+  }
 
   private def isFailureStatus(status: Int) =
     status / 100 >= 4
