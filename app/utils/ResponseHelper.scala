@@ -25,11 +25,12 @@ import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import models.response.JsonClientErrorResponse
 import play.api.libs.json.Json
+import play.api.Logging
 
-trait ResponseHelper extends Results with Status with HttpErrorFunctions {
+trait ResponseHelper extends Results with Status with HttpErrorFunctions with Logging {
 
   def handleNon2xx(response: HttpResponse): Result = {
-    Logger.debug(s"ResponseHelper Log\nstatus: ${response.status}\nbody: ${response.body}\nheaders: ${response.headers.map {
+    logger.debug(s"ResponseHelper Log\nstatus: ${response.status}\nbody: ${response.body}\nheaders: ${response.headers.map {
       x =>
         s"\n  ${x._1} : ${x._2}"
     }}")
@@ -41,7 +42,7 @@ trait ResponseHelper extends Results with Status with HttpErrorFunctions {
   }
 
   def handleNon2xx(response: UpstreamErrorResponse): Result = {
-    Logger.debug(s"ResponseHelper Log\nstatus: ${response.statusCode}\nheaders: ${response.headers.map {
+    logger.debug(s"ResponseHelper Log\nstatus: ${response.statusCode}\nheaders: ${response.headers.map {
       x =>
         s"\n  ${x._1} : ${x._2}"
     }}")

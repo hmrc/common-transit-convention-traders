@@ -21,11 +21,12 @@ import play.api.http.Status
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.http.HttpReads
 import uk.gov.hmrc.http.HttpResponse
+import play.api.Logging
 
-object CustomHttpReader extends HttpReads[HttpResponse] with HttpErrorFunctions with Status {
+object CustomHttpReader extends HttpReads[HttpResponse] with HttpErrorFunctions with Status with Logging {
 
   override def read(method: String, url: String, response: HttpResponse): HttpResponse = {
-    Logger.debug(s"CustomHttpReader Log\nstatus: ${response.status}\nbody: ${response.body}\nheaders: ${response.headers.map {
+    logger.debug(s"CustomHttpReader Log\nstatus: ${response.status}\nbody: ${response.body}\nheaders: ${response.headers.map {
       x =>
         s"\n  ${x._1} : ${x._2}"
     }}")
