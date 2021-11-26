@@ -18,7 +18,6 @@ package controllers
 
 import config.Constants
 import connectors.PushPullNotificationConnector
-import controllers.actions.AuthAction
 import javax.inject.Inject
 import models.response.{JsonClientErrorResponse, JsonSystemErrorResponse}
 import play.api.libs.json.Json
@@ -31,14 +30,13 @@ import models.response.HateoasResponseBox
 import scala.concurrent.{ExecutionContext, Future}
 
 class PushPullNotificationController @Inject() (cc: ControllerComponents,
-                                                authAction: AuthAction,
                                                 pushPullNotificationConnector: PushPullNotificationConnector)
                                                (implicit ec: ExecutionContext)
   extends BackendController(cc)
     with HttpErrorFunctions
     with ResponseHelper {
 
-  def getBoxInfo(): Action[AnyContent] = authAction.async {
+  def getBoxInfo(): Action[AnyContent] = Action.async {
     implicit request => {
       request.headers.get(Constants.XClientIdHeader) match {
         case Some(clientId) => pushPullNotificationConnector.getBox(clientId).map {
