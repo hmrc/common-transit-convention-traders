@@ -1,8 +1,6 @@
 import play.sbt.routes.RoutesKeys
 import scoverage.ScoverageKeys
 import uk.gov.hmrc.DefaultBuildSettings
-import sbt.Tests.Group
-import sbt.Tests.SubProcess
 
 val appName = "common-transit-convention-traders"
 
@@ -23,7 +21,7 @@ lazy val microservice = Project(appName, file("."))
     resolvers += Resolver.jcenterRepo,
     PlayKeys.playDefaultPort := 9487,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
-    unmanagedResourceDirectories in Compile += baseDirectory.value / "resources",
+    Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
     // Import models by default in route files
     RoutesKeys.routesImport ++= Seq(
       "models._",

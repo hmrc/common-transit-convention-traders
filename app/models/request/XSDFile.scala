@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ object XSDFile {
       .toMap
 
     val SupportedMessages: Map[String, XSDFile] = DefinitionsMap.filter {
-      case (key: String, value: XSDFile) =>
+      case (_: String, value: XSDFile) =>
         value.isInstanceOf[ArrivalMessage]
     }
   }
@@ -51,7 +51,7 @@ object XSDFile {
       .toMap
 
     val SupportedMessages: Map[String, XSDFile] = DefinitionsMap.filter {
-      case (key: String, value: XSDFile) =>
+      case (_: String, value: XSDFile) =>
         value.isInstanceOf[DepartureMessage]
     }
   }

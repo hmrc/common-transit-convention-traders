@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,9 @@
 
 package connectors.util
 
-import play.api.Logger
-import play.api.http.Status
-import uk.gov.hmrc.http.HttpErrorFunctions
-import uk.gov.hmrc.http.HttpReads
-import uk.gov.hmrc.http.HttpResponse
 import play.api.Logging
+import play.api.http.Status
+import uk.gov.hmrc.http.{HttpErrorFunctions, HttpReads, HttpResponse}
 
 object CustomHttpReader extends HttpReads[HttpResponse] with HttpErrorFunctions with Status with Logging {
 

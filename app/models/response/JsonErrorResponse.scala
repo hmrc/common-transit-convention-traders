@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ object JsonClientErrorResponse {
   val errorCode = "CLIENT_ERROR"
 
   implicit val jsonClientErrorWrites: OWrites[JsonClientErrorResponse] = OWrites.transform(Json.writes[JsonClientErrorResponse]) {
-    case (clientError, jsObject) => jsObject + ("code" -> JsString(errorCode))
+    case (_, jsObject) => jsObject + ("code" -> JsString(errorCode))
   }
   implicit val jsonClientErrorResponse: OFormat[JsonClientErrorResponse] = OFormat(Json.reads[JsonClientErrorResponse], jsonClientErrorWrites)
 }

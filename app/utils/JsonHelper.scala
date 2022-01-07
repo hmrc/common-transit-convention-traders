@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,13 @@
 
 package utils
 
-import javax.inject.Inject
 import org.json.XML
-import play.api.Logger
-import play.api.libs.json.JsObject
-import play.api.libs.json.Json
-
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
-import scala.xml.NodeSeq
 import play.api.Logging
+import play.api.libs.json.{JsObject, Json}
+
+import javax.inject.Inject
+import scala.util.{Failure, Success, Try}
+import scala.xml.NodeSeq
 
 class JsonHelper @Inject() (messageTranslation: MessageTranslation) extends Logging {
 

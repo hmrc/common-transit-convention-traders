@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,12 @@
 
 package utils
 
-import play.api.Logger
-import play.api.http.Status
-import play.api.mvc.Result
-import play.api.mvc.Results
-import uk.gov.hmrc.http.HttpErrorFunctions
-import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import models.response.JsonClientErrorResponse
-import play.api.libs.json.Json
 import play.api.Logging
+import play.api.http.Status
+import play.api.libs.json.Json
+import play.api.mvc.{Result, Results}
+import uk.gov.hmrc.http.{HttpErrorFunctions, HttpResponse, UpstreamErrorResponse}
 
 trait ResponseHelper extends Results with Status with HttpErrorFunctions with Logging {
 

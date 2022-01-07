@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,11 +82,13 @@ class InstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAn
     val smSeq = Seq(SpecialMentionGuarantee("1alpha"), SpecialMentionGuarantee("2beta", Nil), SpecialMentionGuarantee("3charlie"))
 
     "returns (Some(SpecialMentionGuarantee), Guarantee) when a special mention ends with the guarantee gReference value" in {
-      sut.pair(Guarantee('1', "alpha"), smSeq) mustBe a[Tuple2[Some[SpecialMention], Guarantee]]
+      sut.pair(Guarantee('1', "alpha"), smSeq)._1.get mustBe a[SpecialMention]
+      sut.pair(Guarantee('1', "alpha"), smSeq)._2 mustBe a[Guarantee]
     }
 
     "returns None when no special mention ends with the guarantee gReference value" in {
-      sut.pair(Guarantee('1', "delta"), smSeq) mustBe a[Tuple2[None.type, Guarantee]]
+      sut.pair(Guarantee('1', "delta"), smSeq)._1 mustBe None
+      sut.pair(Guarantee('1', "delta"), smSeq)._2 mustBe a[Guarantee]
     }
   }
 
