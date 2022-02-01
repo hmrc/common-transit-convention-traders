@@ -95,7 +95,7 @@
           <xs:documentation />
         </xs:annotation>
       </xs:element>
-      <xs:element name="MesTypMES20" type="Alphanumeric_Max6" minOccurs="1" maxOccurs="1">
+      <xs:element name="MesTypMES20" type="Alphanumeric_6" minOccurs="1" maxOccurs="1">
         <xs:annotation>
           <xs:documentation />
         </xs:annotation>

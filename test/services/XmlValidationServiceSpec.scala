@@ -16,7 +16,7 @@
 
 package services
 
-import models.request.ArrivalNotificationXSD
+import models.request.{ArrivalNotificationXSD, DepartureDeclarationXSD}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -31,7 +31,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
     "must be successful when validating a valid ArrivalNotification xml" - {
 
       "with minimal completed fields" in {
-        val xml = buildXml(withEnrouteEvent = false)
+        val xml = buildIE007Xml()
 
         xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe a[Right[_, _]]
       }
@@ -40,9 +40,66 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
 
         forAll(arbitrary[Boolean], arbitrary[Boolean], arbitrary[Boolean], arbitrary[Boolean]) {
           (withIncident, withContainer, withVehicle, withSeals) =>
-            val xml = buildXml(withEnrouteEvent = true, withIncident, withContainer, withVehicle, withSeals)
+            val xml = buildIE007Xml(withEnrouteEvent = true, withIncident, withContainer, withVehicle, withSeals)
             xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe a[Right[_, _]]
         }
+      }
+    }
+
+    "must be successful when validating a valid DepartureDeclaration xml" - {
+
+      "with minimal completed fields" in {
+        val xml = buildIE015Xml()
+
+        xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe a[Right[_, _]]
+      }
+
+    }
+
+    "must fail when validating an invalid DepartureDeclaration xml" - {
+
+      "with missing mandatory elements" in {
+        val xml = "<CC015B></CC015B>"
+
+        val expectedMessage =
+          "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc015b.xsd'. Detailed error below:\ncvc-complex-type.2.4.b: The content of element 'CC015B' is not complete. One of '{SynIdeMES1}' is expected."
+
+        xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+      }
+
+      "with invalid fields" in {
+
+        val xml =
+          """
+            |<CC015B>
+            |    <SynIdeMES1>11111111111111</SynIdeMES1>
+            |</CC015B>
+          """.stripMargin
+
+        val expectedMessage =
+          "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc015b.xsd'. Detailed error below:\ncvc-pattern-valid: Value '11111111111111' is not facet-valid with respect to pattern '[a-zA-Z]{4}' for type 'Alpha_4'."
+
+        xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+      }
+
+      "with too long Message Type" in {
+
+        val xml = buildIE015Xml(withMessageType = "toolong")
+
+        val expectedMessage =
+          "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc015b.xsd'. Detailed error below:\ncvc-pattern-valid: Value 'toolong' is not facet-valid with respect to pattern '.{6}' for type 'Alphanumeric_6'."
+
+        xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+      }
+
+      "with too short Message Type" in {
+
+        val xml = buildIE015Xml(withMessageType = "toos")
+
+        val expectedMessage =
+          "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc015b.xsd'. Detailed error below:\ncvc-pattern-valid: Value 'toos' is not facet-valid with respect to pattern '.{6}' for type 'Alphanumeric_6'."
+
+        xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
       }
     }
 
@@ -71,15 +128,36 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
 
         xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
       }
+
+      "with too long Message Type" in {
+
+        val xml = buildIE007Xml(withMessageType = "toolong")
+
+        val expectedMessage =
+          "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc007a.xsd'. Detailed error below:\ncvc-pattern-valid: Value 'toolong' is not facet-valid with respect to pattern '.{6}' for type 'Alphanumeric_6'."
+
+        xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+      }
+
+      "with too short Message Type" in {
+
+        val xml = buildIE007Xml(withMessageType = "toos")
+
+        val expectedMessage =
+          "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc007a.xsd'. Detailed error below:\ncvc-pattern-valid: Value 'toos' is not facet-valid with respect to pattern '.{6}' for type 'Alphanumeric_6'."
+
+        xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+      }
     }
   }
 
-  private def buildXml(
-    withEnrouteEvent: Boolean,
+  private def buildIE007Xml(
+    withEnrouteEvent: Boolean = false,
     withIncident: Boolean = false,
     withContainerTranshipment: Boolean = false,
     withVehicularTranshipment: Boolean = false,
-    withSeals: Boolean = false
+    withSeals: Boolean = false,
+    withMessageType: String = "GB007A"
   ): String = {
 
     val enrouteEvent = {
@@ -99,7 +177,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
        |    <AppRefMES14>NCTS</AppRefMES14>
        |    <TesIndMES18>0</TesIndMES18>
        |    <MesIdeMES19>1</MesIdeMES19>
-       |    <MesTypMES20>GB007A</MesTypMES20>
+       |    <MesTypMES20>$withMessageType</MesTypMES20>
        |    <HEAHEA>
        |        <DocNumHEA5>19IT02110010007827</DocNumHEA5>
        |        <ArrNotPlaHEA60>DOVER</ArrNotPlaHEA60>
@@ -114,6 +192,107 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
        |    </CUSOFFPREOFFRES>
        |    $enrouteEvent
        |</CC007A>
+        """.stripMargin
+  }
+
+  private def buildIE015Xml( withMessageType: String = "GB015B"
+                           ): String = {
+
+    s"""
+       |  <CC015B>
+       |    <SynIdeMES1>UNOC</SynIdeMES1>
+       |    <SynVerNumMES2>3</SynVerNumMES2>
+       |    <MesRecMES6>NCTS</MesRecMES6>
+       |    <DatOfPreMES9>20201217</DatOfPreMES9>
+       |    <TimOfPreMES10>1340</TimOfPreMES10>
+       |    <IntConRefMES11>17712576475433</IntConRefMES11>
+       |    <AppRefMES14>NCTS</AppRefMES14>
+       |    <MesIdeMES19>1</MesIdeMES19>
+       |    <MesTypMES20>$withMessageType</MesTypMES20>
+       |    <HEAHEA>
+       |      <RefNumHEA4>GUATEST1201217134032</RefNumHEA4>
+       |      <TypOfDecHEA24>T1</TypOfDecHEA24>
+       |      <CouOfDesCodHEA30>IT</CouOfDesCodHEA30>
+       |      <AutLocOfGooCodHEA41>954131533-GB60DEP</AutLocOfGooCodHEA41>
+       |      <CouOfDisCodHEA55>GB</CouOfDisCodHEA55>
+       |      <IdeOfMeaOfTraAtDHEA78>NC15 REG</IdeOfMeaOfTraAtDHEA78>
+       |      <NatOfMeaOfTraAtDHEA80>GB</NatOfMeaOfTraAtDHEA80>
+       |      <ConIndHEA96>0</ConIndHEA96>
+       |      <NCTSAccDocHEA601LNG>EN</NCTSAccDocHEA601LNG>
+       |      <TotNumOfIteHEA305>1</TotNumOfIteHEA305>
+       |      <TotNumOfPacHEA306>10</TotNumOfPacHEA306>
+       |      <TotGroMasHEA307>1000</TotGroMasHEA307>
+       |      <DecDatHEA383>20201217</DecDatHEA383>
+       |      <DecPlaHEA394>Dover</DecPlaHEA394>
+       |    </HEAHEA>
+       |    <TRAPRIPC1>
+       |      <NamPC17>NCTS UK TEST LAB HMCE</NamPC17>
+       |      <StrAndNumPC122>11TH FLOOR, ALEX HOUSE, VICTORIA AV</StrAndNumPC122>
+       |      <PosCodPC123>SS99 1AA</PosCodPC123>
+       |      <CitPC124>SOUTHEND-ON-SEA, ESSEX</CitPC124>
+       |      <CouPC125>GB</CouPC125>
+       |      <TINPC159>GB954131533000</TINPC159>
+       |    </TRAPRIPC1>
+       |    <TRACONCO1>
+       |      <NamCO17>NCTS UK TEST LAB HMCE</NamCO17>
+       |      <StrAndNumCO122>11TH FLOOR, ALEX HOUSE, VICTORIA AV</StrAndNumCO122>
+       |      <PosCodCO123>SS99 1AA</PosCodCO123>
+       |      <CitCO124>SOUTHEND-ON-SEA, ESSEX</CitCO124>
+       |      <CouCO125>GB</CouCO125>
+       |      <TINCO159>GB954131533000</TINCO159>
+       |    </TRACONCO1>
+       |    <TRACONCE1>
+       |      <NamCE17>NCTS UK TEST LAB HMCE</NamCE17>
+       |      <StrAndNumCE122>ITALIAN OFFICE</StrAndNumCE122>
+       |      <PosCodCE123>IT99 1IT</PosCodCE123>
+       |      <CitCE124>MILAN</CitCE124>
+       |      <CouCE125>IT</CouCE125>
+       |      <TINCE159>IT11ITALIANC11</TINCE159>
+       |    </TRACONCE1>
+       |    <CUSOFFDEPEPT>
+       |      <RefNumEPT1>GB000060</RefNumEPT1>
+       |    </CUSOFFDEPEPT>
+       |    <CUSOFFTRARNS>
+       |      <RefNumRNS1>FR001260</RefNumRNS1>
+       |      <ArrTimTRACUS085>202012191340</ArrTimTRACUS085>
+       |    </CUSOFFTRARNS>
+       |    <CUSOFFDESEST>
+       |      <RefNumEST1>IT018100</RefNumEST1>
+       |    </CUSOFFDESEST>
+       |    <CONRESERS>
+       |      <ConResCodERS16>A3</ConResCodERS16>
+       |      <DatLimERS69>20201225</DatLimERS69>
+       |    </CONRESERS>
+       |    <SEAINFSLI>
+       |      <SeaNumSLI2>1</SeaNumSLI2>
+       |      <SEAIDSID>
+       |        <SeaIdeSID1>NCTS001</SeaIdeSID1>
+       |      </SEAIDSID>
+       |    </SEAINFSLI>
+       |    <GUAGUA>
+       |      <GuaTypGUA1>0</GuaTypGUA1>
+       |      <GUAREFREF>
+       |        <GuaRefNumGRNREF1>20GB0000010000H72</GuaRefNumGRNREF1>
+       |        <AccCodREF6>AC01</AccCodREF6>
+       |      </GUAREFREF>
+       |    </GUAGUA>
+       |    <GOOITEGDS>
+       |      <IteNumGDS7>1</IteNumGDS7>
+       |      <GooDesGDS23>Wheat</GooDesGDS23>
+       |      <GooDesGDS23LNG>EN</GooDesGDS23LNG>
+       |      <GroMasGDS46>1000</GroMasGDS46>
+       |      <NetMasGDS48>950</NetMasGDS48>
+       |      <SPEMENMT2>
+       |        <AddInfMT21>20GB0000010000H72</AddInfMT21>
+       |        <AddInfCodMT23>CAL</AddInfCodMT23>
+       |      </SPEMENMT2>
+       |      <PACGS2>
+       |        <MarNumOfPacGS21>AB234</MarNumOfPacGS21>
+       |        <KinOfPacGS23>BX</KinOfPacGS23>
+       |        <NumOfPacGS24>10</NumOfPacGS24>
+       |      </PACGS2>
+       |    </GOOITEGDS>
+       |  </CC015B>
         """.stripMargin
   }
 
