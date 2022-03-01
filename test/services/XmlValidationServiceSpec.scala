@@ -16,12 +16,10 @@
 
 package services
 
-import models.request.ArrivalNotificationXSD
-import models.request.DeclarationCancellationRequestXSD
-import models.request.DepartureDeclarationXSD
-import models.request.UnloadingRemarksXSD
+import cats.data.NonEmptyList
+import models.SchemaValidationError
+import models.request.{ArrivalNotificationXSD, DeclarationCancellationRequestXSD, DepartureDeclarationXSD, UnloadingRemarksXSD}
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -107,40 +105,48 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
           v =>
             val xml = buildIE015Xml(withMessageType = v)
 
-            val expectedMessage =
-              s"The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc015b.xsd'. Detailed error below:\ncvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)015B' for type 'CC015B_MessageType'."
+            val errorList = NonEmptyList.of[SchemaValidationError](
+              SchemaValidationError(11,38,s"cvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)015B' for type 'CC015B_MessageType'."),
+              SchemaValidationError(11,38,s"cvc-type.3.1.3: The value '$v' of element 'MesTypMES20' is not valid.")
+            )
 
-            xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+            xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Left(errorList)
         }
 
         "for CC007A" in forResult("007A").foreach {
           v =>
             val xml = buildIE007Xml(withMessageType = v)
 
-            val expectedMessage =
-              s"The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc007a.xsd'. Detailed error below:\ncvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)007A' for type 'CC007A_MessageType'."
+            val errorList = NonEmptyList.of[SchemaValidationError](
+              SchemaValidationError(12,38,s"cvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)007A' for type 'CC007A_MessageType'."),
+              SchemaValidationError(12,38,s"cvc-type.3.1.3: The value '$v' of element 'MesTypMES20' is not valid.")
+            )
 
-            xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+            xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(errorList)
         }
 
         "for CC044A" in forResult("044A").foreach {
           v =>
             val xml = buildIE044Xml(withMessageType = v)
 
-            val expectedMessage =
-              s"The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc044a.xsd'. Detailed error below:\ncvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)044A' for type 'CC044A_MessageType'."
+            val errorList = NonEmptyList.of[SchemaValidationError](
+              SchemaValidationError(18,40,s"cvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)044A' for type 'CC044A_MessageType'."),
+              SchemaValidationError(18,40,s"cvc-type.3.1.3: The value '$v' of element 'MesTypMES20' is not valid.")
+            )
 
-            xmlValidationService.validate(xml, UnloadingRemarksXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+            xmlValidationService.validate(xml, UnloadingRemarksXSD) mustBe Left(errorList)
         }
 
         "for CC014A" in forResult("014A").foreach {
           v =>
             val xml = buildIE014Xml(withMessageType = v)
 
-            val expectedMessage =
-              s"The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc014a.xsd'. Detailed error below:\ncvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)014A' for type 'CC014A_MessageType'."
+            val errorList = NonEmptyList.of[SchemaValidationError](
+              SchemaValidationError(28,38,s"cvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)014A' for type 'CC014A_MessageType'."),
+              SchemaValidationError(28,38,s"cvc-type.3.1.3: The value '$v' of element 'MesTypMES20' is not valid.")
+            )
 
-            xmlValidationService.validate(xml, DeclarationCancellationRequestXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+            xmlValidationService.validate(xml, DeclarationCancellationRequestXSD) mustBe Left(errorList)
         }
 
       }
@@ -152,40 +158,46 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
           v =>
             val xml = buildIE015Xml(withMessageType = v)
 
-            val expectedMessage =
-              s"The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc015b.xsd'. Detailed error below:\ncvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)015B' for type 'CC015B_MessageType'."
+            val errorList = NonEmptyList.of[SchemaValidationError](
+              SchemaValidationError(11,32 + v.length,s"cvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)015B' for type 'CC015B_MessageType'."),
+              SchemaValidationError(11,32 + v.length,s"cvc-type.3.1.3: The value '$v' of element 'MesTypMES20' is not valid.")
+            )
 
-            xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+            xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Left(errorList)
         }
 
         "for CC007A" in values.foreach {
           v =>
             val xml = buildIE007Xml(withMessageType = v)
 
-            val expectedMessage =
-              s"The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc007a.xsd'. Detailed error below:\ncvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)007A' for type 'CC007A_MessageType'."
+            val errorList = NonEmptyList.of[SchemaValidationError](
+              SchemaValidationError(12,32 + v.length,s"cvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)007A' for type 'CC007A_MessageType'."),
+              SchemaValidationError(12,32 + v.length,s"cvc-type.3.1.3: The value '$v' of element 'MesTypMES20' is not valid.")
+            )
 
-            xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+            xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(errorList)
         }
 
         "for CC044A" in values.foreach {
           v =>
             val xml = buildIE044Xml(withMessageType = v)
+            val errorList = NonEmptyList.of[SchemaValidationError](
+              SchemaValidationError(18,34 + v.length,s"cvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)044A' for type 'CC044A_MessageType'."),
+              SchemaValidationError(18,34 + v.length,s"cvc-type.3.1.3: The value '$v' of element 'MesTypMES20' is not valid.")
+            )
 
-            val expectedMessage =
-              s"The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc044a.xsd'. Detailed error below:\ncvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)044A' for type 'CC044A_MessageType'."
-
-            xmlValidationService.validate(xml, UnloadingRemarksXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+            xmlValidationService.validate(xml, UnloadingRemarksXSD) mustBe Left(errorList)
         }
 
         "for CC014A" in values.foreach {
           v =>
             val xml = buildIE014Xml(withMessageType = v)
+            val errorList = NonEmptyList.of[SchemaValidationError](
+              SchemaValidationError(28,32 + v.length,s"cvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)014A' for type 'CC014A_MessageType'."),
+              SchemaValidationError(28,32 + v.length,s"cvc-type.3.1.3: The value '$v' of element 'MesTypMES20' is not valid.")
+            )
 
-            val expectedMessage =
-              s"The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc014a.xsd'. Detailed error below:\ncvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)014A' for type 'CC014A_MessageType'."
-
-            xmlValidationService.validate(xml, DeclarationCancellationRequestXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+            xmlValidationService.validate(xml, DeclarationCancellationRequestXSD) mustBe Left(errorList)
         }
 
       }
@@ -197,9 +209,9 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
         val xml = "<CC015B></CC015B>"
 
         val expectedMessage =
-          "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc015b.xsd'. Detailed error below:\ncvc-complex-type.2.4.b: The content of element 'CC015B' is not complete. One of '{SynIdeMES1}' is expected."
-
-        xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+        "cvc-complex-type.2.4.b: The content of element 'CC015B' is not complete. One of '{SynIdeMES1}' is expected."
+        val errorList = NonEmptyList.of(SchemaValidationError(1, 18, expectedMessage))
+        xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Left(errorList)
       }
 
       "with invalid fields" in {
@@ -211,10 +223,37 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
             |</CC015B>
           """.stripMargin
 
-        val expectedMessage =
-          "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc015b.xsd'. Detailed error below:\ncvc-pattern-valid: Value '11111111111111' is not facet-valid with respect to pattern '[a-zA-Z]{4}' for type 'Alpha_4'."
+        val errorList = NonEmptyList.of(
+          SchemaValidationError(3,44, "cvc-pattern-valid: Value '11111111111111' is not facet-valid with respect to pattern '[a-zA-Z]{4}' for type 'Alpha_4'."),
+          SchemaValidationError(3,44, "cvc-type.3.1.3: The value '11111111111111' of element 'SynIdeMES1' is not valid."),
+          SchemaValidationError(4,10, "cvc-complex-type.2.4.b: The content of element 'CC015B' is not complete. One of '{SynVerNumMES2}' is expected.")
+        )
 
-        xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+        xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Left(errorList)
+      }
+
+      "with too long Message Type" in {
+
+        val xml = buildIE015Xml(withMessageType = "toolong")
+
+        val errorList = NonEmptyList.of(
+          SchemaValidationError(11,39,"cvc-pattern-valid: Value 'toolong' is not facet-valid with respect to pattern '(CC|GB|XI)015B' for type 'CC015B_MessageType'."),
+          SchemaValidationError(11,39,"cvc-type.3.1.3: The value 'toolong' of element 'MesTypMES20' is not valid.")
+        )
+
+        xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Left(errorList)
+      }
+
+      "with too short Message Type" in {
+
+        val xml = buildIE015Xml(withMessageType = "toos")
+
+        val errorList = NonEmptyList.of(
+          SchemaValidationError(11,36,"cvc-pattern-valid: Value 'toos' is not facet-valid with respect to pattern '(CC|GB|XI)015B' for type 'CC015B_MessageType'."),
+          SchemaValidationError(11,36,"cvc-type.3.1.3: The value 'toos' of element 'MesTypMES20' is not valid.")
+        )
+
+        xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Left(errorList)
       }
     }
 
@@ -223,10 +262,11 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
       "with missing mandatory elements" in {
         val xml = "<CC007A></CC007A>"
 
-        val expectedMessage =
-          "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc007a.xsd'. Detailed error below:\ncvc-complex-type.2.4.b: The content of element 'CC007A' is not complete. One of '{SynIdeMES1}' is expected."
+        val errorList = NonEmptyList.of(
+          SchemaValidationError(1,18,"cvc-complex-type.2.4.b: The content of element 'CC007A' is not complete. One of '{SynIdeMES1}' is expected.")
+        )
 
-        xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+        xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(errorList)
       }
 
       "with invalid fields" in {
@@ -238,10 +278,37 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
             |</CC007A>
           """.stripMargin
 
-        val expectedMessage =
-          "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc007a.xsd'. Detailed error below:\ncvc-pattern-valid: Value '11111111111111' is not facet-valid with respect to pattern '[a-zA-Z]{4}' for type 'Alpha_4'."
+        val errorList = NonEmptyList.of(
+          SchemaValidationError(3,44,"cvc-pattern-valid: Value '11111111111111' is not facet-valid with respect to pattern '[a-zA-Z]{4}' for type 'Alpha_4'."),
+          SchemaValidationError(3,44,"cvc-type.3.1.3: The value '11111111111111' of element 'SynIdeMES1' is not valid."),
+          SchemaValidationError(4,10,"cvc-complex-type.2.4.b: The content of element 'CC007A' is not complete. One of '{SynVerNumMES2}' is expected.")
+        )
 
-        xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+        xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(errorList)
+      }
+
+      "with too long Message Type" in {
+
+        val xml = buildIE007Xml(withMessageType = "toolong")
+
+        val errorList = NonEmptyList.of(
+          SchemaValidationError(12,39,"cvc-pattern-valid: Value 'toolong' is not facet-valid with respect to pattern '(CC|GB|XI)007A' for type 'CC007A_MessageType'."),
+          SchemaValidationError(12,39,"cvc-type.3.1.3: The value 'toolong' of element 'MesTypMES20' is not valid.")
+        )
+
+        xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(errorList)
+      }
+
+      "with too short Message Type" in {
+
+        val xml = buildIE007Xml(withMessageType = "toos")
+
+        val errorList = NonEmptyList.of(
+          SchemaValidationError(12,36,"cvc-pattern-valid: Value 'toos' is not facet-valid with respect to pattern '(CC|GB|XI)007A' for type 'CC007A_MessageType'."),
+          SchemaValidationError(12,36,"cvc-type.3.1.3: The value 'toos' of element 'MesTypMES20' is not valid.")
+        )
+
+        xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(errorList)
       }
     }
   }

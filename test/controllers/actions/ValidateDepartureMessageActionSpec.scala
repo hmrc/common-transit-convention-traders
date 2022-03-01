@@ -99,8 +99,8 @@ class ValidateDepartureMessageActionSpec
 
       val result = controller.post()(req)
 
-      val expectedMessage =
-        "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc014a.xsd'. Detailed error below:\ncvc-complex-type.2.4.b: The content of element 'CC014A' is not complete. One of '{HEAHEA}' is expected."
+
+      val expectedMessage = "[{\"lineNumber\":34,\"columnNumber\":12,\"message\":\"cvc-complex-type.2.4.b: The content of element 'CC014A' is not complete. One of '{HEAHEA}' is expected.\"}]"
 
       status(result) mustEqual BAD_REQUEST
       contentAsString(result) mustEqual expectedMessage

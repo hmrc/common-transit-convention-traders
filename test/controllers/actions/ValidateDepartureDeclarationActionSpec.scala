@@ -100,8 +100,7 @@ class ValidateDepartureDeclarationActionSpec
 
       val result = controller.post()(req)
 
-      val expectedMessage =
-        "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc015b.xsd'. Detailed error below:\ncvc-pattern-valid: Value 'thisIsTooLong' is not facet-valid with respect to pattern '.{4}' for type 'Alphanumeric_4_-25'."
+      val expectedMessage = "[{\"lineNumber\":86,\"columnNumber\":47,\"message\":\"cvc-pattern-valid: Value 'thisIsTooLong' is not facet-valid with respect to pattern '.{4}' for type 'Alphanumeric_4_-25'.\"},{\"lineNumber\":86,\"columnNumber\":47,\"message\":\"cvc-type.3.1.3: The value 'thisIsTooLong' of element 'AccCodREF6' is not valid.\"}]"
 
       status(result) mustEqual BAD_REQUEST
       contentAsString(result) mustEqual expectedMessage

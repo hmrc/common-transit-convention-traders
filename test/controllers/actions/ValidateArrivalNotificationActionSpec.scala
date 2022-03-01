@@ -99,8 +99,7 @@ class ValidateArrivalNotificationActionSpec
 
       val result = controller.post()(req)
 
-      val expectedMessage =
-        "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc007a.xsd'. Detailed error below:\ncvc-complex-type.2.4.a: Invalid content was found starting with element 'CUSOFFPREOFFRES'. One of '{TRADESTRD}' is expected."
+      val expectedMessage = "[{\"lineNumber\":21,\"columnNumber\":22,\"message\":\"cvc-complex-type.2.4.a: Invalid content was found starting with element 'CUSOFFPREOFFRES'. One of '{TRADESTRD}' is expected.\"}]"
 
       status(result) mustEqual BAD_REQUEST
       contentAsString(result) mustEqual expectedMessage

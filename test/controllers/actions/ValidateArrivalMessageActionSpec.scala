@@ -99,8 +99,7 @@ class ValidateArrivalMessageActionSpec
 
       val result = controller.post()(req)
 
-      val expectedMessage =
-        "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc044a.xsd'. Detailed error below:\ncvc-complex-type.2.4.a: Invalid content was found starting with element 'RESOFCON534'. One of '{UNLREMREM}' is expected."
+      val expectedMessage = "[{\"lineNumber\":67,\"columnNumber\":20,\"message\":\"cvc-complex-type.2.4.a: Invalid content was found starting with element 'RESOFCON534'. One of '{UNLREMREM}' is expected.\"}]"
 
       status(result) mustEqual BAD_REQUEST
       contentAsString(result) mustEqual expectedMessage

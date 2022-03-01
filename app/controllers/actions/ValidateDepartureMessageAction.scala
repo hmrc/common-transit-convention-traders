@@ -16,8 +16,11 @@
 
 package controllers.actions
 
+import cats.data.NonEmptyList
 import javax.inject.Inject
+import models.SchemaValidationError
 import models.request.XSDFile
+import play.api.libs.json.Json
 import play.api.mvc.Results.BadRequest
 import play.api.mvc.Results.NotImplemented
 import play.api.mvc.ActionRefiner
@@ -43,8 +46,9 @@ class ValidateDepartureMessageAction @Inject() (xmlValidationService: XmlValidat
               xmlValidationService.validate(body.toString, xsd) match {
                 case Right(_) =>
                   Future.successful(Right(request))
-                case Left(error: XmlError) =>
-                  Future.successful(Left(BadRequest(error.reason)))
+                case Left(errors: NonEmptyList[SchemaValidationError]) =>
+                  val response = Json.toJson(errors.toList)
+                  Future.successful(Left(BadRequest(response)))
               }
             case None =>
               Future.successful(Left(NotImplemented))

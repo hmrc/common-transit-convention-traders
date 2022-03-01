@@ -16,25 +16,21 @@
 
 package services
 
-import java.io._
 import java.net.URL
 
+import cats.data.NonEmptyList
 import javax.xml.parsers.SAXParserFactory
 import javax.xml.validation.Schema
+import models.SchemaValidationError
 import models.request.XSDFile
-import org.xml.sax.InputSource
-import org.xml.sax.helpers.DefaultHandler
 import play.api.Logger
-import utils.Utils
+import cats.syntax.all._
 
-import scala.xml.factory.XMLLoader
-import scala.xml.Elem
 import scala.xml.SAXParseException
 import scala.xml.SAXParser
 
 class XmlValidationService {
 
-  private val logger     = Logger(getClass)
   private val schemaLang = javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI
 
   private def saxParser(schema: Schema): SAXParser = {
@@ -49,37 +45,29 @@ class XmlValidationService {
     saxParser.newSAXParser()
   }
 
-  def validate(xml: String, xsdFile: XSDFile): Either[XmlError, XmlValid] =
-    try {
+  def validate(xml: String, xsdFile: XSDFile): Either[NonEmptyList[SchemaValidationError], XmlValid] = {
+    val url: URL = getClass.getResource(xsdFile.FilePath)
 
-      val url: URL = getClass.getResource(xsdFile.FilePath)
+    val schema: Schema = javax.xml.validation.SchemaFactory.newInstance(schemaLang).newSchema(url)
 
-      val schema: Schema = javax.xml.validation.SchemaFactory.newInstance(schemaLang).newSchema(url)
+    val parser = saxParser(schema)
 
-      class CustomParseHandler extends DefaultHandler {
+    val loader = new ErrorCapturingXmlLoader(parser)
 
-        override def error(e: SAXParseException): Unit = {
-          logger.warn(e.getMessage)
-          throw new SAXParseException(e.getMessage, e.getPublicId, e.getSystemId, e.getLineNumber, e.getColumnNumber)
-        }
+    val parseElem = Either
+      .catchOnly[SAXParseException] {
+        loader.loadString(xml)
+        XmlSuccessfullyValidated
+      }
+      .leftMap { exc =>
+        NonEmptyList.of(SchemaValidationError.fromSaxParseException(exc))
       }
 
-      val xmlResponse: XMLLoader[Elem] = new scala.xml.factory.XMLLoader[scala.xml.Elem] {
-        override def parser: SAXParser = saxParser(schema)
-
-        override def adapter =
-          new scala.xml.parsing.NoBindingFactoryAdapter with scala.xml.parsing.ConsoleErrorHandler
-      }
-
-      xmlResponse.parser.parse(new InputSource(new StringReader(xml)), new CustomParseHandler)
-
-      Right(XmlSuccessfullyValidated)
-
-    } catch {
-      case e: Throwable =>
-        logger.warn(e.getMessage)
-        Left(FailedToValidateXml(XmlError.FailedSchemaValidationMessage format (Utils.lastFragment(xsdFile.FilePath), e.getMessage)))
-    }
+    NonEmptyList
+      .fromList(loader.errors)
+      .map(Either.left)
+      .getOrElse(parseElem)
+  }
 }
 
 sealed trait XmlValid
@@ -99,5 +87,3 @@ object XmlError {
 
   val RequestBodyInvalidTypeMessage = "The request cannot be processed as it does not contain an XML request body."
 }
-
-case class FailedToValidateXml(reason: String) extends XmlError

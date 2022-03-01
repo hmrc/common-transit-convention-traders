@@ -51,7 +51,6 @@ object JsonSystemErrorResponse {
 object XmlParseJsonErrorResponse {
   implicit val xmlParseJsonErrorResponse: OFormat[XmlParseJsonErrorResponse] = Json.format[XmlParseJsonErrorResponse]
 
-  def fromXmlError(xmlError: XmlError)       = XmlParseJsonErrorResponse(xmlError.reason)
   def fromParseError(parseError: ParseError) = XmlParseJsonErrorResponse(parseError.message)
 }
 
