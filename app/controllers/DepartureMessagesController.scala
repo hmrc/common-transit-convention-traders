@@ -17,12 +17,12 @@
 package controllers
 
 import java.time.OffsetDateTime
-
 import com.kenshoo.play.metrics.Metrics
 import connectors.DepartureMessageConnector
 import controllers.actions.AuthAction
 import controllers.actions.ValidateAcceptJsonHeaderAction
 import controllers.actions.ValidateDepartureMessageAction
+
 import javax.inject.Inject
 import metrics.HasActionMetrics
 import metrics.MetricsKeys
@@ -39,8 +39,7 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.CallOps._
-import utils.ResponseHelper
-import utils.Utils
+import utils.{ResponseHelper, Utils, XmlParsers}
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
@@ -58,7 +57,8 @@ class DepartureMessagesController @Inject() (
     extends BackendController(cc)
     with HasActionMetrics
     with HttpErrorFunctions
-    with ResponseHelper {
+    with ResponseHelper
+    with XmlParsers {
 
   import MetricsKeys.Endpoints._
 
@@ -66,7 +66,7 @@ class DepartureMessagesController @Inject() (
 
   def sendMessageDownstream(departureId: DepartureId): Action[NodeSeq] =
     withMetricsTimerAction(SendDepartureMessage) {
-      (authAction andThen validateMessageAction andThen messageAnalyser()).async(parse.xml) {
+      (authAction andThen validateMessageAction andThen messageAnalyser()).async(removingXmlNamespaceParser) {
         implicit request =>
           messageConnector.post(request.body.toString, departureId).map {
             response =>
