@@ -39,7 +39,9 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.CallOps._
-import utils.{ResponseHelper, Utils, XmlParsers}
+import utils.ResponseHelper
+import utils.Utils
+import utils.XmlParsers
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq

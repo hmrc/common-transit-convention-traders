@@ -19,16 +19,20 @@ package controllers
 import com.kenshoo.play.metrics.Metrics
 import config.Constants
 import connectors.PushPullNotificationConnector
-import controllers.actions.{AuthAction, FakeAuthAction}
+import controllers.actions.AuthAction
+import controllers.actions.FakeAuthAction
 import data.TestXml
 import models.response.HateoasResponseBox
-import models.{Box, BoxId}
+import models.Box
+import models.BoxId
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{reset, when}
+import org.mockito.Mockito.reset
+import org.mockito.Mockito.when
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames
@@ -37,14 +41,15 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.Helpers._
-import play.api.test.{FakeHeaders, FakeRequest}
+import play.api.test.FakeHeaders
+import play.api.test.FakeRequest
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.TestMetrics
 
 import scala.concurrent.Future
 
 class PushPullNotificationControllerSpec
-  extends AnyFreeSpec
+    extends AnyFreeSpec
     with Matchers
     with GuiceOneAppPerSuite
     with OptionValues
@@ -78,10 +83,12 @@ class PushPullNotificationControllerSpec
       when(mockPushPullNotificationConnector.getBox(any())(any(), any()))
         .thenReturn(Future.successful(Right(box)))
 
-      val request = FakeRequest("GET",
+      val request = FakeRequest(
+        "GET",
         routes.PushPullNotificationController.getBoxInfo().url,
         headers = FakeHeaders(Seq(Constants.XClientIdHeader -> "foo", HeaderNames.ACCEPT -> "application/vnd.hrmc.1.0+json")),
-        AnyContentAsEmpty)
+        AnyContentAsEmpty
+      )
 
       val result = route(app, request).value
 
@@ -94,10 +101,12 @@ class PushPullNotificationControllerSpec
       when(mockPushPullNotificationConnector.getBox(any())(any(), any()))
         .thenReturn(Future.successful(Left(UpstreamErrorResponse("", NOT_FOUND))))
 
-      val request = FakeRequest("GET",
+      val request = FakeRequest(
+        "GET",
         routes.PushPullNotificationController.getBoxInfo().url,
         headers = FakeHeaders(Seq(Constants.XClientIdHeader -> "foo", HeaderNames.ACCEPT -> "application/vnd.hrmc.1.0+json")),
-        AnyContentAsEmpty)
+        AnyContentAsEmpty
+      )
 
       val result = route(app, request).value
 
@@ -108,10 +117,12 @@ class PushPullNotificationControllerSpec
       when(mockPushPullNotificationConnector.getBox(any())(any(), any()))
         .thenReturn(Future.successful(Left(UpstreamErrorResponse("", INTERNAL_SERVER_ERROR))))
 
-      val request = FakeRequest("GET",
+      val request = FakeRequest(
+        "GET",
         routes.PushPullNotificationController.getBoxInfo().url,
         headers = FakeHeaders(Seq(Constants.XClientIdHeader -> "foo", HeaderNames.ACCEPT -> "application/vnd.hrmc.1.0+json")),
-        AnyContentAsEmpty)
+        AnyContentAsEmpty
+      )
 
       val result = route(app, request).value
 
@@ -119,10 +130,12 @@ class PushPullNotificationControllerSpec
     }
 
     "returns BadRequest if ClientId not found" in {
-      val request = FakeRequest("GET",
+      val request = FakeRequest(
+        "GET",
         routes.PushPullNotificationController.getBoxInfo().url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hrmc.1.0+json")),
-        AnyContentAsEmpty)
+        AnyContentAsEmpty
+      )
 
       val result = route(app, request).value
 

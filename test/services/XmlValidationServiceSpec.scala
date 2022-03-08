@@ -96,7 +96,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
 
       "with a Message Type that doesn't match the message" - {
         val prefixes: List[String] = List("CC", "GB", "XI")
-        val values: List[String] = List("015B", "007A", "014A", "044A")
+        val values: List[String]   = List("015B", "007A", "014A", "044A")
 
         def forResult(code: String): List[String] = for {
           p <- prefixes

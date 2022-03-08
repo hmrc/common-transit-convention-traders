@@ -19,36 +19,40 @@ package controllers
 import config.Constants
 import connectors.PushPullNotificationConnector
 import javax.inject.Inject
-import models.response.{JsonClientErrorResponse, JsonSystemErrorResponse}
+import models.response.JsonClientErrorResponse
+import models.response.JsonSystemErrorResponse
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ResponseHelper
 import models.response.HateoasResponseBox
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
-class PushPullNotificationController @Inject() (cc: ControllerComponents,
-                                                pushPullNotificationConnector: PushPullNotificationConnector)
-                                               (implicit ec: ExecutionContext)
-  extends BackendController(cc)
+class PushPullNotificationController @Inject() (cc: ControllerComponents, pushPullNotificationConnector: PushPullNotificationConnector)(implicit
+  ec: ExecutionContext
+) extends BackendController(cc)
     with HttpErrorFunctions
     with ResponseHelper {
 
   def getBoxInfo(): Action[AnyContent] = Action.async {
-    implicit request => {
+    implicit request =>
       request.headers.get(Constants.XClientIdHeader) match {
-        case Some(clientId) => pushPullNotificationConnector.getBox(clientId).map {
-          response =>
-          response match {
-            case Left(error) if(error.statusCode == NOT_FOUND) => NotFound(Json.toJson(JsonClientErrorResponse(NOT_FOUND, "No box found for your client id")))
-            case Left(_) => InternalServerError(Json.toJson(JsonSystemErrorResponse(INTERNAL_SERVER_ERROR, "Unexpected Error")))
-            case Right(box) => Ok(Json.toJson(HateoasResponseBox(box)))
+        case Some(clientId) =>
+          pushPullNotificationConnector.getBox(clientId).map {
+            response =>
+              response match {
+                case Left(error) if error.statusCode == NOT_FOUND =>
+                  NotFound(Json.toJson(JsonClientErrorResponse(NOT_FOUND, "No box found for your client id")))
+                case Left(_)    => InternalServerError(Json.toJson(JsonSystemErrorResponse(INTERNAL_SERVER_ERROR, "Unexpected Error")))
+                case Right(box) => Ok(Json.toJson(HateoasResponseBox(box)))
+              }
           }
-        }
-        case None =>  Future.successful(BadRequest(Json.toJson(JsonClientErrorResponse(BAD_REQUEST, "Client Id Required"))))
+        case None => Future.successful(BadRequest(Json.toJson(JsonClientErrorResponse(BAD_REQUEST, "Client Id Required"))))
       }
-    }
   }
 }

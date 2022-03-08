@@ -18,8 +18,10 @@ package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.Constants
-import models.{Box, BoxId}
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import models.Box
+import models.BoxId
+import org.scalatest.concurrent.IntegrationPatience
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.test.Helpers._
