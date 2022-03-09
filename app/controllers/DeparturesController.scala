@@ -72,37 +72,38 @@ class DeparturesController @Inject() (
 
   def submitDeclaration(): Action[NodeSeq] =
     withMetricsTimerAction(SubmitDepartureDeclaration) {
-      (authAction andThen validateDepartureDeclarationAction andThen messageAnalyser() andThen ensureGuaranteeAction).async(removingXmlNamespaceParser) {
-        implicit request =>
-          departuresConnector.post(request.newXml.toString).map {
-            case Right(response) =>
-              response.header(LOCATION) match {
-                case Some(locationValue) =>
-                  if (request.guaranteeAdded) {
-                    auditService.auditEvent(AuditType.TenThousandEuroGuaranteeAdded, request.newXml)
-                  }
-                  MessageType.getMessageType(request.body) match {
-                    case Some(messageType: MessageType) =>
-                      val departureId = DepartureId(Utils.lastFragment(locationValue).toInt)
-                      Accepted(
-                        Json.toJson(
-                          HateoasDeparturePostResponseMessage(
-                            departureId,
-                            messageType.code,
-                            request.body,
-                            response.responseData
+      (authAction andThen validateDepartureDeclarationAction andThen messageAnalyser() andThen ensureGuaranteeAction)
+        .async(parse.xml.map(stripNamespaceFromRoot)) {
+          implicit request =>
+            departuresConnector.post(request.newXml.toString).map {
+              case Right(response) =>
+                response.header(LOCATION) match {
+                  case Some(locationValue) =>
+                    if (request.guaranteeAdded) {
+                      auditService.auditEvent(AuditType.TenThousandEuroGuaranteeAdded, request.newXml)
+                    }
+                    MessageType.getMessageType(request.body) match {
+                      case Some(messageType: MessageType) =>
+                        val departureId = DepartureId(Utils.lastFragment(locationValue).toInt)
+                        Accepted(
+                          Json.toJson(
+                            HateoasDeparturePostResponseMessage(
+                              departureId,
+                              messageType.code,
+                              request.body,
+                              response.responseData
+                            )
                           )
-                        )
-                      ).withHeaders(LOCATION -> routes.DeparturesController.getDeparture(departureId).urlWithContext)
-                    case None =>
-                      InternalServerError
-                  }
-                case _ =>
-                  InternalServerError
-              }
-            case Left(response) => handleNon2xx(response)
-          }
-      }
+                        ).withHeaders(LOCATION -> routes.DeparturesController.getDeparture(departureId).urlWithContext)
+                      case None =>
+                        InternalServerError
+                    }
+                  case _ =>
+                    InternalServerError
+                }
+              case Left(response) => handleNon2xx(response)
+            }
+        }
     }
 
   def getDeparture(departureId: DepartureId): Action[AnyContent] =

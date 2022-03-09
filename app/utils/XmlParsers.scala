@@ -16,29 +16,42 @@
 
 package utils
 
-import play.api.mvc.BaseControllerHelpers
-import play.api.mvc.BodyParser
-
-import scala.concurrent.ExecutionContext
 import scala.xml.Elem
+import scala.xml.MetaData
+import scala.xml.Node
 import scala.xml.NodeSeq
+import scala.xml.PrefixedAttribute
+import scala.xml.TopScope
+import scala.xml.UnprefixedAttribute
 
-trait XmlParsers { self: BaseControllerHelpers =>
+trait XmlParsers {
 
-  def removingXmlNamespaceParser(implicit ec: ExecutionContext): BodyParser[NodeSeq] = parse.xml.map {
-    nodeSeq =>
-      nodeSeq.headOption
-        .flatMap {
-          case x: Elem => Option(x)
-          case _       => None
-        }
-        .filter(
-          node => node.attribute("xmlns:xsi").isDefined || node.attribute("xmlns:xsd").isDefined
-        )
-        .map(
-          node => node.copy(attributes = node.attributes.remove("xmlns:xsi").remove("xmlns:xsd"))
-        )
-        .getOrElse(nodeSeq)
+  def stripNamespaceFromRoot(nodeSeq: NodeSeq): NodeSeq =
+    nodeSeq.headOption
+      .map {
+        case x: Elem if x.scope != TopScope => removeNamespaceFromElem(x)
+        case x                              => x
+      }
+      .getOrElse(nodeSeq)
+
+  // The following is inspired by https://stackoverflow.com/questions/12535014/scala-completely-remove-namespace-from-xml
+  def removeNamespaceFromElem(elem: Elem): Elem =
+    elem.copy(
+      scope = TopScope,
+      prefix = null,
+      attributes = removeNamespacesFromAttributes(elem.attributes),
+      child = elem.child.map(removeNamespaceFromNode)
+    )
+
+  def removeNamespaceFromNode(node: Node): Node = node match {
+    case elem: Elem => removeNamespaceFromElem(elem)
+    case _          => node
+  }
+
+  def removeNamespacesFromAttributes(metadata: MetaData): MetaData = metadata match {
+    case UnprefixedAttribute(k, v, n)  => new UnprefixedAttribute(k, v, removeNamespacesFromAttributes(n))
+    case PrefixedAttribute(_, k, v, n) => new UnprefixedAttribute(k, v, removeNamespacesFromAttributes(n))
+    case _                             => metadata
   }
 
 }

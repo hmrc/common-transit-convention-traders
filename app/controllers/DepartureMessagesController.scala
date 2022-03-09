@@ -68,7 +68,7 @@ class DepartureMessagesController @Inject() (
 
   def sendMessageDownstream(departureId: DepartureId): Action[NodeSeq] =
     withMetricsTimerAction(SendDepartureMessage) {
-      (authAction andThen validateMessageAction andThen messageAnalyser()).async(removingXmlNamespaceParser) {
+      (authAction andThen validateMessageAction andThen messageAnalyser()).async(parse.xml.map(stripNamespaceFromRoot)) {
         implicit request =>
           messageConnector.post(request.body.toString, departureId).map {
             response =>

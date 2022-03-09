@@ -68,7 +68,7 @@ class ArrivalMovementController @Inject() (
 
   def createArrivalNotification(): Action[NodeSeq] =
     withMetricsTimerAction(CreateArrivalNotification) {
-      (authAction andThen validateArrivalNotificationAction andThen messageAnalyser()).async(removingXmlNamespaceParser) {
+      (authAction andThen validateArrivalNotificationAction andThen messageAnalyser()).async(parse.xml.map(stripNamespaceFromRoot)) {
         implicit request =>
           arrivalConnector.post(request.body.toString).map {
             case Right(response) =>
