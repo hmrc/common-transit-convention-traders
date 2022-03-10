@@ -39,9 +39,7 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.CallOps._
-import utils.ResponseHelper
-import utils.Utils
-import utils.XmlParsers
+import utils.{NamespaceStrippingXmlParser, ResponseHelper, Utils, XmlHelper}
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
@@ -60,7 +58,7 @@ class ArrivalMessagesController @Inject() (
     with HasActionMetrics
     with HttpErrorFunctions
     with ResponseHelper
-    with XmlParsers {
+    with NamespaceStrippingXmlParser {
 
   import MetricsKeys.Endpoints._
 
@@ -68,7 +66,7 @@ class ArrivalMessagesController @Inject() (
 
   def sendMessageDownstream(arrivalId: ArrivalId): Action[NodeSeq] =
     withMetricsTimerAction(SendArrivalMessage) {
-      (authAction andThen validateMessageAction andThen messageAnalyser()).async(parse.xml.map(stripNamespaceFromRoot)) {
+      (authAction andThen validateMessageAction andThen messageAnalyser()).async(namespaceStrippingXmlParser) {
         implicit request =>
           messageConnector.post(request.body.toString, arrivalId).map {
             response =>

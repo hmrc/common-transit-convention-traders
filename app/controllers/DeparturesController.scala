@@ -41,9 +41,7 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.CallOps._
-import utils.ResponseHelper
-import utils.Utils
-import utils.XmlParsers
+import utils.{NamespaceStrippingXmlParser, ResponseHelper, Utils, XmlHelper}
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
@@ -64,7 +62,7 @@ class DeparturesController @Inject() (
     with HasActionMetrics
     with HttpErrorFunctions
     with ResponseHelper
-    with XmlParsers {
+    with NamespaceStrippingXmlParser {
 
   import MetricsKeys.Endpoints._
 
@@ -73,7 +71,7 @@ class DeparturesController @Inject() (
   def submitDeclaration(): Action[NodeSeq] =
     withMetricsTimerAction(SubmitDepartureDeclaration) {
       (authAction andThen validateDepartureDeclarationAction andThen messageAnalyser() andThen ensureGuaranteeAction)
-        .async(parse.xml.map(stripNamespaceFromRoot)) {
+        .async(namespaceStrippingXmlParser) {
           implicit request =>
             departuresConnector.post(request.newXml.toString).map {
               case Right(response) =>

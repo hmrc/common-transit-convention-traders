@@ -16,6 +16,9 @@
 
 package utils
 
+import play.api.mvc.{BaseControllerHelpers, BodyParser}
+
+import scala.concurrent.ExecutionContext
 import scala.xml.Elem
 import scala.xml.MetaData
 import scala.xml.Node
@@ -24,7 +27,7 @@ import scala.xml.PrefixedAttribute
 import scala.xml.TopScope
 import scala.xml.UnprefixedAttribute
 
-trait XmlParsers {
+trait XmlHelper {
 
   def stripNamespaceFromRoot(nodeSeq: NodeSeq): NodeSeq =
     nodeSeq.headOption
@@ -54,4 +57,9 @@ trait XmlParsers {
     case _                             => metadata
   }
 
+}
+
+trait NamespaceStrippingXmlParser extends XmlHelper { self: BaseControllerHelpers =>
+
+  def namespaceStrippingXmlParser(implicit ec: ExecutionContext): BodyParser[NodeSeq] = parse.xml.map(stripNamespaceFromRoot)
 }

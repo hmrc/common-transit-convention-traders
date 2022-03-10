@@ -22,9 +22,9 @@ import org.scalatest.matchers.must.Matchers
 import scala.xml.Node
 import scala.xml.Utility.trim
 
-class XmlParsersSpec extends AnyFreeSpec with Matchers {
+class XmlHelperSpec extends AnyFreeSpec with Matchers {
 
-  object TestXmlParsers extends XmlParsers
+  object TestXmlHelper$ extends XmlHelper
 
   "Valid XML" - {
 
@@ -33,7 +33,7 @@ class XmlParsersSpec extends AnyFreeSpec with Matchers {
         <child>test</child>
       </root>
 
-      TestXmlParsers.stripNamespaceFromRoot(input) mustEqual input
+      TestXmlHelper$.stripNamespaceFromRoot(input) mustEqual input
     }
 
     "with a namespace that is altered" in {
@@ -54,7 +54,7 @@ class XmlParsersSpec extends AnyFreeSpec with Matchers {
       </root>
 
       inputs.foreach(
-        in => trim(TestXmlParsers.stripNamespaceFromRoot(in).asInstanceOf[Node]) mustEqual trim(expected)
+        in => trim(TestXmlHelper$.stripNamespaceFromRoot(in).asInstanceOf[Node]) mustEqual trim(expected)
       )
     }
   }

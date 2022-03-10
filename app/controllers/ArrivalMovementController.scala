@@ -39,9 +39,7 @@ import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.CallOps._
-import utils.ResponseHelper
-import utils.Utils
-import utils.XmlParsers
+import utils.{NamespaceStrippingXmlParser, ResponseHelper, Utils, XmlHelper}
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
@@ -60,7 +58,7 @@ class ArrivalMovementController @Inject() (
     with HasActionMetrics
     with HttpErrorFunctions
     with ResponseHelper
-    with XmlParsers {
+    with NamespaceStrippingXmlParser {
 
   import MetricsKeys.Endpoints._
 
@@ -68,7 +66,7 @@ class ArrivalMovementController @Inject() (
 
   def createArrivalNotification(): Action[NodeSeq] =
     withMetricsTimerAction(CreateArrivalNotification) {
-      (authAction andThen validateArrivalNotificationAction andThen messageAnalyser()).async(parse.xml.map(stripNamespaceFromRoot)) {
+      (authAction andThen validateArrivalNotificationAction andThen messageAnalyser()).async(namespaceStrippingXmlParser) {
         implicit request =>
           arrivalConnector.post(request.body.toString).map {
             case Right(response) =>
@@ -100,7 +98,7 @@ class ArrivalMovementController @Inject() (
 
   def resubmitArrivalNotification(arrivalId: ArrivalId): Action[NodeSeq] =
     withMetricsTimerAction(ResubmitArrivalNotification) {
-      (authAction andThen validateArrivalNotificationAction andThen messageAnalyser()).async(parse.xml) {
+      (authAction andThen validateArrivalNotificationAction andThen messageAnalyser()).async(namespaceStrippingXmlParser) {
         implicit request =>
           arrivalConnector.put(request.body.toString, arrivalId).map {
             case Right(response) =>
