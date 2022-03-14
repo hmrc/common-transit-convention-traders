@@ -18,17 +18,28 @@ package controllers
 
 import com.kenshoo.play.metrics.Metrics
 import connectors.ArrivalConnector
-import controllers.actions.{AnalyseMessageActionProvider, AuthAction, ValidateAcceptJsonHeaderAction, ValidateArrivalNotificationAction}
-import metrics.{HasActionMetrics, MetricsKeys}
+import controllers.actions.AnalyseMessageActionProvider
+import controllers.actions.AuthAction
+import controllers.actions.ValidateAcceptJsonHeaderAction
+import controllers.actions.ValidateArrivalNotificationAction
+import metrics.HasActionMetrics
+import metrics.MetricsKeys
 import models.MessageType
-import models.domain.{ArrivalId, Arrivals}
-import models.response.{HateoasArrivalMovementPostResponseMessage, HateoasResponseArrival, HateoasResponseArrivals}
+import models.domain.ArrivalId
+import models.domain.Arrivals
+import models.response.HateoasArrivalMovementPostResponseMessage
+import models.response.HateoasResponseArrival
+import models.response.HateoasResponseArrivals
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.CallOps._
-import utils.{NamespaceStrippingXmlParser, ResponseHelper, Utils}
+import utils.NamespaceStrippingXmlParser
+import utils.ResponseHelper
+import utils.Utils
 
 import java.time.OffsetDateTime
 import javax.inject.Inject

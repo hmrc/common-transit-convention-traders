@@ -16,7 +16,8 @@
 
 package utils
 
-import play.api.mvc.{BaseControllerHelpers, BodyParser}
+import play.api.mvc.BaseControllerHelpers
+import play.api.mvc.BodyParser
 
 import scala.concurrent.ExecutionContext
 import scala.xml.Elem
