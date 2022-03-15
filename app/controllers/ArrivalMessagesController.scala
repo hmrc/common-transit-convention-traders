@@ -25,7 +25,8 @@ import controllers.actions.ValidateArrivalMessageAction
 import metrics.HasActionMetrics
 import metrics.MetricsKeys
 import models.MessageType
-import models.domain.{ArrivalId, MessageId}
+import models.domain.ArrivalId
+import models.domain.MessageId
 import models.response.HateoasArrivalMessagesPostResponseMessage
 import models.response.HateoasArrivalResponseMessage
 import models.response.HateoasResponseArrivalWithMessages

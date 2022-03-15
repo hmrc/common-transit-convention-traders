@@ -46,6 +46,9 @@ class XmlHelperSpec extends AnyFreeSpec with Matchers {
         </root>,
         <root xmlns:xsd="test" xmlns:xsi="test">
           <child>test</child>
+        </root>,
+        <root xmlns:xsd="test" xmlns:xsi="test">
+          <child xmlns:xsd="test2" xmlns:xsi="test2">test</child>
         </root>
       )
 
