@@ -1,0 +1,77 @@
+#%RAML 1.0
+---
+title: CTC Traders
+description: The public API to allow traders to submit and receive Common Transit Convention Phase 5 (IE) messages
+protocols: [ HTTPS ]
+baseUri: https://common-transit-convention-traders.hmrc.gov.uk/
+version: 2.0
+
+documentation:
+ - title: Overview
+   content: !include docs/overview.md
+ - title: Versioning
+   content: !include https://developer.service.hmrc.gov.uk/api-documentation/assets/common/docs/versioning.md
+ - title: Percent-encoding of parameters in request URLs
+   content: !include docs/percent-encoding.md
+ - title: Errors
+   content: !include docs/errors.md
+
+mediaType: [ application/json, application/xml ]
+
+uses:
+  sec: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/securitySchemes.raml
+  headers: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/headers.raml
+  annotations: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/annotations.raml
+  types: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/types.raml
+
+traits:
+  contentXmlHeader:
+    headers:
+      Content-Type:
+        description: Specifies the format of the request body, which must be XML.
+        type: string
+        required: true
+        example: application/xml
+  acceptHeaderInvalid:
+    responses:
+      406:
+        body:
+          application/json:
+            type: types.errorResponse
+            examples:
+              badRequest:
+                description: The accept header is missing or invalid
+                value:
+                  code : ACCEPT_HEADER_INVALID
+
+/customs/transits/movements:
+  /departures:
+    post:
+      displayName: Send a Declaration Data message
+      description: |
+        Send a Declaration Data message, to let the office at destination know that the goods are on their way. This notification will be sent when the goods leave the Office of Departure. It is also called an E_DEC_DAT (IE015).
+
+        The response will contain a URI and departure ID for the Declaration Data. This will allow you to retrieve messages related to the movement.
+
+        If the user is not enrolled for an EORI number, they will receive an HTTP Forbidden Status.
+
+
+      is: [contentXmlHeader]
+      (annotations.scope): "common-transit-convention-traders"
+      securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+      responses:
+        202:
+          body:
+            application/json:
+              description: JSON Payload
+              example: |
+                {
+                  "_links": {
+                    "self": {
+                      "href": "/customs/transits/movements/departures/abc123efg"
+                    }
+                  },
+                  "departureId": "abc123efg",
+                  "messageType": "IE015",
+                  "body": "<CC015C>...</CC015C>"
+                }
