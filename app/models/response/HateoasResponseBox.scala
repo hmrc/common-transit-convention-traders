@@ -18,7 +18,8 @@ package models.response
 
 import controllers.routes
 import models.Box
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 import utils.CallOps._
 
 object HateoasResponseBox {
@@ -27,13 +28,13 @@ object HateoasResponseBox {
 
     val boxUrl = routes.PushPullNotificationController.getBoxInfo().urlWithContext
 
-      Json
-        .obj(
-          "boxId"                      -> box.boxId,
-          "boxName"                 -> box.boxName,
-          "_links" -> Json.obj(
-            "self"     -> Json.obj("href" -> boxUrl),
-          )
+    Json
+      .obj(
+        "boxId"   -> box.boxId,
+        "boxName" -> box.boxName,
+        "_links" -> Json.obj(
+          "self" -> Json.obj("href" -> boxUrl)
         )
+      )
   }
 }

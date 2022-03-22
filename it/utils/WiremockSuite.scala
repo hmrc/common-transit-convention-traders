@@ -40,13 +40,13 @@ trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach with Guice
 
   lazy val applicationBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
-    .configure(
-      portConfigKey.map {
-        key =>
-          key -> server.port.toString()
-      }: _*
-    )
-    .overrides(bindings: _*)
+      .configure(
+        portConfigKey.map {
+          key =>
+            key -> server.port.toString()
+        }: _*
+      )
+      .overrides(bindings: _*)
 
   override lazy val fakeApplication: Application =
     applicationBuilder.build()
