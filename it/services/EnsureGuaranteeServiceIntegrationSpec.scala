@@ -57,7 +57,7 @@ class EnsureGuaranteeServiceIntegrationSpec
       "result must pass standard validation" in {
         val result = service.ensureGuarantee(TestData.buildGBEUXml(TestData.standardInputXML))
 
-        validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+        validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
       }
       "result must not be changed if no standard guarantees" in {
         val result = service.ensureGuarantee(TestData.buildGBEUXml(TestData.otherInputXML))
@@ -68,26 +68,26 @@ class EnsureGuaranteeServiceIntegrationSpec
         val result = service.ensureGuarantee(TestData.buildGBEUXml(TestData.extraGuaranteesInputXML))
 
         normalise(result.right.get) mustEqual normalise(TestData.buildGBEUXml(TestData.extraGuaranteesExpectedXML))
-        validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+        validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
       }
       "must add default special mentions to first good if special mention isn't present for a guarantee" in {
         val result = service.ensureGuarantee(TestData.buildGBEUXml(TestData.extraGuaranteesComboInputXML))
 
         normalise(result.right.get) mustEqual normalise(TestData.buildGBEUXml(TestData.extraGuaranteesComboExpectedXML))
-        validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+        validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
       }
       "must allow non-guarantee special mentions through without issue" in {
         val result = service.ensureGuarantee(TestData.buildGBEUXml(TestData.oddSpecialMentionsInputXml))
 
         result.right.get.toString().filter(_ > ' ') mustEqual TestData.buildGBEUXml(TestData.oddSpecialMentionsOutputXml).toString().filter(_ > ' ')
-        validator.validate(result.right.get.toString().filter(_ > ' '), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+        validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
 
       }
       "must allow CAL special mentions with additional values through without removing fields" in {
         val result = service.ensureGuarantee(TestData.buildGBEUXml(TestData.mixedSpecialMentionsInputXml))
 
         normalise(result.right.get) mustEqual normalise(TestData.buildGBEUXml(TestData.mixedSpecialMentionsOutputXml))
-        validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+        validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
       }
     }
   }
@@ -110,7 +110,7 @@ class EnsureGuaranteeServiceIntegrationSpec
       val expectedXml = TestData.buildGBEUXml(TestData.basicGuarantee ++ TestData.goodsWithCustomSpecialMention(customSpecialMention ++ addedSpecialMention))
       val result      = service.ensureGuarantee(xml)
       normalise(result.right.get) mustEqual normalise(expectedXml)
-      validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+      validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
     }
 
     "GB -> EU, type 1, non-CAL Special Mentions - SM Passes through to core unedited, new one added" in {
@@ -123,7 +123,7 @@ class EnsureGuaranteeServiceIntegrationSpec
       val xml       = TestData.buildGBEUXml(insertXml)
       val result    = service.ensureGuarantee(xml)
       normalise(result.right.get) mustEqual normalise(xml)
-      validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+      validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
     }
 
     "GB -> EU, with Reference Type, Has Reference Number, CAL Special Mentions, Currency & Value > 0.01 - should pass through unedited" in {
@@ -133,7 +133,7 @@ class EnsureGuaranteeServiceIntegrationSpec
           val xml       = TestData.buildGBEUXml(insertXml)
           val result    = service.ensureGuarantee(xml)
           normalise(result.right.get) mustEqual normalise(xml)
-          validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+          validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
       }
     }
 
@@ -145,7 +145,7 @@ class EnsureGuaranteeServiceIntegrationSpec
           val expectedXml = TestData.buildGBEUXml(TestData.guaranteeWithType(typeNum) ++ TestData.goodsWithCustomSpecialMention(addedSpecialMention))
           val result      = service.ensureGuarantee(xml)
           normalise(result.right.get) mustEqual normalise(expectedXml)
-          validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+          validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
       }
     }
 
@@ -162,7 +162,7 @@ class EnsureGuaranteeServiceIntegrationSpec
           val expectedXml = TestData.buildGBEUXml(TestData.guaranteeWithType(typeNum) ++ TestData.goodsWithCustomSpecialMention(custom ++ addedSpecialMention))
           val result      = service.ensureGuarantee(xml)
           normalise(result.right.get) mustEqual normalise(expectedXml)
-          validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+          validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
       }
     }
 
@@ -173,7 +173,7 @@ class EnsureGuaranteeServiceIntegrationSpec
           val xml       = TestData.buildGBGBXml(insertXml)
           val result    = service.ensureGuarantee(xml)
           normalise(result.right.get) mustEqual normalise(xml)
-          validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+          validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
       }
     }
 
@@ -184,7 +184,7 @@ class EnsureGuaranteeServiceIntegrationSpec
           val xml       = TestData.buildGBGBXml(insertXml)
           val result    = service.ensureGuarantee(xml)
           normalise(result.right.get) mustEqual normalise(xml)
-          validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+          validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
       }
     }
 
@@ -200,7 +200,7 @@ class EnsureGuaranteeServiceIntegrationSpec
           val xml       = TestData.buildGBGBXml(insertXml)
           val result    = service.ensureGuarantee(xml)
           normalise(result.right.get) mustEqual normalise(xml)
-          validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+          validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
       }
     }
 
@@ -229,7 +229,7 @@ class EnsureGuaranteeServiceIntegrationSpec
           )
           val result = service.ensureGuarantee(xml)
           normalise(result.right.get) mustEqual normalise(expectedXml)
-          validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+          validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
       }
     }
 
@@ -243,7 +243,7 @@ class EnsureGuaranteeServiceIntegrationSpec
       val expectedXml = TestData.buildGBXIXml(TestData.basicGuarantee ++ TestData.goodsWithCustomSpecialMention(custom ++ addedSpecialMention))
       val result      = service.ensureGuarantee(xml)
       normalise(result.right.get) mustEqual normalise(expectedXml)
-      validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+      validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
     }
 
     "GB -> XI, type 1, non-CAL Special Mentions - SM Passes through to core unedited" in {
@@ -256,7 +256,7 @@ class EnsureGuaranteeServiceIntegrationSpec
       val xml       = TestData.buildGBXIXml(insertXml)
       val result    = service.ensureGuarantee(xml)
       normalise(result.right.get) mustEqual normalise(xml)
-      validator.validate(normalise(result.right.get), DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+      validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
     }
 
   }

@@ -36,7 +36,7 @@ class ValidateArrivalNotificationAction @Inject() (xmlValidationService: XmlVali
     request.body match {
       case body: NodeSeq =>
         if (body.nonEmpty) {
-          xmlValidationService.validate(body.toString, ArrivalNotificationXSD) match {
+          xmlValidationService.validate(body, ArrivalNotificationXSD) match {
             case Right(_) =>
               Future.successful(Right(request))
             case Left(error: XmlError) =>

@@ -30,15 +30,15 @@ class CC014ASpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks
   "validate" - {
 
     "must be successful when validating a valid CC014A xml" in {
-      xmlValidationService.validate(CC014A.toString(), DeclarationCancellationRequestXSD) mustBe a[Right[_, _]]
+      xmlValidationService.validate(CC014A, DeclarationCancellationRequestXSD) mustBe a[Right[_, _]]
     }
 
     "must fail when validating an invalid CC014A xml" in {
-      xmlValidationService.validate(InvalidCC014A.toString(), DeclarationCancellationRequestXSD) mustBe a[Left[_, _]]
+      xmlValidationService.validate(InvalidCC014A, DeclarationCancellationRequestXSD) mustBe a[Left[_, _]]
     }
 
     "must reject a CC014A containing MesSenMES3" in {
-      xmlValidationService.validate(CC014AwithMesSenMES3.toString(), DeclarationCancellationRequestXSD) mustBe a[Left[_, _]]
+      xmlValidationService.validate(CC014AwithMesSenMES3, DeclarationCancellationRequestXSD) mustBe a[Left[_, _]]
     }
   }
 }
