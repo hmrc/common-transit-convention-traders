@@ -34,6 +34,14 @@ traits:
         type: string
         required: true
         example: application/xml
+  acceptJsonHeader:
+    headers:
+      Accept:
+        description: |
+          Specifies the response format, which must be JSON, and the [version](/api-documentation/docs/reference-guide#versioning) of the API to be used.
+        type: string
+        required: true
+        example: application/vnd.hmrc.1.0+json
   acceptHeaderInvalid:
     responses:
       406:
@@ -96,7 +104,7 @@ traits:
 
         Any Movement Arrivals more than 28 days old will have been archived along with their related messages. Archived movements will return an HTTP 404 Not Found status. You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
       is:
-        - headers.acceptHeader
+        - acceptJsonHeader
         - acceptHeaderInvalid
       queryParameters:
         updatedSince:
@@ -196,7 +204,7 @@ traits:
 
           You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
         is:
-          - headers.acceptHeader
+          - acceptJsonHeader
           - acceptHeaderInvalid
         (annotations.scope): "common-transit-convention-traders"
         securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -263,7 +271,7 @@ traits:
 
             You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
           is:
-            - headers.acceptHeader
+            - acceptJsonHeader
             - acceptHeaderInvalid
           queryParameters:
             receivedSince:
@@ -335,7 +343,7 @@ traits:
 
               You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Arrival.
             is:
-              - headers.acceptHeader
+              - acceptJsonHeader
               - acceptHeaderInvalid
             (annotations.scope): "common-transit-convention-traders"
             securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -413,7 +421,7 @@ traits:
 
         **Note**: The 'movementReferenceNumber' field will only be populated when an MRN is allocated.
       is:
-        - headers.acceptHeader
+        - acceptJsonHeader
         - acceptHeaderInvalid
       queryParameters:
         updatedSince:
@@ -480,7 +488,7 @@ traits:
 
           **Note**: The 'movementReferenceNumber' field will only be populated when an MRN is allocated.
         is:
-          - headers.acceptHeader
+          - acceptJsonHeader
           - acceptHeaderInvalid
         (annotations.scope): "common-transit-convention-traders"
         securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -550,7 +558,7 @@ traits:
 
             **Note**: The 'movementReferenceNumber' field will only be populated when an MRN is allocated.
           is:
-            - headers.acceptHeader
+            - acceptJsonHeader
             - acceptHeaderInvalid
           queryParameters:
             receivedSince:
@@ -616,7 +624,7 @@ traits:
 
               You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
             is:
-              - headers.acceptHeader
+              - acceptJsonHeader
               - acceptHeaderInvalid
             (annotations.scope): "common-transit-convention-traders"
             securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -649,7 +657,7 @@ traits:
       description: |
         Get Box Information for the application if there is a push-pull-notification box
       is:
-        - headers.acceptHeader
+        - acceptJsonHeader
         - acceptHeaderInvalid
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.x-application ]

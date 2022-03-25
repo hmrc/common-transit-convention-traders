@@ -361,6 +361,12 @@
             <xs:pattern value=".{4}" />
         </xs:restriction>
     </xs:simpleType>
+    <xs:simpleType name="Alphanumeric_6">
+        <xs:restriction base="AlphaNumType">
+            <xs:length value="6" />
+            <xs:pattern value=".{6}" />
+        </xs:restriction>
+    </xs:simpleType>
     <xs:simpleType name="Alphanumeric_8">
         <xs:restriction base="AlphaNumType">
             <xs:length value="8" />

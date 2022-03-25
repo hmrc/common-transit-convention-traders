@@ -140,7 +140,7 @@ trait TestXml {
     <!--Optional:-->
     <TesIndMES18>1</TesIndMES18>
     <MesIdeMES19>token</MesIdeMES19>
-    <MesTypMES20>token</MesTypMES20>
+    <MesTypMES20>CC014A</MesTypMES20>
     <!--Optional:-->
     <ComAccRefMES21>token</ComAccRefMES21>
     <!--Optional:-->
@@ -186,7 +186,7 @@ trait TestXml {
     <!--Optional:-->
     <TesIndMES18>1</TesIndMES18>
     <MesIdeMES19>token</MesIdeMES19>
-    <MesTypMES20>token</MesTypMES20>
+    <MesTypMES20>CC014A</MesTypMES20>
     <!--Optional:-->
     <ComAccRefMES21>token</ComAccRefMES21>
     <!--Optional:-->
@@ -222,7 +222,7 @@ trait TestXml {
     <!--Optional:-->
     <TesIndMES18>1</TesIndMES18>
     <MesIdeMES19>token</MesIdeMES19>
-    <MesTypMES20>token</MesTypMES20>
+    <MesTypMES20>CC014A</MesTypMES20>
     <!--Optional:-->
     <ComAccRefMES21>token</ComAccRefMES21>
     <!--Optional:-->
@@ -269,7 +269,7 @@ trait TestXml {
       <!--Optional:-->
       <TesIndMES18>1</TesIndMES18>
       <MesIdeMES19>token</MesIdeMES19>
-      <MesTypMES20>token</MesTypMES20>
+      <MesTypMES20>CC044A</MesTypMES20>
       <!--Optional:-->
       <ComAccRefMES21>token</ComAccRefMES21>
       <!--Optional:-->
@@ -429,7 +429,7 @@ trait TestXml {
       <!--Optional:-->
       <TesIndMES18>1</TesIndMES18>
       <MesIdeMES19>token</MesIdeMES19>
-      <MesTypMES20>token</MesTypMES20>
+      <MesTypMES20>CC044A</MesTypMES20>
       <!--Optional:-->
       <ComAccRefMES21>token</ComAccRefMES21>
       <!--Optional:-->
@@ -659,7 +659,7 @@ trait TestXml {
       <!--Optional:-->
       <TesIndMES18>1</TesIndMES18>
       <MesIdeMES19>token</MesIdeMES19>
-      <MesTypMES20>token</MesTypMES20>
+      <MesTypMES20>CC044A</MesTypMES20>
       <!--Optional:-->
       <ComAccRefMES21>token</ComAccRefMES21>
       <!--Optional:-->
@@ -819,7 +819,7 @@ trait TestXml {
       <!--Optional:-->
       <TesIndMES18>1</TesIndMES18>
       <MesIdeMES19>token</MesIdeMES19>
-      <MesTypMES20>token</MesTypMES20>
+      <MesTypMES20>CC044A</MesTypMES20>
       <!--Optional:-->
       <ComAccRefMES21>token</ComAccRefMES21>
       <!--Optional:-->

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" version="1.00">
+    <!--=========================================-->
+    <!--===== Message Simple Types (additional validation for CTC Traders API -->
+    <!--===== XSD version v1.00  -->
+    <!--=========================================-->
+    <xs:include schemaLocation="simple_types.xsd" />
+    <!-- Additional message types that are specific to our application -->
+    <xs:simpleType name="CC007A_MessageType">
+        <xs:restriction base="AlphaNumType">
+            <xs:length value="6" />
+            <xs:pattern value="(CC|GB|XI)007A" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="CC014A_MessageType">
+        <xs:restriction base="AlphaNumType">
+            <xs:length value="6" />
+            <xs:pattern value="(CC|GB|XI)014A" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="CC015B_MessageType">
+        <xs:restriction base="AlphaNumType">
+            <xs:length value="6" />
+            <xs:pattern value="(CC|GB|XI)015B" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="CC044A_MessageType">
+        <xs:restriction base="AlphaNumType">
+            <xs:length value="6" />
+            <xs:pattern value="(CC|GB|XI)044A" />
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>

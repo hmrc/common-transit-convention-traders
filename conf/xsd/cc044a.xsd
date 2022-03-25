@@ -7,6 +7,7 @@
   <!--===== Includes =====-->
   <xs:include schemaLocation="doc.xsd" />
   <xs:include schemaLocation="simple_types.xsd" />
+  <xs:include schemaLocation="message_types.xsd" />
   <!--===== Root Element =====-->
   <xs:element name="CC044A" type="CC044AType" />
   <!--===== MESSAGE Content =====-->
@@ -95,7 +96,7 @@
           <xs:documentation />
         </xs:annotation>
       </xs:element>
-      <xs:element name="MesTypMES20" type="Alphanumeric_Max6" minOccurs="1" maxOccurs="1">
+      <xs:element name="MesTypMES20" type="CC044A_MessageType" minOccurs="1" maxOccurs="1">
         <xs:annotation>
           <xs:documentation />
         </xs:annotation>
