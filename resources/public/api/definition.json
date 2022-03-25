@@ -39,6 +39,14 @@
             ]
           }
         }]
+      },
+      {
+        "version": "2.0",
+        "status": "ALPHA",
+        "endpointsEnabled": false,
+        "access": {
+          "type": "PUBLIC"
+        }
       }
     ]
   }
