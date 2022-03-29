@@ -32,6 +32,14 @@ traits:
         type: string
         required: true
         example: application/xml
+  acceptJsonHeader:
+    headers:
+      Accept:
+        description: |
+          Specifies the response format, which must be JSON, and the [version](/api-documentation/docs/reference-guide#versioning) of the API to be used.
+        type: string
+        required: true
+        example: application/vnd.hmrc.2.0+json
   acceptHeaderInvalid:
     responses:
       406:
