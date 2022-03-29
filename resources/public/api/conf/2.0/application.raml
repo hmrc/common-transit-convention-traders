@@ -61,7 +61,9 @@ traits:
 
         The response will contain a URI and departure ID for the Declaration Data. This will allow you to retrieve messages related to the movement.
 
-      is: [contentXmlHeader]
+      is: 
+        - contentXmlHeader
+        - acceptJsonHeader
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
