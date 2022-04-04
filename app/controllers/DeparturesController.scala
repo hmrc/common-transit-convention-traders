@@ -17,7 +17,6 @@
 package controllers
 
 import java.time.OffsetDateTime
-
 import audit.AuditService
 import audit.AuditType
 import com.kenshoo.play.metrics.Metrics
@@ -26,6 +25,7 @@ import controllers.actions.AuthAction
 import controllers.actions.EnsureGuaranteeAction
 import controllers.actions.ValidateAcceptJsonHeaderAction
 import controllers.actions.ValidateDepartureDeclarationAction
+
 import javax.inject.Inject
 import metrics.HasActionMetrics
 import metrics.MetricsKeys
@@ -35,16 +35,14 @@ import models.response.HateoasDeparturePostResponseMessage
 import models.response.HateoasResponseDeparture
 import models.response.HateoasResponseDepartures
 import play.api.libs.json.Json
-import play.api.mvc.Action
-import play.api.mvc.AnyContent
-import play.api.mvc.ControllerComponents
+import play.api.mvc.{Action, AnyContent, ControllerComponents, Request}
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.CallOps._
 import utils.ResponseHelper
 import utils.Utils
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.xml.NodeSeq
 import controllers.actions.AnalyseMessageActionProvider
 
@@ -68,7 +66,18 @@ class DeparturesController @Inject() (
 
   lazy val departuresCount = histo(GetDeparturesForEoriCount)
 
-  def submitDeclaration(): Action[NodeSeq] =
+  def submitDeclaration(): Action[NodeSeq] = Action.async(parse.xml) {
+    (request: Request[NodeSeq])  =>
+     request.headers.get("accept") match {
+       case Some("application/vnd.hmrc.2.0+json") => submitDeclarationVersionTwo()(request)
+
+       case Some("application/vnd.hmrc.1.0+json") | None => submitDeclarationVersionOne()(request)
+
+       case headerVal => Future.successful(UnsupportedMediaType(s"Unsupported Accept-header: $headerVal"))
+    }
+  }
+
+  def submitDeclarationVersionOne(): Action[NodeSeq] =
     withMetricsTimerAction(SubmitDepartureDeclaration) {
       (authAction andThen validateDepartureDeclarationAction andThen messageAnalyser() andThen ensureGuaranteeAction).async(parse.xml) {
         implicit request =>
@@ -129,4 +138,10 @@ class DeparturesController @Inject() (
           }
       }
     }
+
+  def submitDeclarationVersionTwo(): Action[NodeSeq] = Action(parse.xml) {
+    request =>
+      logger.info("Version 2 of endpoint has been called")
+      Accepted
+  }
 }
