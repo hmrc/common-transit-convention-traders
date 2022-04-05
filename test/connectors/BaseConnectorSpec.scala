@@ -82,7 +82,7 @@ class BaseConnectorSpec extends AnyFreeSpec with Matchers {
               HeaderNames.ACCEPT        -> ContentTypes.JSON,
               HeaderNames.CONTENT_TYPE  -> ContentTypes.XML,
               Constants.ChannelHeader   -> "api",
-              Constants.XClientIdHeader  -> "foo"
+              Constants.XClientIdHeader -> "foo"
             )
           )
         }
@@ -150,7 +150,7 @@ class BaseConnectorSpec extends AnyFreeSpec with Matchers {
             HeaderNames.AUTHORIZATION -> "",
             HeaderNames.ACCEPT        -> ContentTypes.JSON,
             Constants.ChannelHeader   -> "api",
-            Constants.XClientIdHeader  -> "foo"
+            Constants.XClientIdHeader -> "foo"
           ))
         }
 

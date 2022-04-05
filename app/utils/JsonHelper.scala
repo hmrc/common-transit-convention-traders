@@ -18,10 +18,13 @@ package utils
 
 import org.json.XML
 import play.api.Logging
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 
 import javax.inject.Inject
-import scala.util.{Failure, Success, Try}
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 import scala.xml.NodeSeq
 
 class JsonHelper @Inject() (messageTranslation: MessageTranslation) extends Logging {

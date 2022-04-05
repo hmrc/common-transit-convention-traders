@@ -18,7 +18,9 @@ package connectors.util
 
 import play.api.Logging
 import play.api.http.Status
-import uk.gov.hmrc.http.{HttpErrorFunctions, HttpReads, HttpResponse}
+import uk.gov.hmrc.http.HttpErrorFunctions
+import uk.gov.hmrc.http.HttpReads
+import uk.gov.hmrc.http.HttpResponse
 
 object CustomHttpReader extends HttpReads[HttpResponse] with HttpErrorFunctions with Status with Logging {
 
