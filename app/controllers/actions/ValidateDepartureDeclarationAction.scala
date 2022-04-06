@@ -36,7 +36,7 @@ class ValidateDepartureDeclarationAction @Inject() (xmlValidationService: XmlVal
     request.body match {
       case body: NodeSeq =>
         if (body.nonEmpty) {
-          xmlValidationService.validate(body, DepartureDeclarationXSD) match {
+          xmlValidationService.validate(body.toString, DepartureDeclarationXSD) match {
             case Right(_) =>
               Future.successful(Right(request))
             case Left(error: XmlError) =>

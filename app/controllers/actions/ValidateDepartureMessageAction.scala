@@ -40,7 +40,7 @@ class ValidateDepartureMessageAction @Inject() (xmlValidationService: XmlValidat
           val rootElementName = body.head.label
           XSDFile.Departure.SupportedMessages.get(rootElementName) match {
             case Some(xsd) =>
-              xmlValidationService.validate(body, xsd) match {
+              xmlValidationService.validate(body.toString, xsd) match {
                 case Right(_) =>
                   Future.successful(Right(request))
                 case Left(error: XmlError) =>
