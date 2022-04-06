@@ -35,7 +35,7 @@ import models.response.HateoasDeparturePostResponseMessage
 import models.response.HateoasResponseDeparture
 import models.response.HateoasResponseDepartures
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents, Request}
+import play.api.mvc.{Action, AnyContent, ControllerComponents, Request, Result}
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.CallOps._
@@ -68,13 +68,15 @@ class DeparturesController @Inject() (
 
   def submitDeclaration(): Action[NodeSeq] = Action.async(parse.xml) {
     (request: Request[NodeSeq])  =>
-     request.headers.get("accept") match {
-       case Some("application/vnd.hmrc.2.0+json") => submitDeclarationVersionTwo()(request)
+      request.headers.get("accept") match {
+        case Some("application/vnd.hmrc.2.0+json") => submitDeclarationVersionTwo()(request)
 
-       case Some("application/vnd.hmrc.1.0+json") | None => submitDeclarationVersionOne()(request)
+        case Some("application/vnd.hmrc.1.0+json") => submitDeclarationVersionOne()(request)
 
-       case headerVal => Future.successful(UnsupportedMediaType(s"Unsupported Accept-header: $headerVal"))
-    }
+        case None => submitDeclarationVersionOne()(request)
+
+        case Some(headerVal) => Future.successful(UnsupportedMediaType(s"Unsupported Accept-header: $headerVal"))
+      }
   }
 
   def submitDeclarationVersionOne(): Action[NodeSeq] =
