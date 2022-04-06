@@ -26,9 +26,6 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-import scala.xml.NodeSeq
-import scala.xml.XML
-
 class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks {
 
   private val xmlValidationService = new XmlValidationService
@@ -40,7 +37,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
       "with minimal completed fields" in {
         val xml = buildIE007Xml()
 
-        xmlValidationService.validate(XML.loadString(xml), ArrivalNotificationXSD) mustBe a[Right[_, _]]
+        xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe a[Right[_, _]]
       }
 
       "with an enroute event" in {
@@ -48,7 +45,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
         forAll(arbitrary[Boolean], arbitrary[Boolean], arbitrary[Boolean], arbitrary[Boolean]) {
           (withIncident, withContainer, withVehicle, withSeals) =>
             val xml = buildIE007Xml(withEnrouteEvent = true, withIncident, withContainer, withVehicle, withSeals)
-            xmlValidationService.validate(XML.loadString(xml), ArrivalNotificationXSD) mustBe a[Right[_, _]]
+            xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe a[Right[_, _]]
         }
       }
     }
@@ -58,7 +55,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
       "with minimal completed fields" in {
         val xml = buildIE015Xml()
 
-        xmlValidationService.validate(XML.loadString(xml), DepartureDeclarationXSD) mustBe a[Right[_, _]]
+        xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe a[Right[_, _]]
       }
 
     }
@@ -72,28 +69,28 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
           v =>
             val xml = buildIE015Xml(withMessageType = s"${v}015B")
 
-            xmlValidationService.validate(XML.loadString(xml), DepartureDeclarationXSD) mustBe Right(XmlSuccessfullyValidated)
+            xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Right(XmlSuccessfullyValidated)
         }
 
         "for CC007A" in prefixes.foreach {
           v =>
             val xml = buildIE007Xml(withMessageType = s"${v}007A")
 
-            xmlValidationService.validate(XML.loadString(xml), ArrivalNotificationXSD) mustBe Right(XmlSuccessfullyValidated)
+            xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Right(XmlSuccessfullyValidated)
         }
 
         "for CC044A" in prefixes.foreach {
           v =>
             val xml = buildIE044Xml(withMessageType = s"${v}044A")
 
-            xmlValidationService.validate(XML.loadString(xml), UnloadingRemarksXSD) mustBe Right(XmlSuccessfullyValidated)
+            xmlValidationService.validate(xml, UnloadingRemarksXSD) mustBe Right(XmlSuccessfullyValidated)
         }
 
         "for CC014A" in prefixes.foreach {
           v =>
             val xml = buildIE014Xml(withMessageType = s"${v}014A")
 
-            xmlValidationService.validate(XML.loadString(xml), DeclarationCancellationRequestXSD) mustBe Right(XmlSuccessfullyValidated)
+            xmlValidationService.validate(xml, DeclarationCancellationRequestXSD) mustBe Right(XmlSuccessfullyValidated)
         }
       }
 
@@ -113,7 +110,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
             val expectedMessage =
               s"The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc015b.xsd'. Detailed error below:\ncvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)015B' for type 'CC015B_MessageType'."
 
-            xmlValidationService.validate(XML.loadString(xml), DepartureDeclarationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+            xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
         }
 
         "for CC007A" in forResult("007A").foreach {
@@ -123,7 +120,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
             val expectedMessage =
               s"The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc007a.xsd'. Detailed error below:\ncvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)007A' for type 'CC007A_MessageType'."
 
-            xmlValidationService.validate(XML.loadString(xml), ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+            xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
         }
 
         "for CC044A" in forResult("044A").foreach {
@@ -133,7 +130,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
             val expectedMessage =
               s"The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc044a.xsd'. Detailed error below:\ncvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)044A' for type 'CC044A_MessageType'."
 
-            xmlValidationService.validate(XML.loadString(xml), UnloadingRemarksXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+            xmlValidationService.validate(xml, UnloadingRemarksXSD) mustBe Left(FailedToValidateXml(expectedMessage))
         }
 
         "for CC014A" in forResult("014A").foreach {
@@ -143,7 +140,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
             val expectedMessage =
               s"The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc014a.xsd'. Detailed error below:\ncvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)014A' for type 'CC014A_MessageType'."
 
-            xmlValidationService.validate(XML.loadString(xml), DeclarationCancellationRequestXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+            xmlValidationService.validate(xml, DeclarationCancellationRequestXSD) mustBe Left(FailedToValidateXml(expectedMessage))
         }
 
       }
@@ -158,7 +155,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
             val expectedMessage =
               s"The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc015b.xsd'. Detailed error below:\ncvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)015B' for type 'CC015B_MessageType'."
 
-            xmlValidationService.validate(XML.loadString(xml), DepartureDeclarationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+            xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
         }
 
         "for CC007A" in values.foreach {
@@ -168,7 +165,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
             val expectedMessage =
               s"The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc007a.xsd'. Detailed error below:\ncvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)007A' for type 'CC007A_MessageType'."
 
-            xmlValidationService.validate(XML.loadString(xml), ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+            xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
         }
 
         "for CC044A" in values.foreach {
@@ -178,7 +175,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
             val expectedMessage =
               s"The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc044a.xsd'. Detailed error below:\ncvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)044A' for type 'CC044A_MessageType'."
 
-            xmlValidationService.validate(XML.loadString(xml), UnloadingRemarksXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+            xmlValidationService.validate(xml, UnloadingRemarksXSD) mustBe Left(FailedToValidateXml(expectedMessage))
         }
 
         "for CC014A" in values.foreach {
@@ -188,7 +185,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
             val expectedMessage =
               s"The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc014a.xsd'. Detailed error below:\ncvc-pattern-valid: Value '$v' is not facet-valid with respect to pattern '(CC|GB|XI)014A' for type 'CC014A_MessageType'."
 
-            xmlValidationService.validate(XML.loadString(xml), DeclarationCancellationRequestXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+            xmlValidationService.validate(xml, DeclarationCancellationRequestXSD) mustBe Left(FailedToValidateXml(expectedMessage))
         }
 
       }
@@ -197,7 +194,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
     "must fail when validating an invalid DepartureDeclaration xml" - {
 
       "with missing mandatory elements" in {
-        val xml = <CC015B></CC015B>
+        val xml = "<CC015B></CC015B>"
 
         val expectedMessage =
           "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc015b.xsd'. Detailed error below:\ncvc-complex-type.2.4.b: The content of element 'CC015B' is not complete. One of '{SynIdeMES1}' is expected."
@@ -207,19 +204,17 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
 
       "with invalid fields" in {
 
-        val xml = <CC015B><SynIdeMES1>11111111111111</SynIdeMES1></CC015B>
+        val xml =
+          """
+            |<CC015B>
+            |    <SynIdeMES1>11111111111111</SynIdeMES1>
+            |</CC015B>
+          """.stripMargin
 
         val expectedMessage =
           "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc015b.xsd'. Detailed error below:\ncvc-pattern-valid: Value '11111111111111' is not facet-valid with respect to pattern '[a-zA-Z]{4}' for type 'Alpha_4'."
 
         xmlValidationService.validate(xml, DepartureDeclarationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
-      }
-
-      "with an empty body" in {
-
-        val expectedMessage = "The request cannot be processed as it does not contain a request body."
-
-        xmlValidationService.validate(NodeSeq.Empty, DepartureDeclarationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
       }
     }
 
@@ -231,7 +226,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
         val expectedMessage =
           "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc007a.xsd'. Detailed error below:\ncvc-complex-type.2.4.b: The content of element 'CC007A' is not complete. One of '{SynIdeMES1}' is expected."
 
-        xmlValidationService.validate(XML.loadString(xml), ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
+        xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
       }
 
       "with invalid fields" in {
@@ -246,25 +241,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
         val expectedMessage =
           "The request has failed schema validation. Please review the required message structure as specified by the XSD file 'cc007a.xsd'. Detailed error below:\ncvc-pattern-valid: Value '11111111111111' is not facet-valid with respect to pattern '[a-zA-Z]{4}' for type 'Alpha_4'."
 
-        xmlValidationService.validate(XML.loadString(xml), ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
-      }
-
-      "with an empty body" in {
-
-        val expectedMessage = "The request cannot be processed as it does not contain a request body."
-
-        xmlValidationService.validate(NodeSeq.Empty, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
-      }
-
-      "with an unexpected namespace" in {
-
-        val xml = XML.loadString(buildIE007Xml(with2001Namespace = true))
-
-        val expectedMessage =
-          "The request cannot be processed as it contains a namespace on the root node. Please remove any \"xmlns:\" attributes from all nodes."
-
         xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
-
       }
     }
   }
@@ -275,8 +252,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
     withContainerTranshipment: Boolean = false,
     withVehicularTranshipment: Boolean = false,
     withSeals: Boolean = false,
-    withMessageType: String = "GB007A",
-    with2001Namespace: Boolean = false
+    withMessageType: String = "GB007A"
   ): String = {
 
     val enrouteEvent = {
@@ -285,12 +261,8 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
       else ""
     }
 
-    val namespace =
-      if (with2001Namespace) "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\""
-      else ""
-
     s"""
-       |<CC007A $namespace>
+       |<CC007A>
        |    <SynIdeMES1>UNOC</SynIdeMES1>
        |    <SynVerNumMES2>3</SynVerNumMES2>
        |    <MesRecMES6>NCTS</MesRecMES6>
