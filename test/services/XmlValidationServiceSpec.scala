@@ -21,7 +21,6 @@ import models.request.DeclarationCancellationRequestXSD
 import models.request.DepartureDeclarationXSD
 import models.request.UnloadingRemarksXSD
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -31,6 +30,8 @@ import scala.xml.XML
 
 class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks {
 
+  private val xml2001namespace     = "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\""
+  private val emptyNamespace       = "xmlns=\"\""
   private val xmlValidationService = new XmlValidationService
 
   "validate" - {
@@ -39,6 +40,12 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
 
       "with minimal completed fields" in {
         val xml = buildIE007Xml()
+
+        xmlValidationService.validate(XML.loadString(xml), ArrivalNotificationXSD) mustBe a[Right[_, _]]
+      }
+
+      "with minimal completed fields and an empty namespace" in {
+        val xml = buildIE007Xml(withRootLevelAttirbutes = emptyNamespace)
 
         xmlValidationService.validate(XML.loadString(xml), ArrivalNotificationXSD) mustBe a[Right[_, _]]
       }
@@ -258,10 +265,10 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
 
       "with an unexpected namespace" in {
 
-        val xml = XML.loadString(buildIE007Xml(with2001Namespace = true))
+        val xml = XML.loadString(buildIE007Xml(withRootLevelAttirbutes = xml2001namespace))
 
         val expectedMessage =
-          "The request cannot be processed as it contains a namespace on the root node. Please remove any \"xmlns:\" attributes from all nodes."
+          "The request cannot be processed as it contains a namespace on the root node. Please remove any \"xmlns\" attributes from all nodes."
 
         xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
 
@@ -276,7 +283,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
     withVehicularTranshipment: Boolean = false,
     withSeals: Boolean = false,
     withMessageType: String = "GB007A",
-    with2001Namespace: Boolean = false
+    withRootLevelAttirbutes: String = ""
   ): String = {
 
     val enrouteEvent = {
@@ -285,12 +292,8 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
       else ""
     }
 
-    val namespace =
-      if (with2001Namespace) "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\""
-      else ""
-
     s"""
-       |<CC007A $namespace>
+       |<CC007A $withRootLevelAttirbutes>
        |    <SynIdeMES1>UNOC</SynIdeMES1>
        |    <SynVerNumMES2>3</SynVerNumMES2>
        |    <MesRecMES6>NCTS</MesRecMES6>

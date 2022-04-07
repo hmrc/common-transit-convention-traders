@@ -52,9 +52,12 @@ class XmlValidationService {
 
   def validate(xml: NodeSeq, xsdFile: XSDFile): Either[XmlError, XmlValid] =
     xml.headOption match {
-      case Some(x) if x.scope == TopScope => validate(x.toString, xsdFile)
-      case Some(_)                        => Left(FailedToValidateXml(XmlError.RequestBodyRootContainsNamespaceMessage))
-      case None                           => Left(FailedToValidateXml(XmlError.RequestBodyEmptyMessage))
+      case Some(x) if x.scope == TopScope || x.scope.uri == null => // null scope is xmlns=""
+        validate(x.toString, xsdFile)
+      case Some(x) =>
+        Left(FailedToValidateXml(XmlError.RequestBodyRootContainsNamespaceMessage))
+      case None =>
+        Left(FailedToValidateXml(XmlError.RequestBodyEmptyMessage))
     }
 
   private def validate(xml: String, xsdFile: XSDFile): Either[XmlError, XmlValid] =
@@ -108,7 +111,7 @@ object XmlError {
   val RequestBodyInvalidTypeMessage = "The request cannot be processed as it does not contain an XML request body."
 
   val RequestBodyRootContainsNamespaceMessage =
-    "The request cannot be processed as it contains a namespace on the root node. Please remove any \"xmlns:\" attributes from all nodes."
+    "The request cannot be processed as it contains a namespace on the root node. Please remove any \"xmlns\" attributes from all nodes."
 }
 
 case class FailedToValidateXml(reason: String) extends XmlError
