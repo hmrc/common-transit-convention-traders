@@ -37,7 +37,7 @@ trait VersionSwitch {
         case None => v1Action(request)
 
         case Some(headerVal) => {
-          logger.info("Unknown Accept-Header found: $headerVal")
+          logger.info(s"Unknown Accept-Header found: $headerVal")
           Future.successful(UnsupportedMediaType(s"Unsupported Accept-Header: $headerVal"))
         }
       }
