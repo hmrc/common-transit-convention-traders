@@ -32,14 +32,7 @@ trait VersionSwitch {
       request.headers.get("accept") match {
         case Some("application/vnd.hmrc.2.0+json") => v2Action(request)
 
-        case Some("application/vnd.hmrc.1.0+json") => v1Action(request)
-
-        case None => v1Action(request)
-
-        case Some(headerVal) => {
-          logger.info(s"Unknown Accept-Header found: $headerVal")
-          Future.successful(UnsupportedMediaType(s"Unsupported Accept-Header: $headerVal"))
-        }
+        case _ => v1Action(request)
       }
   }
 }

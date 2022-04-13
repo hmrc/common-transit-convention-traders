@@ -188,7 +188,7 @@ class DeparturesControllerSpec
 
     val emptyHeaders = ResponseHeaders(Map.empty, Option.empty[Box])
 
-    Seq(None, Some("application/vnd.hmrc.1.0+json")).foreach {
+    Seq(None, Some("application/vnd.hmrc.1.0+json"), Some("text/html"), Some("application/vnd.hmrc.1.0+xml"), Some("text/javascript")).foreach {
       acceptHeaderValue =>
         val acceptHeader = acceptHeaderValue.map(header => Seq(HeaderNames.ACCEPT -> header)).getOrElse(Seq.empty)
         val departureHeaders =  FakeHeaders(acceptHeader ++ Seq(HeaderNames.CONTENT_TYPE -> "application/xml"))
@@ -371,22 +371,6 @@ class DeparturesControllerSpec
         val result = route(app, request).value
 
         status(result) mustBe ACCEPTED
-      }
-    }
-
-    "with accept header set to something invalid" - {
-
-      val departureHeaders =  FakeHeaders(Seq(HeaderNames.ACCEPT -> "invalid", HeaderNames.CONTENT_TYPE -> "application/xml"))
-
-      "must return unsupported media type when successful" in {
-
-        when(mockDepartureConnector.post(any())(any(), any()))
-          .thenReturn(Future.successful(Right(responseHeaders("/transits-movements-trader-at-departure/movements/departures/123"))))
-
-        val request = fakeRequestDepartures(method = "POST", body = CC015BRequiringDefaultGuarantee, headers = departureHeaders)
-        val result = route(app, request).value
-
-        status(result) mustBe UNSUPPORTED_MEDIA_TYPE
       }
     }
 

@@ -47,7 +47,7 @@ class VersionSwitchSpec extends AnyFreeSpec
 
   "VersionSwitch" - {
 
-    Seq(None, Some("application/vnd.hmrc.1.0+json")).foreach {
+    Seq(None, Some("application/vnd.hmrc.1.0+json"), Some("text/html"), Some("application/vnd.hmrc.1.0+xml"), Some("text/javascript")).foreach {
       acceptHeaderValue =>
         val acceptHeader = acceptHeaderValue.map(header => Seq(HeaderNames.ACCEPT -> header)).getOrElse(Seq.empty)
         val departureHeaders =  FakeHeaders(acceptHeader ++ Seq(HeaderNames.CONTENT_TYPE -> "application/xml"))
@@ -83,24 +83,6 @@ class VersionSwitchSpec extends AnyFreeSpec
 
       }
     }
-
-    "with accept header set to something invalid" - {
-
-      val departureHeaders =  FakeHeaders(Seq(HeaderNames.ACCEPT -> "invalid", HeaderNames.CONTENT_TYPE -> "application/xml"))
-
-      "must return unsupported media type when successful" in {
-        val cc = app.injector.instanceOf[ControllerComponents]
-        val sut = new Harness(cc)
-
-        val request = FakeRequest("GET","/", departureHeaders, <test>test</test>)
-
-        val result = sut.test()(request)
-        status(result)(defaultAwaitTimeout) mustBe UNSUPPORTED_MEDIA_TYPE
-      }
-    }
-
-
-
 
   }
 
