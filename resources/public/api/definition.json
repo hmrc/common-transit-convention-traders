@@ -42,8 +42,8 @@
       },
       {
         "version": "2.0",
-        "status": "ALPHA",
-        "endpointsEnabled": false,
+        "status": "BETA",
+        "endpointsEnabled": true,
         "access": {
           "type": "PUBLIC"
         }
