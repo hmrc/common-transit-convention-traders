@@ -47,7 +47,7 @@ import scala.xml.NodeSeq
 class DeparturesController @Inject() (
   cc: ControllerComponents,
   authAction: AuthAction,
-  authActionNewEnrolmentOnly: AuthActionNewEnrolmentOnly,
+  authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
   departuresConnector: DeparturesConnector,
   validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction,
   validateDepartureDeclarationAction: ValidateDepartureDeclarationAction,
