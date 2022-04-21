@@ -22,6 +22,9 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.JsString
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.BodyParsers
@@ -207,7 +210,11 @@ class AuthNewEnrolmentOnlyActionSpec extends AnyFreeSpec with Matchers with Mock
       val result     = controller.get()(FakeRequest())
 
       status(result) mustEqual FORBIDDEN
-      contentAsString(result) mustEqual "Current user doesn't have a valid EORI enrolment."
+
+      val json: JsValue = Json.parse(contentAsString(result))
+      (json \ "message").get mustBe JsString("Current user doesn't have a valid EORI enrolment.")
+      (json \ "code").get mustBe JsString("FORBIDDEN")
+
     }
 
     "when the user is logged in and has no valid enrolment identifier" in {
@@ -229,7 +236,10 @@ class AuthNewEnrolmentOnlyActionSpec extends AnyFreeSpec with Matchers with Mock
       val result     = controller.get()(FakeRequest())
 
       status(result) mustEqual FORBIDDEN
-      contentAsString(result) mustEqual "Current user doesn't have a valid EORI enrolment."
+
+      val json: JsValue = Json.parse(contentAsString(result))
+      (json \ "message").get mustBe JsString("Current user doesn't have a valid EORI enrolment.")
+      (json \ "code").get mustBe JsString("FORBIDDEN")
     }
 
     "when the user is logged in and has no valid activated eori enrolments" in {
@@ -251,7 +261,10 @@ class AuthNewEnrolmentOnlyActionSpec extends AnyFreeSpec with Matchers with Mock
       val result     = controller.get()(FakeRequest())
 
       status(result) mustEqual FORBIDDEN
-      contentAsString(result) mustEqual "Current user doesn't have a valid EORI enrolment."
+
+      val json: JsValue = Json.parse(contentAsString(result))
+      (json \ "message").get mustBe JsString("Current user doesn't have a valid EORI enrolment.")
+      (json \ "code").get mustBe JsString("FORBIDDEN")
     }
 
     "when the user is logged in and has the legacy enrolment only" in {
@@ -273,7 +286,10 @@ class AuthNewEnrolmentOnlyActionSpec extends AnyFreeSpec with Matchers with Mock
       val result     = controller.get()(FakeRequest())
 
       status(result) mustEqual FORBIDDEN
-      contentAsString(result) mustEqual "Current user doesn't have a valid EORI enrolment."
+
+      val json: JsValue = Json.parse(contentAsString(result))
+      (json \ "message").get mustBe JsString("Current user doesn't have a valid EORI enrolment.")
+      (json \ "code").get mustBe JsString("FORBIDDEN")
     }
   }
 
