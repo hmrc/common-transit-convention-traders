@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,13 @@
 
 package models.formats
 
-import cats.data.NonEmptyList
-import models.MessageType
 import models.errors.BadRequestError
 import models.errors.ErrorCode
+import models.errors.ForbiddenError
 import models.errors.InternalServiceError
 import models.errors.NotFoundError
-import models.errors.SchemaValidationError
 import models.errors.TransitMovementError
 import models.errors.UpstreamServiceError
-import models.errors.XmlValidationError
-import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
 trait HttpFormats extends CommonFormats {
@@ -37,18 +33,11 @@ trait HttpFormats extends CommonFormats {
   implicit val badRequestErrorWrites: OWrites[BadRequestError] =
     (__ \ "message").write[String].contramap(_.message)
 
-  implicit val notFoundErrorWrites: OWrites[NotFoundError] =
+  implicit val forbiddenErrorWrites: OWrites[ForbiddenError] =
     (__ \ "message").write[String].contramap(_.message)
 
-  implicit val schemaValidationError: OFormat[SchemaValidationError] =
-    Json.format[SchemaValidationError]
-
-  implicit val xmlValidationErrorWrites: OWrites[XmlValidationError] = (
-    (__ \ "message").write[String] and
-      (__ \ "errors").write[NonEmptyList[SchemaValidationError]]
-  )(
-    error => (error.message, error.errors)
-  )
+  implicit val notFoundErrorWrites: OWrites[NotFoundError] =
+    (__ \ "message").write[String].contramap(_.message)
 
   implicit val upstreamServiceErrorWrites: OWrites[UpstreamServiceError] =
     (__ \ "message").write[String].contramap(_.message)
@@ -61,8 +50,8 @@ trait HttpFormats extends CommonFormats {
       withCodeField(badRequestErrorWrites.writes(err), ErrorCode.BadRequest)
     case err @ NotFoundError(_) =>
       withCodeField(notFoundErrorWrites.writes(err), ErrorCode.NotFound)
-    case err @ ForbiddenError(_, _) =>
-      withCodeField(xmlValidationErrorWrites.writes(err), ErrorCode.SchemaValidation)
+    case err @ ForbiddenError(_) =>
+      withCodeField(forbiddenErrorWrites.writes(err), ErrorCode.Forbidden)
     case err @ UpstreamServiceError(_, _) =>
       withCodeField(upstreamServiceErrorWrites.writes(err), ErrorCode.InternalServerError)
     case err @ InternalServiceError(_, _) =>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 HM Revenue & Customs
+ * Copyright 2022 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ object ErrorCode {
   val FieldName           = "code"
   val BadRequest          = "BAD_REQUEST"
   val NotFound            = "NOT_FOUND"
+  val Forbidden           = "FORBIDDEN"
   val InternalServerError = "INTERNAL_SERVER_ERROR"
   val GatewayTimeout      = "GATEWAY_TIMEOUT"
   val SchemaValidation    = "SCHEMA_VALIDATION"
