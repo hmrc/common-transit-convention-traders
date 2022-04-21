@@ -18,7 +18,7 @@ package controllers.actions
 
 import com.google.inject.Inject
 import config.Constants._
-import models.errors.BadRequestError
+import models.errors.ForbiddenError
 import models.errors.TransitMovementError
 import models.formats.HttpFormats
 import play.api.Logging
@@ -71,7 +71,7 @@ class AuthNewEnrolmentOnlyAction @Inject() (override val authConnector: AuthConn
   } recover {
     case e: InsufficientEnrolments =>
       logger.warn("Failed to authorise due to insufficient enrolments", e)
-      Forbidden(Json.toJson[TransitMovementError](BadRequestError("Current user doesn't have a valid EORI enrolment.")))
+      Forbidden(Json.toJson[TransitMovementError](ForbiddenError("Current user doesn't have a valid EORI enrolment.")))
     case e: AuthorisationException =>
       logger.warn(s"Failed to authorise", e)
       Unauthorized
