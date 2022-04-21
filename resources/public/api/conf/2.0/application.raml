@@ -60,6 +60,8 @@ traits:
         Send a Declaration Data message, to let the office at destination know that the goods are on their way. This notification will be sent when the goods leave the Office of Departure. It is also called an E_DEC_DAT (IE015).
 
         The response will contain a URI and departure ID for the Declaration Data. This will allow you to retrieve messages related to the movement.
+        
+        If the user is not enrolled for an EORI number, they will receive an HTTP Forbidden Status.
 
       is: 
         - contentXmlHeader
