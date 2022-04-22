@@ -16,16 +16,21 @@
 
 package xml
 
+import config.AppConfig
 import data.TestXml
 import models.request.ArrivalNotificationXSD
+import org.mockito.Mockito.when
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import services.XmlValidationService
 
-class CC007ASpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks with TestXml {
+class CC007ASpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks with TestXml with MockitoSugar {
 
-  private val xmlValidationService = new XmlValidationService
+  private val mockAppConfig        = mock[AppConfig]
+  private val xmlValidationService = new XmlValidationService(mockAppConfig)
+  when(mockAppConfig.blockUnknownNamespaces).thenReturn(true)
 
   "validate" - {
 

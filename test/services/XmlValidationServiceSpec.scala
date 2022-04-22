@@ -16,23 +16,33 @@
 
 package services
 
+import config.AppConfig
 import models.request.ArrivalNotificationXSD
 import models.request.DeclarationCancellationRequestXSD
 import models.request.DepartureDeclarationXSD
 import models.request.UnloadingRemarksXSD
+import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalatest.BeforeAndAfter
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.xml.NodeSeq
 import scala.xml.XML
 
-class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks {
+class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks with MockitoSugar with BeforeAndAfter {
 
   private val xml2001namespace     = "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\""
   private val emptyNamespace       = "xmlns=\"\""
-  private val xmlValidationService = new XmlValidationService
+  private val mockAppConfig        = mock[AppConfig]
+  private val xmlValidationService = new XmlValidationService(mockAppConfig)
+
+  before {
+    // some tests will set this to false, but the majority of these tests should have this set to true.
+    when(mockAppConfig.blockUnknownNamespaces).thenReturn(true)
+  }
 
   "validate" - {
 
@@ -57,6 +67,14 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
             val xml = buildIE007Xml(withEnrouteEvent = true, withIncident, withContainer, withVehicle, withSeals)
             xmlValidationService.validate(XML.loadString(xml), ArrivalNotificationXSD) mustBe a[Right[_, _]]
         }
+      }
+
+      "with a top level namespace when the config is NOT set to block unknown namespaces" in {
+
+        when(mockAppConfig.blockUnknownNamespaces).thenReturn(false)
+        val xml = XML.loadString(buildIE007Xml(withRootLevelAttirbutes = xml2001namespace))
+        xmlValidationService.validate(xml, ArrivalNotificationXSD) mustBe a[Right[_, _]]
+
       }
     }
 
@@ -263,7 +281,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
         xmlValidationService.validate(NodeSeq.Empty, ArrivalNotificationXSD) mustBe Left(FailedToValidateXml(expectedMessage))
       }
 
-      "with an unexpected namespace" in {
+      "with an unexpected namespace when the config is set to block unknown namespaces" in {
 
         val xml = XML.loadString(buildIE007Xml(withRootLevelAttirbutes = xml2001namespace))
 

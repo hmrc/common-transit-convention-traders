@@ -16,6 +16,9 @@
 
 package services
 
+import com.google.inject.Inject
+import config.AppConfig
+
 import java.io._
 import java.net.URL
 import javax.xml.parsers.SAXParserFactory
@@ -33,7 +36,7 @@ import scala.xml.SAXParseException
 import scala.xml.SAXParser
 import scala.xml.TopScope
 
-class XmlValidationService {
+class XmlValidationService @Inject() (appConfig: AppConfig) {
 
   private val logger     = Logger(getClass)
   private val schemaLang = javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI
@@ -52,9 +55,9 @@ class XmlValidationService {
 
   def validate(xml: NodeSeq, xsdFile: XSDFile): Either[XmlError, XmlValid] =
     xml.headOption match {
-      case Some(x) if x.scope == TopScope || x.scope.uri == null => // null scope is xmlns=""
+      case Some(x) if !appConfig.blockUnknownNamespaces || x.scope == TopScope || x.scope.uri == null => // null scope is xmlns=""
         validate(x.toString, xsdFile)
-      case Some(x) =>
+      case Some(_) =>
         Left(FailedToValidateXml(XmlError.RequestBodyRootContainsNamespaceMessage))
       case None =>
         Left(FailedToValidateXml(XmlError.RequestBodyEmptyMessage))
