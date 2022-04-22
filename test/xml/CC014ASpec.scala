@@ -16,29 +16,34 @@
 
 package xml
 
+import config.AppConfig
 import data.TestXml
 import models.request.DeclarationCancellationRequestXSD
+import org.mockito.Mockito.when
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import services.XmlValidationService
 
-class CC014ASpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks with TestXml {
+class CC014ASpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks with TestXml with MockitoSugar {
 
-  private val xmlValidationService = new XmlValidationService
+  private val mockAppConfig        = mock[AppConfig]
+  private val xmlValidationService = new XmlValidationService(mockAppConfig)
+  when(mockAppConfig.blockUnknownNamespaces).thenReturn(true)
 
   "validate" - {
 
     "must be successful when validating a valid CC014A xml" in {
-      xmlValidationService.validate(CC014A.toString(), DeclarationCancellationRequestXSD) mustBe a[Right[_, _]]
+      xmlValidationService.validate(CC014A, DeclarationCancellationRequestXSD) mustBe a[Right[_, _]]
     }
 
     "must fail when validating an invalid CC014A xml" in {
-      xmlValidationService.validate(InvalidCC014A.toString(), DeclarationCancellationRequestXSD) mustBe a[Left[_, _]]
+      xmlValidationService.validate(InvalidCC014A, DeclarationCancellationRequestXSD) mustBe a[Left[_, _]]
     }
 
     "must reject a CC014A containing MesSenMES3" in {
-      xmlValidationService.validate(CC014AwithMesSenMES3.toString(), DeclarationCancellationRequestXSD) mustBe a[Left[_, _]]
+      xmlValidationService.validate(CC014AwithMesSenMES3, DeclarationCancellationRequestXSD) mustBe a[Left[_, _]]
     }
   }
 }

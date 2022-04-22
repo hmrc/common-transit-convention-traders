@@ -16,9 +16,11 @@
 
 package services
 
+import com.google.inject.Inject
+import config.AppConfig
+
 import java.io._
 import java.net.URL
-
 import javax.xml.parsers.SAXParserFactory
 import javax.xml.validation.Schema
 import models.request.XSDFile
@@ -29,10 +31,12 @@ import utils.Utils
 
 import scala.xml.factory.XMLLoader
 import scala.xml.Elem
+import scala.xml.NodeSeq
 import scala.xml.SAXParseException
 import scala.xml.SAXParser
+import scala.xml.TopScope
 
-class XmlValidationService {
+class XmlValidationService @Inject() (appConfig: AppConfig) {
 
   private val logger     = Logger(getClass)
   private val schemaLang = javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI
@@ -49,7 +53,17 @@ class XmlValidationService {
     saxParser.newSAXParser()
   }
 
-  def validate(xml: String, xsdFile: XSDFile): Either[XmlError, XmlValid] =
+  def validate(xml: NodeSeq, xsdFile: XSDFile): Either[XmlError, XmlValid] =
+    xml.headOption match {
+      case Some(x) if !appConfig.blockUnknownNamespaces || x.scope == TopScope || x.scope.uri == null => // null scope is xmlns=""
+        validate(x.toString, xsdFile)
+      case Some(_) =>
+        Left(FailedToValidateXml(XmlError.RequestBodyRootContainsNamespaceMessage))
+      case None =>
+        Left(FailedToValidateXml(XmlError.RequestBodyEmptyMessage))
+    }
+
+  private def validate(xml: String, xsdFile: XSDFile): Either[XmlError, XmlValid] =
     try {
 
       val url: URL = getClass.getResource(xsdFile.FilePath)
@@ -98,6 +112,9 @@ object XmlError {
   val RequestBodyEmptyMessage = "The request cannot be processed as it does not contain a request body."
 
   val RequestBodyInvalidTypeMessage = "The request cannot be processed as it does not contain an XML request body."
+
+  val RequestBodyRootContainsNamespaceMessage =
+    "The request cannot be processed as it contains a namespace on the root node. Please remove any \"xmlns\" attributes from all nodes."
 }
 
 case class FailedToValidateXml(reason: String) extends XmlError

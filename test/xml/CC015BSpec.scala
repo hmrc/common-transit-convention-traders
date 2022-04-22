@@ -16,29 +16,34 @@
 
 package xml
 
+import config.AppConfig
 import data.TestXml
 import models.request.DepartureDeclarationXSD
+import org.mockito.Mockito.when
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import services.XmlValidationService
 
-class CC015BSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks with TestXml {
+class CC015BSpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks with TestXml with MockitoSugar {
 
-  private val xmlValidationService = new XmlValidationService
+  private val mockAppConfig        = mock[AppConfig]
+  private val xmlValidationService = new XmlValidationService(mockAppConfig)
+  when(mockAppConfig.blockUnknownNamespaces).thenReturn(true)
 
   "validate" - {
 
     "must be successful when validating a valid CC015B xml" in {
-      xmlValidationService.validate(CC015B.toString(), DepartureDeclarationXSD) mustBe a[Right[_, _]]
+      xmlValidationService.validate(CC015B, DepartureDeclarationXSD) mustBe a[Right[_, _]]
     }
 
     "must fail when validating an invalid CC015B xml" in {
-      xmlValidationService.validate(InvalidCC015B.toString(), DepartureDeclarationXSD) mustBe a[Left[_, _]]
+      xmlValidationService.validate(InvalidCC015B, DepartureDeclarationXSD) mustBe a[Left[_, _]]
     }
 
     "must reject a CC015B containing MesSenMES3" in {
-      xmlValidationService.validate(CC015BwithMesSenMES3.toString(), DepartureDeclarationXSD) mustBe a[Left[_, _]]
+      xmlValidationService.validate(CC015BwithMesSenMES3, DepartureDeclarationXSD) mustBe a[Left[_, _]]
     }
   }
 }

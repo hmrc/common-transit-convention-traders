@@ -16,29 +16,34 @@
 
 package xml
 
+import config.AppConfig
 import data.TestXml
 import models.request.UnloadingRemarksXSD
+import org.mockito.Mockito.when
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import services.XmlValidationService
 
-class CC044ASpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks with TestXml {
+class CC044ASpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks with TestXml with MockitoSugar {
 
-  private val xmlValidationService = new XmlValidationService
+  private val mockAppConfig        = mock[AppConfig]
+  private val xmlValidationService = new XmlValidationService(mockAppConfig)
+  when(mockAppConfig.blockUnknownNamespaces).thenReturn(true)
 
   "validate" - {
 
     "must be successful when validating a valid CC044A xml" in {
-      xmlValidationService.validate(CC044A.toString(), UnloadingRemarksXSD) mustBe a[Right[_, _]]
+      xmlValidationService.validate(CC044A, UnloadingRemarksXSD) mustBe a[Right[_, _]]
     }
 
     "must fail when validating an invalid CC044A xml" in {
-      xmlValidationService.validate(InvalidCC044A.toString(), UnloadingRemarksXSD) mustBe a[Left[_, _]]
+      xmlValidationService.validate(InvalidCC044A, UnloadingRemarksXSD) mustBe a[Left[_, _]]
     }
 
     "must reject a CC044A containing MesSenMES3" in {
-      xmlValidationService.validate(CC044AwithMesSenMES3.toString(), UnloadingRemarksXSD) mustBe a[Left[_, _]]
+      xmlValidationService.validate(CC044AwithMesSenMES3, UnloadingRemarksXSD) mustBe a[Left[_, _]]
     }
   }
 }

@@ -16,29 +16,34 @@
 
 package xml
 
+import config.AppConfig
 import data.TestXml
 import models.request.ArrivalNotificationXSD
+import org.mockito.Mockito.when
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import services.XmlValidationService
 
-class CC007ASpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks with TestXml {
+class CC007ASpec extends AnyFreeSpec with Matchers with ScalaCheckPropertyChecks with TestXml with MockitoSugar {
 
-  private val xmlValidationService = new XmlValidationService
+  private val mockAppConfig        = mock[AppConfig]
+  private val xmlValidationService = new XmlValidationService(mockAppConfig)
+  when(mockAppConfig.blockUnknownNamespaces).thenReturn(true)
 
   "validate" - {
 
     "must be successful when validating a valid CC007A xml" in {
-      xmlValidationService.validate(CC007A.toString(), ArrivalNotificationXSD) mustBe a[Right[_, _]]
+      xmlValidationService.validate(CC007A, ArrivalNotificationXSD) mustBe a[Right[_, _]]
     }
 
     "must fail when validating an invalid CC007A xml" in {
-      xmlValidationService.validate(InvalidCC007A.toString(), ArrivalNotificationXSD) mustBe a[Left[_, _]]
+      xmlValidationService.validate(InvalidCC007A, ArrivalNotificationXSD) mustBe a[Left[_, _]]
     }
 
     "must reject a CC007A containing MesSenMES3" in {
-      xmlValidationService.validate(CC007AwithMesSenMES3.toString(), ArrivalNotificationXSD) mustBe a[Left[_, _]]
+      xmlValidationService.validate(CC007AwithMesSenMES3, ArrivalNotificationXSD) mustBe a[Left[_, _]]
     }
   }
 }
