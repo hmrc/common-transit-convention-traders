@@ -386,6 +386,26 @@ class DeparturesControllerSpec
       }
     }
 
+    "version two departure with message size limit" - {
+      "must return RequestEntityTooLarge when rejected because body size exceeds limit" in {
+        val departureHeaders = FakeHeaders(
+          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml", HeaderNames.CONTENT_LENGTH -> "500001")
+        )
+        val request = fakeRequestDepartures(method = "POST", body = CC015BRequiringDefaultGuarantee, headers = departureHeaders)
+        val result  = route(appVersionTwo, request).value
+        status(result) mustBe REQUEST_ENTITY_TOO_LARGE
+      }
+
+      "must return Accepted when body length within limits" in {
+        val departureHeaders = FakeHeaders(
+          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml", HeaderNames.CONTENT_LENGTH -> "500000")
+        )
+        val request = fakeRequestDepartures(method = "POST", body = CC015BRequiringDefaultGuarantee, headers = departureHeaders)
+        val result  = route(appVersionTwo, request).value
+        status(result) mustBe ACCEPTED
+      }
+    }
+
   }
 
   "GET  /movements/departures/:departureId" - {
