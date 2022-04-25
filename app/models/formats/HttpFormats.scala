@@ -16,7 +16,14 @@
 
 package models.formats
 
-import models.errors.{BadRequestError, EntityTooLargeError, ErrorCode, ForbiddenError, InternalServiceError, NotFoundError, TransitMovementError, UpstreamServiceError}
+import models.errors.BadRequestError
+import models.errors.EntityTooLargeError
+import models.errors.ErrorCode
+import models.errors.ForbiddenError
+import models.errors.InternalServiceError
+import models.errors.NotFoundError
+import models.errors.TransitMovementError
+import models.errors.UpstreamServiceError
 import play.api.libs.json._
 
 trait HttpFormats extends CommonFormats {
@@ -56,5 +63,4 @@ trait HttpFormats extends CommonFormats {
     case err @ InternalServiceError(_, _) =>
       withCodeField(internalServiceErrorWrites.writes(err), ErrorCode.InternalServerError)
   }
-
 }
