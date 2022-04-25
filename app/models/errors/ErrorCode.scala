@@ -26,4 +26,5 @@ object ErrorCode {
   val InternalServerError = "INTERNAL_SERVER_ERROR"
   val GatewayTimeout      = "GATEWAY_TIMEOUT"
   val SchemaValidation    = "SCHEMA_VALIDATION"
+  val EntityTooLarge      = "REQUEST_ENTITY_TOO_LARGE"
 }

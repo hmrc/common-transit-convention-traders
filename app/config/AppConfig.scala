@@ -41,4 +41,6 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig
   val pushPullUrl = Url.parse(servicesConfig.baseUrl("push-pull-notifications-api"))
 
   val blockUnknownNamespaces: Boolean = config.get[Boolean]("xml-validation.block-unknown-namespaces")
+
+  val messageSizeLimit: Int = config.get[Int]("messageSizeLimit")
 }

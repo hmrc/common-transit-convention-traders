@@ -16,13 +16,7 @@
 
 package models.formats
 
-import models.errors.BadRequestError
-import models.errors.ErrorCode
-import models.errors.ForbiddenError
-import models.errors.InternalServiceError
-import models.errors.NotFoundError
-import models.errors.TransitMovementError
-import models.errors.UpstreamServiceError
+import models.errors.{BadRequestError, EntityTooLargeError, ErrorCode, ForbiddenError, InternalServiceError, NotFoundError, TransitMovementError, UpstreamServiceError}
 import play.api.libs.json._
 
 trait HttpFormats extends CommonFormats {
@@ -39,6 +33,9 @@ trait HttpFormats extends CommonFormats {
   implicit val notFoundErrorWrites: OWrites[NotFoundError] =
     (__ \ "message").write[String].contramap(_.message)
 
+  implicit val entityTooLargeErrorWrites: OWrites[EntityTooLargeError] =
+    (__ \ "message").write[String].contramap(_.message)
+
   implicit val upstreamServiceErrorWrites: OWrites[UpstreamServiceError] =
     (__ \ "message").write[String].contramap(_.message)
 
@@ -52,6 +49,8 @@ trait HttpFormats extends CommonFormats {
       withCodeField(notFoundErrorWrites.writes(err), ErrorCode.NotFound)
     case err @ ForbiddenError(_) =>
       withCodeField(forbiddenErrorWrites.writes(err), ErrorCode.Forbidden)
+    case err @ EntityTooLargeError(_) =>
+      withCodeField(entityTooLargeErrorWrites.writes(err), ErrorCode.EntityTooLarge)
     case err @ UpstreamServiceError(_, _) =>
       withCodeField(upstreamServiceErrorWrites.writes(err), ErrorCode.InternalServerError)
     case err @ InternalServiceError(_, _) =>
