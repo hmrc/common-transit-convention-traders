@@ -370,6 +370,7 @@ class DeparturesControllerSpec
         }
     }
 
+    // Version 2
     "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
 
       val departureHeaders = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml"))
@@ -384,10 +385,8 @@ class DeparturesControllerSpec
 
         status(result) mustBe ACCEPTED
       }
-    }
 
-    "version two departure with message size limit" - {
-      "must return RequestEntityTooLarge when rejected because body size exceeds limit" in {
+      "must return RequestEntityTooLarge when body size exceeds limit" in {
         val departureHeaders = FakeHeaders(
           Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml", HeaderNames.CONTENT_LENGTH -> "500001")
         )
@@ -396,7 +395,7 @@ class DeparturesControllerSpec
         status(result) mustBe REQUEST_ENTITY_TOO_LARGE
       }
 
-      "must return Accepted when body length within limits" in {
+      "must return Accepted when body length is within limits" in {
         val departureHeaders = FakeHeaders(
           Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml", HeaderNames.CONTENT_LENGTH -> "500000")
         )
