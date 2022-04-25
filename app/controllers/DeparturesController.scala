@@ -54,6 +54,7 @@ class DeparturesController @Inject() (
   ensureGuaranteeAction: EnsureGuaranteeAction,
   auditService: AuditService,
   messageAnalyser: AnalyseMessageActionProvider,
+  messageSizeAction: MessageSizeAction,
   val metrics: Metrics
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
@@ -131,10 +132,11 @@ class DeparturesController @Inject() (
       }
     }
 
-  private def submitDeclarationVersionTwo(): Action[NodeSeq] = authActionNewEnrolmentOnly.async(parse.xml) {
-    implicit request =>
-      val eori = request.eori //TBD: EORI to be sent on to the transit-movements service
-      logger.info("Version 2 of endpoint has been called")
-      Future.successful(Accepted)
-  }
+  private def submitDeclarationVersionTwo(): Action[NodeSeq] =
+    (authActionNewEnrolmentOnly andThen messageSizeAction).async(parse.xml) {
+      _ =>
+        logger.info("Version 2 of endpoint has been called")
+        Future.successful(Accepted)
+    }
+
 }
