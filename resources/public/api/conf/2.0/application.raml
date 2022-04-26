@@ -51,6 +51,17 @@ traits:
                 description: The accept header is missing or invalid
                 value:
                   code : ACCEPT_HEADER_INVALID
+  requestTooLarge:
+    responses:
+      413:
+        body:
+          application/json:
+            type: types.errorResponse
+            examples:
+              requestEntityTooLarge:
+                description: The request body is too large
+                value:
+                  code: REQUEST_ENTITY_TOO_LARGE
 
 /customs/transits/movements:
   /departures:
@@ -66,6 +77,7 @@ traits:
       is: 
         - contentXmlHeader
         - acceptJsonHeader
+        - requestTooLarge
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:

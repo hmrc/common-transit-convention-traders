@@ -11,6 +11,8 @@ We use standard HTTP status codes to show whether an API request has succeeded o
 
 404 Not Found: If no object with specified ID found in database
 
+413 Request Entity Too Large: If the client request body is too large for the given endpoint
+
 415 Unsupported Media Type: If the client specified an invalid ``Content-Type`` header
 
 500 Internal Server Error: If exception in code occurs
@@ -26,6 +28,8 @@ We use standard HTTP status codes to show whether an API request has succeeded o
 403 Forbidden: If supplied auth token doesn't contain valid enrolment
 
 404 Not Found: If no object with specified ID found in database
+
+413 Request Entity Too Large: If the client request body is too large for the given endpoint
 
 415 Unsupported Media Type: If the client specified an invalid ``Content-Type`` header
 
