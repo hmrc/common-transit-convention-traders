@@ -20,9 +20,11 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.Request
+import v2.models.errors.BaseError
 
 import scala.concurrent.Future
 
@@ -35,12 +37,25 @@ trait VersionedRouting {
         routes
           .lift(request.headers.get("accept"))
           .map(
-            x => x(request).run(request.body)
+            action => action(request).run(request.body)
           )
           .getOrElse {
             // To avoid a memory leak, we need to ensure we run the request stream and ignore it.
             request.body.to(Sink.ignore).run()
-            Future.successful(UnsupportedMediaType(s"Accept header ${request.headers.get("accept")} is not supported!"))
+            Future.successful(
+              UnsupportedMediaType(
+                Json.toJson(
+                  BaseError.unsupportedMediaTypeError(
+                    request.headers
+                      .get("accept")
+                      .map(
+                        header => s"Accept header $header is not supported!"
+                      )
+                      .getOrElse("An accept header is required!")
+                  )
+                )
+              )
+            )
           }
     }
 
