@@ -18,6 +18,9 @@ package controllers.stream
 
 import akka.NotUsed
 import akka.stream.Materializer
+import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Keep
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import org.scalatest.freespec.AnyFreeSpec
@@ -26,6 +29,9 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames
 import play.api.http.Status.OK
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.Files
+import play.api.libs.Files.SingletonTemporaryFileCreator
+import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
@@ -38,7 +44,9 @@ import play.api.test.Helpers.status
 import java.nio.charset.StandardCharsets
 import scala.annotation.tailrec
 import scala.collection.immutable
+import scala.concurrent.Await
 import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 
 class StreamingParsersSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite {
 
@@ -63,6 +71,19 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
     def result: Action[String] = Action.async(parse.text) {
       request =>
         Future.successful(Ok(request.body))
+    }
+
+    def testFile: Action[Files.TemporaryFile] = Action.async(parse.temporaryFile) {
+      implicit request =>
+        def stream() = streamFromTemporaryFile {
+          source =>
+            source.toMat(Sink.fold("")((current: String, in: ByteString) => current + in.decodeString(StandardCharsets.UTF_8)))(Keep.right)
+        }
+
+        for {
+          firstString  <- stream()
+          secondString <- stream()
+        } yield Ok(Json.obj("first" -> firstString, "second" -> secondString))
     }
   }
 
@@ -117,6 +138,29 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
             status(result) mustBe OK
             contentAsString(result) mustBe byteString.decodeString(StandardCharsets.UTF_8)
           }
+      }
+    }
+  }
+
+  "From a temporary file" - {
+
+    "test that we can stream from it multiple times" in {
+      val file: Files.TemporaryFile = SingletonTemporaryFileCreator.create()
+      try {
+        import scala.concurrent.ExecutionContext.Implicits.global
+
+        val byteString     = generateByteString(1)
+        val expectedString = byteString.decodeString(StandardCharsets.UTF_8)
+        Await.result(generateSource(byteString).runWith(FileIO.toPath(file.path)).map {
+          _ =>
+            val request = FakeRequest("POST", "/", headers, file)
+            val sut = new Harness(app.injector.instanceOf[ControllerComponents])(app.materializer)
+            val result = sut.testFile()(request)
+            status(result) mustBe OK
+            Json.parse(contentAsString(result)) mustBe Json.obj("first" -> expectedString, "second" -> expectedString)
+        }, 5.seconds)
+      } finally {
+        file.delete()
       }
     }
   }
