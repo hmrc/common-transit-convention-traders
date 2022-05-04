@@ -21,18 +21,23 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.stream.testkit.NoMaterializer
 import akka.util.ByteString
+import models.formats.HttpFormats
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Logging
 import play.api.http.HeaderNames
+import play.api.http.MimeTypes
+import play.api.http.Status.UNSUPPORTED_MEDIA_TYPE
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
 import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.defaultAwaitTimeout
+import play.api.test.Helpers.status
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import java.nio.charset.StandardCharsets
@@ -45,12 +50,13 @@ class VersionedRoutingSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
   class Harness(cc: ControllerComponents)(implicit val materializer: Materializer)
       extends BackendController(cc)
       with VersionedRouting
+      with HttpFormats
       with StreamingParsers
       with Logging {
 
     def test: Action[Source[ByteString, _]] = route {
       case Some("application/vnd.hmrc.2.0+json") => actionTwo
-      case _                                     => actionOne
+      case Some(x) if x != MimeTypes.TEXT        => actionOne
     }
 
     def actionOne: Action[NodeSeq] = Action.async(parse.xml) {
@@ -71,7 +77,7 @@ class VersionedRoutingSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
 
   "VersionRouting" - {
 
-    Seq(None, Some("application/vnd.hmrc.1.0+json"), Some("text/html"), Some("application/vnd.hmrc.1.0+xml"), Some("text/javascript")).foreach {
+    Seq(Some("application/vnd.hmrc.1.0+json"), Some("text/html"), Some("application/vnd.hmrc.1.0+xml"), Some("text/javascript")).foreach {
       acceptHeaderValue =>
         val acceptHeader = acceptHeaderValue
           .map(
@@ -108,6 +114,43 @@ class VersionedRoutingSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
 
         val result = sut.test()(request)
         contentAsString(result)(defaultAwaitTimeout, NoMaterializer) mustBe "Two"
+
+      }
+    }
+
+    "with invalid accept header" - {
+
+      "when not set" in {
+        val departureHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml"))
+
+        val cc  = app.injector.instanceOf[ControllerComponents]
+        val sut = new Harness(cc)
+
+        val request = FakeRequest("GET", "/", departureHeaders, generateSource("<test>test</test>"))
+
+        val result = sut.test()(request)
+        status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+        Json.parse(contentAsString(result)) mustBe Json.obj(
+          "code"    -> "UNSUPPORTED_MEDIA_TYPE",
+          "message" -> "An accept header is required!"
+        )
+
+      }
+
+      "when set to text/plain" in {
+        val departureHeaders = FakeHeaders(Seq(HeaderNames.ACCEPT -> MimeTypes.TEXT, HeaderNames.CONTENT_TYPE -> "application/xml"))
+
+        val cc  = app.injector.instanceOf[ControllerComponents]
+        val sut = new Harness(cc)
+
+        val request = FakeRequest("GET", "/", departureHeaders, generateSource("<test>test</test>"))
+
+        val result = sut.test()(request)
+        status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+        Json.parse(contentAsString(result)) mustBe Json.obj(
+          "code"    -> "UNSUPPORTED_MEDIA_TYPE",
+          "message" -> "Accept header text/plain is not supported!"
+        )
 
       }
     }

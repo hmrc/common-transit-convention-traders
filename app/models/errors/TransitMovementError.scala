@@ -28,6 +28,8 @@ case class NotFoundError(message: String) extends TransitMovementError
 
 case class EntityTooLargeError(message: String) extends TransitMovementError
 
+case class UnsupportedMediaTypeError(message: String) extends TransitMovementError
+
 case class UpstreamServiceError(
   message: String = "Internal server error",
   cause: UpstreamErrorResponse

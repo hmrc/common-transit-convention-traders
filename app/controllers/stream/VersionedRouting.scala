@@ -20,6 +20,10 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import models.errors.TransitMovementError
+import models.errors.UnsupportedMediaTypeError
+import models.formats.HttpFormats
+import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.Request
@@ -27,7 +31,7 @@ import play.api.mvc.Request
 import scala.concurrent.Future
 
 trait VersionedRouting {
-  self: BaseController with StreamingParsers =>
+  self: BaseController with StreamingParsers with HttpFormats =>
 
   def route(routes: PartialFunction[Option[String], Action[_]])(implicit materializer: Materializer): Action[Source[ByteString, _]] =
     Action.async(streamFromMemory) {
@@ -40,7 +44,20 @@ trait VersionedRouting {
           .getOrElse {
             // To avoid a memory leak, we need to ensure we run the request stream and ignore it.
             request.body.to(Sink.ignore).run()
-            Future.successful(UnsupportedMediaType(s"Accept header ${request.headers.get("accept")} is not supported!"))
+            Future.successful(
+              UnsupportedMediaType(
+                Json.toJson(
+                  UnsupportedMediaTypeError(
+                    request.headers
+                      .get("accept")
+                      .map(
+                        x => s"Accept header $x is not supported!"
+                      )
+                      .getOrElse("An accept header is required!")
+                  ).asInstanceOf[TransitMovementError]
+                )
+              )
+            )
           }
     }
 

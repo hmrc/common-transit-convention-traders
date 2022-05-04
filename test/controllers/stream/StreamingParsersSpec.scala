@@ -77,7 +77,11 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
       implicit request =>
         def stream() = streamFromTemporaryFile {
           source =>
-            source.toMat(Sink.fold("")((current: String, in: ByteString) => current + in.decodeString(StandardCharsets.UTF_8)))(Keep.right)
+            source.toMat(
+              Sink.fold("")(
+                (current: String, in: ByteString) => current + in.decodeString(StandardCharsets.UTF_8)
+              )
+            )(Keep.right)
         }
 
         for {
@@ -151,17 +155,18 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
 
         val byteString     = generateByteString(1)
         val expectedString = byteString.decodeString(StandardCharsets.UTF_8)
-        Await.result(generateSource(byteString).runWith(FileIO.toPath(file.path)).map {
-          _ =>
-            val request = FakeRequest("POST", "/", headers, file)
-            val sut = new Harness(app.injector.instanceOf[ControllerComponents])(app.materializer)
-            val result = sut.testFile()(request)
-            status(result) mustBe OK
-            Json.parse(contentAsString(result)) mustBe Json.obj("first" -> expectedString, "second" -> expectedString)
-        }, 5.seconds)
-      } finally {
-        file.delete()
-      }
+        Await.result(
+          generateSource(byteString).runWith(FileIO.toPath(file.path)).map {
+            _ =>
+              val request = FakeRequest("POST", "/", headers, file)
+              val sut     = new Harness(app.injector.instanceOf[ControllerComponents])(app.materializer)
+              val result  = sut.testFile()(request)
+              status(result) mustBe OK
+              Json.parse(contentAsString(result)) mustBe Json.obj("first" -> expectedString, "second" -> expectedString)
+          },
+          5.seconds
+        )
+      } finally file.delete()
     }
   }
 

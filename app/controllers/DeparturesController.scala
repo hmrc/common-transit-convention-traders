@@ -31,6 +31,7 @@ import metrics.HasActionMetrics
 import metrics.MetricsKeys
 import models.MessageType
 import models.domain.DepartureId
+import models.formats.HttpFormats
 import models.response.HateoasDeparturePostResponseMessage
 import models.response.HateoasResponseDeparture
 import models.response.HateoasResponseDepartures
@@ -68,7 +69,8 @@ class DeparturesController @Inject() (
     with HttpErrorFunctions
     with ResponseHelper
     with StreamingParsers
-    with VersionedRouting {
+    with VersionedRouting
+    with HttpFormats {
 
   import MetricsKeys.Endpoints._
 
