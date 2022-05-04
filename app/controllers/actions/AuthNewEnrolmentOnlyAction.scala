@@ -59,9 +59,16 @@ class AuthNewEnrolmentOnlyAction @Inject() (override val authConnector: AuthConn
           NewEnrolmentIdKey
         )
 
+        logger.debug(s"newEnrolmentId: $newEnrolmentId")
+        logger.debug(s"enrolments: $enrolments")
+        logger.debug(s"NewEnrolmentKey: $NewEnrolmentKey")
+        logger.debug(s"NewEnrolmentIdKey: $NewEnrolmentIdKey")
+
         newEnrolmentId
           .map {
             eoriNumber =>
+              logger.debug(s"eoriNumber: $eoriNumber")
+              logger.debug(s"request.headers: ${request.headers}")
               block(AuthRequest(request, eoriNumber))
           }
           .getOrElse {
