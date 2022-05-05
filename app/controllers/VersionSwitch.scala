@@ -19,7 +19,6 @@ package controllers
 import play.api.Logging
 import play.api.mvc.{Action, Request}
 
-import scala.concurrent.Future
 import scala.xml.NodeSeq
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
