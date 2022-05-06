@@ -17,11 +17,17 @@
 package controllers
 
 import akka.stream.Materializer
+import akka.stream.SourceShape
+import akka.stream.UniformFanInShape
+import akka.stream.scaladsl.Concat
+import akka.stream.scaladsl.Flow
+import akka.stream.scaladsl.GraphDSL
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import audit.AuditService
 import audit.AuditType
+import com.fasterxml.jackson.core.io.JsonStringEncoder
 import com.kenshoo.play.metrics.Metrics
 import connectors.DeparturesConnector
 import controllers.actions._
@@ -45,6 +51,7 @@ import utils.CallOps._
 import utils.ResponseHelper
 import utils.Utils
 
+import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -143,6 +150,49 @@ class DeparturesController @Inject() (
       }
     }
 
+  private def UTF8ByteString(string: String) = ByteString(string, StandardCharsets.UTF_8)
+
+  private lazy val embedXmlInJson = {
+    GraphDSL.create() { implicit builder =>
+      import GraphDSL.Implicits._
+
+      // We want to fan in 3 items, and return one item
+      val concat = builder.add(Concat[ByteString](5))
+
+      val messageTypeFlow   = builder.add(Flow.fromFunction((in: ByteString) => UTF8ByteString("{ \"messageType\": \"") ++ in ++ UTF8ByteString("\",")))
+      val eoriFlow          = builder.add(Flow.fromFunction((in: ByteString) => UTF8ByteString(" \"eoriNumber\": \"") ++ in ++ UTF8ByteString("\",")))
+      val messageFlowStart  = builder.add(Source.single(UTF8ByteString(" \"message\": \"")))
+      val messageEscapeFlow = builder.add(Flow.fromFunction((in: ByteString) => ByteString.fromArray(JsonStringEncoder.getInstance().quoteAsUTF8(in.decodeString(StandardCharsets.UTF_8)))))
+      val endJson           = builder.add(Source.single(UTF8ByteString("\" }")))
+
+      messageTypeFlow   ~> concat.in(0)
+      eoriFlow          ~> concat.in(1)
+      messageFlowStart  ~> concat.in(2)
+      messageEscapeFlow ~> concat.in(3)
+      endJson           ~> concat.in(4)
+
+      UniformFanInShape(concat.out, messageTypeFlow.in, eoriFlow.in, messageEscapeFlow.in)
+    }
+  }
+
+  private def createSource(eori: String, messageType: String, source: Source[ByteString, _]): Source[ByteString, _] =
+    Source.fromGraph(
+      GraphDSL.create() { implicit builder =>
+        import GraphDSL.Implicits._
+
+        val eoriSource        = builder.add(Source.single(UTF8ByteString(eori)))
+        val messageTypeSource = builder.add(Source.single(UTF8ByteString(messageType)))
+        val messageSource     = builder.add(source)
+        val jsonBuilder       = builder.add(embedXmlInJson)
+
+        eoriSource        ~> jsonBuilder.in(0)
+        messageTypeSource ~> jsonBuilder.in(1)
+        messageSource     ~> jsonBuilder.in(2)
+
+        SourceShape(jsonBuilder.out)
+      }
+    )
+
   private def submitDeclarationVersionTwo(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen messageSizeAction).async(streamFromMemory) {
       request =>
@@ -152,8 +202,14 @@ class DeparturesController @Inject() (
         //  * Stream from memory to the validation service AND a file, then stream FROM the file if we get the OK
         //  The first option will likely be more stable but slower than the second option.
 
+        val eori        = "abcde"
+        val messageType = "cc015c"
+
+        val s: Source[ByteString, _] = createSource(eori, messageType, request.body)
+        s.to(Sink.foreach(x => print(x.decodeString(StandardCharsets.UTF_8)))).run()
+
         // Because we have an open stream, we **must** do something with it. For now, we send it to the ignore sink.
-        request.body.to(Sink.ignore).run()
+//        request.body.to(Sink.ignore).run()
         logger.info("Version 2 of endpoint has been called")
         Future.successful(Accepted)
     }
