@@ -18,17 +18,15 @@ package v2.controllers
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import cats.data.EitherT
 import cats.syntax.all._
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import play.api.Logging
 import play.api.libs.Files
-import play.api.libs.json.JsError
-import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.BaseController
@@ -36,18 +34,15 @@ import play.api.mvc.ControllerComponents
 import play.api.mvc.Result
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
-import v2.connectors.ValidationConnector
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.MessageSizeAction
 import v2.controllers.stream.StreamingParsers
 import v2.models.errors.BaseError
-import v2.models.errors.InternalServiceError
-import v2.models.responses.ValidationResponse
+import v2.services.ValidationService
 
 import scala.concurrent.Future
-import scala.util.control.NonFatal
+import scala.util.Try
 
 @ImplementedBy(classOf[V2DeparturesControllerImpl])
 trait V2DeparturesController {
@@ -60,7 +55,7 @@ trait V2DeparturesController {
 class V2DeparturesControllerImpl @Inject() (
     val controllerComponents: ControllerComponents,
     authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
-    validationConnector: ValidationConnector,
+    validationService: ValidationService,
     messageSizeAction: MessageSizeAction)(implicit val materializer: Materializer) extends BaseController
   with V2DeparturesController
   with Logging
@@ -73,35 +68,26 @@ class V2DeparturesControllerImpl @Inject() (
         logger.info("Version 2 of endpoint has been called")
 
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        val temporaryFile: Files.TemporaryFile = Files.SingletonTemporaryFileCreator.create()
-
-        // Because we have an open stream, we **must** do something with it. For now, we send it to the ignore sink.
-        val fileDirectedSource: Source[ByteString, _] = request.body.alsoTo(FileIO.toPath(temporaryFile.path))
-
-        EitherT(validationConnector
-          .validate("cc015c", fileDirectedSource)
-          .map {
-            httpResponse =>
-              Json.fromJson(httpResponse.json)(ValidationResponse.validationResponseFormat) match {
-                case JsSuccess(value, _) => Right(value)
-                case JsError(errors)     =>
-                  // This shouldn't happen - if it does it's something we need to fix.
-                  logger.error(s"Failed to parse ValidationResult from Validation Service, the following errors were returned when parsing: ${errors.mkString}")
-                  Left(InternalServiceError())
-              }
+        Try(Files.SingletonTemporaryFileCreator.create())
+          .toEither
+          .leftMap {
+            thr =>
+              request.body.runWith(Sink.ignore)
+              BaseError.internalServiceError(cause = Some(thr))
           }
-          .recover {
-            // A bad request might be returned if the stream doesn't contain XML, in which case, we need to return a bad request.
-            case UpstreamErrorResponse.Upstream4xxResponse(response) if response.statusCode == BAD_REQUEST =>
-              Left(BaseError.badRequestError(response.message)) // TODO: Check to see what response is returned here, we might need to parse JSON for the message code
-            case upstreamError: UpstreamErrorResponse => Left(BaseError.upstreamServiceError(cause = upstreamError))
-            case NonFatal(e)                          => Left(BaseError.internalServiceError(cause = Some(e)))
+          .map(temporaryFile => {
+            // TODO: MessageType
+            // Because we have an open stream, we **must** do something with it. For now, we send it to the ignore sink.
+            (for {
+              validated <- validationService.validateXML("cc015c", request.body.alsoTo(FileIO.toPath(temporaryFile.path)))
+            } yield validated)
+              .fold[Result](
+                baseError => Status(baseError.code.statusCode)(Json.toJson(baseError)),
+                _         => Accepted
+              )
+              .flatTap(_ => Future.successful(temporaryFile.delete()))
           })
-          .fold[Result](
-            baseError => Status(baseError.code.statusCode)(Json.toJson(baseError)),
-            _         => Accepted
-          )
-          .flatTap(_ => Future.successful(temporaryFile.delete()))
+          .fold(error => Future.successful(InternalServerError(Json.toJson(error))), result => result)
 
     }
 

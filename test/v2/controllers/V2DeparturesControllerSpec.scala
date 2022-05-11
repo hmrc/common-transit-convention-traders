@@ -16,9 +16,14 @@
 
 package v2.controllers
 
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import akka.util.Timeout
+import cats.data.EitherT
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyString
+import org.mockito.Mockito.when
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -36,10 +41,15 @@ import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
 import play.api.test.Helpers.route
 import play.api.test.Helpers.status
+import uk.gov.hmrc.http.HeaderCarrier
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
+import v2.models.errors.BaseError
+import v2.services.ValidationService
 
 import java.nio.charset.StandardCharsets
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.xml.NodeSeq
 
@@ -147,9 +157,17 @@ class V2DeparturesControllerSpec extends AnyFreeSpec
         </GOOITEGDS>
       </CC015B>
 
+  val mockValidationService: ValidationService = mock[ValidationService]
+  when(mockValidationService.validateXML(anyString(), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+      .thenAnswer(invocation => {
+        invocation.getArgument[Source[ByteString, _]](1).to(Sink.ignore).run()(app.materializer)
+        EitherT[Future, BaseError, Unit](Future.successful(Right(())))
+      })
+
   override lazy val app = GuiceApplicationBuilder()
     .overrides(
-      bind[AuthNewEnrolmentOnlyAction].to[FakeAuthNewEnrolmentOnlyAction]
+      bind[AuthNewEnrolmentOnlyAction].to[FakeAuthNewEnrolmentOnlyAction],
+      bind[ValidationService].toInstance(mockValidationService)
     )
     .build()
   lazy val sut: V2DeparturesController = app.injector.instanceOf[V2DeparturesController]

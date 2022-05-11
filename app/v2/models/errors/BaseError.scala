@@ -19,6 +19,7 @@ package v2.models.errors
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.functional.syntax.unlift
 import play.api.libs.json.OWrites
+import play.api.libs.json.Writes
 import play.api.libs.json.__
 import play.api.mvc.Result
 import uk.gov.hmrc.http.UpstreamErrorResponse
@@ -43,6 +44,9 @@ object BaseError {
   def notFoundError(message: String): BaseError =
     StandardError(message, ErrorCode.NotFound)
 
+  def schemaValidationError(message:String = "Request failed schema validation.", validationErrors: Seq[String]): SchemaValidationError =
+    SchemaValidationError(message, ErrorCode.SchemaValidation, validationErrors)
+
   def upstreamServiceError(
     message: String = "Internal server error",
     code: ErrorCode = ErrorCode.InternalServerError,
@@ -59,11 +63,23 @@ object BaseError {
 
   def unapply(error: BaseError): Option[(String, ErrorCode)] = Some((error.message, error.code))
 
-  implicit val baseErrorWrites: OWrites[BaseError] =
+  private val standardErrorWrites: OWrites[BaseError] =
     (
       (__ \ MessageFieldName).write[String] and
         (__ \ CodeFieldName).write[ErrorCode]
     )(unlift(BaseError.unapply))
+
+  implicit val schemaErrorWrites: OWrites[SchemaValidationError] =
+    (
+      (__ \ MessageFieldName).write[String] and
+        (__ \ CodeFieldName).write[ErrorCode] and
+        (__ \ "validationErrors").write(Writes.seq[String])
+      )(unlift(SchemaValidationError.unapply))
+
+  implicit val baseErrorWrites: OWrites[BaseError] = OWrites {
+    case schemaValidationError: SchemaValidationError => schemaErrorWrites.writes(schemaValidationError)
+    case baseError                                    => standardErrorWrites.writes(baseError)
+  }
 
 }
 
@@ -73,6 +89,7 @@ sealed abstract class BaseError extends Product with Serializable {
 }
 
 case class StandardError(message: String, code: ErrorCode) extends BaseError
+case class SchemaValidationError(message: String, code: ErrorCode, validationErrors: Seq[String]) extends BaseError
 
 case class UpstreamServiceError(
   message: String = "Internal server error",
