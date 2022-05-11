@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package controllers.actions
+package v2.controllers.actions
 
 import com.google.inject.Inject
 import config.Constants._
+import controllers.actions.AuthRequest
 import play.api.Logging
+import play.api.libs.json.Json
 import play.api.mvc.Results._
 import play.api.mvc._
-import play.api.libs.json.Json
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier

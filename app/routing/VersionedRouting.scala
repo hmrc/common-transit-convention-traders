@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package controllers.stream
+package routing
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
@@ -24,6 +24,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.Request
+import v2.controllers.stream.StreamingParsers
 import v2.models.errors.BaseError
 
 import scala.concurrent.Future

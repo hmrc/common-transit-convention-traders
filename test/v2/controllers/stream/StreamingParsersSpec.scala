@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package controllers.stream
+package v2.controllers.stream
 
 import akka.NotUsed
 import akka.stream.Materializer

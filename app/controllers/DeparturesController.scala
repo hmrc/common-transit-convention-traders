@@ -17,16 +17,13 @@
 package controllers
 
 import akka.stream.Materializer
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
 import audit.AuditService
 import audit.AuditType
+import com.google.inject.ImplementedBy
+import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
 import connectors.DeparturesConnector
 import controllers.actions._
-import controllers.stream.StreamingParsers
-import controllers.stream.VersionedRouting
 import metrics.HasActionMetrics
 import metrics.MetricsKeys
 import models.MessageType
@@ -47,39 +44,38 @@ import utils.Utils
 import java.time.OffsetDateTime
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
 import scala.xml.NodeSeq
 
+@ImplementedBy(classOf[DeparturesController])
+trait V1DeparturesController {
+
+  def submitDeclaration(): Action[NodeSeq]
+
+}
+
+@Singleton
 class DeparturesController @Inject() (
-  cc: ControllerComponents,
-  authAction: AuthAction,
-  authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
-  departuresConnector: DeparturesConnector,
-  validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction,
-  validateDepartureDeclarationAction: ValidateDepartureDeclarationAction,
-  ensureGuaranteeAction: EnsureGuaranteeAction,
-  auditService: AuditService,
-  messageAnalyser: AnalyseMessageActionProvider,
-  messageSizeAction: MessageSizeAction,
-  val metrics: Metrics
+   cc: ControllerComponents,
+   authAction: AuthAction,
+   departuresConnector: DeparturesConnector,
+   validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction,
+   validateDepartureDeclarationAction: ValidateDepartureDeclarationAction,
+   ensureGuaranteeAction: EnsureGuaranteeAction,
+   auditService: AuditService,
+   messageAnalyser: AnalyseMessageActionProvider,
+   val metrics: Metrics
 )(implicit ec: ExecutionContext, val materializer: Materializer)
     extends BackendController(cc)
     with HasActionMetrics
     with HttpErrorFunctions
     with ResponseHelper
-    with StreamingParsers
-    with VersionedRouting {
+    with V1DeparturesController {
 
   import MetricsKeys.Endpoints._
 
   lazy val departuresCount = histo(GetDeparturesForEoriCount)
 
-  def submitDeclaration(): Action[Source[ByteString, _]] = route {
-    case Some("application/vnd.hmrc.2.0+json") => submitDeclarationVersionTwo()
-    case _                                     => submitDeclarationVersionOne()
-  }
-
-  private def submitDeclarationVersionOne(): Action[NodeSeq] =
+  override def submitDeclaration(): Action[NodeSeq] =
     withMetricsTimerAction(SubmitDepartureDeclaration) {
       (authAction andThen validateDepartureDeclarationAction andThen messageAnalyser() andThen ensureGuaranteeAction).async(parse.xml) {
         implicit request =>
@@ -139,21 +135,6 @@ class DeparturesController @Inject() (
               handleNon2xx(invalidResponse)
           }
       }
-    }
-
-  private def submitDeclarationVersionTwo(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen messageSizeAction).async(streamFromMemory) {
-      request =>
-        // TODO: When streaming to the validation service, we will want to keep a copy of the
-        //  stream so we can replay it. We will need to do one of two things:
-        //  * Stream to a temporary file, then stream off it twice
-        //  * Stream from memory to the validation service AND a file, then stream FROM the file if we get the OK
-        //  The first option will likely be more stable but slower than the second option.
-
-        // Because we have an open stream, we **must** do something with it. For now, we send it to the ignore sink.
-        request.body.to(Sink.ignore).run()
-        logger.info("Version 2 of endpoint has been called")
-        Future.successful(Accepted)
     }
 
 }
