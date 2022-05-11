@@ -18,8 +18,6 @@ package controllers.actions
 
 import com.google.inject.Inject
 import config.AppConfig
-import models.errors._
-import models.formats.HttpFormats
 import play.api.http.HeaderNames
 import play.api.libs.json.Json
 import play.api.mvc.Results.BadRequest
@@ -27,27 +25,27 @@ import play.api.mvc.Results.EntityTooLarge
 import play.api.mvc.ActionRefiner
 import play.api.mvc.Request
 import play.api.mvc.Result
+import v2.models.errors.BaseError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Try
 
 class MessageSizeAction @Inject() (config: AppConfig)(implicit val executionContext: ExecutionContext)
-    extends ActionRefiner[Request, Request]
-    with HttpFormats {
+    extends ActionRefiner[Request, Request] {
 
   override protected def refine[A](request: Request[A]): Future[Either[Result, Request[A]]] =
     contentLengthHeader(request) match {
       case Some((_, length)) => Future.successful(checkSize(length, request))
       case None =>
-        Future.successful(Left(BadRequest(Json.toJson[TransitMovementError](BadRequestError("Missing content-length header"))))) // should never happen
+        Future.successful(Left(BadRequest(Json.toJson(BaseError.badRequestError("Missing content-length header"))))) // should never happen
     }
 
   private def checkSize[A](length: String, request: Request[A]): Either[Result, Request[A]] =
     Try(length.toInt).toOption match {
       case Some(x) if x <= limit => Right(request)
-      case Some(_)               => Left(EntityTooLarge(Json.toJson[TransitMovementError](EntityTooLargeError(s"Your message size must be less than $limit bytes"))))
-      case None                  => Left(BadRequest(Json.toJson[TransitMovementError](BadRequestError("Invalid content-length value"))))
+      case Some(_)               => Left(EntityTooLarge(Json.toJson(BaseError.entityTooLargeError(s"Your message size must be less than $limit bytes"))))
+      case None                  => Left(BadRequest(Json.toJson(BaseError.badRequestError("Invalid content-length value"))))
     }
 
   private def contentLengthHeader[A](request: Request[A]): Option[(String, String)] =

@@ -18,9 +18,6 @@ package controllers.actions
 
 import com.google.inject.Inject
 import config.Constants._
-import models.errors.ForbiddenError
-import models.errors.TransitMovementError
-import models.formats.HttpFormats
 import play.api.Logging
 import play.api.mvc.Results._
 import play.api.mvc._
@@ -29,6 +26,7 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
+import v2.models.errors.BaseError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -38,8 +36,7 @@ class AuthNewEnrolmentOnlyAction @Inject() (override val authConnector: AuthConn
 ) extends ActionBuilder[AuthRequest, AnyContent]
     with ActionFunction[Request, AuthRequest]
     with AuthorisedFunctions
-    with Logging
-    with HttpFormats {
+    with Logging {
 
   def getEnrolmentIdentifier(enrolments: Enrolments, enrolmentKey: String, enrolmentIdKey: String): Option[String] =
     for {
@@ -71,7 +68,7 @@ class AuthNewEnrolmentOnlyAction @Inject() (override val authConnector: AuthConn
   } recover {
     case e: InsufficientEnrolments =>
       logger.warn("Failed to authorise due to insufficient enrolments", e)
-      Forbidden(Json.toJson[TransitMovementError](ForbiddenError("Current user doesn't have a valid EORI enrolment.")))
+      Forbidden(Json.toJson(BaseError.forbiddenError("Current user doesn't have a valid EORI enrolment.")))
     case e: AuthorisationException =>
       logger.warn(s"Failed to authorise", e)
       Unauthorized
