@@ -20,6 +20,7 @@ import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.functional.syntax.unlift
 import play.api.libs.json.OWrites
 import play.api.libs.json.__
+import play.api.mvc.Result
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
 object BaseError {

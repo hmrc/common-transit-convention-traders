@@ -6,7 +6,10 @@ object AppDependencies {
   private val catsVersion = "2.6.1"
 
   val compile = Seq(
-    "uk.gov.hmrc"   %% "bootstrap-backend-play-28" % "5.16.0",
+    "uk.gov.hmrc"   %% "bootstrap-backend-play-28" % "5.24.0",
+
+    // TODO: When bootstrap includes this version of http-verbs (or later), we can ditch this line
+    "uk.gov.hmrc"   %% "http-verbs-play-28"        % "14.1.0",
     "org.typelevel" %% "cats-core"                 % catsVersion,
     "org.json"       % "json"                      % "20210307",
     "io.lemonlabs"  %% "scala-uri"                 % "3.6.0"
