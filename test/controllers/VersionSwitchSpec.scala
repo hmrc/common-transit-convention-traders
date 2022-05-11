@@ -22,11 +22,13 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Logging
 import play.api.http.HeaderNames
-import play.api.http.Status.UNSUPPORTED_MEDIA_TYPE
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.{Action, ControllerComponents}
-import play.api.test.Helpers.{contentAsString, defaultAwaitTimeout, status}
-import play.api.test.{FakeHeaders, FakeRequest}
+import play.api.mvc.Action
+import play.api.mvc.ControllerComponents
+import play.api.test.Helpers.contentAsString
+import play.api.test.Helpers.defaultAwaitTimeout
+import play.api.test.FakeHeaders
+import play.api.test.FakeRequest
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.Future
