@@ -20,7 +20,6 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
-import play.api.Logger
 import play.api.Logging
 import play.api.http.Status.BAD_REQUEST
 import play.api.libs.json.JsError
@@ -53,8 +52,8 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
     EitherT(validationConnector
       .validate("cc015c", source)
       .map {
-        httpResponse =>
-          Json.fromJson(httpResponse.json)(ValidationResponse.validationResponseFormat) match {
+        jsonValue =>
+          Json.fromJson(jsonValue)(ValidationResponse.validationResponseFormat) match {
             case JsSuccess(value, _) =>
               if (value.validationErrors.isEmpty) Right(())
               else Left(BaseError.schemaValidationError(validationErrors = value.validationErrors))
