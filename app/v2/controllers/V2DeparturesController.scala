@@ -32,6 +32,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
+import play.api.mvc.Request
 import play.api.mvc.Result
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
@@ -39,6 +40,11 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.MessageSizeAction
 import v2.controllers.stream.StreamingParsers
+import v2.models.ValidationError
+import v2.models.ValidationError.InvalidMessageTypeError
+import v2.models.ValidationError.OtherError
+import v2.models.ValidationError.SchemaValidationError
+import v2.models.ValidationError.XmlParseError
 import v2.models.errors.BaseError
 import v2.models.request.MessageType
 import v2.services.ValidationService
@@ -65,11 +71,11 @@ class V2DeparturesControllerImpl @Inject() (
   with StreamingParsers
   with VersionedRouting {
 
-  def withTemporaryFile[A](onFailure: => Unit)(onSucceed: Files.TemporaryFile => EitherT[Future, BaseError, A]): EitherT[Future, BaseError, A] =
+  def withTemporaryFile[A](onSucceed: Files.TemporaryFile => EitherT[Future, BaseError, A])(implicit request: Request[Source[ByteString, _]]): EitherT[Future, BaseError, A] =
     EitherT(Future.successful(Try(temporaryFileCreator.create()).toEither))
       .leftMap {
         thr =>
-          onFailure
+          request.body.runWith(Sink.ignore)
           BaseError.internalServiceError(cause = Some(thr))
       }
       .flatMap {
@@ -79,6 +85,12 @@ class V2DeparturesControllerImpl @Inject() (
           result
       }
 
+  def translateValidationError(validationError: ValidationError): BaseError = validationError match {
+      case err: OtherError                         => BaseError.internalServiceError(cause = err.thr)
+      case InvalidMessageTypeError(messageType)    => BaseError.badRequestError(s"$messageType is not a valid message type")
+      case SchemaValidationError(validationErrors) => BaseError.schemaValidationError(validationErrors = validationErrors)
+      case XmlParseError                           => BaseError.badRequestError("Body could not be parsed as XML")
+  }
 
   def submitDeclaration(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen messageSizeAction).async(streamFromMemory) {
@@ -86,10 +98,10 @@ class V2DeparturesControllerImpl @Inject() (
         logger.info("Version 2 of endpoint has been called")
 
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        withTemporaryFile(request.body.runWith(Sink.ignore)) {
+        withTemporaryFile {
           temporaryFile =>
             for {
-              validated <- validationService.validateXML(MessageType.DepartureDeclaration, request.body.alsoTo(FileIO.toPath(temporaryFile.path)))
+              validated <- validationService.validateXML(MessageType.DepartureDeclaration, request.body.alsoTo(FileIO.toPath(temporaryFile.path))).leftMap(translateValidationError)
             } yield validated
         }.fold[Result](
           baseError => Status(baseError.code.statusCode)(Json.toJson(baseError)),

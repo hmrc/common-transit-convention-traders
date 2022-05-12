@@ -18,7 +18,9 @@ package v2.models.errors
 
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.functional.syntax.unlift
+import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites
+import play.api.libs.json.Reads
 import play.api.libs.json.Writes
 import play.api.libs.json.__
 import play.api.mvc.Result
@@ -44,7 +46,7 @@ object BaseError {
   def notFoundError(message: String): BaseError =
     StandardError(message, ErrorCode.NotFound)
 
-  def schemaValidationError(message:String = "Request failed schema validation.", validationErrors: Seq[String]): SchemaValidationError =
+  def schemaValidationError(message:String = "Request failed schema validation", validationErrors: Seq[String]): SchemaValidationError =
     SchemaValidationError(message, ErrorCode.SchemaValidation, validationErrors)
 
   def upstreamServiceError(
@@ -63,22 +65,28 @@ object BaseError {
 
   def unapply(error: BaseError): Option[(String, ErrorCode)] = Some((error.message, error.code))
 
-  private val standardErrorWrites: OWrites[BaseError] =
+  private val baseErrorWrites0: OWrites[BaseError] =
     (
       (__ \ MessageFieldName).write[String] and
         (__ \ CodeFieldName).write[ErrorCode]
     )(unlift(BaseError.unapply))
 
-  implicit val schemaErrorWrites: OWrites[SchemaValidationError] =
+  implicit val standardErrorReads: Reads[StandardError] =
     (
-      (__ \ MessageFieldName).write[String] and
-        (__ \ CodeFieldName).write[ErrorCode] and
-        (__ \ "validationErrors").write(Writes.seq[String])
-      )(unlift(SchemaValidationError.unapply))
+      (__ \ MessageFieldName).read[String] and
+        (__ \ CodeFieldName).read[ErrorCode]
+      )(StandardError.apply _)
+
+  implicit val schemaErrorFormat: OFormat[SchemaValidationError] =
+    (
+      (__ \ MessageFieldName).format[String] and
+        (__ \ CodeFieldName).format[ErrorCode] and
+        (__ \ "validationErrors").format(Writes.seq[String])
+    )(SchemaValidationError.apply, unlift(SchemaValidationError.unapply))
 
   implicit val baseErrorWrites: OWrites[BaseError] = OWrites {
-    case schemaValidationError: SchemaValidationError => schemaErrorWrites.writes(schemaValidationError)
-    case baseError                                    => standardErrorWrites.writes(baseError)
+    case schemaValidationError: SchemaValidationError => schemaErrorFormat.writes(schemaValidationError)
+    case baseError                                    => baseErrorWrites0.writes(baseError)
   }
 
 }

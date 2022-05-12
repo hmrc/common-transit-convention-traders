@@ -16,12 +16,16 @@
 
 package v2.controllers
 
+import akka.stream.scaladsl.Flow
+import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import akka.util.Timeout
 import cats.data.EitherT
+import cats.syntax.all._
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.when
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -35,14 +39,17 @@ import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.REQUEST_ENTITY_TOO_LARGE
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.Json
 import play.api.mvc.Request
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
+import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.route
 import play.api.test.Helpers.status
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
+import v2.models.ValidationError
 import v2.models.errors.BaseError
 import v2.models.request.MessageType
 import v2.services.ValidationService
@@ -51,7 +58,9 @@ import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
+import scala.util.Try
 import scala.xml.NodeSeq
+import scala.xml.XML
 
 class V2DeparturesControllerSpec extends AnyFreeSpec
   with Matchers
@@ -62,7 +71,7 @@ class V2DeparturesControllerSpec extends AnyFreeSpec
 
   // TODO: Make this a cc015c
   def CC015C: NodeSeq =
-      <CC015B>
+      <CC015C>
         <SynIdeMES1>UNOC</SynIdeMES1>
         <SynVerNumMES2>3</SynVerNumMES2>
         <MesRecMES6>NCTS</MesRecMES6>
@@ -155,13 +164,28 @@ class V2DeparturesControllerSpec extends AnyFreeSpec
             <NumOfPacGS24>10</NumOfPacGS24>
           </PACGS2>
         </GOOITEGDS>
-      </CC015B>
+      </CC015C>
+
+  val testSink: Sink[ByteString, Future[Either[ValidationError, Unit]]] = {
+    Flow.fromFunction {
+      input: ByteString =>
+        Try(XML.loadString(input.decodeString(StandardCharsets.UTF_8)))
+          .toEither
+          .leftMap(_ => ValidationError.XmlParseError)
+          .flatMap {
+            element =>
+              if (element.label.equalsIgnoreCase("CC015C")) Right(())
+              else Left(ValidationError.SchemaValidationError(validationErrors = Seq("This is an error"))) // TODO: Seq of errors
+          }
+    }.toMat(Sink.last)(Keep.right)
+  }
 
   val mockValidationService: ValidationService = mock[ValidationService]
-  when(mockValidationService.validateXML(any[MessageType](), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+  when(mockValidationService.validateXML(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
       .thenAnswer(invocation => {
-        invocation.getArgument[Source[ByteString, _]](1).to(Sink.ignore).run()(app.materializer)
-        EitherT[Future, BaseError, Unit](Future.successful(Right(())))
+        EitherT(invocation.getArgument[Source[ByteString, _]](1)
+          .fold(ByteString())((current, next) => current ++ next)
+          .runWith(testSink)(app.materializer))
       })
 
   override lazy val app = GuiceApplicationBuilder()
@@ -207,11 +231,33 @@ class V2DeparturesControllerSpec extends AnyFreeSpec
       status(result) mustBe REQUEST_ENTITY_TOO_LARGE
     }
 
-    "must return Accepted when body length is within limits" in {
+    "must return Accepted when body length is within limits and is considered valid" in {
       val request = fakeRequestDepartures(method = "POST", body = CC015C, headers = standardHeaders)
       val result  = route(app, request).value
       status(result) mustBe ACCEPTED
     }
+
+    "must return Bad Request when body is not an XML document" in {
+      val request = fakeRequestDepartures(method = "POST", body = "notxml", headers = standardHeaders)
+      val result  = route(app, request).value
+      status(result) mustBe BAD_REQUEST
+      contentAsJson(result) mustBe Json.obj(
+        "code" -> "BAD_REQUEST",
+        "message" -> "XML is invalid"
+      )
+    }
+
+    "must return Bad Request when body is an XML document that would fail schema validation" in {
+      val request = fakeRequestDepartures(method = "POST", body = <test></test>, headers = standardHeaders)
+      val result  = route(app, request).value
+      status(result) mustBe BAD_REQUEST
+      contentAsJson(result) mustBe Json.obj(
+        "code" -> "SCHEMA_VALIDATION",
+        "message" -> "Request failed schema validation",
+        "validationErrors" -> Seq("This is an error")
+      )
+    }
+
   }
 
 }
