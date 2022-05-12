@@ -21,12 +21,13 @@ import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import cats.syntax.all._
+import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import play.api.Logging
 import play.api.libs.Files
+import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.BaseController
@@ -39,6 +40,7 @@ import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.MessageSizeAction
 import v2.controllers.stream.StreamingParsers
 import v2.models.errors.BaseError
+import v2.models.request.MessageType
 import v2.services.ValidationService
 
 import scala.concurrent.Future
@@ -54,6 +56,7 @@ trait V2DeparturesController {
 @Singleton
 class V2DeparturesControllerImpl @Inject() (
     val controllerComponents: ControllerComponents,
+    temporaryFileCreator: TemporaryFileCreator,
     authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
     validationService: ValidationService,
     messageSizeAction: MessageSizeAction)(implicit val materializer: Materializer) extends BaseController
@@ -62,32 +65,36 @@ class V2DeparturesControllerImpl @Inject() (
   with StreamingParsers
   with VersionedRouting {
 
+  def withTemporaryFile[A](onFailure: => Unit)(onSucceed: Files.TemporaryFile => EitherT[Future, BaseError, A]): EitherT[Future, BaseError, A] =
+    EitherT(Future.successful(Try(temporaryFileCreator.create()).toEither))
+      .leftMap {
+        thr =>
+          onFailure
+          BaseError.internalServiceError(cause = Some(thr))
+      }
+      .flatMap {
+        temporaryFile =>
+          val result = onSucceed(temporaryFile)
+          temporaryFile.delete()
+          result
+      }
+
+
   def submitDeclaration(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen messageSizeAction).async(streamFromMemory) {
       implicit request =>
         logger.info("Version 2 of endpoint has been called")
 
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        Try(Files.SingletonTemporaryFileCreator.create())
-          .toEither
-          .leftMap {
-            thr =>
-              request.body.runWith(Sink.ignore)
-              BaseError.internalServiceError(cause = Some(thr))
-          }
-          .map(temporaryFile => {
-            // TODO: MessageType
-            // Because we have an open stream, we **must** do something with it. For now, we send it to the ignore sink.
-            (for {
-              validated <- validationService.validateXML("cc015c", request.body.alsoTo(FileIO.toPath(temporaryFile.path)))
-            } yield validated)
-              .fold[Result](
-                baseError => Status(baseError.code.statusCode)(Json.toJson(baseError)),
-                _         => Accepted
-              )
-              .flatTap(_ => Future.successful(temporaryFile.delete()))
-          })
-          .fold(error => Future.successful(InternalServerError(Json.toJson(error))), result => result)
+        withTemporaryFile(request.body.runWith(Sink.ignore)) {
+          temporaryFile =>
+            for {
+              validated <- validationService.validateXML(MessageType.DepartureDeclaration, request.body.alsoTo(FileIO.toPath(temporaryFile.path)))
+            } yield validated
+        }.fold[Result](
+          baseError => Status(baseError.code.statusCode)(Json.toJson(baseError)),
+          _         => Accepted
+        )
 
     }
 

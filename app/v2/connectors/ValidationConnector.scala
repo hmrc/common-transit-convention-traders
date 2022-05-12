@@ -31,6 +31,7 @@ import play.api.libs.json.JsValue
 import play.api.libs.ws.WSClient
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import v2.models.request.MessageType
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -38,7 +39,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[ValidationConnectorImpl])
 trait ValidationConnector {
 
-  def validate(messageType: String, xmlStream: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue]
+  def validate(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue]
 
 }
 
@@ -50,7 +51,7 @@ class ValidationConnectorImpl @Inject() (ws: WSClient, appConfig: AppConfig, val
     with V2BaseConnector
     with Logging {
 
-  override def validate(messageType: String, xmlStream: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] = {
+  override def validate(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] = {
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
         val url = appConfig.validatorUrl.withPath(validationRoute(messageType))

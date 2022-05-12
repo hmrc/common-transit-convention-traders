@@ -30,6 +30,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.ValidationConnector
 import v2.models.errors.BaseError
 import v2.models.errors.InternalServiceError
+import v2.models.request.MessageType
 import v2.models.responses.ValidationResponse
 
 import javax.inject.Inject
@@ -41,16 +42,16 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[ValidationServiceImpl])
 trait ValidationService {
 
-  def validateXML(messageType: String, source: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, BaseError, Unit]
+  def validateXML(messageType: MessageType, source: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, BaseError, Unit]
 
 }
 
 @Singleton
 class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector) extends ValidationService with Logging {
 
-  override def validateXML(messageType: String, source: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, BaseError, Unit] =
+  override def validateXML(messageType: MessageType, source: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, BaseError, Unit] =
     EitherT(validationConnector
-      .validate("cc015c", source)
+      .validate(messageType, source)
       .map {
         jsonValue =>
           Json.fromJson(jsonValue)(ValidationResponse.validationResponseFormat) match {

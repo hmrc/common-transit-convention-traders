@@ -22,7 +22,6 @@ import akka.util.ByteString
 import akka.util.Timeout
 import cats.data.EitherT
 import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.when
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -45,6 +44,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import v2.models.errors.BaseError
+import v2.models.request.MessageType
 import v2.services.ValidationService
 
 import java.nio.charset.StandardCharsets
@@ -158,7 +158,7 @@ class V2DeparturesControllerSpec extends AnyFreeSpec
       </CC015B>
 
   val mockValidationService: ValidationService = mock[ValidationService]
-  when(mockValidationService.validateXML(anyString(), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+  when(mockValidationService.validateXML(any[MessageType](), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
       .thenAnswer(invocation => {
         invocation.getArgument[Source[ByteString, _]](1).to(Sink.ignore).run()(app.materializer)
         EitherT[Future, BaseError, Unit](Future.successful(Right(())))

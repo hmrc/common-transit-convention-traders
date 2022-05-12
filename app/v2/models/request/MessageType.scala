@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package v2.connectors
+package v2.models.request
 
-import io.lemonlabs.uri.UrlPath
-import uk.gov.hmrc.http.HttpErrorFunctions
-import v2.models.request.MessageType
+sealed trait MessageType {
+  def code: String
+}
 
-trait V2BaseConnector extends HttpErrorFunctions {
+sealed abstract class DepartureMessageType(val code: String) extends MessageType
 
-  protected def validationRoute(messageType: MessageType): UrlPath =
-    UrlPath.parse(s"/transit-movements-validator/message/${messageType.code}/validate")
-
+object MessageType {
+  case object DepartureDeclaration extends DepartureMessageType("IE015C")
 }
