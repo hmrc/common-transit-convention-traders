@@ -16,11 +16,17 @@
 
 package controllers
 
+import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import audit.AuditService
 import audit.AuditType
 import com.kenshoo.play.metrics.Metrics
 import connectors.DeparturesConnector
 import controllers.actions._
+import controllers.stream.StreamingParsers
+import controllers.stream.VersionedRouting
 import metrics.HasActionMetrics
 import metrics.MetricsKeys
 import models.MessageType
@@ -56,19 +62,22 @@ class DeparturesController @Inject() (
   messageAnalyser: AnalyseMessageActionProvider,
   messageSizeAction: MessageSizeAction,
   val metrics: Metrics
-)(implicit ec: ExecutionContext)
+)(implicit ec: ExecutionContext, val materializer: Materializer)
     extends BackendController(cc)
     with HasActionMetrics
     with HttpErrorFunctions
     with ResponseHelper
-    with VersionSwitch {
+    with StreamingParsers
+    with VersionedRouting {
 
   import MetricsKeys.Endpoints._
 
   lazy val departuresCount = histo(GetDeparturesForEoriCount)
 
-  def submitDeclaration(): Action[NodeSeq] =
-    versionSwitch(submitDeclarationVersionOne, submitDeclarationVersionTwo)
+  def submitDeclaration(): Action[Source[ByteString, _]] = route {
+    case Some("application/vnd.hmrc.2.0+json") => submitDeclarationVersionTwo()
+    case _                                     => submitDeclarationVersionOne()
+  }
 
   private def submitDeclarationVersionOne(): Action[NodeSeq] =
     withMetricsTimerAction(SubmitDepartureDeclaration) {
@@ -132,9 +141,17 @@ class DeparturesController @Inject() (
       }
     }
 
-  private def submitDeclarationVersionTwo(): Action[NodeSeq] =
-    (authActionNewEnrolmentOnly andThen messageSizeAction).async(parse.xml) {
-      _ =>
+  private def submitDeclarationVersionTwo(): Action[Source[ByteString, _]] =
+    (authActionNewEnrolmentOnly andThen messageSizeAction).async(streamFromMemory) {
+      request =>
+        // TODO: When streaming to the validation service, we will want to keep a copy of the
+        //  stream so we can replay it. We will need to do one of two things:
+        //  * Stream to a temporary file, then stream off it twice
+        //  * Stream from memory to the validation service AND a file, then stream FROM the file if we get the OK
+        //  The first option will likely be more stable but slower than the second option.
+
+        // Because we have an open stream, we **must** do something with it. For now, we send it to the ignore sink.
+        request.body.to(Sink.ignore).run()
         logger.info("Version 2 of endpoint has been called")
         Future.successful(Accepted)
     }
