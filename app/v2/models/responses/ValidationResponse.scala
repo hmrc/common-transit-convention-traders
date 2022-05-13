@@ -25,7 +25,7 @@ import play.api.libs.json.__
 object ValidationResponse {
 
   implicit val validationResponseFormat: OFormat[ValidationResponse] =
-    ((__ \ "validationErrors")).format(Reads.seq[String]).inmap(ValidationResponse.apply, unlift(ValidationResponse.unapply))
+    (__ \ "validationErrors").format(Reads.seq[String]).inmap(ValidationResponse.apply, unlift(ValidationResponse.unapply))
 
 }
 case class ValidationResponse(validationErrors: Seq[String])

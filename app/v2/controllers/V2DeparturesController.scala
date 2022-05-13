@@ -61,17 +61,21 @@ trait V2DeparturesController {
 
 @Singleton
 class V2DeparturesControllerImpl @Inject() (
-    val controllerComponents: ControllerComponents,
-    temporaryFileCreator: TemporaryFileCreator,
-    authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
-    validationService: ValidationService,
-    messageSizeAction: MessageSizeAction)(implicit val materializer: Materializer) extends BaseController
-  with V2DeparturesController
-  with Logging
-  with StreamingParsers
-  with VersionedRouting {
+  val controllerComponents: ControllerComponents,
+  temporaryFileCreator: TemporaryFileCreator,
+  authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
+  validationService: ValidationService,
+  messageSizeAction: MessageSizeAction
+)(implicit val materializer: Materializer)
+    extends BaseController
+    with V2DeparturesController
+    with Logging
+    with StreamingParsers
+    with VersionedRouting {
 
-  def withTemporaryFile[A](onSucceed: Files.TemporaryFile => EitherT[Future, BaseError, A])(implicit request: Request[Source[ByteString, _]]): EitherT[Future, BaseError, A] =
+  def withTemporaryFile[A](
+    onSucceed: Files.TemporaryFile => EitherT[Future, BaseError, A]
+  )(implicit request: Request[Source[ByteString, _]]): EitherT[Future, BaseError, A] =
     EitherT(Future.successful(Try(temporaryFileCreator.create()).toEither))
       .leftMap {
         thr =>
@@ -86,10 +90,10 @@ class V2DeparturesControllerImpl @Inject() (
       }
 
   def translateValidationError(validationError: ValidationError): BaseError = validationError match {
-      case err: OtherError                         => BaseError.internalServiceError(cause = err.thr)
-      case InvalidMessageTypeError(messageType)    => BaseError.badRequestError(s"$messageType is not a valid message type")
-      case SchemaValidationError(validationErrors) => BaseError.schemaValidationError(validationErrors = validationErrors)
-      case XmlParseError                           => BaseError.badRequestError("Body could not be parsed as XML")
+    case err: OtherError                         => BaseError.internalServiceError(cause = err.thr)
+    case InvalidMessageTypeError(messageType)    => BaseError.badRequestError(s"$messageType is not a valid message type")
+    case SchemaValidationError(validationErrors) => BaseError.schemaValidationError(validationErrors = validationErrors)
+    case XmlParseError                           => BaseError.badRequestError("Body could not be parsed as XML")
   }
 
   def submitDeclaration(): Action[Source[ByteString, _]] =
@@ -101,11 +105,13 @@ class V2DeparturesControllerImpl @Inject() (
         withTemporaryFile {
           temporaryFile =>
             for {
-              validated <- validationService.validateXML(MessageType.DepartureDeclaration, request.body.alsoTo(FileIO.toPath(temporaryFile.path))).leftMap(translateValidationError)
+              validated <- validationService
+                .validateXML(MessageType.DepartureDeclaration, request.body.alsoTo(FileIO.toPath(temporaryFile.path)))
+                .leftMap(translateValidationError)
             } yield validated
         }.fold[Result](
           baseError => Status(baseError.code.statusCode)(Json.toJson(baseError)),
-          _         => Accepted
+          _ => Accepted
         )
 
     }

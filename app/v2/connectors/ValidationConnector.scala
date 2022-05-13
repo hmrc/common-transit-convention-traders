@@ -26,6 +26,8 @@ import config.AppConfig
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
+import play.api.http.HeaderNames
+import play.api.http.MimeTypes
 import play.api.http.Status.OK
 import play.api.libs.json.JsValue
 import play.api.libs.ws.WSClient
@@ -46,24 +48,25 @@ trait ValidationConnector {
 // TODO: WSClient is temporary until https://github.com/hmrc/bootstrap-play/pull/75 is pulled and deployed.
 @Singleton
 class ValidationConnectorImpl @Inject() (ws: WSClient, appConfig: AppConfig, val metrics: Metrics)
-  extends ValidationConnector
+    extends ValidationConnector
     with HasMetrics
     with V2BaseConnector
     with Logging {
 
-  override def validate(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] = {
+  override def validate(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
         val url = appConfig.validatorUrl.withPath(validationRoute(messageType))
         // httpClient.post(url.toJavaURI.toURL).withBody(xmlStream).execute
 
         // TODO: Temporary, use the above as soon as practical
-        ws.url(url.toString()).withBody(xmlStream).execute("POST")
+        ws.url(url.toString())
+          .addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+          .post(xmlStream)
           .flatMap {
             response =>
               if (response.status == OK) Future.successful(response.json)
               else Future.failed(UpstreamErrorResponse(response.body, response.status))
           }
     }
-  }
 }

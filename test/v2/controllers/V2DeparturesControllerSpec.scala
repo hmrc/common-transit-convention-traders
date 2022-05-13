@@ -62,16 +62,11 @@ import scala.util.Try
 import scala.xml.NodeSeq
 import scala.xml.XML
 
-class V2DeparturesControllerSpec extends AnyFreeSpec
-  with Matchers
-  with GuiceOneAppPerSuite
-  with OptionValues
-  with ScalaFutures
-  with MockitoSugar {
+class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar {
 
   // TODO: Make this a cc015c
   def CC015C: NodeSeq =
-      <CC015C>
+    <CC015C>
         <SynIdeMES1>UNOC</SynIdeMES1>
         <SynVerNumMES2>3</SynVerNumMES2>
         <MesRecMES6>NCTS</MesRecMES6>
@@ -166,27 +161,35 @@ class V2DeparturesControllerSpec extends AnyFreeSpec
         </GOOITEGDS>
       </CC015C>
 
-  val testSink: Sink[ByteString, Future[Either[ValidationError, Unit]]] = {
-    Flow.fromFunction {
-      input: ByteString =>
-        Try(XML.loadString(input.decodeString(StandardCharsets.UTF_8)))
-          .toEither
-          .leftMap(_ => ValidationError.XmlParseError)
-          .flatMap {
-            element =>
-              if (element.label.equalsIgnoreCase("CC015C")) Right(())
-              else Left(ValidationError.SchemaValidationError(validationErrors = Seq("This is an error"))) // TODO: Seq of errors
-          }
-    }.toMat(Sink.last)(Keep.right)
-  }
+  val testSink: Sink[ByteString, Future[Either[ValidationError, Unit]]] =
+    Flow
+      .fromFunction {
+        input: ByteString =>
+          Try(XML.loadString(input.decodeString(StandardCharsets.UTF_8))).toEither
+            .leftMap(
+              _ => ValidationError.XmlParseError
+            )
+            .flatMap {
+              element =>
+                if (element.label.equalsIgnoreCase("CC015C")) Right(())
+                else Left(ValidationError.SchemaValidationError(validationErrors = Seq("This is an error"))) // TODO: Seq of errors
+            }
+      }
+      .toMat(Sink.last)(Keep.right)
 
   val mockValidationService: ValidationService = mock[ValidationService]
   when(mockValidationService.validateXML(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
-      .thenAnswer(invocation => {
-        EitherT(invocation.getArgument[Source[ByteString, _]](1)
-          .fold(ByteString())((current, next) => current ++ next)
-          .runWith(testSink)(app.materializer))
-      })
+    .thenAnswer {
+      invocation =>
+        EitherT(
+          invocation
+            .getArgument[Source[ByteString, _]](1)
+            .fold(ByteString())(
+              (current, next) => current ++ next
+            )
+            .runWith(testSink)(app.materializer)
+        )
+    }
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(
@@ -210,15 +213,18 @@ class V2DeparturesControllerSpec extends AnyFreeSpec
   "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
 
     // For the content length headers, we have to ensure that we send something
-    val standardHeaders = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml", HeaderNames.CONTENT_LENGTH -> "1000"))
+    val standardHeaders = FakeHeaders(
+      Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml", HeaderNames.CONTENT_LENGTH -> "1000")
+    )
 
     "must return BadRequest when content length is not sent" in {
       val departureHeaders = FakeHeaders(
         Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml")
       )
       // We emulate no ContentType by sending in a stream directly, without going through Play's request builder
-      val request = fakeRequestDepartures(method = "POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = departureHeaders)
-      val result  = app.injector.instanceOf[V2DeparturesController].submitDeclaration()(request)
+      val request =
+        fakeRequestDepartures(method = "POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = departureHeaders)
+      val result = app.injector.instanceOf[V2DeparturesController].submitDeclaration()(request)
       status(result) mustBe BAD_REQUEST
     }
 
@@ -242,8 +248,8 @@ class V2DeparturesControllerSpec extends AnyFreeSpec
       val result  = route(app, request).value
       status(result) mustBe BAD_REQUEST
       contentAsJson(result) mustBe Json.obj(
-        "code" -> "BAD_REQUEST",
-        "message" -> "XML is invalid"
+        "code"    -> "BAD_REQUEST",
+        "message" -> "Body could not be parsed as XML"
       )
     }
 
@@ -252,8 +258,8 @@ class V2DeparturesControllerSpec extends AnyFreeSpec
       val result  = route(app, request).value
       status(result) mustBe BAD_REQUEST
       contentAsJson(result) mustBe Json.obj(
-        "code" -> "SCHEMA_VALIDATION",
-        "message" -> "Request failed schema validation",
+        "code"             -> "SCHEMA_VALIDATION",
+        "message"          -> "Request failed schema validation",
         "validationErrors" -> Seq("This is an error")
       )
     }

@@ -55,15 +55,15 @@ trait V1DeparturesController {
 
 @Singleton
 class DeparturesController @Inject() (
-   cc: ControllerComponents,
-   authAction: AuthAction,
-   departuresConnector: DeparturesConnector,
-   validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction,
-   validateDepartureDeclarationAction: ValidateDepartureDeclarationAction,
-   ensureGuaranteeAction: EnsureGuaranteeAction,
-   auditService: AuditService,
-   messageAnalyser: AnalyseMessageActionProvider,
-   val metrics: Metrics
+  cc: ControllerComponents,
+  authAction: AuthAction,
+  departuresConnector: DeparturesConnector,
+  validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction,
+  validateDepartureDeclarationAction: ValidateDepartureDeclarationAction,
+  ensureGuaranteeAction: EnsureGuaranteeAction,
+  auditService: AuditService,
+  messageAnalyser: AnalyseMessageActionProvider,
+  val metrics: Metrics
 )(implicit ec: ExecutionContext, val materializer: Materializer)
     extends BackendController(cc)
     with HasActionMetrics

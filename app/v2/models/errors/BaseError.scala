@@ -23,7 +23,6 @@ import play.api.libs.json.OWrites
 import play.api.libs.json.Reads
 import play.api.libs.json.Writes
 import play.api.libs.json.__
-import play.api.mvc.Result
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
 object BaseError {
@@ -46,7 +45,7 @@ object BaseError {
   def notFoundError(message: String): BaseError =
     StandardError(message, ErrorCode.NotFound)
 
-  def schemaValidationError(message:String = "Request failed schema validation", validationErrors: Seq[String]): SchemaValidationError =
+  def schemaValidationError(message: String = "Request failed schema validation", validationErrors: Seq[String]): SchemaValidationError =
     SchemaValidationError(message, ErrorCode.SchemaValidation, validationErrors)
 
   def upstreamServiceError(
@@ -75,7 +74,7 @@ object BaseError {
     (
       (__ \ MessageFieldName).read[String] and
         (__ \ CodeFieldName).read[ErrorCode]
-      )(StandardError.apply _)
+    )(StandardError.apply _)
 
   implicit val schemaErrorFormat: OFormat[SchemaValidationError] =
     (
@@ -96,7 +95,7 @@ sealed abstract class BaseError extends Product with Serializable {
   def code: ErrorCode
 }
 
-case class StandardError(message: String, code: ErrorCode) extends BaseError
+case class StandardError(message: String, code: ErrorCode)                                        extends BaseError
 case class SchemaValidationError(message: String, code: ErrorCode, validationErrors: Seq[String]) extends BaseError
 
 case class UpstreamServiceError(

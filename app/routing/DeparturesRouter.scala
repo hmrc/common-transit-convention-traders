@@ -27,11 +27,9 @@ import play.api.mvc.ControllerComponents
 import v2.controllers.V2DeparturesController
 import v2.controllers.stream.StreamingParsers
 
-class DeparturesRouter @Inject()(val controllerComponents: ControllerComponents,
-                                 v1Departures: V1DeparturesController,
-                                 v2Departures: V2DeparturesController
-                                 )(implicit val materializer: Materializer)
-  extends BaseController
+class DeparturesRouter @Inject() (val controllerComponents: ControllerComponents, v1Departures: V1DeparturesController, v2Departures: V2DeparturesController)(
+  implicit val materializer: Materializer
+) extends BaseController
     with StreamingParsers
     with VersionedRouting {
 

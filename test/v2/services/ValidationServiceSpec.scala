@@ -36,75 +36,73 @@ import v2.models.request.MessageType
 import v2.models.responses.ValidationResponse
 
 import java.nio.charset.StandardCharsets
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 
-class ValidationServiceSpec extends AnyFreeSpec
-  with Matchers
-  with OptionValues
-  with ScalaFutures
-  with MockitoSugar {
+class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  val SchemaValidXml: Source[ByteString, NotUsed] = Source.single(ByteString("<schemaValid></schemaValid>", StandardCharsets.UTF_8))
-  val SchemaInvalidXml: Source[ByteString, NotUsed] = Source.single(ByteString("<schemaInvalid></schemaInvalid>", StandardCharsets.UTF_8))
-  val InvalidXml: Source[ByteString, NotUsed] = Source.single(ByteString("invalid", StandardCharsets.UTF_8))
-  val InternalServerError: Source[ByteString, NotUsed] = Source.single(ByteString("error", StandardCharsets.UTF_8))
+  val SchemaValidXml: Source[ByteString, NotUsed]       = Source.single(ByteString("<schemaValid></schemaValid>", StandardCharsets.UTF_8))
+  val SchemaInvalidXml: Source[ByteString, NotUsed]     = Source.single(ByteString("<schemaInvalid></schemaInvalid>", StandardCharsets.UTF_8))
+  val InvalidXml: Source[ByteString, NotUsed]           = Source.single(ByteString("invalid", StandardCharsets.UTF_8))
+  val UpstreamError: Source[ByteString, NotUsed]        = Source.single(ByteString("error", StandardCharsets.UTF_8))
+  val InternalServiceError: Source[ByteString, NotUsed] = Source.single(ByteString("exception", StandardCharsets.UTF_8))
 
-  private val upstreamErrorResponse = UpstreamErrorResponse(Json.obj("code" -> "INTERNAL_SERVER_ERROR", "message" -> "Internal Server Error").toString, INTERNAL_SERVER_ERROR)
+  private val upstreamErrorResponse =
+    UpstreamErrorResponse(Json.obj("code" -> "INTERNAL_SERVER_ERROR", "message" -> "Internal Server Error").toString, INTERNAL_SERVER_ERROR)
+  private val internalException = new IllegalStateException("arbitrary failure")
 
   val fakeValidationConnector: ValidationConnector = new ValidationConnector {
+
     override def validate(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
       xmlStream match {
-        case SchemaValidXml => Future.successful(Json.toJson(ValidationResponse(Seq.empty)))
-        case SchemaInvalidXml => Future.successful(Json.toJson(ValidationResponse(Seq("nope"))))
-        case InvalidXml => Future.failed(UpstreamErrorResponse(Json.obj("code" -> "BAD_REQUEST", "message" -> "Invalid XML").toString, BAD_REQUEST))
-        case InvalidXml => Future.failed(upstreamErrorResponse)
+        case SchemaValidXml       => Future.successful(Json.toJson(ValidationResponse(Seq.empty)))
+        case SchemaInvalidXml     => Future.successful(Json.toJson(ValidationResponse(Seq("nope"))))
+        case InvalidXml           => Future.failed(UpstreamErrorResponse(Json.obj("code" -> "BAD_REQUEST", "message" -> "Invalid XML").toString, BAD_REQUEST))
+        case UpstreamError        => Future.failed(upstreamErrorResponse)
+        case InternalServiceError => Future.failed(internalException)
       }
   }
 
-  "with valid XML" - {
+  "validating XML" - {
 
     "should return a right with no validation errors" in {
-      val sut = new ValidationServiceImpl(fakeValidationConnector)
+      val sut    = new ValidationServiceImpl(fakeValidationConnector)
       val result = sut.validateXML(MessageType.DepartureDeclaration, SchemaValidXml)
 
-      result mustBe Right(())
+      Await.result(result.value, 5.seconds) mustBe Right(())
     }
 
-  }
-
-  "with valid but non-conforming XML" - {
-
-    "should return a left with a SchemaValidationError" in {
-      val sut = new ValidationServiceImpl(fakeValidationConnector)
+    "non-conforming XML should return a left with a SchemaValidationError" in {
+      val sut    = new ValidationServiceImpl(fakeValidationConnector)
       val result = sut.validateXML(MessageType.DepartureDeclaration, SchemaInvalidXml)
 
-      result mustBe Left(ValidationError.SchemaValidationError(Seq("nope")))
+      Await.result(result.value, 5.seconds) mustBe Left(ValidationError.SchemaValidationError(Seq("nope")))
     }
 
-  }
+    "a string that is not XML should return a left with a XmlParseError" in {
+      val sut    = new ValidationServiceImpl(fakeValidationConnector)
+      val result = sut.validateXML(MessageType.DepartureDeclaration, InvalidXml)
 
-  "with invalid XML" - {
-
-    "should return a left with a XmlParseError" in {
-      val sut = new ValidationServiceImpl(fakeValidationConnector)
-      val result = sut.validateXML(MessageType.DepartureDeclaration, SchemaInvalidXml)
-
-      result mustBe Left(ValidationError.XmlParseError)
+      Await.result(result.value, 5.seconds) mustBe Left(ValidationError.XmlParseError)
     }
 
-  }
+    "an upstream error should return a left with a OtherError" in {
+      val sut    = new ValidationServiceImpl(fakeValidationConnector)
+      val result = sut.validateXML(MessageType.DepartureDeclaration, UpstreamError)
 
-  "with a response that causes and unstream error" - {
+      Await.result(result.value, 5.seconds) mustBe Left(ValidationError.OtherError(Some(upstreamErrorResponse)))
+    }
 
-    "should return a left with a OtherError" in {
-      val sut = new ValidationServiceImpl(fakeValidationConnector)
-      val result = sut.validateXML(MessageType.DepartureDeclaration, InternalServerError)
+    "an internal exception should return a left with a OtherError" in {
+      val sut    = new ValidationServiceImpl(fakeValidationConnector)
+      val result = sut.validateXML(MessageType.DepartureDeclaration, InternalServiceError)
 
-      result mustBe Left(ValidationError.OtherError(Some(upstreamErrorResponse)))
+      Await.result(result.value, 5.seconds) mustBe Left(ValidationError.OtherError(Some(internalException)))
     }
 
   }

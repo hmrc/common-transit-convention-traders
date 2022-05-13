@@ -24,14 +24,15 @@ import play.api.libs.json.Reads
 import play.api.libs.json.Writes
 
 sealed abstract class ErrorCode(val code: String, val statusCode: Int) extends Product with Serializable
+
 object ErrorCode {
-  case object BadRequest extends ErrorCode("BAD_REQUEST", BAD_REQUEST)
-  case object NotFound extends ErrorCode("NOT_FOUND", NOT_FOUND)
-  case object Forbidden extends ErrorCode("FORBIDDEN", FORBIDDEN)
-  case object InternalServerError extends ErrorCode("INTERNAL_SERVER_ERROR", INTERNAL_SERVER_ERROR)
-  case object GatewayTimeout extends ErrorCode("GATEWAY_TIMEOUT", GATEWAY_TIMEOUT)
-  case object SchemaValidation extends ErrorCode("SCHEMA_VALIDATION", BAD_REQUEST)
-  case object EntityTooLarge extends ErrorCode("REQUEST_ENTITY_TOO_LARGE", REQUEST_ENTITY_TOO_LARGE)
+  case object BadRequest           extends ErrorCode("BAD_REQUEST", BAD_REQUEST)
+  case object NotFound             extends ErrorCode("NOT_FOUND", NOT_FOUND)
+  case object Forbidden            extends ErrorCode("FORBIDDEN", FORBIDDEN)
+  case object InternalServerError  extends ErrorCode("INTERNAL_SERVER_ERROR", INTERNAL_SERVER_ERROR)
+  case object GatewayTimeout       extends ErrorCode("GATEWAY_TIMEOUT", GATEWAY_TIMEOUT)
+  case object SchemaValidation     extends ErrorCode("SCHEMA_VALIDATION", BAD_REQUEST)
+  case object EntityTooLarge       extends ErrorCode("REQUEST_ENTITY_TOO_LARGE", REQUEST_ENTITY_TOO_LARGE)
   case object UnsupportedMediaType extends ErrorCode("UNSUPPORTED_MEDIA_TYPE", UNSUPPORTED_MEDIA_TYPE)
 
   lazy val errorCodes: Seq[ErrorCode] = Seq(
@@ -50,9 +51,14 @@ object ErrorCode {
   }
 
   implicit val errorCodeReads: Reads[ErrorCode] = Reads {
-    errorCode => errorCodes
-      .find(value => value.code == errorCode.asInstanceOf[JsString].value)
-      .map(errorCode => JsSuccess(errorCode))
-      .getOrElse(JsError())
+    errorCode =>
+      errorCodes
+        .find(
+          value => value.code == errorCode.asInstanceOf[JsString].value
+        )
+        .map(
+          errorCode => JsSuccess(errorCode)
+        )
+        .getOrElse(JsError())
   }
 }

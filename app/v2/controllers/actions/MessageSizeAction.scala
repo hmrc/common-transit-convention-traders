@@ -31,8 +31,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Try
 
-class MessageSizeAction @Inject() (config: AppConfig)(implicit val executionContext: ExecutionContext)
-    extends ActionRefiner[Request, Request] {
+class MessageSizeAction @Inject() (config: AppConfig)(implicit val executionContext: ExecutionContext) extends ActionRefiner[Request, Request] {
 
   override protected def refine[A](request: Request[A]): Future[Either[Result, Request[A]]] =
     contentLengthHeader(request) match {

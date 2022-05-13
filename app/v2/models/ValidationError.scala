@@ -21,9 +21,8 @@ import v2.models.responses.ValidationResponse
 sealed trait ValidationError
 
 object ValidationError {
-  case class OtherError(thr: Option[Throwable] = None) extends ValidationError
-  case class InvalidMessageTypeError(messageType: String) extends ValidationError
+  case class OtherError(thr: Option[Throwable] = None)            extends ValidationError
+  case class InvalidMessageTypeError(messageType: String)         extends ValidationError
   case class SchemaValidationError(validationErrors: Seq[String]) extends ValidationError // TODO: fix for correct type
-  case object XmlParseError extends ValidationError
+  case object XmlParseError                                       extends ValidationError
 }
-
