@@ -51,18 +51,13 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
-class ValidationConnectorSpec extends AnyFreeSpec
-  with Matchers
-  with GuiceOneAppPerSuite
-  with utils.WiremockSuite
-  with ScalaFutures
-  with IntegrationPatience {
+class ValidationConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with utils.WiremockSuite with ScalaFutures with IntegrationPatience {
 
-  lazy val wsclient: WSClient             = app.injector.instanceOf[WSClient]
-  lazy val appConfig: AppConfig           = app.injector.instanceOf[AppConfig]
+  lazy val wsclient: WSClient   = app.injector.instanceOf[WSClient]
+  lazy val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
   lazy val validationConnector: ValidationConnectorImpl = new ValidationConnectorImpl(wsclient, appConfig, new TestMetrics())
-  implicit lazy val ec: ExecutionContext = app.materializer.executionContext
+  implicit lazy val ec: ExecutionContext                = app.materializer.executionContext
 
   "POST /message/:messageType/validate" - {
 
@@ -72,17 +67,17 @@ class ValidationConnectorSpec extends AnyFreeSpec
         post(
           urlEqualTo("/transit-movements-validator/message/IE015C/validate") // /transit-movements-validator/message/IE015C/validate
         )
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-        .willReturn(
-          aResponse()
-            .withStatus(OK)
-            .withBody(
-              Json.stringify(
-                Json.toJson(
-                  ValidationResponse(Seq())
+          .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(
+                Json.stringify(
+                  Json.toJson(
+                    ValidationResponse(Seq())
+                  )
                 )
               )
-            )
           )
       )
 
@@ -149,7 +144,7 @@ class ValidationConnectorSpec extends AnyFreeSpec
       val result: Future[JsValue] = Await.ready(validationConnector.validate(MessageType.DepartureDeclaration, source), 5.seconds)
 
       val thr = result.eitherValue.get.left.get
-      thr mustBe a [http.UpstreamErrorResponse]
+      thr mustBe a[http.UpstreamErrorResponse]
       thr.asInstanceOf[UpstreamErrorResponse].statusCode mustBe BAD_REQUEST
       Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj("code" -> "BAD_REQUEST", "message" -> "Invalid XML")
     }
