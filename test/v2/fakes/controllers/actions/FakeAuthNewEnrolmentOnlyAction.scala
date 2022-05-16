@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-package controllers.actions
+package v2.fakes.controllers.actions
 
 import com.google.inject.Inject
 import config.AppConfig
-import play.api.mvc._
-import uk.gov.hmrc.auth.core._
+import controllers.actions.AuthRequest
+import play.api.mvc.BodyParsers
+import play.api.mvc.Request
+import play.api.mvc.Result
+import uk.gov.hmrc.auth.core.AuthConnector
+import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future

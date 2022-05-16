@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package controllers.actions
+package v2.controllers.actions
 
+import controllers.actions.AuthAction
+import controllers.actions.FakeAuthAction
 import data.TestXml
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -27,10 +29,10 @@ import play.api.http.HeaderNames
 import play.api.http.HttpVerbs
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.test.Helpers._
 import play.api.mvc._
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.ExecutionContext.Implicits.global

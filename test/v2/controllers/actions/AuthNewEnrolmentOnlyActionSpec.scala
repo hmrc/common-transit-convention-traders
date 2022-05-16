@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package controllers.actions
+package v2.controllers.actions
 
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._

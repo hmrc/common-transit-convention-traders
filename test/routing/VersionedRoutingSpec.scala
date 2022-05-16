@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package controllers.stream
+package routing
 
 import akka.NotUsed
 import akka.stream.Materializer
@@ -38,6 +38,7 @@ import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.defaultAwaitTimeout
 import play.api.test.Helpers.status
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import v2.controllers.stream.StreamingParsers
 
 import java.nio.charset.StandardCharsets
 import scala.collection.immutable

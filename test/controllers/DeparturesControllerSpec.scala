@@ -16,17 +16,12 @@
 
 package controllers
 
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
 import audit.AuditService
 import com.kenshoo.play.metrics.Metrics
 import connectors.DeparturesConnector
 import connectors.ResponseHeaders
 import controllers.actions.AuthAction
-import controllers.actions.AuthNewEnrolmentOnlyAction
 import controllers.actions.FakeAuthAction
-import controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import data.TestXml
 import models.Box
 import models.domain.Departure
@@ -50,16 +45,22 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
+import play.api.mvc.Request
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
-import play.api.test.Helpers.headers
 import play.api.test.Helpers._
+import play.api.test.Helpers.headers
 import services.EnsureGuaranteeService
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.CallOps._
 import utils.TestMetrics
+import v2.controllers.V2DeparturesController
+import v2.fakes.controllers.FakeV2DeparturesController
 
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import scala.concurrent.Future
 
 class DeparturesControllerSpec
@@ -71,26 +72,17 @@ class DeparturesControllerSpec
     with MockitoSugar
     with BeforeAndAfterEach
     with TestXml {
-  private val mockDepartureConnector: DeparturesConnector  = mock[DeparturesConnector]
-  private val mockGuaranteeService: EnsureGuaranteeService = mock[EnsureGuaranteeService]
-  private val mockAuditService: AuditService               = mock[AuditService]
+  private val mockDepartureConnector: DeparturesConnector        = mock[DeparturesConnector]
+  private val mockGuaranteeService: EnsureGuaranteeService       = mock[EnsureGuaranteeService]
+  private val mockAuditService: AuditService                     = mock[AuditService]
 
   when(mockGuaranteeService.ensureGuarantee(any())).thenReturn(Right(CC015B))
 
-  lazy val appVersionOne = GuiceApplicationBuilder()
+  override lazy val app = GuiceApplicationBuilder()
     .overrides(
       bind[Metrics].toInstance(new TestMetrics),
       bind[AuthAction].to[FakeAuthAction],
-      bind[DeparturesConnector].toInstance(mockDepartureConnector),
-      bind[EnsureGuaranteeService].toInstance(mockGuaranteeService),
-      bind[AuditService].toInstance(mockAuditService)
-    )
-    .build()
-
-  lazy val appVersionTwo = GuiceApplicationBuilder()
-    .overrides(
-      bind[Metrics].toInstance(new TestMetrics),
-      bind[AuthNewEnrolmentOnlyAction].to[FakeAuthNewEnrolmentOnlyAction],
+      bind[V2DeparturesController].to[FakeV2DeparturesController],
       bind[DeparturesConnector].toInstance(mockDepartureConnector),
       bind[EnsureGuaranteeService].toInstance(mockGuaranteeService),
       bind[AuditService].toInstance(mockAuditService)
@@ -188,9 +180,9 @@ class DeparturesControllerSpec
   def fakeRequestDepartures[A](
     method: String,
     headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")),
-    uri: String = routes.DeparturesController.submitDeclaration().url,
+    uri: String = routing.routes.DeparturesRouter.submitDeclaration().url,
     body: A
-  ) =
+  ): Request[A] =
     FakeRequest(method = method, uri = uri, headers = headers, body = body)
 
   "POST /movements/departures" - {
@@ -218,7 +210,7 @@ class DeparturesControllerSpec
                 .thenReturn(Future.successful(Right(responseHeaders("/transits-movements-trader-at-departure/movements/departures/123"))))
 
               val request = fakeRequestDepartures(method = "POST", body = CC015BRequiringDefaultGuarantee, headers = departureHeaders)
-              val result  = route(appVersionOne, request).value
+              val result  = route(app, request).value
 
               val expectedJson = Json.parse("""
                   |{
@@ -246,7 +238,7 @@ class DeparturesControllerSpec
                 )
 
               val request = fakeRequestDepartures(method = "POST", body = CC015B, headers = departureHeaders)
-              val result  = route(appVersionOne, request).value
+              val result  = route(app, request).value
 
               val expectedJson = Json.parse("""
                   |{
@@ -271,7 +263,7 @@ class DeparturesControllerSpec
 
           "must return BadRequest when xml includes MesSenMES3" in {
             val request = fakeRequestDepartures(method = "POST", body = CC015BwithMesSenMES3, headers = departureHeaders)
-            val result  = route(appVersionOne, request).value
+            val result  = route(app, request).value
 
             status(result) mustBe BAD_REQUEST
           }
@@ -283,7 +275,7 @@ class DeparturesControllerSpec
               .thenReturn(Future.successful(Left(errorResponse)))
 
             val request = fakeRequestDepartures(method = "POST", body = CC015B)
-            val result  = route(appVersionOne, request).value
+            val result  = route(app, request).value
 
             status(result) mustBe INTERNAL_SERVER_ERROR
           }
@@ -293,7 +285,7 @@ class DeparturesControllerSpec
               .thenReturn(Future.successful(Right(emptyHeaders)))
 
             val request = fakeRequestDepartures(method = "POST", body = CC015B)
-            val result  = route(appVersionOne, request).value
+            val result  = route(app, request).value
 
             status(result) mustBe INTERNAL_SERVER_ERROR
           }
@@ -307,7 +299,7 @@ class DeparturesControllerSpec
               )
 
             val request = fakeRequestDepartures(method = "POST", body = CC015B)
-            val result  = route(appVersionOne, request).value
+            val result  = route(app, request).value
 
             val expectedJson = Json.parse("""
                 |{
@@ -338,7 +330,7 @@ class DeparturesControllerSpec
               headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json") ++ acceptHeader),
               body = AnyContentAsEmpty
             )
-            val result = route(appVersionOne, request).value
+            val result = route(app, request).value
 
             status(result) mustBe UNSUPPORTED_MEDIA_TYPE
           }
@@ -351,7 +343,7 @@ class DeparturesControllerSpec
 
             val request = FakeRequest(method = "POST", uri = "/movements/departures", headers = FakeHeaders(acceptHeader), body = AnyContentAsEmpty)
 
-            val result = route(appVersionOne, request).value
+            val result = route(app, request).value
 
             status(result) mustBe UNSUPPORTED_MEDIA_TYPE
           }
@@ -363,48 +355,12 @@ class DeparturesControllerSpec
               )
 
             val request = FakeRequest(method = "POST", uri = "/movements/departures", headers = FakeHeaders(acceptHeader), body = AnyContentAsEmpty)
-            val result  = route(appVersionOne, request).value
+            val result  = route(app, request).value
 
             status(result) mustBe UNSUPPORTED_MEDIA_TYPE
           }
         }
     }
-
-    // Version 2
-    "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
-
-      val departureHeaders = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml"))
-
-      "must return Accepted when successful" in {
-
-        when(mockDepartureConnector.post(any())(any(), any()))
-          .thenReturn(Future.successful(Right(responseHeaders("/transits-movements-trader-at-departure/movements/departures/123"))))
-
-        val request = fakeRequestDepartures(method = "POST", body = CC015BRequiringDefaultGuarantee, headers = departureHeaders)
-        val result  = route(appVersionTwo, request).value
-
-        status(result) mustBe ACCEPTED
-      }
-
-      "must return RequestEntityTooLarge when body size exceeds limit" in {
-        val departureHeaders = FakeHeaders(
-          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml", HeaderNames.CONTENT_LENGTH -> "500001")
-        )
-        val request = fakeRequestDepartures(method = "POST", body = CC015BRequiringDefaultGuarantee, headers = departureHeaders)
-        val result  = route(appVersionTwo, request).value
-        status(result) mustBe REQUEST_ENTITY_TOO_LARGE
-      }
-
-      "must return Accepted when body length is within limits" in {
-        val departureHeaders = FakeHeaders(
-          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml", HeaderNames.CONTENT_LENGTH -> "500000")
-        )
-        val request = fakeRequestDepartures(method = "POST", body = CC015BRequiringDefaultGuarantee, headers = departureHeaders)
-        val result  = route(appVersionTwo, request).value
-        status(result) mustBe ACCEPTED
-      }
-    }
-
   }
 
   "GET  /movements/departures/:departureId" - {
@@ -418,7 +374,7 @@ class DeparturesControllerSpec
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
-      val result = route(appVersionOne, request).value
+      val result = route(app, request).value
 
       status(result) mustBe OK
       contentAsString(result) mustEqual expectedDepartureResult.toString()
@@ -434,7 +390,7 @@ class DeparturesControllerSpec
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
-      val result = route(appVersionOne, request).value
+      val result = route(app, request).value
 
       status(result) mustBe NOT_FOUND
     }
@@ -449,7 +405,7 @@ class DeparturesControllerSpec
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
-      val result = route(appVersionOne, request).value
+      val result = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
     }
@@ -467,7 +423,7 @@ class DeparturesControllerSpec
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
-      val result = route(appVersionOne, request).value
+      val result = route(app, request).value
 
       status(result) mustBe OK
       contentAsString(result) mustEqual expectedDeparture.toString()
@@ -483,7 +439,7 @@ class DeparturesControllerSpec
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
-      val result = route(appVersionOne, request).value
+      val result = route(app, request).value
 
       val expectedJson = Json.parse("""
           |{
@@ -516,10 +472,10 @@ class DeparturesControllerSpec
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
-      val result = route(appVersionOne, request).value
+      val result = route(app, request).value
 
       status(result) mustBe OK
-      argCaptor.getValue() mustBe dateTime
+      argCaptor.getValue.asInstanceOf[Option[OffsetDateTime]] mustBe dateTime
     }
 
     "return 500 for downstream errors" in {
@@ -532,7 +488,7 @@ class DeparturesControllerSpec
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
-      val result = route(appVersionOne, request).value
+      val result = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
     }

@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package controllers.actions
+package v2.controllers.actions
 
 import com.google.inject.Inject
 import config.AppConfig
 import play.api.http.HeaderNames
 import play.api.libs.json.Json
-import play.api.mvc.Results.BadRequest
-import play.api.mvc.Results.EntityTooLarge
 import play.api.mvc.ActionRefiner
 import play.api.mvc.Request
 import play.api.mvc.Result
+import play.api.mvc.Results.BadRequest
+import play.api.mvc.Results.EntityTooLarge
 import v2.models.errors.BaseError
 
 import scala.concurrent.ExecutionContext
