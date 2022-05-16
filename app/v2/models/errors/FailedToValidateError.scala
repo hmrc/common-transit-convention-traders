@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 
-package v2.models.responses
+package v2.models.errors
 
 import cats.data.NonEmptyList
-import play.api.libs.functional.syntax.toInvariantFunctorOps
-import play.api.libs.functional.syntax.unlift
-import play.api.libs.json.OFormat
-import play.api.libs.json.__
-import v2.models.errors.ValidationError
-import v2.models.formats.CommonFormats
 
-object ValidationResponse extends CommonFormats {
+sealed trait FailedToValidateError
 
-  implicit val validationResponseFormat: OFormat[ValidationResponse] =
-    (__ \ "validationErrors").format[NonEmptyList[ValidationError]].inmap(ValidationResponse.apply, unlift(ValidationResponse.unapply))
-
+object FailedToValidateError {
+  case class OtherError(thr: Option[Throwable] = None)                                    extends FailedToValidateError
+  case class InvalidMessageTypeError(messageType: String)                                 extends FailedToValidateError
+  case class SchemaFailedToValidateError(validationErrors: NonEmptyList[ValidationError]) extends FailedToValidateError
 }
-case class ValidationResponse(validationErrors: NonEmptyList[ValidationError])
+

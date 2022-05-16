@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package v2.models
+package v2.models.errors
 
-import v2.models.responses.ValidationResponse
-
-sealed trait ValidationError
+import play.api.libs.json.Json
+import play.api.libs.json.Reads
+import play.api.libs.json.Writes
 
 object ValidationError {
-  case class OtherError(thr: Option[Throwable] = None)            extends ValidationError
-  case class InvalidMessageTypeError(messageType: String)         extends ValidationError
-  case class SchemaValidationError(validationErrors: Seq[String]) extends ValidationError // TODO: fix for correct type
-  case object XmlParseError                                       extends ValidationError
+  implicit val validationErrorReads: Reads[ValidationError]   = Json.reads[ValidationError]
+  implicit val validationErrorWrites: Writes[ValidationError] = Json.writes[ValidationError]
 }
+case class ValidationError (lineNumber: Int, columnNumber: Int, message: String)

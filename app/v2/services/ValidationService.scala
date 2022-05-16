@@ -22,16 +22,11 @@ import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import play.api.Logging
 import play.api.http.Status.BAD_REQUEST
-import play.api.libs.json.JsError
-import play.api.libs.json.JsSuccess
-import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.ValidationConnector
-import v2.models.ValidationError
-import v2.models.errors.BaseError
+import v2.models.errors.FailedToValidateError
 import v2.models.request.MessageType
-import v2.models.responses.ValidationResponse
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -45,7 +40,7 @@ trait ValidationService {
   def validateXML(messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, ValidationError, Unit]
+  ): EitherT[Future, FailedToValidateError, Unit]
 
 }
 
@@ -55,40 +50,21 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
   override def validateXML(messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, ValidationError, Unit] =
+  ): EitherT[Future, FailedToValidateError, Unit] =
     EitherT(
       validationConnector
         .validate(messageType, source)
         .map {
-          jsonValue =>
-            Json.fromJson(jsonValue)(ValidationResponse.validationResponseFormat) match {
-              case JsSuccess(value, _) =>
-                if (value.validationErrors.isEmpty) Right(())
-                else Left(ValidationError.SchemaValidationError(value.validationErrors))
-              case JsError(errors) =>
-                // This shouldn't happen - if it does it's something we need to fix.
-                logger.error(s"Failed to parse ValidationResult from Validation Service, the following errors were returned when parsing: ${errors.mkString}")
-                Left(ValidationError.OtherError())
-            }
+          case None           => Right(())
+          case Some(response) => Left(FailedToValidateError.SchemaFailedToValidateError(response.validationErrors))
         }
         .recover {
           // A bad request might be returned if the stream doesn't contain XML, in which case, we need to return a bad request.
           case UpstreamErrorResponse.Upstream4xxResponse(response) if response.statusCode == BAD_REQUEST =>
-            Left(
-              Json
-                .parse(response.message)
-                .validate(BaseError.standardErrorReads)
-                .map(
-                  _ => ValidationError.XmlParseError
-                ) // TODO: only select if the correct bad request
-                .recoverTotal {
-                  error =>
-                    logger.error(s"Errors occurred while validating error JSON: ${error.errors.mkString}")
-                    ValidationError.OtherError()
-                }
-            ) // TODO: Check to see what response is returned here, we might need to parse JSON for the message code
-          case upstreamError: UpstreamErrorResponse => Left(ValidationError.OtherError(Some(upstreamError)))
-          case NonFatal(e)                          => Left(ValidationError.OtherError(Some(e)))
+            // This can only be a message type error
+            Left(FailedToValidateError.InvalidMessageTypeError(messageType.toString))
+          case upstreamError: UpstreamErrorResponse => Left(FailedToValidateError.OtherError(Some(upstreamError)))
+          case NonFatal(e)                          => Left(FailedToValidateError.OtherError(Some(e)))
         }
     )
 

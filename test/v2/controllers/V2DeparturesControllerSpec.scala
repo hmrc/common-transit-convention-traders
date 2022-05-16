@@ -23,6 +23,7 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import akka.util.Timeout
 import cats.data.EitherT
+import cats.data.NonEmptyList
 import cats.syntax.all._
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
@@ -33,6 +34,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.Application
 import play.api.http.HeaderNames
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.BAD_REQUEST
@@ -49,8 +51,9 @@ import play.api.test.Helpers.status
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
-import v2.models.ValidationError
 import v2.models.errors.BaseError
+import v2.models.errors.FailedToValidateError
+import v2.models.errors.ValidationError
 import v2.models.request.MessageType
 import v2.services.ValidationService
 
@@ -161,18 +164,18 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
         </GOOITEGDS>
       </CC015C>
 
-  val testSink: Sink[ByteString, Future[Either[ValidationError, Unit]]] =
+  val testSink: Sink[ByteString, Future[Either[FailedToValidateError, Unit]]] =
     Flow
       .fromFunction {
         input: ByteString =>
           Try(XML.loadString(input.decodeString(StandardCharsets.UTF_8))).toEither
             .leftMap(
-              _ => ValidationError.XmlParseError
+              _ => FailedToValidateError.SchemaFailedToValidateError(NonEmptyList(ValidationError(42, 27, "invalid XML"), Nil))
             )
             .flatMap {
               element =>
                 if (element.label.equalsIgnoreCase("CC015C")) Right(())
-                else Left(ValidationError.SchemaValidationError(validationErrors = Seq("This is an error"))) // TODO: Seq of errors
+                else Left(FailedToValidateError.SchemaFailedToValidateError(validationErrors = NonEmptyList(ValidationError(1, 1, "an error"), Nil)))
             }
       }
       .toMat(Sink.last)(Keep.right)
@@ -191,7 +194,7 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
         )
     }
 
-  override lazy val app = GuiceApplicationBuilder()
+  override lazy val app: Application = GuiceApplicationBuilder()
     .overrides(
       bind[AuthNewEnrolmentOnlyAction].to[FakeAuthNewEnrolmentOnlyAction],
       bind[ValidationService].toInstance(mockValidationService)
@@ -248,9 +251,13 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
       val result  = route(app, request).value
       status(result) mustBe BAD_REQUEST
       contentAsJson(result) mustBe Json.obj(
-        "code"    -> "BAD_REQUEST",
-        "message" -> "Body could not be parsed as XML"
-      )
+        "code"             -> "SCHEMA_VALIDATION",
+        "message"          -> "Request failed schema validation",
+        "validationErrors" -> Seq(Json.obj(
+          "lineNumber" -> 42,
+          "columnNumber" -> 27,
+          "message" -> "invalid XML"
+      )))
     }
 
     "must return Bad Request when body is an XML document that would fail schema validation" in {
@@ -260,7 +267,11 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
       contentAsJson(result) mustBe Json.obj(
         "code"             -> "SCHEMA_VALIDATION",
         "message"          -> "Request failed schema validation",
-        "validationErrors" -> Seq("This is an error")
+        "validationErrors" -> Seq(Json.obj(
+          "lineNumber" -> 1,
+          "columnNumber" -> 1,
+          "message" -> "an error"
+        ))
       )
     }
 

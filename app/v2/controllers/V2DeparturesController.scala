@@ -40,12 +40,11 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.MessageSizeAction
 import v2.controllers.stream.StreamingParsers
-import v2.models.ValidationError
-import v2.models.ValidationError.InvalidMessageTypeError
-import v2.models.ValidationError.OtherError
-import v2.models.ValidationError.SchemaValidationError
-import v2.models.ValidationError.XmlParseError
 import v2.models.errors.BaseError
+import v2.models.errors.FailedToValidateError
+import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
+import v2.models.errors.FailedToValidateError.OtherError
+import v2.models.errors.FailedToValidateError.SchemaFailedToValidateError
 import v2.models.request.MessageType
 import v2.services.ValidationService
 
@@ -89,11 +88,10 @@ class V2DeparturesControllerImpl @Inject() (
           result
       }
 
-  def translateValidationError(validationError: ValidationError): BaseError = validationError match {
-    case err: OtherError                         => BaseError.internalServiceError(cause = err.thr)
-    case InvalidMessageTypeError(messageType)    => BaseError.badRequestError(s"$messageType is not a valid message type")
-    case SchemaValidationError(validationErrors) => BaseError.schemaValidationError(validationErrors = validationErrors)
-    case XmlParseError                           => BaseError.badRequestError("Body could not be parsed as XML")
+  def translateValidationError(validationError: FailedToValidateError): BaseError = validationError match {
+    case err: OtherError                               => BaseError.internalServiceError(cause = err.thr)
+    case InvalidMessageTypeError(messageType)          => BaseError.badRequestError(s"$messageType is not a valid message type")
+    case SchemaFailedToValidateError(validationErrors) => BaseError.schemaValidationError(validationErrors = validationErrors)
   }
 
   def submitDeclaration(): Action[Source[ByteString, _]] =

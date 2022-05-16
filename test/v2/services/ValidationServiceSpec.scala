@@ -19,6 +19,7 @@ package v2.services
 import akka.NotUsed
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import cats.data.NonEmptyList
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -26,12 +27,15 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.libs.json.JsError
+import play.api.libs.json.JsResult
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.ValidationConnector
-import v2.models.ValidationError
+import v2.models.errors.FailedToValidateError
+import v2.models.errors.ValidationError
 import v2.models.request.MessageType
 import v2.models.responses.ValidationResponse
 
@@ -54,15 +58,14 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
   private val upstreamErrorResponse =
     UpstreamErrorResponse(Json.obj("code" -> "INTERNAL_SERVER_ERROR", "message" -> "Internal Server Error").toString, INTERNAL_SERVER_ERROR)
-  private val internalException = new IllegalStateException("arbitrary failure")
+  private val internalException = new JsResult.Exception(JsError("arbitrary failure"))
 
   val fakeValidationConnector: ValidationConnector = new ValidationConnector {
 
-    override def validate(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
+    override def validate(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[ValidationResponse]] =
       xmlStream match {
-        case SchemaValidXml       => Future.successful(Json.toJson(ValidationResponse(Seq.empty)))
-        case SchemaInvalidXml     => Future.successful(Json.toJson(ValidationResponse(Seq("nope"))))
-        case InvalidXml           => Future.failed(UpstreamErrorResponse(Json.obj("code" -> "BAD_REQUEST", "message" -> "Invalid XML").toString, BAD_REQUEST))
+        case SchemaValidXml       => Future.successful(None)
+        case SchemaInvalidXml     => Future.successful(Some(ValidationResponse(NonEmptyList(ValidationError(1, 1, "nope"), Nil))))
         case UpstreamError        => Future.failed(upstreamErrorResponse)
         case InternalServiceError => Future.failed(internalException)
       }
@@ -77,32 +80,25 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
       Await.result(result.value, 5.seconds) mustBe Right(())
     }
 
-    "non-conforming XML should return a left with a SchemaValidationError" in {
+    "non-conforming XML should return a left with a SchemaFailedToValidateError" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
       val result = sut.validateXML(MessageType.DepartureDeclaration, SchemaInvalidXml)
 
-      Await.result(result.value, 5.seconds) mustBe Left(ValidationError.SchemaValidationError(Seq("nope")))
-    }
-
-    "a string that is not XML should return a left with a XmlParseError" in {
-      val sut    = new ValidationServiceImpl(fakeValidationConnector)
-      val result = sut.validateXML(MessageType.DepartureDeclaration, InvalidXml)
-
-      Await.result(result.value, 5.seconds) mustBe Left(ValidationError.XmlParseError)
+      Await.result(result.value, 5.seconds) mustBe Left(FailedToValidateError.SchemaFailedToValidateError(NonEmptyList(ValidationError(1, 1, "nope"), Nil)))
     }
 
     "an upstream error should return a left with a OtherError" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
       val result = sut.validateXML(MessageType.DepartureDeclaration, UpstreamError)
 
-      Await.result(result.value, 5.seconds) mustBe Left(ValidationError.OtherError(Some(upstreamErrorResponse)))
+      Await.result(result.value, 5.seconds) mustBe Left(FailedToValidateError.OtherError(Some(upstreamErrorResponse)))
     }
 
     "an internal exception should return a left with a OtherError" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
       val result = sut.validateXML(MessageType.DepartureDeclaration, InternalServiceError)
 
-      Await.result(result.value, 5.seconds) mustBe Left(ValidationError.OtherError(Some(internalException)))
+      Await.result(result.value, 5.seconds) mustBe Left(FailedToValidateError.OtherError(Some(internalException)))
     }
 
   }
