@@ -25,4 +25,3 @@ object FailedToValidateError {
   case class InvalidMessageTypeError(messageType: String)                                 extends FailedToValidateError
   case class SchemaFailedToValidateError(validationErrors: NonEmptyList[ValidationError]) extends FailedToValidateError
 }
-

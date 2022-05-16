@@ -24,4 +24,4 @@ object ValidationError {
   implicit val validationErrorReads: Reads[ValidationError]   = Json.reads[ValidationError]
   implicit val validationErrorWrites: Writes[ValidationError] = Json.writes[ValidationError]
 }
-case class ValidationError (lineNumber: Int, columnNumber: Int, message: String)
+case class ValidationError(lineNumber: Int, columnNumber: Int, message: String)

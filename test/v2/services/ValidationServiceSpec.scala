@@ -25,11 +25,9 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json.JsError
 import play.api.libs.json.JsResult
-import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
@@ -62,7 +60,10 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
   val fakeValidationConnector: ValidationConnector = new ValidationConnector {
 
-    override def validate(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[ValidationResponse]] =
+    override def validate(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit
+      hc: HeaderCarrier,
+      ec: ExecutionContext
+    ): Future[Option[ValidationResponse]] =
       xmlStream match {
         case SchemaValidXml       => Future.successful(None)
         case SchemaInvalidXml     => Future.successful(Some(ValidationResponse(NonEmptyList(ValidationError(1, 1, "nope"), Nil))))

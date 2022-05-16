@@ -251,13 +251,16 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
       val result  = route(app, request).value
       status(result) mustBe BAD_REQUEST
       contentAsJson(result) mustBe Json.obj(
-        "code"             -> "SCHEMA_VALIDATION",
-        "message"          -> "Request failed schema validation",
-        "validationErrors" -> Seq(Json.obj(
-          "lineNumber" -> 42,
-          "columnNumber" -> 27,
-          "message" -> "invalid XML"
-      )))
+        "code"    -> "SCHEMA_VALIDATION",
+        "message" -> "Request failed schema validation",
+        "validationErrors" -> Seq(
+          Json.obj(
+            "lineNumber"   -> 42,
+            "columnNumber" -> 27,
+            "message"      -> "invalid XML"
+          )
+        )
+      )
     }
 
     "must return Bad Request when body is an XML document that would fail schema validation" in {
@@ -265,13 +268,15 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
       val result  = route(app, request).value
       status(result) mustBe BAD_REQUEST
       contentAsJson(result) mustBe Json.obj(
-        "code"             -> "SCHEMA_VALIDATION",
-        "message"          -> "Request failed schema validation",
-        "validationErrors" -> Seq(Json.obj(
-          "lineNumber" -> 1,
-          "columnNumber" -> 1,
-          "message" -> "an error"
-        ))
+        "code"    -> "SCHEMA_VALIDATION",
+        "message" -> "Request failed schema validation",
+        "validationErrors" -> Seq(
+          Json.obj(
+            "lineNumber"   -> 1,
+            "columnNumber" -> 1,
+            "message"      -> "an error"
+          )
+        )
       )
     }
 

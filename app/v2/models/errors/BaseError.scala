@@ -22,7 +22,6 @@ import play.api.libs.functional.syntax.unlift
 import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites
 import play.api.libs.json.Reads
-import play.api.libs.json.Writes
 import play.api.libs.json.__
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.models.formats.CommonFormats
@@ -98,6 +97,7 @@ sealed abstract class BaseError extends Product with Serializable {
 }
 
 case class StandardError(message: String, code: ErrorCode) extends BaseError
+
 case class SchemaValidationError(
   message: String,
   code: ErrorCode,

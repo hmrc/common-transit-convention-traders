@@ -55,7 +55,10 @@ class ValidationConnectorImpl @Inject() (ws: WSClient, appConfig: AppConfig, val
     with V2BaseConnector
     with Logging {
 
-  override def validate(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[ValidationResponse]] =
+  override def validate(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Option[ValidationResponse]] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
         val url = appConfig.validatorUrl.withPath(validationRoute(messageType))
@@ -74,8 +77,12 @@ class ValidationConnectorImpl @Inject() (ws: WSClient, appConfig: AppConfig, val
                 case OK =>
                   response.json
                     .validate[ValidationResponse]
-                    .map(result => Future.successful(Some(result)))
-                    .recoverTotal(error => Future.failed(JsResult.Exception(error)))
+                    .map(
+                      result => Future.successful(Some(result))
+                    )
+                    .recoverTotal(
+                      error => Future.failed(JsResult.Exception(error))
+                    )
                 case _ =>
                   Future.failed(UpstreamErrorResponse(response.body, response.status))
 
