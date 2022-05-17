@@ -3,7 +3,9 @@ We use standard HTTP status codes to show whether an API request has succeeded o
 
 **POST**
 
-400 BadRequest: XML has failed validation - see response body for details
+400 BadRequest: The "code" field in the Json body provides the exact cause:
+
+* `SCHEMA_VALIDATION`: The request body failed to validate against the appropriate schema, check the `validationErrors` field for more details
 
 401 Unauthorized: If client passes invalid auth credentials
 
@@ -21,7 +23,9 @@ We use standard HTTP status codes to show whether an API request has succeeded o
 
 **PUT**
 
-400 BadRequest: If XML message is invalid
+400 BadRequest: The "code" field in the Json body provides the exact cause:
+
+* `SCHEMA_VALIDATION`: The request body failed to validate against the appropriate schema, check the `validationErrors` field for more details
 
 401 Unauthorized: If client passes invalid auth credentials
 
@@ -41,7 +45,7 @@ We use standard HTTP status codes to show whether an API request has succeeded o
 
 403 Forbidden: If supplied auth token doesn't contain valid enrolment
 
-404 Not Found: If no object with specified ID found in database. Or if client passes in an ``Accept`` header which contains the wrong API version number. We have only released version 1.0 of the API
+404 Not Found: If no object with specified ID found in database. Or if client passes in an ``Accept`` header which contains the wrong API version number.
 
 415 Unsupported Media Type: If ``Accept`` header contains invalid type
 
@@ -50,3 +54,28 @@ We use standard HTTP status codes to show whether an API request has succeeded o
 
 Errors specific to each API are shown in the Endpoints section, under Response.
 See our [reference guide](https://developer.service.hmrc.gov.uk/api-documentation/docs/reference-guide#errors) for more on errors.
+
+### Schema Validation Error Responses
+
+If a request fails to pass validation, the response body will contain a list of validation errors in the "validationErrors" field. Each error will contain the fields "lineNumber", "columnNumber" and "message". 
+
+An example response for a request that failed to validate can be found below:
+
+```json
+{
+  "message": "Request failed schema validation",
+  "code": "SCHEMA_VALIDATION",
+  "validationErrors": [
+    {
+      "lineNumber": 4,
+      "columnNumber": 60,
+      "message": "cvc-pattern-valid: Value 'notatime' is not facet-valid with respect to pattern '\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}' for type 'PreparationDateAndTimeContentType'."
+    },
+    {
+      "lineNumber": 4,
+      "columnNumber": 60,
+      "message": "cvc-type.3.1.3: The value 'notatime' of element 'preparationDateAndTime' is not valid."
+    }
+  ]
+}
+```
