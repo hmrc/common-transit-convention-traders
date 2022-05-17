@@ -62,6 +62,17 @@ traits:
                 description: The request body is too large
                 value:
                   code: REQUEST_ENTITY_TOO_LARGE
+  schemaValidation:
+    responses:
+      400:
+        body:
+          application/json:
+            type: types.errorResponse
+            examples:
+              schemaValidation:
+                description: The request body failed schema validation
+                value:
+                  code: SCHEMA_VALIDATION
 
 /customs/transits/movements:
   /departures:
@@ -78,6 +89,7 @@ traits:
         - contentXmlHeader
         - acceptJsonHeader
         - requestTooLarge
+        - schemaValidation
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
