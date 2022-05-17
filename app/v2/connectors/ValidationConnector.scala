@@ -62,15 +62,13 @@ class ValidationConnectorImpl @Inject() (ws: WSClient, appConfig: AppConfig, val
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
         val url = appConfig.validatorUrl.withPath(validationRoute(messageType))
-        // httpClient.post(url.toJavaURI.toURL).withBody(xmlStream).execute (plus handling 204)
 
-        // TODO: Temporary, use something like the above as soon as practical
+        // TODO: Temporary, use HttpClientV2 when available
         ws.url(url.toString())
           .addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
           .post(xmlStream)
           .flatMap {
             response =>
-              JsResult
               response.status match {
                 case NO_CONTENT =>
                   Future.successful(None)

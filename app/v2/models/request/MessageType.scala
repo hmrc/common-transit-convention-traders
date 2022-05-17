@@ -23,5 +23,5 @@ sealed trait MessageType {
 sealed abstract class DepartureMessageType(val code: String) extends MessageType
 
 object MessageType {
-  case object DepartureDeclaration extends DepartureMessageType("IE015C")
+  case object DepartureDeclaration extends DepartureMessageType("IE015")
 }

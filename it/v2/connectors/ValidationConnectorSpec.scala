@@ -48,10 +48,8 @@ import v2.models.request.MessageType
 import v2.models.responses.ValidationResponse
 
 import java.nio.charset.StandardCharsets
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.concurrent.duration.DurationInt
+import scala.util.control.NonFatal
 
 class ValidationConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with utils.WiremockSuite with ScalaFutures with IntegrationPatience {
 
@@ -67,7 +65,7 @@ class ValidationConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneApp
 
       server.stubFor(
         post(
-          urlEqualTo("/transit-movements-validator/message/IE015C/validate") // /transit-movements-validator/message/IE015C/validate
+          urlEqualTo("/transit-movements-validator/message/IE015/validate")
         )
           .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
           .willReturn(
@@ -79,14 +77,17 @@ class ValidationConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneApp
 
       val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
 
-      Await.result(validationConnector.validate(MessageType.DepartureDeclaration, source), 5.seconds) mustBe None
+      whenReady(validationConnector.validate(MessageType.DepartureDeclaration, source)) {
+        result =>
+          result mustBe None
+      }
     }
 
     "On successful validation of schema invalid XML, must return OK and a validation error" in {
 
       server.stubFor(
         post(
-          urlEqualTo("/transit-movements-validator/message/IE015C/validate") // /transit-movements-validator/message/IE015C/validate
+          urlEqualTo("/transit-movements-validator/message/IE015/validate")
         )
           .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
           .willReturn(
@@ -106,15 +107,17 @@ class ValidationConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneApp
 
       val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
 
-      val result = validationConnector.validate(MessageType.DepartureDeclaration, source)
-      Await.result(result, 5.seconds) mustBe Some(ValidationResponse(NonEmptyList(ValidationError(1, 1, "nope"), Nil)))
+      whenReady(validationConnector.validate(MessageType.DepartureDeclaration, source)) {
+        result =>
+          result mustBe Some(ValidationResponse(NonEmptyList(ValidationError(1, 1, "nope"), Nil)))
+      }
     }
 
     "On an invalid message type, must return BAD_REQUEST and an appropriate error message" in {
 
       server.stubFor(
         post(
-          urlEqualTo("/transit-movements-validator/message/IE015C/validate") // /transit-movements-validator/message/IE015C/validate
+          urlEqualTo("/transit-movements-validator/message/IE015/validate")
         )
           .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
           .willReturn(
@@ -134,12 +137,18 @@ class ValidationConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneApp
 
       val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
 
-      val result: Future[Option[ValidationResponse]] = Await.ready(validationConnector.validate(MessageType.DepartureDeclaration, source), 5.seconds)
+      val future = validationConnector.validate(MessageType.DepartureDeclaration, source).map(Right(_)).recover {
+        case NonFatal(e) => Left(e)
+      }
 
-      val thr = result.eitherValue.get.left.get
-      thr mustBe a[http.UpstreamErrorResponse]
-      thr.asInstanceOf[UpstreamErrorResponse].statusCode mustBe BAD_REQUEST
-      Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj("code" -> "BAD_REQUEST", "message" -> "Invalid message type")
+      whenReady(future) {
+        result =>
+          val thr = result.left.get
+          thr mustBe a[http.UpstreamErrorResponse]
+          thr.asInstanceOf[UpstreamErrorResponse].statusCode mustBe BAD_REQUEST
+          Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj("code" -> "BAD_REQUEST", "message" -> "Invalid message type")
+      }
+
     }
 
   }
@@ -148,7 +157,7 @@ class ValidationConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneApp
 
     server.stubFor(
       post(
-        urlEqualTo("/transit-movements-validator/message/IE015C/validate") // /transit-movements-validator/message/IE015C/validate
+        urlEqualTo("/transit-movements-validator/message/IE015/validate")
       )
         .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
         .willReturn(
@@ -164,10 +173,14 @@ class ValidationConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneApp
 
     val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
 
-    val result: Future[Option[ValidationResponse]] = Await.ready(validationConnector.validate(MessageType.DepartureDeclaration, source), 5.seconds)
+    val future = validationConnector.validate(MessageType.DepartureDeclaration, source).map(Right(_)).recover {
+      case NonFatal(e) => Left(e)
+    }
 
-    val thr = result.eitherValue.get.left.get
-    thr mustBe a[JsonParseException]
+    whenReady(future) {
+      result =>
+        result.left.get mustBe a[JsonParseException]
+    }
   }
 
   override protected def portConfigKey: Seq[String] =

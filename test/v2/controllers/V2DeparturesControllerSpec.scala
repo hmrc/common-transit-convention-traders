@@ -51,7 +51,6 @@ import play.api.test.Helpers.status
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
-import v2.models.errors.BaseError
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.ValidationError
 import v2.models.request.MessageType

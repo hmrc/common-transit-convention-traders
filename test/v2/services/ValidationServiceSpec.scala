@@ -48,8 +48,8 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  val SchemaValidXml: Source[ByteString, NotUsed]       = Source.single(ByteString("<schemaValid></schemaValid>", StandardCharsets.UTF_8))
-  val SchemaInvalidXml: Source[ByteString, NotUsed]     = Source.single(ByteString("<schemaInvalid></schemaInvalid>", StandardCharsets.UTF_8))
+  val SchemaValidXml: Source[ByteString, NotUsed]       = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
+  val SchemaInvalidXml: Source[ByteString, NotUsed]     = Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8))
   val InvalidXml: Source[ByteString, NotUsed]           = Source.single(ByteString("invalid", StandardCharsets.UTF_8))
   val UpstreamError: Source[ByteString, NotUsed]        = Source.single(ByteString("error", StandardCharsets.UTF_8))
   val InternalServiceError: Source[ByteString, NotUsed] = Source.single(ByteString("exception", StandardCharsets.UTF_8))

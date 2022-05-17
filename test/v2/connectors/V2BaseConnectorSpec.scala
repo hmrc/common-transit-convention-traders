@@ -22,17 +22,17 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import v2.models.request.MessageType
 
-class BaseConnectorSpec extends AnyFreeSpec with Matchers with MockitoSugar {
+class V2BaseConnectorSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
   object Harness extends V2BaseConnector {
 
     def validationRouteTest(messageType: MessageType): UrlPath = validationRoute(messageType)
   }
 
-  "the validation URL for a cc015c message type on localhost should be as expected" in {
+  "the validation URL for an IE015 message type on localhost should be as expected" in {
     val urlPath = Harness.validationRouteTest(MessageType.DepartureDeclaration)
 
-    urlPath.toString() mustBe "/transit-movements-validator/message/IE015C/validate"
+    urlPath.toString() mustBe "/transit-movements-validator/message/IE015/validate"
   }
 
 }
