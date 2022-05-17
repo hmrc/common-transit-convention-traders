@@ -73,7 +73,7 @@ class V2DeparturesControllerImpl @Inject() (
     with VersionedRouting {
 
   def withTemporaryFile[A](
-    onSucceed: Files.TemporaryFile => EitherT[Future, BaseError, A]
+    onSucceed: (Files.TemporaryFile, Source[ByteString, _]) => EitherT[Future, BaseError, A]
   )(implicit request: Request[Source[ByteString, _]]): EitherT[Future, BaseError, A] =
     EitherT(Future.successful(Try(temporaryFileCreator.create()).toEither))
       .leftMap {
@@ -83,7 +83,14 @@ class V2DeparturesControllerImpl @Inject() (
       }
       .flatMap {
         temporaryFile =>
-          val result = onSucceed(temporaryFile)
+          // As well as sending this stream to another service, we need to save it as
+          // if we succeed in validating, we will want to run the stream again to other
+          // services - saving it to file means we can keep it out of memory.
+          //
+          // The alsoTo call causes the file to be written as we send the request -
+          // fanning-out such that we request and save at the same time.
+          val source = request.body.alsoTo(FileIO.toPath(temporaryFile.path))
+          val result = onSucceed(temporaryFile, source)
           temporaryFile.delete()
           result
       }
@@ -101,12 +108,10 @@ class V2DeparturesControllerImpl @Inject() (
 
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         withTemporaryFile {
-          temporaryFile =>
-            for {
-              validated <- validationService
-                .validateXML(MessageType.DepartureDeclaration, request.body.alsoTo(FileIO.toPath(temporaryFile.path)))
+          (temporaryFile, source) =>
+            validationService
+                .validateXML(MessageType.DepartureDeclaration, source)
                 .leftMap(translateValidationError)
-            } yield validated
         }.fold[Result](
           baseError => Status(baseError.code.statusCode)(Json.toJson(baseError)),
           _ => Accepted
