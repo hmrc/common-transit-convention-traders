@@ -5,7 +5,7 @@ We use standard HTTP status codes to show whether an API request has succeeded o
 
 400 BadRequest: The "code" field in the Json body provides the exact cause:
 
-* `SCHEMA_VALIDATION`: The request body failed to validate against the appropriate schema, check the `validationErrors` field for more details
+* `SCHEMA_VALIDATION`: The request body failed to validate against the appropriate schema. Check the `validationErrors` field for more details.
 
 401 Unauthorized: If client passes invalid auth credentials
 
@@ -25,7 +25,7 @@ We use standard HTTP status codes to show whether an API request has succeeded o
 
 400 BadRequest: The "code" field in the Json body provides the exact cause:
 
-* `SCHEMA_VALIDATION`: The request body failed to validate against the appropriate schema, check the `validationErrors` field for more details
+* `SCHEMA_VALIDATION`: The request body failed to validate against the appropriate schema. Check the `validationErrors` field for more details.
 
 401 Unauthorized: If client passes invalid auth credentials
 
