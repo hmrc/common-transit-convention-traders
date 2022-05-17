@@ -59,13 +59,13 @@ class ValidationConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneApp
   lazy val validationConnector: ValidationConnectorImpl = new ValidationConnectorImpl(wsclient, appConfig, new TestMetrics())
   implicit lazy val ec: ExecutionContext                = app.materializer.executionContext
 
-  "POST /message/:messageType/validate" - {
+  "POST /message/:messageType/validation" - {
 
     "On successful validation of schema valid XML, must return NO_CONTENT" in {
 
       server.stubFor(
         post(
-          urlEqualTo("/transit-movements-validator/message/IE015/validate")
+          urlEqualTo("/transit-movements-validator/messages/IE015/validation")
         )
           .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
           .willReturn(
@@ -75,7 +75,7 @@ class ValidationConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneApp
 
       implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
-      val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
+      val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8)) // TODO: IE015C
 
       whenReady(validationConnector.validate(MessageType.DepartureDeclaration, source)) {
         result =>
@@ -87,7 +87,7 @@ class ValidationConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneApp
 
       server.stubFor(
         post(
-          urlEqualTo("/transit-movements-validator/message/IE015/validate")
+          urlEqualTo("/transit-movements-validator/messages/IE015/validation")
         )
           .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
           .willReturn(
@@ -117,7 +117,7 @@ class ValidationConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneApp
 
       server.stubFor(
         post(
-          urlEqualTo("/transit-movements-validator/message/IE015/validate")
+          urlEqualTo("/transit-movements-validator/messages/IE015/validation")
         )
           .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
           .willReturn(
@@ -157,7 +157,7 @@ class ValidationConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneApp
 
     server.stubFor(
       post(
-        urlEqualTo("/transit-movements-validator/message/IE015/validate")
+        urlEqualTo("/transit-movements-validator/messages/IE015/validation")
       )
         .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
         .willReturn(
@@ -171,7 +171,7 @@ class ValidationConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneApp
 
     implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
-    val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
+    val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8)) // TODO: IE015C
 
     val future = validationConnector.validate(MessageType.DepartureDeclaration, source).map(Right(_)).recover {
       case NonFatal(e) => Left(e)

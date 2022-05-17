@@ -32,7 +32,7 @@ class V2BaseConnectorSpec extends AnyFreeSpec with Matchers with MockitoSugar {
   "the validation URL for an IE015 message type on localhost should be as expected" in {
     val urlPath = Harness.validationRouteTest(MessageType.DepartureDeclaration)
 
-    urlPath.toString() mustBe "/transit-movements-validator/message/IE015/validate"
+    urlPath.toString() mustBe "/transit-movements-validator/messages/IE015/validation"
   }
 
 }

@@ -23,6 +23,6 @@ import v2.models.request.MessageType
 trait V2BaseConnector extends HttpErrorFunctions {
 
   protected def validationRoute(messageType: MessageType): UrlPath =
-    UrlPath.parse(s"/transit-movements-validator/message/${messageType.code}/validate")
+    UrlPath.parse(s"/transit-movements-validator/messages/${messageType.code}/validation") //transit-movements-validator/messages/IE015/validation
 
 }
