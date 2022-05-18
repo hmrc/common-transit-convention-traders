@@ -113,8 +113,8 @@ class V2DeparturesControllerImpl @Inject() (
         withTemporaryFile {
           (temporaryFile, source) =>
             validationService
-                .validateXML(MessageType.DepartureDeclaration, source)
-                .leftMap(translateValidationError)
+              .validateXML(MessageType.DepartureDeclaration, source)
+              .leftMap(translateValidationError)
         }.fold[Result](
           baseError => Status(baseError.code.statusCode)(Json.toJson(baseError)),
           _ => Accepted
