@@ -72,6 +72,11 @@ class V2DeparturesControllerImpl @Inject() (
     with StreamingParsers
     with VersionedRouting {
 
+  private def deleteFile[A](temporaryFile: Files.TemporaryFile)(identity: A): A = {
+    temporaryFile.delete()
+    identity
+  }
+
   def withTemporaryFile[A](
     onSucceed: (Files.TemporaryFile, Source[ByteString, _]) => EitherT[Future, BaseError, A]
   )(implicit request: Request[Source[ByteString, _]]): EitherT[Future, BaseError, A] =
@@ -90,9 +95,7 @@ class V2DeparturesControllerImpl @Inject() (
           // The alsoTo call causes the file to be written as we send the request -
           // fanning-out such that we request and save at the same time.
           val source = request.body.alsoTo(FileIO.toPath(temporaryFile.path))
-          val result = onSucceed(temporaryFile, source)
-          temporaryFile.delete()
-          result
+          onSucceed(temporaryFile, source).bimap(deleteFile(temporaryFile), deleteFile(temporaryFile))
       }
 
   def translateValidationError(validationError: FailedToValidateError): BaseError = validationError match {
