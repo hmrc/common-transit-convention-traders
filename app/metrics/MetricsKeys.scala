@@ -37,6 +37,10 @@ object MetricsKeys {
     val GetMessagesForDeparture = "departures-backend-get-messages-for-departure"
   }
 
+  object ValidatorBackend {
+    val Post = "validator-backend-post"
+  }
+
   object Endpoints {
     def count(metricKey: String) = s"$metricKey-count"
     // Arrivals

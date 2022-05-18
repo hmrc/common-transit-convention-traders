@@ -29,7 +29,9 @@ import v2.controllers.V2DeparturesController
 import v2.controllers.stream.StreamingParsers
 
 class FakeV2DeparturesController @Inject() ()(implicit val materializer: Materializer)
-  extends BaseController with V2DeparturesController with StreamingParsers {
+    extends BaseController
+    with V2DeparturesController
+    with StreamingParsers {
 
   override val controllerComponents = stubControllerComponents()
 

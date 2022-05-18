@@ -16,13 +16,17 @@
 
 package v2.models.errors
 
+import cats.data.NonEmptyList
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.functional.syntax.unlift
+import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites
+import play.api.libs.json.Reads
 import play.api.libs.json.__
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import v2.models.formats.CommonFormats
 
-object BaseError {
+object BaseError extends CommonFormats {
 
   val MessageFieldName = "message"
   val CodeFieldName    = "code"
@@ -42,6 +46,9 @@ object BaseError {
   def notFoundError(message: String): BaseError =
     StandardError(message, ErrorCode.NotFound)
 
+  def schemaValidationError(message: String = "Request failed schema validation", validationErrors: NonEmptyList[ValidationError]): SchemaValidationError =
+    SchemaValidationError(message, ErrorCode.SchemaValidation, validationErrors)
+
   def upstreamServiceError(
     message: String = "Internal server error",
     code: ErrorCode = ErrorCode.InternalServerError,
@@ -58,11 +65,29 @@ object BaseError {
 
   def unapply(error: BaseError): Option[(String, ErrorCode)] = Some((error.message, error.code))
 
-  implicit val baseErrorWrites: OWrites[BaseError] =
+  private val baseErrorWrites0: OWrites[BaseError] =
     (
       (__ \ MessageFieldName).write[String] and
         (__ \ CodeFieldName).write[ErrorCode]
     )(unlift(BaseError.unapply))
+
+  implicit val standardErrorReads: Reads[StandardError] =
+    (
+      (__ \ MessageFieldName).read[String] and
+        (__ \ CodeFieldName).read[ErrorCode]
+    )(StandardError.apply _)
+
+  implicit val schemaErrorFormat: OFormat[SchemaValidationError] =
+    (
+      (__ \ MessageFieldName).format[String] and
+        (__ \ CodeFieldName).format[ErrorCode] and
+        (__ \ "validationErrors").format[NonEmptyList[ValidationError]]
+    )(SchemaValidationError.apply, unlift(SchemaValidationError.unapply))
+
+  implicit val baseErrorWrites: OWrites[BaseError] = OWrites {
+    case schemaValidationError: SchemaValidationError => schemaErrorFormat.writes(schemaValidationError)
+    case baseError                                    => baseErrorWrites0.writes(baseError)
+  }
 
 }
 
@@ -72,6 +97,12 @@ sealed abstract class BaseError extends Product with Serializable {
 }
 
 case class StandardError(message: String, code: ErrorCode) extends BaseError
+
+case class SchemaValidationError(
+  message: String,
+  code: ErrorCode,
+  validationErrors: NonEmptyList[ValidationError]
+) extends BaseError
 
 case class UpstreamServiceError(
   message: String = "Internal server error",

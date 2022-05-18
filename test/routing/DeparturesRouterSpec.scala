@@ -40,13 +40,9 @@ import v2.fakes.controllers.FakeV2DeparturesController
 
 import scala.concurrent.duration.DurationInt
 
-class DeparturesRouterSpec extends AnyFreeSpec with Matchers
-  with OptionValues
-  with ScalaFutures
-  with MockitoSugar
-  with GuiceOneAppPerSuite {
+class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar with GuiceOneAppPerSuite {
 
-  private implicit val timeout: Timeout = 5.seconds
+  implicit private val timeout: Timeout = 5.seconds
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(
@@ -86,7 +82,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers
         "must route to the v1 controller and return Accepted when successful" in {
 
           val request = FakeRequest(method = "POST", uri = routes.DeparturesRouter.submitDeclaration().url, body = <test></test>, headers = departureHeaders)
-          val result = route(app, request).value
+          val result  = route(app, request).value
 
           status(result) mustBe ACCEPTED
           contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action

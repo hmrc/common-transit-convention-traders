@@ -72,9 +72,9 @@ class DeparturesControllerSpec
     with MockitoSugar
     with BeforeAndAfterEach
     with TestXml {
-  private val mockDepartureConnector: DeparturesConnector        = mock[DeparturesConnector]
-  private val mockGuaranteeService: EnsureGuaranteeService       = mock[EnsureGuaranteeService]
-  private val mockAuditService: AuditService                     = mock[AuditService]
+  private val mockDepartureConnector: DeparturesConnector  = mock[DeparturesConnector]
+  private val mockGuaranteeService: EnsureGuaranteeService = mock[EnsureGuaranteeService]
+  private val mockAuditService: AuditService               = mock[AuditService]
 
   when(mockGuaranteeService.ensureGuarantee(any())).thenReturn(Right(CC015B))
 
