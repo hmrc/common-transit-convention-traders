@@ -133,7 +133,7 @@ class V2DeparturesControllerImpl @Inject() (
             } yield declarationResult
         }.fold[Result](
           baseError => Status(baseError.code.statusCode)(Json.toJson(baseError)),
-          result => Accepted(Json.toJson(result.movementId)) // TODO: do we want the message ID too?
+          result => Accepted(Json.obj("movementId" -> result.movementId)) // TODO: do we want the message ID too? Create case object if necessary
         )
 
     }
