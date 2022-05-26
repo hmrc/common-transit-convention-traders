@@ -28,7 +28,6 @@ import metrics.MetricsKeys
 import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
-import play.api.http.Status.NO_CONTENT
 import play.api.http.Status.OK
 import play.api.libs.json.JsResult
 import play.api.libs.ws.WSClient
@@ -36,7 +35,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.models.EORINumber
 import v2.models.responses.DeclarationResponse
-import v2.models.responses.ValidationResponse
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future

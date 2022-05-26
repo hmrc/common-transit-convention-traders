@@ -202,7 +202,10 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
     }
 
   val mockDeparturesPersistenceService = mock[DeparturesPersistenceService]
-  when(mockDeparturesPersistenceService.saveDeclaration(eqTo("id").asInstanceOf[EORINumber], any[Source[ByteString, _]]()))
+  when(
+    mockDeparturesPersistenceService
+      .saveDeclaration(eqTo("id").asInstanceOf[EORINumber], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+  )
     .thenReturn(EitherT.fromEither[Future](Right[PersistenceError, DeclarationResponse](DeclarationResponse(MovementId("123"), MessageId("456")))))
 
   override lazy val app: Application = GuiceApplicationBuilder()

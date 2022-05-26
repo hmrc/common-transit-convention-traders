@@ -19,9 +19,7 @@ package v2.services
 import akka.NotUsed
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import cats.data.EitherT
 import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.anyString
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.when
 import org.scalatest.OptionValues
@@ -56,21 +54,29 @@ class DeparturesPersistenceServiceSpec extends AnyFreeSpec with Matchers with Op
     val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
 
     val mockConnector: PersistenceConnector = mock[PersistenceConnector]
-    when(mockConnector.sendDepartureDeclaration(anyString().asInstanceOf[EORINumber], eqTo(ValidRequest))(any[HeaderCarrier], any[ExecutionContext]))
+
+    // Because we're using AnyVal, Mockito doesn't really like it, so we have to put the underlying type down, then cast to the value type...
+    when(mockConnector.sendDepartureDeclaration(any[String].asInstanceOf[EORINumber], eqTo(ValidRequest))(any[HeaderCarrier], any[ExecutionContext]))
       .thenReturn(Future.successful(DeclarationResponse(MovementId("ABC"), MessageId("123"))))
-    when(mockConnector.sendDepartureDeclaration(anyString().asInstanceOf[EORINumber], eqTo(InvalidRequest))(any[HeaderCarrier], any[ExecutionContext]))
+    when(mockConnector.sendDepartureDeclaration(any[String].asInstanceOf[EORINumber], eqTo(InvalidRequest))(any[HeaderCarrier], any[ExecutionContext]))
       .thenReturn(Future.failed(upstreamErrorResponse))
 
     val sut = new DeparturesPersistenceServiceImpl(mockConnector)
 
     "on a successful submission, should return a Right" in {
-      val result = sut.saveDeclaration(EORINumber("1"), ValidRequest)
-      result mustBe EitherT(Future.successful(Right(DeclarationResponse(MovementId("ABC"), MessageId("123")))))
+      val result                                                  = sut.saveDeclaration(EORINumber("1"), ValidRequest)
+      val expected: Either[PersistenceError, DeclarationResponse] = Right(DeclarationResponse(MovementId("ABC"), MessageId("123")))
+      whenReady(result.value) {
+        _ mustBe expected
+      }
     }
 
     "on a failed submission, should return a Left with an OtherError" in {
-      val result = sut.saveDeclaration(EORINumber("1"), InvalidRequest)
-      result mustBe EitherT(Future.successful(Left(PersistenceError.OtherError(Some(upstreamErrorResponse)))))
+      val result                                                  = sut.saveDeclaration(EORINumber("1"), InvalidRequest)
+      val expected: Either[PersistenceError, DeclarationResponse] = Left(PersistenceError.OtherError(Some(upstreamErrorResponse)))
+      whenReady(result.value) {
+        _ mustBe expected
+      }
     }
   }
 
