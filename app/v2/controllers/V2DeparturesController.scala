@@ -121,13 +121,13 @@ class V2DeparturesControllerImpl @Inject() (
         withTemporaryFile {
           (temporaryFile, source) =>
             for {
-              _                 <- validationService
-                                    .validateXML(MessageType.DepartureDeclaration, source)
-                                    .leftMap(translateValidationError)
+              _ <- validationService
+                .validateXML(MessageType.DepartureDeclaration, source)
+                .leftMap(translateValidationError)
               fileSource = FileIO.fromPath(temporaryFile)
               declarationResult <- departuresPersistenceService
-                                    .saveDeclaration(request.eoriNumber, fileSource)
-                                    .leftMap(translatePersistenceError)
+                .saveDeclaration(request.eoriNumber, fileSource)
+                .leftMap(translatePersistenceError)
             } yield declarationResult
         }.fold[Result](
           baseError => Status(baseError.code.statusCode)(Json.toJson(baseError)),
