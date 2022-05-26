@@ -124,7 +124,9 @@ class V2DeparturesControllerImpl @Inject() (
               _ <- validationService
                 .validateXML(MessageType.DepartureDeclaration, source)
                 .leftMap(translateValidationError)
+
               fileSource = FileIO.fromPath(temporaryFile)
+
               declarationResult <- departuresPersistenceService
                 .saveDeclaration(request.eoriNumber, fileSource)
                 .leftMap(translatePersistenceError)
