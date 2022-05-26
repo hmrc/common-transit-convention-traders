@@ -39,13 +39,16 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.MessageSizeAction
+import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models.errors.BaseError
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
 import v2.models.errors.FailedToValidateError.OtherError
 import v2.models.errors.FailedToValidateError.SchemaFailedToValidateError
+import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
+import v2.services.DeparturesPersistenceService
 import v2.services.ValidationService
 
 import scala.concurrent.Future
@@ -64,7 +67,8 @@ class V2DeparturesControllerImpl @Inject() (
   temporaryFileCreator: TemporaryFileCreator,
   authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
   validationService: ValidationService,
-  messageSizeAction: MessageSizeAction
+  departuresPersistenceService: DeparturesPersistenceService,
+  messageSizeAction: MessageSizeAction[AuthenticatedRequest]
 )(implicit val materializer: Materializer)
     extends BaseController
     with V2DeparturesController
@@ -104,6 +108,10 @@ class V2DeparturesControllerImpl @Inject() (
     case SchemaFailedToValidateError(validationErrors) => BaseError.schemaValidationError(validationErrors = validationErrors)
   }
 
+  def translatePersistenceError(persistenceError: PersistenceError): BaseError = persistenceError match {
+    case err: PersistenceError.OtherError => BaseError.internalServiceError(cause = err.thr)
+  }
+
   def submitDeclaration(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen messageSizeAction).async(streamFromMemory) {
       implicit request =>
@@ -112,12 +120,18 @@ class V2DeparturesControllerImpl @Inject() (
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         withTemporaryFile {
           (temporaryFile, source) =>
-            validationService
-              .validateXML(MessageType.DepartureDeclaration, source)
-              .leftMap(translateValidationError)
+            for {
+              _                 <- validationService
+                                    .validateXML(MessageType.DepartureDeclaration, source)
+                                    .leftMap(translateValidationError)
+              fileSource = FileIO.fromPath(temporaryFile)
+              declarationResult <- departuresPersistenceService
+                                    .saveDeclaration(request.eoriNumber, fileSource)
+                                    .leftMap(translatePersistenceError)
+            } yield declarationResult
         }.fold[Result](
           baseError => Status(baseError.code.statusCode)(Json.toJson(baseError)),
-          _ => Accepted
+          result => Accepted(Json.toJson(result.movementId)) // TODO: do we want the message ID too?
         )
 
     }

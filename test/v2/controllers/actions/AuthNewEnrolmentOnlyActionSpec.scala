@@ -42,7 +42,7 @@ class AuthNewEnrolmentOnlyActionSpec extends AnyFreeSpec with Matchers with Mock
 
     def get(): Action[AnyContent] = authAction {
       authedRequest =>
-        Ok(authedRequest.eori)
+        Ok(authedRequest.eoriNumber.value)
     }
   }
 

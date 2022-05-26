@@ -18,7 +18,7 @@ package v2.controllers.actions
 
 import com.google.inject.Inject
 import config.Constants._
-import controllers.actions.AuthRequest
+import v2.controllers.request.AuthenticatedRequest
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.Results._
@@ -27,6 +27,7 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
+import v2.models.EORINumber
 import v2.models.errors.BaseError
 
 import scala.concurrent.ExecutionContext
@@ -34,8 +35,8 @@ import scala.concurrent.Future
 
 class AuthNewEnrolmentOnlyAction @Inject() (override val authConnector: AuthConnector, val parser: BodyParsers.Default)(implicit
   val executionContext: ExecutionContext
-) extends ActionBuilder[AuthRequest, AnyContent]
-    with ActionFunction[Request, AuthRequest]
+) extends ActionBuilder[AuthenticatedRequest, AnyContent]
+    with ActionFunction[Request, AuthenticatedRequest]
     with AuthorisedFunctions
     with Logging {
 
@@ -45,7 +46,7 @@ class AuthNewEnrolmentOnlyAction @Inject() (override val authConnector: AuthConn
       identifier <- enrolment.getIdentifier(enrolmentIdKey)
     } yield identifier.value
 
-  override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: AuthenticatedRequest[A] => Future[Result]): Future[Result] = {
 
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -60,7 +61,7 @@ class AuthNewEnrolmentOnlyAction @Inject() (override val authConnector: AuthConn
         newEnrolmentId
           .map {
             eoriNumber =>
-              block(AuthRequest(request, eoriNumber))
+              block(AuthenticatedRequest(EORINumber(eoriNumber), request))
           }
           .getOrElse {
             Future.failed(InsufficientEnrolments(s"Unable to retrieve enrolment for $NewEnrolmentKey"))

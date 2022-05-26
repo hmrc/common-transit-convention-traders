@@ -24,6 +24,7 @@ import akka.util.ByteString
 import akka.util.Timeout
 import cats.data.EitherT
 import cats.data.NonEmptyList
+import cats.implicits.catsStdInstancesForFuture
 import cats.syntax.all._
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
@@ -51,13 +52,20 @@ import play.api.test.Helpers.status
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
+import v2.models.EORINumber
+import v2.models.MessageId
+import v2.models.MovementId
 import v2.models.errors.FailedToValidateError
+import v2.models.errors.PersistenceError
 import v2.models.errors.ValidationError
 import v2.models.request.MessageType
+import v2.models.responses.DeclarationResponse
+import v2.services.DeparturesPersistenceService
 import v2.services.ValidationService
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.Try
@@ -193,10 +201,15 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
         )
     }
 
+  val mockDeparturesPersistenceService = mock[DeparturesPersistenceService]
+  when(mockDeparturesPersistenceService.saveDeclaration(eqTo("id").asInstanceOf[EORINumber], any[Source[ByteString, _]]()))
+    .thenReturn(EitherT.fromEither[Future](Right[PersistenceError, DeclarationResponse](DeclarationResponse(MovementId("123"), MessageId("456")))))
+
   override lazy val app: Application = GuiceApplicationBuilder()
     .overrides(
       bind[AuthNewEnrolmentOnlyAction].to[FakeAuthNewEnrolmentOnlyAction],
-      bind[ValidationService].toInstance(mockValidationService)
+      bind[ValidationService].toInstance(mockValidationService),
+      bind[DeparturesPersistenceService].toInstance(mockDeparturesPersistenceService)
     )
     .build()
   lazy val sut: V2DeparturesController = app.injector.instanceOf[V2DeparturesController]

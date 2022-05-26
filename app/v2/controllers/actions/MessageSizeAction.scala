@@ -31,23 +31,23 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Try
 
-class MessageSizeAction @Inject() (config: AppConfig)(implicit val executionContext: ExecutionContext) extends ActionRefiner[Request, Request] {
+class MessageSizeAction[R[_] <: Request[_]] @Inject() (config: AppConfig)(implicit val executionContext: ExecutionContext) extends ActionRefiner[R, R] {
 
-  override protected def refine[A](request: Request[A]): Future[Either[Result, Request[A]]] =
+  override protected def refine[A](request: R[A]): Future[Either[Result, R[A]]] =
     contentLengthHeader(request) match {
       case Some((_, length)) => Future.successful(checkSize(length, request))
       case None =>
         Future.successful(Left(BadRequest(Json.toJson(BaseError.badRequestError("Missing content-length header"))))) // should never happen
     }
 
-  private def checkSize[A](length: String, request: Request[A]): Either[Result, Request[A]] =
+  private def checkSize[A](length: String, request: R[A]): Either[Result, R[A]] =
     Try(length.toInt).toOption match {
       case Some(x) if x <= limit => Right(request)
       case Some(_)               => Left(EntityTooLarge(Json.toJson(BaseError.entityTooLargeError(s"Your message size must be less than $limit bytes"))))
       case None                  => Left(BadRequest(Json.toJson(BaseError.badRequestError("Invalid content-length value"))))
     }
 
-  private def contentLengthHeader[A](request: Request[A]): Option[(String, String)] =
+  private def contentLengthHeader[A](request: R[A]): Option[(String, String)] =
     request.headers.headers.find(_._1.equalsIgnoreCase(HeaderNames.CONTENT_LENGTH))
 
   private lazy val limit = config.messageSizeLimit
