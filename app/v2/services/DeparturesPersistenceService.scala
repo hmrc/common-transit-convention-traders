@@ -20,21 +20,42 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
+import com.google.inject.Inject
 import com.google.inject.Singleton
+import uk.gov.hmrc.http.HeaderCarrier
+import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
 import v2.models.errors.PersistenceError
 import v2.models.responses.DeclarationResponse
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[DeparturesPersistenceServiceImpl])
 trait DeparturesPersistenceService {
 
-  def saveDeclaration(eori: EORINumber, source: Source[ByteString, _]): EitherT[Future, PersistenceError, DeclarationResponse]
+  def saveDeclaration(eori: EORINumber, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, DeclarationResponse]
 
 }
 
 @Singleton
-class DeparturesPersistenceServiceImpl extends DeparturesPersistenceService {
-  override def saveDeclaration(eori: EORINumber, source: Source[ByteString, _]): EitherT[Future, PersistenceError, DeclarationResponse] = ???
+class DeparturesPersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnector) extends DeparturesPersistenceService {
+
+  override def saveDeclaration(eori: EORINumber, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, DeclarationResponse] =
+    EitherT(
+      persistenceConnector
+        .sendDepartureDeclaration(eori, source)
+        .map(Right(_))
+        .recover {
+          case NonFatal(thr) => Left(PersistenceError.OtherError(Some(thr)))
+        }
+    )
+
 }

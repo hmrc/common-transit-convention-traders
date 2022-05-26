@@ -18,11 +18,17 @@ package v2.connectors
 
 import io.lemonlabs.uri.UrlPath
 import uk.gov.hmrc.http.HttpErrorFunctions
+import v2.models.EORINumber
 import v2.models.request.MessageType
 
 trait V2BaseConnector extends HttpErrorFunctions {
 
   protected def validationRoute(messageType: MessageType): UrlPath =
-    UrlPath.parse(s"/transit-movements-validator/messages/${messageType.code}/validation") //transit-movements-validator/messages/IE015/validation
+    UrlPath.parse(s"/transit-movements-validator/messages/${messageType.code}/validation")
+
+  protected def movementsBaseRoute: String = "/transit-movements"
+
+  protected def movementsPostDeperatureDeclaration(eoriNumber: EORINumber): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/movements/${eoriNumber.value}/departures/") // TODO: What is RESTful here?
 
 }
