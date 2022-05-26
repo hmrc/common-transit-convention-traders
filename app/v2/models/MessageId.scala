@@ -20,7 +20,7 @@ import play.api.libs.functional.syntax.toInvariantFunctorOps
 import play.api.libs.json.Format
 
 object MessageId {
-  implicit val messageIdFormat: Format[MessageId] = implicitly[Format[String]].inmap(MessageId(_), _.value)
+  implicit lazy val messageIdFormat: Format[MessageId] = implicitly[Format[String]].inmap(MessageId(_), _.value)
 }
 
 case class MessageId(value: String) extends AnyVal

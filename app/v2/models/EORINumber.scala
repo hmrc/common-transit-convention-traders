@@ -20,7 +20,7 @@ import play.api.libs.functional.syntax.toInvariantFunctorOps
 import play.api.libs.json.Format
 
 object EORINumber {
-  implicit val eoriNumberFormats: Format[EORINumber] = implicitly[Format[String]].inmap(EORINumber(_), _.value)
+  implicit lazy val eoriNumberFormats: Format[EORINumber] = implicitly[Format[String]].inmap(EORINumber(_), _.value)
 }
 
 case class EORINumber(value: String) extends AnyVal

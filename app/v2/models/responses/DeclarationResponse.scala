@@ -22,7 +22,7 @@ import v2.models.MessageId
 import v2.models.MovementId
 
 object DeclarationResponse {
-  implicit val declarationResponseFormat: OFormat[DeclarationResponse] = Json.format[DeclarationResponse]
+  implicit lazy val declarationResponseFormat: OFormat[DeclarationResponse] = Json.format[DeclarationResponse]
 }
 
 case class DeclarationResponse(movementId: MovementId, messageId: MessageId)
