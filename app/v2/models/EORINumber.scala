@@ -16,11 +16,11 @@
 
 package v2.models
 
-import play.api.libs.functional.syntax.toInvariantFunctorOps
 import play.api.libs.json.Format
+import play.api.libs.json.Json
 
 object EORINumber {
-  implicit lazy val eoriNumberFormats: Format[EORINumber] = implicitly[Format[String]].inmap(EORINumber(_), _.value)
+  implicit lazy val eoriNumberFormats: Format[EORINumber] = Json.valueFormat[EORINumber]
 }
 
 case class EORINumber(value: String) extends AnyVal

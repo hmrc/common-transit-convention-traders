@@ -16,11 +16,11 @@
 
 package v2.models
 
-import play.api.libs.functional.syntax.toInvariantFunctorOps
 import play.api.libs.json.Format
+import play.api.libs.json.Json
 
 object MessageId {
-  implicit lazy val messageIdFormat: Format[MessageId] = implicitly[Format[String]].inmap(MessageId(_), _.value)
+  implicit lazy val messageIdFormat: Format[MessageId] = Json.valueFormat[MessageId]
 }
 
 case class MessageId(value: String) extends AnyVal
