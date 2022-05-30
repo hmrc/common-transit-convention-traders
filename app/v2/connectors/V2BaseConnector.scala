@@ -29,6 +29,6 @@ trait V2BaseConnector extends HttpErrorFunctions {
   protected def movementsBaseRoute: String = "/transit-movements"
 
   protected def movementsPostDeperatureDeclaration(eoriNumber: EORINumber): UrlPath =
-    UrlPath.parse(s"$movementsBaseRoute/transits/${eoriNumber.value}/movements/departures/")
+    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/")
 
 }

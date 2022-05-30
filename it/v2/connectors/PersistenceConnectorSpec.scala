@@ -65,7 +65,7 @@ class PersistenceConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAp
 
     lazy val okResult   = DeclarationResponse(MovementId("123"), MessageId("456"))
     lazy val eoriNumber = EORINumber("ABC123")
-    lazy val targetUrl  = s"/transit-movements/movements/${eoriNumber.value}/departures/"
+    lazy val targetUrl  = s"/transit-movements/traders/${eoriNumber.value}/movements/departures/"
 
     "On successful creation of an element, must return OK" in {
 
