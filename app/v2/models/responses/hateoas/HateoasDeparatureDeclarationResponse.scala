@@ -34,7 +34,7 @@ object HateoasDepartureLinks {
   implicit val hateoasDepartureLinksWrites: OWrites[HateoasDepartureLinks] = Json.writes[HateoasDepartureLinks]
 
   def messageUrl(movementId: MovementId, messageId: MessageId) =
-  // TODO: Fix when we do this route, as right now it only accepts an int.
+    // TODO: Fix when we do this route, as right now it only accepts an int.
     routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), models.domain.MessageId(456)).urlWithContext
 
   // TODO: Fix when we do this route, as right now it only accepts an int.
@@ -43,16 +43,18 @@ object HateoasDepartureLinks {
   def apply(movementId: MovementId, messageId: MessageId): HateoasDepartureLinks =
     HateoasDepartureLinks(HateoasHref(messageUrl(movementId, messageId)), HateoasHref(departureUrl(movementId)))
 }
+
 case class HateoasDepartureLinks(
   self: HateoasHref,
   departure: HateoasHref
 )
 
-
 object HateoasDepartureMessagePostResponse {
 
   // in this case, we want to force a different conversion then message type would give.
-  implicit private val messageTypeWrites: Writes[MessageType] = Writes(t => JsString(t.code))
+  implicit private val messageTypeWrites: Writes[MessageType] = Writes(
+    t => JsString(t.code)
+  )
 
   implicit val hateoasMessagePostResponseWrites = (
     (__ \ "_links").write[HateoasDepartureLinks] and
@@ -71,6 +73,7 @@ object HateoasDepartureMessagePostResponse {
       HateoasEmbedded(None)
     )
 }
+
 case class HateoasDepartureMessagePostResponse(
   _links: HateoasDepartureLinks,
   movementId: MovementId,
@@ -78,4 +81,3 @@ case class HateoasDepartureMessagePostResponse(
   messageType: MessageType,
   _embedded: HateoasEmbedded
 )
-

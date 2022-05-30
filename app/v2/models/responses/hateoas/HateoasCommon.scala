@@ -32,4 +32,3 @@ object HateoasEmbedded {
   implicit lazy val hateoasEmbeddedWrites = Json.writes[HateoasEmbedded]
 }
 case class HateoasEmbedded(notifications: Option[HateoasRequest])
-

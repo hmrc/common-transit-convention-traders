@@ -269,10 +269,10 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
             "href" -> "/customs/transits/movements/departures/123"
           )
         ),
-        "movementId" -> "123",
-        "messageId" -> "456",
-        "messageType" ->"IE015",
-        "_embedded" -> Json.obj()
+        "movementId"  -> "123",
+        "messageId"   -> "456",
+        "messageType" -> "IE015",
+        "_embedded"   -> Json.obj()
       )
     }
 
