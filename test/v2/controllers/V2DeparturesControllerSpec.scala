@@ -259,7 +259,21 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
       val request = fakeRequestDepartures(method = "POST", body = CC015C, headers = standardHeaders)
       val result  = route(app, request).value
       status(result) mustBe ACCEPTED
-      contentAsJson(result) mustBe Json.obj("movementId" -> "123")
+
+      contentAsJson(result) mustBe Json.obj(
+        "_links" -> Json.obj(
+          "self" -> Json.obj(
+            "href" -> "/customs/transits/movements/departures/123/messages/456"
+          ),
+          "departure" -> Json.obj(
+            "href" -> "/customs/transits/movements/departures/123"
+          )
+        ),
+        "movementId" -> "123",
+        "messageId" -> "456",
+        "messageType" ->"IE015",
+        "_embedded" -> Json.obj()
+      )
     }
 
     "must return Bad Request when body is not an XML document" in {
