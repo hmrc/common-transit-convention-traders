@@ -42,11 +42,6 @@ import v2.controllers.actions.MessageSizeAction
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models.errors.BaseError
-import v2.models.errors.FailedToValidateError
-import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
-import v2.models.errors.FailedToValidateError.OtherError
-import v2.models.errors.FailedToValidateError.SchemaFailedToValidateError
-import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
 import v2.models.responses.hateoas.HateoasDepartureMessagePostResponse
 import v2.services.DeparturesPersistenceService
@@ -113,11 +108,11 @@ class V2DeparturesControllerImpl @Inject() (
         withTemporaryFile {
           (temporaryFile, source) =>
             for {
-              _ <- validationService.validateXML(MessageType.DepartureDeclaration, source).asBaseError
+              _ <- validationService.validateXML(MessageType.DepartureDeclaration, source).convertError
 
               fileSource = FileIO.fromPath(temporaryFile)
 
-              declarationResult <- departuresPersistenceService.saveDeclaration(request.eoriNumber, fileSource).asBaseError
+              declarationResult <- departuresPersistenceService.saveDeclaration(request.eoriNumber, fileSource).convertError
             } yield declarationResult
         }.fold[Result](
           baseError => Status(baseError.code.statusCode)(Json.toJson(baseError)),

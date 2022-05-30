@@ -31,11 +31,11 @@ trait ErrorTranslator {
 
   implicit class ErrorConverter[E, A](value: EitherT[Future, E, A]) {
 
-    def asBaseError(implicit c: Converter[E], ec: ExecutionContext): EitherT[Future, BaseError, A] =
+    def convertError(implicit c: Converter[E], ec: ExecutionContext): EitherT[Future, BaseError, A] =
       value.leftMap(c.convert)
   }
 
-  sealed trait Converter[E] {
+  trait Converter[E] {
     def convert(input: E): BaseError
   }
 
