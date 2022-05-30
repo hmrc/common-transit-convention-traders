@@ -48,6 +48,7 @@ import v2.models.errors.FailedToValidateError.OtherError
 import v2.models.errors.FailedToValidateError.SchemaFailedToValidateError
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
+import v2.models.responses.hateoas.HateoasDepartureMessagePostResponse
 import v2.services.DeparturesPersistenceService
 import v2.services.ValidationService
 
@@ -133,7 +134,7 @@ class V2DeparturesControllerImpl @Inject() (
             } yield declarationResult
         }.fold[Result](
           baseError => Status(baseError.code.statusCode)(Json.toJson(baseError)),
-          result => Accepted(Json.obj("movementId" -> result.movementId)) // TODO: do we want the message ID too? Create case object if necessary
+          result => Accepted(Json.toJson(HateoasDepartureMessagePostResponse(result.movementId, result.messageId, MessageType.DepartureDeclaration)))
         )
 
     }
