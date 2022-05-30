@@ -101,10 +101,15 @@ traits:
                 {
                   "_links": {
                     "self": {
-                      "href": "/customs/transits/movements/departures/abc123efg"
+                      "href": "/customs/transits/movements/departures/0123456789abcdef"
                     }
                   },
-                  "departureId": "abc123efg",
-                  "messageType": "IE015",
-                  "body": "<CC015C>...</CC015C>"
+                  "id": "0123456789abcdef",
+                  "_embedded": {
+                    "messages": {
+                      "_links": {
+                        "href": "/customs/transits/movements/departures/0123456789abcdef/messages"
+                      }
+                    }
+                  }
                 }
