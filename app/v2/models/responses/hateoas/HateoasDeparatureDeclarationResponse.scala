@@ -58,16 +58,16 @@ object HateoasDepartureMessagePostResponse {
 
   implicit val hateoasMessagePostResponseWrites = (
     (__ \ "_links").write[HateoasDepartureLinks] and
-      (__ \ "movementId").write[MovementId] and
+      (__ \ "departureId").write[MovementId] and
       (__ \ "messageId").write[MessageId] and
       (__ \ "messageType").write[MessageType] and
       (__ \ "_embedded").write[HateoasEmbedded]
   )(unlift(HateoasDepartureMessagePostResponse.unapply))
 
-  def apply(movementId: MovementId, messageId: MessageId, messageType: MessageType): HateoasDepartureMessagePostResponse =
+  def apply(departureId: MovementId, messageId: MessageId, messageType: MessageType): HateoasDepartureMessagePostResponse =
     HateoasDepartureMessagePostResponse(
-      HateoasDepartureLinks(movementId, messageId),
-      movementId,
+      HateoasDepartureLinks(departureId, messageId),
+      departureId,
       messageId,
       messageType,
       HateoasEmbedded(None)
