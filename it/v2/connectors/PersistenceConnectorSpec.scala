@@ -61,7 +61,7 @@ class PersistenceConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAp
   lazy val persistenceConnector: PersistenceConnectorImpl = new PersistenceConnectorImpl(wsclient, appConfig, new TestMetrics())
   implicit lazy val ec: ExecutionContext                  = app.materializer.executionContext
 
-  "POST /message/:eori/departures" - {
+  "POST /traders/:eori/message/departures" - {
 
     lazy val okResult   = DeclarationResponse(MovementId("123"), MessageId("456"))
     lazy val eoriNumber = EORINumber("ABC123")
