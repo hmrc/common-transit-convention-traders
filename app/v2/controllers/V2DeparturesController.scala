@@ -75,7 +75,8 @@ class V2DeparturesControllerImpl @Inject() (
     with V2DeparturesController
     with Logging
     with StreamingParsers
-    with VersionedRouting {
+    with VersionedRouting
+    with ErrorTranslator {
 
   private def deleteFile[A](temporaryFile: Files.TemporaryFile)(identity: A): A = {
     temporaryFile.delete()
@@ -103,16 +104,6 @@ class V2DeparturesControllerImpl @Inject() (
           onSucceed(temporaryFile, source).bimap(deleteFile(temporaryFile), deleteFile(temporaryFile))
       }
 
-  def translateValidationError(validationError: FailedToValidateError): BaseError = validationError match {
-    case err: OtherError                               => BaseError.internalServiceError(cause = err.thr)
-    case InvalidMessageTypeError(messageType)          => BaseError.badRequestError(s"$messageType is not a valid message type")
-    case SchemaFailedToValidateError(validationErrors) => BaseError.schemaValidationError(validationErrors = validationErrors)
-  }
-
-  def translatePersistenceError(persistenceError: PersistenceError): BaseError = persistenceError match {
-    case err: PersistenceError.OtherError => BaseError.internalServiceError(cause = err.thr)
-  }
-
   def submitDeclaration(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen messageSizeAction).async(streamFromMemory) {
       implicit request =>
@@ -122,15 +113,11 @@ class V2DeparturesControllerImpl @Inject() (
         withTemporaryFile {
           (temporaryFile, source) =>
             for {
-              _ <- validationService
-                .validateXML(MessageType.DepartureDeclaration, source)
-                .leftMap(translateValidationError)
+              _ <- validationService.validateXML(MessageType.DepartureDeclaration, source).asBaseError
 
               fileSource = FileIO.fromPath(temporaryFile)
 
-              declarationResult <- departuresPersistenceService
-                .saveDeclaration(request.eoriNumber, fileSource)
-                .leftMap(translatePersistenceError)
+              declarationResult <- departuresPersistenceService.saveDeclaration(request.eoriNumber, fileSource).asBaseError
             } yield declarationResult
         }.fold[Result](
           baseError => Status(baseError.code.statusCode)(Json.toJson(baseError)),
