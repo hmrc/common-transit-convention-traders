@@ -25,9 +25,9 @@ import play.api.libs.json.Json
 import play.api.libs.json.OWrites
 import play.api.libs.json.Writes
 import play.api.libs.json.__
+import utils.CallOps.CallOps
 import v2.models.MessageId
 import v2.models.MovementId
-import utils.CallOps.CallOps
 import v2.models.request.MessageType
 
 object HateoasDepartureLinks {
