@@ -33,13 +33,13 @@ class DeclarationResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckD
   "when MessageID is serialized, return an appropriate JsObject" in forAll(gen, gen) {
     (movement, message) =>
       val actual   = DeclarationResponse.declarationResponseFormat.writes(DeclarationResponse(MovementId(movement), MessageId(message)))
-      val expected = Json.obj("movementId" -> movement, "messageId" -> message)
+      val expected = Json.obj("departureId" -> movement, "messageId" -> message)
       actual mustBe expected
   }
 
   "when an appropriate JsObject is deserialized, return a MessageId" in forAll(gen, gen) {
     (movement, message) =>
-      val actual   = DeclarationResponse.declarationResponseFormat.reads(Json.obj("movementId" -> movement, "messageId" -> message))
+      val actual   = DeclarationResponse.declarationResponseFormat.reads(Json.obj("departureId" -> movement, "messageId" -> message))
       val expected = DeclarationResponse(MovementId(movement), MessageId(message))
       actual mustBe JsSuccess(expected)
   }

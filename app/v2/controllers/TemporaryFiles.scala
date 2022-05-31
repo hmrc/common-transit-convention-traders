@@ -38,11 +38,6 @@ import scala.util.Try
 trait TemporaryFiles {
   val temporaryFileCreator: TemporaryFileCreator
 
-  private def deleteFile(temporaryFile: Files.TemporaryFile): Future[Unit] = {
-    temporaryFile.delete()
-    Future.successful(())
-  }
-
   def withTemporaryFile[R](
     onSucceed: (Files.TemporaryFile, Source[ByteString, _]) => Future[R]
   )(implicit request: Request[Source[ByteString, _]], materializer: Materializer, ec: ExecutionContext): EitherT[Future, Throwable, R] =
@@ -62,7 +57,7 @@ trait TemporaryFiles {
           val source = request.body.alsoTo(FileIO.toPath(temporaryFile.path))
           EitherT.right(
             onSucceed(temporaryFile, source).flatTap(
-              _ => deleteFile(temporaryFile)
+              _ => Future.successful(temporaryFile.delete())
             )
           )
       }

@@ -25,4 +25,4 @@ object DeclarationResponse {
   implicit lazy val declarationResponseFormat: OFormat[DeclarationResponse] = Json.format[DeclarationResponse]
 }
 
-case class DeclarationResponse(movementId: MovementId, messageId: MessageId)
+case class DeclarationResponse(departureId: MovementId, messageId: MessageId)
