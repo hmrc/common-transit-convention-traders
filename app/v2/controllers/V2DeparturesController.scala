@@ -115,7 +115,7 @@ class V2DeparturesControllerImpl @Inject() (
               declarationResult <- departuresService.saveDeclaration(request.eoriNumber, fileSource).convertError
             } yield declarationResult
         }.fold[Result](
-          baseError => Status(baseError.code.statusCode)(Json.toJson(baseError)),
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           result => Accepted(HateoasDepartureDeclarationResponse(result.movementId, result.messageId, MessageType.DepartureDeclaration))
         )
 
