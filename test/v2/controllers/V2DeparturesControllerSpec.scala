@@ -312,5 +312,3 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
   }
 
 }
-// {"_links":{"self":{"href":"/customs/transits/movements/departures/123/messages/456"},"departure":{"href":"/customs/transits/movements/departures/123"}},"departureId":"123","messageId":"456","messageType":"IE015"}
-// {"_links":{"self":{"href":"/customs/transits/movements/departures/123/messages/456","departure":{"href":"/customs/transits/movements/departures/123"}},"departureId":"123","messageId":"456","messageType":"IE015"}}
