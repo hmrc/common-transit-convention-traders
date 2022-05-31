@@ -48,23 +48,23 @@ class DeparturesServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
   "Submitting a Departure Declaration" - {
 
-    val ValidRequest: Source[ByteString, NotUsed]   = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
-    val InvalidRequest: Source[ByteString, NotUsed] = Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8))
+    val validRequest: Source[ByteString, NotUsed]   = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
+    val invalidRequest: Source[ByteString, NotUsed] = Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8))
 
     val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
 
     val mockConnector: PersistenceConnector = mock[PersistenceConnector]
 
     // Because we're using AnyVal, Mockito doesn't really like it, so we have to put the underlying type down, then cast to the value type...
-    when(mockConnector.post(any[String].asInstanceOf[EORINumber], eqTo(ValidRequest))(any[HeaderCarrier], any[ExecutionContext]))
+    when(mockConnector.post(any[String].asInstanceOf[EORINumber], eqTo(validRequest))(any[HeaderCarrier], any[ExecutionContext]))
       .thenReturn(Future.successful(DeclarationResponse(MovementId("ABC"), MessageId("123"))))
-    when(mockConnector.post(any[String].asInstanceOf[EORINumber], eqTo(InvalidRequest))(any[HeaderCarrier], any[ExecutionContext]))
+    when(mockConnector.post(any[String].asInstanceOf[EORINumber], eqTo(invalidRequest))(any[HeaderCarrier], any[ExecutionContext]))
       .thenReturn(Future.failed(upstreamErrorResponse))
 
     val sut = new DeparturesServiceImpl(mockConnector)
 
     "on a successful submission, should return a Right" in {
-      val result                                                  = sut.saveDeclaration(EORINumber("1"), ValidRequest)
+      val result                                                  = sut.saveDeclaration(EORINumber("1"), validRequest)
       val expected: Either[PersistenceError, DeclarationResponse] = Right(DeclarationResponse(MovementId("ABC"), MessageId("123")))
       whenReady(result.value) {
         _ mustBe expected
@@ -72,7 +72,7 @@ class DeparturesServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
     }
 
     "on a failed submission, should return a Left with an OtherError" in {
-      val result                                                  = sut.saveDeclaration(EORINumber("1"), InvalidRequest)
+      val result                                                  = sut.saveDeclaration(EORINumber("1"), invalidRequest)
       val expected: Either[PersistenceError, DeclarationResponse] = Left(PersistenceError.OtherError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected
