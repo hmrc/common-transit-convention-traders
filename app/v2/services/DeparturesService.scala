@@ -43,7 +43,7 @@ trait DeparturesService {
 }
 
 @Singleton
-class DeparturesServiceImpl @Inject()(persistenceConnector: PersistenceConnector) extends DeparturesService {
+class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnector) extends DeparturesService {
 
   override def saveDeclaration(eori: EORINumber, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,

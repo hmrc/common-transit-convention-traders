@@ -34,7 +34,7 @@ import v2.models.request.MessageType
 object HateoasDepartureDeclarationResponse {
 
   def messageUrl(movementId: MovementId, messageId: MessageId) =
-  // TODO: Fix when we do this route, as right now it only accepts an int.
+    // TODO: Fix when we do this route, as right now it only accepts an int.
     routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), models.domain.MessageId(456)).urlWithContext
 
   // TODO: Fix when we do this route, as right now it only accepts an int.
@@ -42,12 +42,12 @@ object HateoasDepartureDeclarationResponse {
 
   def apply(departureId: MovementId, messageId: MessageId, messageType: MessageType): JsObject =
     Json.obj(
-    "_links" -> Json.obj(
-      "self" -> Json.obj("href" -> messageUrl(departureId, messageId)),
+      "_links" -> Json.obj(
+        "self"      -> Json.obj("href" -> messageUrl(departureId, messageId)),
         "departure" -> Json.obj("href" -> departureUrl(departureId))
       ),
       "departureId" -> departureId.value,
-      "messageId" -> messageId.value,
+      "messageId"   -> messageId.value,
       "messageType" -> messageType.code
     )
 }

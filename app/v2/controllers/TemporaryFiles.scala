@@ -45,10 +45,7 @@ trait TemporaryFiles {
 
   def withTemporaryFile[R](
     onSucceed: (Files.TemporaryFile, Source[ByteString, _]) => Future[R]
-  )(implicit request: Request[Source[ByteString, _]],
-    materializer: Materializer,
-    ec: ExecutionContext
-  ): EitherT[Future, Throwable, R] =
+  )(implicit request: Request[Source[ByteString, _]], materializer: Materializer, ec: ExecutionContext): EitherT[Future, Throwable, R] =
     EitherT(Future.successful(Try(temporaryFileCreator.create()).toEither))
       .leftSemiflatTap {
         _ =>
@@ -63,13 +60,20 @@ trait TemporaryFiles {
           // The alsoTo call causes the file to be written as we send the request -
           // fanning-out such that we request and save at the same time.
           val source = request.body.alsoTo(FileIO.toPath(temporaryFile.path))
-          EitherT.right(onSucceed(temporaryFile, source).flatTap(_ => deleteFile(temporaryFile)))
+          EitherT.right(
+            onSucceed(temporaryFile, source).flatTap(
+              _ => deleteFile(temporaryFile)
+            )
+          )
       }
 
   implicit class TemporaryFileResult(value: EitherT[Future, Throwable, Result]) {
+
     def toResult(implicit ec: ExecutionContext): Future[Result] =
       value
-        .leftMap(thr => PresentationError.internalServiceError(cause = Some(thr)))
+        .leftMap(
+          thr => PresentationError.internalServiceError(cause = Some(thr))
+        )
         .fold(presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)), in => in)
   }
 

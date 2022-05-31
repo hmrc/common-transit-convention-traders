@@ -36,13 +36,7 @@ import v2.models.errors.ValidationError
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ErrorTranslatorSpec
-  extends AnyFreeSpec
-    with Matchers
-    with OptionValues
-    with ScalaFutures
-    with MockitoSugar
-    with ScalaCheckDrivenPropertyChecks {
+class ErrorTranslatorSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar with ScalaCheckDrivenPropertyChecks {
 
   object Harness extends ErrorTranslator
 
@@ -67,7 +61,7 @@ class ErrorTranslatorSpec
   "Validation Error" - {
 
     "an Unexpected Error with no exception returns an internal service error with no exception" in {
-      val input = UnexpectedError(None)
+      val input  = UnexpectedError(None)
       val output = PresentationError.internalServiceError()
 
       validationErrorConverter.convert(input) mustBe output
@@ -75,15 +69,15 @@ class ErrorTranslatorSpec
 
     "an Unexpected Error with an exception returns an internal service error with an exception" in {
       val exception = new IllegalStateException()
-      val input = UnexpectedError(Some(exception))
-      val output = PresentationError.internalServiceError(cause = Some(exception))
+      val input     = UnexpectedError(Some(exception))
+      val output    = PresentationError.internalServiceError(cause = Some(exception))
 
       validationErrorConverter.convert(input) mustBe output
     }
 
     "an InvalidMessageTypeError returns a bad request error" in forAll(Gen.identifier) {
       messageType =>
-        val input = InvalidMessageTypeError(messageType)
+        val input  = InvalidMessageTypeError(messageType)
         val output = PresentationError.badRequestError(s"$messageType is not a valid message type")
 
         validationErrorConverter.convert(input) mustBe output
@@ -91,8 +85,8 @@ class ErrorTranslatorSpec
 
     "a SchemaFailedToValidateError returns a schema validation error presentation error" in {
       val validationError = ValidationError(1, 1, "error")
-      val input = SchemaFailedToValidateError(NonEmptyList(validationError, Nil))
-      val output = PresentationError.schemaValidationError(validationErrors = NonEmptyList(validationError, Nil))
+      val input           = SchemaFailedToValidateError(NonEmptyList(validationError, Nil))
+      val output          = PresentationError.schemaValidationError(validationErrors = NonEmptyList(validationError, Nil))
 
       validationErrorConverter.convert(input) mustBe output
     }
@@ -101,7 +95,7 @@ class ErrorTranslatorSpec
 
   "Persistence Error" - {
     "an Unexpected Error with no exception returns an internal service error with no exception" in {
-      val input = PersistenceError.UnexpectedError(None)
+      val input  = PersistenceError.UnexpectedError(None)
       val output = PresentationError.internalServiceError()
 
       persistenceErrorConverter.convert(input) mustBe output
@@ -109,8 +103,8 @@ class ErrorTranslatorSpec
 
     "an Unexpected Error with an exception returns an internal service error with an exception" in {
       val exception = new IllegalStateException()
-      val input = PersistenceError.UnexpectedError(Some(exception))
-      val output = PresentationError.internalServiceError(cause = Some(exception))
+      val input     = PersistenceError.UnexpectedError(Some(exception))
+      val output    = PresentationError.internalServiceError(cause = Some(exception))
 
       persistenceErrorConverter.convert(input) mustBe output
     }

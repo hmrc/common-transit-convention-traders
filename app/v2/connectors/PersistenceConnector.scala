@@ -43,8 +43,8 @@ import scala.concurrent.Future
 trait PersistenceConnector {
 
   def post(eori: EORINumber, source: Source[ByteString, _])(implicit
-                                                            hc: HeaderCarrier,
-                                                            ec: ExecutionContext
+    hc: HeaderCarrier,
+    ec: ExecutionContext
   ): Future[DeclarationResponse]
 
 }
@@ -57,8 +57,8 @@ class PersistenceConnectorImpl @Inject() (ws: WSClient, appConfig: AppConfig, va
     with Logging {
 
   override def post(eori: EORINumber, source: Source[ByteString, _])(implicit
-                                                                     hc: HeaderCarrier,
-                                                                     ec: ExecutionContext
+    hc: HeaderCarrier,
+    ec: ExecutionContext
   ): Future[DeclarationResponse] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
