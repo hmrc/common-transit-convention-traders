@@ -24,11 +24,13 @@ import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
+import org.scalacheck.Gen
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.ContentTypes
 import play.api.http.HeaderNames
 import play.api.http.Status.BAD_REQUEST
@@ -41,11 +43,12 @@ import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.TestMetrics
+import utils.WiremockSuite
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
-import v2.models.errors.PresentationError
 import v2.models.errors.ErrorCode
+import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
 import v2.models.responses.DeclarationResponse
 
@@ -53,7 +56,14 @@ import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 
-class PersistenceConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with utils.WiremockSuite with ScalaFutures with IntegrationPatience {
+class PersistenceConnectorSpec
+    extends AnyFreeSpec
+    with Matchers
+    with GuiceOneAppPerSuite
+    with WiremockSuite
+    with ScalaFutures
+    with IntegrationPatience
+    with ScalaCheckDrivenPropertyChecks {
 
   lazy val wsclient: WSClient   = app.injector.instanceOf[WSClient]
   lazy val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
@@ -63,126 +73,127 @@ class PersistenceConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAp
 
   "POST /traders/:eori/message/departures" - {
 
-    lazy val okResult   = DeclarationResponse(MovementId("123"), MessageId("456"))
-    lazy val eoriNumber = EORINumber("ABC123")
-    lazy val targetUrl  = s"/transit-movements/traders/${eoriNumber.value}/movements/departures/"
+    lazy val okResult      = DeclarationResponse(MovementId("123"), MessageId("456"))
+    lazy val eoriNumberGen = Gen.alphaNumStr.map(EORINumber.apply)
 
-    "On successful creation of an element, must return OK" in {
+    def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures/"
 
-      server.stubFor(
-        post(
-          urlEqualTo(targetUrl)
-        )
-          .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-          .willReturn(
-            aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(okResult)))
+    "On successful creation of an element, must return OK" in forAll(eoriNumberGen) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
           )
-      )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(okResult)))
+            )
+        )
 
-      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
-      val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
+        val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-      whenReady(persistenceConnector.post(eoriNumber, source)) {
-        result =>
-          result mustBe okResult
-      }
+        whenReady(persistenceConnector.post(eoriNumber, source)) {
+          result =>
+            result mustBe okResult
+        }
     }
 
-    "On an upstream internal server error, get a UpstreamErrorResponse" in {
-
-      server.stubFor(
-        post(
-          urlEqualTo(targetUrl)
-        )
-          .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-          .willReturn(
-            aResponse()
-              .withStatus(INTERNAL_SERVER_ERROR)
-              .withBody(
-                Json.stringify(Json.toJson(PresentationError.internalServiceError()))
-              )
+    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(eoriNumberGen) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
           )
-      )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse()
+                .withStatus(INTERNAL_SERVER_ERROR)
+                .withBody(
+                  Json.stringify(Json.toJson(PresentationError.internalServiceError()))
+                )
+            )
+        )
 
-      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
-      val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
+        val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-      val future = persistenceConnector.post(eoriNumber, source).map(Right(_)).recover {
-        case NonFatal(e) => Left(e)
-      }
+        val future = persistenceConnector.post(eoriNumber, source).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
 
-      whenReady(future) {
-        result =>
-          result.left.get mustBe a[UpstreamErrorResponse]
-          val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
-          response.statusCode mustBe INTERNAL_SERVER_ERROR
-          Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
-      }
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            response.statusCode mustBe INTERNAL_SERVER_ERROR
+            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+        }
     }
 
-    "On an upstream bad request, get an UpstreamErrorResponse" in {
-
-      server.stubFor(
-        post(
-          urlEqualTo(targetUrl)
-        )
-          .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-          .willReturn(
-            aResponse()
-              .withStatus(BAD_REQUEST)
-              .withBody(
-                Json.stringify(Json.toJson(PresentationError.badRequestError("Bad request")))
-              )
+    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(eoriNumberGen) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
           )
-      )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse()
+                .withStatus(BAD_REQUEST)
+                .withBody(
+                  Json.stringify(Json.toJson(PresentationError.badRequestError("Bad request")))
+                )
+            )
+        )
 
-      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
-      val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
+        val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-      val future = persistenceConnector.post(eoriNumber, source).map(Right(_)).recover {
-        case NonFatal(e) => Left(e)
-      }
+        val future = persistenceConnector.post(eoriNumber, source).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
 
-      whenReady(future) {
-        result =>
-          result.left.get mustBe a[UpstreamErrorResponse]
-          val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
-          response.statusCode mustBe BAD_REQUEST
-          Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
-      }
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            response.statusCode mustBe BAD_REQUEST
+            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+        }
     }
 
-    "On an incorrect Json fragment, must return a JsResult.Exception" in {
-
-      server.stubFor(
-        post(
-          urlEqualTo(targetUrl)
-        )
-          .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-          .willReturn(
-            aResponse()
-              .withStatus(OK)
-              .withBody(
-                "{ hello"
-              )
+    "On an incorrect Json fragment, must return a JsResult.Exception" in forAll(eoriNumberGen) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
           )
-      )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  "{ hello"
+                )
+            )
+        )
 
-      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
-      val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
+        val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-      val future = persistenceConnector.post(eoriNumber, source).map(Right(_)).recover {
-        case NonFatal(e) => Left(e)
-      }
+        val future = persistenceConnector.post(eoriNumber, source).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
 
-      whenReady(future) {
-        result =>
-          result.left.get mustBe a[JsonParseException]
-      }
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[JsonParseException]
+        }
     }
   }
 
