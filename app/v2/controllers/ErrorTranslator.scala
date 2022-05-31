@@ -17,7 +17,7 @@
 package v2.controllers
 
 import cats.data.EitherT
-import v2.models.errors.BaseError
+import v2.models.errors.PresentationError
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
 import v2.models.errors.FailedToValidateError.OtherError
@@ -31,27 +31,27 @@ trait ErrorTranslator {
 
   implicit class ErrorConverter[E, A](value: EitherT[Future, E, A]) {
 
-    def convertError(implicit c: Converter[E], ec: ExecutionContext): EitherT[Future, BaseError, A] =
+    def convertError(implicit c: Converter[E], ec: ExecutionContext): EitherT[Future, PresentationError, A] =
       value.leftMap(c.convert)
   }
 
   trait Converter[E] {
-    def convert(input: E): BaseError
+    def convert(input: E): PresentationError
   }
 
   implicit val validationErrorConverter = new Converter[FailedToValidateError] {
 
-    def convert(validationError: FailedToValidateError): BaseError = validationError match {
-      case err: OtherError                               => BaseError.internalServiceError(cause = err.thr)
-      case InvalidMessageTypeError(messageType)          => BaseError.badRequestError(s"$messageType is not a valid message type")
-      case SchemaFailedToValidateError(validationErrors) => BaseError.schemaValidationError(validationErrors = validationErrors)
+    def convert(validationError: FailedToValidateError): PresentationError = validationError match {
+      case err: OtherError                               => PresentationError.internalServiceError(cause = err.thr)
+      case InvalidMessageTypeError(messageType)          => PresentationError.badRequestError(s"$messageType is not a valid message type")
+      case SchemaFailedToValidateError(validationErrors) => PresentationError.schemaValidationError(validationErrors = validationErrors)
     }
   }
 
   implicit val persistenceErrorConverter = new Converter[PersistenceError] {
 
-    def convert(persistenceError: PersistenceError): BaseError = persistenceError match {
-      case err: PersistenceError.OtherError => BaseError.internalServiceError(cause = err.thr)
+    def convert(persistenceError: PersistenceError): PresentationError = persistenceError match {
+      case err: PersistenceError.OtherError => PresentationError.internalServiceError(cause = err.thr)
     }
   }
 

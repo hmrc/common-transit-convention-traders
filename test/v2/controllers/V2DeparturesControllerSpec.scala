@@ -60,7 +60,7 @@ import v2.models.errors.PersistenceError
 import v2.models.errors.ValidationError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
-import v2.services.DeparturesPersistenceService
+import v2.services.DeparturesService
 import v2.services.ValidationService
 
 import java.nio.charset.StandardCharsets
@@ -201,7 +201,7 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
         )
     }
 
-  val mockDeparturesPersistenceService = mock[DeparturesPersistenceService]
+  val mockDeparturesPersistenceService = mock[DeparturesService]
   when(
     mockDeparturesPersistenceService
       .saveDeclaration(eqTo("id").asInstanceOf[EORINumber], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
@@ -212,7 +212,7 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
     .overrides(
       bind[AuthNewEnrolmentOnlyAction].to[FakeAuthNewEnrolmentOnlyAction],
       bind[ValidationService].toInstance(mockValidationService),
-      bind[DeparturesPersistenceService].toInstance(mockDeparturesPersistenceService)
+      bind[DeparturesService].toInstance(mockDeparturesPersistenceService)
     )
     .build()
   lazy val sut: V2DeparturesController = app.injector.instanceOf[V2DeparturesController]
@@ -271,8 +271,7 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
         ),
         "departureId" -> "123",
         "messageId"   -> "456",
-        "messageType" -> "IE015",
-        "_embedded"   -> Json.obj()
+        "messageType" -> "IE015"
       )
     }
 
@@ -313,3 +312,5 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
   }
 
 }
+// {"_links":{"self":{"href":"/customs/transits/movements/departures/123/messages/456"},"departure":{"href":"/customs/transits/movements/departures/123"}},"departureId":"123","messageId":"456","messageType":"IE015"}
+// {"_links":{"self":{"href":"/customs/transits/movements/departures/123/messages/456","departure":{"href":"/customs/transits/movements/departures/123"}},"departureId":"123","messageId":"456","messageType":"IE015"}}

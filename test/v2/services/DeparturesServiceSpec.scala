@@ -42,7 +42,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class DeparturesPersistenceServiceSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar {
+class DeparturesServiceSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
@@ -56,12 +56,12 @@ class DeparturesPersistenceServiceSpec extends AnyFreeSpec with Matchers with Op
     val mockConnector: PersistenceConnector = mock[PersistenceConnector]
 
     // Because we're using AnyVal, Mockito doesn't really like it, so we have to put the underlying type down, then cast to the value type...
-    when(mockConnector.sendDepartureDeclaration(any[String].asInstanceOf[EORINumber], eqTo(ValidRequest))(any[HeaderCarrier], any[ExecutionContext]))
+    when(mockConnector.post(any[String].asInstanceOf[EORINumber], eqTo(ValidRequest))(any[HeaderCarrier], any[ExecutionContext]))
       .thenReturn(Future.successful(DeclarationResponse(MovementId("ABC"), MessageId("123"))))
-    when(mockConnector.sendDepartureDeclaration(any[String].asInstanceOf[EORINumber], eqTo(InvalidRequest))(any[HeaderCarrier], any[ExecutionContext]))
+    when(mockConnector.post(any[String].asInstanceOf[EORINumber], eqTo(InvalidRequest))(any[HeaderCarrier], any[ExecutionContext]))
       .thenReturn(Future.failed(upstreamErrorResponse))
 
-    val sut = new DeparturesPersistenceServiceImpl(mockConnector)
+    val sut = new DeparturesServiceImpl(mockConnector)
 
     "on a successful submission, should return a Right" in {
       val result                                                  = sut.saveDeclaration(EORINumber("1"), ValidRequest)

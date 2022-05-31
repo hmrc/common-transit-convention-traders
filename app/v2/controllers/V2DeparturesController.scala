@@ -41,10 +41,10 @@ import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.MessageSizeAction
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
-import v2.models.errors.BaseError
+import v2.models.errors.PresentationError
 import v2.models.request.MessageType
-import v2.models.responses.hateoas.HateoasDepartureMessagePostResponse
-import v2.services.DeparturesPersistenceService
+import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
+import v2.services.DeparturesService
 import v2.services.ValidationService
 
 import scala.concurrent.Future
@@ -59,12 +59,12 @@ trait V2DeparturesController {
 
 @Singleton
 class V2DeparturesControllerImpl @Inject() (
-  val controllerComponents: ControllerComponents,
-  temporaryFileCreator: TemporaryFileCreator,
-  authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
-  validationService: ValidationService,
-  departuresPersistenceService: DeparturesPersistenceService,
-  messageSizeAction: MessageSizeAction[AuthenticatedRequest]
+                                             val controllerComponents: ControllerComponents,
+                                             temporaryFileCreator: TemporaryFileCreator,
+                                             authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
+                                             validationService: ValidationService,
+                                             departuresService: DeparturesService,
+                                             messageSizeAction: MessageSizeAction[AuthenticatedRequest]
 )(implicit val materializer: Materializer)
     extends BaseController
     with V2DeparturesController
@@ -79,13 +79,13 @@ class V2DeparturesControllerImpl @Inject() (
   }
 
   def withTemporaryFile[A](
-    onSucceed: (Files.TemporaryFile, Source[ByteString, _]) => EitherT[Future, BaseError, A]
-  )(implicit request: Request[Source[ByteString, _]]): EitherT[Future, BaseError, A] =
+    onSucceed: (Files.TemporaryFile, Source[ByteString, _]) => EitherT[Future, PresentationError, A]
+  )(implicit request: Request[Source[ByteString, _]]): EitherT[Future, PresentationError, A] =
     EitherT(Future.successful(Try(temporaryFileCreator.create()).toEither))
       .leftMap {
         thr =>
           request.body.runWith(Sink.ignore)
-          BaseError.internalServiceError(cause = Some(thr))
+          PresentationError.internalServiceError(cause = Some(thr))
       }
       .flatMap {
         temporaryFile =>
@@ -112,11 +112,11 @@ class V2DeparturesControllerImpl @Inject() (
 
               fileSource = FileIO.fromPath(temporaryFile)
 
-              declarationResult <- departuresPersistenceService.saveDeclaration(request.eoriNumber, fileSource).convertError
+              declarationResult <- departuresService.saveDeclaration(request.eoriNumber, fileSource).convertError
             } yield declarationResult
         }.fold[Result](
           baseError => Status(baseError.code.statusCode)(Json.toJson(baseError)),
-          result => Accepted(Json.toJson(HateoasDepartureMessagePostResponse(result.movementId, result.messageId, MessageType.DepartureDeclaration)))
+          result => Accepted(HateoasDepartureDeclarationResponse(result.movementId, result.messageId, MessageType.DepartureDeclaration))
         )
 
     }

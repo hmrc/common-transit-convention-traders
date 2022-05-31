@@ -28,7 +28,7 @@ import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.models.EORINumber
-import v2.models.errors.BaseError
+import v2.models.errors.PresentationError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -70,7 +70,7 @@ class AuthNewEnrolmentOnlyAction @Inject() (override val authConnector: AuthConn
   } recover {
     case e: InsufficientEnrolments =>
       logger.warn("Failed to authorise due to insufficient enrolments", e)
-      Forbidden(Json.toJson(BaseError.forbiddenError("Current user doesn't have a valid EORI enrolment.")))
+      Forbidden(Json.toJson(PresentationError.forbiddenError("Current user doesn't have a valid EORI enrolment.")))
     case e: AuthorisationException =>
       logger.warn(s"Failed to authorise", e)
       Unauthorized

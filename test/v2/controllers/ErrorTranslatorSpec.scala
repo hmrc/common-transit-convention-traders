@@ -25,7 +25,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import v2.models.errors.BaseError
+import v2.models.errors.PresentationError
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
 import v2.models.errors.FailedToValidateError.OtherError
@@ -56,10 +56,10 @@ class ErrorTranslatorSpec
       }
     }
 
-    "for an error returns the same right" in {
+    "for an error returns a left with the appropriate presentation error" in {
       val input = Left[FailedToValidateError, Unit](FailedToValidateError.InvalidMessageTypeError("IE015")).toEitherT[Future]
       whenReady(input.convertError.value) {
-        _ mustBe Left(BaseError.badRequestError("IE015 is not a valid message type"))
+        _ mustBe Left(PresentationError.badRequestError("IE015 is not a valid message type"))
       }
     }
   }
@@ -68,7 +68,7 @@ class ErrorTranslatorSpec
 
     "an Other Error with no exception returns an internal service error with no exception" in {
       val input = OtherError(None)
-      val output = BaseError.internalServiceError()
+      val output = PresentationError.internalServiceError()
 
       validationErrorConverter.convert(input) mustBe output
     }
@@ -76,7 +76,7 @@ class ErrorTranslatorSpec
     "an Other Error with an exception returns an internal service error with an exception" in {
       val exception = new IllegalStateException()
       val input = OtherError(Some(exception))
-      val output = BaseError.internalServiceError(cause = Some(exception))
+      val output = PresentationError.internalServiceError(cause = Some(exception))
 
       validationErrorConverter.convert(input) mustBe output
     }
@@ -84,7 +84,7 @@ class ErrorTranslatorSpec
     "an InvalidMessageTypeError returns a bad request error" in forAll(Gen.identifier) {
       messageType =>
         val input = InvalidMessageTypeError(messageType)
-        val output = BaseError.badRequestError(s"$messageType is not a valid message type")
+        val output = PresentationError.badRequestError(s"$messageType is not a valid message type")
 
         validationErrorConverter.convert(input) mustBe output
     }
@@ -92,7 +92,7 @@ class ErrorTranslatorSpec
     "a SchemaFailedToValidateError returns a schema validation error presentation error" in {
       val validationError = ValidationError(1, 1, "error")
       val input = SchemaFailedToValidateError(NonEmptyList(validationError, Nil))
-      val output = BaseError.schemaValidationError(validationErrors = NonEmptyList(validationError, Nil))
+      val output = PresentationError.schemaValidationError(validationErrors = NonEmptyList(validationError, Nil))
 
       validationErrorConverter.convert(input) mustBe output
     }
@@ -102,7 +102,7 @@ class ErrorTranslatorSpec
   "Persistence Error" - {
     "an Other Error with no exception returns an internal service error with no exception" in {
       val input = PersistenceError.OtherError(None)
-      val output = BaseError.internalServiceError()
+      val output = PresentationError.internalServiceError()
 
       persistenceErrorConverter.convert(input) mustBe output
     }
@@ -110,7 +110,7 @@ class ErrorTranslatorSpec
     "an Other Error with an exception returns an internal service error with an exception" in {
       val exception = new IllegalStateException()
       val input = PersistenceError.OtherError(Some(exception))
-      val output = BaseError.internalServiceError(cause = Some(exception))
+      val output = PresentationError.internalServiceError(cause = Some(exception))
 
       persistenceErrorConverter.convert(input) mustBe output
     }

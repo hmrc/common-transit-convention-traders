@@ -25,10 +25,12 @@ import play.api.mvc.Request
 import play.api.mvc.Result
 import play.api.mvc.Results.BadRequest
 import play.api.mvc.Results.EntityTooLarge
-import v2.models.errors.BaseError
+import v2.models.errors.PresentationError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.Failure
+import scala.util.Success
 import scala.util.Try
 
 class MessageSizeAction[R[_] <: Request[_]] @Inject() (config: AppConfig)(implicit val executionContext: ExecutionContext) extends ActionRefiner[R, R] {
@@ -37,14 +39,14 @@ class MessageSizeAction[R[_] <: Request[_]] @Inject() (config: AppConfig)(implic
     contentLengthHeader(request) match {
       case Some((_, length)) => Future.successful(checkSize(length, request))
       case None =>
-        Future.successful(Left(BadRequest(Json.toJson(BaseError.badRequestError("Missing content-length header"))))) // should never happen
+        Future.successful(Left(BadRequest(Json.toJson(PresentationError.badRequestError("Missing content-length header"))))) // should never happen
     }
 
   private def checkSize[A](length: String, request: R[A]): Either[Result, R[A]] =
-    Try(length.toInt).toOption match {
-      case Some(x) if x <= limit => Right(request)
-      case Some(_)               => Left(EntityTooLarge(Json.toJson(BaseError.entityTooLargeError(s"Your message size must be less than $limit bytes"))))
-      case None                  => Left(BadRequest(Json.toJson(BaseError.badRequestError("Invalid content-length value"))))
+    Try(length.toInt) match {
+      case Success(x) if x <= limit => Right(request)
+      case Success(_)               => Left(EntityTooLarge(Json.toJson(PresentationError.entityTooLargeError(s"Your message size must be less than $limit bytes"))))
+      case Failure(_)               => Left(BadRequest(Json.toJson(PresentationError.badRequestError("Invalid content-length value"))))
     }
 
   private def contentLengthHeader[A](request: R[A]): Option[(String, String)] =

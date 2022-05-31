@@ -26,24 +26,24 @@ import play.api.libs.json.__
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.models.formats.CommonFormats
 
-object BaseError extends CommonFormats {
+object PresentationError extends CommonFormats {
 
   val MessageFieldName = "message"
   val CodeFieldName    = "code"
 
-  def forbiddenError(message: String): BaseError =
+  def forbiddenError(message: String): PresentationError =
     StandardError(message, ErrorCode.Forbidden)
 
-  def entityTooLargeError(message: String): BaseError =
+  def entityTooLargeError(message: String): PresentationError =
     StandardError(message, ErrorCode.EntityTooLarge)
 
-  def unsupportedMediaTypeError(message: String): BaseError =
+  def unsupportedMediaTypeError(message: String): PresentationError =
     StandardError(message, ErrorCode.UnsupportedMediaType)
 
-  def badRequestError(message: String): BaseError =
+  def badRequestError(message: String): PresentationError =
     StandardError(message, ErrorCode.BadRequest)
 
-  def notFoundError(message: String): BaseError =
+  def notFoundError(message: String): PresentationError =
     StandardError(message, ErrorCode.NotFound)
 
   def schemaValidationError(message: String = "Request failed schema validation", validationErrors: NonEmptyList[ValidationError]): SchemaValidationError =
@@ -53,23 +53,23 @@ object BaseError extends CommonFormats {
     message: String = "Internal server error",
     code: ErrorCode = ErrorCode.InternalServerError,
     cause: UpstreamErrorResponse
-  ): BaseError =
+  ): PresentationError =
     UpstreamServiceError(message, code, cause)
 
   def internalServiceError(
     message: String = "Internal server error",
     code: ErrorCode = ErrorCode.InternalServerError,
     cause: Option[Throwable] = None
-  ): BaseError =
+  ): PresentationError =
     InternalServiceError(message, code, cause)
 
-  def unapply(error: BaseError): Option[(String, ErrorCode)] = Some((error.message, error.code))
+  def unapply(error: PresentationError): Option[(String, ErrorCode)] = Some((error.message, error.code))
 
-  private val baseErrorWrites0: OWrites[BaseError] =
+  private val baseErrorWrites0: OWrites[PresentationError] =
     (
       (__ \ MessageFieldName).write[String] and
         (__ \ CodeFieldName).write[ErrorCode]
-    )(unlift(BaseError.unapply))
+    )(unlift(PresentationError.unapply))
 
   implicit val standardErrorReads: Reads[StandardError] =
     (
@@ -84,46 +84,46 @@ object BaseError extends CommonFormats {
         (__ \ "validationErrors").format[NonEmptyList[ValidationError]]
     )(SchemaValidationError.apply, unlift(SchemaValidationError.unapply))
 
-  implicit val baseErrorWrites: OWrites[BaseError] = OWrites {
+  implicit val baseErrorWrites: OWrites[PresentationError] = OWrites {
     case schemaValidationError: SchemaValidationError => schemaErrorFormat.writes(schemaValidationError)
     case baseError                                    => baseErrorWrites0.writes(baseError)
   }
 
 }
 
-sealed abstract class BaseError extends Product with Serializable {
+sealed abstract class PresentationError extends Product with Serializable {
   def message: String
   def code: ErrorCode
 }
 
-case class StandardError(message: String, code: ErrorCode) extends BaseError
+case class StandardError(message: String, code: ErrorCode) extends PresentationError
 
 case class SchemaValidationError(
   message: String,
   code: ErrorCode,
   validationErrors: NonEmptyList[ValidationError]
-) extends BaseError
+) extends PresentationError
 
 case class UpstreamServiceError(
   message: String = "Internal server error",
   code: ErrorCode = ErrorCode.InternalServerError,
   cause: UpstreamErrorResponse
-) extends BaseError
+) extends PresentationError
 
 object UpstreamServiceError {
 
-  def causedBy(cause: UpstreamErrorResponse): BaseError =
-    BaseError.upstreamServiceError(cause = cause)
+  def causedBy(cause: UpstreamErrorResponse): PresentationError =
+    PresentationError.upstreamServiceError(cause = cause)
 }
 
 case class InternalServiceError(
   message: String = "Internal server error",
   code: ErrorCode = ErrorCode.InternalServerError,
   cause: Option[Throwable] = None
-) extends BaseError
+) extends PresentationError
 
 object InternalServiceError {
 
-  def causedBy(cause: Throwable): BaseError =
-    BaseError.internalServiceError(cause = Some(cause))
+  def causedBy(cause: Throwable): PresentationError =
+    PresentationError.internalServiceError(cause = Some(cause))
 }

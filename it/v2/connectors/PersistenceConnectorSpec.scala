@@ -44,7 +44,7 @@ import utils.TestMetrics
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
-import v2.models.errors.BaseError
+import v2.models.errors.PresentationError
 import v2.models.errors.ErrorCode
 import v2.models.errors.StandardError
 import v2.models.responses.DeclarationResponse
@@ -83,7 +83,7 @@ class PersistenceConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAp
 
       val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-      whenReady(persistenceConnector.sendDepartureDeclaration(eoriNumber, source)) {
+      whenReady(persistenceConnector.post(eoriNumber, source)) {
         result =>
           result mustBe okResult
       }
@@ -100,7 +100,7 @@ class PersistenceConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAp
             aResponse()
               .withStatus(INTERNAL_SERVER_ERROR)
               .withBody(
-                Json.stringify(Json.toJson(BaseError.internalServiceError()))
+                Json.stringify(Json.toJson(PresentationError.internalServiceError()))
               )
           )
       )
@@ -109,7 +109,7 @@ class PersistenceConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAp
 
       val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-      val future = persistenceConnector.sendDepartureDeclaration(eoriNumber, source).map(Right(_)).recover {
+      val future = persistenceConnector.post(eoriNumber, source).map(Right(_)).recover {
         case NonFatal(e) => Left(e)
       }
 
@@ -133,7 +133,7 @@ class PersistenceConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAp
             aResponse()
               .withStatus(BAD_REQUEST)
               .withBody(
-                Json.stringify(Json.toJson(BaseError.badRequestError("Bad request")))
+                Json.stringify(Json.toJson(PresentationError.badRequestError("Bad request")))
               )
           )
       )
@@ -142,7 +142,7 @@ class PersistenceConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAp
 
       val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-      val future = persistenceConnector.sendDepartureDeclaration(eoriNumber, source).map(Right(_)).recover {
+      val future = persistenceConnector.post(eoriNumber, source).map(Right(_)).recover {
         case NonFatal(e) => Left(e)
       }
 
@@ -175,7 +175,7 @@ class PersistenceConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAp
 
       val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-      val future = persistenceConnector.sendDepartureDeclaration(eoriNumber, source).map(Right(_)).recover {
+      val future = persistenceConnector.post(eoriNumber, source).map(Right(_)).recover {
         case NonFatal(e) => Left(e)
       }
 

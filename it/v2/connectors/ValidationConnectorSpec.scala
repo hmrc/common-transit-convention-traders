@@ -42,7 +42,7 @@ import uk.gov.hmrc.http
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.TestMetrics
-import v2.models.errors.BaseError
+import v2.models.errors.PresentationError
 import v2.models.errors.ValidationError
 import v2.models.request.MessageType
 import v2.models.responses.ValidationResponse
@@ -126,7 +126,7 @@ class ValidationConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneApp
               .withBody(
                 Json.stringify(
                   Json.toJson(
-                    BaseError.badRequestError("Invalid message type") // The message doesn't matter here
+                    PresentationError.badRequestError("Invalid message type") // The message doesn't matter here
                   )
                 )
               )

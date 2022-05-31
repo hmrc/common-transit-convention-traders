@@ -22,25 +22,25 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
-class BaseErrorSpec extends AnyFreeSpec with Matchers with MockitoSugar {
+class PresentationErrorSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
   "Test Json is as expected" - {
-    def testStandard(function: String => BaseError, message: String, code: String) = {
+    def testStandard(function: String => PresentationError, message: String, code: String) = {
       val sut    = function(message)
       val result = Json.toJson(sut)
 
       result mustBe Json.obj("message" -> message, "code" -> code)
     }
 
-    "for Forbidden" in testStandard(BaseError.forbiddenError, "forbidden", "FORBIDDEN")
+    "for Forbidden" in testStandard(PresentationError.forbiddenError, "forbidden", "FORBIDDEN")
 
-    "for EntityTooLarge" in testStandard(BaseError.entityTooLargeError, "entity too large", "REQUEST_ENTITY_TOO_LARGE")
+    "for EntityTooLarge" in testStandard(PresentationError.entityTooLargeError, "entity too large", "REQUEST_ENTITY_TOO_LARGE")
 
-    "for UnsupportedMediaType" in testStandard(BaseError.unsupportedMediaTypeError, "unsupported media type", "UNSUPPORTED_MEDIA_TYPE")
+    "for UnsupportedMediaType" in testStandard(PresentationError.unsupportedMediaTypeError, "unsupported media type", "UNSUPPORTED_MEDIA_TYPE")
 
-    "for BadRequest" in testStandard(BaseError.badRequestError, "bad request", "BAD_REQUEST")
+    "for BadRequest" in testStandard(PresentationError.badRequestError, "bad request", "BAD_REQUEST")
 
-    "for NotFound" in testStandard(BaseError.notFoundError, "not found", "NOT_FOUND")
+    "for NotFound" in testStandard(PresentationError.notFoundError, "not found", "NOT_FOUND")
 
     Seq(Some(new IllegalStateException("message")), None).foreach {
       exception =>
@@ -54,7 +54,7 @@ class BaseErrorSpec extends AnyFreeSpec with Matchers with MockitoSugar {
           val exception = new IllegalStateException("message")
 
           // when we create a error for this
-          val sut = BaseError.internalServiceError(cause = Some(exception))
+          val sut = PresentationError.internalServiceError(cause = Some(exception))
 
           // and when we turn it to Json
           val json = Json.toJson(sut)

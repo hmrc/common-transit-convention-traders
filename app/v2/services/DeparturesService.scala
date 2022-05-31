@@ -32,8 +32,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-@ImplementedBy(classOf[DeparturesPersistenceServiceImpl])
-trait DeparturesPersistenceService {
+@ImplementedBy(classOf[DeparturesServiceImpl])
+trait DeparturesService {
 
   def saveDeclaration(eori: EORINumber, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
@@ -43,7 +43,7 @@ trait DeparturesPersistenceService {
 }
 
 @Singleton
-class DeparturesPersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnector) extends DeparturesPersistenceService {
+class DeparturesServiceImpl @Inject()(persistenceConnector: PersistenceConnector) extends DeparturesService {
 
   override def saveDeclaration(eori: EORINumber, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
@@ -51,7 +51,7 @@ class DeparturesPersistenceServiceImpl @Inject() (persistenceConnector: Persiste
   ): EitherT[Future, PersistenceError, DeclarationResponse] =
     EitherT(
       persistenceConnector
-        .sendDepartureDeclaration(eori, source)
+        .post(eori, source)
         .map(Right(_))
         .recover {
           case NonFatal(thr) => Left(PersistenceError.OtherError(Some(thr)))
