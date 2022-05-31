@@ -54,7 +54,7 @@ class DeparturesServiceImpl @Inject()(persistenceConnector: PersistenceConnector
         .post(eori, source)
         .map(Right(_))
         .recover {
-          case NonFatal(thr) => Left(PersistenceError.OtherError(Some(thr)))
+          case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
 

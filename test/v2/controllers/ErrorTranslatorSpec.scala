@@ -28,7 +28,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import v2.models.errors.PresentationError
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
-import v2.models.errors.FailedToValidateError.OtherError
+import v2.models.errors.FailedToValidateError.UnexpectedError
 import v2.models.errors.FailedToValidateError.SchemaFailedToValidateError
 import v2.models.errors.PersistenceError
 import v2.models.errors.ValidationError
@@ -66,16 +66,16 @@ class ErrorTranslatorSpec
 
   "Validation Error" - {
 
-    "an Other Error with no exception returns an internal service error with no exception" in {
-      val input = OtherError(None)
+    "an Unexpected Error with no exception returns an internal service error with no exception" in {
+      val input = UnexpectedError(None)
       val output = PresentationError.internalServiceError()
 
       validationErrorConverter.convert(input) mustBe output
     }
 
-    "an Other Error with an exception returns an internal service error with an exception" in {
+    "an Unexpected Error with an exception returns an internal service error with an exception" in {
       val exception = new IllegalStateException()
-      val input = OtherError(Some(exception))
+      val input = UnexpectedError(Some(exception))
       val output = PresentationError.internalServiceError(cause = Some(exception))
 
       validationErrorConverter.convert(input) mustBe output
@@ -100,16 +100,16 @@ class ErrorTranslatorSpec
   }
 
   "Persistence Error" - {
-    "an Other Error with no exception returns an internal service error with no exception" in {
-      val input = PersistenceError.OtherError(None)
+    "an Unexpected Error with no exception returns an internal service error with no exception" in {
+      val input = PersistenceError.UnexpectedError(None)
       val output = PresentationError.internalServiceError()
 
       persistenceErrorConverter.convert(input) mustBe output
     }
 
-    "an Other Error with an exception returns an internal service error with an exception" in {
+    "an Unexpected Error with an exception returns an internal service error with an exception" in {
       val exception = new IllegalStateException()
-      val input = PersistenceError.OtherError(Some(exception))
+      val input = PersistenceError.UnexpectedError(Some(exception))
       val output = PresentationError.internalServiceError(cause = Some(exception))
 
       persistenceErrorConverter.convert(input) mustBe output

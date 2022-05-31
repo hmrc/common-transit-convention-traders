@@ -20,7 +20,7 @@ import cats.data.EitherT
 import v2.models.errors.PresentationError
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
-import v2.models.errors.FailedToValidateError.OtherError
+import v2.models.errors.FailedToValidateError.UnexpectedError
 import v2.models.errors.FailedToValidateError.SchemaFailedToValidateError
 import v2.models.errors.PersistenceError
 
@@ -42,7 +42,7 @@ trait ErrorTranslator {
   implicit val validationErrorConverter = new Converter[FailedToValidateError] {
 
     def convert(validationError: FailedToValidateError): PresentationError = validationError match {
-      case err: OtherError                               => PresentationError.internalServiceError(cause = err.thr)
+      case err: UnexpectedError                               => PresentationError.internalServiceError(cause = err.thr)
       case InvalidMessageTypeError(messageType)          => PresentationError.badRequestError(s"$messageType is not a valid message type")
       case SchemaFailedToValidateError(validationErrors) => PresentationError.schemaValidationError(validationErrors = validationErrors)
     }
@@ -51,7 +51,7 @@ trait ErrorTranslator {
   implicit val persistenceErrorConverter = new Converter[PersistenceError] {
 
     def convert(persistenceError: PersistenceError): PresentationError = persistenceError match {
-      case err: PersistenceError.OtherError => PresentationError.internalServiceError(cause = err.thr)
+      case err: PersistenceError.UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
     }
   }
 

@@ -19,5 +19,5 @@ package v2.models.errors
 sealed trait PersistenceError
 
 object PersistenceError {
-  case class OtherError(thr: Option[Throwable] = None) extends PersistenceError
+  case class UnexpectedError(thr: Option[Throwable] = None) extends PersistenceError
 }

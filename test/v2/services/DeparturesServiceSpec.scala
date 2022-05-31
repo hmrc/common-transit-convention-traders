@@ -71,9 +71,9 @@ class DeparturesServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
       }
     }
 
-    "on a failed submission, should return a Left with an OtherError" in {
+    "on a failed submission, should return a Left with an UnexpectedError" in {
       val result                                                  = sut.saveDeclaration(EORINumber("1"), invalidRequest)
-      val expected: Either[PersistenceError, DeclarationResponse] = Left(PersistenceError.OtherError(Some(upstreamErrorResponse)))
+      val expected: Either[PersistenceError, DeclarationResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected
       }
