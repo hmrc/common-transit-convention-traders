@@ -24,6 +24,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
+import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
@@ -73,13 +74,23 @@ class PersistenceConnectorSpec
 
   "POST /traders/:eori/message/departures" - {
 
-    lazy val okResult      = DeclarationResponse(MovementId("123"), MessageId("456"))
+    lazy val shortUuidGen: Arbitrary[String] = Arbitrary(Gen.long.map {
+      l: Long =>
+        f"${BigInt(l)}%016x"
+    })
+
+    lazy val okResultGen =
+      for {
+        movementId <- shortUuidGen.arbitrary.map(MovementId.apply)
+        messageId  <- shortUuidGen.arbitrary.map(MessageId.apply)
+      } yield DeclarationResponse(movementId, messageId)
+
     lazy val eoriNumberGen = Gen.alphaNumStr.map(EORINumber.apply)
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures/"
 
-    "On successful creation of an element, must return OK" in forAll(eoriNumberGen) {
-      eoriNumber =>
+    "On successful creation of an element, must return OK" in forAll(eoriNumberGen, okResultGen) {
+      (eoriNumber, okResult) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber))
