@@ -76,11 +76,11 @@ class V2DeparturesControllerImpl @Inject() (
             implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
             (for {
-              _ <- validationService.validateXML(MessageType.DepartureDeclaration, source).convertError
+              _ <- validationService.validateXML(MessageType.DepartureDeclaration, source).asPresentation
 
               fileSource = FileIO.fromPath(temporaryFile)
 
-              declarationResult <- departuresService.saveDeclaration(request.eoriNumber, fileSource).convertError
+              declarationResult <- departuresService.saveDeclaration(request.eoriNumber, fileSource).asPresentation
             } yield declarationResult).fold[Result](
               presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
               result => Accepted(HateoasDepartureDeclarationResponse(result.movementId, result.messageId, MessageType.DepartureDeclaration))

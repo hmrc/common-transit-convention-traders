@@ -48,17 +48,17 @@ class ErrorTranslatorSpec
 
   import Harness._
 
-  "ErrorConverter#convertError" - {
+  "ErrorConverter#asPresentation" - {
     "for a success returns the same right" in {
       val input = Right[FailedToValidateError, Unit](()).toEitherT[Future]
-      whenReady(input.convertError.value) {
+      whenReady(input.asPresentation.value) {
         _ mustBe Right(())
       }
     }
 
     "for an error returns a left with the appropriate presentation error" in {
       val input = Left[FailedToValidateError, Unit](FailedToValidateError.InvalidMessageTypeError("IE015")).toEitherT[Future]
-      whenReady(input.convertError.value) {
+      whenReady(input.asPresentation.value) {
         _ mustBe Left(PresentationError.badRequestError("IE015 is not a valid message type"))
       }
     }
