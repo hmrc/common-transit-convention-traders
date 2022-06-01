@@ -33,21 +33,24 @@ import v2.models.request.MessageType
 
 object HateoasDepartureDeclarationResponse {
 
-  def messageUrl(movementId: MovementId, messageId: MessageId) =
+  def messageUrl(movementId: MovementId) =
     // TODO: Fix when we do this route, as right now it only accepts an int.
-    routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), models.domain.MessageId(456)).urlWithContext
+    routes.DepartureMessagesController.sendMessageDownstream(DepartureId(123)).urlWithContext
 
   // TODO: Fix when we do this route, as right now it only accepts an int.
   def departureUrl(movementId: MovementId) = routes.DeparturesController.getDeparture(DepartureId(123)).urlWithContext
 
-  def apply(departureId: MovementId, messageId: MessageId, messageType: MessageType): JsObject =
+  def apply(departureId: MovementId): JsObject =
     Json.obj(
       "_links" -> Json.obj(
-        "self"      -> Json.obj("href" -> messageUrl(departureId, messageId)),
-        "departure" -> Json.obj("href" -> departureUrl(departureId))
+        "self" -> Json.obj("href" -> departureUrl(departureId))
       ),
-      "departureId" -> departureId.value,
-      "messageId"   -> messageId.value,
-      "messageType" -> messageType.code
+      "id" -> departureId.value,
+      "_embedded" -> Json.obj(
+        "messages" -> Json.obj(
+          "_links" ->
+            Json.obj("href" -> messageUrl(departureId))
+        )
+      )
     )
 }

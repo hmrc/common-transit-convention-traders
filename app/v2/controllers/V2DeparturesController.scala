@@ -83,7 +83,7 @@ class V2DeparturesControllerImpl @Inject() (
               declarationResult <- departuresService.saveDeclaration(request.eoriNumber, fileSource).asPresentation
             } yield declarationResult).fold[Result](
               presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-              result => Accepted(HateoasDepartureDeclarationResponse(result.departureId, result.messageId, MessageType.DepartureDeclaration))
+              result => Accepted(HateoasDepartureDeclarationResponse(result.departureId))
             )
         }.toResult
     }

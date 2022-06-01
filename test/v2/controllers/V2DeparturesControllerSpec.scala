@@ -263,15 +263,17 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
       contentAsJson(result) mustBe Json.obj(
         "_links" -> Json.obj(
           "self" -> Json.obj(
-            "href" -> "/customs/transits/movements/departures/123/messages/456"
-          ),
-          "departure" -> Json.obj(
             "href" -> "/customs/transits/movements/departures/123"
           )
         ),
-        "departureId" -> "123",
-        "messageId"   -> "456",
-        "messageType" -> "IE015"
+        "id" -> "123",
+        "_embedded" -> Json.obj(
+          "messages" -> Json.obj(
+            "_links" -> Json.obj(
+              "href" -> "/customs/transits/movements/departures/123/messages"
+            )
+          )
+        )
       )
     }
 
