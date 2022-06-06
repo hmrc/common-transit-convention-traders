@@ -320,26 +320,30 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
     }
   }
 
-  "guarantee" - {
+  "guaranteeSet" - {
+    val countGen         = Gen.choose(2, 4)
+    val allTypesGen      = Gen.oneOf(Guarantee.validTypes)
     val referenceTypeGen = Gen.oneOf(Guarantee.referenceTypes)
     val otherTypes       = Gen.oneOf(Guarantee.validTypes.diff(Guarantee.referenceTypes))
-    "returns Guarantee when given GuaRefNumGRNREF1 field and the Guarantee type is 0,1,2,4,9" in {
+    "returns a single Guarantee when given a single GuaRefNumGRNREF1 field and the Guarantee type is 0,1,2,4,9" in {
       forAll(referenceTypeGen) {
         gType =>
-          val result = sut.guarantee(exampleGuaranteeGuaTypGUA1(gType))
-          result mustBe a[Right[_, Guarantee]]
-          val item = result.right.get
+          val result = sut.guaranteeSet(exampleGuaranteeGuaTypGUA1(gType))
+          result mustBe a[Right[_, Seq[Guarantee]]]
+          result.right.get.length mustBe 1
+          val item = result.right.get.head
           item.gReference mustEqual "07IT00000100000Z3"
           item.gType mustEqual gType
       }
     }
 
-    "returns Guarantee when given OthGuaRefREF4 field and the Guarantee type is not 0,1,2,4,9" in {
+    "returns a single Guarantee when given a single OthGuaRefREF4 field and the Guarantee type is not 0,1,2,4,9" in {
       forAll(otherTypes) {
         gType =>
-          val result = sut.guarantee(exampleOtherGuaranteeGuaTypGUA1(gType))
-          result mustBe a[Right[_, Guarantee]]
-          val item = result.right.get
+          val result = sut.guaranteeSet(exampleOtherGuaranteeGuaTypGUA1(gType))
+          result mustBe a[Right[_, Seq[Guarantee]]]
+          result.right.get.length mustBe 1
+          val item = result.right.get.head
           item.gReference mustEqual "SomeValue"
           item.gType mustEqual gType
 
@@ -347,24 +351,50 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
 
     }
 
-    "returns NoOtherGuaranteeField when not given OthGuaRefREF4 and the guarantee type is not 0,1,2,4,9" in {
+    "returns NoOtherGuaranteeField when not given any OthGuaRefREF4 and the guarantee type is not 0,1,2,4,9" in {
       forAll(otherTypes) {
         gType =>
-          val result = sut.guarantee(exampleGuaranteeGuaTypGUA1(gType))
+          val result = sut.guaranteeSet(exampleGuaranteeGuaTypGUA1(gType))
           result mustBe a[Left[NoOtherGuaranteeField, _]]
       }
     }
 
     "returns GuaranteeTypeInvalid if no GuaTypGUA1 value" in {
-      sut.guarantee(exampleGuaranteeGuaTypGUA1MissingGuaType) mustBe a[Left[GuaranteeTypeInvalid, _]]
+      sut.guaranteeSet(exampleGuaranteeGuaTypGUA1MissingGuaType) mustBe a[Left[GuaranteeTypeInvalid, _]]
     }
 
     "returns GuaranteeTypeInvalid if GuaTypGua1 is not an int" in {
-      sut.guarantee(exampleGuaranteeGuaTypGUA1BadGuaType) mustBe a[Left[GuaranteeTypeInvalid, _]]
+      sut.guaranteeSet(exampleGuaranteeGuaTypGUA1BadGuaType) mustBe a[Left[GuaranteeTypeInvalid, _]]
     }
 
-    "returns NoGuaranteeReferenceNumber if GuaRefNumGRNRef1 was empty" in {
-      sut.guarantee(exampleGuaranteeGuaTypGUA1EmptyReference) mustBe a[Left[NoGuaranteeReferenceNumber, _]]
+    "returns NoGuaranteeReferenceNumber when not given any GuaRefNumGRNRef1 value" in {
+      sut.guaranteeSet(exampleGuaranteeGuaTypGUA1EmptyReference) mustBe a[Left[NoGuaranteeReferenceNumber, _]]
+    }
+
+    "returns multiple Guarantees of the same type when multiple guarantee references provided (defaulting reference)" in {
+      val gType  = '9'
+      val xml    = exampleMultiGuaranteeGuaTypGUA1(gType, 4)
+      val result = sut.guaranteeSet(xml)
+      result mustBe a[Right[_, Seq[Guarantee]]]
+      result.right.get.length mustBe 4
+      result.right.get.map {
+        item =>
+          item.gReference mustEqual "07IT00000100000Z3"
+          item.gType mustEqual gType
+      }
+    }
+
+    "returns multiple Guarantees of the same type when multiple guarantee references provided (non-defaulting reference)" in {
+      val gType  = 'A'
+      val xml    = exampleMultiGuaranteeGuaTypGUA1(gType, 4)
+      val result = sut.guaranteeSet(xml)
+      result mustBe a[Right[_, Seq[Guarantee]]]
+      result.right.get.length mustBe 4
+      result.right.get.map {
+        item =>
+          item.gReference mustEqual "SomeValue"
+          item.gType mustEqual gType
+      }
     }
   }
 

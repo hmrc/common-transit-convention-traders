@@ -30,13 +30,16 @@ class GuaranteeXmlReaders extends ParseHandling {
 
   def parseGuarantees(xml: NodeSeq): ParseHandler[Seq[Guarantee]] = {
 
-    val guaranteeEithers: Seq[Either[ParseError, Guarantee]] =
+    val guaranteeSequences: Seq[Either[ParseError, Seq[Guarantee]]] =
       (xml \ "GUAGUA").map {
         node =>
-          guarantee(node)
+          guaranteeSet(node)
       }
 
-    ParseError.sequenceErrors(guaranteeEithers)
+    ParseError.sequenceErrors(guaranteeSequences) match {
+      case Left(error) => Left(error)
+      case Right(ss)   => Right(ss.flatten)
+    }
   }
 
   def parseSpecialMentions(xml: NodeSeq): ParseHandler[Seq[SpecialMention]] =
@@ -107,26 +110,28 @@ class GuaranteeXmlReaders extends ParseHandling {
         }
     }
 
-  val guarantee: ReaderT[ParseHandler, Node, Guarantee] =
-    ReaderT[ParseHandler, Node, Guarantee] {
+  val guaranteeSet: ReaderT[ParseHandler, Node, Seq[Guarantee]] =
+    ReaderT[ParseHandler, Node, Seq[Guarantee]] {
       xml =>
+        def internal(key: String, gChar: Char, error: => ParseError)(reference: Node): ParseHandler[Guarantee] =
+          (reference \ key).text match {
+            case g if !g.isEmpty => Right(Guarantee(gChar, g))
+            case _               => Left(error)
+          }
+
         (xml \ "GuaTypGUA1").text match {
           case gType if gType.isEmpty                              => Left(GuaranteeTypeInvalid("GuaTypGUA1 was invalid"))
           case gType if gType.length > 1                           => Left(GuaranteeTypeTooLong("GuaTypGUA1 was too long"))
           case gType if !Guarantee.validTypes.contains(gType.head) => Left(GuaranteeTypeInvalid("GuaTypGUA1 was not a valid type"))
           case gType if Guarantee.validTypes.contains(gType.head) =>
-            val gChar = gType.head
-            if (Guarantee.isOther(gChar)) {
-              (xml \ "GUAREFREF" \ "OthGuaRefREF4").text match {
-                case gOther if !gOther.isEmpty => Right(Guarantee(gChar, gOther))
-                case _                         => Left(NoOtherGuaranteeField("OthGuaRefREF4 was empty"))
-              }
+            val gChar               = gType.head
+            val guaranteeReferences = (xml \ "GUAREFREF").theSeq
+            val gParse = if (Guarantee.isOther(gChar)) {
+              guaranteeReferences.map(internal("OthGuaRefREF4", gChar, NoOtherGuaranteeField("OthGuaRefREF4 was empty")))
             } else {
-              (xml \ "GUAREFREF" \ "GuaRefNumGRNREF1").text match {
-                case gReference if !gReference.isEmpty => Right(Guarantee(gChar, gReference))
-                case _                                 => Left(NoGuaranteeReferenceNumber("GuaRefNumGRNREF1 was empty"))
-              }
+              guaranteeReferences.map(internal("GuaRefNumGRNREF1", gChar, NoGuaranteeReferenceNumber("GuaRefNumGRNREF1 was empty")))
             }
+            ParseError.sequenceErrors(gParse)
         }
     }
 

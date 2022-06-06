@@ -607,6 +607,29 @@ object EnsureGuaranteeServiceTestData {
       </GUAREFREF>
     </GUAGUA>
 
+  val guaranteeWithManyReferences: NodeSeq =
+    <GUAGUA>
+      <GuaTypGUA1>1</GuaTypGUA1>
+      <GUAREFREF><GuaRefNumGRNREF1>21GB0000010000HU1</GuaRefNumGRNREF1><AccCodREF6>AC01</AccCodREF6></GUAREFREF>
+      <GUAREFREF><GuaRefNumGRNREF1>21GB0000010000HU2</GuaRefNumGRNREF1><AccCodREF6>AC01</AccCodREF6></GUAREFREF>
+      <GUAREFREF><GuaRefNumGRNREF1>21GB0000010000HU3</GuaRefNumGRNREF1><AccCodREF6>AC01</AccCodREF6></GUAREFREF>
+      <GUAREFREF><GuaRefNumGRNREF1>21GB0000010000HU4</GuaRefNumGRNREF1><AccCodREF6>AC01</AccCodREF6></GUAREFREF>
+    </GUAGUA>
+
+  val goodsNoMentions =
+    <GOOITEGDS>
+    <IteNumGDS7>1</IteNumGDS7>
+    <GooDesGDS23>Daffodils</GooDesGDS23>
+    <GooDesGDS23LNG>EN</GooDesGDS23LNG>
+    <GroMasGDS46>1000</GroMasGDS46>
+    <NetMasGDS48>950</NetMasGDS48>
+    <PACGS2>
+      <MarNumOfPacGS21>AB234</MarNumOfPacGS21>
+      <KinOfPacGS23>BX</KinOfPacGS23>
+      <NumOfPacGS24>10</NumOfPacGS24>
+    </PACGS2>
+  </GOOITEGDS>
+
   def goodsWithCustomSpecialMention(nodeSeq: NodeSeq) =
     <GOOITEGDS>
       <IteNumGDS7>1</IteNumGDS7>
