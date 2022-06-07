@@ -14,14 +14,19 @@
  * limitations under the License.
  */
 
-package v2.models.errors
+package v2.models
 
-import cats.data.NonEmptyList
+import play.api.http.Writeable
+import play.api.libs.json.Format
+import play.api.libs.json.Json
 
-sealed trait FailedToValidateError
+object EORINumber {
+  implicit lazy val eoriNumberFormats: Format[EORINumber] = Json.valueFormat[EORINumber]
 
-object FailedToValidateError {
-  case class UnexpectedError(thr: Option[Throwable] = None)                               extends FailedToValidateError
-  case class InvalidMessageTypeError(messageType: String)                                 extends FailedToValidateError
-  case class SchemaFailedToValidateError(validationErrors: NonEmptyList[ValidationError]) extends FailedToValidateError
+  implicit lazy val eoriNumberWriteable: Writeable[EORINumber] = Writeable(
+    eoriNumber => implicitly[Writeable[String]].transform(eoriNumber.value),
+    None
+  )
 }
+
+case class EORINumber(value: String) extends AnyVal

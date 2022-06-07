@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package v2.models.errors
+package v2.models.responses
 
-import cats.data.NonEmptyList
+import play.api.libs.json.Json
+import play.api.libs.json.OFormat
+import v2.models.MessageId
+import v2.models.MovementId
 
-sealed trait FailedToValidateError
-
-object FailedToValidateError {
-  case class UnexpectedError(thr: Option[Throwable] = None)                               extends FailedToValidateError
-  case class InvalidMessageTypeError(messageType: String)                                 extends FailedToValidateError
-  case class SchemaFailedToValidateError(validationErrors: NonEmptyList[ValidationError]) extends FailedToValidateError
+object DeclarationResponse {
+  implicit lazy val declarationResponseFormat: OFormat[DeclarationResponse] = Json.format[DeclarationResponse]
 }
+
+case class DeclarationResponse(departureId: MovementId, messageId: MessageId)

@@ -63,8 +63,8 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
           case UpstreamErrorResponse.Upstream4xxResponse(response) if response.statusCode == BAD_REQUEST =>
             // This can only be a message type error
             Left(FailedToValidateError.InvalidMessageTypeError(messageType.toString))
-          case upstreamError: UpstreamErrorResponse => Left(FailedToValidateError.OtherError(Some(upstreamError)))
-          case NonFatal(e)                          => Left(FailedToValidateError.OtherError(Some(e)))
+          case upstreamError: UpstreamErrorResponse => Left(FailedToValidateError.UnexpectedError(Some(upstreamError)))
+          case NonFatal(e)                          => Left(FailedToValidateError.UnexpectedError(Some(e)))
         }
     )
 

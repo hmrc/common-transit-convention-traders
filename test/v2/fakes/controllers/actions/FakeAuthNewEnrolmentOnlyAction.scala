@@ -18,12 +18,13 @@ package v2.fakes.controllers.actions
 
 import com.google.inject.Inject
 import config.AppConfig
-import controllers.actions.AuthRequest
 import play.api.mvc.BodyParsers
 import play.api.mvc.Request
 import play.api.mvc.Result
 import uk.gov.hmrc.auth.core.AuthConnector
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
+import v2.controllers.request.AuthenticatedRequest
+import v2.models.EORINumber
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -35,6 +36,6 @@ case class FakeAuthNewEnrolmentOnlyAction @Inject() (
 )(implicit override val executionContext: ExecutionContext)
     extends AuthNewEnrolmentOnlyAction(authConnector, parser) {
 
-  override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] =
-    block(AuthRequest(request, "id"))
+  override def invokeBlock[A](request: Request[A], block: AuthenticatedRequest[A] => Future[Result]): Future[Result] =
+    block(AuthenticatedRequest(EORINumber("id"), request))
 }

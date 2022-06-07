@@ -25,7 +25,7 @@ import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.Request
 import v2.controllers.stream.StreamingParsers
-import v2.models.errors.BaseError
+import v2.models.errors.PresentationError
 
 import scala.concurrent.Future
 
@@ -46,7 +46,7 @@ trait VersionedRouting {
             Future.successful(
               UnsupportedMediaType(
                 Json.toJson(
-                  BaseError.unsupportedMediaTypeError(
+                  PresentationError.unsupportedMediaTypeError(
                     request.headers
                       .get("accept")
                       .map(

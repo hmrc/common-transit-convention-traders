@@ -88,18 +88,18 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
       Await.result(result.value, 5.seconds) mustBe Left(FailedToValidateError.SchemaFailedToValidateError(NonEmptyList(ValidationError(1, 1, "nope"), Nil)))
     }
 
-    "an upstream error should return a left with a OtherError" in {
+    "an upstream error should return a left with an UnexpectedError" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
       val result = sut.validateXML(MessageType.DepartureDeclaration, UpstreamError)
 
-      Await.result(result.value, 5.seconds) mustBe Left(FailedToValidateError.OtherError(Some(upstreamErrorResponse)))
+      Await.result(result.value, 5.seconds) mustBe Left(FailedToValidateError.UnexpectedError(Some(upstreamErrorResponse)))
     }
 
-    "an internal exception should return a left with a OtherError" in {
+    "an internal exception should return a left with an UnexpectedError" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
       val result = sut.validateXML(MessageType.DepartureDeclaration, InternalServiceError)
 
-      Await.result(result.value, 5.seconds) mustBe Left(FailedToValidateError.OtherError(Some(internalException)))
+      Await.result(result.value, 5.seconds) mustBe Left(FailedToValidateError.UnexpectedError(Some(internalException)))
     }
 
   }

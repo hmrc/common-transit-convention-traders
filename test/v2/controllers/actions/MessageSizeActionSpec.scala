@@ -45,7 +45,7 @@ class MessageSizeActionSpec extends AnyFreeSpec with Matchers with GuiceOneAppPe
     .overrides(bind[AuthAction].to[FakeAuthAction])
     .build()
 
-  class Harness(messageSizeAction: MessageSizeAction, cc: ControllerComponents) extends BackendController(cc) {
+  class Harness(messageSizeAction: MessageSizeAction[Request], cc: ControllerComponents) extends BackendController(cc) {
 
     def post: Action[NodeSeq] = (DefaultActionBuilder.apply(cc.parsers.anyContent) andThen messageSizeAction).async(cc.parsers.xml) {
       _ =>
@@ -61,7 +61,7 @@ class MessageSizeActionSpec extends AnyFreeSpec with Matchers with GuiceOneAppPe
 
   "MessageSizeAction " - {
     "must allow a POST under 0.5mb" in {
-      val messageSizeAction = app.injector.instanceOf[MessageSizeAction]
+      val messageSizeAction = app.injector.instanceOf[MessageSizeAction[Request]]
       val cc                = app.injector.instanceOf[ControllerComponents]
 
       val controller                = new Harness(messageSizeAction, cc)
@@ -72,7 +72,7 @@ class MessageSizeActionSpec extends AnyFreeSpec with Matchers with GuiceOneAppPe
     }
 
     "must reject a POST over 0.5mb" in {
-      val messageSizeAction = app.injector.instanceOf[MessageSizeAction]
+      val messageSizeAction = app.injector.instanceOf[MessageSizeAction[Request]]
       val cc                = app.injector.instanceOf[ControllerComponents]
 
       val controller                = new Harness(messageSizeAction, cc)
@@ -87,7 +87,7 @@ class MessageSizeActionSpec extends AnyFreeSpec with Matchers with GuiceOneAppPe
     }
 
     "must reject a PUT over 0.5mb" in {
-      val messageSizeAction = app.injector.instanceOf[MessageSizeAction]
+      val messageSizeAction = app.injector.instanceOf[MessageSizeAction[Request]]
       val cc                = app.injector.instanceOf[ControllerComponents]
 
       val controller                = new Harness(messageSizeAction, cc)
@@ -98,7 +98,7 @@ class MessageSizeActionSpec extends AnyFreeSpec with Matchers with GuiceOneAppPe
     }
 
     "must NOT allow a POST if content-length header is missing" in {
-      val messageSizeAction = app.injector.instanceOf[MessageSizeAction]
+      val messageSizeAction = app.injector.instanceOf[MessageSizeAction[Request]]
       val cc                = app.injector.instanceOf[ControllerComponents]
 
       val controller                = new Harness(messageSizeAction, cc)
@@ -112,7 +112,7 @@ class MessageSizeActionSpec extends AnyFreeSpec with Matchers with GuiceOneAppPe
     }
 
     "must NOT allow a POST if content-length header is invalid" in {
-      val messageSizeAction = app.injector.instanceOf[MessageSizeAction]
+      val messageSizeAction = app.injector.instanceOf[MessageSizeAction[Request]]
       val cc                = app.injector.instanceOf[ControllerComponents]
 
       val controller                = new Harness(messageSizeAction, cc)

@@ -16,12 +16,8 @@
 
 package v2.models.errors
 
-import cats.data.NonEmptyList
+sealed trait PersistenceError
 
-sealed trait FailedToValidateError
-
-object FailedToValidateError {
-  case class UnexpectedError(thr: Option[Throwable] = None)                               extends FailedToValidateError
-  case class InvalidMessageTypeError(messageType: String)                                 extends FailedToValidateError
-  case class SchemaFailedToValidateError(validationErrors: NonEmptyList[ValidationError]) extends FailedToValidateError
+object PersistenceError {
+  case class UnexpectedError(thr: Option[Throwable] = None) extends PersistenceError
 }
