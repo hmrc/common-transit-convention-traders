@@ -41,6 +41,10 @@ object MetricsKeys {
     val Post = "validator-backend-post"
   }
 
+  object RouterBackend {
+    val Post = "router-backend-post"
+  }
+
   object Endpoints {
     def count(metricKey: String) = s"$metricKey-count"
     // Arrivals

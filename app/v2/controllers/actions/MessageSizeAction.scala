@@ -33,7 +33,9 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-class MessageSizeAction[R[_] <: Request[_]] @Inject() (config: AppConfig)(implicit val executionContext: ExecutionContext) extends ActionRefiner[R, R] {
+trait MessageSizeAction[R[_] <: Request[_]] extends ActionRefiner[R, R]
+
+class MessageSizeActionImpl[R[_] <: Request[_]] @Inject() (config: AppConfig)(implicit val executionContext: ExecutionContext) extends MessageSizeAction[R] {
 
   override protected def refine[A](request: R[A]): Future[Either[Result, R[A]]] =
     contentLengthHeader(request) match {

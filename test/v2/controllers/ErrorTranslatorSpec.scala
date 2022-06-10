@@ -31,6 +31,7 @@ import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
 import v2.models.errors.FailedToValidateError.UnexpectedError
 import v2.models.errors.FailedToValidateError.SchemaFailedToValidateError
 import v2.models.errors.PersistenceError
+import v2.models.errors.RouterError
 import v2.models.errors.ValidationError
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -107,6 +108,23 @@ class ErrorTranslatorSpec extends AnyFreeSpec with Matchers with OptionValues wi
       val output    = PresentationError.internalServiceError(cause = Some(exception))
 
       persistenceErrorConverter.convert(input) mustBe output
+    }
+  }
+
+  "Router Error" - {
+    "an Unexpected Error with no exception returns an internal service error with no exception" in {
+      val input  = RouterError.UnexpectedError(None)
+      val output = PresentationError.internalServiceError()
+
+      routerErrorConverter.convert(input) mustBe output
+    }
+
+    "an Unexpected Error with an exception returns an internal service error with an exception" in {
+      val exception = new IllegalStateException()
+      val input     = RouterError.UnexpectedError(Some(exception))
+      val output    = PresentationError.internalServiceError(cause = Some(exception))
+
+      routerErrorConverter.convert(input) mustBe output
     }
   }
 
