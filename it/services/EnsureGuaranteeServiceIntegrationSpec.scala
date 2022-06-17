@@ -215,14 +215,14 @@ class EnsureGuaranteeServiceIntegrationSpec
               <AddInfMT21>1.00GBP21GB0000010000HU1</AddInfMT21>
               <AddInfCodMT23>CAL</AddInfCodMT23>
             </SPEMENMT2>
-            <SPEMENMT2>
-              <AddInfMT21>1.00GBP21GB0000010000HU2</AddInfMT21>
-              <AddInfCodMT23>CAL</AddInfCodMT23>
-            </SPEMENMT2>
-            <SPEMENMT2>
-              <AddInfMT21>1.00GBP21GB0000010000HU3</AddInfMT21>
-              <AddInfCodMT23>CAL</AddInfCodMT23>
-            </SPEMENMT2>
+              <SPEMENMT2>
+                <AddInfMT21>1.00GBP21GB0000010000HU2</AddInfMT21>
+                <AddInfCodMT23>CAL</AddInfCodMT23>
+              </SPEMENMT2>
+              <SPEMENMT2>
+                <AddInfMT21>1.00GBP21GB0000010000HU3</AddInfMT21>
+                <AddInfCodMT23>CAL</AddInfCodMT23>
+              </SPEMENMT2>
           val expectedXml = TestData.buildGBEUXml(
             TestData.guaranteeWithType(typeNum, 1) ++ TestData.guaranteeWithType(typeNum, 2) ++ TestData.guaranteeWithType(typeNum, 3) ++ TestData
               .goodsWithCustomSpecialMention(expectedSpecialMentions)
@@ -259,6 +259,34 @@ class EnsureGuaranteeServiceIntegrationSpec
       validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
     }
 
+    "Multiple Guarantee References in a single guarantee - all references handled as unique guarantees" in {
+
+      val expectedSpecialMentions =
+        <SPEMENMT2>
+          <AddInfMT21>1.00GBP21GB0000010000HU1</AddInfMT21>
+          <AddInfCodMT23>CAL</AddInfCodMT23>
+        </SPEMENMT2>
+        <SPEMENMT2>
+          <AddInfMT21>1.00GBP21GB0000010000HU2</AddInfMT21>
+          <AddInfCodMT23>CAL</AddInfCodMT23>
+        </SPEMENMT2>
+        <SPEMENMT2>
+          <AddInfMT21>1.00GBP21GB0000010000HU3</AddInfMT21>
+          <AddInfCodMT23>CAL</AddInfCodMT23>
+        </SPEMENMT2>
+        <SPEMENMT2>
+          <AddInfMT21>1.00GBP21GB0000010000HU4</AddInfMT21>
+          <AddInfCodMT23>CAL</AddInfCodMT23>
+        </SPEMENMT2>
+
+      val insertXml   = TestData.guaranteeWithManyReferences ++ TestData.goodsNoMentions
+      val xml         = TestData.buildGBEUXml(insertXml)
+      val expectedXml = TestData.buildGBEUXml(TestData.guaranteeWithManyReferences ++ TestData.goodsWithCustomSpecialMention(expectedSpecialMentions))
+
+      val result = service.ensureGuarantee(xml)
+      normalise(result.right.get) mustEqual normalise(expectedXml)
+      validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+    }
   }
 
   override protected def portConfigKey: Seq[String] =

@@ -16,7 +16,10 @@
 
 package data
 
-import scala.xml.Elem
+import models.Guarantee
+
+import scala.annotation.tailrec
+import scala.xml.{Elem, NodeSeq}
 
 trait TestXml {
 
@@ -1584,6 +1587,36 @@ trait TestXml {
         <OthGuaRefREF4>SomeValue</OthGuaRefREF4>
       </GUAREFREF>
     </GUAGUA>
+
+  def exampleMultiGuaranteeGuaTypGUA1(gType: Char, count: Int): Elem =
+    <GUAGUA>
+      <GuaTypGUA1>{gType}</GuaTypGUA1>
+      {generateGuaranteeReference(gType, count)}
+    </GUAGUA>
+
+  def generateGuaranteeReference(gType: Char, count: Int): NodeSeq = {
+    @tailrec
+    def gen_internal(c: Int, accumulator: NodeSeq): NodeSeq =
+      c match {
+        case 0 => accumulator
+        case _ =>
+          gen_internal(
+            c - 1,
+            accumulator ++ {
+              if (!Guarantee.isOther(gType)) {
+                <GUAREFREF>
+                  <GuaRefNumGRNREF1>07IT00000100000Z3</GuaRefNumGRNREF1>
+                </GUAREFREF>
+              } else {
+                <GUAREFREF>
+                  <OthGuaRefREF4>SomeValue</OthGuaRefREF4>
+                </GUAREFREF>
+              }
+            })
+      }
+
+    gen_internal(count, NodeSeq.Empty)
+  }
 
   lazy val exampleGuaranteeGuaTypGUA1BadGuaType =
     <GUAGUA>
