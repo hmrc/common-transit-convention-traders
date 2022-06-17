@@ -17,10 +17,12 @@
 package controllers.actions
 
 import com.google.inject.Inject
+import config.Constants
 import config.Constants._
 import play.api.Logging
 import play.api.mvc.Results._
 import play.api.mvc._
+import services.EnrolmentLoggingService
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier
@@ -31,7 +33,8 @@ import scala.concurrent.Future
 
 class AuthAction @Inject() (
   override val authConnector: AuthConnector,
-  val parser: BodyParsers.Default
+  val parser: BodyParsers.Default,
+  enrolmentLoggingService: EnrolmentLoggingService
 )(implicit val executionContext: ExecutionContext)
     extends ActionBuilder[AuthRequest, AnyContent]
     with ActionFunction[Request, AuthRequest]
@@ -48,9 +51,10 @@ class AuthAction @Inject() (
       identifier <- enrolment.getIdentifier(enrolmentIdKey)
     } yield identifier.value
 
-  override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] =
+    invoke(request, block)(HeaderCarrierConverter.fromRequest(request))
 
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+  def invoke[A](request: Request[A], block: AuthRequest[A] => Future[Result])(implicit hc: HeaderCarrier): Future[Result] = {
 
     authorised(Enrolment(NewEnrolmentKey) or Enrolment(LegacyEnrolmentKey)).retrieve(Retrievals.authorisedEnrolments) {
       enrolments: Enrolments =>
@@ -79,6 +83,7 @@ class AuthAction @Inject() (
   } recover {
     case e: InsufficientEnrolments =>
       logger.warn("Failed to authorise due to insufficient enrolments", e)
+      enrolmentLoggingService.logEnrolments(request.headers.get(Constants.XClientIdHeader))
       Forbidden("Current user doesn't have a valid EORI enrolment.")
     case e: AuthorisationException =>
       logger.warn(s"Failed to authorise", e)

@@ -46,4 +46,6 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig
 
   val messageSizeLimit: Int = config.get[Int]("messageSizeLimit")
 
+  val logInsufficientEnrolments: Boolean = config.get[Boolean]("logInsufficientEnrolments")
+
 }
