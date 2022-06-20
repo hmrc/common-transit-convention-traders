@@ -29,6 +29,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.Logger
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.auth.core.Enrolment
@@ -42,7 +43,13 @@ import scala.collection.immutable.ListSet
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class EnrolmentLoggingServiceSpec extends AnyFreeSpec with MockitoSugar with BeforeAndAfterEach with Matchers with ScalaFutures {
+class EnrolmentLoggingServiceSpec
+    extends AnyFreeSpec
+    with MockitoSugar
+    with BeforeAndAfterEach
+    with Matchers
+    with ScalaFutures
+    with ScalaCheckDrivenPropertyChecks {
 
   val appConfigMock     = mock[AppConfig]
   val authConnectorMock = mock[AuthConnector]
@@ -128,39 +135,39 @@ class EnrolmentLoggingServiceSpec extends AnyFreeSpec with MockitoSugar with Bef
 
   "Requesting logging" - {
 
-    val clientId               = Gen.alphaNumStr.sample
-    val gaUserId               = Gen.alphaNumStr.sample
-    implicit val headerCarrier = HeaderCarrier(gaUserId = gaUserId)
-
     "when the flag is not enabled will not log anything" in {
       when(appConfigMock.logInsufficientEnrolments).thenReturn(false)
+      implicit val hc: HeaderCarrier = HeaderCarrier()
 
-      whenReady(Harness.logEnrolments(clientId)) {
+      whenReady(Harness.logEnrolments(Some("1234"))) {
         _ =>
           verify(underlyingLogger, times(0)).info(any())
           verify(authConnectorMock, times(0)).authorise(eqTo(EmptyPredicate), eqTo(Retrievals.allEnrolments))(any(), any())
       }
     }
 
-    "when the flag is enabled will request logging" in {
-      val enrolments = Enrolments(Set(Enrolment("key", Seq(EnrolmentIdentifier("key1", "value1")), "activated")))
+    "when the flag is enabled will request logging" in forAll(Gen.oneOf(None, Gen.alphaNumStr.sample), Gen.oneOf(None, Gen.alphaNumStr.sample)) {
+      (clientId, gaUserId) =>
+        beforeEach() // need to reset the mocks
+        implicit val hc: HeaderCarrier = HeaderCarrier(gaUserId = gaUserId)
+        val enrolments                 = Enrolments(Set(Enrolment("key", Seq(EnrolmentIdentifier("key1", "value1")), "activated")))
 
-      when(appConfigMock.logInsufficientEnrolments).thenReturn(true)
-      when(authConnectorMock.authorise(eqTo(EmptyPredicate), eqTo(Retrievals.allEnrolments))(any(), any()))
-        .thenReturn(Future.successful(enrolments))
+        when(appConfigMock.logInsufficientEnrolments).thenReturn(true)
+        when(authConnectorMock.authorise(eqTo(EmptyPredicate), eqTo(Retrievals.allEnrolments))(any(), any()))
+          .thenReturn(Future.successful(enrolments))
 
-      val message: String = s"""Insufficient enrolments were received for the following request:
-          |Client ID: ${clientId.getOrElse("Not provided")}
-          |Gateway User ID: ${gaUserId.getOrElse("Not provided")}
-          |Enrolment Key: key, Activated: true, Identifiers: [ key1: ***ue1 ]""".stripMargin
+        val message: String =
+          s"""Insufficient enrolments were received for the following request:
+                 |Client ID: ${clientId.getOrElse("Not provided")}
+                 |Gateway User ID: ${gaUserId.getOrElse("Not provided")}
+                 |Enrolment Key: key, Activated: true, Identifiers: [ key1: ***ue1 ]""".stripMargin
 
-      whenReady(Harness.logEnrolments(clientId)) {
-        _ =>
-          verify(underlyingLogger, times(1)).info(eqTo(message))
-          verify(authConnectorMock, times(1)).authorise(eqTo(EmptyPredicate), eqTo(Retrievals.allEnrolments))(any(), any())
-      }
+        whenReady(Harness.logEnrolments(clientId)) {
+          _ =>
+            verify(underlyingLogger, times(1)).info(eqTo(message))
+            verify(authConnectorMock, times(1)).authorise(eqTo(EmptyPredicate), eqTo(Retrievals.allEnrolments))(any(), any())
+        }
     }
-
   }
 
 }
