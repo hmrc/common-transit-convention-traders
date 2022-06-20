@@ -45,7 +45,7 @@ class EnrolmentLoggingServiceImpl @Inject() (authConnector: AuthConnector, appCo
         .authorise(EmptyPredicate, Retrievals.allEnrolments)
         .map(_.enrolments.map(createLogString))
         .map(createMessage(clientId))
-        .map(logger.info(_))
+        .map(logger.warn(_))
     } else Future.successful(())
 
   def createLogString(enrolment: Enrolment): String =
@@ -56,7 +56,7 @@ class EnrolmentLoggingServiceImpl @Inject() (authConnector: AuthConnector, appCo
     identifiers
       .map {
         identifier =>
-          s"${identifier.key}: ***${identifier.value.takeRight(3)}"
+          s"${identifier.key}: ${redact(identifier.value)}"
       }
       .mkString(", ")
 
@@ -64,10 +64,15 @@ class EnrolmentLoggingServiceImpl @Inject() (authConnector: AuthConnector, appCo
     val message: Seq[String] = Seq(
       "Insufficient enrolments were received for the following request:",
       s"Client ID: ${clientId.getOrElse("Not provided")}",
-      s"Gateway User ID: ${hc.gaUserId.getOrElse("Not provided")}"
+      s"Gateway User ID: ${redact(hc.gaUserId)}"
     ) ++ logMessage
 
     message.mkString("\n")
   }
+
+  def redact(value: Option[String]): String =
+    value.map(redact).getOrElse("Not provided")
+
+  def redact(value: String): String = s"***${value.takeRight(3)}"
 
 }

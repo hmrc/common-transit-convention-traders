@@ -69,6 +69,7 @@ class EnrolmentLoggingServiceSpec
     reset(authConnectorMock)
     reset(underlyingLogger)
     when(underlyingLogger.isInfoEnabled).thenReturn(true)
+    when(underlyingLogger.isWarnEnabled).thenReturn(true)
   }
 
   "Logging Enrolment Identifiers" - {
@@ -121,9 +122,15 @@ class EnrolmentLoggingServiceSpec
       val gaUserId               = Gen.alphaNumStr.sample
       implicit val headerCarrier = HeaderCarrier(gaUserId = gaUserId)
 
+      val redactedGaUserId = gaUserId
+        .map(
+          x => s"***${x.takeRight(3)}"
+        )
+        .getOrElse("Not provided")
+
       val message: String = s"""Insufficient enrolments were received for the following request:
                                |Client ID: ${clientId.getOrElse("Not provided")}
-                               |Gateway User ID: ${gaUserId.getOrElse("Not provided")}
+                               |Gateway User ID: $redactedGaUserId
                                |message1
                                |message2""".stripMargin
 
@@ -141,7 +148,7 @@ class EnrolmentLoggingServiceSpec
 
       whenReady(Harness.logEnrolments(Some("1234"))) {
         _ =>
-          verify(underlyingLogger, times(0)).info(any())
+          verify(underlyingLogger, times(0)).warn(any())
           verify(authConnectorMock, times(0)).authorise(eqTo(EmptyPredicate), eqTo(Retrievals.allEnrolments))(any(), any())
       }
     }
@@ -156,17 +163,37 @@ class EnrolmentLoggingServiceSpec
         when(authConnectorMock.authorise(eqTo(EmptyPredicate), eqTo(Retrievals.allEnrolments))(any(), any()))
           .thenReturn(Future.successful(enrolments))
 
+        val redactedGaUserId = gaUserId
+          .map(
+            x => s"***${x.takeRight(3)}"
+          )
+          .getOrElse("Not provided")
+
         val message: String =
           s"""Insufficient enrolments were received for the following request:
                  |Client ID: ${clientId.getOrElse("Not provided")}
-                 |Gateway User ID: ${gaUserId.getOrElse("Not provided")}
+                 |Gateway User ID: $redactedGaUserId
                  |Enrolment Key: key, Activated: true, Identifiers: [ key1: ***ue1 ]""".stripMargin
 
         whenReady(Harness.logEnrolments(clientId)) {
           _ =>
-            verify(underlyingLogger, times(1)).info(eqTo(message))
+            verify(underlyingLogger, times(1)).warn(eqTo(message))
             verify(authConnectorMock, times(1)).authorise(eqTo(EmptyPredicate), eqTo(Retrievals.allEnrolments))(any(), any())
         }
+    }
+  }
+
+  "Redact" - {
+    "redacts a string" in {
+      Harness.redact("abcde") mustBe "***cde"
+    }
+
+    "redacts an optional string" in {
+      Harness.redact(Some("abcde")) mustBe "***cde"
+    }
+
+    "does not redact a None" in {
+      Harness.redact(None) mustBe "Not provided"
     }
   }
 
