@@ -37,11 +37,9 @@ trait EnrolmentLoggingService {
 
 }
 
-class EnrolmentLoggingServiceImpl @Inject()(authConnector: AuthConnector, appConfig: AppConfig)
-  extends EnrolmentLoggingService
-  with Logging {
+class EnrolmentLoggingServiceImpl @Inject() (authConnector: AuthConnector, appConfig: AppConfig) extends EnrolmentLoggingService with Logging {
 
-  override def logEnrolments(clientId: Option[String])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] = {
+  override def logEnrolments(clientId: Option[String])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     if (appConfig.logInsufficientEnrolments) {
       authConnector
         .authorise(EmptyPredicate, Retrievals.allEnrolments)
@@ -49,7 +47,6 @@ class EnrolmentLoggingServiceImpl @Inject()(authConnector: AuthConnector, appCon
         .map(createMessage(clientId))
         .map(logger.info(_))
     } else Future.successful(())
-  }
 
   def createLogString(enrolment: Enrolment): String =
     s"Enrolment Key: ${enrolment.key}, Activated: ${enrolment.isActivated}, Identifiers: [ ${createIdentifierString(enrolment.identifiers)} ]"

@@ -42,22 +42,17 @@ import scala.collection.immutable.ListSet
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class EnrolmentLoggingServiceSpec
-  extends AnyFreeSpec
-  with MockitoSugar
-  with BeforeAndAfterEach
-  with Matchers
-  with ScalaFutures {
+class EnrolmentLoggingServiceSpec extends AnyFreeSpec with MockitoSugar with BeforeAndAfterEach with Matchers with ScalaFutures {
 
   val appConfigMock     = mock[AppConfig]
   val authConnectorMock = mock[AuthConnector]
 
   // Because Mockito doesn't like by-name parameters of the Play logger, we need to test against the underlying
   // logger (which is Java based, and so isn't by name).
-  val underlyingLogger  = mock[org.slf4j.Logger]
+  val underlyingLogger = mock[org.slf4j.Logger]
 
   object Harness extends EnrolmentLoggingServiceImpl(authConnectorMock, appConfigMock) {
-    protected override val logger: Logger = new Logger(underlyingLogger)
+    override protected val logger: Logger = new Logger(underlyingLogger)
   }
 
   private def enrolmentIdentifier(key: String) = Gen.alphaNumStr.sample.map(EnrolmentIdentifier(key, _)).get

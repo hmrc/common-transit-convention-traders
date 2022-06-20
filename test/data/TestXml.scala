@@ -19,7 +19,8 @@ package data
 import models.Guarantee
 
 import scala.annotation.tailrec
-import scala.xml.{Elem, NodeSeq}
+import scala.xml.Elem
+import scala.xml.NodeSeq
 
 trait TestXml {
 
@@ -1612,7 +1613,8 @@ trait TestXml {
                   <OthGuaRefREF4>SomeValue</OthGuaRefREF4>
                 </GUAREFREF>
               }
-            })
+            }
+          )
       }
 
     gen_internal(count, NodeSeq.Empty)
