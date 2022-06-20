@@ -46,7 +46,8 @@ class EnrolmentLoggingServiceImpl @Inject()(authConnector: AuthConnector, appCon
       authConnector
         .authorise(EmptyPredicate, Retrievals.allEnrolments)
         .map(_.enrolments.map(createLogString))
-        .map(log(clientId))
+        .map(createMessage(clientId))
+        .map(logger.info(_))
     } else Future.successful(())
   }
 
@@ -62,14 +63,14 @@ class EnrolmentLoggingServiceImpl @Inject()(authConnector: AuthConnector, appCon
       }
       .mkString(", ")
 
-  def log(clientId: Option[String])(logMessage: Set[String])(implicit hc: HeaderCarrier): Unit = {
+  def createMessage(clientId: Option[String])(logMessage: Set[String])(implicit hc: HeaderCarrier): String = {
     val message: Seq[String] = Seq(
       "Insufficient enrolments were received for the following request:",
       s"Client ID: ${clientId.getOrElse("Not provided")}",
       s"Gateway User ID: ${hc.gaUserId.getOrElse("Not provided")}"
     ) ++ logMessage
 
-    logger.info(message.mkString("\n"))
+    message.mkString("\n")
   }
 
 }

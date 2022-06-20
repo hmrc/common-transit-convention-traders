@@ -19,7 +19,6 @@ package controllers.actions
 import com.google.inject.Inject
 import config.AppConfig
 import play.api.mvc._
-import services.EnrolmentLoggingService
 import services.FakeEnrolmentLoggingService
 import uk.gov.hmrc.auth.core._
 
