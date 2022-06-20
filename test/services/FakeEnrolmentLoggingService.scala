@@ -14,24 +14,13 @@
  * limitations under the License.
  */
 
-package controllers.actions
+package services
 
-import com.google.inject.Inject
-import config.AppConfig
-import play.api.mvc._
-import services.FakeEnrolmentLoggingService
-import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-case class FakeAuthAction @Inject() (
-  override val authConnector: AuthConnector,
-  config: AppConfig,
-  override val parser: BodyParsers.Default
-)(implicit override val executionContext: ExecutionContext)
-    extends AuthAction(authConnector, parser, new FakeEnrolmentLoggingService()) {
-
-  override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] =
-    block(AuthRequest(request, "id"))
+class FakeEnrolmentLoggingService extends EnrolmentLoggingService {
+  override def logEnrolments(clientId: Option[String])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] = Future.successful(())
 }

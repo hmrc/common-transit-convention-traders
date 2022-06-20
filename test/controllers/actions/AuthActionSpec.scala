@@ -28,12 +28,15 @@ import play.api.mvc.BodyParsers
 import play.api.mvc.Results.Ok
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+import services.FakeEnrolmentLoggingService
 import uk.gov.hmrc.auth.core._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
+
+  val fakeEnrolmentLoggingService = new FakeEnrolmentLoggingService()
 
   class Harness(authAction: AuthAction) {
 
@@ -178,7 +181,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
-      val authAction = new AuthAction(authConnector, bodyParser)
+      val authAction = new AuthAction(authConnector, bodyParser, fakeEnrolmentLoggingService)
       val controller = new Harness(authAction)
       val result     = controller.get()(FakeRequest())
 
@@ -200,7 +203,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
-      val authAction = new AuthAction(authConnector, bodyParser)
+      val authAction = new AuthAction(authConnector, bodyParser, fakeEnrolmentLoggingService)
       val controller = new Harness(authAction)
       val result     = controller.get()(FakeRequest())
 
@@ -224,7 +227,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
-      val authAction = new AuthAction(authConnector, bodyParser)
+      val authAction = new AuthAction(authConnector, bodyParser, fakeEnrolmentLoggingService)
       val controller = new Harness(authAction)
       val result     = controller.get()(FakeRequest())
 
@@ -246,7 +249,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
-      val authAction = new AuthAction(authConnector, bodyParser)
+      val authAction = new AuthAction(authConnector, bodyParser, fakeEnrolmentLoggingService)
       val controller = new Harness(authAction)
       val result     = controller.get()(FakeRequest())
 
@@ -268,7 +271,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
-      val authAction = new AuthAction(authConnector, bodyParser)
+      val authAction = new AuthAction(authConnector, bodyParser, fakeEnrolmentLoggingService)
       val controller = new Harness(authAction)
       val result     = controller.get()(FakeRequest())
 
@@ -292,7 +295,7 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
-      val authAction = new AuthAction(authConnector, bodyParser)
+      val authAction = new AuthAction(authConnector, bodyParser, fakeEnrolmentLoggingService)
       val controller = new Harness(authAction)
       val result     = controller.get()(FakeRequest())
 
