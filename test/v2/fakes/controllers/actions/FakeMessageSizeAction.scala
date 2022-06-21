@@ -16,25 +16,21 @@
 
 package v2.fakes.controllers.actions
 
-import play.api.mvc.AnyContent
-import play.api.mvc.BodyParser
 import play.api.mvc.Request
 import play.api.mvc.Result
-import play.api.test.Helpers
-import v2.controllers.actions.AuthNewEnrolmentOnlyAction
-import v2.controllers.request.AuthenticatedRequest
-import v2.models.EORINumber
+import v2.controllers.actions.MessageSizeAction
+import v2.controllers.actions.providers.MessageSizeActionProvider
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.global
 import scala.concurrent.Future
 
-case class FakeAuthNewEnrolmentOnlyAction(eori: EORINumber = EORINumber("id")) extends AuthNewEnrolmentOnlyAction {
+object FakeMessageSizeActionProvider extends MessageSizeActionProvider {
+  override def apply[R[_] <: Request[_]](): FakeMessageSizeAction[R] = FakeMessageSizeAction()
+}
 
-  override def invokeBlock[A](request: Request[A], block: AuthenticatedRequest[A] => Future[Result]): Future[Result] =
-    block(AuthenticatedRequest(eori, request))
-
-  override def parser: BodyParser[AnyContent] = Helpers.stubBodyParser()
+case class FakeMessageSizeAction[R[_] <: Request[_]]() extends MessageSizeAction[R] {
+  override protected def refine[A](request: R[A]): Future[Either[Result, R[A]]] = Future.successful(Right(request))
 
   override protected def executionContext: ExecutionContext = global
 }

@@ -23,6 +23,7 @@ import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
 import v2.models.errors.FailedToValidateError.UnexpectedError
 import v2.models.errors.FailedToValidateError.SchemaFailedToValidateError
 import v2.models.errors.PersistenceError
+import v2.models.errors.RouterError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -52,6 +53,13 @@ trait ErrorTranslator {
 
     def convert(persistenceError: PersistenceError): PresentationError = persistenceError match {
       case err: PersistenceError.UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
+    }
+  }
+
+  implicit val routerErrorConverter = new Converter[RouterError] {
+
+    override def convert(routerError: RouterError): PresentationError = routerError match {
+      case err: RouterError.UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
     }
   }
 

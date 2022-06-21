@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package v2.models.request
+package v2.base
 
-sealed trait MessageType {
-  def code: String
-  def movementType: String
+import akka.actor.ActorSystem
+import akka.stream.Materializer
+import org.scalatest.Suite
+
+object TestActorSystem {
+  val system: ActorSystem = ActorSystem("test")
 }
 
-sealed abstract class DepartureMessageType(val code: String) extends MessageType {
-  val movementType: String = "departures"
-}
-
-object MessageType {
-  case object DepartureDeclaration extends DepartureMessageType("IE015")
+trait TestActorSystem { self: Suite =>
+  implicit val system: ActorSystem        = TestActorSystem.system
+  implicit val materializer: Materializer = Materializer(TestActorSystem.system)
 }

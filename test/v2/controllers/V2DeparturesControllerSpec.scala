@@ -29,6 +29,7 @@ import cats.syntax.all._
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.when
+import org.mockito.invocation.InvocationOnMock
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -39,28 +40,35 @@ import play.api.Application
 import play.api.http.HeaderNames
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.BAD_REQUEST
+import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.Status.REQUEST_ENTITY_TOO_LARGE
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json.Json
 import play.api.mvc.Request
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
+import play.api.test.Helpers
 import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.route
 import play.api.test.Helpers.status
 import uk.gov.hmrc.http.HeaderCarrier
+import v2.base.TestActorSystem
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
+import v2.fakes.controllers.actions.FakeMessageSizeActionProvider
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.PersistenceError
+import v2.models.errors.RouterError
 import v2.models.errors.ValidationError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.services.DeparturesService
+import v2.services.RouterService
 import v2.services.ValidationService
 
 import java.nio.charset.StandardCharsets
@@ -72,7 +80,14 @@ import scala.util.Try
 import scala.xml.NodeSeq
 import scala.xml.XML
 
-class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with OptionValues with ScalaFutures with MockitoSugar {
+class V2DeparturesControllerSpec
+    extends AnyFreeSpec
+    with Matchers
+    with GuiceOneAppPerSuite
+    with OptionValues
+    with ScalaFutures
+    with MockitoSugar
+    with TestActorSystem {
 
   // TODO: Make this a cc015c
   def CC015C: NodeSeq =
@@ -204,15 +219,37 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
   val mockDeparturesPersistenceService = mock[DeparturesService]
   when(
     mockDeparturesPersistenceService
-      .saveDeclaration(eqTo("id").asInstanceOf[EORINumber], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+      .saveDeclaration(any[String].asInstanceOf[EORINumber], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
   )
-    .thenReturn(EitherT.fromEither[Future](Right[PersistenceError, DeclarationResponse](DeclarationResponse(MovementId("123"), MessageId("456")))))
+    .thenAnswer {
+      invocation: InvocationOnMock =>
+        // we're using Mockito, so don't use AnyVal class stuff
+        if (invocation.getArgument(0, classOf[String]) == "id") EitherT.rightT(DeclarationResponse(MovementId("123"), MessageId("456")))
+        else EitherT.leftT(PersistenceError.UnexpectedError(None))
+    }
+
+  val mockRouterService = mock[RouterService]
+  when(
+    mockRouterService.send(
+      eqTo(MessageType.DepartureDeclaration),
+      any[String].asInstanceOf[EORINumber],
+      any[String].asInstanceOf[MovementId],
+      any[String].asInstanceOf[MessageId],
+      any[Source[ByteString, _]]
+    )(any[ExecutionContext])
+  )
+    .thenAnswer {
+      invocation: InvocationOnMock =>
+        if (invocation.getArgument(1, classOf[String]) == "id") EitherT.rightT(()) // we're using Mockito, so don't use AnyVal class stuff
+        else EitherT.leftT(RouterError.UnexpectedError(None))
+    }
 
   override lazy val app: Application = GuiceApplicationBuilder()
     .overrides(
-      bind[AuthNewEnrolmentOnlyAction].to[FakeAuthNewEnrolmentOnlyAction],
+      bind[AuthNewEnrolmentOnlyAction].toInstance(FakeAuthNewEnrolmentOnlyAction()),
       bind[ValidationService].toInstance(mockValidationService),
-      bind[DeparturesService].toInstance(mockDeparturesPersistenceService)
+      bind[DeparturesService].toInstance(mockDeparturesPersistenceService),
+      bind[RouterService].toInstance(mockRouterService)
     )
     .build()
   lazy val sut: V2DeparturesController = app.injector.instanceOf[V2DeparturesController]
@@ -308,6 +345,56 @@ class V2DeparturesControllerSpec extends AnyFreeSpec with Matchers with GuiceOne
             "message"      -> "an error"
           )
         )
+      )
+    }
+
+    "must return Internal Service Error if the persistence service reports an error" in {
+      val sut = new V2DeparturesControllerImpl(
+        Helpers.stubControllerComponents(),
+        SingletonTemporaryFileCreator,
+        FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
+        mockValidationService,
+        mockDeparturesPersistenceService,
+        mockRouterService,
+        FakeMessageSizeActionProvider
+      )
+
+      val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)))
+      val response = sut.submitDeclaration()(request)
+
+      status(response) mustBe INTERNAL_SERVER_ERROR
+      contentAsJson(response) mustBe Json.obj(
+        "code"    -> "INTERNAL_SERVER_ERROR",
+        "message" -> "Internal server error"
+      )
+    }
+
+    "must return Internal Service Error if the router service reports an error" in {
+
+      // we're not testing what happens with the departures service here, so just pass through with a right.
+      val mockDeparturesPersistenceService = mock[DeparturesService]
+      when(
+        mockDeparturesPersistenceService
+          .saveDeclaration(any[String].asInstanceOf[EORINumber], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+      ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, DeclarationResponse](DeclarationResponse(MovementId("123"), MessageId("456")))))
+
+      val sut = new V2DeparturesControllerImpl(
+        Helpers.stubControllerComponents(),
+        SingletonTemporaryFileCreator,
+        FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
+        mockValidationService,
+        mockDeparturesPersistenceService,
+        mockRouterService,
+        FakeMessageSizeActionProvider
+      )
+
+      val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)))
+      val response = sut.submitDeclaration()(request)
+
+      status(response) mustBe INTERNAL_SERVER_ERROR
+      contentAsJson(response) mustBe Json.obj(
+        "code"    -> "INTERNAL_SERVER_ERROR",
+        "message" -> "Internal server error"
       )
     }
 

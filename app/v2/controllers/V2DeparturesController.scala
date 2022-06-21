@@ -34,12 +34,12 @@ import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
-import v2.controllers.actions.MessageSizeAction
-import v2.controllers.request.AuthenticatedRequest
+import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.stream.StreamingParsers
 import v2.models.request.MessageType
 import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
 import v2.services.DeparturesService
+import v2.services.RouterService
 import v2.services.ValidationService
 
 @ImplementedBy(classOf[V2DeparturesControllerImpl])
@@ -56,7 +56,8 @@ class V2DeparturesControllerImpl @Inject() (
   authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
   validationService: ValidationService,
   departuresService: DeparturesService,
-  messageSizeAction: MessageSizeAction[AuthenticatedRequest]
+  routerService: RouterService,
+  messageSizeAction: MessageSizeActionProvider
 )(implicit val materializer: Materializer)
     extends BaseController
     with V2DeparturesController
@@ -67,7 +68,7 @@ class V2DeparturesControllerImpl @Inject() (
     with TemporaryFiles {
 
   def submitDeclaration(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen messageSizeAction).async(streamFromMemory) {
+    (authActionNewEnrolmentOnly andThen messageSizeAction()).async(streamFromMemory) {
       implicit request =>
         withTemporaryFile {
           (temporaryFile, source) =>
@@ -81,6 +82,9 @@ class V2DeparturesControllerImpl @Inject() (
               fileSource = FileIO.fromPath(temporaryFile)
 
               declarationResult <- departuresService.saveDeclaration(request.eoriNumber, fileSource).asPresentation
+              _ <- routerService
+                .send(MessageType.DepartureDeclaration, request.eoriNumber, declarationResult.departureId, declarationResult.messageId, fileSource)
+                .asPresentation
             } yield declarationResult).fold[Result](
               presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
               result => Accepted(HateoasDepartureDeclarationResponse(result.departureId))

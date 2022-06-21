@@ -181,7 +181,7 @@ class AuthNewEnrolmentOnlyActionSpec extends AnyFreeSpec with Matchers with Mock
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
-      val authAction = new AuthNewEnrolmentOnlyAction(authConnector, bodyParser)
+      val authAction = new AuthNewEnrolmentOnlyActionImpl(authConnector, bodyParser)
       val controller = new Harness(authAction)
       val result     = controller.get()(FakeRequest())
 
@@ -205,7 +205,7 @@ class AuthNewEnrolmentOnlyActionSpec extends AnyFreeSpec with Matchers with Mock
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
-      val authAction = new AuthNewEnrolmentOnlyAction(authConnector, bodyParser)
+      val authAction = new AuthNewEnrolmentOnlyActionImpl(authConnector, bodyParser)
       val controller = new Harness(authAction)
       val result     = controller.get()(FakeRequest())
 
@@ -231,7 +231,7 @@ class AuthNewEnrolmentOnlyActionSpec extends AnyFreeSpec with Matchers with Mock
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
-      val authAction = new AuthNewEnrolmentOnlyAction(authConnector, bodyParser)
+      val authAction = new AuthNewEnrolmentOnlyActionImpl(authConnector, bodyParser)
       val controller = new Harness(authAction)
       val result     = controller.get()(FakeRequest())
 
@@ -256,7 +256,7 @@ class AuthNewEnrolmentOnlyActionSpec extends AnyFreeSpec with Matchers with Mock
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
-      val authAction = new AuthNewEnrolmentOnlyAction(authConnector, bodyParser)
+      val authAction = new AuthNewEnrolmentOnlyActionImpl(authConnector, bodyParser)
       val controller = new Harness(authAction)
       val result     = controller.get()(FakeRequest())
 
@@ -281,7 +281,7 @@ class AuthNewEnrolmentOnlyActionSpec extends AnyFreeSpec with Matchers with Mock
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
-      val authAction = new AuthNewEnrolmentOnlyAction(authConnector, bodyParser)
+      val authAction = new AuthNewEnrolmentOnlyActionImpl(authConnector, bodyParser)
       val controller = new Harness(authAction)
       val result     = controller.get()(FakeRequest())
 
@@ -308,7 +308,7 @@ class AuthNewEnrolmentOnlyActionSpec extends AnyFreeSpec with Matchers with Mock
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
-      val authAction = new AuthNewEnrolmentOnlyAction(authConnector, bodyParser)
+      val authAction = new AuthNewEnrolmentOnlyActionImpl(authConnector, bodyParser)
       val controller = new Harness(authAction)
       val result     = controller.get()(FakeRequest())
 

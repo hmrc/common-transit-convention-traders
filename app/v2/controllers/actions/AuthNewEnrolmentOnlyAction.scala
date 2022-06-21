@@ -16,6 +16,7 @@
 
 package v2.controllers.actions
 
+import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import config.Constants._
 import v2.controllers.request.AuthenticatedRequest
@@ -33,10 +34,12 @@ import v2.models.errors.PresentationError
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class AuthNewEnrolmentOnlyAction @Inject() (override val authConnector: AuthConnector, val parser: BodyParsers.Default)(implicit
+@ImplementedBy(classOf[AuthNewEnrolmentOnlyActionImpl])
+trait AuthNewEnrolmentOnlyAction extends ActionBuilder[AuthenticatedRequest, AnyContent] with ActionFunction[Request, AuthenticatedRequest]
+
+class AuthNewEnrolmentOnlyActionImpl @Inject() (override val authConnector: AuthConnector, val parser: BodyParsers.Default)(implicit
   val executionContext: ExecutionContext
-) extends ActionBuilder[AuthenticatedRequest, AnyContent]
-    with ActionFunction[Request, AuthenticatedRequest]
+) extends AuthNewEnrolmentOnlyAction
     with AuthorisedFunctions
     with Logging {
 

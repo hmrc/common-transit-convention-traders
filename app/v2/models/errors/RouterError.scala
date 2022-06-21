@@ -14,17 +14,10 @@
  * limitations under the License.
  */
 
-package v2.models.request
+package v2.models.errors
 
-sealed trait MessageType {
-  def code: String
-  def movementType: String
-}
+sealed trait RouterError
 
-sealed abstract class DepartureMessageType(val code: String) extends MessageType {
-  val movementType: String = "departures"
-}
-
-object MessageType {
-  case object DepartureDeclaration extends DepartureMessageType("IE015")
+object RouterError {
+  case class UnexpectedError(thr: Option[Throwable] = None) extends RouterError
 }
