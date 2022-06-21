@@ -62,7 +62,8 @@ class EnrolmentLoggingServiceSpec
     override protected val logger: Logger = new Logger(underlyingLogger)
   }
 
-  private def enrolmentIdentifier(key: String) = Gen.alphaNumStr.sample.map(EnrolmentIdentifier(key, _)).get
+  private def enrolmentIdentifier(key: String) =
+    Gen.listOfN(10, Gen.alphaNumStr).sample.map(_.mkString).map(EnrolmentIdentifier(key, _)).get
 
   override def beforeEach(): Unit = {
     reset(appConfigMock)
@@ -190,6 +191,18 @@ class EnrolmentLoggingServiceSpec
 
     "redacts an optional string" in {
       Harness.redact(Some("abcde")) mustBe "***cde"
+    }
+
+    "redacts a full string if three characters" in {
+      Harness.redact("abc") mustBe "***"
+    }
+
+    "redacts a full string if two characters" in {
+      Harness.redact("ab") mustBe "***"
+    }
+
+    "redacts a full string if one character" in {
+      Harness.redact("a") mustBe "***"
     }
 
     "does not redact a None" in {

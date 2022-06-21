@@ -73,6 +73,8 @@ class EnrolmentLoggingServiceImpl @Inject() (authConnector: AuthConnector, appCo
   def redact(value: Option[String]): String =
     value.map(redact).getOrElse("Not provided")
 
-  def redact(value: String): String = s"***${value.takeRight(3)}"
+  def redact(value: String): String =
+    if (value.length > 3) s"***${value.takeRight(3)}"
+    else "***"
 
 }
