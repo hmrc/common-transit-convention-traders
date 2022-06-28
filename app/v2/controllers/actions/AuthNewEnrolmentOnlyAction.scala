@@ -77,9 +77,9 @@ class AuthNewEnrolmentOnlyActionImpl @Inject() (override val authConnector: Auth
       Forbidden(Json.toJson(PresentationError.forbiddenError("Current user doesn't have a valid EORI enrolment.")))
     case e: AuthorisationException =>
       logger.warn(s"Failed to authorise", e)
-      Unauthorized
+      Unauthorized(Json.toJson(PresentationError.unauthorized(s"Failed to authorise user: ${e.reason}")))
     case NonFatal(thr) =>
       logger.error(s"Error returned from auth service: ${thr.getMessage}", thr)
-      InternalServerError
+      InternalServerError(Json.toJson(PresentationError.internalServiceError(cause = Some(thr))))
   }
 }

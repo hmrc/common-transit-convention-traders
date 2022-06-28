@@ -314,6 +314,10 @@ class AuthNewEnrolmentOnlyActionSpec extends AnyFreeSpec with Matchers with Mock
       val result     = controller.get()(FakeRequest())
 
       status(result) mustEqual UNAUTHORIZED
+      contentAsJson(result) mustEqual Json.obj(
+        "message" -> "Failed to authorise user: Bearer token not supplied",
+        "code"    -> "UNAUTHORIZED"
+      )
     }
   }
 
@@ -337,7 +341,10 @@ class AuthNewEnrolmentOnlyActionSpec extends AnyFreeSpec with Matchers with Mock
       val result     = controller.get()(FakeRequest())
 
       status(result) mustEqual INTERNAL_SERVER_ERROR
-      contentAsString(result) mustEqual ""
+      contentAsJson(result) mustEqual Json.obj(
+        "message" -> "Internal server error",
+        "code"    -> "INTERNAL_SERVER_ERROR"
+      )
     }
   }
 }

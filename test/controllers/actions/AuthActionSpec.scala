@@ -22,6 +22,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.BodyParsers
@@ -301,6 +302,10 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
       val result     = controller.get()(FakeRequest())
 
       status(result) mustEqual UNAUTHORIZED
+      contentAsJson(result) mustEqual Json.obj(
+        "message" -> "Failed to authorise user: Bearer token not supplied",
+        "code"    -> "UNAUTHORIZED"
+      )
     }
   }
 
@@ -324,7 +329,10 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
       val result     = controller.get()(FakeRequest())
 
       status(result) mustEqual INTERNAL_SERVER_ERROR
-      contentAsString(result) mustEqual ""
+      contentAsJson(result) mustEqual Json.obj(
+        "message" -> "Internal server error",
+        "code"    -> "INTERNAL_SERVER_ERROR"
+      )
     }
   }
 

@@ -46,6 +46,9 @@ object PresentationError extends CommonFormats {
   def notFoundError(message: String): PresentationError =
     StandardError(message, ErrorCode.NotFound)
 
+  def unauthorized(message: String): PresentationError =
+    StandardError(message, ErrorCode.Unauthorized)
+
   def schemaValidationError(message: String = "Request failed schema validation", validationErrors: NonEmptyList[ValidationError]): SchemaValidationError =
     SchemaValidationError(message, ErrorCode.SchemaValidation, validationErrors)
 
