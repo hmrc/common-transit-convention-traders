@@ -30,6 +30,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.FakeEnrolmentLoggingService
 import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.http.UpstreamErrorResponse
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -302,4 +303,29 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
       status(result) mustEqual UNAUTHORIZED
     }
   }
+
+  "must return InternalServerError" - {
+    "when the auth connector returns an UpstreamErrorResponse" in {
+      val authConnector = mock[AuthConnector]
+
+      when(authConnector.authorise[Enrolments](any(), any())(any(), any()))
+        .thenReturn(Future.failed(UpstreamErrorResponse("Invalid auth-client version", 403, 403, Map.empty)))
+
+      val application = GuiceApplicationBuilder()
+        .configure(
+          "metrics.jvm" -> false
+        )
+        .build()
+
+      val bodyParser = application.injector.instanceOf[BodyParsers.Default]
+
+      val authAction = new AuthAction(authConnector, bodyParser, fakeEnrolmentLoggingService)
+      val controller = new Harness(authAction)
+      val result     = controller.get()(FakeRequest())
+
+      status(result) mustEqual INTERNAL_SERVER_ERROR
+      contentAsString(result) mustEqual ""
+    }
+  }
+
 }

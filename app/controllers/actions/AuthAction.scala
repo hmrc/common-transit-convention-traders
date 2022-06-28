@@ -30,6 +30,7 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 
 class AuthAction @Inject() (
   override val authConnector: AuthConnector,
@@ -88,5 +89,8 @@ class AuthAction @Inject() (
     case e: AuthorisationException =>
       logger.warn(s"Failed to authorise", e)
       Unauthorized
+    case NonFatal(thr) =>
+      logger.error(s"Error returned from auth service: ${thr.getMessage}", thr)
+      InternalServerError
   }
 }
