@@ -22,6 +22,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.BodyParsers
@@ -30,6 +31,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.FakeEnrolmentLoggingService
 import uk.gov.hmrc.auth.core._
+import uk.gov.hmrc.http.UpstreamErrorResponse
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -300,6 +302,38 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
       val result     = controller.get()(FakeRequest())
 
       status(result) mustEqual UNAUTHORIZED
+      contentAsJson(result) mustEqual Json.obj(
+        "message" -> "Failed to authorise user: Bearer token not supplied",
+        "code"    -> "UNAUTHORIZED"
+      )
     }
   }
+
+  "must return InternalServerError" - {
+    "when the auth connector returns an UpstreamErrorResponse" in {
+      val authConnector = mock[AuthConnector]
+
+      when(authConnector.authorise[Enrolments](any(), any())(any(), any()))
+        .thenReturn(Future.failed(UpstreamErrorResponse("Invalid auth-client version", 403, 403, Map.empty)))
+
+      val application = GuiceApplicationBuilder()
+        .configure(
+          "metrics.jvm" -> false
+        )
+        .build()
+
+      val bodyParser = application.injector.instanceOf[BodyParsers.Default]
+
+      val authAction = new AuthAction(authConnector, bodyParser, fakeEnrolmentLoggingService)
+      val controller = new Harness(authAction)
+      val result     = controller.get()(FakeRequest())
+
+      status(result) mustEqual INTERNAL_SERVER_ERROR
+      contentAsJson(result) mustEqual Json.obj(
+        "message" -> "Internal server error",
+        "code"    -> "INTERNAL_SERVER_ERROR"
+      )
+    }
+  }
+
 }

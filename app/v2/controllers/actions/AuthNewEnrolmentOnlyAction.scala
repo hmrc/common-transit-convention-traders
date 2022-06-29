@@ -33,6 +33,7 @@ import v2.models.errors.PresentationError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[AuthNewEnrolmentOnlyActionImpl])
 trait AuthNewEnrolmentOnlyAction extends ActionBuilder[AuthenticatedRequest, AnyContent] with ActionFunction[Request, AuthenticatedRequest]
@@ -76,6 +77,9 @@ class AuthNewEnrolmentOnlyActionImpl @Inject() (override val authConnector: Auth
       Forbidden(Json.toJson(PresentationError.forbiddenError("Current user doesn't have a valid EORI enrolment.")))
     case e: AuthorisationException =>
       logger.warn(s"Failed to authorise", e)
-      Unauthorized
+      Unauthorized(Json.toJson(PresentationError.unauthorized(s"Failed to authorise user: ${e.reason}")))
+    case NonFatal(thr) =>
+      logger.error(s"Error returned from auth service: ${thr.getMessage}", thr)
+      InternalServerError(Json.toJson(PresentationError.internalServiceError(cause = Some(thr))))
   }
 }
