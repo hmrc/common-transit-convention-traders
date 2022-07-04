@@ -18,6 +18,7 @@ package v2.connectors
 
 import io.lemonlabs.uri.UrlPath
 import uk.gov.hmrc.http.HttpErrorFunctions
+import v2.models.AuditType
 import v2.models.EORINumber
 import v2.models.MovementId
 import v2.models.MessageId
@@ -37,5 +38,10 @@ trait V2BaseConnector extends HttpErrorFunctions {
 
   protected def routerRoute(eoriNumber: EORINumber, messageType: MessageType, movementId: MovementId, messageId: MessageId): UrlPath =
     UrlPath.parse(s"$routerBaseRoute/traders/${eoriNumber.value}/movements/${messageType.movementType}/${movementId.value}/messages/${messageId.value}/")
+
+  protected def auditingBaseRoute: String = "/transit-movements-auditing"
+
+  protected def auditingRoute(auditType: AuditType): UrlPath =
+    UrlPath.parse(s"$auditingBaseRoute/audit/${auditType.name}")
 
 }

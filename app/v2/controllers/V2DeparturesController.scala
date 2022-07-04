@@ -21,6 +21,7 @@ import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
@@ -38,8 +39,10 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.stream.StreamingParsers
+import v2.models.AuditType
 import v2.models.request.MessageType
 import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
+import v2.services.AuditingService
 import v2.services.DeparturesService
 import v2.services.RouterService
 import v2.services.ValidationService
@@ -61,6 +64,7 @@ class V2DeparturesControllerImpl @Inject() (
   validationService: ValidationService,
   departuresService: DeparturesService,
   routerService: RouterService,
+  auditService: AuditingService,
   messageSizeAction: MessageSizeActionProvider
 )(implicit val materializer: Materializer)
     extends BaseController
@@ -70,12 +74,23 @@ class V2DeparturesControllerImpl @Inject() (
     with VersionedRouting
     with ErrorTranslator
     with TemporaryFiles
-    with ContentTypeRouting {
+    with ContentTypeRouting
+    with SourceParallelisation {
+
+  private def auditAndCallService[E, A](in: Source[ByteString, _], auditType: AuditType)(
+    block: Source[ByteString, _] => EitherT[Future, E, A]
+  )(implicit hc: HeaderCarrier, materializer: Materializer): EitherT[Future, E, A] =
+    callInParallel(in) {
+      source =>
+        // fire and forget for auditing
+        auditService.audit(auditType, source)
+        block(source)
+    }
 
   def submitDeclaration(): Action[Source[ByteString, _]] =
     contentTypeRoute {
-      case Some(MimeTypes.XML)  => submitDeclarationXML
-      case Some(MimeTypes.JSON) => submitDeclarationJSON
+      case Some(MimeTypes.XML)  => submitDeclarationXML()
+      case Some(MimeTypes.JSON) => submitDeclarationJSON()
     }
 
   def submitDeclarationJSON(): Action[Source[ByteString, _]] =
@@ -93,7 +108,7 @@ class V2DeparturesControllerImpl @Inject() (
             implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
             (for {
-              _ <- validationService.validateXML(MessageType.DepartureDeclaration, source).asPresentation
+              _ <- auditAndCallService(source, AuditType.DeclarationData)(validationService.validateXML(MessageType.DepartureDeclaration, _).asPresentation)
 
               fileSource = FileIO.fromPath(temporaryFile)
 
