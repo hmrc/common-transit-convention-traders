@@ -55,7 +55,9 @@ class AuditingConnectorSpec
     with TestActorSystem {
 
   val mockAppConfig = mock[AppConfig]
-  when(mockAppConfig.auditingUrl).thenAnswer(_ => Url.parse(server.baseUrl())) // using thenAnswer for lazy semantics
+  when(mockAppConfig.auditingUrl).thenAnswer(
+    _ => Url.parse(server.baseUrl())
+  ) // using thenAnswer for lazy semantics
 
   lazy val sut                        = new AuditingConnectorImpl(AhcWSClient(), mockAppConfig, new TestMetrics)
   def targetUrl(auditType: AuditType) = s"/transit-movements-auditing/audit/${auditType.name}"
