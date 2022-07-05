@@ -50,7 +50,10 @@ class SourceParallelisationSpec extends AnyFreeSpec with Matchers with ScalaFutu
           val a = source.runWith(Sink.seq)
           val b = source.runWith(Sink.seq)
 
-          // we have to run the above
+          // We have to run the above like that as we need all futures to occur simultaneously
+          // we can then map the results - if we don't do it this way, the second future will
+          // get an error as it'll potentially force the source to run twice (or not at all,
+          // and will just get a "complete" notification)
           for {
             first  <- a
             second <- b
@@ -71,7 +74,10 @@ class SourceParallelisationSpec extends AnyFreeSpec with Matchers with ScalaFutu
           val b = source.runWith(Sink.seq)
           val c = source.runWith(Sink.seq)
 
-          // we have to run the above
+          // We have to run the above like that as we need all futures to occur simultaneously
+          // we can then map the results - if we don't do it this way, the second future will
+          // get an error as it'll potentially force the source to run twice (or not at all,
+          // and will just get a "complete" notification)
           for {
             first  <- a
             second <- b

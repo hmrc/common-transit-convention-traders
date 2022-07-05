@@ -54,6 +54,7 @@ import play.api.test.Helpers
 import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
@@ -301,7 +302,6 @@ class V2DeparturesControllerSpec
           val result  = sut.submitDeclaration()(request)
           status(result) mustBe REQUEST_ENTITY_TOO_LARGE
         }
-
     }
 
     "with content type set to application/xml" - {
@@ -336,6 +336,42 @@ class V2DeparturesControllerSpec
         verify(mockValidationService, times(1)).validateXML(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
         verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
         verify(mockRouterService, times(1)).send(eqTo(MessageType.DepartureDeclaration), EORINumber(any()), MovementId(any()), MessageId(any()), any())(any(), any())
+      }
+
+      "must return Accepted when body length is within limits and is considered valid" - Seq(true, false).foreach {
+        auditEnabled =>
+          val success = if (auditEnabled) "is successful" else "fails"
+          s"when auditing $success" in {
+            beforeEach()
+            if (!auditEnabled) {
+              reset(mockAuditService)
+              when(mockAuditService.audit(any(), any())(any(), any())).thenReturn(Future.failed(UpstreamErrorResponse("error", 500)))
+            }
+            val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource(CC015C.mkString), headers = standardHeaders)
+            val result  = sut.submitDeclaration()(request)
+            status(result) mustBe ACCEPTED
+
+            contentAsJson(result) mustBe Json.obj(
+              "_links" -> Json.obj(
+                "self" -> Json.obj(
+                  "href" -> "/customs/transits/movements/departures/123"
+                )
+              ),
+              "id" -> "123",
+              "_embedded" -> Json.obj(
+                "messages" -> Json.obj(
+                  "_links" -> Json.obj(
+                    "href" -> "/customs/transits/movements/departures/123/messages"
+                  )
+                )
+              )
+            )
+
+            verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any())(any(), any())
+            verify(mockValidationService, times(1)).validateXML(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
+            verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
+            verify(mockRouterService, times(1)).send(eqTo(MessageType.DepartureDeclaration), EORINumber(any()), MovementId(any()), MessageId(any()), any())(any(), any())
+          }
       }
 
       "must return Bad Request when body is not an XML document" in {
