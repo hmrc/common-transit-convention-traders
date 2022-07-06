@@ -64,7 +64,8 @@ class RouterServiceSpec extends AnyFreeSpec with Matchers with OptionValues with
         any[String].asInstanceOf[MessageId],
         eqTo(validRequest)
       )(
-        any[ExecutionContext]
+        any[ExecutionContext],
+        any[HeaderCarrier]
       )
     )
       .thenReturn(Future.successful(()))
@@ -77,7 +78,8 @@ class RouterServiceSpec extends AnyFreeSpec with Matchers with OptionValues with
         any[String].asInstanceOf[MessageId],
         eqTo(invalidRequest)
       )(
-        any[ExecutionContext]
+        any[ExecutionContext],
+        any[HeaderCarrier]
       )
     )
       .thenReturn(Future.failed(upstreamErrorResponse))

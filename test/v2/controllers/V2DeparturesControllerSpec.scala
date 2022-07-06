@@ -236,7 +236,7 @@ class V2DeparturesControllerSpec
       any[String].asInstanceOf[MovementId],
       any[String].asInstanceOf[MessageId],
       any[Source[ByteString, _]]
-    )(any[ExecutionContext])
+    )(any[ExecutionContext], any[HeaderCarrier])
   )
     .thenAnswer {
       invocation: InvocationOnMock =>

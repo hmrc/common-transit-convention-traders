@@ -21,6 +21,7 @@ import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
+import uk.gov.hmrc.http.HeaderCarrier
 import v2.connectors.RouterConnector
 import v2.models.EORINumber
 import v2.models.MessageId
@@ -36,7 +37,8 @@ import scala.util.control.NonFatal
 trait RouterService {
 
   def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
-    ec: ExecutionContext
+    ec: ExecutionContext,
+    hc: HeaderCarrier
   ): EitherT[Future, RouterError, Unit]
 
 }
@@ -44,7 +46,8 @@ trait RouterService {
 class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends RouterService {
 
   def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
-    ec: ExecutionContext
+    ec: ExecutionContext,
+    hc: HeaderCarrier
   ): EitherT[Future, RouterError, Unit] =
     EitherT(
       routerConnector

@@ -39,10 +39,10 @@ import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.Status.OK
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
-import play.api.libs.ws.WSClient
 import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.TestMetrics
 import utils.WiremockSuite
 import v2.models.EORINumber
@@ -59,6 +59,7 @@ import scala.util.control.NonFatal
 
 class PersistenceConnectorSpec
     extends AnyFreeSpec
+    with HttpClientV2Support
     with Matchers
     with GuiceOneAppPerSuite
     with WiremockSuite
@@ -66,10 +67,9 @@ class PersistenceConnectorSpec
     with IntegrationPatience
     with ScalaCheckDrivenPropertyChecks {
 
-  lazy val wsclient: WSClient   = app.injector.instanceOf[WSClient]
   lazy val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
-  lazy val persistenceConnector: PersistenceConnectorImpl = new PersistenceConnectorImpl(wsclient, appConfig, new TestMetrics())
+  lazy val persistenceConnector: PersistenceConnectorImpl = new PersistenceConnectorImpl(httpClientV2, appConfig, new TestMetrics())
   implicit lazy val ec: ExecutionContext                  = app.materializer.executionContext
 
   "POST /traders/:eori/message/departures" - {

@@ -36,11 +36,12 @@ import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.NO_CONTENT
 import play.api.http.Status.OK
 import play.api.libs.json.Json
-import play.api.libs.ws.WSClient
 import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.http
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.test.HttpClientV2Support
+import uk.gov.hmrc.play.http.test.ResponseMatchers
 import utils.TestMetrics
 import v2.models.errors.PresentationError
 import v2.models.errors.ValidationError
@@ -51,12 +52,18 @@ import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 
-class ValidationConnectorSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite with utils.WiremockSuite with ScalaFutures with IntegrationPatience {
+class ValidationConnectorSpec
+    extends AnyFreeSpec
+    with HttpClientV2Support
+    with Matchers
+    with GuiceOneAppPerSuite
+    with utils.WiremockSuite
+    with ScalaFutures
+    with IntegrationPatience {
 
-  lazy val wsclient: WSClient   = app.injector.instanceOf[WSClient]
   lazy val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
-  lazy val validationConnector: ValidationConnectorImpl = new ValidationConnectorImpl(wsclient, appConfig, new TestMetrics())
+  lazy val validationConnector: ValidationConnectorImpl = new ValidationConnectorImpl(httpClientV2, appConfig, new TestMetrics())
   implicit lazy val ec: ExecutionContext                = app.materializer.executionContext
 
   "POST /message/:messageType/validation" - {

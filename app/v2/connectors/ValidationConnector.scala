@@ -31,11 +31,15 @@ import play.api.http.MimeTypes
 import play.api.http.Status.NO_CONTENT
 import play.api.http.Status.OK
 import play.api.libs.json.JsResult
-import play.api.libs.ws.WSClient
+import play.api.libs.json.Json
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.models.request.MessageType
 import v2.models.responses.ValidationResponse
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -43,13 +47,15 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[ValidationConnectorImpl])
 trait ValidationConnector {
 
-  def validate(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[ValidationResponse]]
+  def validate(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Option[ValidationResponse]]
 
 }
 
-// TODO: WSClient is temporary until https://github.com/hmrc/bootstrap-play/pull/75 is pulled and deployed.
 @Singleton
-class ValidationConnectorImpl @Inject() (ws: WSClient, appConfig: AppConfig, val metrics: Metrics)
+class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig, val metrics: Metrics)
     extends ValidationConnector
     with HasMetrics
     with V2BaseConnector
@@ -63,17 +69,19 @@ class ValidationConnectorImpl @Inject() (ws: WSClient, appConfig: AppConfig, val
       _ =>
         val url = appConfig.validatorUrl.withPath(validationRoute(messageType))
 
-        // TODO: Temporary, use HttpClientV2 when available
-        ws.url(url.toString())
-          .addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
-          .post(xmlStream)
+        httpClientV2
+          .post(url"$url")
+          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+          .withBody(xmlStream)
+          .execute[HttpResponse]
           .flatMap {
             response =>
               response.status match {
                 case NO_CONTENT =>
                   Future.successful(None)
                 case OK =>
-                  response.json
+                  Json
+                    .parse(response.body)
                     .validate[ValidationResponse]
                     .map(
                       result => Future.successful(Some(result))

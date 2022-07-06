@@ -28,12 +28,16 @@ import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status.ACCEPTED
-import play.api.libs.ws.WSClient
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.request.MessageType
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -42,28 +46,31 @@ import scala.concurrent.Future
 trait RouterConnector {
 
   def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
-    ec: ExecutionContext
+    ec: ExecutionContext,
+    hc: HeaderCarrier
   ): Future[Unit]
 
 }
 
-class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig, ws: WSClient)
+class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig, httpClientV2: HttpClientV2)
     extends RouterConnector
     with V2BaseConnector
     with HasMetrics
     with Logging {
 
   override def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
-    ec: ExecutionContext
+    ec: ExecutionContext,
+    hc: HeaderCarrier
   ): Future[Unit] =
     withMetricsTimerAsync(MetricsKeys.RouterBackend.Post) {
       _ =>
         val url = appConfig.routerUrl.withPath(routerRoute(eoriNumber, messageType, movementId, messageId))
 
-        // TODO: Temporary, use HttpClientV2 when available
-        ws.url(url.toString())
-          .addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
-          .post(body)
+        httpClientV2
+          .post(url"$url")
+          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+          .withBody(body)
+          .execute[HttpResponse]
           .flatMap {
             response =>
               response.status match {
