@@ -180,9 +180,10 @@ class CustomJsonErrorHandlerSpec
       val response = httpClient
         .url(s"http://localhost:$port/movements/departures?updatedSince=2021-06-15T10%3A13%3A05%2B00%3A00")
         .withHttpHeaders(
-          "Accept"       -> "application/vnd.hmrc.1.0+json",
-          "channel"      -> "api",
-          "X-Request-ID" -> requestId
+          "Accept"        -> "application/vnd.hmrc.1.0+json",
+          "channel"       -> "api",
+          "X-Request-ID"  -> requestId,
+          "Authorization" -> "Bearer token"
         )
         .get()
         .futureValue

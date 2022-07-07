@@ -30,11 +30,14 @@ import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status.OK
 import play.api.libs.json.JsResult
-import play.api.libs.ws.WSClient
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.models.EORINumber
 import v2.models.responses.DeclarationResponse
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -50,7 +53,7 @@ trait PersistenceConnector {
 }
 
 @Singleton
-class PersistenceConnectorImpl @Inject() (ws: WSClient, appConfig: AppConfig, val metrics: Metrics)
+class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig, val metrics: Metrics)
     extends PersistenceConnector
     with HasMetrics
     with V2BaseConnector
@@ -64,10 +67,11 @@ class PersistenceConnectorImpl @Inject() (ws: WSClient, appConfig: AppConfig, va
       _ =>
         val url = appConfig.movementsUrl.withPath(movementsPostDeperatureDeclaration(eori))
 
-        // TODO: Temporary, use HttpClientV2 when available
-        ws.url(url.toString())
-          .addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
-          .post(source)
+        httpClientV2
+          .post(url"$url")
+          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+          .withBody(source)
+          .execute[HttpResponse]
           .flatMap {
             response =>
               response.status match {
@@ -82,7 +86,6 @@ class PersistenceConnectorImpl @Inject() (ws: WSClient, appConfig: AppConfig, va
                     )
                 case _ =>
                   Future.failed(UpstreamErrorResponse(response.body, response.status))
-
               }
           }
     }

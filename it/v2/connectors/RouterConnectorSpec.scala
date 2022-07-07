@@ -38,10 +38,10 @@ import play.api.http.Status.ACCEPTED
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
-import play.api.libs.ws.ahc.AhcWSClient
 import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.TestMetrics
 import utils.WiremockSuite
 import v2.models.EORINumber
@@ -58,6 +58,7 @@ import scala.util.control.NonFatal
 
 class RouterConnectorSpec
     extends AnyFreeSpec
+    with HttpClientV2Support
     with Matchers
     with GuiceOneAppPerSuite
     with WiremockSuite
@@ -69,7 +70,7 @@ class RouterConnectorSpec
 
   implicit lazy val materializer: Materializer = app.materializer
   implicit lazy val ec: ExecutionContext       = app.materializer.executionContext
-  lazy val routerConnector: RouterConnector    = new RouterConnectorImpl(new TestMetrics(), appConfig, AhcWSClient())
+  lazy val routerConnector: RouterConnector    = new RouterConnectorImpl(new TestMetrics(), appConfig, httpClientV2)
 
   "POST /traders/:eori/message/:movementType/:messageId/movements/:movementId" - {
 
