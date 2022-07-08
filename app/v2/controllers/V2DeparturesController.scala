@@ -18,6 +18,7 @@ package v2.controllers
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.google.inject.ImplementedBy
@@ -35,12 +36,16 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.MessageSizeActionProvider
+import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
+import v2.models.errors.PresentationError
 import v2.models.request.MessageType
 import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
 import v2.services.DeparturesService
 import v2.services.RouterService
 import v2.services.ValidationService
+
+import scala.concurrent.Future
 
 @ImplementedBy(classOf[V2DeparturesControllerImpl])
 trait V2DeparturesController {
@@ -70,26 +75,56 @@ class V2DeparturesControllerImpl @Inject() (
   def submitDeclaration(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen messageSizeAction()).async(streamFromMemory) {
       implicit request =>
-        withTemporaryFile {
-          (temporaryFile, source) =>
-            logger.info("Version 2 of endpoint has been called")
+        request.headers.get("Content-Type") match {
+          case Some("application/xml")  => submitDeclarationXML
+          case Some("application/json") => submitDeclarationJSON
+          case contentType              => handleInvalidContentType(contentType)
+        }
 
-            implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
-            (for {
-              _ <- validationService.validateXML(MessageType.DepartureDeclaration, source).asPresentation
-
-              fileSource = FileIO.fromPath(temporaryFile)
-
-              declarationResult <- departuresService.saveDeclaration(request.eoriNumber, fileSource).asPresentation
-              _ <- routerService
-                .send(MessageType.DepartureDeclaration, request.eoriNumber, declarationResult.departureId, declarationResult.messageId, fileSource)
-                .asPresentation
-            } yield declarationResult).fold[Result](
-              presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-              result => Accepted(HateoasDepartureDeclarationResponse(result.departureId))
-            )
-        }.toResult
     }
+
+  def submitDeclarationJSON(implicit request: AuthenticatedRequest[Source[ByteString, _]]): Future[Result] = {
+    request.body.to(Sink.ignore).run()
+    Future.successful(Accepted)
+  }
+
+  def submitDeclarationXML(implicit request: AuthenticatedRequest[Source[ByteString, _]]): Future[Result] =
+    withTemporaryFile {
+      (temporaryFile, source) =>
+        logger.info("Version 2 of endpoint has been called")
+
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+        (for {
+          _ <- validationService.validateXML(MessageType.DepartureDeclaration, source).asPresentation
+
+          fileSource = FileIO.fromPath(temporaryFile)
+
+          declarationResult <- departuresService.saveDeclaration(request.eoriNumber, fileSource).asPresentation
+          _ <- routerService
+            .send(MessageType.DepartureDeclaration, request.eoriNumber, declarationResult.departureId, declarationResult.messageId, fileSource)
+            .asPresentation
+        } yield declarationResult).fold[Result](
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          result => Accepted(HateoasDepartureDeclarationResponse(result.departureId))
+        )
+    }.toResult
+
+  def handleInvalidContentType(contentType: Option[String])(implicit request: AuthenticatedRequest[Source[ByteString, _]]): Future[Result] = {
+    request.body.to(Sink.ignore).run()
+    Future.successful(
+      UnsupportedMediaType(
+        Json.toJson(
+          PresentationError.unsupportedMediaTypeError(
+            contentType
+              .map(
+                ct => s"Content-Type $ct is not supported!"
+              )
+              .getOrElse("A Content-Type header is required!")
+          )
+        )
+      )
+    )
+  }
 
 }
