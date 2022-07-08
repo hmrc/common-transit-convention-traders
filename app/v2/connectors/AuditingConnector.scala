@@ -28,9 +28,11 @@ import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status.ACCEPTED
-import play.api.libs.ws.WSClient
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.AuditType
 
 import scala.concurrent.ExecutionContext
@@ -43,7 +45,7 @@ trait AuditingConnector {
 
 }
 
-class AuditingConnectorImpl @Inject() (ws: WSClient, appConfig: AppConfig, val metrics: Metrics)
+class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, appConfig: AppConfig, val metrics: Metrics)
     extends AuditingConnector
     with V2BaseConnector
     with HasMetrics
@@ -52,12 +54,13 @@ class AuditingConnectorImpl @Inject() (ws: WSClient, appConfig: AppConfig, val m
   def post(auditType: AuditType, source: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     withMetricsTimerAsync(MetricsKeys.AuditingBackend.Post) {
       _ =>
-        val url = appConfig.auditingUrl.withPath(auditingRoute(auditType))
+        val url = appConfig.auditingUrl.withPath(auditingRoute(auditType)).toJavaURI.toURL
 
-        // TODO: Temporary, use HttpClientV2 when available (and add the header carrier)
-        ws.url(url.toString())
-          .addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
-          .post(source)
+        httpClient
+          .post(url)
+          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+          .withBody(source)
+          .execute[HttpResponse]
           .flatMap {
             response =>
               response.status match {

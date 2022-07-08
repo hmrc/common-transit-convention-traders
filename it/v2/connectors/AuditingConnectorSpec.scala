@@ -38,6 +38,8 @@ import play.api.libs.ws.ahc.AhcWSClient
 import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.test.HttpClientSupport
+import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.TestMetrics
 import utils.WiremockSuite
 import v2.base.TestActorSystem
@@ -52,14 +54,14 @@ class AuditingConnectorSpec
     with ScalaFutures
     with WiremockSuite
     with IntegrationPatience
-    with TestActorSystem {
+    with HttpClientV2Support {
 
   val mockAppConfig = mock[AppConfig]
   when(mockAppConfig.auditingUrl).thenAnswer(
     _ => Url.parse(server.baseUrl())
   ) // using thenAnswer for lazy semantics
 
-  lazy val sut                        = new AuditingConnectorImpl(AhcWSClient(), mockAppConfig, new TestMetrics)
+  lazy val sut                        = new AuditingConnectorImpl(httpClientV2, mockAppConfig, new TestMetrics)
   def targetUrl(auditType: AuditType) = s"/transit-movements-auditing/audit/${auditType.name}"
 
   "when sending an audit message" - {

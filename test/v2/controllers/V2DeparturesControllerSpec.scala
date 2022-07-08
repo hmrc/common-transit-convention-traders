@@ -370,7 +370,8 @@ class V2DeparturesControllerSpec
             verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any())(any(), any())
             verify(mockValidationService, times(1)).validateXML(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
             verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
-            verify(mockRouterService, times(1)).send(eqTo(MessageType.DepartureDeclaration), EORINumber(any()), MovementId(any()), MessageId(any()), any())(any(), any())
+            verify(mockRouterService, times(1))
+              .send(eqTo(MessageType.DepartureDeclaration), EORINumber(any()), MovementId(any()), MessageId(any()), any())(any(), any())
           }
       }
 

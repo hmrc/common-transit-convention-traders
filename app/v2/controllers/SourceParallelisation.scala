@@ -22,7 +22,6 @@ import akka.stream.contrib.Valve
 import akka.stream.scaladsl.BroadcastHub
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Source
-import akka.util.ByteString
 import cats.syntax.all._
 
 import scala.concurrent.ExecutionContext
