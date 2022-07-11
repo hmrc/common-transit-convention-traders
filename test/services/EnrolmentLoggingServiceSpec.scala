@@ -118,20 +118,45 @@ class EnrolmentLoggingServiceSpec
 
   "Creating a message" - {
 
-    "should produce a string of the expected format" in {
+    "should produce a string of the expected format for a gaUserId of length 10 " in {
       val clientId               = Gen.alphaNumStr.sample
-      val gaUserId               = Gen.alphaNumStr.sample
-      implicit val headerCarrier = HeaderCarrier(gaUserId = gaUserId)
+      val gaUserId               = Gen.listOfN(10, Gen.alphaNumChar).map(_.mkString).sample.getOrElse("0123456789")
+      implicit val headerCarrier = HeaderCarrier(gaUserId = Some(gaUserId))
 
-      val redactedGaUserId = gaUserId
-        .map(
-          x => s"***${x.takeRight(3)}"
-        )
-        .getOrElse("Not provided")
+      val redactedGaUserId = s"***${gaUserId.takeRight(3)}"
 
       val message: String = s"""Insufficient enrolments were received for the following request:
                                |Client ID: ${clientId.getOrElse("Not provided")}
                                |Gateway User ID: $redactedGaUserId
+                               |message1
+                               |message2""".stripMargin
+
+      // use a list set for ordering in testing purposes
+      Harness.createMessage(clientId)(ListSet("message1", "message2")) mustBe message
+    }
+
+    "should produce a string of the expected format for a gaUserId of length 2 " in {
+      val clientId               = Gen.alphaNumStr.sample
+      val gaUserId               = Gen.listOfN(2, Gen.alphaNumChar).map(_.mkString).sample.getOrElse("ga")
+      implicit val headerCarrier = HeaderCarrier(gaUserId = Some(gaUserId))
+
+      val message: String = s"""Insufficient enrolments were received for the following request:
+                               |Client ID: ${clientId.getOrElse("Not provided")}
+                               |Gateway User ID: ***
+                               |message1
+                               |message2""".stripMargin
+
+      // use a list set for ordering in testing purposes
+      Harness.createMessage(clientId)(ListSet("message1", "message2")) mustBe message
+    }
+
+    "should produce a string of the expected format where a gaUserId is not provided" in {
+      val clientId               = Gen.alphaNumStr.sample
+      implicit val headerCarrier = HeaderCarrier()
+
+      val message: String = s"""Insufficient enrolments were received for the following request:
+                               |Client ID: ${clientId.getOrElse("Not provided")}
+                               |Gateway User ID: Not provided
                                |message1
                                |message2""".stripMargin
 
