@@ -31,6 +31,7 @@ import play.api.http.Status.ACCEPTED
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.AuditType
@@ -54,10 +55,10 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, appConfig: AppC
   def post(auditType: AuditType, source: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     withMetricsTimerAsync(MetricsKeys.AuditingBackend.Post) {
       _ =>
-        val url = appConfig.auditingUrl.withPath(auditingRoute(auditType)).toJavaURI.toURL
+        val url = appConfig.auditingUrl.withPath(auditingRoute(auditType))
 
         httpClient
-          .post(url)
+          .post(url"$url")
           .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
           .withBody(source)
           .execute[HttpResponse]
