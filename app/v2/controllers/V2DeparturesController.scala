@@ -25,6 +25,8 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import play.api.Logging
+import play.api.http.HeaderNames
+import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.Json
 import play.api.mvc.Action
@@ -75,10 +77,12 @@ class V2DeparturesControllerImpl @Inject() (
   def submitDeclaration(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen messageSizeAction()).async(streamFromMemory) {
       implicit request =>
-        request.headers.get("Content-Type") match {
-          case Some("application/xml")  => submitDeclarationXML
-          case Some("application/json") => submitDeclarationJSON
-          case contentType              => handleInvalidContentType(contentType)
+        logger.info("Version 2 of endpoint has been called")
+
+        request.headers.get(HeaderNames.CONTENT_TYPE) match {
+          case Some(MimeTypes.XML)  => submitDeclarationXML
+          case Some(MimeTypes.JSON) => submitDeclarationJSON
+          case contentType          => handleInvalidContentType(contentType)
         }
 
     }
@@ -91,8 +95,6 @@ class V2DeparturesControllerImpl @Inject() (
   def submitDeclarationXML(implicit request: AuthenticatedRequest[Source[ByteString, _]]): Future[Result] =
     withTemporaryFile {
       (temporaryFile, source) =>
-        logger.info("Version 2 of endpoint has been called")
-
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         (for {
