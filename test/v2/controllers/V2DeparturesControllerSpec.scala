@@ -42,6 +42,7 @@ import play.api.http.Status.ACCEPTED
 import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.Status.REQUEST_ENTITY_TOO_LARGE
+import play.api.http.Status.UNSUPPORTED_MEDIA_TYPE
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.Files.SingletonTemporaryFileCreator
@@ -266,138 +267,190 @@ class V2DeparturesControllerSpec
 
   // Version 2
   "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
-
-    // For the content length headers, we have to ensure that we send something
-    val standardHeaders = FakeHeaders(
-      Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml", HeaderNames.CONTENT_LENGTH -> "1000")
-    )
-
-    "must return BadRequest when content length is not sent" in {
-      val departureHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml")
-      )
-      // We emulate no ContentType by sending in a stream directly, without going through Play's request builder
-      val request =
-        fakeRequestDepartures(method = "POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = departureHeaders)
-      val result = app.injector.instanceOf[V2DeparturesController].submitDeclaration()(request)
-      status(result) mustBe BAD_REQUEST
-    }
-
-    "must return RequestEntityTooLarge when body size exceeds limit" in {
-      val departureHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml", HeaderNames.CONTENT_LENGTH -> "500001")
-      )
-      val request = fakeRequestDepartures(method = "POST", body = CC015C, headers = departureHeaders)
-      val result  = route(app, request).value
-      status(result) mustBe REQUEST_ENTITY_TOO_LARGE
-    }
-
-    "must return Accepted when body length is within limits and is considered valid" in {
-      val request = fakeRequestDepartures(method = "POST", body = CC015C, headers = standardHeaders)
-      val result  = route(app, request).value
-      status(result) mustBe ACCEPTED
-
-      contentAsJson(result) mustBe Json.obj(
-        "_links" -> Json.obj(
-          "self" -> Json.obj(
-            "href" -> "/customs/transits/movements/departures/123"
+    Seq("application/xml", "application/json").foreach {
+      contentType =>
+        s"must return BadRequest when the content type is $contentType and content length is not sent" in {
+          val departureHeaders = FakeHeaders(
+            Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> contentType)
           )
-        ),
-        "id" -> "123",
-        "_embedded" -> Json.obj(
-          "messages" -> Json.obj(
-            "_links" -> Json.obj(
-              "href" -> "/customs/transits/movements/departures/123/messages"
+          // We emulate no content length by sending in a stream directly, without going through Play's request builder
+          val request =
+            fakeRequestDepartures(method = "POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = departureHeaders)
+          val result = app.injector.instanceOf[V2DeparturesController].submitDeclaration()(request)
+          status(result) mustBe BAD_REQUEST
+        }
+
+        s"must return RequestEntityTooLarge when the content type is $contentType and body size exceeds limit" in {
+          val departureHeaders = FakeHeaders(
+            Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> contentType, HeaderNames.CONTENT_LENGTH -> "500001")
+          )
+          val request = fakeRequestDepartures(method = "POST", body = CC015C, headers = departureHeaders)
+          val result  = route(app, request).value
+          status(result) mustBe REQUEST_ENTITY_TOO_LARGE
+        }
+
+    }
+
+    "with content type set to application/xml" - {
+
+      // For the content length headers, we have to ensure that we send something
+      val standardHeaders = FakeHeaders(
+        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml", HeaderNames.CONTENT_LENGTH -> "1000")
+      )
+
+      "must return Accepted when body length is within limits and is considered valid" in {
+        val request = fakeRequestDepartures(method = "POST", body = CC015C, headers = standardHeaders)
+        val result  = route(app, request).value
+        status(result) mustBe ACCEPTED
+
+        contentAsJson(result) mustBe Json.obj(
+          "_links" -> Json.obj(
+            "self" -> Json.obj(
+              "href" -> "/customs/transits/movements/departures/123"
+            )
+          ),
+          "id" -> "123",
+          "_embedded" -> Json.obj(
+            "messages" -> Json.obj(
+              "_links" -> Json.obj(
+                "href" -> "/customs/transits/movements/departures/123/messages"
+              )
             )
           )
         )
-      )
-    }
+      }
 
-    "must return Bad Request when body is not an XML document" in {
-      val request = fakeRequestDepartures(method = "POST", body = "notxml", headers = standardHeaders)
-      val result  = route(app, request).value
-      status(result) mustBe BAD_REQUEST
-      contentAsJson(result) mustBe Json.obj(
-        "code"    -> "SCHEMA_VALIDATION",
-        "message" -> "Request failed schema validation",
-        "validationErrors" -> Seq(
-          Json.obj(
-            "lineNumber"   -> 42,
-            "columnNumber" -> 27,
-            "message"      -> "invalid XML"
+      "must return Bad Request when body is not an XML document" in {
+        val request = fakeRequestDepartures(method = "POST", body = "notxml", headers = standardHeaders)
+        val result  = route(app, request).value
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "SCHEMA_VALIDATION",
+          "message" -> "Request failed schema validation",
+          "validationErrors" -> Seq(
+            Json.obj(
+              "lineNumber"   -> 42,
+              "columnNumber" -> 27,
+              "message"      -> "invalid XML"
+            )
           )
         )
-      )
-    }
+      }
 
-    "must return Bad Request when body is an XML document that would fail schema validation" in {
-      val request = fakeRequestDepartures(method = "POST", body = <test></test>, headers = standardHeaders)
-      val result  = route(app, request).value
-      status(result) mustBe BAD_REQUEST
-      contentAsJson(result) mustBe Json.obj(
-        "code"    -> "SCHEMA_VALIDATION",
-        "message" -> "Request failed schema validation",
-        "validationErrors" -> Seq(
-          Json.obj(
-            "lineNumber"   -> 1,
-            "columnNumber" -> 1,
-            "message"      -> "an error"
+      "must return Bad Request when body is an XML document that would fail schema validation" in {
+        val request = fakeRequestDepartures(method = "POST", body = <test></test>, headers = standardHeaders)
+        val result  = route(app, request).value
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "SCHEMA_VALIDATION",
+          "message" -> "Request failed schema validation",
+          "validationErrors" -> Seq(
+            Json.obj(
+              "lineNumber"   -> 1,
+              "columnNumber" -> 1,
+              "message"      -> "an error"
+            )
           )
         )
-      )
+      }
+
+      "must return Internal Service Error if the persistence service reports an error" in {
+        val sut = new V2DeparturesControllerImpl(
+          Helpers.stubControllerComponents(),
+          SingletonTemporaryFileCreator,
+          FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
+          mockValidationService,
+          mockDeparturesPersistenceService,
+          mockRouterService,
+          FakeMessageSizeActionProvider
+        )
+
+        val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)))
+        val response = sut.submitDeclaration()(request)
+
+        status(response) mustBe INTERNAL_SERVER_ERROR
+        contentAsJson(response) mustBe Json.obj(
+          "code"    -> "INTERNAL_SERVER_ERROR",
+          "message" -> "Internal server error"
+        )
+      }
+
+      "must return Internal Service Error if the router service reports an error" in {
+
+        // we're not testing what happens with the departures service here, so just pass through with a right.
+        val mockDeparturesPersistenceService = mock[DeparturesService]
+        when(
+          mockDeparturesPersistenceService
+            .saveDeclaration(any[String].asInstanceOf[EORINumber], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+        ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, DeclarationResponse](DeclarationResponse(MovementId("123"), MessageId("456")))))
+
+        val sut = new V2DeparturesControllerImpl(
+          Helpers.stubControllerComponents(),
+          SingletonTemporaryFileCreator,
+          FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
+          mockValidationService,
+          mockDeparturesPersistenceService,
+          mockRouterService,
+          FakeMessageSizeActionProvider
+        )
+
+        val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)))
+        val response = sut.submitDeclaration()(request)
+
+        status(response) mustBe INTERNAL_SERVER_ERROR
+        contentAsJson(response) mustBe Json.obj(
+          "code"    -> "INTERNAL_SERVER_ERROR",
+          "message" -> "Internal server error"
+        )
+      }
     }
 
-    "must return Internal Service Error if the persistence service reports an error" in {
-      val sut = new V2DeparturesControllerImpl(
-        Helpers.stubControllerComponents(),
-        SingletonTemporaryFileCreator,
-        FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
-        mockValidationService,
-        mockDeparturesPersistenceService,
-        mockRouterService,
-        FakeMessageSizeActionProvider
+    "with content type set to application/json" - {
+      val standardHeaders = FakeHeaders(
+        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/json", HeaderNames.CONTENT_LENGTH -> "1000")
       )
 
-      val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)))
-      val response = sut.submitDeclaration()(request)
-
-      status(response) mustBe INTERNAL_SERVER_ERROR
-      contentAsJson(response) mustBe Json.obj(
-        "code"    -> "INTERNAL_SERVER_ERROR",
-        "message" -> "Internal server error"
-      )
+      val json = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
+      "must return Accepted" in {
+        val request = fakeRequestDepartures(method = "POST", body = json, headers = standardHeaders)
+        val result  = route(app, request).value
+        status(result) mustBe ACCEPTED
+      }
     }
 
-    "must return Internal Service Error if the router service reports an error" in {
-
-      // we're not testing what happens with the departures service here, so just pass through with a right.
-      val mockDeparturesPersistenceService = mock[DeparturesService]
-      when(
-        mockDeparturesPersistenceService
-          .saveDeclaration(any[String].asInstanceOf[EORINumber], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-      ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, DeclarationResponse](DeclarationResponse(MovementId("123"), MessageId("456")))))
-
-      val sut = new V2DeparturesControllerImpl(
-        Helpers.stubControllerComponents(),
-        SingletonTemporaryFileCreator,
-        FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
-        mockValidationService,
-        mockDeparturesPersistenceService,
-        mockRouterService,
-        FakeMessageSizeActionProvider
+    "must return UNSUPPORTED_MEDIA_TYPE when the content type is invalid" in {
+      val standardHeaders = FakeHeaders(
+        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "invalid", HeaderNames.CONTENT_LENGTH -> "1000")
       )
 
-      val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)))
-      val response = sut.submitDeclaration()(request)
-
-      status(response) mustBe INTERNAL_SERVER_ERROR
-      contentAsJson(response) mustBe Json.obj(
-        "code"    -> "INTERNAL_SERVER_ERROR",
-        "message" -> "Internal server error"
+      val json    = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
+      val request = fakeRequestDepartures(method = "POST", body = json, headers = standardHeaders)
+      val result  = route(app, request).value
+      status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "UNSUPPORTED_MEDIA_TYPE",
+        "message" -> "Content-type header invalid is not supported!"
       )
+
     }
 
+    "must return UNSUPPORTED_MEDIA_TYPE when the content type is not supplied" in {
+      val standardHeaders = FakeHeaders(
+        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_LENGTH -> "1000")
+      )
+
+      // We emulate no ContentType by sending in a stream directly, without going through Play's request builder
+      val json = Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC"))
+      val request =
+        fakeRequestDepartures(method = "POST", body = Source.single(json), headers = standardHeaders)
+      val result = app.injector.instanceOf[V2DeparturesController].submitDeclaration()(request)
+
+      status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "UNSUPPORTED_MEDIA_TYPE",
+        "message" -> "A content-type header is required!"
+      )
+
+    }
   }
-
 }

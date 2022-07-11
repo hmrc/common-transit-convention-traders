@@ -18,12 +18,14 @@ package v2.controllers
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import play.api.Logging
+import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.Json
 import play.api.mvc.Action
@@ -41,6 +43,8 @@ import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
 import v2.services.DeparturesService
 import v2.services.RouterService
 import v2.services.ValidationService
+
+import scala.concurrent.Future
 
 @ImplementedBy(classOf[V2DeparturesControllerImpl])
 trait V2DeparturesController {
@@ -65,15 +69,27 @@ class V2DeparturesControllerImpl @Inject() (
     with StreamingParsers
     with VersionedRouting
     with ErrorTranslator
-    with TemporaryFiles {
+    with TemporaryFiles
+    with ContentTypeRouting {
 
   def submitDeclaration(): Action[Source[ByteString, _]] =
+    contentTypeRoute {
+      case Some(MimeTypes.XML)  => submitDeclarationXML
+      case Some(MimeTypes.JSON) => submitDeclarationJSON
+    }
+
+  def submitDeclarationJSON(): Action[Source[ByteString, _]] =
+    (authActionNewEnrolmentOnly andThen messageSizeAction()).async(streamFromMemory) {
+      implicit request =>
+        request.body.to(Sink.ignore).run()
+        Future.successful(Accepted)
+    }
+
+  def submitDeclarationXML(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen messageSizeAction()).async(streamFromMemory) {
       implicit request =>
         withTemporaryFile {
           (temporaryFile, source) =>
-            logger.info("Version 2 of endpoint has been called")
-
             implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
             (for {

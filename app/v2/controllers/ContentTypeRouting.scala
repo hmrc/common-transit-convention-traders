@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package routing
+package v2.controllers
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
@@ -30,14 +30,14 @@ import v2.models.errors.PresentationError
 
 import scala.concurrent.Future
 
-trait VersionedRouting {
+trait ContentTypeRouting {
   self: BaseController with StreamingParsers =>
 
-  def route(routes: PartialFunction[Option[String], Action[_]])(implicit materializer: Materializer): Action[Source[ByteString, _]] =
+  def contentTypeRoute(routes: PartialFunction[Option[String], Action[_]])(implicit materializer: Materializer): Action[Source[ByteString, _]] =
     Action.async(streamFromMemory) {
       (request: Request[Source[ByteString, _]]) =>
         routes
-          .lift(request.headers.get(HeaderNames.ACCEPT))
+          .lift(request.headers.get(HeaderNames.CONTENT_TYPE))
           .map(
             action => action(request).run(request.body)
           )
@@ -49,11 +49,11 @@ trait VersionedRouting {
                 Json.toJson(
                   PresentationError.unsupportedMediaTypeError(
                     request.headers
-                      .get("accept")
+                      .get(HeaderNames.CONTENT_TYPE)
                       .map(
-                        header => s"Accept header $header is not supported!"
+                        header => s"Content-type header $header is not supported!"
                       )
-                      .getOrElse("An accept header is required!")
+                      .getOrElse("A content-type header is required!")
                   )
                 )
               )
