@@ -418,7 +418,7 @@ class V2DeparturesControllerSpec
       }
     }
 
-    "must return UNSUPPORTED_MEDIA_TYPE when the content type is invalid" - {
+    "must return UNSUPPORTED_MEDIA_TYPE when the content type is invalid" in {
       val standardHeaders = FakeHeaders(
         Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "invalid", HeaderNames.CONTENT_LENGTH -> "1000")
       )
@@ -429,12 +429,12 @@ class V2DeparturesControllerSpec
       status(result) mustBe UNSUPPORTED_MEDIA_TYPE
       contentAsJson(result) mustBe Json.obj(
         "code"    -> "UNSUPPORTED_MEDIA_TYPE",
-        "message" -> "Content-Type invalid is not supported!"
+        "message" -> "Content-type header invalid is not supported!"
       )
 
     }
 
-    "must return UNSUPPORTED_MEDIA_TYPE when the content type is not supplied" - {
+    "must return UNSUPPORTED_MEDIA_TYPE when the content type is not supplied" in {
       val standardHeaders = FakeHeaders(
         Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_LENGTH -> "1000")
       )
@@ -448,7 +448,7 @@ class V2DeparturesControllerSpec
       status(result) mustBe UNSUPPORTED_MEDIA_TYPE
       contentAsJson(result) mustBe Json.obj(
         "code"    -> "UNSUPPORTED_MEDIA_TYPE",
-        "message" -> "A Content-Type header is required!"
+        "message" -> "A content-type header is required!"
       )
 
     }
