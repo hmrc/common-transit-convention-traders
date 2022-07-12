@@ -30,11 +30,32 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.guice.GuiceableModule
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier
 
-trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach with GuiceFakeApplicationFactory {
+trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
   this: Suite =>
+
   protected val wiremockConfig = wireMockConfig().dynamicPort().notifier(new ConsoleNotifier(false))
 
   protected val server: WireMockServer = new WireMockServer(wiremockConfig)
+
+  override def beforeAll(): Unit = {
+    server.start()
+    super.beforeAll()
+  }
+
+  override def beforeEach(): Unit = {
+    server.resetAll()
+    super.beforeEach()
+  }
+
+  override def afterAll(): Unit = {
+    super.afterAll()
+    server.stop()
+  }
+
+}
+
+trait GuiceWiremockSuite extends WiremockSuite with GuiceFakeApplicationFactory {
+  this: Suite =>
 
   protected def portConfigKey: Seq[String]
 

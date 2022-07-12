@@ -43,7 +43,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.TestMetrics
-import utils.WiremockSuite
+import utils.GuiceWiremockSuite
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
@@ -61,7 +61,7 @@ class RouterConnectorSpec
     with HttpClientV2Support
     with Matchers
     with GuiceOneAppPerSuite
-    with WiremockSuite
+    with GuiceWiremockSuite
     with ScalaFutures
     with IntegrationPatience
     with ScalaCheckDrivenPropertyChecks {

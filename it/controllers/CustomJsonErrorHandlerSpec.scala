@@ -34,7 +34,7 @@ class CustomJsonErrorHandlerSpec
     extends AnyFreeSpec
     with Matchers
     with GuiceOneServerPerSuite
-    with utils.WiremockSuite
+    with utils.GuiceWiremockSuite
     with ScalaFutures
     with IntegrationPatience {
 

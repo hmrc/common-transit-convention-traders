@@ -26,11 +26,11 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.WiremockSuite
+import utils.GuiceWiremockSuite
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class PushPullNotificationConnectorSpec extends AnyFreeSpec with WiremockSuite with ScalaFutures with Matchers with IntegrationPatience {
+class PushPullNotificationConnectorSpec extends AnyFreeSpec with GuiceWiremockSuite with ScalaFutures with Matchers with IntegrationPatience {
   override protected def portConfigKey: Seq[String] = Seq("microservice.services.push-pull-notifications-api.port")
 
   implicit val headerCarrier: HeaderCarrier = HeaderCarrier()

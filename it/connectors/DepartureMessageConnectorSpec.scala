@@ -47,7 +47,7 @@ class DepartureMessageConnectorSpec
     extends AnyFreeSpec
     with Matchers
     with GuiceOneAppPerSuite
-    with utils.WiremockSuite
+    with utils.GuiceWiremockSuite
     with ScalaFutures
     with IntegrationPatience
     with ScalaCheckPropertyChecks {

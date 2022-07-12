@@ -18,18 +18,10 @@ package v2.models.responses.hateoas
 
 import controllers.routes
 import models.domain.DepartureId
-import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import play.api.libs.functional.syntax.unlift
 import play.api.libs.json.JsObject
-import play.api.libs.json.JsString
 import play.api.libs.json.Json
-import play.api.libs.json.OWrites
-import play.api.libs.json.Writes
-import play.api.libs.json.__
 import utils.CallOps.CallOps
-import v2.models.MessageId
 import v2.models.MovementId
-import v2.models.request.MessageType
 
 object HateoasDepartureDeclarationResponse {
 

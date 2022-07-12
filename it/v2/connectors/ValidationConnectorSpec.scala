@@ -57,7 +57,7 @@ class ValidationConnectorSpec
     with HttpClientV2Support
     with Matchers
     with GuiceOneAppPerSuite
-    with utils.WiremockSuite
+    with utils.GuiceWiremockSuite
     with ScalaFutures
     with IntegrationPatience {
 
