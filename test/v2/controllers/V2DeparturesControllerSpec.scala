@@ -281,29 +281,6 @@ class V2DeparturesControllerSpec
 
   // Version 2
   "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
-    Seq("application/xml", "application/json").foreach {
-      contentType =>
-        s"must return BadRequest when the content type is $contentType and content length is not sent" in {
-          val departureHeaders = FakeHeaders(
-            Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> contentType)
-          )
-          // We emulate no content length by sending in a stream directly, without going through Play's request builder
-          val request =
-            fakeRequestDepartures(method = "POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = departureHeaders)
-          val result = sut.submitDeclaration()(request)
-          status(result) mustBe BAD_REQUEST
-        }
-
-        s"must return RequestEntityTooLarge when the content type is $contentType and body size exceeds limit" in {
-          val departureHeaders = FakeHeaders(
-            Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> contentType, HeaderNames.CONTENT_LENGTH -> "500001")
-          )
-          val request = fakeRequestDepartures(method = "POST", body = CC015C, headers = departureHeaders)
-          val result  = sut.submitDeclaration()(request)
-          status(result) mustBe REQUEST_ENTITY_TOO_LARGE
-        }
-    }
-
     "with content type set to application/xml" - {
 
       // For the content length headers, we have to ensure that we send something
