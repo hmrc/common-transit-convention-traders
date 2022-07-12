@@ -335,7 +335,10 @@ class V2DeparturesControllerSpec
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any())(any(), any())
         verify(mockValidationService, times(1)).validateXML(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
         verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
-        verify(mockRouterService, times(1)).send(eqTo(MessageType.DepartureDeclaration), EORINumber(any()), MovementId(any()), MessageId(any()), any())(any(), any())
+        verify(mockRouterService, times(1)).send(eqTo(MessageType.DepartureDeclaration), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
+          any(),
+          any()
+        )
       }
 
       "must return Accepted when body length is within limits and is considered valid" - Seq(true, false).foreach {
@@ -504,7 +507,7 @@ class V2DeparturesControllerSpec
       val result = sut.submitDeclaration()(request)
       status(result) mustBe UNSUPPORTED_MEDIA_TYPE
       contentAsJson(result) mustBe Json.obj(
-        "code" -> "UNSUPPORTED_MEDIA_TYPE",
+        "code"    -> "UNSUPPORTED_MEDIA_TYPE",
         "message" -> "A content-type header is required!"
       )
     }
