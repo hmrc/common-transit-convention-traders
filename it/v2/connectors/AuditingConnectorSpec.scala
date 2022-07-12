@@ -34,15 +34,12 @@ import play.api.http.HeaderNames
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.INTERNAL_SERVER_ERROR
-import play.api.libs.ws.ahc.AhcWSClient
 import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
-import uk.gov.hmrc.http.test.HttpClientSupport
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.TestMetrics
 import utils.WiremockSuite
-import v2.base.TestActorSystem
 import v2.models.AuditType
 
 import scala.concurrent.ExecutionContext.Implicits.global
