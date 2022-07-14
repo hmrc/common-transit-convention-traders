@@ -5,7 +5,7 @@ This is a microservice for a public API which provides ability for traders to su
 
 This mircoservice is in [Beta](https://www.gov.uk/help/beta). The signature may change. 
 
-You can find our full list of endpoints on [API definitions](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/common-transit-convention-traders/1.0).
+You can find our full list of endpoints on [API definitions](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/common-transit-convention-traders/2.0).
 
 
 ### Prerequisites  
@@ -32,8 +32,8 @@ dependencyUpdatesReport | Writes a list of project dependencies to a file | ```$
 
 ### CTC Traders API related pages
 
-- [CTC Traders API end-to-end service guide](https://developer.service.hmrc.gov.uk/guides/common-transit-convention-traders-service-guide) gives you an overview of  of the API, the support we offer and the processes involved in creating your solution.
-- [CTC Traders API specifications](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/common-transit-convention-traders/1.0) lets you see a list of our endpoints.
+- [CTC Traders API end-to-end service guide](https://developer.service.hmrc.gov.uk/guides/ctc-traders-phase5-service-guide) gives you an overview of the API, the support we offer and the processes involved in creating your solution.
+- [CTC Traders API specifications](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/common-transit-convention-traders/2.0) lets you see a list of our endpoints.
 
 ### Helpful information
 
