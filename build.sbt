@@ -36,7 +36,7 @@ lazy val microservice = Project(appName, file("."))
 
 // Settings for the whole build
 lazy val buildSettings = Def.settings(
-  // scalafmtOnCompile := true,
+  scalafmtOnCompile := true,
   useSuperShell := false
 )
 
