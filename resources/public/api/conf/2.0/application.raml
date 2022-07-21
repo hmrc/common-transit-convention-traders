@@ -25,10 +25,10 @@ uses:
   types: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/types.raml
 
 traits:
-  contentXmlHeader:
+  contentXmlJsonHeader:
     headers:
       Content-Type:
-        description: Specifies the format of the request body, which must be XML.
+        description: Specifies the format of the request body, which must be XML or JSON, using UTF-8 character encoding.
         type: string
         required: true
         example: application/xml
@@ -86,7 +86,7 @@ traits:
         If the user is not enrolled for an EORI number, they will receive an HTTP Forbidden Status.
 
       is: 
-        - contentXmlHeader
+        - contentXmlJsonHeader
         - acceptJsonHeader
         - requestTooLarge
         - schemaValidation
