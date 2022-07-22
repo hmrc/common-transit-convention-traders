@@ -17,13 +17,14 @@
 package v2.controllers
 
 import cats.data.EitherT
-import v2.models.errors.PresentationError
+import v2.models.errors.ConversionError
 import v2.models.errors.FailedToValidateError
+import v2.models.errors.PersistenceError
+import v2.models.errors.PresentationError
+import v2.models.errors.RouterError
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
 import v2.models.errors.FailedToValidateError.UnexpectedError
 import v2.models.errors.FailedToValidateError.SchemaFailedToValidateError
-import v2.models.errors.PersistenceError
-import v2.models.errors.RouterError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -60,6 +61,13 @@ trait ErrorTranslator {
 
     override def convert(routerError: RouterError): PresentationError = routerError match {
       case err: RouterError.UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
+    }
+  }
+
+  implicit val conversionErrorConverter = new Converter[ConversionError] {
+
+    override def convert(routerError: ConversionError): PresentationError = routerError match {
+      case err: ConversionError.UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
     }
   }
 

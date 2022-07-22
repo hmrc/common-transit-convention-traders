@@ -43,6 +43,7 @@ import v2.models.AuditType
 import v2.models.request.MessageType
 import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
 import v2.services.AuditingService
+import v2.services.ConversionService
 import v2.services.DeparturesService
 import v2.services.RouterService
 import v2.services.ValidationService
@@ -62,6 +63,7 @@ class V2DeparturesControllerImpl @Inject() (
   val temporaryFileCreator: TemporaryFileCreator,
   authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
   validationService: ValidationService,
+  conversionService: ConversionService,
   departuresService: DeparturesService,
   routerService: RouterService,
   auditService: AuditingService,
@@ -96,8 +98,22 @@ class V2DeparturesControllerImpl @Inject() (
   def submitDeclarationJSON(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen messageSizeAction()).async(streamFromMemory) {
       implicit request =>
-        request.body.to(Sink.ignore).run()
-        Future.successful(Accepted)
+        withTemporaryFile {
+          (temporaryFile, source) =>
+            implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+            (for {
+              _ <- validationService.validate(MessageType.DepartureDeclaration, source, MimeTypes.JSON).asPresentation
+              fileSource = FileIO.fromPath(temporaryFile)
+              xmlDeclaration <- conversionService.convert(MessageType.DepartureDeclaration, fileSource, MimeTypes.JSON).asPresentation
+              //TBD: stream xml declaration to a temporary file so we can re-use it
+            } yield xmlDeclaration).fold[Result](
+              presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+              xmlSource => {
+                xmlSource.runWith(Sink.ignore)
+                Accepted
+              }
+            )
+        }.toResult
     }
 
   def submitDeclarationXML(): Action[Source[ByteString, _]] =
@@ -108,7 +124,9 @@ class V2DeparturesControllerImpl @Inject() (
             implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
             (for {
-              _ <- auditAndCallService(source, AuditType.DeclarationData)(validationService.validateXML(MessageType.DepartureDeclaration, _).asPresentation)
+              _ <- auditAndCallService(source, AuditType.DeclarationData)(
+                validationService.validate(MessageType.DepartureDeclaration, _, MimeTypes.XML).asPresentation
+              )
 
               fileSource = FileIO.fromPath(temporaryFile)
 

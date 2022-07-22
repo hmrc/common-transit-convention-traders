@@ -84,7 +84,7 @@ class ValidationConnectorSpec
 
       val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8)) // TODO: IE015C
 
-      whenReady(validationConnector.validate(MessageType.DepartureDeclaration, source)) {
+      whenReady(validationConnector.post(MessageType.DepartureDeclaration, source, MimeTypes.XML)) {
         result =>
           result mustBe None
       }
@@ -114,7 +114,7 @@ class ValidationConnectorSpec
 
       val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
 
-      whenReady(validationConnector.validate(MessageType.DepartureDeclaration, source)) {
+      whenReady(validationConnector.post(MessageType.DepartureDeclaration, source, MimeTypes.XML)) {
         result =>
           result mustBe Some(ValidationResponse(NonEmptyList(ValidationError(1, 1, "nope"), Nil)))
       }
@@ -144,7 +144,7 @@ class ValidationConnectorSpec
 
       val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
 
-      val future = validationConnector.validate(MessageType.DepartureDeclaration, source).map(Right(_)).recover {
+      val future = validationConnector.post(MessageType.DepartureDeclaration, source, MimeTypes.XML).map(Right(_)).recover {
         case NonFatal(e) => Left(e)
       }
 
@@ -180,7 +180,7 @@ class ValidationConnectorSpec
 
     val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8)) // TODO: IE015C
 
-    val future = validationConnector.validate(MessageType.DepartureDeclaration, source).map(Right(_)).recover {
+    val future = validationConnector.post(MessageType.DepartureDeclaration, source, MimeTypes.XML).map(Right(_)).recover {
       case NonFatal(e) => Left(e)
     }
 

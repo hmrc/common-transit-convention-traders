@@ -34,6 +34,7 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig
   val traderAtDestinationUrl = Url.parse(servicesConfig.baseUrl("transit-movement-trader-at-destination"))
   val traderAtDeparturesUrl  = Url.parse(servicesConfig.baseUrl("transits-movements-trader-at-departure"))
   val validatorUrl           = Url.parse(servicesConfig.baseUrl("transit-movements-validator"))
+  val converterUrl           = Url.parse(servicesConfig.baseUrl("transit-movements-converter"))
   val movementsUrl           = Url.parse(servicesConfig.baseUrl("transit-movements"))
   val routerUrl              = Url.parse(servicesConfig.baseUrl("transit-movements-router"))
   val auditingUrl            = Url.parse(servicesConfig.baseUrl("transit-movements-auditing"))

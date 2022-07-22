@@ -24,8 +24,11 @@ import play.api.Logging
 import play.api.http.Status.BAD_REQUEST
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import v2.connectors.ConversionConnector
 import v2.connectors.ValidationConnector
+import v2.models.errors.ConversionError
 import v2.models.errors.FailedToValidateError
+import v2.models.errors.RouterError
 import v2.models.request.MessageType
 
 import javax.inject.Inject
@@ -34,37 +37,32 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-@ImplementedBy(classOf[ValidationServiceImpl])
-trait ValidationService {
+@ImplementedBy(classOf[ConversionServiceImpl])
+trait ConversionService {
 
-  def validate(messageType: MessageType, source: Source[ByteString, _], contentType: String)(implicit
+  def convert(messageType: MessageType, source: Source[ByteString, _], contentType: String)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, FailedToValidateError, Unit]
+  ): EitherT[Future, ConversionError, Source[ByteString, _]]
 
 }
 
 @Singleton
-class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector) extends ValidationService with Logging {
+class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector) extends ConversionService with Logging {
 
-  override def validate(messageType: MessageType, source: Source[ByteString, _], contentType: String)(implicit
+  override def convert(messageType: MessageType, source: Source[ByteString, _], contentType: String)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, FailedToValidateError, Unit] =
+  ): EitherT[Future, ConversionError, Source[ByteString, _]] =
     EitherT(
-      validationConnector
+      conversionConnector
         .post(messageType, source, contentType)
         .map {
-          case None           => Right(())
-          case Some(response) => Left(FailedToValidateError.SchemaFailedToValidateError(response.validationErrors))
+          case response => Right(response)
         }
         .recover {
-          // A bad request might be returned if the stream doesn't contain XML/JSON, in which case, we need to return a bad request.
-          case UpstreamErrorResponse.Upstream4xxResponse(response) if response.statusCode == BAD_REQUEST =>
-            // This can only be a message type error
-            Left(FailedToValidateError.InvalidMessageTypeError(messageType.toString))
-          case upstreamError: UpstreamErrorResponse => Left(FailedToValidateError.UnexpectedError(Some(upstreamError)))
-          case NonFatal(e)                          => Left(FailedToValidateError.UnexpectedError(Some(e)))
+          case NonFatal(e) =>
+            Left(ConversionError.UnexpectedError(thr = Some(e)))
         }
     )
 
