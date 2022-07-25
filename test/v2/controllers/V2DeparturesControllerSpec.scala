@@ -40,10 +40,10 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames
+import play.api.http.MimeTypes
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.INTERNAL_SERVER_ERROR
-import play.api.http.Status.REQUEST_ENTITY_TOO_LARGE
 import play.api.http.Status.UNSUPPORTED_MEDIA_TYPE
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json.Json
@@ -63,13 +63,16 @@ import v2.models.AuditType
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.errors.ConversionError
 import v2.models.errors.FailedToValidateError
+import v2.models.errors.JsonValidationError
 import v2.models.errors.PersistenceError
 import v2.models.errors.RouterError
-import v2.models.errors.ValidationError
+import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.services.AuditingService
+import v2.services.ConversionService
 import v2.services.DeparturesService
 import v2.services.RouterService
 import v2.services.ValidationService
@@ -190,23 +193,10 @@ class V2DeparturesControllerSpec
         </GOOITEGDS>
       </CC015C>
 
-  val testSink: Sink[ByteString, Future[Either[FailedToValidateError, Unit]]] =
-    Flow
-      .fromFunction {
-        input: ByteString =>
-          Try(XML.loadString(input.decodeString(StandardCharsets.UTF_8))).toEither
-            .leftMap(
-              _ => FailedToValidateError.SchemaFailedToValidateError(NonEmptyList(ValidationError(42, 27, "invalid XML"), Nil))
-            )
-            .flatMap {
-              element =>
-                if (element.label.equalsIgnoreCase("CC015C")) Right(())
-                else Left(FailedToValidateError.SchemaFailedToValidateError(validationErrors = NonEmptyList(ValidationError(1, 1, "an error"), Nil)))
-            }
-      }
-      .toMat(Sink.last)(Keep.right)
+  val CC015Cjson = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
 
   val mockValidationService: ValidationService = mock[ValidationService]
+  val mockConversionService: ConversionService = mock[ConversionService]
   val mockDeparturesPersistenceService         = mock[DeparturesService]
   val mockRouterService                        = mock[RouterService]
   val mockAuditService                         = mock[AuditingService]
@@ -216,6 +206,7 @@ class V2DeparturesControllerSpec
     SingletonTemporaryFileCreator,
     FakeAuthNewEnrolmentOnlyAction(),
     mockValidationService,
+    mockConversionService,
     mockDeparturesPersistenceService,
     mockRouterService,
     mockAuditService,
@@ -224,9 +215,11 @@ class V2DeparturesControllerSpec
 
   implicit val timeout: Timeout = 5.seconds
 
+  def fakeHeaders(contentType: String) = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> contentType))
+
   def fakeRequestDepartures[A](
     method: String,
-    headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")),
+    headers: FakeHeaders,
     uri: String = routing.routes.DeparturesRouter.submitDeclaration().url,
     body: A
   ): Request[A] =
@@ -234,18 +227,6 @@ class V2DeparturesControllerSpec
 
   override def beforeEach(): Unit = {
     reset(mockValidationService)
-    when(mockValidationService.validateXML(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
-      .thenAnswer {
-        invocation =>
-          EitherT(
-            invocation
-              .getArgument[Source[ByteString, _]](1)
-              .fold(ByteString())(
-                (current, next) => current ++ next
-              )
-              .runWith(testSink)
-          )
-      }
 
     reset(mockDeparturesPersistenceService)
     when(
@@ -277,7 +258,67 @@ class V2DeparturesControllerSpec
 
     reset(mockAuditService)
     when(mockAuditService.audit(any(), any())(any(), any())).thenReturn(Future.successful(()))
+
+    reset(mockConversionService)
   }
+
+  val testSinkXml: Sink[ByteString, Future[Either[FailedToValidateError, Unit]]] =
+    Flow
+      .fromFunction {
+        input: ByteString =>
+          Try(XML.loadString(input.decodeString(StandardCharsets.UTF_8))).toEither
+            .leftMap(
+              _ => FailedToValidateError.SchemaFailedToValidateError(NonEmptyList(XmlValidationError(42, 27, "invalid XML"), Nil))
+            )
+            .flatMap {
+              element =>
+                if (element.label.equalsIgnoreCase("CC015C")) Right(())
+                else Left(FailedToValidateError.SchemaFailedToValidateError(validationErrors = NonEmptyList(XmlValidationError(1, 1, "an error"), Nil)))
+            }
+      }
+      .toMat(Sink.last)(Keep.right)
+
+  val xmlValidationMockAnswer = (invocation: InvocationOnMock) =>
+    EitherT(
+      invocation
+        .getArgument[Source[ByteString, _]](1)
+        .fold(ByteString())(
+          (current, next) => current ++ next
+        )
+        .runWith(testSinkXml)
+    )
+
+  val testSinkJson: Sink[ByteString, Future[Either[FailedToValidateError, Unit]]] =
+    Flow
+      .fromFunction {
+        input: ByteString =>
+          Try(Json.parse(input.utf8String)).toEither
+            .leftMap(
+              _ =>
+                FailedToValidateError
+                  .SchemaFailedToValidateError(NonEmptyList(JsonValidationError("path", "Invalid JSON"), Nil))
+            )
+            .flatMap {
+              jsVal =>
+                if ((jsVal \ "CC015").isDefined) Right(())
+                else
+                  Left(
+                    FailedToValidateError
+                      .SchemaFailedToValidateError(validationErrors = NonEmptyList(JsonValidationError("CC015", "CC015 expected but not present"), Nil))
+                  )
+            }
+      }
+      .toMat(Sink.last)(Keep.right)
+
+  val jsonValidationMockAnswer = (invocation: InvocationOnMock) =>
+    EitherT(
+      invocation
+        .getArgument[Source[ByteString, _]](1)
+        .fold(ByteString())(
+          (current, next) => current ++ next
+        )
+        .runWith(testSinkJson)
+    )
 
   // Version 2
   "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
@@ -285,10 +326,18 @@ class V2DeparturesControllerSpec
 
       // For the content length headers, we have to ensure that we send something
       val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml", HeaderNames.CONTENT_LENGTH -> "1000")
+        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
       )
 
       "must return Accepted when body length is within limits and is considered valid" in {
+        when(
+          mockValidationService
+            .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.XML))(any[HeaderCarrier], any[ExecutionContext])
+        ).thenAnswer {
+          invocation =>
+            xmlValidationMockAnswer(invocation)
+        }
+
         val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource(CC015C.mkString), headers = standardHeaders)
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe ACCEPTED
@@ -310,7 +359,7 @@ class V2DeparturesControllerSpec
         )
 
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any())(any(), any())
-        verify(mockValidationService, times(1)).validateXML(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
+        verify(mockValidationService, times(1)).validate(eqTo(MessageType.DepartureDeclaration), any(), eqTo(MimeTypes.XML))(any(), any())
         verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
         verify(mockRouterService, times(1)).send(eqTo(MessageType.DepartureDeclaration), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
           any(),
@@ -320,9 +369,25 @@ class V2DeparturesControllerSpec
 
       "must return Accepted when body length is within limits and is considered valid" - Seq(true, false).foreach {
         auditEnabled =>
+          when(
+            mockValidationService
+              .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.XML))(any[HeaderCarrier], any[ExecutionContext])
+          ).thenAnswer {
+            invocation =>
+              xmlValidationMockAnswer(invocation)
+          }
+
           val success = if (auditEnabled) "is successful" else "fails"
           s"when auditing $success" in {
             beforeEach()
+            when(
+              mockValidationService
+                .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.XML))(any[HeaderCarrier], any[ExecutionContext])
+            ).thenAnswer {
+              invocation =>
+                xmlValidationMockAnswer(invocation)
+            }
+
             if (!auditEnabled) {
               reset(mockAuditService)
               when(mockAuditService.audit(any(), any())(any(), any())).thenReturn(Future.failed(UpstreamErrorResponse("error", 500)))
@@ -348,7 +413,7 @@ class V2DeparturesControllerSpec
             )
 
             verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any())(any(), any())
-            verify(mockValidationService, times(1)).validateXML(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
+            verify(mockValidationService, times(1)).validate(eqTo(MessageType.DepartureDeclaration), any(), eqTo(MimeTypes.XML))(any(), any())
             verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
             verify(mockRouterService, times(1))
               .send(eqTo(MessageType.DepartureDeclaration), EORINumber(any()), MovementId(any()), MessageId(any()), any())(any(), any())
@@ -356,6 +421,14 @@ class V2DeparturesControllerSpec
       }
 
       "must return Bad Request when body is not an XML document" in {
+        when(
+          mockValidationService
+            .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.XML))(any[HeaderCarrier], any[ExecutionContext])
+        ).thenAnswer {
+          invocation =>
+            xmlValidationMockAnswer(invocation)
+        }
+
         val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource("notxml"), headers = standardHeaders)
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe BAD_REQUEST
@@ -373,6 +446,14 @@ class V2DeparturesControllerSpec
       }
 
       "must return Bad Request when body is an XML document that would fail schema validation" in {
+        when(
+          mockValidationService
+            .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.XML))(any[HeaderCarrier], any[ExecutionContext])
+        ).thenAnswer {
+          invocation =>
+            xmlValidationMockAnswer(invocation)
+        }
+
         val request =
           fakeRequestDepartures(method = "POST", body = singleUseStringSource(<test></test>.mkString), headers = standardHeaders)
         val result = sut.submitDeclaration()(request)
@@ -391,18 +472,27 @@ class V2DeparturesControllerSpec
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
+        when(
+          mockValidationService
+            .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.XML))(any[HeaderCarrier], any[ExecutionContext])
+        ).thenAnswer {
+          invocation =>
+            xmlValidationMockAnswer(invocation)
+        }
+
         val sut = new V2DeparturesControllerImpl(
           Helpers.stubControllerComponents(),
           SingletonTemporaryFileCreator,
           FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
           mockValidationService,
+          mockConversionService,
           mockDeparturesPersistenceService,
           mockRouterService,
           mockAuditService,
           FakeMessageSizeActionProvider
         )
 
-        val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)))
+        val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
         val response = sut.submitDeclaration()(request)
 
         status(response) mustBe INTERNAL_SERVER_ERROR
@@ -413,6 +503,13 @@ class V2DeparturesControllerSpec
       }
 
       "must return Internal Service Error if the router service reports an error" in {
+        when(
+          mockValidationService
+            .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.XML))(any[HeaderCarrier], any[ExecutionContext])
+        ).thenAnswer {
+          invocation =>
+            xmlValidationMockAnswer(invocation)
+        }
 
         // we're not testing what happens with the departures service here, so just pass through with a right.
         val mockDeparturesPersistenceService = mock[DeparturesService]
@@ -426,13 +523,14 @@ class V2DeparturesControllerSpec
           SingletonTemporaryFileCreator,
           FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
           mockValidationService,
+          mockConversionService,
           mockDeparturesPersistenceService,
           mockRouterService,
           mockAuditService,
           FakeMessageSizeActionProvider
         )
 
-        val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)))
+        val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
         val response = sut.submitDeclaration()(request)
 
         status(response) mustBe INTERNAL_SERVER_ERROR
@@ -445,14 +543,110 @@ class V2DeparturesControllerSpec
 
     "with content type set to application/json" - {
       val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/json", HeaderNames.CONTENT_LENGTH -> "1000")
+        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.JSON, HeaderNames.CONTENT_LENGTH -> "1000")
       )
 
-      val json = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
-      "must return Accepted" in {
-        val request = fakeRequestDepartures(method = "POST", body = json, headers = standardHeaders)
+      "must return Accepted when body length is within limits and is considered valid" in {
+        when(
+          mockValidationService
+            .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.JSON))(any[HeaderCarrier], any[ExecutionContext])
+        ).thenAnswer {
+          invocation =>
+            jsonValidationMockAnswer(invocation)
+        }
+
+        val testSinkJsonConversion: Sink[ByteString, Future[Either[ConversionError, Source[ByteString, _]]]] =
+          Flow
+            .fromFunction {
+              input: ByteString =>
+                Try(Json.parse(input.utf8String)).toEither
+                  .leftMap(
+                    _ => ConversionError.UnexpectedError(None)
+                  )
+                  .flatMap {
+                    jsVal =>
+                      Right(singleUseStringSource(Json.stringify(jsVal)))
+                  }
+            }
+            .toMat(Sink.last)(Keep.right)
+
+        when(
+          mockConversionService
+            .convertXmlToJson(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+        ).thenAnswer {
+          invocation =>
+            EitherT(
+              invocation
+                .getArgument[Source[ByteString, _]](1)
+                .fold(ByteString())(
+                  (current, next) => current ++ next
+                )
+                .runWith(testSinkJsonConversion)
+            )
+        }
+
+        val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource(CC015Cjson), headers = standardHeaders)
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe ACCEPTED
+
+        verify(mockValidationService, times(1)).validate(eqTo(MessageType.DepartureDeclaration), any(), eqTo(MimeTypes.JSON))(any(), any())
+        verify(mockConversionService, times(1))
+          .convertXmlToJson(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
+            any[HeaderCarrier],
+            any[ExecutionContext]
+          )
+      }
+
+      "must return Bad Request when body is not an JSON document" in {
+        when(
+          mockValidationService
+            .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.JSON))(any[HeaderCarrier], any[ExecutionContext])
+        ).thenAnswer {
+          invocation =>
+            jsonValidationMockAnswer(invocation)
+        }
+
+        val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource("notjson"), headers = standardHeaders)
+        val result  = sut.submitDeclaration()(request)
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "SCHEMA_VALIDATION",
+          "message" -> "Request failed schema validation",
+          "validationErrors" -> Seq(
+            Json.obj(
+              "schemaPath" -> "path",
+              "message"    -> "Invalid JSON"
+            )
+          )
+        )
+      }
+
+      "must return Bad Request when body is an JSON document that would fail schema validation" in {
+        when(
+          mockValidationService
+            .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.JSON))(any[HeaderCarrier], any[ExecutionContext])
+        ).thenAnswer {
+          invocation =>
+            jsonValidationMockAnswer(invocation)
+        }
+
+        val request =
+          fakeRequestDepartures(method = "POST", body = singleUseStringSource("{}"), headers = standardHeaders)
+        val result = sut.submitDeclaration()(request)
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "SCHEMA_VALIDATION",
+          "message" -> "Request failed schema validation",
+          "validationErrors" -> Seq(
+            Json.obj(
+              "schemaPath" -> "CC015",
+              "message"    -> "CC015 expected but not present"
+            )
+          )
+        )
       }
     }
 
@@ -490,6 +684,17 @@ class V2DeparturesControllerSpec
     }
 
     "must return Internal Service Error if the router service reports an error" in {
+      val standardHeaders = FakeHeaders(
+        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
+      )
+
+      when(
+        mockValidationService
+          .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.XML))(any[HeaderCarrier], any[ExecutionContext])
+      ).thenAnswer {
+        invocation =>
+          xmlValidationMockAnswer(invocation)
+      }
 
       // we're not testing what happens with the departures service here, so just pass through with a right.
       val mockDeparturesPersistenceService = mock[DeparturesService]
@@ -503,13 +708,14 @@ class V2DeparturesControllerSpec
         SingletonTemporaryFileCreator,
         FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
         mockValidationService,
+        mockConversionService,
         mockDeparturesPersistenceService,
         mockRouterService,
         mockAuditService,
         FakeMessageSizeActionProvider
       )
 
-      val request  = fakeRequestDepartures("POST", body = singleUseStringSource(CC015C.mkString))
+      val request  = fakeRequestDepartures("POST", body = singleUseStringSource(CC015C.mkString), headers = standardHeaders)
       val response = sut.submitDeclaration()(request)
       status(response) mustBe INTERNAL_SERVER_ERROR
       contentAsJson(response) mustBe Json.obj(

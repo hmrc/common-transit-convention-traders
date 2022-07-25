@@ -25,14 +25,15 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import v2.models.errors.PresentationError
 import v2.models.errors.FailedToValidateError
+import v2.models.errors.PersistenceError
+import v2.models.errors.PresentationError
+import v2.models.errors.RouterError
+import v2.models.errors.ValidationError
+import v2.models.errors.XmlValidationError
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
 import v2.models.errors.FailedToValidateError.UnexpectedError
 import v2.models.errors.FailedToValidateError.SchemaFailedToValidateError
-import v2.models.errors.PersistenceError
-import v2.models.errors.RouterError
-import v2.models.errors.ValidationError
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -85,7 +86,7 @@ class ErrorTranslatorSpec extends AnyFreeSpec with Matchers with OptionValues wi
     }
 
     "a SchemaFailedToValidateError returns a schema validation error presentation error" in {
-      val validationError = ValidationError(1, 1, "error")
+      val validationError = XmlValidationError(1, 1, "error")
       val input           = SchemaFailedToValidateError(NonEmptyList(validationError, Nil))
       val output          = PresentationError.schemaValidationError(validationErrors = NonEmptyList(validationError, Nil))
 

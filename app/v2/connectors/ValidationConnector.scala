@@ -27,7 +27,6 @@ import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
 import play.api.http.HeaderNames
-import play.api.http.MimeTypes
 import play.api.http.Status.NO_CONTENT
 import play.api.http.Status.OK
 import play.api.libs.json.JsResult
@@ -38,8 +37,8 @@ import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.models.request.MessageType
-import v2.models.responses.ValidationResponse
 import uk.gov.hmrc.http.HttpReads.Implicits._
+import v2.models.responses.ValidationResponse
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -61,7 +60,7 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
     with V2BaseConnector
     with Logging {
 
-  override def post(messageType: MessageType, xmlStream: Source[ByteString, _], contentType: String)(implicit
+  override def post(messageType: MessageType, stream: Source[ByteString, _], contentType: String)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Option[ValidationResponse]] =
@@ -72,7 +71,7 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
         httpClientV2
           .post(url"$url")
           .addHeaders(HeaderNames.CONTENT_TYPE -> contentType)
-          .withBody(xmlStream)
+          .withBody(stream)
           .execute[HttpResponse]
           .flatMap {
             response =>

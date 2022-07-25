@@ -104,7 +104,7 @@ class V2DeparturesControllerImpl @Inject() (
             (for {
               _ <- validationService.validate(MessageType.DepartureDeclaration, source, MimeTypes.JSON).asPresentation
               fileSource = FileIO.fromPath(temporaryFile)
-              xmlDeclaration <- conversionService.convert(MessageType.DepartureDeclaration, fileSource, MimeTypes.JSON).asPresentation
+              xmlDeclaration <- conversionService.convertXmlToJson(MessageType.DepartureDeclaration, fileSource).asPresentation
               //TBD: stream xml declaration to a temporary file so we can re-use it
             } yield xmlDeclaration).fold[Result](
               presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),

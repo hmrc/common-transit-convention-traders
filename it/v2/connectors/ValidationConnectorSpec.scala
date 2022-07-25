@@ -45,6 +45,7 @@ import uk.gov.hmrc.play.http.test.ResponseMatchers
 import utils.TestMetrics
 import v2.models.errors.PresentationError
 import v2.models.errors.ValidationError
+import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
 import v2.models.responses.ValidationResponse
 
@@ -103,7 +104,7 @@ class ValidationConnectorSpec
               .withBody(
                 Json.stringify(
                   Json.toJson(
-                    ValidationResponse(NonEmptyList(ValidationError(1, 1, "nope"), Nil))
+                    ValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))
                   )
                 )
               )
@@ -116,7 +117,7 @@ class ValidationConnectorSpec
 
       whenReady(validationConnector.post(MessageType.DepartureDeclaration, source, MimeTypes.XML)) {
         result =>
-          result mustBe Some(ValidationResponse(NonEmptyList(ValidationError(1, 1, "nope"), Nil)))
+          result mustBe Some(ValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)))
       }
     }
 

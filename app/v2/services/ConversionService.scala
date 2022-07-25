@@ -40,7 +40,7 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[ConversionServiceImpl])
 trait ConversionService {
 
-  def convert(messageType: MessageType, source: Source[ByteString, _], contentType: String)(implicit
+  def convertXmlToJson(messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, ConversionError, Source[ByteString, _]]
@@ -50,13 +50,13 @@ trait ConversionService {
 @Singleton
 class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector) extends ConversionService with Logging {
 
-  override def convert(messageType: MessageType, source: Source[ByteString, _], contentType: String)(implicit
+  override def convertXmlToJson(messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, ConversionError, Source[ByteString, _]] =
     EitherT(
       conversionConnector
-        .post(messageType, source, contentType)
+        .post(messageType, source)
         .map {
           case response => Right(response)
         }
