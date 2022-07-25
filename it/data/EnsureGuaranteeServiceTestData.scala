@@ -630,6 +630,22 @@ object EnsureGuaranteeServiceTestData {
     </PACGS2>
   </GOOITEGDS>
 
+  val goodsWithDuplicate =
+    <GOOITEGDS>
+      <IteNumGDS7>1</IteNumGDS7>
+      <GooDesGDS23>Daffodils</GooDesGDS23>
+      <GooDesGDS23LNG>EN</GooDesGDS23LNG>
+      <GroMasGDS46>1000</GroMasGDS46>
+      <NetMasGDS48>950</NetMasGDS48>
+      <PRODOCDC2><DocTypDC21>ZZZ</DocTypDC21><DocRefDC23>3375551</DocRefDC23></PRODOCDC2>
+      <PRODOCDC2><DocTypDC21>ZZZ</DocTypDC21><DocRefDC23>3375551</DocRefDC23></PRODOCDC2>
+      <PACGS2>
+        <MarNumOfPacGS21>AB234</MarNumOfPacGS21>
+        <KinOfPacGS23>BX</KinOfPacGS23>
+        <NumOfPacGS24>10</NumOfPacGS24>
+      </PACGS2>
+    </GOOITEGDS>
+
   def goodsWithCustomSpecialMention(nodeSeq: NodeSeq) =
     <GOOITEGDS>
       <IteNumGDS7>1</IteNumGDS7>
