@@ -45,6 +45,6 @@ trait V2BaseConnector extends HttpErrorFunctions {
     UrlPath.parse(s"$auditingBaseRoute/audit/${auditType.name}")
 
   protected def conversionRoute(messageType: MessageType): UrlPath =
-    UrlPath.parse(s"/transit-movements-conversion/convert/${messageType.code}")
+    UrlPath.parse(s"/transit-movements-converter/messages/${messageType.code}")
 
 }
