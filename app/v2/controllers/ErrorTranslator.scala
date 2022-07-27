@@ -23,8 +23,9 @@ import v2.models.errors.PersistenceError
 import v2.models.errors.PresentationError
 import v2.models.errors.RouterError
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
+import v2.models.errors.FailedToValidateError.JsonSchemaFailedToValidateError
 import v2.models.errors.FailedToValidateError.UnexpectedError
-import v2.models.errors.FailedToValidateError.SchemaFailedToValidateError
+import v2.models.errors.FailedToValidateError.XmlSchemaFailedToValidateError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -44,9 +45,11 @@ trait ErrorTranslator {
   implicit val validationErrorConverter = new Converter[FailedToValidateError] {
 
     def convert(validationError: FailedToValidateError): PresentationError = validationError match {
-      case err: UnexpectedError                          => PresentationError.internalServiceError(cause = err.thr)
-      case InvalidMessageTypeError(messageType)          => PresentationError.badRequestError(s"$messageType is not a valid message type")
-      case SchemaFailedToValidateError(validationErrors) => PresentationError.schemaValidationError(validationErrors = validationErrors)
+      case err: UnexpectedError                              => PresentationError.internalServiceError(cause = err.thr)
+      case InvalidMessageTypeError(messageType)              => PresentationError.badRequestError(s"$messageType is not a valid message type")
+      case XmlSchemaFailedToValidateError(validationErrors)  => PresentationError.xmlSchemaValidationError(validationErrors = validationErrors)
+      case JsonSchemaFailedToValidateError(validationErrors) => PresentationError.jsonSchemaValidationError(validationErrors = validationErrors)
+
     }
   }
 

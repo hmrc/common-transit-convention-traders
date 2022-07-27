@@ -21,14 +21,9 @@ import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import play.api.Logging
-import play.api.http.Status.BAD_REQUEST
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.ConversionConnector
-import v2.connectors.ValidationConnector
 import v2.models.errors.ConversionError
-import v2.models.errors.FailedToValidateError
-import v2.models.errors.RouterError
 import v2.models.request.MessageType
 
 import javax.inject.Inject

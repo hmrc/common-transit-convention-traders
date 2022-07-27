@@ -16,32 +16,15 @@
 
 package v2.models.errors
 
-import org.xml.sax.SAXParseException
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.functional.syntax.unlift
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites
 import play.api.libs.json.Reads
 import play.api.libs.json.__
 
-sealed trait ValidationError {
-  def message: String
-}
+sealed trait ValidationError
 
-object ValidationError {
-
-  implicit lazy val format: OFormat[ValidationError] = OFormat.oFormatFromReadsAndOWrites(reads, writes)
-
-  implicit lazy val reads: Reads[ValidationError] = Json.reads[ValidationError]
-
-  implicit lazy val writes: OWrites[ValidationError] = OWrites {
-    case sve: XmlValidationError  => Json.toJsObject(sve)
-    case jve: JsonValidationError => Json.toJsObject(jve)
-  }
-}
-
-case class JsonValidationError(schemaPath: String, message: String) extends ValidationError
+case class JsonValidationError(schemaPath: String, message: String)
 
 object JsonValidationError {
 
@@ -58,12 +41,9 @@ object JsonValidationError {
     )(unlift(JsonValidationError.unapply))
 }
 
-case class XmlValidationError(lineNumber: Int, columnNumber: Int, message: String) extends ValidationError
+case class XmlValidationError(lineNumber: Int, columnNumber: Int, message: String)
 
 object XmlValidationError {
-
-  def fromSaxParseException(ex: SAXParseException) =
-    XmlValidationError(ex.getLineNumber, ex.getColumnNumber, ex.getMessage)
 
   implicit val schemaValidationErrorReads: Reads[XmlValidationError] =
     (

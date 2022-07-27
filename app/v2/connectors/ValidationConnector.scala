@@ -27,6 +27,7 @@ import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
 import play.api.http.HeaderNames
+import play.api.http.MimeTypes
 import play.api.http.Status.NO_CONTENT
 import play.api.http.Status.OK
 import play.api.libs.json.JsResult
@@ -38,7 +39,8 @@ import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.models.request.MessageType
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import v2.models.responses.ValidationResponse
+import v2.models.responses.JsonValidationResponse
+import v2.models.responses.XmlValidationResponse
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -46,10 +48,15 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[ValidationConnectorImpl])
 trait ValidationConnector {
 
-  def post(messageType: MessageType, xmlStream: Source[ByteString, _], contentType: String)(implicit
+  def postXml(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Option[ValidationResponse]]
+  ): Future[Option[XmlValidationResponse]]
+
+  def postJson(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Option[JsonValidationResponse]]
 
 }
 
@@ -60,38 +67,72 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
     with V2BaseConnector
     with Logging {
 
-  override def post(messageType: MessageType, stream: Source[ByteString, _], contentType: String)(implicit
+  override def postXml(messageType: MessageType, stream: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Option[ValidationResponse]] =
+  ): Future[Option[XmlValidationResponse]] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
-        val url = appConfig.validatorUrl.withPath(validationRoute(messageType))
-
-        httpClientV2
-          .post(url"$url")
-          .addHeaders(HeaderNames.CONTENT_TYPE -> contentType)
-          .withBody(stream)
-          .execute[HttpResponse]
+        post(messageType, stream, MimeTypes.XML)
           .flatMap {
-            response =>
-              response.status match {
-                case NO_CONTENT =>
-                  Future.successful(None)
-                case OK =>
-                  Json
-                    .parse(response.body)
-                    .validate[ValidationResponse]
-                    .map(
-                      result => Future.successful(Some(result))
-                    )
-                    .recoverTotal(
-                      error => Future.failed(JsResult.Exception(error))
-                    )
-                case _ =>
-                  Future.failed(UpstreamErrorResponse(response.body, response.status))
-
-              }
+            case Some(responseBody) =>
+              Json
+                .parse(responseBody)
+                .validate[XmlValidationResponse]
+                .map(
+                  result => Future.successful(Some(result))
+                )
+                .recoverTotal(
+                  error => Future.failed(JsResult.Exception(error))
+                )
+            case None => Future.successful(None)
           }
     }
+
+  override def postJson(messageType: MessageType, stream: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Option[JsonValidationResponse]] =
+    withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
+      _ =>
+        post(messageType, stream, MimeTypes.JSON)
+          .flatMap {
+            case Some(responseBody) =>
+              Json
+                .parse(responseBody)
+                .validate[JsonValidationResponse]
+                .map(
+                  result => Future.successful(Some(result))
+                )
+                .recoverTotal(
+                  error => Future.failed(JsResult.Exception(error))
+                )
+            case None => Future.successful(None)
+          }
+    }
+
+  private def post(messageType: MessageType, stream: Source[ByteString, _], contentType: String)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Option[String]] = {
+    val url = appConfig.validatorUrl.withPath(validationRoute(messageType))
+
+    httpClientV2
+      .post(url"$url")
+      .addHeaders(HeaderNames.CONTENT_TYPE -> contentType)
+      .withBody(stream)
+      .execute[HttpResponse]
+      .flatMap {
+        response =>
+          response.status match {
+            case NO_CONTENT =>
+              Future.successful(None)
+            case OK =>
+              Future.successful(Some(response.body))
+            case _ =>
+              Future.failed(UpstreamErrorResponse(response.body, response.status))
+
+          }
+      }
+  }
 }

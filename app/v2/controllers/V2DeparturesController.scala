@@ -18,7 +18,6 @@ package v2.controllers
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
-import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
@@ -43,7 +42,6 @@ import v2.models.AuditType
 import v2.models.request.MessageType
 import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
 import v2.services.AuditingService
-import v2.services.ConversionService
 import v2.services.DeparturesService
 import v2.services.RouterService
 import v2.services.ValidationService
@@ -63,7 +61,6 @@ class V2DeparturesControllerImpl @Inject() (
   val temporaryFileCreator: TemporaryFileCreator,
   authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
   validationService: ValidationService,
-  conversionService: ConversionService,
   departuresService: DeparturesService,
   routerService: RouterService,
   auditService: AuditingService,
@@ -102,16 +99,13 @@ class V2DeparturesControllerImpl @Inject() (
           (temporaryFile, source) =>
             implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
             (for {
-              _ <- validationService.validate(MessageType.DepartureDeclaration, source, MimeTypes.JSON).asPresentation
-              fileSource = FileIO.fromPath(temporaryFile)
-              xmlDeclaration <- conversionService.convertXmlToJson(MessageType.DepartureDeclaration, fileSource).asPresentation
-              //TBD: stream xml declaration to a temporary file so we can re-use it
-            } yield xmlDeclaration).fold[Result](
+              result <- validationService.validateJson(MessageType.DepartureDeclaration, source).asPresentation
+              //TBD: send JSON Departure declaration to converter
+              //fileSource = FileIO.fromPath(temporaryFile)
+              //xmlDeclaration <- conversionService.convertXmlToJson(MessageType.DepartureDeclaration, fileSource).asPresentation
+            } yield result).fold[Result](
               presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-              xmlSource => {
-                xmlSource.runWith(Sink.ignore)
-                Accepted
-              }
+              _ => Accepted
             )
         }.toResult
     }
@@ -125,7 +119,7 @@ class V2DeparturesControllerImpl @Inject() (
 
             (for {
               _ <- auditAndCallService(source, AuditType.DeclarationData)(
-                validationService.validate(MessageType.DepartureDeclaration, _, MimeTypes.XML).asPresentation
+                validationService.validateXml(MessageType.DepartureDeclaration, _).asPresentation
               )
 
               fileSource = FileIO.fromPath(temporaryFile)

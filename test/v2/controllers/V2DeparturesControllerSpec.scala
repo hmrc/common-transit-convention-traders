@@ -72,7 +72,6 @@ import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.services.AuditingService
-import v2.services.ConversionService
 import v2.services.DeparturesService
 import v2.services.RouterService
 import v2.services.ValidationService
@@ -99,104 +98,103 @@ class V2DeparturesControllerSpec
   // TODO: Make this a cc015c
   def CC015C: NodeSeq =
     <CC015C>
-        <SynIdeMES1>UNOC</SynIdeMES1>
-        <SynVerNumMES2>3</SynVerNumMES2>
-        <MesRecMES6>NCTS</MesRecMES6>
-        <DatOfPreMES9>20201217</DatOfPreMES9>
-        <TimOfPreMES10>1340</TimOfPreMES10>
-        <IntConRefMES11>17712576475433</IntConRefMES11>
-        <AppRefMES14>NCTS</AppRefMES14>
-        <MesIdeMES19>1</MesIdeMES19>
-        <MesTypMES20>GB015B</MesTypMES20>
-        <HEAHEA>
-          <RefNumHEA4>GUATEST1201217134032</RefNumHEA4>
-          <TypOfDecHEA24>T1</TypOfDecHEA24>
-          <CouOfDesCodHEA30>IT</CouOfDesCodHEA30>
-          <AutLocOfGooCodHEA41>954131533-GB60DEP</AutLocOfGooCodHEA41>
-          <CouOfDisCodHEA55>GB</CouOfDisCodHEA55>
-          <IdeOfMeaOfTraAtDHEA78>NC15 REG</IdeOfMeaOfTraAtDHEA78>
-          <NatOfMeaOfTraAtDHEA80>GB</NatOfMeaOfTraAtDHEA80>
-          <ConIndHEA96>0</ConIndHEA96>
-          <NCTSAccDocHEA601LNG>EN</NCTSAccDocHEA601LNG>
-          <TotNumOfIteHEA305>1</TotNumOfIteHEA305>
-          <TotNumOfPacHEA306>10</TotNumOfPacHEA306>
-          <TotGroMasHEA307>1000</TotGroMasHEA307>
-          <DecDatHEA383>20201217</DecDatHEA383>
-          <DecPlaHEA394>Dover</DecPlaHEA394>
-        </HEAHEA>
-        <TRAPRIPC1>
-          <NamPC17>NCTS UK TEST LAB HMCE</NamPC17>
-          <StrAndNumPC122>11TH FLOOR, ALEX HOUSE, VICTORIA AV</StrAndNumPC122>
-          <PosCodPC123>SS99 1AA</PosCodPC123>
-          <CitPC124>SOUTHEND-ON-SEA, ESSEX</CitPC124>
-          <CouPC125>GB</CouPC125>
-          <TINPC159>GB954131533000</TINPC159>
-        </TRAPRIPC1>
-        <TRACONCO1>
-          <NamCO17>NCTS UK TEST LAB HMCE</NamCO17>
-          <StrAndNumCO122>11TH FLOOR, ALEX HOUSE, VICTORIA AV</StrAndNumCO122>
-          <PosCodCO123>SS99 1AA</PosCodCO123>
-          <CitCO124>SOUTHEND-ON-SEA, ESSEX</CitCO124>
-          <CouCO125>GB</CouCO125>
-          <TINCO159>GB954131533000</TINCO159>
-        </TRACONCO1>
-        <TRACONCE1>
-          <NamCE17>NCTS UK TEST LAB HMCE</NamCE17>
-          <StrAndNumCE122>ITALIAN OFFICE</StrAndNumCE122>
-          <PosCodCE123>IT99 1IT</PosCodCE123>
-          <CitCE124>MILAN</CitCE124>
-          <CouCE125>IT</CouCE125>
-          <TINCE159>IT11ITALIANC11</TINCE159>
-        </TRACONCE1>
-        <CUSOFFDEPEPT>
-          <RefNumEPT1>GB000060</RefNumEPT1>
-        </CUSOFFDEPEPT>
-        <CUSOFFTRARNS>
-          <RefNumRNS1>FR001260</RefNumRNS1>
-          <ArrTimTRACUS085>202012191340</ArrTimTRACUS085>
-        </CUSOFFTRARNS>
-        <CUSOFFDESEST>
-          <RefNumEST1>IT018100</RefNumEST1>
-        </CUSOFFDESEST>
-        <CONRESERS>
-          <ConResCodERS16>A3</ConResCodERS16>
-          <DatLimERS69>20201225</DatLimERS69>
-        </CONRESERS>
-        <SEAINFSLI>
-          <SeaNumSLI2>1</SeaNumSLI2>
-          <SEAIDSID>
-            <SeaIdeSID1>NCTS001</SeaIdeSID1>
-          </SEAIDSID>
-        </SEAINFSLI>
-        <GUAGUA>
-          <GuaTypGUA1>0</GuaTypGUA1>
-          <GUAREFREF>
-            <GuaRefNumGRNREF1>20GB0000010000H72</GuaRefNumGRNREF1>
-            <AccCodREF6>AC01</AccCodREF6>
-          </GUAREFREF>
-        </GUAGUA>
-        <GOOITEGDS>
-          <IteNumGDS7>1</IteNumGDS7>
-          <GooDesGDS23>Wheat</GooDesGDS23>
-          <GooDesGDS23LNG>EN</GooDesGDS23LNG>
-          <GroMasGDS46>1000</GroMasGDS46>
-          <NetMasGDS48>950</NetMasGDS48>
-          <SPEMENMT2>
-            <AddInfMT21>20GB0000010000H72</AddInfMT21>
-            <AddInfCodMT23>CAL</AddInfCodMT23>
-          </SPEMENMT2>
-          <PACGS2>
-            <MarNumOfPacGS21>AB234</MarNumOfPacGS21>
-            <KinOfPacGS23>BX</KinOfPacGS23>
-            <NumOfPacGS24>10</NumOfPacGS24>
-          </PACGS2>
-        </GOOITEGDS>
-      </CC015C>
+      <SynIdeMES1>UNOC</SynIdeMES1>
+      <SynVerNumMES2>3</SynVerNumMES2>
+      <MesRecMES6>NCTS</MesRecMES6>
+      <DatOfPreMES9>20201217</DatOfPreMES9>
+      <TimOfPreMES10>1340</TimOfPreMES10>
+      <IntConRefMES11>17712576475433</IntConRefMES11>
+      <AppRefMES14>NCTS</AppRefMES14>
+      <MesIdeMES19>1</MesIdeMES19>
+      <MesTypMES20>GB015B</MesTypMES20>
+      <HEAHEA>
+        <RefNumHEA4>GUATEST1201217134032</RefNumHEA4>
+        <TypOfDecHEA24>T1</TypOfDecHEA24>
+        <CouOfDesCodHEA30>IT</CouOfDesCodHEA30>
+        <AutLocOfGooCodHEA41>954131533-GB60DEP</AutLocOfGooCodHEA41>
+        <CouOfDisCodHEA55>GB</CouOfDisCodHEA55>
+        <IdeOfMeaOfTraAtDHEA78>NC15 REG</IdeOfMeaOfTraAtDHEA78>
+        <NatOfMeaOfTraAtDHEA80>GB</NatOfMeaOfTraAtDHEA80>
+        <ConIndHEA96>0</ConIndHEA96>
+        <NCTSAccDocHEA601LNG>EN</NCTSAccDocHEA601LNG>
+        <TotNumOfIteHEA305>1</TotNumOfIteHEA305>
+        <TotNumOfPacHEA306>10</TotNumOfPacHEA306>
+        <TotGroMasHEA307>1000</TotGroMasHEA307>
+        <DecDatHEA383>20201217</DecDatHEA383>
+        <DecPlaHEA394>Dover</DecPlaHEA394>
+      </HEAHEA>
+      <TRAPRIPC1>
+        <NamPC17>NCTS UK TEST LAB HMCE</NamPC17>
+        <StrAndNumPC122>11TH FLOOR, ALEX HOUSE, VICTORIA AV</StrAndNumPC122>
+        <PosCodPC123>SS99 1AA</PosCodPC123>
+        <CitPC124>SOUTHEND-ON-SEA, ESSEX</CitPC124>
+        <CouPC125>GB</CouPC125>
+        <TINPC159>GB954131533000</TINPC159>
+      </TRAPRIPC1>
+      <TRACONCO1>
+        <NamCO17>NCTS UK TEST LAB HMCE</NamCO17>
+        <StrAndNumCO122>11TH FLOOR, ALEX HOUSE, VICTORIA AV</StrAndNumCO122>
+        <PosCodCO123>SS99 1AA</PosCodCO123>
+        <CitCO124>SOUTHEND-ON-SEA, ESSEX</CitCO124>
+        <CouCO125>GB</CouCO125>
+        <TINCO159>GB954131533000</TINCO159>
+      </TRACONCO1>
+      <TRACONCE1>
+        <NamCE17>NCTS UK TEST LAB HMCE</NamCE17>
+        <StrAndNumCE122>ITALIAN OFFICE</StrAndNumCE122>
+        <PosCodCE123>IT99 1IT</PosCodCE123>
+        <CitCE124>MILAN</CitCE124>
+        <CouCE125>IT</CouCE125>
+        <TINCE159>IT11ITALIANC11</TINCE159>
+      </TRACONCE1>
+      <CUSOFFDEPEPT>
+        <RefNumEPT1>GB000060</RefNumEPT1>
+      </CUSOFFDEPEPT>
+      <CUSOFFTRARNS>
+        <RefNumRNS1>FR001260</RefNumRNS1>
+        <ArrTimTRACUS085>202012191340</ArrTimTRACUS085>
+      </CUSOFFTRARNS>
+      <CUSOFFDESEST>
+        <RefNumEST1>IT018100</RefNumEST1>
+      </CUSOFFDESEST>
+      <CONRESERS>
+        <ConResCodERS16>A3</ConResCodERS16>
+        <DatLimERS69>20201225</DatLimERS69>
+      </CONRESERS>
+      <SEAINFSLI>
+        <SeaNumSLI2>1</SeaNumSLI2>
+        <SEAIDSID>
+          <SeaIdeSID1>NCTS001</SeaIdeSID1>
+        </SEAIDSID>
+      </SEAINFSLI>
+      <GUAGUA>
+        <GuaTypGUA1>0</GuaTypGUA1>
+        <GUAREFREF>
+          <GuaRefNumGRNREF1>20GB0000010000H72</GuaRefNumGRNREF1>
+          <AccCodREF6>AC01</AccCodREF6>
+        </GUAREFREF>
+      </GUAGUA>
+      <GOOITEGDS>
+        <IteNumGDS7>1</IteNumGDS7>
+        <GooDesGDS23>Wheat</GooDesGDS23>
+        <GooDesGDS23LNG>EN</GooDesGDS23LNG>
+        <GroMasGDS46>1000</GroMasGDS46>
+        <NetMasGDS48>950</NetMasGDS48>
+        <SPEMENMT2>
+          <AddInfMT21>20GB0000010000H72</AddInfMT21>
+          <AddInfCodMT23>CAL</AddInfCodMT23>
+        </SPEMENMT2>
+        <PACGS2>
+          <MarNumOfPacGS21>AB234</MarNumOfPacGS21>
+          <KinOfPacGS23>BX</KinOfPacGS23>
+          <NumOfPacGS24>10</NumOfPacGS24>
+        </PACGS2>
+      </GOOITEGDS>
+    </CC015C>
 
   val CC015Cjson = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
 
   val mockValidationService: ValidationService = mock[ValidationService]
-  val mockConversionService: ConversionService = mock[ConversionService]
   val mockDeparturesPersistenceService         = mock[DeparturesService]
   val mockRouterService                        = mock[RouterService]
   val mockAuditService                         = mock[AuditingService]
@@ -206,7 +204,7 @@ class V2DeparturesControllerSpec
     SingletonTemporaryFileCreator,
     FakeAuthNewEnrolmentOnlyAction(),
     mockValidationService,
-    mockConversionService,
+    //mockConversionService,
     mockDeparturesPersistenceService,
     mockRouterService,
     mockAuditService,
@@ -258,8 +256,6 @@ class V2DeparturesControllerSpec
 
     reset(mockAuditService)
     when(mockAuditService.audit(any(), any())(any(), any())).thenReturn(Future.successful(()))
-
-    reset(mockConversionService)
   }
 
   val testSinkXml: Sink[ByteString, Future[Either[FailedToValidateError, Unit]]] =
@@ -268,12 +264,12 @@ class V2DeparturesControllerSpec
         input: ByteString =>
           Try(XML.loadString(input.decodeString(StandardCharsets.UTF_8))).toEither
             .leftMap(
-              _ => FailedToValidateError.SchemaFailedToValidateError(NonEmptyList(XmlValidationError(42, 27, "invalid XML"), Nil))
+              _ => FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList(XmlValidationError(42, 27, "invalid XML"), Nil))
             )
             .flatMap {
               element =>
                 if (element.label.equalsIgnoreCase("CC015C")) Right(())
-                else Left(FailedToValidateError.SchemaFailedToValidateError(validationErrors = NonEmptyList(XmlValidationError(1, 1, "an error"), Nil)))
+                else Left(FailedToValidateError.XmlSchemaFailedToValidateError(validationErrors = NonEmptyList(XmlValidationError(1, 1, "an error"), Nil)))
             }
       }
       .toMat(Sink.last)(Keep.right)
@@ -296,7 +292,7 @@ class V2DeparturesControllerSpec
             .leftMap(
               _ =>
                 FailedToValidateError
-                  .SchemaFailedToValidateError(NonEmptyList(JsonValidationError("path", "Invalid JSON"), Nil))
+                  .JsonSchemaFailedToValidateError(NonEmptyList(JsonValidationError("path", "Invalid JSON"), Nil))
             )
             .flatMap {
               jsVal =>
@@ -304,7 +300,7 @@ class V2DeparturesControllerSpec
                 else
                   Left(
                     FailedToValidateError
-                      .SchemaFailedToValidateError(validationErrors = NonEmptyList(JsonValidationError("CC015", "CC015 expected but not present"), Nil))
+                      .JsonSchemaFailedToValidateError(validationErrors = NonEmptyList(JsonValidationError("CC015", "CC015 expected but not present"), Nil))
                   )
             }
       }
@@ -332,7 +328,7 @@ class V2DeparturesControllerSpec
       "must return Accepted when body length is within limits and is considered valid" in {
         when(
           mockValidationService
-            .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.XML))(any[HeaderCarrier], any[ExecutionContext])
+            .validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer {
           invocation =>
             xmlValidationMockAnswer(invocation)
@@ -359,7 +355,7 @@ class V2DeparturesControllerSpec
         )
 
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any())(any(), any())
-        verify(mockValidationService, times(1)).validate(eqTo(MessageType.DepartureDeclaration), any(), eqTo(MimeTypes.XML))(any(), any())
+        verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
         verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
         verify(mockRouterService, times(1)).send(eqTo(MessageType.DepartureDeclaration), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
           any(),
@@ -371,7 +367,7 @@ class V2DeparturesControllerSpec
         auditEnabled =>
           when(
             mockValidationService
-              .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.XML))(any[HeaderCarrier], any[ExecutionContext])
+              .validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
           ).thenAnswer {
             invocation =>
               xmlValidationMockAnswer(invocation)
@@ -382,7 +378,10 @@ class V2DeparturesControllerSpec
             beforeEach()
             when(
               mockValidationService
-                .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.XML))(any[HeaderCarrier], any[ExecutionContext])
+                .validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
             ).thenAnswer {
               invocation =>
                 xmlValidationMockAnswer(invocation)
@@ -413,7 +412,7 @@ class V2DeparturesControllerSpec
             )
 
             verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any())(any(), any())
-            verify(mockValidationService, times(1)).validate(eqTo(MessageType.DepartureDeclaration), any(), eqTo(MimeTypes.XML))(any(), any())
+            verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
             verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
             verify(mockRouterService, times(1))
               .send(eqTo(MessageType.DepartureDeclaration), EORINumber(any()), MovementId(any()), MessageId(any()), any())(any(), any())
@@ -423,7 +422,7 @@ class V2DeparturesControllerSpec
       "must return Bad Request when body is not an XML document" in {
         when(
           mockValidationService
-            .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.XML))(any[HeaderCarrier], any[ExecutionContext])
+            .validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer {
           invocation =>
             xmlValidationMockAnswer(invocation)
@@ -448,7 +447,7 @@ class V2DeparturesControllerSpec
       "must return Bad Request when body is an XML document that would fail schema validation" in {
         when(
           mockValidationService
-            .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.XML))(any[HeaderCarrier], any[ExecutionContext])
+            .validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer {
           invocation =>
             xmlValidationMockAnswer(invocation)
@@ -474,7 +473,7 @@ class V2DeparturesControllerSpec
       "must return Internal Service Error if the persistence service reports an error" in {
         when(
           mockValidationService
-            .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.XML))(any[HeaderCarrier], any[ExecutionContext])
+            .validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer {
           invocation =>
             xmlValidationMockAnswer(invocation)
@@ -485,7 +484,6 @@ class V2DeparturesControllerSpec
           SingletonTemporaryFileCreator,
           FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
           mockValidationService,
-          mockConversionService,
           mockDeparturesPersistenceService,
           mockRouterService,
           mockAuditService,
@@ -505,7 +503,7 @@ class V2DeparturesControllerSpec
       "must return Internal Service Error if the router service reports an error" in {
         when(
           mockValidationService
-            .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.XML))(any[HeaderCarrier], any[ExecutionContext])
+            .validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer {
           invocation =>
             xmlValidationMockAnswer(invocation)
@@ -523,7 +521,6 @@ class V2DeparturesControllerSpec
           SingletonTemporaryFileCreator,
           FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
           mockValidationService,
-          mockConversionService,
           mockDeparturesPersistenceService,
           mockRouterService,
           mockAuditService,
@@ -549,61 +546,23 @@ class V2DeparturesControllerSpec
       "must return Accepted when body length is within limits and is considered valid" in {
         when(
           mockValidationService
-            .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.JSON))(any[HeaderCarrier], any[ExecutionContext])
+            .validateJson(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer {
           invocation =>
             jsonValidationMockAnswer(invocation)
-        }
-
-        val testSinkJsonConversion: Sink[ByteString, Future[Either[ConversionError, Source[ByteString, _]]]] =
-          Flow
-            .fromFunction {
-              input: ByteString =>
-                Try(Json.parse(input.utf8String)).toEither
-                  .leftMap(
-                    _ => ConversionError.UnexpectedError(None)
-                  )
-                  .flatMap {
-                    jsVal =>
-                      Right(singleUseStringSource(Json.stringify(jsVal)))
-                  }
-            }
-            .toMat(Sink.last)(Keep.right)
-
-        when(
-          mockConversionService
-            .convertXmlToJson(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
-              any[HeaderCarrier],
-              any[ExecutionContext]
-            )
-        ).thenAnswer {
-          invocation =>
-            EitherT(
-              invocation
-                .getArgument[Source[ByteString, _]](1)
-                .fold(ByteString())(
-                  (current, next) => current ++ next
-                )
-                .runWith(testSinkJsonConversion)
-            )
         }
 
         val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource(CC015Cjson), headers = standardHeaders)
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe ACCEPTED
 
-        verify(mockValidationService, times(1)).validate(eqTo(MessageType.DepartureDeclaration), any(), eqTo(MimeTypes.JSON))(any(), any())
-        verify(mockConversionService, times(1))
-          .convertXmlToJson(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
-            any[HeaderCarrier],
-            any[ExecutionContext]
-          )
+        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
       }
 
       "must return Bad Request when body is not an JSON document" in {
         when(
           mockValidationService
-            .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.JSON))(any[HeaderCarrier], any[ExecutionContext])
+            .validateJson(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer {
           invocation =>
             jsonValidationMockAnswer(invocation)
@@ -627,7 +586,7 @@ class V2DeparturesControllerSpec
       "must return Bad Request when body is an JSON document that would fail schema validation" in {
         when(
           mockValidationService
-            .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.JSON))(any[HeaderCarrier], any[ExecutionContext])
+            .validateJson(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer {
           invocation =>
             jsonValidationMockAnswer(invocation)
@@ -681,48 +640,6 @@ class V2DeparturesControllerSpec
         "code"    -> "UNSUPPORTED_MEDIA_TYPE",
         "message" -> "A content-type header is required!"
       )
-    }
-
-    "must return Internal Service Error if the router service reports an error" in {
-      val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
-      )
-
-      when(
-        mockValidationService
-          .validate(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]](), eqTo(MimeTypes.XML))(any[HeaderCarrier], any[ExecutionContext])
-      ).thenAnswer {
-        invocation =>
-          xmlValidationMockAnswer(invocation)
-      }
-
-      // we're not testing what happens with the departures service here, so just pass through with a right.
-      val mockDeparturesPersistenceService = mock[DeparturesService]
-      when(
-        mockDeparturesPersistenceService
-          .saveDeclaration(any[String].asInstanceOf[EORINumber], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-      ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, DeclarationResponse](DeclarationResponse(MovementId("123"), MessageId("456")))))
-
-      val sut = new V2DeparturesControllerImpl(
-        Helpers.stubControllerComponents(),
-        SingletonTemporaryFileCreator,
-        FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
-        mockValidationService,
-        mockConversionService,
-        mockDeparturesPersistenceService,
-        mockRouterService,
-        mockAuditService,
-        FakeMessageSizeActionProvider
-      )
-
-      val request  = fakeRequestDepartures("POST", body = singleUseStringSource(CC015C.mkString), headers = standardHeaders)
-      val response = sut.submitDeclaration()(request)
-      status(response) mustBe INTERNAL_SERVER_ERROR
-      contentAsJson(response) mustBe Json.obj(
-        "code"    -> "INTERNAL_SERVER_ERROR",
-        "message" -> "Internal server error"
-      )
-
     }
   }
 }

@@ -49,8 +49,17 @@ object PresentationError extends CommonFormats {
   def unauthorized(message: String): PresentationError =
     StandardError(message, ErrorCode.Unauthorized)
 
-  def schemaValidationError(message: String = "Request failed schema validation", validationErrors: NonEmptyList[ValidationError]): SchemaValidationError =
-    SchemaValidationError(message, ErrorCode.SchemaValidation, validationErrors)
+  def xmlSchemaValidationError(
+    message: String = "Request failed schema validation",
+    validationErrors: NonEmptyList[XmlValidationError]
+  ): XmlSchemaValidationError =
+    XmlSchemaValidationError(message, ErrorCode.SchemaValidation, validationErrors)
+
+  def jsonSchemaValidationError(
+    message: String = "Request failed schema validation",
+    validationErrors: NonEmptyList[JsonValidationError]
+  ): JsonSchemaValidationError =
+    JsonSchemaValidationError(message, ErrorCode.SchemaValidation, validationErrors)
 
   def upstreamServiceError(
     message: String = "Internal server error",
@@ -80,16 +89,24 @@ object PresentationError extends CommonFormats {
         (__ \ CodeFieldName).read[ErrorCode]
     )(StandardError.apply _)
 
-  implicit val schemaErrorFormat: OFormat[SchemaValidationError] =
+  implicit val xmlSchemaErrorFormat: OFormat[XmlSchemaValidationError] =
     (
       (__ \ MessageFieldName).format[String] and
         (__ \ CodeFieldName).format[ErrorCode] and
-        (__ \ "validationErrors").format[NonEmptyList[ValidationError]]
-    )(SchemaValidationError.apply, unlift(SchemaValidationError.unapply))
+        (__ \ "validationErrors").format[NonEmptyList[XmlValidationError]]
+    )(XmlSchemaValidationError.apply, unlift(XmlSchemaValidationError.unapply))
+
+  implicit val jsonSchemaErrorFormat: OFormat[JsonSchemaValidationError] =
+    (
+      (__ \ MessageFieldName).format[String] and
+        (__ \ CodeFieldName).format[ErrorCode] and
+        (__ \ "validationErrors").format[NonEmptyList[JsonValidationError]]
+    )(JsonSchemaValidationError.apply, unlift(JsonSchemaValidationError.unapply))
 
   implicit val baseErrorWrites: OWrites[PresentationError] = OWrites {
-    case schemaValidationError: SchemaValidationError => schemaErrorFormat.writes(schemaValidationError)
-    case baseError                                    => baseErrorWrites0.writes(baseError)
+    case xmlSchemaValidationError: XmlSchemaValidationError   => xmlSchemaErrorFormat.writes(xmlSchemaValidationError)
+    case jsonSchemaValidationError: JsonSchemaValidationError => jsonSchemaErrorFormat.writes(jsonSchemaValidationError)
+    case baseError                                            => baseErrorWrites0.writes(baseError)
   }
 
 }
@@ -101,10 +118,16 @@ sealed abstract class PresentationError extends Product with Serializable {
 
 case class StandardError(message: String, code: ErrorCode) extends PresentationError
 
-case class SchemaValidationError(
+case class XmlSchemaValidationError(
   message: String,
   code: ErrorCode,
-  validationErrors: NonEmptyList[ValidationError]
+  validationErrors: NonEmptyList[XmlValidationError]
+) extends PresentationError
+
+case class JsonSchemaValidationError(
+  message: String,
+  code: ErrorCode,
+  validationErrors: NonEmptyList[JsonValidationError]
 ) extends PresentationError
 
 case class UpstreamServiceError(
