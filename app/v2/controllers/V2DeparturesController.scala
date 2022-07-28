@@ -21,7 +21,6 @@ import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
@@ -74,18 +73,7 @@ class V2DeparturesControllerImpl @Inject() (
     with VersionedRouting
     with ErrorTranslator
     with TemporaryFiles
-    with ContentTypeRouting
-    with SourceParallelisation {
-
-  private def auditAndCallService[E, A](in: Source[ByteString, _], auditType: AuditType)(
-    block: Source[ByteString, _] => EitherT[Future, E, A]
-  )(implicit hc: HeaderCarrier, materializer: Materializer): EitherT[Future, E, A] =
-    callInParallel(in) {
-      source =>
-        // fire and forget for auditing
-        auditService.audit(auditType, source)
-        block(source)
-    }
+    with ContentTypeRouting {
 
   def submitDeclaration(): Action[Source[ByteString, _]] =
     contentTypeRoute {
@@ -108,9 +96,13 @@ class V2DeparturesControllerImpl @Inject() (
             implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
             (for {
-              _ <- auditAndCallService(source, AuditType.DeclarationData)(validationService.validateXML(MessageType.DepartureDeclaration, _).asPresentation)
+              _ <- validationService.validateXML(MessageType.DepartureDeclaration, source).asPresentation
 
               fileSource = FileIO.fromPath(temporaryFile)
+              // TODO: See if we can parallelise this call with the one to persistence, below.
+              // Note it's an =, not <-, as we don't care (here) for its response, once it's sent, it should be
+              // non-blocking
+              _ = auditService.audit(AuditType.DeclarationData, fileSource)
 
               declarationResult <- departuresService.saveDeclaration(request.eoriNumber, fileSource).asPresentation
               _ <- routerService
