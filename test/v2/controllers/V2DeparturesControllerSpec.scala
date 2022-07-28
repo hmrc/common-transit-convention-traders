@@ -16,16 +16,12 @@
 
 package v2.controllers
 
-import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Keep
-import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import akka.util.Timeout
 import cats.data.EitherT
 import cats.data.NonEmptyList
 import cats.implicits.catsStdInstancesForFuture
-import cats.syntax.all._
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.reset
@@ -43,7 +39,6 @@ import play.api.http.HeaderNames
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.INTERNAL_SERVER_ERROR
-import play.api.http.Status.REQUEST_ENTITY_TOO_LARGE
 import play.api.http.Status.UNSUPPORTED_MEDIA_TYPE
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json.Json
@@ -79,9 +74,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import scala.util.Try
 import scala.xml.NodeSeq
-import scala.xml.XML
 
 class V2DeparturesControllerSpec
     extends AnyFreeSpec
@@ -190,22 +183,6 @@ class V2DeparturesControllerSpec
         </GOOITEGDS>
       </CC015C>
 
-  val testSink: Sink[ByteString, Future[Either[FailedToValidateError, Unit]]] =
-    Flow
-      .fromFunction {
-        input: ByteString =>
-          Try(XML.loadString(input.decodeString(StandardCharsets.UTF_8))).toEither
-            .leftMap(
-              _ => FailedToValidateError.SchemaFailedToValidateError(NonEmptyList(ValidationError(42, 27, "invalid XML"), Nil))
-            )
-            .flatMap {
-              element =>
-                if (element.label.equalsIgnoreCase("CC015C")) Right(())
-                else Left(FailedToValidateError.SchemaFailedToValidateError(validationErrors = NonEmptyList(ValidationError(1, 1, "an error"), Nil)))
-            }
-      }
-      .toMat(Sink.last)(Keep.right)
-
   val mockValidationService: ValidationService = mock[ValidationService]
   val mockDeparturesPersistenceService         = mock[DeparturesService]
   val mockRouterService                        = mock[RouterService]
@@ -234,18 +211,6 @@ class V2DeparturesControllerSpec
 
   override def beforeEach(): Unit = {
     reset(mockValidationService)
-    when(mockValidationService.validateXML(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
-      .thenAnswer {
-        invocation =>
-          EitherT(
-            invocation
-              .getArgument[Source[ByteString, _]](1)
-              .fold(ByteString())(
-                (current, next) => current ++ next
-              )
-              .runWith(testSink)
-          )
-      }
 
     reset(mockDeparturesPersistenceService)
     when(
@@ -289,6 +254,10 @@ class V2DeparturesControllerSpec
       )
 
       "must return Accepted when body length is within limits and is considered valid" in {
+        when(mockValidationService.validateXML(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.rightT(())
+          )
         val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource(CC015C.mkString), headers = standardHeaders)
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe ACCEPTED
@@ -323,6 +292,12 @@ class V2DeparturesControllerSpec
           val success = if (auditEnabled) "is successful" else "fails"
           s"when auditing $success" in {
             beforeEach()
+            when(
+              mockValidationService.validateXML(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            )
+              .thenAnswer(
+                _ => EitherT.rightT(())
+              )
             if (!auditEnabled) {
               reset(mockAuditService)
               when(mockAuditService.audit(any(), any())(any(), any())).thenReturn(Future.failed(UpstreamErrorResponse("error", 500)))
@@ -356,6 +331,10 @@ class V2DeparturesControllerSpec
       }
 
       "must return Bad Request when body is not an XML document" in {
+        when(mockValidationService.validateXML(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.leftT(FailedToValidateError.SchemaFailedToValidateError(NonEmptyList(ValidationError(42, 27, "invalid XML"), Nil)))
+          )
         val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource("notxml"), headers = standardHeaders)
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe BAD_REQUEST
@@ -373,6 +352,10 @@ class V2DeparturesControllerSpec
       }
 
       "must return Bad Request when body is an XML document that would fail schema validation" in {
+        when(mockValidationService.validateXML(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.leftT(FailedToValidateError.SchemaFailedToValidateError(NonEmptyList(ValidationError(1, 1, "an error"), Nil)))
+          )
         val request =
           fakeRequestDepartures(method = "POST", body = singleUseStringSource(<test></test>.mkString), headers = standardHeaders)
         val result = sut.submitDeclaration()(request)
@@ -391,6 +374,10 @@ class V2DeparturesControllerSpec
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
+        when(mockValidationService.validateXML(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.rightT(())
+          )
         val sut = new V2DeparturesControllerImpl(
           Helpers.stubControllerComponents(),
           SingletonTemporaryFileCreator,
@@ -413,7 +400,10 @@ class V2DeparturesControllerSpec
       }
 
       "must return Internal Service Error if the router service reports an error" in {
-
+        when(mockValidationService.validateXML(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.rightT(())
+          )
         // we're not testing what happens with the departures service here, so just pass through with a right.
         val mockDeparturesPersistenceService = mock[DeparturesService]
         when(
@@ -490,7 +480,10 @@ class V2DeparturesControllerSpec
     }
 
     "must return Internal Service Error if the router service reports an error" in {
-
+      when(mockValidationService.validateXML(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+        .thenAnswer(
+          _ => EitherT.rightT(())
+        )
       // we're not testing what happens with the departures service here, so just pass through with a right.
       val mockDeparturesPersistenceService = mock[DeparturesService]
       when(
