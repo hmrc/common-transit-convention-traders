@@ -145,7 +145,7 @@ class EnsureGuaranteeService @Inject() (
                         }
                       } else Nil
 
-                      val division = modifiedChildren.splitAt(modifiedChildren.indexOf(last) + 1)
+                      val division = modifiedChildren.splitAt(modifiedChildren.lastIndexOf(last) + 1)
                       val finalXml = division._1 ++ toAppendXml ++ division._2
                       e.copy(child = finalXml)
                   }

@@ -287,6 +287,18 @@ class EnsureGuaranteeServiceIntegrationSpec
       normalise(result.right.get) mustEqual normalise(expectedXml)
       validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
     }
+
+    "Multiple identical pieces of XML do not produce invalid XML" in {
+
+      val insertXml = TestData.basicGuarantee ++ TestData.goodsWithDuplicate
+      val xml       = TestData.buildGBEUXml(insertXml)
+
+      val result = service.ensureGuarantee(xml)
+
+      validator.validate(result.right.get, DepartureDeclarationXSD) mustBe a[Right[_, XmlValid]]
+
+    }
+
   }
 
   override protected def portConfigKey: Seq[String] =
