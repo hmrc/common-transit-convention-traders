@@ -64,7 +64,7 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
           case Some(response) => Left(FailedToValidateError.XmlSchemaFailedToValidateError(response.validationErrors))
         }
         .recover {
-          // A bad request might be returned if the stream doesn't contain XML/JSON, in which case, we need to return a bad request.
+          // A bad request might be returned if the stream doesn't contain XML, in which case, we need to return a bad request.
           case UpstreamErrorResponse.Upstream4xxResponse(response) if response.statusCode == BAD_REQUEST =>
             // This can only be a message type error
             Left(FailedToValidateError.InvalidMessageTypeError(messageType.toString))
