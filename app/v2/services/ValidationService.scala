@@ -37,7 +37,12 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[ValidationServiceImpl])
 trait ValidationService {
 
-  def validateXML(messageType: MessageType, source: Source[ByteString, _])(implicit
+  def validateXml(messageType: MessageType, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, FailedToValidateError, Unit]
+
+  def validateJson(messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, FailedToValidateError, Unit]
@@ -47,20 +52,41 @@ trait ValidationService {
 @Singleton
 class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector) extends ValidationService with Logging {
 
-  override def validateXML(messageType: MessageType, source: Source[ByteString, _])(implicit
+  override def validateXml(messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, FailedToValidateError, Unit] =
     EitherT(
       validationConnector
-        .validate(messageType, source)
+        .postXml(messageType, source)
         .map {
           case None           => Right(())
-          case Some(response) => Left(FailedToValidateError.SchemaFailedToValidateError(response.validationErrors))
+          case Some(response) => Left(FailedToValidateError.XmlSchemaFailedToValidateError(response.validationErrors))
         }
         .recover {
           // A bad request might be returned if the stream doesn't contain XML, in which case, we need to return a bad request.
-          case UpstreamErrorResponse.Upstream4xxResponse(response) if response.statusCode == BAD_REQUEST =>
+          case UpstreamErrorResponse(_, BAD_REQUEST, _, _) =>
+            // This can only be a message type error
+            Left(FailedToValidateError.InvalidMessageTypeError(messageType.toString))
+          case upstreamError: UpstreamErrorResponse => Left(FailedToValidateError.UnexpectedError(Some(upstreamError)))
+          case NonFatal(e)                          => Left(FailedToValidateError.UnexpectedError(Some(e)))
+        }
+    )
+
+  override def validateJson(messageType: MessageType, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, FailedToValidateError, Unit] =
+    EitherT(
+      validationConnector
+        .postJson(messageType, source)
+        .map {
+          case None           => Right(())
+          case Some(response) => Left(FailedToValidateError.JsonSchemaFailedToValidateError(response.validationErrors))
+        }
+        .recover {
+          // A bad request might be returned if the stream doesn't contain XML/JSON, in which case, we need to return a bad request.
+          case UpstreamErrorResponse(_, BAD_REQUEST, _, _) =>
             // This can only be a message type error
             Left(FailedToValidateError.InvalidMessageTypeError(messageType.toString))
           case upstreamError: UpstreamErrorResponse => Left(FailedToValidateError.UnexpectedError(Some(upstreamError)))

@@ -33,24 +33,25 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.ValidationConnector
 import v2.models.errors.FailedToValidateError
-import v2.models.errors.ValidationError
+import v2.models.errors.JsonValidationError
+import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
-import v2.models.responses.ValidationResponse
+import v2.models.responses.JsonValidationResponse
+import v2.models.responses.XmlValidationResponse
 
 import java.nio.charset.StandardCharsets
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.concurrent.duration.DurationInt
 
 class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
+  val SchemaValidJson: Source[ByteString, NotUsed]      = Source.single(ByteString("{}", StandardCharsets.UTF_8))
+  val SchemaInvalidJson: Source[ByteString, NotUsed]    = Source.single(ByteString("{", StandardCharsets.UTF_8))
   val SchemaValidXml: Source[ByteString, NotUsed]       = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
   val SchemaInvalidXml: Source[ByteString, NotUsed]     = Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8))
-  val InvalidXml: Source[ByteString, NotUsed]           = Source.single(ByteString("invalid", StandardCharsets.UTF_8))
   val UpstreamError: Source[ByteString, NotUsed]        = Source.single(ByteString("error", StandardCharsets.UTF_8))
   val InternalServiceError: Source[ByteString, NotUsed] = Source.single(ByteString("exception", StandardCharsets.UTF_8))
 
@@ -60,13 +61,25 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
   val fakeValidationConnector: ValidationConnector = new ValidationConnector {
 
-    override def validate(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit
+    override def postXml(messageType: MessageType, stream: Source[ByteString, _])(implicit
       hc: HeaderCarrier,
       ec: ExecutionContext
-    ): Future[Option[ValidationResponse]] =
-      xmlStream match {
+    ): Future[Option[XmlValidationResponse]] =
+      stream match {
         case SchemaValidXml       => Future.successful(None)
-        case SchemaInvalidXml     => Future.successful(Some(ValidationResponse(NonEmptyList(ValidationError(1, 1, "nope"), Nil))))
+        case SchemaInvalidXml     => Future.successful(Some(XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))))
+        case UpstreamError        => Future.failed(upstreamErrorResponse)
+        case InternalServiceError => Future.failed(internalException)
+      }
+
+    override def postJson(messageType: MessageType, stream: Source[ByteString, _])(implicit
+      hc: HeaderCarrier,
+      ec: ExecutionContext
+    ): Future[Option[JsonValidationResponse]] =
+      stream match {
+        case SchemaValidJson => Future.successful(None)
+        case SchemaInvalidJson =>
+          Future.successful(Some(JsonValidationResponse(NonEmptyList(JsonValidationError("IEO15C:messageSender", "MessageSender not expected"), Nil))))
         case UpstreamError        => Future.failed(upstreamErrorResponse)
         case InternalServiceError => Future.failed(internalException)
       }
@@ -76,30 +89,83 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
     "should return a right with no validation errors" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
-      val result = sut.validateXML(MessageType.DepartureDeclaration, SchemaValidXml)
+      val result = sut.validateXml(MessageType.DepartureDeclaration, SchemaValidXml)
 
-      Await.result(result.value, 5.seconds) mustBe Right(())
+      whenReady(result.value) {
+        result => result mustBe Right(())
+      }
     }
 
     "non-conforming XML should return a left with a SchemaFailedToValidateError" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
-      val result = sut.validateXML(MessageType.DepartureDeclaration, SchemaInvalidXml)
+      val result = sut.validateXml(MessageType.DepartureDeclaration, SchemaInvalidXml)
 
-      Await.result(result.value, 5.seconds) mustBe Left(FailedToValidateError.SchemaFailedToValidateError(NonEmptyList(ValidationError(1, 1, "nope"), Nil)))
+      whenReady(result.value) {
+        result => result mustBe Left(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)))
+      }
     }
 
     "an upstream error should return a left with an UnexpectedError" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
-      val result = sut.validateXML(MessageType.DepartureDeclaration, UpstreamError)
+      val result = sut.validateXml(MessageType.DepartureDeclaration, UpstreamError)
 
-      Await.result(result.value, 5.seconds) mustBe Left(FailedToValidateError.UnexpectedError(Some(upstreamErrorResponse)))
+      whenReady(result.value) {
+        result => result mustBe Left(FailedToValidateError.UnexpectedError(Some(upstreamErrorResponse)))
+      }
     }
 
     "an internal exception should return a left with an UnexpectedError" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
-      val result = sut.validateXML(MessageType.DepartureDeclaration, InternalServiceError)
+      val result = sut.validateXml(MessageType.DepartureDeclaration, InternalServiceError)
 
-      Await.result(result.value, 5.seconds) mustBe Left(FailedToValidateError.UnexpectedError(Some(internalException)))
+      whenReady(result.value) {
+        result => result mustBe Left(FailedToValidateError.UnexpectedError(Some(internalException)))
+      }
+    }
+
+  }
+
+  "validating JSON" - {
+
+    "should return a right with no validation errors" in {
+      val sut    = new ValidationServiceImpl(fakeValidationConnector)
+      val result = sut.validateJson(MessageType.DepartureDeclaration, SchemaValidJson)
+
+      whenReady(result.value) {
+        result => result mustBe Right(())
+      }
+    }
+
+    "non-conforming JSON should return a left with a SchemaFailedToValidateError" in {
+      val sut    = new ValidationServiceImpl(fakeValidationConnector)
+      val result = sut.validateJson(MessageType.DepartureDeclaration, SchemaInvalidJson)
+
+      whenReady(result.value) {
+        result =>
+          result mustBe Left(
+            FailedToValidateError.JsonSchemaFailedToValidateError(NonEmptyList(JsonValidationError("IEO15C:messageSender", "MessageSender not expected"), Nil))
+          )
+      }
+    }
+
+    "an upstream error should return a left with an UnexpectedError" in {
+      val sut    = new ValidationServiceImpl(fakeValidationConnector)
+      val result = sut.validateJson(MessageType.DepartureDeclaration, UpstreamError)
+
+      whenReady(result.value) {
+        result =>
+          result mustBe Left(FailedToValidateError.UnexpectedError(Some(upstreamErrorResponse)))
+      }
+    }
+
+    "an internal exception should return a left with an UnexpectedError" in {
+      val sut    = new ValidationServiceImpl(fakeValidationConnector)
+      val result = sut.validateJson(MessageType.DepartureDeclaration, InternalServiceError)
+
+      whenReady(result.value) {
+        result =>
+          result mustBe Left(FailedToValidateError.UnexpectedError(Some(internalException)))
+      }
     }
 
   }

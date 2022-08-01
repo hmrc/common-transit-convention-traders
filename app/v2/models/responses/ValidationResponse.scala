@@ -21,13 +21,24 @@ import play.api.libs.functional.syntax.toInvariantFunctorOps
 import play.api.libs.functional.syntax.unlift
 import play.api.libs.json.OFormat
 import play.api.libs.json.__
-import v2.models.errors.ValidationError
+import v2.models.errors.JsonValidationError
+import v2.models.errors.XmlValidationError
 import v2.models.formats.CommonFormats
 
-object ValidationResponse extends CommonFormats {
+object XmlValidationResponse extends CommonFormats {
 
-  implicit val validationResponseFormat: OFormat[ValidationResponse] =
-    (__ \ "validationErrors").format[NonEmptyList[ValidationError]].inmap(ValidationResponse.apply, unlift(ValidationResponse.unapply))
+  implicit val validationResponseFormat: OFormat[XmlValidationResponse] =
+    (__ \ "validationErrors").format[NonEmptyList[XmlValidationError]].inmap(XmlValidationResponse.apply, unlift(XmlValidationResponse.unapply))
 
 }
-case class ValidationResponse(validationErrors: NonEmptyList[ValidationError])
+
+case class XmlValidationResponse(validationErrors: NonEmptyList[XmlValidationError])
+
+object JsonValidationResponse extends CommonFormats {
+
+  implicit val validationResponseFormat: OFormat[JsonValidationResponse] =
+    (__ \ "validationErrors").format[NonEmptyList[JsonValidationError]].inmap(JsonValidationResponse.apply, unlift(JsonValidationResponse.unapply))
+
+}
+
+case class JsonValidationResponse(validationErrors: NonEmptyList[JsonValidationError])

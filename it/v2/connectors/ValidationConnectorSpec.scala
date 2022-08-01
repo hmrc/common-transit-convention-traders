@@ -41,12 +41,13 @@ import uk.gov.hmrc.http
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
-import uk.gov.hmrc.play.http.test.ResponseMatchers
 import utils.TestMetrics
+import v2.models.errors.JsonValidationError
 import v2.models.errors.PresentationError
-import v2.models.errors.ValidationError
+import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
-import v2.models.responses.ValidationResponse
+import v2.models.responses.XmlValidationResponse
+import v2.models.responses.JsonValidationResponse
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext
@@ -68,126 +69,253 @@ class ValidationConnectorSpec
 
   "POST /message/:messageType/validation" - {
 
-    "On successful validation of schema valid XML, must return NO_CONTENT" in {
+    "When validating XML" - {
 
-      server.stubFor(
-        post(
-          urlEqualTo("/transit-movements-validator/messages/IE015/validation")
-        )
-          .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-          .willReturn(
-            aResponse().withStatus(NO_CONTENT)
+      "On successful validation of schema valid XML, must return NO_CONTENT" in {
+
+        server.stubFor(
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
           )
-      )
-
-      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
-
-      val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8)) // TODO: IE015C
-
-      whenReady(validationConnector.validate(MessageType.DepartureDeclaration, source)) {
-        result =>
-          result mustBe None
-      }
-    }
-
-    "On successful validation of schema invalid XML, must return OK and a validation error" in {
-
-      server.stubFor(
-        post(
-          urlEqualTo("/transit-movements-validator/messages/IE015/validation")
-        )
-          .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-          .willReturn(
-            aResponse()
-              .withStatus(OK)
-              .withBody(
-                Json.stringify(
-                  Json.toJson(
-                    ValidationResponse(NonEmptyList(ValidationError(1, 1, "nope"), Nil))
-                  )
-                )
-              )
-          )
-      )
-
-      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
-
-      val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
-
-      whenReady(validationConnector.validate(MessageType.DepartureDeclaration, source)) {
-        result =>
-          result mustBe Some(ValidationResponse(NonEmptyList(ValidationError(1, 1, "nope"), Nil)))
-      }
-    }
-
-    "On an invalid message type, must return BAD_REQUEST and an appropriate error message" in {
-
-      server.stubFor(
-        post(
-          urlEqualTo("/transit-movements-validator/messages/IE015/validation")
-        )
-          .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-          .willReturn(
-            aResponse()
-              .withStatus(BAD_REQUEST)
-              .withBody(
-                Json.stringify(
-                  Json.toJson(
-                    PresentationError.badRequestError("Invalid message type") // The message doesn't matter here
-                  )
-                )
-              )
-          )
-      )
-
-      implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
-
-      val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
-
-      val future = validationConnector.validate(MessageType.DepartureDeclaration, source).map(Right(_)).recover {
-        case NonFatal(e) => Left(e)
-      }
-
-      whenReady(future) {
-        result =>
-          val thr = result.left.get
-          thr mustBe a[http.UpstreamErrorResponse]
-          thr.asInstanceOf[UpstreamErrorResponse].statusCode mustBe BAD_REQUEST
-          Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj("code" -> "BAD_REQUEST", "message" -> "Invalid message type")
-      }
-
-    }
-
-  }
-
-  "On an incorrect Json fragment, must return a JsResult.Exception" in {
-
-    server.stubFor(
-      post(
-        urlEqualTo("/transit-movements-validator/messages/IE015/validation")
-      )
-        .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-        .willReturn(
-          aResponse()
-            .withStatus(OK)
-            .withBody(
-              "{ hello"
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse().withStatus(NO_CONTENT)
             )
         )
-    )
 
-    implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
-    val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8)) // TODO: IE015C
+        val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8)) // TODO: IE015C
 
-    val future = validationConnector.validate(MessageType.DepartureDeclaration, source).map(Right(_)).recover {
-      case NonFatal(e) => Left(e)
+        whenReady(validationConnector.postXml(MessageType.DepartureDeclaration, source)) {
+          result =>
+            result mustBe None
+        }
+      }
+
+      "On successful validation of schema invalid XML, must return OK and a validation error" in {
+
+        server.stubFor(
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  Json.stringify(
+                    Json.toJson(
+                      XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))
+                    )
+                  )
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
+
+        whenReady(validationConnector.postXml(MessageType.DepartureDeclaration, source)) {
+          result =>
+            result mustBe Some(XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)))
+        }
+      }
+
+      "On an invalid message type, must return BAD_REQUEST and an appropriate error message" in {
+
+        server.stubFor(
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse()
+                .withStatus(BAD_REQUEST)
+                .withBody(
+                  Json.stringify(
+                    Json.toJson(
+                      PresentationError.badRequestError("Invalid message type") // The message doesn't matter here
+                    )
+                  )
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
+
+        val future = validationConnector.postXml(MessageType.DepartureDeclaration, source).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            val thr = result.left.get
+            thr mustBe a[http.UpstreamErrorResponse]
+            thr.asInstanceOf[UpstreamErrorResponse].statusCode mustBe BAD_REQUEST
+            Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj("code" -> "BAD_REQUEST", "message" -> "Invalid message type")
+        }
+
+      }
+
+      "On an incorrect Json fragment, must return a JsResult.Exception" in {
+
+        server.stubFor(
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  "{ hello"
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8)) // TODO: IE015C
+
+        val future = validationConnector.postXml(MessageType.DepartureDeclaration, source).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[JsonParseException]
+        }
+      }
     }
 
-    whenReady(future) {
-      result =>
-        result.left.get mustBe a[JsonParseException]
+    "When validating JSON" - {
+
+      "On successful validation of schema valid JSON, must return NO_CONTENT" in {
+
+        server.stubFor(
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.JSON))
+            .willReturn(
+              aResponse().withStatus(NO_CONTENT)
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val source = Source.single(ByteString("{}", StandardCharsets.UTF_8)) // TODO: IE015C
+
+        whenReady(validationConnector.postJson(MessageType.DepartureDeclaration, source)) {
+          result =>
+            result mustBe None
+        }
+      }
+
+      "On successful validation of schema invalid JSON, must return OK and a validation error" in {
+
+        server.stubFor(
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.JSON))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  Json.stringify(
+                    Json.toJson(
+                      JsonValidationResponse(NonEmptyList(JsonValidationError("path", "error"), Nil))
+                    )
+                  )
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val source = Source.single(ByteString("{", StandardCharsets.UTF_8)) // TODO: IE015C
+
+        whenReady(validationConnector.postJson(MessageType.DepartureDeclaration, source)) {
+          result =>
+            result mustBe Some(JsonValidationResponse(NonEmptyList(JsonValidationError("path", "error"), Nil)))
+        }
+      }
+
+      "On an invalid message type, must return BAD_REQUEST and an appropriate error message" in {
+
+        server.stubFor(
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.JSON))
+            .willReturn(
+              aResponse()
+                .withStatus(BAD_REQUEST)
+                .withBody(
+                  Json.stringify(
+                    Json.toJson(
+                      PresentationError.badRequestError("Invalid message type") // The message doesn't matter here
+                    )
+                  )
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val source = Source.single(ByteString("{}", StandardCharsets.UTF_8)) // TODO: IE015C
+
+        val future = validationConnector.postJson(MessageType.DepartureDeclaration, source).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            val thr = result.left.get
+            thr mustBe a[http.UpstreamErrorResponse]
+            thr.asInstanceOf[UpstreamErrorResponse].statusCode mustBe BAD_REQUEST
+            Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj("code" -> "BAD_REQUEST", "message" -> "Invalid message type")
+        }
+
+      }
+
+      "On an incorrect Json fragment, must return a JsResult.Exception" in {
+
+        server.stubFor(
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.JSON))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  "{ hello"
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val source = Source.single(ByteString("{}", StandardCharsets.UTF_8)) // TODO: IE015C
+
+        val future = validationConnector.postJson(MessageType.DepartureDeclaration, source).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[JsonParseException]
+        }
+      }
+
     }
+
   }
 
   override protected def portConfigKey: Seq[String] =

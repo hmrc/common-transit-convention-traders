@@ -25,14 +25,16 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import v2.models.errors.PresentationError
 import v2.models.errors.FailedToValidateError
-import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
-import v2.models.errors.FailedToValidateError.UnexpectedError
-import v2.models.errors.FailedToValidateError.SchemaFailedToValidateError
+import v2.models.errors.JsonValidationError
 import v2.models.errors.PersistenceError
+import v2.models.errors.PresentationError
 import v2.models.errors.RouterError
-import v2.models.errors.ValidationError
+import v2.models.errors.XmlValidationError
+import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
+import v2.models.errors.FailedToValidateError.JsonSchemaFailedToValidateError
+import v2.models.errors.FailedToValidateError.UnexpectedError
+import v2.models.errors.FailedToValidateError.XmlSchemaFailedToValidateError
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -84,10 +86,18 @@ class ErrorTranslatorSpec extends AnyFreeSpec with Matchers with OptionValues wi
         validationErrorConverter.convert(input) mustBe output
     }
 
-    "a SchemaFailedToValidateError returns a schema validation error presentation error" in {
-      val validationError = ValidationError(1, 1, "error")
-      val input           = SchemaFailedToValidateError(NonEmptyList(validationError, Nil))
-      val output          = PresentationError.schemaValidationError(validationErrors = NonEmptyList(validationError, Nil))
+    "a XmlSchemaFailedToValidateError returns a schema validation error presentation error" in {
+      val validationError = XmlValidationError(1, 1, "error")
+      val input           = XmlSchemaFailedToValidateError(NonEmptyList(validationError, Nil))
+      val output          = PresentationError.xmlSchemaValidationError(validationErrors = NonEmptyList(validationError, Nil))
+
+      validationErrorConverter.convert(input) mustBe output
+    }
+
+    "a JsonSchemaFailedToValidateError returns a schema validation error presentation error" in {
+      val validationError = JsonValidationError("path", "error")
+      val input           = JsonSchemaFailedToValidateError(NonEmptyList(validationError, Nil))
+      val output          = PresentationError.jsonSchemaValidationError(validationErrors = NonEmptyList(validationError, Nil))
 
       validationErrorConverter.convert(input) mustBe output
     }

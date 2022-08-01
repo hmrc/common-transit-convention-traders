@@ -18,7 +18,6 @@ package v2.controllers
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
-import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.google.inject.ImplementedBy
@@ -45,8 +44,6 @@ import v2.services.AuditingService
 import v2.services.DeparturesService
 import v2.services.RouterService
 import v2.services.ValidationService
-
-import scala.concurrent.Future
 
 @ImplementedBy(classOf[V2DeparturesControllerImpl])
 trait V2DeparturesController {
@@ -84,8 +81,19 @@ class V2DeparturesControllerImpl @Inject() (
   def submitDeclarationJSON(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen messageSizeAction()).async(streamFromMemory) {
       implicit request =>
-        request.body.to(Sink.ignore).run()
-        Future.successful(Accepted)
+        withTemporaryFile {
+          (temporaryFile, source) =>
+            implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+            (for {
+              result <- validationService.validateJson(MessageType.DepartureDeclaration, source).asPresentation
+              //TBD: send JSON Departure declaration to converter
+              //fileSource = FileIO.fromPath(temporaryFile)
+              //xmlDeclaration <- conversionService.convertXmlToJson(MessageType.DepartureDeclaration, fileSource).asPresentation
+            } yield result).fold[Result](
+              presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+              _ => Accepted
+            )
+        }.toResult
     }
 
   def submitDeclarationXML(): Action[Source[ByteString, _]] =
@@ -96,7 +104,7 @@ class V2DeparturesControllerImpl @Inject() (
             implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
             (for {
-              _ <- validationService.validateXML(MessageType.DepartureDeclaration, source).asPresentation
+              _ <- validationService.validateXml(MessageType.DepartureDeclaration, source).asPresentation
 
               fileSource = FileIO.fromPath(temporaryFile)
               // TODO: See if we can parallelise this call with the one to persistence, below.

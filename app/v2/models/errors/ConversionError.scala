@@ -16,13 +16,8 @@
 
 package v2.models.errors
 
-import cats.data.NonEmptyList
+sealed trait ConversionError
 
-sealed trait FailedToValidateError
-
-object FailedToValidateError {
-  case class UnexpectedError(thr: Option[Throwable] = None)                                       extends FailedToValidateError
-  case class InvalidMessageTypeError(messageType: String)                                         extends FailedToValidateError
-  case class XmlSchemaFailedToValidateError(validationErrors: NonEmptyList[XmlValidationError])   extends FailedToValidateError
-  case class JsonSchemaFailedToValidateError(validationErrors: NonEmptyList[JsonValidationError]) extends FailedToValidateError
+object ConversionError {
+  case class UnexpectedError(thr: Option[Throwable] = None) extends ConversionError
 }
