@@ -16,6 +16,8 @@
 
 package v2.connectors
 
+import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.google.inject.ImplementedBy
@@ -35,8 +37,6 @@ import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.models.request.MessageType
-import uk.gov.hmrc.http.HttpReads.Implicits._
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -45,7 +45,8 @@ trait ConversionConnector {
 
   def post(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
-    ec: ExecutionContext
+    ec: ExecutionContext,
+    materializer: Materializer
   ): Future[Source[ByteString, _]]
 
 }
@@ -59,7 +60,8 @@ class ConversionConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
 
   override def post(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
-    ec: ExecutionContext
+    ec: ExecutionContext,
+    materializer: Materializer
   ): Future[Source[ByteString, _]] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
@@ -70,14 +72,20 @@ class ConversionConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
           .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
           .addHeaders(HeaderNames.ACCEPT -> MimeTypes.XML)
           .withBody(xmlStream)
-          .execute[HttpResponse]
+          .stream[HttpResponse]
           .flatMap {
             response =>
               response.status match {
                 case OK =>
                   Future.successful(response.bodyAsSource)
                 case _ =>
-                  Future.failed(UpstreamErrorResponse(response.body, response.status))
+                  response.bodyAsSource
+                    .reduce(_ ++ _)
+                    .map(_.utf8String)
+                    .runWith(Sink.head)
+                    .flatMap(
+                      result => Future.failed(UpstreamErrorResponse(result, response.status))
+                    )
               }
           }
     }

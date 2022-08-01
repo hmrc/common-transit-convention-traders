@@ -16,6 +16,7 @@
 
 package v2.services
 
+import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
@@ -37,7 +38,8 @@ trait ConversionService {
 
   def convertXmlToJson(messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
-    ec: ExecutionContext
+    ec: ExecutionContext,
+    materializer: Materializer
   ): EitherT[Future, ConversionError, Source[ByteString, _]]
 
 }
@@ -47,7 +49,8 @@ class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector)
 
   override def convertXmlToJson(messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
-    ec: ExecutionContext
+    ec: ExecutionContext,
+    materializer: Materializer
   ): EitherT[Future, ConversionError, Source[ByteString, _]] =
     EitherT(
       conversionConnector
