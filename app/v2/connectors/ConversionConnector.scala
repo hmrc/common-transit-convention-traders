@@ -43,7 +43,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[ConversionConnectorImpl])
 trait ConversionConnector {
 
-  def post(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit
+  def post(messageType: MessageType, jsonStream: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer
@@ -58,7 +58,7 @@ class ConversionConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
     with V2BaseConnector
     with Logging {
 
-  override def post(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit
+  override def post(messageType: MessageType, jsonStream: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer
@@ -71,7 +71,7 @@ class ConversionConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
           .post(url"$url")
           .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
           .addHeaders(HeaderNames.ACCEPT -> MimeTypes.XML)
-          .withBody(xmlStream)
+          .withBody(jsonStream)
           .stream[HttpResponse]
           .flatMap {
             response =>
