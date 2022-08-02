@@ -86,8 +86,9 @@ class V2DeparturesControllerImpl @Inject() (
             implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
             (for {
               result <- validationService.validateJson(MessageType.DepartureDeclaration, source).asPresentation
+              fileSource = FileIO.fromPath(temporaryFile)
+              _          = auditService.audit(AuditType.DeclarationData, fileSource, MimeTypes.JSON)
               //TBD: send JSON Departure declaration to converter
-              //fileSource = FileIO.fromPath(temporaryFile)
               //xmlDeclaration <- conversionService.convertXmlToJson(MessageType.DepartureDeclaration, fileSource).asPresentation
             } yield result).fold[Result](
               presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -110,7 +111,7 @@ class V2DeparturesControllerImpl @Inject() (
               // TODO: See if we can parallelise this call with the one to persistence, below.
               // Note it's an =, not <-, as we don't care (here) for its response, once it's sent, it should be
               // non-blocking
-              _ = auditService.audit(AuditType.DeclarationData, fileSource)
+              _ = auditService.audit(AuditType.DeclarationData, fileSource, MimeTypes.XML)
 
               declarationResult <- departuresService.saveDeclaration(request.eoriNumber, fileSource).asPresentation
               _ <- routerService
