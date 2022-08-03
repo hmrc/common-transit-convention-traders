@@ -57,7 +57,7 @@ class DepartureMessageConnectorSpec
       val connector = app.injector.instanceOf[DepartureMessageConnector]
 
       val movement = MovementMessage(
-        routes.DepartureMessagesController.getDepartureMessage(DepartureId(1), MessageId(1)).urlWithContext,
+        routing.routes.DeparturesRouter.getMessage(DepartureId(1).toString, MessageId(1).toString).urlWithContext,
         LocalDateTime.now,
         "abc",
         <test>default</test>
@@ -186,13 +186,13 @@ class DepartureMessageConnectorSpec
         LocalDateTime.now,
         Seq(
           MovementMessage(
-            routes.DepartureMessagesController.getDepartureMessage(DepartureId(1), MessageId(1)).urlWithContext,
+            routing.routes.DeparturesRouter.getMessage(DepartureId(1).toString, MessageId(1).toString).urlWithContext,
             LocalDateTime.now,
             "abc",
             <test>default</test>
           ),
           MovementMessage(
-            routes.DepartureMessagesController.getDepartureMessage(DepartureId(1), MessageId(2)).urlWithContext,
+            routing.routes.DeparturesRouter.getMessage(DepartureId(1).toString, MessageId(2).toString).urlWithContext,
             LocalDateTime.now,
             "abc",
             <test>default</test>
@@ -236,13 +236,13 @@ class DepartureMessageConnectorSpec
         LocalDateTime.now,
         Seq(
           MovementMessage(
-            routes.DepartureMessagesController.getDepartureMessage(DepartureId(1), MessageId(1)).urlWithContext,
+            routing.routes.DeparturesRouter.getMessage(DepartureId(1).toString, MessageId(1).toString).urlWithContext,
             LocalDateTime.now,
             "abc",
             <test>default</test>
           ),
           MovementMessage(
-            routes.DepartureMessagesController.getDepartureMessage(DepartureId(1), MessageId(2)).urlWithContext,
+            routing.routes.DeparturesRouter.getMessage(DepartureId(1).toString, MessageId(2).toString).urlWithContext,
             LocalDateTime.now,
             "abc",
             <test>default</test>

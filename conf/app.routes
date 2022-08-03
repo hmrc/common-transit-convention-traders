@@ -19,6 +19,6 @@ GET        /movements/departures/:departureId                       controllers.
 POST       /movements/departures/:departureId/messages              controllers.DepartureMessagesController.sendMessageDownstream(departureId: DepartureId)
 GET        /movements/departures/:departureId/messages              controllers.DepartureMessagesController.getDepartureMessages(departureId: DepartureId, receivedSince: Option[OffsetDateTime] ?= None)
 
-GET        /movements/departures/:departureId/messages/:messageId   controllers.DepartureMessagesController.getDepartureMessage(departureId: DepartureId, messageId: MessageId)
+GET        /movements/departures/:departureId/messages/:messageId   routing.DeparturesRouter.getMessage(departureId: String, messageId: String)
 
 GET        /movements/push-pull-notifications/box                   controllers.PushPullNotificationController.getBoxInfo()

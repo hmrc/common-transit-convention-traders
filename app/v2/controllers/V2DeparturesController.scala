@@ -32,6 +32,7 @@ import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.Json
 import play.api.mvc.Action
+import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
 import play.api.mvc.Result
@@ -44,6 +45,8 @@ import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models.AuditType
 import v2.models.errors.PresentationError
+import v2.models.MessageId
+import v2.models.MovementId
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
@@ -56,10 +59,14 @@ import com.codahale.metrics.Counter
 
 import scala.concurrent.Future
 
+import scala.concurrent.Future
+
 @ImplementedBy(classOf[V2DeparturesControllerImpl])
 trait V2DeparturesController {
 
   def submitDeclaration(): Action[Source[ByteString, _]]
+
+  def getMessage(departureId: MovementId, messageId: MessageId): Action[AnyContent]
 
 }
 
@@ -168,4 +175,11 @@ class V2DeparturesControllerImpl @Inject() (
         .send(MessageType.DepartureDeclaration, request.eoriNumber, declarationResult.departureId, declarationResult.messageId, fileSource)
         .asPresentation
     } yield declarationResult
+
+  def getMessage(departureId: MovementId, messageId: MessageId): Action[AnyContent] =
+    authActionNewEnrolmentOnly.async {
+      implicit request =>
+        Future.successful(Ok)
+    }
+
 }

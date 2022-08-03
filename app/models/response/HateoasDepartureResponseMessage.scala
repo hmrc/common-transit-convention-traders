@@ -27,7 +27,7 @@ import utils.CallOps._
 object HateoasDepartureResponseMessage {
 
   def apply(departureId: DepartureId, messageId: MessageId, m: MovementMessage): JsObject = {
-    val departureUrl = routes.DepartureMessagesController.getDepartureMessage(departureId, messageId).urlWithContext
+    val departureUrl = routing.routes.DeparturesRouter.getMessage(departureId.toString, messageId.toString).urlWithContext
     val messageUrl   = routes.DeparturesController.getDeparture(departureId).urlWithContext
 
     Json.obj(

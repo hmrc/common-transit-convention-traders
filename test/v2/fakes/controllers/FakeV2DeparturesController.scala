@@ -23,10 +23,13 @@ import akka.util.ByteString
 import com.google.inject.Inject
 import play.api.libs.json.Json
 import play.api.mvc.Action
+import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
 import play.api.test.Helpers.stubControllerComponents
 import v2.controllers.V2DeparturesController
 import v2.controllers.stream.StreamingParsers
+import v2.models.MessageId
+import v2.models.MovementId
 
 class FakeV2DeparturesController @Inject() ()(implicit val materializer: Materializer)
     extends BaseController
@@ -41,4 +44,8 @@ class FakeV2DeparturesController @Inject() ()(implicit val materializer: Materia
       Accepted(Json.obj("version" -> 2))
   }
 
+  override def getMessage(departureId: MovementId, messageId: MessageId): Action[AnyContent] = Action {
+    _ =>
+      Accepted(Json.obj("version" -> 2))
+  }
 }

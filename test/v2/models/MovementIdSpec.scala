@@ -25,12 +25,12 @@ import play.api.libs.json.JsSuccess
 
 class MovementIdSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
-  "when MovementId is serialized, return a JsString" in forAll(Gen.listOfN(10, Gen.alphaChar).map(_.mkString)) {
+  "when MovementId is serialized, return a JsString" in forAll(Gen.listOfN(16, Gen.hexChar).map(_.mkString.toLowerCase)) {
     string =>
       MovementId.movementIdFormat.writes(MovementId(string)) mustBe JsString(string)
   }
 
-  "when JsString is deserialized, return a MessageId" in forAll(Gen.listOfN(10, Gen.alphaChar).map(_.mkString)) {
+  "when JsString is deserialized, return a MessageId" in forAll(Gen.listOfN(16, Gen.hexChar).map(_.mkString.toLowerCase)) {
     string =>
       MovementId.movementIdFormat.reads(JsString(string)) mustBe JsSuccess(MovementId(string))
   }
