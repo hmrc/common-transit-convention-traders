@@ -542,7 +542,7 @@ class V2DeparturesControllerSpec
         val mockResponse: EitherT[Future, ConversionError, Source[ByteString, _]] =
           EitherT.rightT(Source.single(ByteString("{}", StandardCharsets.UTF_8)))
         when(
-          mockConversionService.convert(any(), any())(
+          mockConversionService.jsonToXml(any(), any())(
             any[HeaderCarrier],
             any[ExecutionContext],
             any[Materializer]
@@ -555,7 +555,7 @@ class V2DeparturesControllerSpec
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe ACCEPTED
 
-        verify(mockConversionService, times(1)).convert(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
+        verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.JSON))(any(), any())
       }

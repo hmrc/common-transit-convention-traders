@@ -30,6 +30,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils._
+import v2.models.HeaderTypes.jsonToXml
 import v2.models.request.MessageType
 
 import java.nio.charset.StandardCharsets
@@ -62,7 +63,7 @@ class ConversionConnectorSpec
         )
       )
 
-      whenReady(sut.post(MessageType.DepartureDeclaration, jsonStream)) {
+      whenReady(sut.post(MessageType.DepartureDeclaration, jsonStream, jsonToXml)) {
         _.reduce(_ ++ _)
           .map(_.utf8String)
           .runWith(Sink.last)
@@ -81,7 +82,7 @@ class ConversionConnectorSpec
         )
       )
 
-      val postResponse = sut.post(MessageType.DepartureDeclaration, jsonStream)
+      val postResponse = sut.post(MessageType.DepartureDeclaration, jsonStream, jsonToXml)
       // whenReady for some reason not working - even when changing patienceConfig!
       concurrent.Await.ready(postResponse, concurrent.duration.Duration.Inf)
       postResponse.map {

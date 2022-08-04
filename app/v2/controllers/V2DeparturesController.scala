@@ -39,6 +39,7 @@ import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.stream.StreamingParsers
 import v2.models.AuditType
+import v2.models.HeaderTypes.jsonToXml
 import v2.models.request.MessageType
 import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
 import v2.services.AuditingService
@@ -91,7 +92,7 @@ class V2DeparturesControllerImpl @Inject() (
               result <- validationService.validateJson(MessageType.DepartureDeclaration, source).asPresentation
               fileSource = FileIO.fromPath(temporaryFile)
               _          = auditService.audit(AuditType.DeclarationData, fileSource, MimeTypes.JSON)
-              asXml <- conversionService.convert(MessageType.DepartureDeclaration, fileSource).asPresentation
+              asXml <- conversionService.jsonToXml(MessageType.DepartureDeclaration, fileSource).asPresentation
               _ = asXml.runWith(Sink.ignore)
             } yield result).fold[Result](
               presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
