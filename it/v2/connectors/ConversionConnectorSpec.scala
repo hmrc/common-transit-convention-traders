@@ -66,9 +66,9 @@ class ConversionConnectorSpec
         _.reduce(_ ++ _)
           .map(_.utf8String)
           .runWith(Sink.last)
-          .map(
+          .map {
             _ mustBe "a response from the converter"
-          )
+          }
       }
     }
 

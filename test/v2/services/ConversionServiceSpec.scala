@@ -18,6 +18,7 @@ package v2.services
 
 import akka.NotUsed
 import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import org.mockito.ArgumentMatchers.any
@@ -31,6 +32,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.base.TestActorSystem
 import v2.connectors.ConversionConnector
+import v2.models.errors.ConversionError
 import v2.models.request.MessageType
 
 import java.nio.charset.StandardCharsets
@@ -42,7 +44,13 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
     "a successful conversion, should return a Right" in new Setup {
       val result = sut.convert(MessageType.DepartureDeclaration, jsonPayload)
       whenReady(result.value) {
-        _.isRight
+        _.right.get
+          .reduce(_ ++ _)
+          .map(_.utf8String)
+          .runWith(Sink.last)
+          .map(
+            _ mustBe "a response from the converter"
+          )
       }
       verify(mockConnector, times(1)).post(any(), any())(any(), any(), any())
     }
@@ -52,7 +60,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
         .thenReturn(Future.failed(upstreamErrorResponse))
       val result = sut.convert(MessageType.DepartureDeclaration, jsonPayload)
       whenReady(result.value) {
-        _.isLeft
+        _.left.get mustBe ConversionError.UnexpectedError(Some(upstreamErrorResponse))
       }
       verify(mockConnector, times(1)).post(any(), any())(any(), any(), any())
     }
