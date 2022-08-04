@@ -27,7 +27,8 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status.INTERNAL_SERVER_ERROR
-import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.base.TestActorSystem
 import v2.connectors.ConversionConnector
 import v2.models.request.MessageType
@@ -61,15 +62,15 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
     implicit val ec: ExecutionContext = materializer.executionContext
     implicit val hc: HeaderCarrier    = HeaderCarrier()
 
-    val upstreamErrorResponse: Throwable          = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
-    val mockResponse: Source[ByteString, NotUsed] = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
-    val jsonPayload: Source[ByteString, NotUsed]  = Source.single(ByteString("{}", StandardCharsets.UTF_8))
+    lazy val upstreamErrorResponse: Throwable          = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
+    lazy val mockResponse: Source[ByteString, NotUsed] = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
+    lazy val jsonPayload: Source[ByteString, NotUsed]  = Source.single(ByteString("{}", StandardCharsets.UTF_8))
 
-    val mockConnector = mock[ConversionConnector]
+    lazy val mockConnector = mock[ConversionConnector]
     when(mockConnector.post(any[MessageType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
       .thenReturn(Future(mockResponse))
 
-    val sut = new ConversionServiceImpl(mockConnector)
+    lazy val sut = new ConversionServiceImpl(mockConnector)
   }
 
 }
