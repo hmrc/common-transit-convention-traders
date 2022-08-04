@@ -16,6 +16,7 @@
 
 package v2.models.errors
 
+import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
@@ -62,6 +63,19 @@ class PresentationErrorSpec extends AnyFreeSpec with Matchers with MockitoSugar 
           // then we should get an expected output
           json mustBe Json.obj("code" -> "INTERNAL_SERVER_ERROR", "message" -> "Internal server error")
         }
+    }
+
+    "for a binding bad request" in {
+      val gen          = Gen.alphaNumStr.sample.getOrElse("something")
+      val bindingError = PresentationError.bindingBadRequestError(gen)
+
+      val json = Json.toJson(bindingError)
+
+      json mustBe Json.obj(
+        "code"       -> "BAD_REQUEST",
+        "statusCode" -> 400,
+        "message"    -> gen
+      )
     }
 
     "for an upstream error" in {

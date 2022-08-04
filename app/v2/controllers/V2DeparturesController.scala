@@ -50,14 +50,13 @@ import v2.models.MovementId
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
+import v2.models.responses.hateoas.HateoasDepartureMessageResponse
 import v2.services.AuditingService
 import v2.services.ConversionService
 import v2.services.DeparturesService
 import v2.services.RouterService
 import v2.services.ValidationService
 import com.codahale.metrics.Counter
-
-import scala.concurrent.Future
 
 import scala.concurrent.Future
 
@@ -179,7 +178,16 @@ class V2DeparturesControllerImpl @Inject() (
   def getMessage(departureId: MovementId, messageId: MessageId): Action[AnyContent] =
     authActionNewEnrolmentOnly.async {
       implicit request =>
-        Future.successful(Ok)
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+        departuresService
+          .getMessage(request.eoriNumber, departureId, messageId)
+          .asPresentation
+          .fold(
+            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+            response => Ok(Json.toJson(HateoasDepartureMessageResponse(departureId, messageId, response)))
+          )
+
     }
 
 }

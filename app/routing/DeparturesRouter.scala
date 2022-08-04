@@ -25,14 +25,13 @@ import controllers.V1DeparturesController
 import models.domain.DepartureId
 import models.domain.MessageId
 import play.api.mvc.Action
-import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
 import play.api.mvc.PathBindable
 import v2.controllers.V2DeparturesController
 import v2.controllers.stream.StreamingParsers
-import v2.models.MovementId
 import v2.models.Bindings._
+import v2.models.MovementId
 
 class DeparturesRouter @Inject() (
   val controllerComponents: ControllerComponents,

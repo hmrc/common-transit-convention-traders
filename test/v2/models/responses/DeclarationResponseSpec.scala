@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package v2.models.response
+package v2.models.responses
 
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec

@@ -14,14 +14,25 @@
  * limitations under the License.
  */
 
-package v2.models.errors
+package v2.models.responses
 
+import play.api.libs.json.Json
 import v2.models.MessageId
-import v2.models.MovementId
+import v2.models.request.MessageType
 
-sealed trait PersistenceError
+import java.net.URI
+import java.time.OffsetDateTime
 
-object PersistenceError {
-  case class MessageNotFound(movementId: MovementId, messageId: MessageId) extends PersistenceError
-  case class UnexpectedError(thr: Option[Throwable] = None)                extends PersistenceError
+object MessageResponse {
+  implicit lazy val messageResponseFormat = Json.format[MessageResponse]
 }
+
+case class MessageResponse(
+  id: MessageId,
+  received: OffsetDateTime,
+  generated: OffsetDateTime,
+  messageType: MessageType,
+  triggerId: Option[MessageId],
+  url: Option[URI],
+  body: Option[String]
+)

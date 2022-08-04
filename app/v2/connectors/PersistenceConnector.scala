@@ -38,6 +38,9 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.models.EORINumber
 import v2.models.responses.DeclarationResponse
 import uk.gov.hmrc.http.HttpReads.Implicits._
+import v2.models.MessageId
+import v2.models.MovementId
+import v2.models.responses.MessageResponse
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -49,6 +52,11 @@ trait PersistenceConnector {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[DeclarationResponse]
+
+  def getDepartureMessage(eori: EORINumber, departureId: MovementId, messageId: MessageId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[MessageResponse]
 
 }
 
@@ -90,4 +98,31 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
           }
     }
 
+  override def getDepartureMessage(eori: EORINumber, departureId: MovementId, messageId: MessageId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[MessageResponse] = {
+    val url = appConfig.movementsUrl.withPath(movementsGetDepartureMessage(eori, departureId, messageId))
+
+    httpClientV2
+      .get(url"$url")
+      .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+      .execute[HttpResponse]
+      .flatMap {
+        response =>
+          response.status match {
+            case OK =>
+              response.json
+                .validate[MessageResponse]
+                .map(
+                  result => Future.successful(result)
+                )
+                .recoverTotal(
+                  error => Future.failed(JsResult.Exception(error))
+                )
+            case _ =>
+              Future.failed(UpstreamErrorResponse(response.body, response.status))
+          }
+      }
+  }
 }
