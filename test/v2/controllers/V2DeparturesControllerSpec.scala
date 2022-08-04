@@ -65,7 +65,6 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.errors.ConversionError
-import v2.models.errors.ConversionError.UnexpectedError
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.JsonValidationError
 import v2.models.errors.PersistenceError
