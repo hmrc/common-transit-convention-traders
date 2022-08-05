@@ -54,16 +54,16 @@ class DeparturesRouter @Inject() (
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE) =>
       (for {
         convertedDepartureId <- implicitly[PathBindable[V2DepartureId]].bind("departureId", departureId)
-        convertedMovementId  <- implicitly[PathBindable[V2MessageId]].bind("messageId", messageId)
-      } yield (convertedDepartureId, convertedMovementId)).fold(
+        convertedMessageId   <- implicitly[PathBindable[V2MessageId]].bind("messageId", messageId)
+      } yield (convertedDepartureId, convertedMessageId)).fold(
         bindingFailureAction(_),
         converted => v2Departures.getMessage(converted._1, converted._2)
       )
     case _ =>
       (for {
         convertedDepartureId <- implicitly[PathBindable[V1DepartureId]].bind("departureId", departureId)
-        convertedMovementId  <- implicitly[PathBindable[V1MessageId]].bind("messageId", messageId)
-      } yield (convertedDepartureId, convertedMovementId)).fold(
+        convertedMessageId   <- implicitly[PathBindable[V1MessageId]].bind("messageId", messageId)
+      } yield (convertedDepartureId, convertedMessageId)).fold(
         bindingFailureAction(_),
         converted => v1DepartureMessages.getDepartureMessage(converted._1, converted._2)
       )
