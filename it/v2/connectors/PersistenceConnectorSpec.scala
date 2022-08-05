@@ -51,7 +51,7 @@ import utils.TestMetrics
 import utils.GuiceWiremockSuite
 import v2.models.EORINumber
 import v2.models.MessageId
-import v2.models.MovementId
+import v2.models.DepartureId
 import v2.models.errors.ErrorCode
 import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
@@ -91,7 +91,7 @@ class PersistenceConnectorSpec
 
     lazy val okResultGen =
       for {
-        movementId <- shortUuidGen.arbitrary.map(MovementId.apply)
+        movementId <- shortUuidGen.arbitrary.map(DepartureId.apply)
         messageId  <- shortUuidGen.arbitrary.map(MessageId.apply)
       } yield DeclarationResponse(movementId, messageId)
 
@@ -232,12 +232,12 @@ class PersistenceConnectorSpec
         messageType <- Gen.oneOf(MessageType.values)
       } yield MessageResponse(messageId, now, now, messageType, None, None, Some(s"<test>$body</test>"))
 
-    def targetUrl(eoriNumber: EORINumber, departureId: MovementId, messageId: MessageId) =
+    def targetUrl(eoriNumber: EORINumber, departureId: DepartureId, messageId: MessageId) =
       s"/transit-movements/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/${messageId.value}/"
 
     "on successful message, return a success" in {
       val eori            = eoriNumberGen.sample.get
-      val departureId     = shortUuidGen.arbitrary.map(MovementId.apply).sample.get
+      val departureId     = shortUuidGen.arbitrary.map(DepartureId.apply).sample.get
       val messageResponse = okResultGen.sample.get
 
       server.stubFor(
@@ -263,7 +263,7 @@ class PersistenceConnectorSpec
     "on incorrect Json, return an error" in {
 
       val eori        = eoriNumberGen.sample.get
-      val departureId = shortUuidGen.arbitrary.map(MovementId.apply).sample.get
+      val departureId = shortUuidGen.arbitrary.map(DepartureId.apply).sample.get
       val messageId   = shortUuidGen.arbitrary.map(MessageId.apply).sample.get
       server.stubFor(
         get(
@@ -298,7 +298,7 @@ class PersistenceConnectorSpec
 
     "on not found, return an UpstreamServerError" in forAll(
       eoriNumberGen,
-      shortUuidGen.arbitrary.map(MovementId.apply),
+      shortUuidGen.arbitrary.map(DepartureId.apply),
       shortUuidGen.arbitrary.map(MessageId.apply)
     ) {
       (eori, departureId, messageId) =>
@@ -338,7 +338,7 @@ class PersistenceConnectorSpec
 
     "on an internal error, return an UpstreamServerError" in {
       val eori        = eoriNumberGen.sample.get
-      val departureId = shortUuidGen.arbitrary.map(MovementId.apply).sample.get
+      val departureId = shortUuidGen.arbitrary.map(DepartureId.apply).sample.get
       val messageId   = shortUuidGen.arbitrary.map(MessageId.apply).sample.get
 
       server.stubFor(

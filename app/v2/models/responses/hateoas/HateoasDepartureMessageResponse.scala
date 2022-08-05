@@ -19,7 +19,7 @@ package v2.models.responses.hateoas
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.models.MessageId
-import v2.models.MovementId
+import v2.models.DepartureId
 import v2.models.responses.MessageResponse
 
 object HateoasDepartureMessageResponse {
@@ -28,15 +28,15 @@ object HateoasDepartureMessageResponse {
     if (routing.routes.DeparturesRouter.submitDeclaration().url.startsWith("/customs/transits")) ""
     else "/customs/transits"
 
-  def selfUrl(departureId: MovementId, messageId: MessageId) =
+  def selfUrl(departureId: DepartureId, messageId: MessageId) =
     prefix + routing.routes.DeparturesRouter.getMessage(departureId.value, messageId.value).url
 
   // TODO: When we do the departure endpoint, this needs updating
-  def departureUrl(departureId: MovementId) =
+  def departureUrl(departureId: DepartureId) =
     s"/customs/transits/movements/departures/${departureId.value}"
   // prefix + routing.routes.DeparturesRouter.getMessage(departureId.value, "1").url
 
-  def apply(departureId: MovementId, messageId: MessageId, messageResponse: MessageResponse): JsObject =
+  def apply(departureId: DepartureId, messageId: MessageId, messageResponse: MessageResponse): JsObject =
     Json.obj(
       "_links" -> Json.obj(
         "self"      -> Json.obj("href" -> selfUrl(departureId, messageId)),

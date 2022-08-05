@@ -26,7 +26,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import v2.models.MessageId
-import v2.models.MovementId
+import v2.models.DepartureId
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.JsonValidationError
 import v2.models.errors.PersistenceError
@@ -109,7 +109,7 @@ class ErrorTranslatorSpec extends AnyFreeSpec with Matchers with OptionValues wi
   "Persistence Error" - {
     "a MessageNotFound error returns a NOT_FOUND" in {
       val hexId      = Gen.listOfN(16, Gen.hexChar).map(_.mkString.toLowerCase)
-      val movementId = MovementId(hexId.sample.getOrElse("1234567890abcedf"))
+      val movementId = DepartureId(hexId.sample.getOrElse("1234567890abcedf"))
       val messageId  = MessageId(hexId.sample.getOrElse("1234567890abcedf"))
 
       val input  = PersistenceError.MessageNotFound(movementId, messageId)

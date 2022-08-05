@@ -36,7 +36,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
 import v2.models.MessageId
-import v2.models.MovementId
+import v2.models.DepartureId
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
@@ -68,9 +68,9 @@ class DeparturesServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
     "on a successful submission, should return a Right" in {
       when(mockConnector.post(EORINumber(any[String]), eqTo(validRequest))(any[HeaderCarrier], any[ExecutionContext]))
-        .thenReturn(Future.successful(DeclarationResponse(MovementId("ABC"), MessageId("123"))))
+        .thenReturn(Future.successful(DeclarationResponse(DepartureId("ABC"), MessageId("123"))))
       val result                                                  = sut.saveDeclaration(EORINumber("1"), validRequest)
-      val expected: Either[PersistenceError, DeclarationResponse] = Right(DeclarationResponse(MovementId("ABC"), MessageId("123")))
+      val expected: Either[PersistenceError, DeclarationResponse] = Right(DeclarationResponse(DepartureId("ABC"), MessageId("123")))
       whenReady(result.value) {
         _ mustBe expected
       }
@@ -102,31 +102,31 @@ class DeparturesServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
         Some("<test></test>")
       )
 
-      when(mockConnector.getDepartureMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any(), any()))
+      when(mockConnector.getDepartureMessage(EORINumber(any()), DepartureId(any()), MessageId(any()))(any(), any()))
         .thenReturn(Future.successful(successResponse))
 
-      val result = sut.getMessage(EORINumber("1"), MovementId("1234567890abcdef"), MessageId("1234567890abcdef"))
+      val result = sut.getMessage(EORINumber("1"), DepartureId("1234567890abcdef"), MessageId("1234567890abcdef"))
       whenReady(result.value) {
         _ mustBe Right(successResponse)
       }
     }
 
     "when a message is not found, should return a Left with an MessageNotFound" in {
-      when(mockConnector.getDepartureMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any(), any()))
+      when(mockConnector.getDepartureMessage(EORINumber(any()), DepartureId(any()), MessageId(any()))(any(), any()))
         .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-      val result = sut.getMessage(EORINumber("1"), MovementId("1234567890abcdef"), MessageId("1234567890abcdef"))
+      val result = sut.getMessage(EORINumber("1"), DepartureId("1234567890abcdef"), MessageId("1234567890abcdef"))
       whenReady(result.value) {
-        _ mustBe Left(PersistenceError.MessageNotFound(MovementId("1234567890abcdef"), MessageId("1234567890abcdef")))
+        _ mustBe Left(PersistenceError.MessageNotFound(DepartureId("1234567890abcdef"), MessageId("1234567890abcdef")))
       }
     }
 
     "on a failed submission, should return a Left with an UnexpectedError" in {
       val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
-      when(mockConnector.getDepartureMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any(), any()))
+      when(mockConnector.getDepartureMessage(EORINumber(any()), DepartureId(any()), MessageId(any()))(any(), any()))
         .thenReturn(Future.failed(error))
 
-      val result = sut.getMessage(EORINumber("1"), MovementId("1234567890abcdef"), MessageId("1234567890abcdef"))
+      val result = sut.getMessage(EORINumber("1"), DepartureId("1234567890abcdef"), MessageId("1234567890abcdef"))
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
       }

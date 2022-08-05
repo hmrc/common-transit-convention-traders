@@ -46,7 +46,7 @@ import utils.TestMetrics
 import utils.GuiceWiremockSuite
 import v2.models.EORINumber
 import v2.models.MessageId
-import v2.models.MovementId
+import v2.models.DepartureId
 import v2.models.errors.ErrorCode
 import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
@@ -80,12 +80,12 @@ class RouterConnectorSpec
     })
 
     lazy val messageTypeGen = Gen.oneOf(Seq(MessageType.DepartureDeclaration))
-    lazy val movementIdGen  = shortUuidGen.arbitrary.map(MovementId.apply)
+    lazy val movementIdGen  = shortUuidGen.arbitrary.map(DepartureId.apply)
     lazy val messageIdGen   = shortUuidGen.arbitrary.map(MessageId.apply)
 
     lazy val eoriNumberGen = Gen.alphaNumStr.map(EORINumber.apply)
 
-    def targetUrl(eoriNumber: EORINumber, messageType: MessageType, movementId: MovementId, messageId: MessageId) =
+    def targetUrl(eoriNumber: EORINumber, messageType: MessageType, movementId: DepartureId, messageId: MessageId) =
       s"/transit-movements-router/traders/${eoriNumber.value}/movements/${messageType.movementType}/${movementId.value}/messages/${messageId.value}/"
 
     "When ACCEPTED is received, must returned a successful future" in forAll(eoriNumberGen, messageTypeGen, movementIdGen, messageIdGen) {

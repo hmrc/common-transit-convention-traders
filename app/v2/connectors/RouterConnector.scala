@@ -35,7 +35,7 @@ import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.models.EORINumber
 import v2.models.MessageId
-import v2.models.MovementId
+import v2.models.DepartureId
 import v2.models.request.MessageType
 import uk.gov.hmrc.http.HttpReads.Implicits._
 
@@ -45,7 +45,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[RouterConnectorImpl])
 trait RouterConnector {
 
-  def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
+  def post(messageType: MessageType, eoriNumber: EORINumber, movementId: DepartureId, messageId: MessageId, body: Source[ByteString, _])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): Future[Unit]
@@ -58,7 +58,7 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
     with HasMetrics
     with Logging {
 
-  override def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
+  override def post(messageType: MessageType, eoriNumber: EORINumber, movementId: DepartureId, messageId: MessageId, body: Source[ByteString, _])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): Future[Unit] =

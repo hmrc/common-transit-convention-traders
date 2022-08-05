@@ -39,7 +39,7 @@ import v2.models.EORINumber
 import v2.models.responses.DeclarationResponse
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import v2.models.MessageId
-import v2.models.MovementId
+import v2.models.DepartureId
 import v2.models.responses.MessageResponse
 
 import scala.concurrent.ExecutionContext
@@ -53,7 +53,7 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[DeclarationResponse]
 
-  def getDepartureMessage(eori: EORINumber, departureId: MovementId, messageId: MessageId)(implicit
+  def getDepartureMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[MessageResponse]
@@ -98,7 +98,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
           }
     }
 
-  override def getDepartureMessage(eori: EORINumber, departureId: MovementId, messageId: MessageId)(implicit
+  override def getDepartureMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[MessageResponse] = {

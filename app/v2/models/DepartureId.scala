@@ -19,8 +19,8 @@ package v2.models
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 
-object MovementId {
-  implicit lazy val movementIdFormat: Format[MovementId] = Json.valueFormat[MovementId]
+object DepartureId {
+  implicit lazy val departureIdFormat: Format[DepartureId] = Json.valueFormat[DepartureId]
 }
 
-case class MovementId(value: String) extends AnyVal
+case class DepartureId(value: String) extends AnyVal

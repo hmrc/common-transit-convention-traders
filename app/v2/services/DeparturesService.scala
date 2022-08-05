@@ -28,7 +28,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
 import v2.models.MessageId
-import v2.models.MovementId
+import v2.models.DepartureId
 import v2.models.errors.PersistenceError
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.MessageResponse
@@ -45,7 +45,7 @@ trait DeparturesService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, DeclarationResponse]
 
-  def getMessage(eori: EORINumber, departureId: MovementId, messageId: MessageId)(implicit
+  def getMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MessageResponse]
@@ -68,7 +68,7 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
         }
     )
 
-  override def getMessage(eori: EORINumber, departureId: MovementId, messageId: MessageId)(implicit
+  override def getMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MessageResponse] =

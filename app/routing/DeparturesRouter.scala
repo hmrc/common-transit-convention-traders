@@ -22,8 +22,8 @@ import akka.util.ByteString
 import com.google.inject.Inject
 import controllers.V1DepartureMessagesController
 import controllers.V1DeparturesController
-import models.domain.DepartureId
-import models.domain.MessageId
+import models.domain.{DepartureId => V1DepartureId}
+import models.domain.{MessageId => V1MessageId}
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
@@ -31,7 +31,8 @@ import play.api.mvc.PathBindable
 import v2.controllers.V2DeparturesController
 import v2.controllers.stream.StreamingParsers
 import v2.models.Bindings._
-import v2.models.MovementId
+import v2.models.{DepartureId => V2DepartureId}
+import v2.models.{MessageId => V2MessageId}
 
 class DeparturesRouter @Inject() (
   val controllerComponents: ControllerComponents,
@@ -52,16 +53,16 @@ class DeparturesRouter @Inject() (
   def getMessage(departureId: String, messageId: String): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE) =>
       (for {
-        convertedDepartureId <- implicitly[PathBindable[MovementId]].bind("departureId", departureId)
-        convertedMovementId  <- implicitly[PathBindable[v2.models.MessageId]].bind("messageId", messageId)
+        convertedDepartureId <- implicitly[PathBindable[V2DepartureId]].bind("departureId", departureId)
+        convertedMovementId  <- implicitly[PathBindable[V2MessageId]].bind("messageId", messageId)
       } yield (convertedDepartureId, convertedMovementId)).fold(
         bindingFailureAction(_),
         converted => v2Departures.getMessage(converted._1, converted._2)
       )
     case _ =>
       (for {
-        convertedDepartureId <- implicitly[PathBindable[DepartureId]].bind("departureId", departureId)
-        convertedMovementId  <- implicitly[PathBindable[MessageId]].bind("messageId", messageId)
+        convertedDepartureId <- implicitly[PathBindable[V1DepartureId]].bind("departureId", departureId)
+        convertedMovementId  <- implicitly[PathBindable[V1MessageId]].bind("messageId", messageId)
       } yield (convertedDepartureId, convertedMovementId)).fold(
         bindingFailureAction(_),
         converted => v1DepartureMessages.getDepartureMessage(converted._1, converted._2)

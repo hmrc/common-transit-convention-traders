@@ -46,7 +46,7 @@ import v2.controllers.stream.StreamingParsers
 import v2.models.AuditType
 import v2.models.errors.PresentationError
 import v2.models.MessageId
-import v2.models.MovementId
+import v2.models.DepartureId
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
@@ -65,7 +65,7 @@ trait V2DeparturesController {
 
   def submitDeclaration(): Action[Source[ByteString, _]]
 
-  def getMessage(departureId: MovementId, messageId: MessageId): Action[AnyContent]
+  def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent]
 
 }
 
@@ -175,7 +175,7 @@ class V2DeparturesControllerImpl @Inject() (
         .asPresentation
     } yield declarationResult
 
-  def getMessage(departureId: MovementId, messageId: MessageId): Action[AnyContent] =
+  def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent] =
     authActionNewEnrolmentOnly.async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)

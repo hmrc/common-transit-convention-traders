@@ -22,7 +22,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import v2.models.MessageId
-import v2.models.MovementId
+import v2.models.DepartureId
 import v2.models.request.MessageType
 import v2.models.responses.MessageResponse
 
@@ -36,7 +36,7 @@ class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with
 
   "with a valid message response, create a valid HateoasDepartureMessageResponse" in {
     val messageId   = MessageId(hexId.sample.get)
-    val departureId = MovementId(hexId.sample.get)
+    val departureId = DepartureId(hexId.sample.get)
     val triggerId   = MessageId(hexId.sample.get)
     val body        = Gen.alphaNumStr.sample.get
     val response = MessageResponse(
