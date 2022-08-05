@@ -36,7 +36,7 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[ConversionServiceImpl])
 trait ConversionService {
 
-  def convertXmlToJson(messageType: MessageType, source: Source[ByteString, _])(implicit
+  def convertJsonToXml(messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer
@@ -47,7 +47,7 @@ trait ConversionService {
 @Singleton
 class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector) extends ConversionService with Logging {
 
-  override def convertXmlToJson(messageType: MessageType, source: Source[ByteString, _])(implicit
+  override def convertJsonToXml(messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer
