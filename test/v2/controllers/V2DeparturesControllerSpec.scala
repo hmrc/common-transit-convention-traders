@@ -65,12 +65,12 @@ import v2.models.AuditType
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
-import v2.models.errors.ConversionError
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.JsonValidationError
 import v2.models.errors.PersistenceError
 import v2.models.errors.RouterError
 import v2.models.errors.XmlValidationError
+import v2.models.errors.ConversionError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.services.AuditingService
@@ -260,7 +260,6 @@ class V2DeparturesControllerSpec
       }
 
     reset(mockAuditService)
-    when(mockAuditService.audit(any(), any())(any(), any())).thenReturn(Future.successful(()))
   }
 
   val testSinkXml: Sink[ByteString, Future[Either[FailedToValidateError, Unit]]] =
@@ -331,11 +330,11 @@ class V2DeparturesControllerSpec
       )
 
       "must return Accepted when body length is within limits and is considered valid" in {
-
         when(mockValidationService.validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
             _ => EitherT.rightT(())
           )
+        when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
 
         val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource(CC015C.mkString), headers = standardHeaders)
         val result  = sut.submitDeclaration()(request)
@@ -357,7 +356,7 @@ class V2DeparturesControllerSpec
           )
         )
 
-        verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any())(any(), any())
+        verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
         verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
         verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
         verify(mockRouterService, times(1)).send(eqTo(MessageType.DepartureDeclaration), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
@@ -375,6 +374,7 @@ class V2DeparturesControllerSpec
             invocation =>
               xmlValidationMockAnswer(invocation)
           }
+          when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
 
           val success = if (auditEnabled) "is successful" else "fails"
           s"when auditing $success" in {
@@ -388,7 +388,7 @@ class V2DeparturesControllerSpec
 
             if (!auditEnabled) {
               reset(mockAuditService)
-              when(mockAuditService.audit(any(), any())(any(), any())).thenReturn(Future.failed(UpstreamErrorResponse("error", 500)))
+              when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.failed(UpstreamErrorResponse("error", 500)))
             }
             val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource(CC015C.mkString), headers = standardHeaders)
             val result  = sut.submitDeclaration()(request)
@@ -410,7 +410,7 @@ class V2DeparturesControllerSpec
               )
             )
 
-            verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any())(any(), any())
+            verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
             verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
             verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
             verify(mockRouterService, times(1))
@@ -423,6 +423,7 @@ class V2DeparturesControllerSpec
           .thenAnswer(
             _ => EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList(XmlValidationError(42, 27, "invalid XML"), Nil)))
           )
+
         val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource("notxml"), headers = standardHeaders)
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe BAD_REQUEST
@@ -546,6 +547,7 @@ class V2DeparturesControllerSpec
           invocation =>
             jsonValidationMockAnswer(invocation)
         }
+        when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())).thenReturn(Future.successful(()))
 
         val jsonToXmlConversion = (invocation: InvocationOnMock) =>
           EitherT.rightT(
@@ -570,6 +572,7 @@ class V2DeparturesControllerSpec
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
         verify(mockConversionService).convertJsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
+        verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.JSON))(any(), any())
       }
 
       "must return Bad Request when body is not an JSON document" in {
@@ -594,6 +597,8 @@ class V2DeparturesControllerSpec
             )
           )
         )
+
+        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
       }
 
       "must return Bad Request when body is an JSON document that would fail schema validation" in {
@@ -619,6 +624,8 @@ class V2DeparturesControllerSpec
             )
           )
         )
+
+        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
       }
 
       "must return Internal Service Error if the JSON to XML conversion service reports an error" in {

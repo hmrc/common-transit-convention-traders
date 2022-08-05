@@ -97,7 +97,7 @@ class V2DeparturesControllerImpl @Inject() (
             (for {
               _ <- validationService.validateJson(messageType, source).asPresentation
               fileSource = FileIO.fromPath(temporaryFile)
-              _          = auditService.audit(AuditType.DeclarationData, fileSource)
+              _          = auditService.audit(AuditType.DeclarationData, fileSource, MimeTypes.JSON)
 
               xmlSource         <- conversionService.convertJsonToXml(messageType, fileSource).asPresentation
               _                 <- validationService.validateXml(messageType, fileSource).asPresentation
@@ -109,7 +109,7 @@ class V2DeparturesControllerImpl @Inject() (
         }.toResult
     }
 
-  private def persistAndSendToEIS(
+  def persistAndSendToEIS(
     src: Source[ByteString, _]
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]): EitherT[Future, PresentationError, DeclarationResponse] =
     withTemporaryFileA(
@@ -139,7 +139,7 @@ class V2DeparturesControllerImpl @Inject() (
               // TODO: See if we can parallelise this call with the one to persistence, below.
               // Note it's an =, not <-, as we don't care (here) for its response, once it's sent, it should be
               // non-blocking
-              _ = auditService.audit(AuditType.DeclarationData, fileSource)
+              _ = auditService.audit(AuditType.DeclarationData, fileSource, MimeTypes.XML)
 
               declarationResult <- departuresService.saveDeclaration(request.eoriNumber, fileSource).asPresentation
               _ <- routerService

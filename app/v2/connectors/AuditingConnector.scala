@@ -42,7 +42,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[AuditingConnectorImpl])
 trait AuditingConnector {
 
-  def post(auditType: AuditType, source: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit]
+  def post(auditType: AuditType, source: Source[ByteString, _], contentType: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit]
 
 }
 
@@ -52,14 +52,14 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, appConfig: AppC
     with HasMetrics
     with Logging {
 
-  def post(auditType: AuditType, source: Source[ByteString, _])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+  def post(auditType: AuditType, source: Source[ByteString, _], contentType: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     withMetricsTimerAsync(MetricsKeys.AuditingBackend.Post) {
       _ =>
         val url = appConfig.auditingUrl.withPath(auditingRoute(auditType))
 
         httpClient
           .post(url"$url")
-          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+          .addHeaders(HeaderNames.CONTENT_TYPE -> contentType)
           .withBody(source)
           .execute[HttpResponse]
           .flatMap {

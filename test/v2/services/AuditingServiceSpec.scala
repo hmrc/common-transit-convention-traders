@@ -27,6 +27,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.Logger
+import play.api.http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.connectors.AuditingConnector
 import v2.models.AuditType
@@ -38,36 +39,39 @@ class AuditingServiceSpec extends AnyFreeSpec with Matchers with ScalaFutures wi
 
   implicit val hc = HeaderCarrier()
 
-  "Posting an audit message" - {
-    "on success, return the successful future" in {
-      val mockConnector = mock[AuditingConnector]
-      when(mockConnector.post(any(), any())(any(), any())).thenReturn(Future.successful(()))
-      val sut = new AuditingServiceImpl(mockConnector)
+  "Posting an audit message" - Seq(MimeTypes.XML, MimeTypes.JSON).foreach {
+    contentType =>
+      s"when contentType equals $contentType" - {
+        "on success, return the successful future" in {
+          val mockConnector = mock[AuditingConnector]
+          when(mockConnector.post(any(), any(), eqTo(contentType))(any(), any())).thenReturn(Future.successful(()))
+          val sut = new AuditingServiceImpl(mockConnector)
 
-      whenReady(sut.audit(AuditType.DeclarationData, Source.empty)) {
-        _ =>
-          verify(mockConnector, times(1)).post(any(), any())(any(), any())
+          whenReady(sut.audit(AuditType.DeclarationData, Source.empty, contentType)) {
+            _ =>
+              verify(mockConnector, times(1)).post(any(), any(), eqTo(contentType))(any(), any())
+          }
+        }
+
+        "on failure, will log a message" in {
+          val mockConnector = mock[AuditingConnector]
+          val exception     = new IllegalStateException("failed")
+          when(mockConnector.post(any(), any(), eqTo(contentType))(any(), any())).thenReturn(Future.failed(exception))
+
+          object Harness extends AuditingServiceImpl(mockConnector) {
+            val logger0 = mock[org.slf4j.Logger]
+            when(logger0.isWarnEnabled()).thenReturn(true)
+            override val logger: Logger = new Logger(logger0)
+          }
+
+          whenReady(Harness.audit(AuditType.DeclarationData, Source.empty, contentType)) {
+            _ =>
+              verify(mockConnector, times(1)).post(any(), any(), eqTo(contentType))(any(), any())
+              verify(Harness.logger0, times(1)).warn(eqTo("Unable to audit payload due to an exception"), eqTo(exception))
+          }
+
+        }
       }
-    }
-
-    "on failure, will log a message" in {
-      val mockConnector = mock[AuditingConnector]
-      val exception     = new IllegalStateException("failed")
-      when(mockConnector.post(any(), any())(any(), any())).thenReturn(Future.failed(exception))
-
-      object Harness extends AuditingServiceImpl(mockConnector) {
-        val logger0 = mock[org.slf4j.Logger]
-        when(logger0.isWarnEnabled()).thenReturn(true)
-        override val logger: Logger = new Logger(logger0)
-      }
-
-      whenReady(Harness.audit(AuditType.DeclarationData, Source.empty)) {
-        _ =>
-          verify(mockConnector, times(1)).post(any(), any())(any(), any())
-          verify(Harness.logger0, times(1)).warn(eqTo("Unable to audit payload due to an exception"), eqTo(exception))
-      }
-
-    }
   }
 
 }
