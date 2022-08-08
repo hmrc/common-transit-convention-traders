@@ -150,4 +150,11 @@ traits:
                         "body": "<CC015C>...</CC015C>"
                       }
               404:
-                description: When message does not exist, has been archived or is not available to the EORI number.
+                body:
+                  application/json:
+                    type: types.errorResponse
+                    examples:
+                      schemaValidation:
+                        description: The requested message does not exist, has been archived, or is not available to the EORI number
+                        value:
+                          code: NOT_FOUND
