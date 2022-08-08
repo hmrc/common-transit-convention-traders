@@ -101,7 +101,7 @@ class V2DeparturesControllerImpl @Inject() (
 
               xmlSource         <- conversionService.convertJsonToXml(messageType, fileSource).asPresentation
               _                 <- validationService.validateXml(messageType, fileSource).asPresentation
-              declarationResult <- persistAndSendToEIS(xmlSource) //.asPresentation
+              declarationResult <- persistAndSendToEIS(xmlSource)
             } yield declarationResult).fold[Result](
               presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
               result => Accepted(HateoasDepartureDeclarationResponse(result.departureId))

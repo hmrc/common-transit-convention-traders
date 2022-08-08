@@ -629,7 +629,6 @@ class V2DeparturesControllerSpec
       }
 
       "must return Internal Service Error if the JSON to XML conversion service reports an error" in {
-//        TODO: WIP
         when(
           mockValidationService
             .validateJson(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
@@ -657,6 +656,51 @@ class V2DeparturesControllerSpec
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
         verify(mockConversionService).convertJsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
+      }
+
+      "must return Bad Request after JSON to XML conversion if the XML validation service reports an error" in {
+        validateXmlNotOkStub()
+        when(
+          mockValidationService
+            .validateJson(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+        ).thenAnswer {
+          invocation =>
+            jsonValidationMockAnswer(invocation)
+        }
+
+        when(
+          mockConversionService
+            .convertJsonToXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext],
+              any[Materializer]
+            )
+        ).thenAnswer {
+          invocation =>
+            EitherT.rightT(
+              invocation.getArgument[Source[ByteString, _]](1)
+            )
+        }
+
+        val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource(CC015Cjson), headers = standardHeaders)
+        val result  = sut.submitDeclaration()(request)
+
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "SCHEMA_VALIDATION",
+          "message" -> "Request failed schema validation",
+          "validationErrors" -> Seq(
+            Json.obj(
+              "lineNumber"   -> 1,
+              "columnNumber" -> 1,
+              "message"      -> "invalid XML"
+            )
+          )
+        )
+
+        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
+        verify(mockConversionService).convertJsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
+        verify(mockValidationService).validateXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
@@ -848,5 +892,14 @@ class V2DeparturesControllerSpec
     ).thenAnswer {
       _ =>
         EitherT.rightT(())
+    }
+
+  def validateXmlNotOkStub(): OngoingStubbing[EitherT[Future, FailedToValidateError, Unit]] =
+    when(
+      mockValidationService
+        .validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+    ).thenAnswer {
+      _ =>
+        EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList(XmlValidationError(1, 1, "invalid XML"), Nil)))
     }
 }
