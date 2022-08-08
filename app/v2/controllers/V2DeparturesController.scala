@@ -18,6 +18,7 @@ package v2.controllers
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.google.inject.ImplementedBy
@@ -41,6 +42,7 @@ import v2.models.AuditType
 import v2.models.request.MessageType
 import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
 import v2.services.AuditingService
+import v2.services.ConversionService
 import v2.services.DeparturesService
 import v2.services.RouterService
 import v2.services.ValidationService
@@ -59,6 +61,7 @@ class V2DeparturesControllerImpl @Inject() (
   authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
   validationService: ValidationService,
   departuresService: DeparturesService,
+  conversionService: ConversionService,
   routerService: RouterService,
   auditService: AuditingService,
   messageSizeAction: MessageSizeActionProvider
@@ -88,8 +91,8 @@ class V2DeparturesControllerImpl @Inject() (
               result <- validationService.validateJson(MessageType.DepartureDeclaration, source).asPresentation
               fileSource = FileIO.fromPath(temporaryFile)
               _          = auditService.audit(AuditType.DeclarationData, fileSource, MimeTypes.JSON)
-              //TBD: send JSON Departure declaration to converter
-              //xmlDeclaration <- conversionService.convertXmlToJson(MessageType.DepartureDeclaration, fileSource).asPresentation
+              asXml <- conversionService.jsonToXml(MessageType.DepartureDeclaration, fileSource).asPresentation
+              _ = asXml.runWith(Sink.ignore)
             } yield result).fold[Result](
               presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
               _ => Accepted

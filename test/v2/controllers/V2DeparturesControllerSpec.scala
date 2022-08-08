@@ -16,6 +16,7 @@
 
 package v2.controllers
 
+import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
@@ -63,6 +64,7 @@ import v2.models.AuditType
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.errors.ConversionError
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.JsonValidationError
 import v2.models.errors.PersistenceError
@@ -71,6 +73,7 @@ import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.services.AuditingService
+import v2.services.ConversionService
 import v2.services.DeparturesService
 import v2.services.RouterService
 import v2.services.ValidationService
@@ -197,14 +200,15 @@ class V2DeparturesControllerSpec
   val mockDeparturesPersistenceService         = mock[DeparturesService]
   val mockRouterService                        = mock[RouterService]
   val mockAuditService                         = mock[AuditingService]
+  val mockConversionService                    = mock[ConversionService]
 
   lazy val sut: V2DeparturesController = new V2DeparturesControllerImpl(
     Helpers.stubControllerComponents(),
     SingletonTemporaryFileCreator,
     FakeAuthNewEnrolmentOnlyAction(),
     mockValidationService,
-    //mockConversionService,
     mockDeparturesPersistenceService,
+    mockConversionService,
     mockRouterService,
     mockAuditService,
     FakeMessageSizeActionProvider
@@ -469,6 +473,7 @@ class V2DeparturesControllerSpec
           FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
           mockValidationService,
           mockDeparturesPersistenceService,
+          mockConversionService,
           mockRouterService,
           mockAuditService,
           FakeMessageSizeActionProvider
@@ -502,6 +507,7 @@ class V2DeparturesControllerSpec
           FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
           mockValidationService,
           mockDeparturesPersistenceService,
+          mockConversionService,
           mockRouterService,
           mockAuditService,
           FakeMessageSizeActionProvider
@@ -533,10 +539,23 @@ class V2DeparturesControllerSpec
         }
         when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())).thenReturn(Future.successful(()))
 
+        val mockResponse: EitherT[Future, ConversionError, Source[ByteString, _]] =
+          EitherT.rightT(Source.single(ByteString("{}", StandardCharsets.UTF_8)))
+        when(
+          mockConversionService.jsonToXml(any(), any())(
+            any[HeaderCarrier],
+            any[ExecutionContext],
+            any[Materializer]
+          )
+        ).thenAnswer(
+          _ => mockResponse
+        )
+
         val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource(CC015Cjson), headers = standardHeaders)
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe ACCEPTED
 
+        verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.JSON))(any(), any())
       }
@@ -650,6 +669,7 @@ class V2DeparturesControllerSpec
         FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
         mockValidationService,
         mockDeparturesPersistenceService,
+        mockConversionService,
         mockRouterService,
         mockAuditService,
         FakeMessageSizeActionProvider

@@ -28,22 +28,22 @@ import config.AppConfig
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
-import play.api.http.HeaderNames
-import play.api.http.MimeTypes
 import play.api.http.Status.OK
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import v2.models.HeaderType
 import v2.models.request.MessageType
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 @ImplementedBy(classOf[ConversionConnectorImpl])
 trait ConversionConnector {
 
-  def post(messageType: MessageType, jsonStream: Source[ByteString, _])(implicit
+  def post(messageType: MessageType, jsonStream: Source[ByteString, _], headerType: HeaderType)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer
@@ -58,7 +58,7 @@ class ConversionConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
     with V2BaseConnector
     with Logging {
 
-  override def post(messageType: MessageType, jsonStream: Source[ByteString, _])(implicit
+  override def post(messageType: MessageType, jsonStream: Source[ByteString, _], headerType: HeaderType)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer
@@ -69,8 +69,7 @@ class ConversionConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
 
         httpClientV2
           .post(url"$url")
-          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
-          .addHeaders(HeaderNames.ACCEPT -> MimeTypes.XML)
+          .addHeaders(headerType.header: _*)
           .withBody(jsonStream)
           .stream[HttpResponse]
           .flatMap {
