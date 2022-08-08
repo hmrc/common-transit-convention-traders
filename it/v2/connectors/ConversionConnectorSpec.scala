@@ -83,14 +83,16 @@ class ConversionConnectorSpec
       )
 
       val postResponse = sut.post(MessageType.DepartureDeclaration, jsonStream, jsonToXml)
-      // whenReady for some reason not working - even when changing patienceConfig!
-      concurrent.Await.ready(postResponse, concurrent.duration.Duration.Inf)
-      postResponse.map {
-        result =>
-          result.map {
-            error =>
-              error mustBe UpstreamErrorResponse("Internal service error", 500)
-          }
+      val failedResponse = postResponse
+        .map(
+          _ => fail("Future unexpectedly succeeded, expected and UpstreamErrorResponse")
+        )
+        .recover {
+          case error @ UpstreamErrorResponse("Internal service error", 500, _, _) => error
+          case _                                                                  => fail("Future failed but with unexpected arguments")
+        }
+      whenReady(failedResponse) {
+        _ mustBe UpstreamErrorResponse("Internal service error", 500)
       }
     }
   }
