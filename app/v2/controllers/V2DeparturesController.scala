@@ -39,7 +39,6 @@ import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.stream.StreamingParsers
 import v2.models.AuditType
-import v2.models.HeaderTypes.jsonToXml
 import v2.models.request.MessageType
 import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
 import v2.services.AuditingService

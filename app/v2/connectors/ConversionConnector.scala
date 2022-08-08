@@ -28,8 +28,6 @@ import config.AppConfig
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
-import play.api.http.HeaderNames
-import play.api.http.MimeTypes
 import play.api.http.Status.OK
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier

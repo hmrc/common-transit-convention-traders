@@ -26,7 +26,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import v2.connectors.ConversionConnector
 import v2.models.HeaderType
 import v2.models.HeaderTypes
-import v2.models.HeaderTypes.jsonToXml
 import v2.models.errors.ConversionError
 import v2.models.request.MessageType
 
