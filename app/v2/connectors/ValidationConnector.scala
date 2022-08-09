@@ -30,15 +30,13 @@ import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status.NO_CONTENT
 import play.api.http.Status.OK
-import play.api.libs.json.JsResult
-import play.api.libs.json.Json
-import uk.gov.hmrc.http.client.HttpClientV2
+import play.api.libs.json.Reads
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
-import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.request.MessageType
-import uk.gov.hmrc.http.HttpReads.Implicits._
 import v2.models.responses.JsonValidationResponse
 import v2.models.responses.XmlValidationResponse
 
@@ -73,20 +71,7 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
   ): Future[Option[XmlValidationResponse]] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
-        post(messageType, stream, MimeTypes.XML)
-          .flatMap {
-            case Some(responseBody) =>
-              Json
-                .parse(responseBody)
-                .validate[XmlValidationResponse]
-                .map(
-                  result => Future.successful(Some(result))
-                )
-                .recoverTotal(
-                  error => Future.failed(JsResult.Exception(error))
-                )
-            case None => Future.successful(None)
-          }
+        post[XmlValidationResponse](messageType, stream, MimeTypes.XML)
     }
 
   override def postJson(messageType: MessageType, stream: Source[ByteString, _])(implicit
@@ -95,26 +80,14 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
   ): Future[Option[JsonValidationResponse]] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
-        post(messageType, stream, MimeTypes.JSON)
-          .flatMap {
-            case Some(responseBody) =>
-              Json
-                .parse(responseBody)
-                .validate[JsonValidationResponse]
-                .map(
-                  result => Future.successful(Some(result))
-                )
-                .recoverTotal(
-                  error => Future.failed(JsResult.Exception(error))
-                )
-            case None => Future.successful(None)
-          }
+        post[JsonValidationResponse](messageType, stream, MimeTypes.JSON)
     }
 
-  private def post(messageType: MessageType, stream: Source[ByteString, _], contentType: String)(implicit
+  private def post[A](messageType: MessageType, stream: Source[ByteString, _], contentType: String)(implicit
     hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[Option[String]] = {
+    ec: ExecutionContext,
+    reads: Reads[A]
+  ): Future[Option[A]] = {
     val url = appConfig.validatorUrl.withPath(validationRoute(messageType))
 
     httpClientV2
@@ -125,12 +98,9 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
       .flatMap {
         response =>
           response.status match {
-            case NO_CONTENT =>
-              Future.successful(None)
-            case OK =>
-              Future.successful(Some(response.body))
-            case _ =>
-              Future.failed(UpstreamErrorResponse(response.body, response.status))
+            case NO_CONTENT => Future.successful(None)
+            case OK         => response.as[A].map(Option(_))
+            case _          => response.error
 
           }
       }
