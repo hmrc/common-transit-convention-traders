@@ -57,6 +57,7 @@ import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import utils.TestMetrics
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
@@ -212,7 +213,8 @@ class V2DeparturesControllerSpec
     mockDeparturesPersistenceService,
     mockRouterService,
     mockAuditService,
-    FakeMessageSizeActionProvider
+    FakeMessageSizeActionProvider,
+    new TestMetrics()
   )
 
   implicit val timeout: Timeout = 5.seconds
@@ -478,7 +480,8 @@ class V2DeparturesControllerSpec
           mockDeparturesPersistenceService,
           mockRouterService,
           mockAuditService,
-          FakeMessageSizeActionProvider
+          FakeMessageSizeActionProvider,
+          new TestMetrics()
         )
 
         val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
@@ -518,7 +521,8 @@ class V2DeparturesControllerSpec
           mockDeparturesPersistenceService,
           mockRouterService,
           mockAuditService,
-          FakeMessageSizeActionProvider
+          FakeMessageSizeActionProvider,
+          new TestMetrics()
         )
 
         val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
@@ -871,7 +875,8 @@ class V2DeparturesControllerSpec
         mockDeparturesPersistenceService,
         mockRouterService,
         mockAuditService,
-        FakeMessageSizeActionProvider
+        FakeMessageSizeActionProvider,
+        new TestMetrics()
       )
 
       val request  = fakeRequestDepartures("POST", body = singleUseStringSource(CC015C.mkString), headers = standardHeaders)

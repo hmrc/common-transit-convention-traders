@@ -24,6 +24,9 @@ import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import com.kenshoo.play.metrics.Metrics
+import metrics.ErrorRatioGauge
+import metrics.HasActionMetrics
 import play.api.Logging
 import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
@@ -49,6 +52,8 @@ import v2.services.ConversionService
 import v2.services.DeparturesService
 import v2.services.RouterService
 import v2.services.ValidationService
+import com.codahale.metrics.Counter
+import com.codahale.metrics.Gauge
 
 import scala.concurrent.Future
 
@@ -69,7 +74,8 @@ class V2DeparturesControllerImpl @Inject() (
   departuresService: DeparturesService,
   routerService: RouterService,
   auditService: AuditingService,
-  messageSizeAction: MessageSizeActionProvider
+  messageSizeAction: MessageSizeActionProvider,
+  val metrics: Metrics
 )(implicit val materializer: Materializer)
     extends BaseController
     with V2DeparturesController
@@ -78,7 +84,13 @@ class V2DeparturesControllerImpl @Inject() (
     with VersionedRouting
     with ErrorTranslator
     with TemporaryFiles
-    with ContentTypeRouting {
+    with ContentTypeRouting
+    with HasActionMetrics {
+
+  lazy val sCounter: Counter = counter(s"success-counter")
+  lazy val fCounter: Counter = counter(s"failure-counter")
+
+  lazy val gauge: Gauge[_] = registry.gauge(s"error-ratio", () => ErrorRatioGauge(sCounter, fCounter))
 
   def submitDeclaration(): Action[Source[ByteString, _]] =
     contentTypeRoute {
@@ -93,18 +105,24 @@ class V2DeparturesControllerImpl @Inject() (
           (temporaryFile, source) =>
             implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
             val messageType: MessageType   = MessageType.DepartureDeclaration
+            val fileSource                 = FileIO.fromPath(temporaryFile)
 
             (for {
               _ <- validationService.validateJson(messageType, source).asPresentation
-              fileSource = FileIO.fromPath(temporaryFile)
-              _          = auditService.audit(AuditType.DeclarationData, fileSource, MimeTypes.JSON)
+              _ = auditService.audit(AuditType.DeclarationData, fileSource, MimeTypes.JSON)
 
               xmlSource         <- conversionService.convertJsonToXml(messageType, fileSource).asPresentation
               _                 <- validationService.validateXml(messageType, fileSource).asPresentation
               declarationResult <- persistAndSendToEIS(xmlSource)
             } yield declarationResult).fold[Result](
-              presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-              result => Accepted(HateoasDepartureDeclarationResponse(result.departureId))
+              presentationError => {
+                fCounter.inc()
+                Status(presentationError.code.statusCode)(Json.toJson(presentationError))
+              },
+              result => {
+                sCounter.inc()
+                Accepted(HateoasDepartureDeclarationResponse(result.departureId))
+              }
             )
         }.toResult
     }

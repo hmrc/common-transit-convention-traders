@@ -55,6 +55,9 @@ trait HasMetrics {
   def histo(metricKey: String) =
     registry.histogram(metricKey)
 
+  def counter(metricsKey: String) =
+    registry.counter(metricsKey)
+
   class MetricsTimer(metricKey: String) {
     val timerContext   = registry.timer(s"$metricKey-timer").time()
     val successCounter = registry.counter(s"$metricKey-success-counter")
