@@ -25,7 +25,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
-import org.scalacheck.Arbitrary
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
@@ -47,11 +47,12 @@ import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
-import utils.TestMetrics
 import utils.GuiceWiremockSuite
+import utils.TestMetrics
+import v2.utils.CommonGenerators
+import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
-import v2.models.DepartureId
 import v2.models.errors.ErrorCode
 import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
@@ -73,31 +74,25 @@ class PersistenceConnectorSpec
     with GuiceWiremockSuite
     with ScalaFutures
     with IntegrationPatience
-    with ScalaCheckDrivenPropertyChecks {
+    with ScalaCheckDrivenPropertyChecks
+    with CommonGenerators {
 
   lazy val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
   lazy val persistenceConnector: PersistenceConnectorImpl = new PersistenceConnectorImpl(httpClientV2, appConfig, new TestMetrics())
   implicit lazy val ec: ExecutionContext                  = app.materializer.executionContext
 
-  lazy val shortUuidGen: Arbitrary[String] = Arbitrary(Gen.long.map {
-    l: Long =>
-      f"${BigInt(l)}%016x"
-  })
-
-  lazy val eoriNumberGen = Gen.alphaNumStr.map(EORINumber.apply)
-
   "POST /traders/:eori/movements/departures" - {
 
     lazy val okResultGen =
       for {
-        movementId <- shortUuidGen.arbitrary.map(DepartureId.apply)
-        messageId  <- shortUuidGen.arbitrary.map(MessageId.apply)
+        movementId <- arbitrary[DepartureId]
+        messageId  <- arbitrary[MessageId]
       } yield DeclarationResponse(movementId, messageId)
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures/"
 
-    "On successful creation of an element, must return OK" in forAll(eoriNumberGen, okResultGen) {
+    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen) {
       (eoriNumber, okResult) =>
         server.stubFor(
           post(
@@ -119,7 +114,7 @@ class PersistenceConnectorSpec
         }
     }
 
-    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(eoriNumberGen) {
+    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
       eoriNumber =>
         server.stubFor(
           post(
@@ -152,7 +147,7 @@ class PersistenceConnectorSpec
         }
     }
 
-    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(eoriNumberGen) {
+    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
       eoriNumber =>
         server.stubFor(
           post(
@@ -185,7 +180,7 @@ class PersistenceConnectorSpec
         }
     }
 
-    "On an incorrect Json fragment, must return a JsResult.Exception" in forAll(eoriNumberGen) {
+    "On an incorrect Json fragment, must return a JsResult.Exception" in forAll(arbitrary[EORINumber]) {
       eoriNumber =>
         server.stubFor(
           post(
@@ -218,16 +213,11 @@ class PersistenceConnectorSpec
 
   "GET /traders/:eori/movements/departure/:departureid/messages/:message" - {
 
-    lazy val shortUuidGen: Arbitrary[String] = Arbitrary(Gen.long.map {
-      l: Long =>
-        f"${BigInt(l)}%016x"
-    })
-
     val now = OffsetDateTime.now(ZoneOffset.UTC)
 
     lazy val okResultGen =
       for {
-        messageId   <- shortUuidGen.arbitrary.map(MessageId.apply)
+        messageId   <- arbitrary[MessageId]
         body        <- Gen.alphaNumStr
         messageType <- Gen.oneOf(MessageType.values)
       } yield MessageResponse(messageId, now, now, messageType, None, None, Some(s"<test>$body</test>"))
@@ -236,8 +226,8 @@ class PersistenceConnectorSpec
       s"/transit-movements/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/${messageId.value}/"
 
     "on successful message, return a success" in {
-      val eori            = eoriNumberGen.sample.get
-      val departureId     = shortUuidGen.arbitrary.map(DepartureId.apply).sample.get
+      val eori            = arbitrary[EORINumber].sample.get
+      val departureId     = arbitrary[DepartureId].sample.get
       val messageResponse = okResultGen.sample.get
 
       server.stubFor(
@@ -262,9 +252,9 @@ class PersistenceConnectorSpec
 
     "on incorrect Json, return an error" in {
 
-      val eori        = eoriNumberGen.sample.get
-      val departureId = shortUuidGen.arbitrary.map(DepartureId.apply).sample.get
-      val messageId   = shortUuidGen.arbitrary.map(MessageId.apply).sample.get
+      val eori        = arbitrary[EORINumber].sample.get
+      val departureId = arbitrary[DepartureId].sample.get
+      val messageId   = arbitrary[MessageId].sample.get
       server.stubFor(
         get(
           urlEqualTo(targetUrl(eori, departureId, messageId))
@@ -297,9 +287,9 @@ class PersistenceConnectorSpec
     }
 
     "on not found, return an UpstreamServerError" in forAll(
-      eoriNumberGen,
-      shortUuidGen.arbitrary.map(DepartureId.apply),
-      shortUuidGen.arbitrary.map(MessageId.apply)
+      arbitrary[EORINumber],
+      arbitrary[DepartureId],
+      arbitrary[MessageId]
     ) {
       (eori, departureId, messageId) =>
         server.stubFor(
@@ -337,9 +327,9 @@ class PersistenceConnectorSpec
     }
 
     "on an internal error, return an UpstreamServerError" in {
-      val eori        = eoriNumberGen.sample.get
-      val departureId = shortUuidGen.arbitrary.map(DepartureId.apply).sample.get
-      val messageId   = shortUuidGen.arbitrary.map(MessageId.apply).sample.get
+      val eori        = arbitrary[EORINumber].sample.get
+      val departureId = arbitrary[DepartureId].sample.get
+      val messageId   = arbitrary[MessageId].sample.get
 
       server.stubFor(
         get(

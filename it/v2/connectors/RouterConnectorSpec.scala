@@ -24,7 +24,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
-import org.scalacheck.Arbitrary
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
@@ -51,6 +51,7 @@ import v2.models.errors.ErrorCode
 import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
+import v2.utils.CommonGenerators
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext
@@ -64,7 +65,8 @@ class RouterConnectorSpec
     with GuiceWiremockSuite
     with ScalaFutures
     with IntegrationPatience
-    with ScalaCheckDrivenPropertyChecks {
+    with ScalaCheckDrivenPropertyChecks
+    with CommonGenerators {
 
   lazy val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
@@ -74,21 +76,17 @@ class RouterConnectorSpec
 
   "POST /traders/:eori/message/:movementType/:messageId/movements/:movementId" - {
 
-    lazy val shortUuidGen: Arbitrary[String] = Arbitrary(Gen.long.map {
-      l: Long =>
-        f"${BigInt(l)}%016x"
-    })
-
     lazy val messageTypeGen = Gen.oneOf(Seq(MessageType.DepartureDeclaration))
-    lazy val movementIdGen  = shortUuidGen.arbitrary.map(DepartureId.apply)
-    lazy val messageIdGen   = shortUuidGen.arbitrary.map(MessageId.apply)
-
-    lazy val eoriNumberGen = Gen.alphaNumStr.map(EORINumber.apply)
 
     def targetUrl(eoriNumber: EORINumber, messageType: MessageType, movementId: DepartureId, messageId: MessageId) =
       s"/transit-movements-router/traders/${eoriNumber.value}/movements/${messageType.movementType}/${movementId.value}/messages/${messageId.value}/"
 
-    "When ACCEPTED is received, must returned a successful future" in forAll(eoriNumberGen, messageTypeGen, movementIdGen, messageIdGen) {
+    "When ACCEPTED is received, must returned a successful future" in forAll(
+      arbitrary[EORINumber],
+      messageTypeGen,
+      arbitrary[DepartureId],
+      arbitrary[MessageId]
+    ) {
       (eoriNumber, messageType, movementId, messageId) =>
         server.stubFor(
           post(
@@ -115,10 +113,10 @@ class RouterConnectorSpec
     }
 
     "On an upstream internal server error, get a failed Future with an UpstreamErrorResponse" in forAll(
-      eoriNumberGen,
+      arbitrary[EORINumber],
       messageTypeGen,
-      movementIdGen,
-      messageIdGen
+      arbitrary[DepartureId],
+      arbitrary[MessageId]
     ) {
       (eoriNumber, messageType, movementId, messageId) =>
         server.stubFor(
