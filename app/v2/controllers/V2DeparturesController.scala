@@ -18,6 +18,7 @@ package v2.controllers
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
@@ -111,9 +112,10 @@ class V2DeparturesControllerImpl @Inject() (
               _ <- validationService.validateJson(messageType, source).asPresentation
               _ = auditService.audit(AuditType.DeclarationData, fileSource, MimeTypes.JSON)
 
-              xmlSource         <- conversionService.convertJsonToXml(messageType, fileSource).asPresentation
+              xmlSource         <- conversionService.jsonToXml(messageType, fileSource).asPresentation
               _                 <- validationService.validateXml(messageType, fileSource).asPresentation
               declarationResult <- persistAndSendToEIS(xmlSource)
+              _ = xmlSource.runWith(Sink.ignore)
             } yield declarationResult).fold[Result](
               presentationError => {
                 fCounter.inc()

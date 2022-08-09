@@ -24,6 +24,8 @@ import com.google.inject.ImplementedBy
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.connectors.ConversionConnector
+import v2.models.HeaderType
+import v2.models.HeaderTypes
 import v2.models.errors.ConversionError
 import v2.models.request.MessageType
 
@@ -36,25 +38,37 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[ConversionServiceImpl])
 trait ConversionService {
 
-  def convertJsonToXml(messageType: MessageType, source: Source[ByteString, _])(implicit
+  def convert(messageType: MessageType, source: Source[ByteString, _], headerType: HeaderType)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer
   ): EitherT[Future, ConversionError, Source[ByteString, _]]
+
+  def jsonToXml(messageType: MessageType, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext,
+    materializer: Materializer
+  ): EitherT[Future, ConversionError, Source[ByteString, _]] = convert(messageType, source, HeaderTypes.jsonToXml)
+
+  def xmlToJson(messageType: MessageType, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext,
+    materializer: Materializer
+  ): EitherT[Future, ConversionError, Source[ByteString, _]] = convert(messageType, source, HeaderTypes.xmlToJson)
 
 }
 
 @Singleton
 class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector) extends ConversionService with Logging {
 
-  override def convertJsonToXml(messageType: MessageType, source: Source[ByteString, _])(implicit
+  override def convert(messageType: MessageType, source: Source[ByteString, _], headerType: HeaderType)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer
   ): EitherT[Future, ConversionError, Source[ByteString, _]] =
     EitherT(
       conversionConnector
-        .post(messageType, source)
+        .post(messageType, source, headerType)
         .map {
           case response => Right(response)
         }

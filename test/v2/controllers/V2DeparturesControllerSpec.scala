@@ -66,6 +66,7 @@ import v2.models.AuditType
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.errors.ConversionError
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.JsonValidationError
 import v2.models.errors.PersistenceError
@@ -560,7 +561,7 @@ class V2DeparturesControllerSpec
 
         when(
           mockConversionService
-            .convertJsonToXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
+            .jsonToXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -574,8 +575,9 @@ class V2DeparturesControllerSpec
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe ACCEPTED
 
+        verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
-        verify(mockConversionService).convertJsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
+        verify(mockConversionService).jsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.JSON))(any(), any())
       }
 
@@ -644,7 +646,7 @@ class V2DeparturesControllerSpec
 
         when(
           mockConversionService
-            .convertJsonToXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
+            .jsonToXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -659,7 +661,7 @@ class V2DeparturesControllerSpec
         status(result) mustBe INTERNAL_SERVER_ERROR
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
-        verify(mockConversionService).convertJsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
+        verify(mockConversionService).jsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
       }
 
       "must return Bad Request after JSON to XML conversion if the XML validation service reports an error" in {
@@ -674,7 +676,7 @@ class V2DeparturesControllerSpec
 
         when(
           mockConversionService
-            .convertJsonToXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
+            .jsonToXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -703,7 +705,7 @@ class V2DeparturesControllerSpec
         )
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
-        verify(mockConversionService).convertJsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
+        verify(mockConversionService).jsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
         verify(mockValidationService).validateXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
       }
 
@@ -720,7 +722,7 @@ class V2DeparturesControllerSpec
 
         when(
           mockConversionService
-            .convertJsonToXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
+            .jsonToXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -745,7 +747,7 @@ class V2DeparturesControllerSpec
         status(result) mustBe INTERNAL_SERVER_ERROR
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
-        verify(mockConversionService).convertJsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
+        verify(mockConversionService).jsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
         verify(mockDeparturesPersistenceService).saveDeclaration(any[String].asInstanceOf[EORINumber], any())(any(), any())
       }
 
@@ -762,7 +764,7 @@ class V2DeparturesControllerSpec
 
         when(
           mockConversionService
-            .convertJsonToXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
+            .jsonToXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -804,7 +806,7 @@ class V2DeparturesControllerSpec
         status(result) mustBe INTERNAL_SERVER_ERROR
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
-        verify(mockConversionService).convertJsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
+        verify(mockConversionService).jsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
         verify(mockDeparturesPersistenceService).saveDeclaration(any[String].asInstanceOf[EORINumber], any())(any(), any())
         verify(mockRouterService).send(
           eqTo(MessageType.DepartureDeclaration),
