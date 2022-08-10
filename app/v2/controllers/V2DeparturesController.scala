@@ -16,9 +16,9 @@
 
 package v2.controllers
 
+import akka.stream.IOResult
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
-import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
@@ -26,7 +26,6 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
-import metrics.ErrorRatioGauge
 import metrics.HasActionMetrics
 import play.api.Logging
 import play.api.http.MimeTypes
@@ -54,7 +53,6 @@ import v2.services.DeparturesService
 import v2.services.RouterService
 import v2.services.ValidationService
 import com.codahale.metrics.Counter
-import com.codahale.metrics.Gauge
 
 import scala.concurrent.Future
 
@@ -91,8 +89,6 @@ class V2DeparturesControllerImpl @Inject() (
   lazy val sCounter: Counter = counter(s"success-counter")
   lazy val fCounter: Counter = counter(s"failure-counter")
 
-  lazy val gauge: Gauge[_] = registry.gauge(s"error-ratio", () => ErrorRatioGauge(sCounter, fCounter))
-
   def submitDeclaration(): Action[Source[ByteString, _]] =
     contentTypeRoute {
       case Some(MimeTypes.XML)  => submitDeclarationXML()
@@ -115,7 +111,6 @@ class V2DeparturesControllerImpl @Inject() (
               xmlSource         <- conversionService.jsonToXml(messageType, fileSource).asPresentation
               _                 <- validationService.validateXml(messageType, fileSource).asPresentation
               declarationResult <- persistAndSendToEIS(xmlSource)
-              _ = xmlSource.runWith(Sink.ignore)
             } yield declarationResult).fold[Result](
               presentationError => {
                 fCounter.inc()
@@ -136,12 +131,7 @@ class V2DeparturesControllerImpl @Inject() (
       src,
       (temporaryFile, _) => {
         val fileSource = FileIO.fromPath(temporaryFile)
-        (for {
-          declarationResult <- departuresService.saveDeclaration(request.eoriNumber, fileSource).asPresentation
-          _ <- routerService
-            .send(MessageType.DepartureDeclaration, request.eoriNumber, declarationResult.departureId, declarationResult.messageId, fileSource)
-            .asPresentation
-        } yield declarationResult)
+        persistAndSend(fileSource)
       }
     )
 
@@ -161,10 +151,7 @@ class V2DeparturesControllerImpl @Inject() (
               // non-blocking
               _ = auditService.audit(AuditType.DeclarationData, fileSource, MimeTypes.XML)
 
-              declarationResult <- departuresService.saveDeclaration(request.eoriNumber, fileSource).asPresentation
-              _ <- routerService
-                .send(MessageType.DepartureDeclaration, request.eoriNumber, declarationResult.departureId, declarationResult.messageId, fileSource)
-                .asPresentation
+              declarationResult <- persistAndSend(fileSource)
             } yield declarationResult).fold[Result](
               presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
               result => Accepted(HateoasDepartureDeclarationResponse(result.departureId))
@@ -172,4 +159,13 @@ class V2DeparturesControllerImpl @Inject() (
         }.toResult
     }
 
+  private def persistAndSend(
+    fileSource: Source[ByteString, Future[IOResult]]
+  )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
+    for {
+      declarationResult <- departuresService.saveDeclaration(request.eoriNumber, fileSource).asPresentation
+      _ <- routerService
+        .send(MessageType.DepartureDeclaration, request.eoriNumber, declarationResult.departureId, declarationResult.messageId, fileSource)
+        .asPresentation
+    } yield declarationResult
 }
