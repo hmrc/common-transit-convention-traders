@@ -34,6 +34,8 @@ import v2.models.Bindings._
 import v2.models.{DepartureId => V2DepartureId}
 import v2.models.{MessageId => V2MessageId}
 
+import java.time.OffsetDateTime
+
 class DeparturesRouter @Inject() (
   val controllerComponents: ControllerComponents,
   v1Departures: V1DeparturesController,
@@ -66,6 +68,24 @@ class DeparturesRouter @Inject() (
       } yield (convertedDepartureId, convertedMessageId)).fold(
         bindingFailureAction(_),
         converted => v1DepartureMessages.getDepartureMessage(converted._1, converted._2)
+      )
+
+  }
+
+  def getMessageIds(departureId: String, receivedSince: Option[OffsetDateTime] = None): Action[Source[ByteString, _]] = route {
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE) =>
+      (for {
+        convertedDepartureId <- implicitly[PathBindable[V2DepartureId]].bind("departureId", departureId)
+      } yield convertedDepartureId).fold(
+        bindingFailureAction(_),
+        converted => v2Departures.getMessageIds(converted)
+      )
+    case _ =>
+      (for {
+        convertedDepartureId <- implicitly[PathBindable[V1DepartureId]].bind("departureId", departureId)
+      } yield convertedDepartureId).fold(
+        bindingFailureAction(_),
+        converted => v1DepartureMessages.getDepartureMessages(converted, receivedSince)
       )
 
   }

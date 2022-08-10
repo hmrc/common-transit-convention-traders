@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package v2.models.errors
+package v2.models.responses
 
+import play.api.libs.json.Json
+import play.api.libs.json.Reads
 import v2.models.MessageId
-import v2.models.DepartureId
 
-sealed trait PersistenceError
-
-object PersistenceError {
-  case class MessageNotFound(movementId: DepartureId, messageId: MessageId) extends PersistenceError
-  case class DepartureNotFound(departureId: DepartureId)                    extends PersistenceError
-  case class UnexpectedError(thr: Option[Throwable] = None)                 extends PersistenceError
+object MessageIdsResponse {
+  implicit val idsResponseReads: Reads[MessageIdsResponse] = Json.reads[MessageIdsResponse]
 }
+
+case class MessageIdsResponse(ids: Seq[MessageId])

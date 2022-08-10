@@ -26,7 +26,7 @@ object HateoasResponseDeparture {
 
   def apply(departureId: DepartureId, created: String, updated: String, movementReferenceNumber: Option[String]): JsObject = {
     val departureUrl = routes.DeparturesController.getDeparture(departureId).urlWithContext
-    val messagesUrl  = routes.DepartureMessagesController.getDepartureMessages(departureId).urlWithContext
+    val messagesUrl  = routing.routes.DeparturesRouter.getMessageIds(departureId.toString).urlWithContext
 
     JsObject(
       Json

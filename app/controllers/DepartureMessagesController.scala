@@ -54,6 +54,8 @@ trait V1DepartureMessagesController {
 
   def getDepartureMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent]
 
+  def getDepartureMessages(departureId: DepartureId, receivedSince: Option[OffsetDateTime]): Action[AnyContent]
+
 }
 
 @Singleton

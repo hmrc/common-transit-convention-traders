@@ -22,11 +22,7 @@ import v2.models.MessageId
 import v2.models.DepartureId
 import v2.models.responses.MessageResponse
 
-object HateoasDepartureMessageResponse {
-
-  lazy val prefix =
-    if (routing.routes.DeparturesRouter.submitDeclaration().url.startsWith("/customs/transits")) ""
-    else "/customs/transits"
+object HateoasDepartureMessageResponse extends HateoasResponse {
 
   def selfUrl(departureId: DepartureId, messageId: MessageId) =
     prefix + routing.routes.DeparturesRouter.getMessage(departureId.value, messageId.value).url

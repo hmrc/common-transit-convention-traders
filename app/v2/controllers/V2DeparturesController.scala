@@ -57,6 +57,7 @@ import v2.services.DeparturesService
 import v2.services.RouterService
 import v2.services.ValidationService
 import com.codahale.metrics.Counter
+import v2.models.responses.hateoas.HateoasDepartureMessageIdsResponse
 
 import scala.concurrent.Future
 
@@ -66,6 +67,8 @@ trait V2DeparturesController {
   def submitDeclaration(): Action[Source[ByteString, _]]
 
   def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent]
+
+  def getMessageIds(departureId: DepartureId): Action[AnyContent]
 
 }
 
@@ -189,6 +192,21 @@ class V2DeparturesControllerImpl @Inject() (
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
             response => Ok(Json.toJson(HateoasDepartureMessageResponse(departureId, messageId, response)))
+          )
+
+    }
+
+  def getMessageIds(departureId: DepartureId): Action[AnyContent] =
+    authActionNewEnrolmentOnly.async {
+      implicit request =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+        departuresService
+          .getMessageIds(request.eoriNumber, departureId)
+          .asPresentation
+          .fold(
+            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+            response => Ok(Json.toJson(HateoasDepartureMessageIdsResponse(departureId, response)))
           )
 
     }

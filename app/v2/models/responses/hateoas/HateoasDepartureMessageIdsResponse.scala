@@ -19,27 +19,28 @@ package v2.models.responses.hateoas
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.models.DepartureId
+import v2.models.MessageId
 
-object HateoasDepartureDeclarationResponse extends HateoasResponse {
+import java.time.OffsetDateTime
 
-  def messageUrl(departureId: DepartureId) =
-    prefix + routing.routes.DeparturesRouter.getMessageIds(departureId.value).url
+object HateoasDepartureMessageIdsResponse extends HateoasResponse {
 
-  // TODO: Fix when we do this route, as right now it only accepts an int.
+  def selfUrl(departureId: DepartureId, receivedSince: Option[OffsetDateTime] = None) =
+    prefix + routing.routes.DeparturesRouter.getMessageIds(departureId.value, receivedSince).url
+
+  // TODO: When we do the departure endpoint, this needs updating
   def departureUrl(departureId: DepartureId) =
     s"/customs/transits/movements/departures/${departureId.value}"
+  // prefix + routing.routes.DeparturesRouter.getMessage(departureId.value, "1").url
 
-  def apply(departureId: DepartureId): JsObject =
+  def apply(departureId: DepartureId, messageIds: Seq[MessageId], receivedSince: Option[OffsetDateTime] = None): JsObject =
     Json.obj(
       "_links" -> Json.obj(
-        "self" -> Json.obj("href" -> departureUrl(departureId))
+        "self"      -> Json.obj("href" -> selfUrl(departureId, receivedSince)),
+        "departure" -> Json.obj("href" -> departureUrl(departureId))
       ),
-      "id" -> departureId.value,
-      "_embedded" -> Json.obj(
-        "messages" -> Json.obj(
-          "_links" ->
-            Json.obj("href" -> messageUrl(departureId))
-        )
-      )
+      "departureId" -> departureId.value,
+      "messages"    -> messageIds // TODO: links?
     )
+
 }

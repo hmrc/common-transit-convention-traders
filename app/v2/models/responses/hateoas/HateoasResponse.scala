@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package v2.models.errors
+package v2.models.responses.hateoas
 
-import v2.models.MessageId
-import v2.models.DepartureId
+trait HateoasResponse {
 
-sealed trait PersistenceError
+  lazy val prefix =
+    if (routing.routes.DeparturesRouter.submitDeclaration().url.startsWith("/customs/transits")) ""
+    else "/customs/transits"
 
-object PersistenceError {
-  case class MessageNotFound(movementId: DepartureId, messageId: MessageId) extends PersistenceError
-  case class DepartureNotFound(departureId: DepartureId)                    extends PersistenceError
-  case class UnexpectedError(thr: Option[Throwable] = None)                 extends PersistenceError
 }
