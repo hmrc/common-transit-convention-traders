@@ -109,7 +109,7 @@ class V2DeparturesControllerImpl @Inject() (
               _ = auditService.audit(AuditType.DeclarationData, fileSource, MimeTypes.JSON)
 
               xmlSource         <- conversionService.jsonToXml(messageType, fileSource).asPresentation
-              _                 <- validationService.validateXml(messageType, fileSource).asPresentation
+              _                 <- validationService.validateXml(messageType, xmlSource).asPresentation
               declarationResult <- persistAndSendToEIS(xmlSource)
             } yield declarationResult).fold[Result](
               presentationError => {
