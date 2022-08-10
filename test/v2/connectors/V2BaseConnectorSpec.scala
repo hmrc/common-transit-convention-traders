@@ -23,6 +23,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
+import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -57,6 +58,7 @@ class V2BaseConnectorSpec
     with CommonGenerators
     with ScalaCheckDrivenPropertyChecks
     with ScalaFutures
+    with OptionValues
     with TestActorSystem {
 
   object Harness extends V2BaseConnector
@@ -68,16 +70,16 @@ class V2BaseConnectorSpec
   }
 
   "the post departure movements URL on localhost for a given EORI should be as expected" in {
-    val eori    = arbitrary[EORINumber].sample.get
+    val eori    = arbitrary[EORINumber].sample.value
     val urlPath = Harness.movementsPostDepartureDeclaration(eori)
 
     urlPath.toString() mustBe s"/transit-movements/traders/${eori.value}/movements/departures/"
   }
 
   "the get single departure movement URL on localhost for a given EORI, departure ID or message ID should be as expected" in {
-    val eori        = arbitrary[EORINumber].sample.get
-    val departureId = arbitrary[DepartureId].sample.get
-    val messageId   = arbitrary[MessageId].sample.get
+    val eori        = arbitrary[EORINumber].sample.value
+    val departureId = arbitrary[DepartureId].sample.value
+    val messageId   = arbitrary[MessageId].sample.value
     val urlPath     = Harness.movementsGetDepartureMessage(eori, departureId, messageId)
 
     urlPath.toString() mustBe s"/transit-movements/traders/${eori.value}/movements/departures/${departureId.value}/messages/${messageId.value}/"
@@ -85,9 +87,9 @@ class V2BaseConnectorSpec
 
   "the router message submission URL on localhost for a given EORI, departure ID or message ID should be as expected" in forAll(arbitrary[MessageType]) {
     messageType =>
-      val eori        = arbitrary[EORINumber].sample.get
-      val departureId = arbitrary[DepartureId].sample.get
-      val messageId   = arbitrary[MessageId].sample.get
+      val eori        = arbitrary[EORINumber].sample.value
+      val departureId = arbitrary[DepartureId].sample.value
+      val messageId   = arbitrary[MessageId].sample.value
       val urlPath     = Harness.routerRoute(eori, messageType, departureId, messageId)
       urlPath
         .toString() mustBe s"/transit-movements-router/traders/${eori.value}/movements/${messageType.movementType}/${departureId.value}/messages/${messageId.value}/"
@@ -152,8 +154,8 @@ class V2BaseConnectorSpec
     }
 
     "errorFromStream creates the appropriate failed Future" in {
-      val string1  = Gen.alphaNumStr.sample.get
-      val string2  = Gen.alphaNumStr.sample.get
+      val string1  = Gen.alphaNumStr.sample.value
+      val string2  = Gen.alphaNumStr.sample.value
       val expected = string1 + string2
 
       val sut = mock[HttpResponse]
@@ -183,7 +185,7 @@ class V2BaseConnectorSpec
     }
 
     "error returns a simple upstream error response" in {
-      val expected = Gen.alphaNumStr.sample.get
+      val expected = Gen.alphaNumStr.sample.value
       val sut      = mock[HttpResponse]
       when(sut.body).thenReturn(expected)
       when(sut.status).thenReturn(INTERNAL_SERVER_ERROR)
