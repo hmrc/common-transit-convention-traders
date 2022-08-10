@@ -16,12 +16,12 @@
 
 package v2.models.responses
 
+import play.api.libs.json.Format
 import play.api.libs.json.Json
-import play.api.libs.json.Reads
 import v2.models.MessageId
 
 object MessageIdsResponse {
-  implicit val idsResponseReads: Reads[MessageIdsResponse] = Json.reads[MessageIdsResponse]
+  implicit val responseFormat: Format[MessageIdsResponse] = Json.format[MessageIdsResponse]
 }
 
 case class MessageIdsResponse(ids: Seq[MessageId])

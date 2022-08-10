@@ -58,6 +58,7 @@ import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
+import v2.models.responses.MessageIdsResponse
 import v2.models.responses.MessageResponse
 
 import java.nio.charset.StandardCharsets
@@ -352,6 +353,157 @@ class PersistenceConnectorSpec
       implicit val hc = HeaderCarrier()
       val r = persistenceConnector
         .getDepartureMessage(eori, departureId, messageId)
+        .map(
+          _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
+        )
+        .recover {
+          case UpstreamErrorResponse(_, INTERNAL_SERVER_ERROR, _, _) => ()
+          case thr                                                   => fail(s"Expected an UpstreamErrorResponse with a 500, got $thr")
+        }
+
+      whenReady(r) {
+        _ =>
+      }
+    }
+
+  }
+
+  "GET /traders/:eori/movements/departure/:departureid/messages" - {
+
+    lazy val okResultGen =
+      for {
+        messsageId1 <- arbitrary[MessageId]
+        messsageId2 <- arbitrary[MessageId]
+        messsageId3 <- arbitrary[MessageId]
+      } yield MessageIdsResponse(Seq(messsageId1, messsageId2, messsageId3))
+
+    def targetUrl(eoriNumber: EORINumber, departureId: DepartureId) =
+      s"/transit-movements/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/"
+
+    "on successful return of message IDs, return a success" in {
+      val eori            = arbitrary[EORINumber].sample.get
+      val departureId     = arbitrary[DepartureId].sample.get
+      val messageResponse = okResultGen.sample.get
+
+      server.stubFor(
+        get(
+          urlEqualTo(targetUrl(eori, departureId))
+        )
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(
+                Json.stringify(Json.toJson(messageResponse))
+              )
+          )
+      )
+
+      implicit val hc = HeaderCarrier()
+      val result      = persistenceConnector.getDepartureMessageIds(eori, departureId)
+      whenReady(result) {
+        _ mustBe messageResponse
+      }
+    }
+
+    "on incorrect Json, return an error" in {
+
+      val eori        = arbitrary[EORINumber].sample.get
+      val departureId = arbitrary[DepartureId].sample.get
+      server.stubFor(
+        get(
+          urlEqualTo(targetUrl(eori, departureId))
+        )
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(
+                "{ \"test\": \"fail\" }"
+              )
+          )
+      )
+
+      implicit val hc = HeaderCarrier()
+      val r = persistenceConnector
+        .getDepartureMessageIds(eori, departureId)
+        .map(
+          _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
+        )
+        .recover {
+          case JsResult.Exception(_)  => ()
+          case t: TestFailedException => t
+          case thr                    => fail(s"Expected a JsResult.Exception, got $thr")
+        }
+
+      whenReady(r) {
+        _ =>
+      }
+
+    }
+
+    "on not found, return an UpstreamServerError" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[DepartureId]
+    ) {
+      (eori, departureId) =>
+        server.stubFor(
+          get(
+            urlEqualTo(targetUrl(eori, departureId))
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(NOT_FOUND)
+                .withBody(
+                  Json.stringify(
+                    Json.obj(
+                      "code"    -> "NOT_FOUND",
+                      "message" -> "not found"
+                    )
+                  )
+                )
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val r = persistenceConnector
+          .getDepartureMessageIds(eori, departureId)
+          .map(
+            _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
+          )
+          .recover {
+            case UpstreamErrorResponse(_, NOT_FOUND, _, _) => ()
+            case thr                                       => fail(s"Expected an UpstreamErrorResponse with a 404, got $thr")
+          }
+
+        whenReady(r) {
+          _ =>
+        }
+    }
+
+    "on an internal error, return an UpstreamServerError" in {
+      val eori        = arbitrary[EORINumber].sample.get
+      val departureId = arbitrary[DepartureId].sample.get
+
+      server.stubFor(
+        get(
+          urlEqualTo(targetUrl(eori, departureId))
+        )
+          .willReturn(
+            aResponse()
+              .withStatus(INTERNAL_SERVER_ERROR)
+              .withBody(
+                Json.stringify(
+                  Json.obj(
+                    "code"    -> "INTERNAL_SERVER_ERROR",
+                    "message" -> "Internal server error"
+                  )
+                )
+              )
+          )
+      )
+
+      implicit val hc = HeaderCarrier()
+      val r = persistenceConnector
+        .getDepartureMessageIds(eori, departureId)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
