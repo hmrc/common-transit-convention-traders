@@ -109,8 +109,7 @@ class V2DeparturesControllerImpl @Inject() (
               _ = auditService.audit(AuditType.DeclarationData, fileSource, MimeTypes.JSON)
 
               xmlSource         <- conversionService.jsonToXml(messageType, fileSource).asPresentation
-              _                 <- validationService.validateXml(messageType, xmlSource).asPresentation
-              declarationResult <- persistAndSendToEIS(xmlSource)
+              declarationResult <- persistAndSendToEIS(xmlSource, messageType)
             } yield declarationResult).fold[Result](
               presentationError => {
                 fCounter.inc()
@@ -125,13 +124,17 @@ class V2DeparturesControllerImpl @Inject() (
     }
 
   def persistAndSendToEIS(
-    src: Source[ByteString, _]
+    src: Source[ByteString, _],
+    messageType: MessageType
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]): EitherT[Future, PresentationError, DeclarationResponse] =
     withTemporaryFileA(
       src,
-      (temporaryFile, _) => {
+      (temporaryFile, xmlSource) => {
         val fileSource = FileIO.fromPath(temporaryFile)
-        persistAndSend(fileSource)
+        for {
+          _      <- validationService.validateXml(messageType, xmlSource).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
+          result <- persistAndSend(fileSource)
+        } yield result
       }
     )
 

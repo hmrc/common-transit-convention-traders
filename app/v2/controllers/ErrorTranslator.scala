@@ -42,6 +42,14 @@ trait ErrorTranslator {
     def convert(input: E): PresentationError
   }
 
+  val jsonToXmlValidationErrorConverter = new Converter[FailedToValidateError] {
+
+    def convert(validationError: FailedToValidateError): PresentationError = validationError match {
+      case XmlSchemaFailedToValidateError(_) => PresentationError.internalServiceError(cause = None) // TODO: Determine error message
+      case x                                 => validationErrorConverter.convert(x)
+    }
+  }
+
   implicit val validationErrorConverter = new Converter[FailedToValidateError] {
 
     def convert(validationError: FailedToValidateError): PresentationError = validationError match {
