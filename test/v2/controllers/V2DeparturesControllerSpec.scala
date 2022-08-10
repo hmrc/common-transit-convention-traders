@@ -696,7 +696,7 @@ class V2DeparturesControllerSpec
           .thenAnswer(
             _ =>
               EitherT.rightT(
-                DeclarationResponse(MovementId("123"), MessageId("456"))
+                DeclarationResponse(DepartureId("123"), MessageId("456"))
               )
           )
 
@@ -704,7 +704,7 @@ class V2DeparturesControllerSpec
           mockRouterService.send(
             eqTo(MessageType.DepartureDeclaration),
             any[String].asInstanceOf[EORINumber],
-            any[String].asInstanceOf[MovementId],
+            any[String].asInstanceOf[DepartureId],
             any[String].asInstanceOf[MessageId],
             any[Source[ByteString, _]]
           )(any[ExecutionContext], any[HeaderCarrier])
@@ -724,7 +724,7 @@ class V2DeparturesControllerSpec
         verify(mockRouterService).send(
           eqTo(MessageType.DepartureDeclaration),
           any[String].asInstanceOf[EORINumber],
-          any[String].asInstanceOf[MovementId],
+          any[String].asInstanceOf[DepartureId],
           any[String].asInstanceOf[MessageId],
           any[Source[ByteString, _]]
         )(any[ExecutionContext], any[HeaderCarrier])
