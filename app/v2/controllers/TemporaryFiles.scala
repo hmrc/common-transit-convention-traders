@@ -62,6 +62,36 @@ trait TemporaryFiles {
           )
       }
 
+  def withTemporaryFileA[R](
+    source: Source[ByteString, _],
+    onSucceed: (Files.TemporaryFile, Source[ByteString, _]) => EitherT[Future, PresentationError, R]
+  )(implicit materializer: Materializer, ec: ExecutionContext): EitherT[Future, PresentationError, R] =
+    EitherT(Future.successful(Try(temporaryFileCreator.create()).toEither))
+      .leftSemiflatTap {
+        _ =>
+          source.runWith(Sink.ignore)
+      }
+      .leftMap(
+        t => PresentationError.internalServiceError(cause = Some(t))
+      )
+      .flatMap {
+        temporaryFile =>
+          // As well as sending this stream to another service, we need to save it as
+          // if we succeed in validating, we will want to run the stream again to other
+          // services - saving it to file means we can keep it out of memory.
+          //
+          // The alsoTo call causes the file to be written as we send the request -
+          // fanning-out such that we request and save at the same time.
+          val newSource = source.alsoTo(FileIO.toPath(temporaryFile.path))
+
+          val succeed = onSucceed(temporaryFile, newSource)
+          succeed.value.flatTap(
+            // TODO: Want to delete the file regardless of the future state
+            _ => Future.successful(temporaryFile.delete())
+          )
+          succeed
+      }
+
   implicit class TemporaryFileResult(value: EitherT[Future, Throwable, Result]) {
 
     def toResult(implicit ec: ExecutionContext): Future[Result] =
