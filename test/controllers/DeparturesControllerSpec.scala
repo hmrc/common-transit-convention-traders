@@ -98,7 +98,7 @@ class DeparturesControllerSpec
   val sourceDeparture = Departure(
     DepartureId(123),
     routes.DeparturesController.getDeparture(DepartureId(123)).urlWithContext,
-    routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).urlWithContext,
+    routing.routes.DeparturesRouter.getMessageIds("123").urlWithContext,
     Some("MRN"),
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
     LocalDateTime.of(2020, 2, 2, 2, 2, 2)

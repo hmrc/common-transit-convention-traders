@@ -162,7 +162,7 @@ class DepartureConnectorSpec
       val departure = Departure(
         DepartureId(1),
         routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
-        routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
+        routing.routes.DeparturesRouter.getMessageIds("1").urlWithContext,
         Some("MRN"),
         LocalDateTime.now,
         LocalDateTime.now
@@ -195,7 +195,7 @@ class DepartureConnectorSpec
       val departure = Departure(
         DepartureId(1),
         routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
-        routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
+        routing.routes.DeparturesRouter.getMessageIds("1").urlWithContext,
         Some("MRN"),
         LocalDateTime.now,
         LocalDateTime.now
@@ -282,7 +282,7 @@ class DepartureConnectorSpec
           Departure(
             DepartureId(1),
             routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
-            routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
+            routing.routes.DeparturesRouter.getMessageIds("1").urlWithContext,
             Some("1"),
             LocalDateTime.now,
             LocalDateTime.now
@@ -321,7 +321,7 @@ class DepartureConnectorSpec
           Departure(
             DepartureId(1),
             routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
-            routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
+            routing.routes.DeparturesRouter.getMessageIds("1").urlWithContext,
             Some("1"),
             LocalDateTime.now,
             LocalDateTime.now
@@ -410,7 +410,7 @@ class DepartureConnectorSpec
           Departure(
             DepartureId(1),
             routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
-            routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
+            routing.routes.DeparturesRouter.getMessageIds("1").urlWithContext,
             Some("MRN"),
             LocalDateTime.now,
             LocalDateTime.now
