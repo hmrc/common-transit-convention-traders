@@ -94,6 +94,20 @@ class ErrorTranslatorSpec extends AnyFreeSpec with Matchers with OptionValues wi
       validationErrorConverter.convert(input) mustBe output
     }
 
+    "jsonToXmlValidationErrorConverter special case validation error" in {
+      val validationError = XmlValidationError(1, 1, "empty")
+      val input           = XmlSchemaFailedToValidateError(NonEmptyList(validationError, Nil))
+      val output          = PresentationError.internalServiceError(cause = None)
+      jsonToXmlValidationErrorConverter.convert(input) mustBe output
+    }
+
+    "jsonToXmlValidationErrorConverter should forward other cases to standard conversion" in {
+      val validationError = JsonValidationError("path", "message")
+      val input           = JsonSchemaFailedToValidateError(NonEmptyList(validationError, Nil))
+      val output          = PresentationError.jsonSchemaValidationError(validationErrors = NonEmptyList(validationError, Nil))
+      jsonToXmlValidationErrorConverter.convert(input) mustBe output
+    }
+
     "a JsonSchemaFailedToValidateError returns a schema validation error presentation error" in {
       val validationError = JsonValidationError("path", "error")
       val input           = JsonSchemaFailedToValidateError(NonEmptyList(validationError, Nil))
