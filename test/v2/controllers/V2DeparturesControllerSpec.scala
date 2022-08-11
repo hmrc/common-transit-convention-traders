@@ -664,7 +664,7 @@ class V2DeparturesControllerSpec
         verify(mockConversionService).jsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
       }
 
-      "must return Bad Request after JSON to XML conversion if the XML validation service reports an error" in {
+      "must return Internal Service Error after JSON to XML conversion if the XML validation service reports an error" in {
         validateXmlNotOkStub()
         when(
           mockValidationService
@@ -691,17 +691,10 @@ class V2DeparturesControllerSpec
         val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource(CC015Cjson), headers = standardHeaders)
         val result  = sut.submitDeclaration()(request)
 
-        status(result) mustBe BAD_REQUEST
+        status(result) mustBe INTERNAL_SERVER_ERROR
         contentAsJson(result) mustBe Json.obj(
-          "code"    -> "SCHEMA_VALIDATION",
-          "message" -> "Request failed schema validation",
-          "validationErrors" -> Seq(
-            Json.obj(
-              "lineNumber"   -> 1,
-              "columnNumber" -> 1,
-              "message"      -> "invalid XML"
-            )
-          )
+          "code"    -> "INTERNAL_SERVER_ERROR",
+          "message" -> "Internal server error"
         )
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
