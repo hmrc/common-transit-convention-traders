@@ -16,23 +16,21 @@
 
 package v2.models.responses.hateoas
 
-import controllers.routes
-import models.domain.DepartureId
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import utils.CallOps.CallOps
-import v2.models.MovementId
+import v2.models.DepartureId
 
 object HateoasDepartureDeclarationResponse {
 
-  def messageUrl(movementId: MovementId) =
-    // TODO: Fix when we do this route, as right now it only accepts an int.
-    routes.DepartureMessagesController.sendMessageDownstream(DepartureId(123)).urlWithContext
+  // TODO: Fix when we do this route, as right now it only accepts an int.
+  def messageUrl(departureId: DepartureId) =
+    s"/customs/transits/movements/departures/${departureId.value}/messages"
 
   // TODO: Fix when we do this route, as right now it only accepts an int.
-  def departureUrl(movementId: MovementId) = routes.DeparturesController.getDeparture(DepartureId(123)).urlWithContext
+  def departureUrl(departureId: DepartureId) =
+    s"/customs/transits/movements/departures/${departureId.value}"
 
-  def apply(departureId: MovementId): JsObject =
+  def apply(departureId: DepartureId): JsObject =
     Json.obj(
       "_links" -> Json.obj(
         "self" -> Json.obj("href" -> departureUrl(departureId))

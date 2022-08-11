@@ -32,6 +32,7 @@ import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.Json
 import play.api.mvc.Action
+import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
 import play.api.mvc.Result
@@ -44,9 +45,12 @@ import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models.AuditType
 import v2.models.errors.PresentationError
+import v2.models.MessageId
+import v2.models.DepartureId
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
+import v2.models.responses.hateoas.HateoasDepartureMessageResponse
 import v2.services.AuditingService
 import v2.services.ConversionService
 import v2.services.DeparturesService
@@ -60,6 +64,8 @@ import scala.concurrent.Future
 trait V2DeparturesController {
 
   def submitDeclaration(): Action[Source[ByteString, _]]
+
+  def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent]
 
 }
 
@@ -171,4 +177,20 @@ class V2DeparturesControllerImpl @Inject() (
         .send(MessageType.DepartureDeclaration, request.eoriNumber, declarationResult.departureId, declarationResult.messageId, fileSource)
         .asPresentation
     } yield declarationResult
+
+  def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent] =
+    authActionNewEnrolmentOnly.async {
+      implicit request =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+        departuresService
+          .getMessage(request.eoriNumber, departureId, messageId)
+          .asPresentation
+          .fold(
+            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+            response => Ok(Json.toJson(HateoasDepartureMessageResponse(departureId, messageId, response)))
+          )
+
+    }
+
 }

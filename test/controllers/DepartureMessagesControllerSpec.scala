@@ -84,7 +84,7 @@ class DepartureMessagesControllerSpec
   }
 
   val sourceMovement = MovementMessage(
-    routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), MessageId(4)).urlWithContext,
+    routing.routes.DeparturesRouter.getMessage(DepartureId(123).toString, MessageId(4).toString).urlWithContext,
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
     "IE025",
     <test>default</test>
@@ -272,7 +272,7 @@ class DepartureMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), MessageId(4)).url,
+        routing.routes.DeparturesRouter.getMessage(DepartureId(123).toString, MessageId(4).toString).url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -288,7 +288,7 @@ class DepartureMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), MessageId(4)).url,
+        routing.routes.DeparturesRouter.getMessage(DepartureId(123).toString, MessageId(4).toString).url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -306,7 +306,7 @@ class DepartureMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), MessageId(4)).url,
+        routing.routes.DeparturesRouter.getMessage(DepartureId(123).toString, MessageId(4).toString).url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -328,7 +328,7 @@ class DepartureMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), MessageId(4)).url,
+        routing.routes.DeparturesRouter.getMessage(DepartureId(123).toString, MessageId(4).toString).url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -343,7 +343,7 @@ class DepartureMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), MessageId(4)).url,
+        routing.routes.DeparturesRouter.getMessage(DepartureId(123).toString, MessageId(4).toString).url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -388,7 +388,7 @@ class DepartureMessagesControllerSpec
 
       status(result) mustBe ACCEPTED
       contentAsString(result) mustEqual expectedJson.toString()
-      headers(result) must contain(LOCATION -> routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), MessageId(1)).urlWithContext)
+      headers(result) must contain(LOCATION -> routing.routes.DeparturesRouter.getMessage(DepartureId(123).toString, MessageId(1).toString).urlWithContext)
     }
 
     "must return InternalServerError when unsuccessful" in {
@@ -438,7 +438,7 @@ class DepartureMessagesControllerSpec
 
       status(result) mustBe ACCEPTED
       contentAsString(result) mustEqual expectedJson.toString()
-      headers(result) must contain(LOCATION -> routes.DepartureMessagesController.getDepartureMessage(DepartureId(123), MessageId(1)).urlWithContext)
+      headers(result) must contain(LOCATION -> routing.routes.DeparturesRouter.getMessage(DepartureId(123).toString, MessageId(1).toString).urlWithContext)
     }
 
     "must return UnsupportedMediaType when Content-Type is JSON" in {

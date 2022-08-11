@@ -14,15 +14,31 @@
  * limitations under the License.
  */
 
-package v2.models.responses
+package v2.utils
 
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
-import v2.models.MessageId
+import org.scalacheck.Arbitrary
+import org.scalacheck.Gen
 import v2.models.DepartureId
+import v2.models.EORINumber
+import v2.models.MessageId
 
-object DeclarationResponse {
-  implicit lazy val declarationResponseFormat: OFormat[DeclarationResponse] = Json.format[DeclarationResponse]
+trait CommonGenerators {
+
+  lazy val genShortUUID: Gen[String] = Gen.long.map {
+    l: Long =>
+      f"${BigInt(l)}%016x"
+  }
+
+  implicit lazy val arbitraryDepartureId: Arbitrary[DepartureId] = Arbitrary {
+    genShortUUID.map(DepartureId(_))
+  }
+
+  implicit lazy val arbitraryMessageId: Arbitrary[MessageId] = Arbitrary {
+    genShortUUID.map(MessageId(_))
+  }
+
+  implicit lazy val arbitraryEORINumber: Arbitrary[EORINumber] = Arbitrary {
+    Gen.alphaNumStr.map(EORINumber(_))
+  }
+
 }
-
-case class DeclarationResponse(departureId: DepartureId, messageId: MessageId)

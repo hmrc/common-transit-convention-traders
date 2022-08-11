@@ -46,6 +46,8 @@ import play.api.http.MimeTypes
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.http.Status.NOT_FOUND
+import play.api.http.Status.OK
 import play.api.http.Status.UNSUPPORTED_MEDIA_TYPE
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json.Json
@@ -63,18 +65,19 @@ import v2.base.TestSourceProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeMessageSizeActionProvider
 import v2.models.AuditType
+import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
-import v2.models.MovementId
 import v2.models.errors.ConversionError
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.JsonValidationError
 import v2.models.errors.PersistenceError
 import v2.models.errors.RouterError
 import v2.models.errors.XmlValidationError
-import v2.models.errors.ConversionError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
+import v2.models.responses.MessageResponse
+import v2.models.responses.hateoas.HateoasDepartureMessageResponse
 import v2.services.AuditingService
 import v2.services.ConversionService
 import v2.services.DeparturesService
@@ -82,6 +85,8 @@ import v2.services.RouterService
 import v2.services.ValidationService
 
 import java.nio.charset.StandardCharsets
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -100,101 +105,9 @@ class V2DeparturesControllerSpec
     with TestSourceProvider
     with BeforeAndAfterEach {
 
-  // TODO: Make this a cc015c
   def CC015C: NodeSeq =
     <CC015C>
-      <SynIdeMES1>UNOC</SynIdeMES1>
-      <SynVerNumMES2>3</SynVerNumMES2>
-      <MesRecMES6>NCTS</MesRecMES6>
-      <DatOfPreMES9>20201217</DatOfPreMES9>
-      <TimOfPreMES10>1340</TimOfPreMES10>
-      <IntConRefMES11>17712576475433</IntConRefMES11>
-      <AppRefMES14>NCTS</AppRefMES14>
-      <MesIdeMES19>1</MesIdeMES19>
-      <MesTypMES20>GB015B</MesTypMES20>
-      <HEAHEA>
-        <RefNumHEA4>GUATEST1201217134032</RefNumHEA4>
-        <TypOfDecHEA24>T1</TypOfDecHEA24>
-        <CouOfDesCodHEA30>IT</CouOfDesCodHEA30>
-        <AutLocOfGooCodHEA41>954131533-GB60DEP</AutLocOfGooCodHEA41>
-        <CouOfDisCodHEA55>GB</CouOfDisCodHEA55>
-        <IdeOfMeaOfTraAtDHEA78>NC15 REG</IdeOfMeaOfTraAtDHEA78>
-        <NatOfMeaOfTraAtDHEA80>GB</NatOfMeaOfTraAtDHEA80>
-        <ConIndHEA96>0</ConIndHEA96>
-        <NCTSAccDocHEA601LNG>EN</NCTSAccDocHEA601LNG>
-        <TotNumOfIteHEA305>1</TotNumOfIteHEA305>
-        <TotNumOfPacHEA306>10</TotNumOfPacHEA306>
-        <TotGroMasHEA307>1000</TotGroMasHEA307>
-        <DecDatHEA383>20201217</DecDatHEA383>
-        <DecPlaHEA394>Dover</DecPlaHEA394>
-      </HEAHEA>
-      <TRAPRIPC1>
-        <NamPC17>NCTS UK TEST LAB HMCE</NamPC17>
-        <StrAndNumPC122>11TH FLOOR, ALEX HOUSE, VICTORIA AV</StrAndNumPC122>
-        <PosCodPC123>SS99 1AA</PosCodPC123>
-        <CitPC124>SOUTHEND-ON-SEA, ESSEX</CitPC124>
-        <CouPC125>GB</CouPC125>
-        <TINPC159>GB954131533000</TINPC159>
-      </TRAPRIPC1>
-      <TRACONCO1>
-        <NamCO17>NCTS UK TEST LAB HMCE</NamCO17>
-        <StrAndNumCO122>11TH FLOOR, ALEX HOUSE, VICTORIA AV</StrAndNumCO122>
-        <PosCodCO123>SS99 1AA</PosCodCO123>
-        <CitCO124>SOUTHEND-ON-SEA, ESSEX</CitCO124>
-        <CouCO125>GB</CouCO125>
-        <TINCO159>GB954131533000</TINCO159>
-      </TRACONCO1>
-      <TRACONCE1>
-        <NamCE17>NCTS UK TEST LAB HMCE</NamCE17>
-        <StrAndNumCE122>ITALIAN OFFICE</StrAndNumCE122>
-        <PosCodCE123>IT99 1IT</PosCodCE123>
-        <CitCE124>MILAN</CitCE124>
-        <CouCE125>IT</CouCE125>
-        <TINCE159>IT11ITALIANC11</TINCE159>
-      </TRACONCE1>
-      <CUSOFFDEPEPT>
-        <RefNumEPT1>GB000060</RefNumEPT1>
-      </CUSOFFDEPEPT>
-      <CUSOFFTRARNS>
-        <RefNumRNS1>FR001260</RefNumRNS1>
-        <ArrTimTRACUS085>202012191340</ArrTimTRACUS085>
-      </CUSOFFTRARNS>
-      <CUSOFFDESEST>
-        <RefNumEST1>IT018100</RefNumEST1>
-      </CUSOFFDESEST>
-      <CONRESERS>
-        <ConResCodERS16>A3</ConResCodERS16>
-        <DatLimERS69>20201225</DatLimERS69>
-      </CONRESERS>
-      <SEAINFSLI>
-        <SeaNumSLI2>1</SeaNumSLI2>
-        <SEAIDSID>
-          <SeaIdeSID1>NCTS001</SeaIdeSID1>
-        </SEAIDSID>
-      </SEAINFSLI>
-      <GUAGUA>
-        <GuaTypGUA1>0</GuaTypGUA1>
-        <GUAREFREF>
-          <GuaRefNumGRNREF1>20GB0000010000H72</GuaRefNumGRNREF1>
-          <AccCodREF6>AC01</AccCodREF6>
-        </GUAREFREF>
-      </GUAGUA>
-      <GOOITEGDS>
-        <IteNumGDS7>1</IteNumGDS7>
-        <GooDesGDS23>Wheat</GooDesGDS23>
-        <GooDesGDS23LNG>EN</GooDesGDS23LNG>
-        <GroMasGDS46>1000</GroMasGDS46>
-        <NetMasGDS48>950</NetMasGDS48>
-        <SPEMENMT2>
-          <AddInfMT21>20GB0000010000H72</AddInfMT21>
-          <AddInfCodMT23>CAL</AddInfCodMT23>
-        </SPEMENMT2>
-        <PACGS2>
-          <MarNumOfPacGS21>AB234</MarNumOfPacGS21>
-          <KinOfPacGS23>BX</KinOfPacGS23>
-          <NumOfPacGS24>10</NumOfPacGS24>
-        </PACGS2>
-      </GOOITEGDS>
+      <test>testxml</test>
     </CC015C>
 
   val CC015Cjson = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
@@ -242,7 +155,7 @@ class V2DeparturesControllerSpec
       .thenAnswer {
         invocation: InvocationOnMock =>
           // we're using Mockito, so don't use AnyVal class stuff
-          if (invocation.getArgument(0, classOf[String]) == "id") EitherT.rightT(DeclarationResponse(MovementId("123"), MessageId("456")))
+          if (invocation.getArgument(0, classOf[String]) == "id") EitherT.rightT(DeclarationResponse(DepartureId("123"), MessageId("456")))
           else EitherT.leftT(PersistenceError.UnexpectedError(None))
       }
 
@@ -251,7 +164,7 @@ class V2DeparturesControllerSpec
       mockRouterService.send(
         eqTo(MessageType.DepartureDeclaration),
         any[String].asInstanceOf[EORINumber],
-        any[String].asInstanceOf[MovementId],
+        any[String].asInstanceOf[DepartureId],
         any[String].asInstanceOf[MessageId],
         any[Source[ByteString, _]]
       )(any[ExecutionContext], any[HeaderCarrier])
@@ -324,7 +237,7 @@ class V2DeparturesControllerSpec
     )
 
   // Version 2
-  "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
+  "for a departure declaration with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
     "with content type set to application/xml" - {
 
       // For the content length headers, we have to ensure that we send something
@@ -362,7 +275,7 @@ class V2DeparturesControllerSpec
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
         verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
         verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
-        verify(mockRouterService, times(1)).send(eqTo(MessageType.DepartureDeclaration), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
+        verify(mockRouterService, times(1)).send(eqTo(MessageType.DepartureDeclaration), EORINumber(any()), DepartureId(any()), MessageId(any()), any())(
           any(),
           any()
         )
@@ -417,7 +330,7 @@ class V2DeparturesControllerSpec
             verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
             verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
             verify(mockRouterService, times(1))
-              .send(eqTo(MessageType.DepartureDeclaration), EORINumber(any()), MovementId(any()), MessageId(any()), any())(any(), any())
+              .send(eqTo(MessageType.DepartureDeclaration), EORINumber(any()), DepartureId(any()), MessageId(any()), any())(any(), any())
           }
       }
 
@@ -511,7 +424,7 @@ class V2DeparturesControllerSpec
         when(
           mockDeparturesPersistenceService
             .saveDeclaration(any[String].asInstanceOf[EORINumber], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-        ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, DeclarationResponse](DeclarationResponse(MovementId("123"), MessageId("456")))))
+        ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, DeclarationResponse](DeclarationResponse(DepartureId("123"), MessageId("456")))))
 
         val sut = new V2DeparturesControllerImpl(
           Helpers.stubControllerComponents(),
@@ -776,7 +689,7 @@ class V2DeparturesControllerSpec
           .thenAnswer(
             _ =>
               EitherT.rightT(
-                DeclarationResponse(MovementId("123"), MessageId("456"))
+                DeclarationResponse(DepartureId("123"), MessageId("456"))
               )
           )
 
@@ -784,7 +697,7 @@ class V2DeparturesControllerSpec
           mockRouterService.send(
             eqTo(MessageType.DepartureDeclaration),
             any[String].asInstanceOf[EORINumber],
-            any[String].asInstanceOf[MovementId],
+            any[String].asInstanceOf[DepartureId],
             any[String].asInstanceOf[MessageId],
             any[Source[ByteString, _]]
           )(any[ExecutionContext], any[HeaderCarrier])
@@ -804,7 +717,7 @@ class V2DeparturesControllerSpec
         verify(mockRouterService).send(
           eqTo(MessageType.DepartureDeclaration),
           any[String].asInstanceOf[EORINumber],
-          any[String].asInstanceOf[MovementId],
+          any[String].asInstanceOf[DepartureId],
           any[String].asInstanceOf[MessageId],
           any[Source[ByteString, _]]
         )(any[ExecutionContext], any[HeaderCarrier])
@@ -859,7 +772,7 @@ class V2DeparturesControllerSpec
       when(
         mockDeparturesPersistenceService
           .saveDeclaration(any[String].asInstanceOf[EORINumber], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-      ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, DeclarationResponse](DeclarationResponse(MovementId("123"), MessageId("456")))))
+      ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, DeclarationResponse](DeclarationResponse(DepartureId("123"), MessageId("456")))))
 
       val sut = new V2DeparturesControllerImpl(
         Helpers.stubControllerComponents(),
@@ -883,6 +796,66 @@ class V2DeparturesControllerSpec
       )
 
     }
+  }
+
+  "for retrieving a single message" - {
+
+    val dateTime = OffsetDateTime.of(2022, 8, 4, 11, 34, 42, 0, ZoneOffset.UTC)
+
+    "when the message is found" in {
+      val messageResponse = MessageResponse(
+        MessageId("0123456789abcdef"),
+        dateTime,
+        dateTime,
+        MessageType.DepartureDeclaration,
+        None,
+        None,
+        Some("<test></test>")
+      )
+      when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), DepartureId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenAnswer(
+          _ => EitherT.rightT(messageResponse)
+        )
+
+      val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+      val result  = sut.getMessage(DepartureId("0123456789abcdef"), MessageId("0123456789abcdef"))(request)
+
+      status(result) mustBe OK
+      contentAsJson(result) mustBe Json.toJson(HateoasDepartureMessageResponse(DepartureId("0123456789abcdef"), MessageId("0123456789abcdef"), messageResponse))
+    }
+
+    "when no message is found" in {
+      when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), DepartureId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenAnswer(
+          _ => EitherT.leftT(PersistenceError.MessageNotFound(DepartureId("0123456789abcdef"), MessageId("0123456789abcdef")))
+        )
+
+      val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+      val result  = sut.getMessage(DepartureId("0123456789abcdef"), MessageId("0123456789abcdef"))(request)
+
+      status(result) mustBe NOT_FOUND
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "NOT_FOUND",
+        "message" -> "Message with ID 0123456789abcdef for movement 0123456789abcdef was not found"
+      )
+    }
+
+    "when an unknown error occurs" in {
+      when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), DepartureId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenAnswer(
+          _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
+        )
+
+      val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+      val result  = sut.getMessage(DepartureId("0123456789abcdef"), MessageId("0123456789abcdef"))(request)
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "INTERNAL_SERVER_ERROR",
+        "message" -> "Internal server error"
+      )
+    }
+
   }
 
   def validateXmlOkStub(): OngoingStubbing[EitherT[Future, FailedToValidateError, Unit]] =

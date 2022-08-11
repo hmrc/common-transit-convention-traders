@@ -23,4 +23,8 @@ object AuditType {
   // IE015
   case object DeclarationData extends AuditType("DeclarationData")
 
+  val values: Seq[AuditType] = Seq(
+    DeclarationData
+  )
+
 }

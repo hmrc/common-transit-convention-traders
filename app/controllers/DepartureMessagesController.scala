@@ -16,13 +16,16 @@
 
 package controllers
 
-import java.time.OffsetDateTime
+import com.google.inject.ImplementedBy
+import com.google.inject.Singleton
 
+import java.time.OffsetDateTime
 import com.kenshoo.play.metrics.Metrics
 import connectors.DepartureMessageConnector
 import controllers.actions.AuthAction
 import controllers.actions.ValidateAcceptJsonHeaderAction
 import controllers.actions.ValidateDepartureMessageAction
+
 import javax.inject.Inject
 import metrics.HasActionMetrics
 import metrics.MetricsKeys
@@ -46,6 +49,14 @@ import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
 import controllers.actions.AnalyseMessageActionProvider
 
+@ImplementedBy(classOf[DepartureMessagesController])
+trait V1DepartureMessagesController {
+
+  def getDepartureMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent]
+
+}
+
+@Singleton
 class DepartureMessagesController @Inject() (
   cc: ControllerComponents,
   authAction: AuthAction,
@@ -58,7 +69,8 @@ class DepartureMessagesController @Inject() (
     extends BackendController(cc)
     with HasActionMetrics
     with HttpErrorFunctions
-    with ResponseHelper {
+    with ResponseHelper
+    with V1DepartureMessagesController {
 
   import MetricsKeys.Endpoints._
 
@@ -86,7 +98,7 @@ class DepartureMessagesController @Inject() (
                                 request.body
                               )
                             )
-                          ).withHeaders(LOCATION -> routes.DepartureMessagesController.getDepartureMessage(departureId, messageId).urlWithContext)
+                          ).withHeaders(LOCATION -> routing.routes.DeparturesRouter.getMessage(departureId.toString, messageId.toString).urlWithContext)
                         case None =>
                           InternalServerError
                       }

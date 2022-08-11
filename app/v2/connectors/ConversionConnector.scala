@@ -17,7 +17,6 @@
 package v2.connectors
 
 import akka.stream.Materializer
-import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.google.inject.ImplementedBy
@@ -28,12 +27,9 @@ import config.AppConfig
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
-import play.api.http.Status.OK
-import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
-import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.HeaderType
 import v2.models.request.MessageType
 
@@ -71,21 +67,6 @@ class ConversionConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
           .post(url"$url")
           .addHeaders(headerType.header: _*)
           .withBody(jsonStream)
-          .stream[HttpResponse]
-          .flatMap {
-            response =>
-              response.status match {
-                case OK =>
-                  Future.successful(response.bodyAsSource)
-                case _ =>
-                  response.bodyAsSource
-                    .reduce(_ ++ _)
-                    .map(_.utf8String)
-                    .runWith(Sink.head)
-                    .flatMap(
-                      result => Future.failed(UpstreamErrorResponse(result, response.status))
-                    )
-              }
-          }
+          .executeAsStream
     }
 }

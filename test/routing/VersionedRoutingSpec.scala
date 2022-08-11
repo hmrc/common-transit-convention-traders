@@ -23,21 +23,23 @@ import akka.stream.testkit.NoMaterializer
 import akka.util.ByteString
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
+import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.UNSUPPORTED_MEDIA_TYPE
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.ControllerComponents
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
+import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.defaultAwaitTimeout
 import play.api.test.Helpers.status
+import play.api.test.Helpers.stubControllerComponents
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import v2.base.TestActorSystem
 import v2.controllers.stream.StreamingParsers
 
 import java.nio.charset.StandardCharsets
@@ -45,7 +47,7 @@ import scala.collection.immutable
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class VersionedRoutingSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite {
+class VersionedRoutingSpec extends AnyFreeSpec with Matchers with TestActorSystem {
 
   class Harness(cc: ControllerComponents)(implicit val materializer: Materializer)
       extends BackendController(cc)
@@ -67,10 +69,6 @@ class VersionedRoutingSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
     }
   }
 
-  override lazy val app = GuiceApplicationBuilder()
-    .build()
-  implicit lazy val materializer: Materializer = app.materializer
-
   private def generateSource(string: String): Source[ByteString, NotUsed] =
     Source(ByteString.fromString(string, StandardCharsets.UTF_8).grouped(1024).to[immutable.Iterable])
 
@@ -89,7 +87,7 @@ class VersionedRoutingSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
         s"with accept header set to $withString" - {
 
           "must call correct action" in {
-            val cc  = app.injector.instanceOf[ControllerComponents]
+            val cc  = stubControllerComponents()
             val sut = new Harness(cc)
 
             val request = FakeRequest("GET", "/", departureHeaders, generateSource("<test>test</test>"))
@@ -106,7 +104,7 @@ class VersionedRoutingSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
 
       "must call correct action" in {
 
-        val cc  = app.injector.instanceOf[ControllerComponents]
+        val cc  = stubControllerComponents()
         val sut = new Harness(cc)
 
         val request = FakeRequest("GET", "/", departureHeaders, generateSource("<test>test</test>"))
@@ -122,7 +120,7 @@ class VersionedRoutingSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
       "when not set" in {
         val departureHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml"))
 
-        val cc  = app.injector.instanceOf[ControllerComponents]
+        val cc  = stubControllerComponents()
         val sut = new Harness(cc)
 
         val request = FakeRequest("GET", "/", departureHeaders, generateSource("<test>test</test>"))
@@ -139,7 +137,7 @@ class VersionedRoutingSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
       "when set to text/plain" in {
         val departureHeaders = FakeHeaders(Seq(HeaderNames.ACCEPT -> MimeTypes.TEXT, HeaderNames.CONTENT_TYPE -> "application/xml"))
 
-        val cc  = app.injector.instanceOf[ControllerComponents]
+        val cc  = stubControllerComponents()
         val sut = new Harness(cc)
 
         val request = FakeRequest("GET", "/", departureHeaders, generateSource("<test>test</test>"))
@@ -154,6 +152,24 @@ class VersionedRoutingSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
       }
     }
 
+  }
+
+  "Binding Failure Error Action" - {
+    "when a failure is requested, return an appropriate BAD_REQUEST" in {
+
+      val sut = new Harness(stubControllerComponents())
+
+      val request = FakeRequest("GET", "/", FakeHeaders(), generateSource("<test>test</test>"))
+      val action  = sut.bindingFailureAction("failed")
+      val result  = action(request)
+
+      status(result) mustBe BAD_REQUEST
+      contentAsJson(result) mustBe Json.obj(
+        "code"       -> "BAD_REQUEST",
+        "statusCode" -> 400,
+        "message"    -> "failed"
+      )
+    }
   }
 
 }

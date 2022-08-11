@@ -17,12 +17,22 @@
 package v2.models.responses
 
 import play.api.libs.json.Json
-import play.api.libs.json.OFormat
 import v2.models.MessageId
-import v2.models.DepartureId
+import v2.models.request.MessageType
 
-object DeclarationResponse {
-  implicit lazy val declarationResponseFormat: OFormat[DeclarationResponse] = Json.format[DeclarationResponse]
+import java.net.URI
+import java.time.OffsetDateTime
+
+object MessageResponse {
+  implicit lazy val messageResponseFormat = Json.format[MessageResponse]
 }
 
-case class DeclarationResponse(departureId: DepartureId, messageId: MessageId)
+case class MessageResponse(
+  id: MessageId,
+  received: OffsetDateTime,
+  generated: OffsetDateTime,
+  messageType: MessageType,
+  triggerId: Option[MessageId],
+  url: Option[URI],
+  body: Option[String]
+)

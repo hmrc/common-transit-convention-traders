@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package v2.models.responses
+package v2.models
 
+import play.api.libs.json.Format
 import play.api.libs.json.Json
-import play.api.libs.json.OFormat
-import v2.models.MessageId
-import v2.models.DepartureId
 
-object DeclarationResponse {
-  implicit lazy val declarationResponseFormat: OFormat[DeclarationResponse] = Json.format[DeclarationResponse]
+object DepartureId {
+  implicit lazy val departureIdFormat: Format[DepartureId] = Json.valueFormat[DepartureId]
 }
 
-case class DeclarationResponse(departureId: DepartureId, messageId: MessageId)
+case class DepartureId(value: String) extends AnyVal

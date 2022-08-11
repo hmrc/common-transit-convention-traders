@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package v2.models.response
+package v2.models.responses
 
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
@@ -22,9 +22,8 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
+import v2.models.DepartureId
 import v2.models.MessageId
-import v2.models.MovementId
-import v2.models.responses.DeclarationResponse
 
 class DeclarationResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
@@ -32,7 +31,7 @@ class DeclarationResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckD
 
   "when MessageID is serialized, return an appropriate JsObject" in forAll(gen, gen) {
     (movement, message) =>
-      val actual   = DeclarationResponse.declarationResponseFormat.writes(DeclarationResponse(MovementId(movement), MessageId(message)))
+      val actual   = DeclarationResponse.declarationResponseFormat.writes(DeclarationResponse(DepartureId(movement), MessageId(message)))
       val expected = Json.obj("departureId" -> movement, "messageId" -> message)
       actual mustBe expected
   }
@@ -40,7 +39,7 @@ class DeclarationResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckD
   "when an appropriate JsObject is deserialized, return a MessageId" in forAll(gen, gen) {
     (movement, message) =>
       val actual   = DeclarationResponse.declarationResponseFormat.reads(Json.obj("departureId" -> movement, "messageId" -> message))
-      val expected = DeclarationResponse(MovementId(movement), MessageId(message))
+      val expected = DeclarationResponse(DepartureId(movement), MessageId(message))
       actual mustBe JsSuccess(expected)
   }
 

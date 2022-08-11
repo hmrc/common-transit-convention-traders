@@ -16,35 +16,105 @@
 
 package v2.connectors
 
+import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import io.lemonlabs.uri.UrlPath
+import play.api.http.Status.ACCEPTED
+import play.api.http.Status.OK
+import play.api.libs.json.JsResult
+import play.api.libs.json.Reads
 import uk.gov.hmrc.http.HttpErrorFunctions
+import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.client.RequestBuilder
 import v2.models.AuditType
 import v2.models.EORINumber
-import v2.models.MovementId
+import v2.models.DepartureId
 import v2.models.MessageId
 import v2.models.request.MessageType
 
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
 trait V2BaseConnector extends HttpErrorFunctions {
 
-  protected def validationRoute(messageType: MessageType): UrlPath =
+  def validationRoute(messageType: MessageType): UrlPath =
     UrlPath.parse(s"/transit-movements-validator/messages/${messageType.code}/validation")
 
-  protected def movementsBaseRoute: String = "/transit-movements"
+  def movementsBaseRoute: String = "/transit-movements"
 
-  protected def movementsPostDeperatureDeclaration(eoriNumber: EORINumber): UrlPath =
+  def movementsPostDepartureDeclaration(eoriNumber: EORINumber): UrlPath =
     UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/")
 
-  protected def routerBaseRoute: String = "/transit-movements-router"
+  def movementsGetDepartureMessage(eoriNumber: EORINumber, departureId: DepartureId, messageId: MessageId): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/${messageId.value}/")
 
-  protected def routerRoute(eoriNumber: EORINumber, messageType: MessageType, movementId: MovementId, messageId: MessageId): UrlPath =
+  def routerBaseRoute: String = "/transit-movements-router"
+
+  def routerRoute(eoriNumber: EORINumber, messageType: MessageType, movementId: DepartureId, messageId: MessageId): UrlPath =
     UrlPath.parse(s"$routerBaseRoute/traders/${eoriNumber.value}/movements/${messageType.movementType}/${movementId.value}/messages/${messageId.value}/")
 
-  protected def auditingBaseRoute: String = "/transit-movements-auditing"
+  def auditingBaseRoute: String = "/transit-movements-auditing"
 
-  protected def auditingRoute(auditType: AuditType): UrlPath =
+  def auditingRoute(auditType: AuditType): UrlPath =
     UrlPath.parse(s"$auditingBaseRoute/audit/${auditType.name}")
 
-  protected def conversionRoute(messageType: MessageType): UrlPath =
+  def conversionRoute(messageType: MessageType): UrlPath =
     UrlPath.parse(s"/transit-movements-converter/messages/${messageType.code}")
+
+  implicit class HttpResponseHelpers(response: HttpResponse) {
+
+    def as[A](implicit reads: Reads[A]): Future[A] =
+      response.json
+        .validate[A]
+        .map(
+          result => Future.successful(result)
+        )
+        .recoverTotal(
+          error => Future.failed(JsResult.Exception(error))
+        )
+
+    def errorFromStream[A](implicit m: Materializer, ec: ExecutionContext): Future[A] =
+      response.bodyAsSource
+        .reduce(_ ++ _)
+        .map(_.utf8String)
+        .runWith(Sink.head)
+        .flatMap(
+          result => Future.failed(UpstreamErrorResponse(result, response.status))
+        )
+
+    def error[A]: Future[A] =
+      Future.failed(UpstreamErrorResponse(response.body, response.status))
+
+  }
+
+  implicit class RequestBuilderHelpers(requestBuilder: RequestBuilder) {
+
+    def executeAccepted(implicit ec: ExecutionContext): Future[Unit] =
+      requestBuilder
+        .execute[HttpResponse]
+        .flatMap {
+          response =>
+            response.status match {
+              case ACCEPTED => Future.successful(())
+              case _        => response.error
+            }
+        }
+
+    def executeAsStream(implicit m: Materializer, ec: ExecutionContext): Future[Source[ByteString, _]] =
+      requestBuilder
+        .stream[HttpResponse]
+        .flatMap {
+          response =>
+            response.status match {
+              case OK => Future.successful(response.bodyAsSource)
+              case _  => response.errorFromStream
+            }
+        }
+
+  }
 
 }

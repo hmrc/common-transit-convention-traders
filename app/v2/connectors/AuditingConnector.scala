@@ -26,13 +26,8 @@ import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
 import play.api.http.HeaderNames
-import play.api.http.MimeTypes
-import play.api.http.Status.ACCEPTED
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.AuditType
 
@@ -61,14 +56,7 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, appConfig: AppC
           .post(url"$url")
           .addHeaders(HeaderNames.CONTENT_TYPE -> contentType)
           .withBody(source)
-          .execute[HttpResponse]
-          .flatMap {
-            response =>
-              response.status match {
-                case ACCEPTED => Future.successful(())
-                case _        => Future.failed(UpstreamErrorResponse(response.body, response.status))
-              }
-          }
+          .executeAccepted
     }
 
 }

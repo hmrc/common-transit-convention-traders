@@ -29,15 +29,16 @@ import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status.OK
-import play.api.libs.json.JsResult
-import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
-import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.client.HttpClientV2
+import v2.models.DepartureId
 import v2.models.EORINumber
+import v2.models.MessageId
 import v2.models.responses.DeclarationResponse
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import v2.models.responses.MessageResponse
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -49,6 +50,11 @@ trait PersistenceConnector {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[DeclarationResponse]
+
+  def getDepartureMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[MessageResponse]
 
 }
 
@@ -65,7 +71,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
   ): Future[DeclarationResponse] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
-        val url = appConfig.movementsUrl.withPath(movementsPostDeperatureDeclaration(eori))
+        val url = appConfig.movementsUrl.withPath(movementsPostDepartureDeclaration(eori))
 
         httpClientV2
           .post(url"$url")
@@ -75,19 +81,28 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
           .flatMap {
             response =>
               response.status match {
-                case OK =>
-                  response.json
-                    .validate[DeclarationResponse]
-                    .map(
-                      result => Future.successful(result)
-                    )
-                    .recoverTotal(
-                      error => Future.failed(JsResult.Exception(error))
-                    )
-                case _ =>
-                  Future.failed(UpstreamErrorResponse(response.body, response.status))
+                case OK => response.as[DeclarationResponse]
+                case _  => response.error
               }
           }
     }
 
+  override def getDepartureMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[MessageResponse] = {
+    val url = appConfig.movementsUrl.withPath(movementsGetDepartureMessage(eori, departureId, messageId))
+
+    httpClientV2
+      .get(url"$url")
+      .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+      .execute[HttpResponse]
+      .flatMap {
+        response =>
+          response.status match {
+            case OK => response.as[MessageResponse]
+            case _  => response.error
+          }
+      }
+  }
 }

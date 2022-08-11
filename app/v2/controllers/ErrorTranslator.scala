@@ -64,6 +64,8 @@ trait ErrorTranslator {
   implicit val persistenceErrorConverter = new Converter[PersistenceError] {
 
     def convert(persistenceError: PersistenceError): PresentationError = persistenceError match {
+      case PersistenceError.MessageNotFound(movement, message) =>
+        PresentationError.notFoundError(s"Message with ID ${message.value} for movement ${movement.value} was not found")
       case err: PersistenceError.UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
     }
   }

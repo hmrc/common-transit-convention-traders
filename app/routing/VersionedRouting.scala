@@ -30,6 +30,12 @@ import v2.models.errors.PresentationError
 
 import scala.concurrent.Future
 
+object VersionedRouting {
+
+  val VERSION_2_ACCEPT_HEADER_VALUE = "application/vnd.hmrc.2.0+json"
+
+}
+
 trait VersionedRouting {
   self: BaseController with StreamingParsers =>
 
@@ -59,6 +65,15 @@ trait VersionedRouting {
               )
             )
           }
+    }
+
+  // This simulates what Play will do if a binding fails, with the addition of the "code" field
+  // that we use elsewhere.
+  def bindingFailureAction(message: String)(implicit materializer: Materializer): Action[Source[ByteString, _]] =
+    Action.async(streamFromMemory) {
+      implicit request =>
+        request.body.runWith(Sink.ignore)
+        Future.successful(Status(BAD_REQUEST)(Json.toJson(PresentationError.bindingBadRequestError(message))))
     }
 
 }

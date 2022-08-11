@@ -17,8 +17,10 @@
 package v2.models.errors
 
 import cats.data.NonEmptyList
+import play.api.http.Status.BAD_REQUEST
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.functional.syntax.unlift
+import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites
 import play.api.libs.json.Reads
@@ -42,6 +44,9 @@ object PresentationError extends CommonFormats {
 
   def badRequestError(message: String): PresentationError =
     StandardError(message, ErrorCode.BadRequest)
+
+  def bindingBadRequestError(message: String): PresentationError =
+    BindingError(message, BAD_REQUEST, ErrorCode.BadRequest)
 
   def notFoundError(message: String): PresentationError =
     StandardError(message, ErrorCode.NotFound)
@@ -104,6 +109,7 @@ object PresentationError extends CommonFormats {
     )(JsonSchemaValidationError.apply, unlift(JsonSchemaValidationError.unapply))
 
   implicit val baseErrorWrites: OWrites[PresentationError] = OWrites {
+    case bindingError: BindingError                           => Json.writes[BindingError].writes(bindingError)
     case xmlSchemaValidationError: XmlSchemaValidationError   => xmlSchemaErrorFormat.writes(xmlSchemaValidationError)
     case jsonSchemaValidationError: JsonSchemaValidationError => jsonSchemaErrorFormat.writes(jsonSchemaValidationError)
     case baseError                                            => baseErrorWrites0.writes(baseError)
@@ -117,6 +123,8 @@ sealed abstract class PresentationError extends Product with Serializable {
 }
 
 case class StandardError(message: String, code: ErrorCode) extends PresentationError
+
+case class BindingError(message: String, statusCode: Int, code: ErrorCode) extends PresentationError
 
 case class XmlSchemaValidationError(
   message: String,

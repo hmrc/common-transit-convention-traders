@@ -14,13 +14,21 @@
  * limitations under the License.
  */
 
-package v2.models
+package v2.fakes.controllers
 
-import play.api.libs.json.Format
+import controllers.V1DepartureMessagesController
+import models.domain.DepartureId
+import models.domain.MessageId
 import play.api.libs.json.Json
+import play.api.mvc.Action
+import play.api.mvc.AnyContent
+import play.api.mvc.BaseController
+import play.api.test.Helpers.stubControllerComponents
 
-object MovementId {
-  implicit lazy val movementIdFormat: Format[MovementId] = Json.valueFormat[MovementId]
+class FakeV1DepartureMessagesController extends BaseController with V1DepartureMessagesController {
+  val controllerComponents = stubControllerComponents()
+
+  override def getDepartureMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent] = Action {
+    _ => Accepted(Json.obj("version" -> 1))
+  }
 }
-
-case class MovementId(value: String) extends AnyVal

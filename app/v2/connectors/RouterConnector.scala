@@ -27,17 +27,13 @@ import metrics.MetricsKeys
 import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
-import play.api.http.Status.ACCEPTED
-import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
-import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.client.HttpClientV2
+import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
-import v2.models.MovementId
 import v2.models.request.MessageType
-import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -45,7 +41,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[RouterConnectorImpl])
 trait RouterConnector {
 
-  def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
+  def post(messageType: MessageType, eoriNumber: EORINumber, movementId: DepartureId, messageId: MessageId, body: Source[ByteString, _])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): Future[Unit]
@@ -58,7 +54,7 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
     with HasMetrics
     with Logging {
 
-  override def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
+  override def post(messageType: MessageType, eoriNumber: EORINumber, movementId: DepartureId, messageId: MessageId, body: Source[ByteString, _])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): Future[Unit] =
@@ -70,14 +66,7 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
           .post(url"$url")
           .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
           .withBody(body)
-          .execute[HttpResponse]
-          .flatMap {
-            response =>
-              response.status match {
-                case ACCEPTED => Future.successful(())
-                case _        => Future.failed(UpstreamErrorResponse(response.body, response.status))
-              }
-          }
+          .executeAccepted
     }
 
 }

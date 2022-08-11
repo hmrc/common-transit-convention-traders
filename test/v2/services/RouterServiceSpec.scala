@@ -33,7 +33,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.RouterConnector
 import v2.models.EORINumber
 import v2.models.MessageId
-import v2.models.MovementId
+import v2.models.DepartureId
 import v2.models.errors.RouterError
 import v2.models.request.MessageType
 
@@ -60,7 +60,7 @@ class RouterServiceSpec extends AnyFreeSpec with Matchers with OptionValues with
       mockConnector.post(
         any[MessageType],
         any[String].asInstanceOf[EORINumber],
-        any[String].asInstanceOf[MovementId],
+        any[String].asInstanceOf[DepartureId],
         any[String].asInstanceOf[MessageId],
         eqTo(validRequest)
       )(
@@ -74,7 +74,7 @@ class RouterServiceSpec extends AnyFreeSpec with Matchers with OptionValues with
       mockConnector.post(
         any[MessageType],
         any[String].asInstanceOf[EORINumber],
-        any[String].asInstanceOf[MovementId],
+        any[String].asInstanceOf[DepartureId],
         any[String].asInstanceOf[MessageId],
         eqTo(invalidRequest)
       )(
@@ -87,7 +87,7 @@ class RouterServiceSpec extends AnyFreeSpec with Matchers with OptionValues with
     val sut = new RouterServiceImpl(mockConnector)
 
     "on a successful submission, should return a Right" in {
-      val result                              = sut.send(MessageType.DepartureDeclaration, EORINumber("1"), MovementId("1"), MessageId("1"), validRequest)
+      val result                              = sut.send(MessageType.DepartureDeclaration, EORINumber("1"), DepartureId("1"), MessageId("1"), validRequest)
       val expected: Either[RouterError, Unit] = Right(())
       whenReady(result.value) {
         _ mustBe expected
@@ -95,7 +95,7 @@ class RouterServiceSpec extends AnyFreeSpec with Matchers with OptionValues with
     }
 
     "on a failed submission, should return a Left with an UnexpectedError" in {
-      val result                              = sut.send(MessageType.DepartureDeclaration, EORINumber("1"), MovementId("1"), MessageId("1"), invalidRequest)
+      val result                              = sut.send(MessageType.DepartureDeclaration, EORINumber("1"), DepartureId("1"), MessageId("1"), invalidRequest)
       val expected: Either[RouterError, Unit] = Left(RouterError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected

@@ -22,11 +22,16 @@ import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import play.api.http.Status.NOT_FOUND
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
+import v2.models.MessageId
+import v2.models.DepartureId
 import v2.models.errors.PersistenceError
 import v2.models.responses.DeclarationResponse
+import v2.models.responses.MessageResponse
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -39,6 +44,11 @@ trait DeparturesService {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, DeclarationResponse]
+
+  def getMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, MessageResponse]
 
 }
 
@@ -58,4 +68,17 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
         }
     )
 
+  override def getMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, MessageResponse] =
+    EitherT(
+      persistenceConnector
+        .getDepartureMessage(eori, departureId, messageId)
+        .map(Right(_))
+        .recover {
+          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(departureId, messageId))
+          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+        }
+    )
 }
