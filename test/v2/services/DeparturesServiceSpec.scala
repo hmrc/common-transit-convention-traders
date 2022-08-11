@@ -23,6 +23,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.when
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -33,6 +34,7 @@ import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.Status.NOT_FOUND
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import v2.base.CommonGenerators
 import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
 import v2.models.MessageId
@@ -40,6 +42,7 @@ import v2.models.DepartureId
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
+import v2.models.responses.MessageIdsResponse
 import v2.models.responses.MessageResponse
 
 import java.nio.charset.StandardCharsets
@@ -49,7 +52,14 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class DeparturesServiceSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
+class DeparturesServiceSpec
+    extends AnyFreeSpec
+    with Matchers
+    with OptionValues
+    with ScalaFutures
+    with MockitoSugar
+    with CommonGenerators
+    with BeforeAndAfterEach {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
@@ -85,6 +95,47 @@ class DeparturesServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
         _ mustBe expected
       }
     }
+  }
+
+  "Getting a list of Departure message IDs" - {
+
+    "when a departure is found, should return a Right of the sequence of message IDs" in {
+      val expected = (for {
+        messageId1 <- arbitrary[MessageId]
+        messageId2 <- arbitrary[MessageId]
+        messageId3 <- arbitrary[MessageId]
+      } yield Seq(messageId1, messageId2, messageId3)).sample.value
+
+      when(mockConnector.getDepartureMessageIds(EORINumber(any()), DepartureId(any()))(any(), any()))
+        .thenReturn(Future.successful(MessageIdsResponse(expected)))
+
+      val result = sut.getMessageIds(EORINumber("1"), DepartureId("1234567890abcdef"))
+      whenReady(result.value) {
+        _ mustBe Right(expected)
+      }
+    }
+
+    "when a message is not found, should return a Left with an MessageNotFound" in {
+      when(mockConnector.getDepartureMessageIds(EORINumber(any()), DepartureId(any()))(any(), any()))
+        .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
+
+      val result = sut.getMessageIds(EORINumber("1"), DepartureId("1234567890abcdef"))
+      whenReady(result.value) {
+        _ mustBe Left(PersistenceError.DepartureNotFound(DepartureId("1234567890abcdef")))
+      }
+    }
+
+    "on a failed submission, should return a Left with an UnexpectedError" in {
+      val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
+      when(mockConnector.getDepartureMessageIds(EORINumber(any()), DepartureId(any()))(any(), any()))
+        .thenReturn(Future.failed(error))
+
+      val result = sut.getMessageIds(EORINumber("1"), DepartureId("1234567890abcdef"))
+      whenReady(result.value) {
+        _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
+      }
+    }
+
   }
 
   "Getting a Single Message" - {

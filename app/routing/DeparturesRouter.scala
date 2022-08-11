@@ -78,7 +78,7 @@ class DeparturesRouter @Inject() (
         convertedDepartureId <- implicitly[PathBindable[V2DepartureId]].bind("departureId", departureId)
       } yield convertedDepartureId).fold(
         bindingFailureAction(_),
-        converted => v2Departures.getMessageIds(converted)
+        converted => v2Departures.getMessageIds(converted, receivedSince)
       )
     case _ =>
       (for {

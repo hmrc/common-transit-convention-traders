@@ -35,6 +35,7 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.OngoingStubbing
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -60,6 +61,7 @@ import play.api.test.Helpers.status
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.TestMetrics
+import v2.base.CommonGenerators
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
@@ -77,6 +79,7 @@ import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.MessageResponse
+import v2.models.responses.hateoas.HateoasDepartureMessageIdsResponse
 import v2.models.responses.hateoas.HateoasDepartureMessageResponse
 import v2.services.AuditingService
 import v2.services.ConversionService
@@ -103,7 +106,8 @@ class V2DeparturesControllerSpec
     with MockitoSugar
     with TestActorSystem
     with TestSourceProvider
-    with BeforeAndAfterEach {
+    with BeforeAndAfterEach
+    with CommonGenerators {
 
   def CC015C: NodeSeq =
     <CC015C>
@@ -796,6 +800,64 @@ class V2DeparturesControllerSpec
       )
 
     }
+  }
+
+  "for retrieving a list of message IDs" - {
+
+    val datetimes = Seq(arbitrary[OffsetDateTime].sample, None)
+
+    "when a departure is found" in datetimes.foreach {
+      dateTime =>
+        val messageResponse = (for {
+          messageId1 <- arbitrary[MessageId]
+          messageId2 <- arbitrary[MessageId]
+          messageId3 <- arbitrary[MessageId]
+        } yield Seq(messageId1, messageId2, messageId3)).sample.value
+
+        when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.rightT(messageResponse)
+          )
+
+        val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+        val result  = sut.getMessageIds(DepartureId("0123456789abcdef"), dateTime)(request)
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(HateoasDepartureMessageIdsResponse(DepartureId("0123456789abcdef"), messageResponse, dateTime))
+    }
+
+    "when no departure is found" in {
+      when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenAnswer(
+          _ => EitherT.leftT(PersistenceError.DepartureNotFound(DepartureId("0123456789abcdef")))
+        )
+
+      val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+      val result  = sut.getMessageIds(DepartureId("0123456789abcdef"), None)(request)
+
+      status(result) mustBe NOT_FOUND
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "NOT_FOUND",
+        "message" -> "Departure movement with ID 0123456789abcdef was not found"
+      )
+    }
+
+    "when an unknown error occurs" in {
+      when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenAnswer(
+          _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
+        )
+
+      val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+      val result  = sut.getMessageIds(DepartureId("0123456789abcdef"), None)(request)
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "INTERNAL_SERVER_ERROR",
+        "message" -> "Internal server error"
+      )
+    }
+
   }
 
   "for retrieving a single message" - {

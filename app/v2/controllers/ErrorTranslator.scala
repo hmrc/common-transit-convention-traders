@@ -65,7 +65,7 @@ trait ErrorTranslator {
 
     def convert(persistenceError: PersistenceError): PresentationError = persistenceError match {
       case PersistenceError.DepartureNotFound(movement) =>
-        PresentationError.notFoundError(s"Departure movement ${movement.value} was not found")
+        PresentationError.notFoundError(s"Departure movement with ID ${movement.value} was not found")
       case PersistenceError.MessageNotFound(movement, message) =>
         PresentationError.notFoundError(s"Message with ID ${message.value} for movement ${movement.value} was not found")
       case err: PersistenceError.UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
