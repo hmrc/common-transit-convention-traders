@@ -48,7 +48,7 @@ object HateoasDepartureMessageIdsResponse extends HateoasResponse {
         "departure" -> Json.obj("href" -> departureUrl(departureId))
       ),
       "departureId" -> departureId.value,
-      "messageIds"  -> messageIds // TODO: links?
+      "messageIds"  -> messageIds // TODO: links? [ { id: "abcde", link: "sdfkjghksldfb"},  ]
     )
 
 }
