@@ -21,6 +21,7 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import play.api.http.HeaderNames
+import play.api.http.HttpVerbs
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.BaseController
@@ -44,9 +45,22 @@ trait VersionedRouting {
       (request: Request[Source[ByteString, _]]) =>
         routes
           .lift(request.headers.get(HeaderNames.ACCEPT))
-          .map(
-            action => action(request).run(request.body)
-          )
+          .map {
+            action =>
+              request.method match {
+                case HttpVerbs.GET | HttpVerbs.HEAD | HttpVerbs.DELETE | HttpVerbs.OPTIONS =>
+                  // For the above verbs, we don't want to send a body,
+                  // however, in case we have one, we still need to drain the body.
+                  request.body.to(Sink.ignore).run()
+
+                  // We need to remove this as it might otherwise trigger any AnyContent
+                  // actions to try to parse an empty body
+                  val headersWithoutContentType = request.headers.remove(CONTENT_TYPE)
+                  action(request.withHeaders(headersWithoutContentType)).run()
+                case _ =>
+                  action(request).run(request.body)
+              }
+          }
           .getOrElse {
             // To avoid a memory leak, we need to ensure we run the request stream and ignore it.
             request.body.to(Sink.ignore).run()
