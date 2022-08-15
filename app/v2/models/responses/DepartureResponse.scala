@@ -31,7 +31,7 @@ case class DepartureResponse(
   _id: DepartureId,
   enrollmentEORINumber: EORINumber,
   movementEORINumber: EORINumber,
-  movementReferenceNumber: Option[MovementReferenceNumber], // optional pending MRN allocation
+  movementReferenceNumber: Option[MovementReferenceNumber],
   created: OffsetDateTime,
   updated: OffsetDateTime
 )

@@ -862,8 +862,7 @@ class V2DeparturesControllerSpec
 
   }
 
-  // for retrieving a single departure/movement
-  "GET  /movements/departures/:departureId" - {
+  "retrieving a single departure/movement" - {
     "should return ok with json body of departure" in {
       val createdTime = OffsetDateTime.now()
       val departureResponse = DepartureResponse(

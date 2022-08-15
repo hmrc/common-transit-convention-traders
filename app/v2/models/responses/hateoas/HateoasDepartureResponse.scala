@@ -16,6 +16,7 @@
 
 package v2.models.responses.hateoas
 
+import config.Constants
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.models.DepartureId
@@ -24,8 +25,8 @@ import v2.models.responses.DepartureResponse
 object HateoasDepartureResponse {
 
   def prefix(departureId: DepartureId) =
-    if (routing.routes.DeparturesRouter.getDeparture(departureId.value).url.startsWith("/customs/transits")) ""
-    else "/customs/transits"
+    if (routing.routes.DeparturesRouter.getDeparture(departureId.value).url.startsWith(Constants.Context)) ""
+    else Constants.Context
 
   def selfUrl(departureId: DepartureId) =
     prefix(departureId) + routing.routes.DeparturesRouter.getDeparture(departureId.value).url
