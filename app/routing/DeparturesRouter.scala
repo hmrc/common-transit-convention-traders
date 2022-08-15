@@ -54,40 +54,32 @@ class DeparturesRouter @Inject() (
 
   def getMessage(departureId: String, messageId: String): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE) =>
-      (for {
-        convertedDepartureId <- implicitly[PathBindable[V2DepartureId]].bind("departureId", departureId)
-        convertedMessageId   <- implicitly[PathBindable[V2MessageId]].bind("messageId", messageId)
-      } yield (convertedDepartureId, convertedMessageId)).fold(
-        bindingFailureAction(_),
-        converted => v2Departures.getMessage(converted._1, converted._2)
+      runIfBound[V2DepartureId](
+        "departureId",
+        departureId,
+        boundDepartureId => runIfBound[V2MessageId]("messageId", messageId, v2Departures.getMessage(boundDepartureId, _))
       )
     case _ =>
-      (for {
-        convertedDepartureId <- implicitly[PathBindable[V1DepartureId]].bind("departureId", departureId)
-        convertedMessageId   <- implicitly[PathBindable[V1MessageId]].bind("messageId", messageId)
-      } yield (convertedDepartureId, convertedMessageId)).fold(
-        bindingFailureAction(_),
-        converted => v1DepartureMessages.getDepartureMessage(converted._1, converted._2)
+      runIfBound[V1DepartureId](
+        "departureId",
+        departureId,
+        boundDepartureId => runIfBound[V1MessageId]("messageId", messageId, v1DepartureMessages.getDepartureMessage(boundDepartureId, _))
       )
-
   }
 
   def getMessageIds(departureId: String, receivedSince: Option[OffsetDateTime] = None): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE) =>
-      (for {
-        convertedDepartureId <- implicitly[PathBindable[V2DepartureId]].bind("departureId", departureId)
-      } yield convertedDepartureId).fold(
-        bindingFailureAction(_),
-        converted => v2Departures.getMessageIds(converted, receivedSince)
+      runIfBound[V2DepartureId](
+        "departureId",
+        departureId,
+        v2Departures.getMessageIds(_, receivedSince)
       )
     case _ =>
-      (for {
-        convertedDepartureId <- implicitly[PathBindable[V1DepartureId]].bind("departureId", departureId)
-      } yield convertedDepartureId).fold(
-        bindingFailureAction(_),
-        converted => v1DepartureMessages.getDepartureMessages(converted, receivedSince)
+      runIfBound[V1DepartureId](
+        "departureId",
+        departureId,
+        v1DepartureMessages.getDepartureMessages(_, receivedSince)
       )
-
   }
 
 }
