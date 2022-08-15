@@ -16,6 +16,7 @@
 
 package v2.models.responses.hateoas
 
+import config.Constants
 import v2.models.DepartureId
 import v2.models.MessageId
 import v2.models.responses.hateoas.HateoasResponse.prefix
@@ -26,8 +27,8 @@ import java.time.temporal.ChronoUnit
 object HateoasResponse {
 
   lazy val prefix =
-    if (routing.routes.DeparturesRouter.submitDeclaration().url.startsWith("/customs/transits")) ""
-    else "/customs/transits"
+    if (routing.routes.DeparturesRouter.submitDeclaration().url.startsWith(Constants.Context)) ""
+    else Constants.Context
 
 }
 
