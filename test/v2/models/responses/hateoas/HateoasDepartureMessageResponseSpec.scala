@@ -57,8 +57,8 @@ class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with
         "self"      -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}/messages/${messageId.value}"),
         "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
       ),
-      "departureId" -> departureId,
-      "messageId"   -> messageId,
+      "departureId" -> s"/customs/transits/movements/departures/${departureId.value}",
+      "messageId"   -> s"/customs/transits/movements/departures/${departureId.value}/messages/${messageId.value}",
       "received"    -> "2022-08-04T11:52:59",
       "messageType" -> MessageType.DepartureDeclaration.code,
       "body"        -> body

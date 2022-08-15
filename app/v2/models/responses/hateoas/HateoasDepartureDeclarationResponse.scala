@@ -22,23 +22,16 @@ import v2.models.DepartureId
 
 object HateoasDepartureDeclarationResponse extends HateoasResponse {
 
-  def messageUrl(departureId: DepartureId) =
-    prefix + routing.routes.DeparturesRouter.getMessageIds(departureId.value).url
-
-  // TODO: Fix when we do this route, as right now it only accepts an int.
-  def departureUrl(departureId: DepartureId) =
-    s"/customs/transits/movements/departures/${departureId.value}"
-
   def apply(departureId: DepartureId): JsObject =
     Json.obj(
       "_links" -> Json.obj(
-        "self" -> Json.obj("href" -> departureUrl(departureId))
+        "self" -> Json.obj("href" -> departureUri(departureId))
       ),
-      "id" -> departureId.value,
+      "id" -> departureUri(departureId),
       "_embedded" -> Json.obj(
         "messages" -> Json.obj(
           "_links" ->
-            Json.obj("href" -> messageUrl(departureId))
+            Json.obj("href" -> messageIdsUri(departureId, None))
         )
       )
     )

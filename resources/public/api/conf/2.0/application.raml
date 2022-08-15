@@ -104,7 +104,7 @@ traits:
                       "href": "/customs/transits/movements/departures/0123456789abcdef"
                     }
                   },
-                  "id": "0123456789abcdef",
+                  "id": "/customs/transits/movements/departures/0123456789abcdef",
                   "_embedded": {
                     "messages": {
                       "_links": {
@@ -116,6 +116,53 @@ traits:
 
     /{departureId}:
       /messages:
+        get:
+          displayName: Get all messages relating to a Movement Departure
+          description: |
+            Get the IDs of all messages sent within 31 days of the goods being released relating to a Movement Departure. Any Movements that are more than 31 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status.
+
+            You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
+
+            **Note**: The 'movementReferenceNumber' field will only be populated when an MRN is allocated.
+          is:
+            - acceptJsonHeader
+            - acceptHeaderInvalid
+#          queryParameters:
+#            receivedSince:
+#              required: false
+#              type: datetime
+#              description: This is an optional filtering parameter. It allows you to request only the messages relating to a Movement Departure which have been received since the date and time you have given us.
+#              example: 2021-06-21T09:00+00:00
+          (annotations.scope): "common-transit-convention-traders"
+          securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+          responses:
+            200:
+              body:
+                application/json:
+                  description: JSON Payload
+                  example: |
+                    {
+                      "_links": {
+                        "self": {
+                          "href": "/customs/transits/movements/departures/0123456789abcdef/messages"
+                        }
+                      },
+                      "departureId": "/customs/transits/movements/departures/0123456789abcdef",
+                      "messageIds": [
+                        "/customs/transits/movements/departures/0123456789abcdef/messages/abcdef0123456789",
+                        "/customs/transits/movements/departures/0123456789abcdef/messages/abcdef0123456788",
+                        "/customs/transits/movements/departures/0123456789abcdef/messages/abcdef0123456787"
+                      ]
+                    }
+            404:
+              body:
+                application/json:
+                  type: types.errorResponse
+                  examples:
+                    notFound:
+                      description: The requested message does not exist, has been archived, or is not available to the EORI number
+                      value:
+                        code: NOT_FOUND
         /{messageId}:
           get:
             displayName: Get a message relating to a Movement Departure and message ID
@@ -143,8 +190,8 @@ traits:
                             "href": "/customs/transits/movements/departures/0123456789abcdef"
                           }
                         },
-                        "departureId": "0123456789abcdef",
-                        "messageId": "abcdef0123456789",
+                        "departureId": "/customs/transits/movements/departures/0123456789abcdef",
+                        "messageId": "/customs/transits/movements/departures/0123456789abcdef/messages/abcdef0123456789",
                         "received": "2020-10-10T10:10:10",
                         "messageType": "IE015",
                         "body": "<CC015C>...</CC015C>"
@@ -154,7 +201,7 @@ traits:
                   application/json:
                     type: types.errorResponse
                     examples:
-                      schemaValidation:
+                      notFound:
                         description: The requested message does not exist, has been archived, or is not available to the EORI number
                         value:
                           code: NOT_FOUND

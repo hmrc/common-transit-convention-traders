@@ -58,7 +58,6 @@ import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
-import v2.models.responses.MessageIdsResponse
 import v2.models.responses.MessageResponse
 
 import java.nio.charset.StandardCharsets
@@ -375,7 +374,7 @@ class PersistenceConnectorSpec
         messsageId1 <- arbitrary[MessageId]
         messsageId2 <- arbitrary[MessageId]
         messsageId3 <- arbitrary[MessageId]
-      } yield MessageIdsResponse(Seq(messsageId1, messsageId2, messsageId3))
+      } yield Seq(messsageId1, messsageId2, messsageId3)
 
     def targetUrl(eoriNumber: EORINumber, departureId: DepartureId) =
       s"/transit-movements/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/"
@@ -393,7 +392,9 @@ class PersistenceConnectorSpec
             aResponse()
               .withStatus(OK)
               .withBody(
-                Json.stringify(Json.toJson(messageResponse))
+                // Doing this to ensure we know what the response will be, and not what
+                // Play thinks it will be based on turning an object into Json
+                s"""[ "${messageResponse.head.value}", "${messageResponse(1).value}", "${messageResponse(2).value}" ]""""
               )
           )
       )

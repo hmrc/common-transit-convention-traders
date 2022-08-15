@@ -266,7 +266,7 @@ class V2DeparturesControllerSpec
               "href" -> "/customs/transits/movements/departures/123"
             )
           ),
-          "id" -> "123",
+          "id" -> "/customs/transits/movements/departures/123",
           "_embedded" -> Json.obj(
             "messages" -> Json.obj(
               "_links" -> Json.obj(
@@ -320,7 +320,7 @@ class V2DeparturesControllerSpec
                   "href" -> "/customs/transits/movements/departures/123"
                 )
               ),
-              "id" -> "123",
+              "id" -> "/customs/transits/movements/departures/123",
               "_embedded" -> Json.obj(
                 "messages" -> Json.obj(
                   "_links" -> Json.obj(

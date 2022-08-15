@@ -16,10 +16,38 @@
 
 package v2.models.responses.hateoas
 
-trait HateoasResponse {
+import v2.models.DepartureId
+import v2.models.MessageId
+import v2.models.responses.hateoas.HateoasResponse.prefix
+
+import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
+
+object HateoasResponse {
 
   lazy val prefix =
     if (routing.routes.DeparturesRouter.submitDeclaration().url.startsWith("/customs/transits")) ""
     else "/customs/transits"
+
+}
+
+trait HateoasResponse {
+
+  def messageUri(departureId: DepartureId, messageId: MessageId) =
+    prefix + routing.routes.DeparturesRouter.getMessage(departureId.value, messageId.value).url
+
+  def messageIdsUri(departureId: DepartureId, receivedSince: Option[OffsetDateTime]) =
+    prefix + routing.routes.DeparturesRouter
+      .getMessageIds(
+        departureId.value,
+        receivedSince.map(
+          x => x.truncatedTo(ChronoUnit.SECONDS)
+        )
+      )
+      .url
+
+  // TODO: When we do the departure endpoint, this needs updating
+  def departureUri(departureId: DepartureId) =
+    s"/customs/transits/movements/departures/${departureId.value}"
 
 }

@@ -42,7 +42,6 @@ import v2.models.DepartureId
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
-import v2.models.responses.MessageIdsResponse
 import v2.models.responses.MessageResponse
 
 import java.nio.charset.StandardCharsets
@@ -107,7 +106,7 @@ class DeparturesServiceSpec
       } yield Seq(messageId1, messageId2, messageId3)).sample.value
 
       when(mockConnector.getDepartureMessageIds(EORINumber(any()), DepartureId(any()))(any(), any()))
-        .thenReturn(Future.successful(MessageIdsResponse(expected)))
+        .thenReturn(Future.successful(expected))
 
       val result = sut.getMessageIds(EORINumber("1"), DepartureId("1234567890abcdef"))
       whenReady(result.value) {

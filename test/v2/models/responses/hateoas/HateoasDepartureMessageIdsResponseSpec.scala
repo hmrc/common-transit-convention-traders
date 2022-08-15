@@ -53,8 +53,10 @@ class HateoasDepartureMessageIdsResponseSpec extends AnyFreeSpec with Matchers w
             "self"      -> selfUrl(departureId, dateTime),
             "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
           ),
-          "departureId" -> departureId,
-          "messageIds"  -> messageIds
+          "departureId" -> s"/customs/transits/movements/departures/${departureId.value}",
+          "messageIds" -> messageIds.map(
+            x => s"/customs/transits/movements/departures/${departureId.value}/messages/${x.value}"
+          )
         )
 
         actual mustBe expected

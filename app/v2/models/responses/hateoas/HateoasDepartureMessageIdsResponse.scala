@@ -22,33 +22,17 @@ import v2.models.DepartureId
 import v2.models.MessageId
 
 import java.time.OffsetDateTime
-import java.time.temporal.ChronoUnit
 
 object HateoasDepartureMessageIdsResponse extends HateoasResponse {
-
-  def selfUrl(departureId: DepartureId, receivedSince: Option[OffsetDateTime]) =
-    prefix + routing.routes.DeparturesRouter
-      .getMessageIds(
-        departureId.value,
-        receivedSince.map(
-          x => x.truncatedTo(ChronoUnit.SECONDS)
-        )
-      )
-      .url
-
-  // TODO: When we do the departure endpoint, this needs updating
-  def departureUrl(departureId: DepartureId) =
-    s"/customs/transits/movements/departures/${departureId.value}"
-  // prefix + routing.routes.DeparturesRouter.getMessage(departureId.value, "1").url
 
   def apply(departureId: DepartureId, messageIds: Seq[MessageId], receivedSince: Option[OffsetDateTime]): JsObject =
     Json.obj(
       "_links" -> Json.obj(
-        "self"      -> Json.obj("href" -> selfUrl(departureId, receivedSince)),
-        "departure" -> Json.obj("href" -> departureUrl(departureId))
+        "self"      -> Json.obj("href" -> messageIdsUri(departureId, receivedSince)),
+        "departure" -> Json.obj("href" -> departureUri(departureId))
       ),
-      "departureId" -> departureId.value,
-      "messageIds"  -> messageIds // TODO: links? [ { id: "abcde", link: "sdfkjghksldfb"},  ]
+      "departureId" -> departureUri(departureId),
+      "messageIds"  -> messageIds.map(messageUri(departureId, _))
     )
 
 }

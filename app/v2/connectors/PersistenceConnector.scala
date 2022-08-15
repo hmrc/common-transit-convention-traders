@@ -38,7 +38,6 @@ import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.responses.DeclarationResponse
-import v2.models.responses.MessageIdsResponse
 import v2.models.responses.MessageResponse
 
 import scala.concurrent.ExecutionContext
@@ -60,7 +59,7 @@ trait PersistenceConnector {
   def getDepartureMessageIds(eori: EORINumber, departureId: DepartureId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[MessageIdsResponse]
+  ): Future[Seq[MessageId]]
 }
 
 @Singleton
@@ -114,7 +113,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
   override def getDepartureMessageIds(eori: EORINumber, departureId: DepartureId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[MessageIdsResponse] = {
+  ): Future[Seq[MessageId]] = {
     val url = appConfig.movementsUrl.withPath(movementsGetDepartureMessageIds(eori, departureId))
 
     httpClientV2
@@ -124,7 +123,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       .flatMap {
         response =>
           response.status match {
-            case OK => response.as[MessageIdsResponse]
+            case OK => response.as[Seq[MessageId]]
             case _  => response.error
           }
       }
