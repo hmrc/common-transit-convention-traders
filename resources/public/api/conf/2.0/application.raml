@@ -115,6 +115,44 @@ traits:
                 }
 
     /{departureId}:
+      get:
+        displayName: Get a Movement Departure for a departure ID
+        description: |
+          Get a specific Movement Departure which was sent to the office at departure within 31 days of the goods being released at their final destination. Any Movements that are more than 31 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status.
+
+          You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
+
+          **Note**: The 'movementReferenceNumber' field will only be populated when an MRN is allocated.
+        is:
+          - acceptJsonHeader
+          - acceptHeaderInvalid
+        (annotations.scope): "common-transit-convention-traders"
+        securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+        responses:
+          200:
+            body:
+              application/json:
+                description: JSON Payload
+                example: |
+                  {
+                    "_id": "1",
+                    "enrollmentEORINumber": "GB002",
+                    "movementEORINumber": "GB001",
+                    "movementReferenceNumber": "MRN001",
+                    "created": "2022-08-14T00:00:00",
+                    "updated": "2020-08-15T01:23:45",
+                    "_links": {
+                      "self": {
+                        "href": "/customs/transits/movements/departures/1"
+                      },
+                      "messages": {
+                        "href": "/customs/transits/movements/departures/1/messages"
+                      }
+                    }
+                  }
+
+          404:
+            description: When a Departure Movement does not exist, has been archived or is not available to the EORI number.
       /messages:
         /{messageId}:
           get:
