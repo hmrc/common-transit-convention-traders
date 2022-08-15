@@ -369,12 +369,7 @@ class PersistenceConnectorSpec
 
   "GET /traders/:eori/movements/departure/:departureid/messages" - {
 
-    lazy val okResultGen =
-      for {
-        messsageId1 <- arbitrary[MessageId]
-        messsageId2 <- arbitrary[MessageId]
-        messsageId3 <- arbitrary[MessageId]
-      } yield Seq(messsageId1, messsageId2, messsageId3)
+    lazy val messageIdList = Gen.listOfN(3, arbitrary[MessageId])
 
     def targetUrl(eoriNumber: EORINumber, departureId: DepartureId) =
       s"/transit-movements/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/"
@@ -382,7 +377,7 @@ class PersistenceConnectorSpec
     "on successful return of message IDs, return a success" in {
       val eori            = arbitrary[EORINumber].sample.get
       val departureId     = arbitrary[DepartureId].sample.get
-      val messageResponse = okResultGen.sample.get
+      val messageResponse = messageIdList.sample.get
 
       server.stubFor(
         get(
