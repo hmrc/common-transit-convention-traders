@@ -50,6 +50,7 @@ import scala.xml.NodeSeq
 trait V1DeparturesController {
 
   def submitDeclaration(): Action[NodeSeq]
+  def getDeparture(departureId: DepartureId): Action[AnyContent]
 
 }
 
@@ -98,7 +99,7 @@ class DeparturesController @Inject() (
                             response.responseData
                           )
                         )
-                      ).withHeaders(LOCATION -> routes.DeparturesController.getDeparture(departureId).urlWithContext)
+                      ).withHeaders(LOCATION -> routing.routes.DeparturesRouter.getDeparture(departureId.toString).urlWithContext)
                     case None =>
                       InternalServerError
                   }

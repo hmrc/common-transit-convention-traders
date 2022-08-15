@@ -17,8 +17,10 @@
 package v2.fakes.controllers
 
 import controllers.V1DeparturesController
+import models.domain.DepartureId
 import play.api.libs.json.Json
 import play.api.mvc.Action
+import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
 import play.api.mvc.Request
 import play.api.test.Helpers.stubControllerComponents
@@ -32,6 +34,11 @@ class FakeV1DeparturesController extends BaseController with V1DeparturesControl
   override def submitDeclaration(): Action[NodeSeq] = Action(parse.xml) {
     _: Request[NodeSeq] =>
       Accepted(Json.obj("version" -> 1))
+  }
+
+  override def getDeparture(departureId: DepartureId): Action[AnyContent] = Action {
+    _ =>
+      Ok(Json.obj("version" -> 1))
   }
 
 }

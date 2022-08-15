@@ -16,7 +16,6 @@
 
 package routing
 
-import akka.util.ByteString
 import akka.util.Timeout
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -24,6 +23,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames
+import play.api.http.Status.OK
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.BAD_REQUEST
 import play.api.libs.json.Json
@@ -207,5 +207,64 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
       }
     }
 
+  }
+
+  "when getting a departure/movement" - {
+    "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
+      val departureHeaders = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json"))
+
+      "must route to the v2 controller and return Ok when successful" in {
+        val request = FakeRequest(method = "GET", body = "", uri = routes.DeparturesRouter.getDeparture("").url, headers = departureHeaders)
+        val result  = sut.getDeparture("1234567890abcdef")(request)
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
+      }
+
+      "must route to the v2 controller and return BAD_REQUEST when departureId has invalid format" in {
+        val request = FakeRequest(method = "GET", body = "", uri = routes.DeparturesRouter.getDeparture("").url, headers = departureHeaders)
+        val result  = sut.getDeparture("1234567890abcde")(request)
+
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "code"       -> "BAD_REQUEST",
+          "statusCode" -> 400,
+          "message"    -> "departureId: Value 1234567890abcde is not a 16 character hexadecimal string"
+        )
+      }
+
+    }
+
+    "with accept header set to application/vnd.hmrc.1.0+json (version one)" - {
+      val departureHeaders = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json"))
+
+      "must route to the v1 controller and return Ok when successful" in {
+        val request = FakeRequest(method = "GET", body = "", uri = routes.DeparturesRouter.getDeparture("").url, headers = departureHeaders)
+        val result  = sut.getDeparture("1234567890")(request)
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
+      }
+
+      "must route to the v1 controller by default if version unspecified" in {
+        val request = FakeRequest(method = "GET", body = "", uri = routes.DeparturesRouter.getDeparture("").url, headers = FakeHeaders())
+        val result  = sut.getDeparture("1234567890")(request)
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.obj("version" -> 1)
+      }
+
+      "must route to the v1 controller and return 400 with invalid id" in {
+        val request = FakeRequest(method = "GET", body = "", uri = routes.DeparturesRouter.getDeparture("").url, headers = departureHeaders)
+        val result  = sut.getDeparture("1234567890abc")(request)
+
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "message"    -> "Cannot parse parameter departureId as Int: For input string: \"1234567890abc\"",
+          "statusCode" -> 400,
+          "code"       -> "BAD_REQUEST"
+        )
+      }
+    }
   }
 }

@@ -51,6 +51,7 @@ import play.api.http.Status.OK
 import play.api.http.Status.UNSUPPORTED_MEDIA_TYPE
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json.Json
+import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.Request
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
@@ -67,6 +68,7 @@ import v2.fakes.controllers.actions.FakeMessageSizeActionProvider
 import v2.models.AuditType
 import v2.models.DepartureId
 import v2.models.EORINumber
+import v2.models.MovementReferenceNumber
 import v2.models.MessageId
 import v2.models.errors.ConversionError
 import v2.models.errors.FailedToValidateError
@@ -76,8 +78,10 @@ import v2.models.errors.RouterError
 import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
+import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
 import v2.models.responses.hateoas.HateoasDepartureMessageResponse
+import v2.models.responses.hateoas.HateoasDepartureResponse
 import v2.services.AuditingService
 import v2.services.ConversionService
 import v2.services.DeparturesService
@@ -856,6 +860,86 @@ class V2DeparturesControllerSpec
       )
     }
 
+  }
+
+  // for retrieving a single departure/movement
+  "GET  /movements/departures/:departureId" - {
+    "should return ok with json body of departure" in {
+      val createdTime = OffsetDateTime.now()
+      val departureResponse = DepartureResponse(
+        DepartureId("0123456789abcdef"),
+        EORINumber("GB123"),
+        EORINumber("XI456"),
+        Some(MovementReferenceNumber("312")),
+        createdTime,
+        createdTime
+      )
+
+      when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), DepartureId(any()))(any(), any()))
+        .thenAnswer(
+          _ => EitherT.rightT(departureResponse)
+        )
+
+      val request = FakeRequest(
+        "GET",
+        routing.routes.DeparturesRouter.getDeparture("123").url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json")),
+        AnyContentAsEmpty
+      )
+      val result = sut.getDeparture(DepartureId("0123456789abcdef"))(request)
+
+      status(result) mustBe OK
+      contentAsJson(result) mustBe Json.toJson(
+        HateoasDepartureResponse(
+          DepartureId("0123456789abcdef"),
+          DepartureResponse(
+            DepartureId("0123456789abcdef"),
+            EORINumber("GB123"),
+            EORINumber("XI456"),
+            Some(MovementReferenceNumber("312")),
+            createdTime,
+            createdTime
+          )
+        )
+      )
+    }
+
+    "should return departure not found if persistence service returns 404" in {
+      when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), DepartureId(any()))(any(), any()))
+        .thenAnswer {
+          inv =>
+            val d = DepartureId(inv.getArgument[String](1))
+            EitherT.leftT(PersistenceError.DepartureNotFound(d))
+        }
+
+      val request = FakeRequest(
+        "GET",
+        routing.routes.DeparturesRouter.getDeparture("0123456789abcdef").url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json")),
+        AnyContentAsEmpty
+      )
+      val result = sut.getDeparture(DepartureId("0123456789abcdef"))(request)
+
+      status(result) mustBe NOT_FOUND
+    }
+
+    "should return unexpected error for all other errors" in {
+      when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), DepartureId(any()))(any(), any()))
+        .thenAnswer {
+          _ =>
+            EitherT.leftT(PersistenceError.UnexpectedError(None))
+        }
+
+      val request = FakeRequest(
+        "GET",
+        routing.routes.DeparturesRouter.getDeparture("0123456789abcdef").url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json")),
+        AnyContentAsEmpty
+      )
+      val result = sut.getDeparture(DepartureId("0123456789abcdef"))(request)
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+    }
   }
 
   def validateXmlOkStub(): OngoingStubbing[EitherT[Future, FailedToValidateError, Unit]] =

@@ -24,7 +24,6 @@ import models.BoxId
 import models.domain.Departure
 import models.domain.DepartureId
 import models.domain.Departures
-import models.response.HateoasResponseDeparture
 import models.response.HateoasResponseDepartures
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
@@ -201,7 +200,7 @@ class DepartureConnectorSpec
         LocalDateTime.now
       )
 
-      val response = HateoasResponseDeparture(departure)
+      val response = HateoasDepartureResponse(departure)
 
       server.stubFor(
         get(urlEqualTo("/transits-movements-trader-at-departure/movements/departures/1"))

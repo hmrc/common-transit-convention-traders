@@ -31,6 +31,7 @@ import v2.models.MessageId
 import v2.models.DepartureId
 import v2.models.errors.PersistenceError
 import v2.models.responses.DeclarationResponse
+import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
 
 import scala.concurrent.ExecutionContext
@@ -49,6 +50,11 @@ trait DeparturesService {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MessageResponse]
+
+  def getDeparture(eori: EORINumber, departureId: DepartureId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, DepartureResponse]
 
 }
 
@@ -81,4 +87,19 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
           case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
+
+  override def getDeparture(eori: EORINumber, departureId: DepartureId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, DepartureResponse] =
+    EitherT(
+      persistenceConnector
+        .getDeparture(eori, departureId)
+        .map(Right(_))
+        .recover {
+          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.DepartureNotFound(departureId))
+          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+        }
+    )
+
 }

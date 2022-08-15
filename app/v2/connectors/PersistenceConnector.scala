@@ -38,6 +38,7 @@ import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.responses.DeclarationResponse
+import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
 
 import scala.concurrent.ExecutionContext
@@ -55,6 +56,11 @@ trait PersistenceConnector {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[MessageResponse]
+
+  def getDeparture(eori: EORINumber, departureId: DepartureId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[DepartureResponse]
 
 }
 
@@ -105,4 +111,24 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
           }
       }
   }
+
+  override def getDeparture(eori: EORINumber, departureId: DepartureId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[DepartureResponse] = {
+    val url = appConfig.movementsUrl.withPath(movementsGetDeparture(eori, departureId))
+
+    httpClientV2
+      .get(url"$url")
+      .addHeaders(HeaderNames.ACCEPT -> MimeTypes.JSON)
+      .execute[HttpResponse]
+      .flatMap {
+        response =>
+          response.status match {
+            case OK => response.as[DepartureResponse]
+            case _  => response.error
+          }
+      }
+  }
+
 }

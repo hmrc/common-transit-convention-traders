@@ -18,7 +18,6 @@ package models
 
 package response
 
-import controllers.routes
 import models.domain.DepartureId
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
@@ -29,7 +28,7 @@ import scala.xml.NodeSeq
 object HateoasDeparturePostResponseMessage {
 
   def apply(departureId: DepartureId, messageType: String, messageBody: NodeSeq, notificationsBox: Option[Box]): JsObject = {
-    val departureUrl = routes.DeparturesController.getDeparture(departureId).urlWithContext
+    val departureUrl = routing.routes.DeparturesRouter.getDeparture(departureId.toString).urlWithContext
     val embedded = notificationsBox
       .map {
         box =>

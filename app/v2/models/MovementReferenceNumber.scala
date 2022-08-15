@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package v2.models.errors
+package v2.models
 
-import v2.models.MessageId
-import v2.models.DepartureId
+import play.api.libs.json.Format
+import play.api.libs.json.Json
 
-sealed trait PersistenceError
+case class MovementReferenceNumber(value: String) extends AnyVal
 
-object PersistenceError {
-  case class MessageNotFound(movementId: DepartureId, messageId: MessageId) extends PersistenceError
-  case class DepartureNotFound(movementId: DepartureId)                     extends PersistenceError
-  case class UnexpectedError(thr: Option[Throwable] = None)                 extends PersistenceError
+object MovementReferenceNumber {
+  implicit val movementReferenceNumberFormat: Format[MovementReferenceNumber] = Json.valueFormat[MovementReferenceNumber]
 }
