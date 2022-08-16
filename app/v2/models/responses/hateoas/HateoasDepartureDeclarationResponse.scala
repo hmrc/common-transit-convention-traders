@@ -27,7 +27,9 @@ object HateoasDepartureDeclarationResponse extends HateoasResponse {
       "_links" -> Json.obj(
         "self" -> Json.obj("href" -> departureUri(departureId))
       ),
-      "id" -> departureUri(departureId),
+      "departure" -> Json.obj(
+        "id" -> departureUri(departureId)
+      ),
       "_embedded" -> Json.obj(
         "messages" -> Json.obj(
           "_links" ->

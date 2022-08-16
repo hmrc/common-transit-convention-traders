@@ -79,6 +79,7 @@ import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.MessageResponse
+import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
 import v2.models.responses.hateoas.HateoasDepartureMessageIdsResponse
 import v2.models.responses.hateoas.HateoasDepartureMessageResponse
 import v2.services.AuditingService
@@ -260,21 +261,7 @@ class V2DeparturesControllerSpec
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe ACCEPTED
 
-        contentAsJson(result) mustBe Json.obj(
-          "_links" -> Json.obj(
-            "self" -> Json.obj(
-              "href" -> "/customs/transits/movements/departures/123"
-            )
-          ),
-          "id" -> "/customs/transits/movements/departures/123",
-          "_embedded" -> Json.obj(
-            "messages" -> Json.obj(
-              "_links" -> Json.obj(
-                "href" -> "/customs/transits/movements/departures/123/messages"
-              )
-            )
-          )
-        )
+        contentAsJson(result) mustBe Json.toJson(HateoasDepartureDeclarationResponse(DepartureId("123")))
 
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
         verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
@@ -314,21 +301,8 @@ class V2DeparturesControllerSpec
             val result  = sut.submitDeclaration()(request)
             status(result) mustBe ACCEPTED
 
-            contentAsJson(result) mustBe Json.obj(
-              "_links" -> Json.obj(
-                "self" -> Json.obj(
-                  "href" -> "/customs/transits/movements/departures/123"
-                )
-              ),
-              "id" -> "/customs/transits/movements/departures/123",
-              "_embedded" -> Json.obj(
-                "messages" -> Json.obj(
-                  "_links" -> Json.obj(
-                    "href" -> "/customs/transits/movements/departures/123/messages"
-                  )
-                )
-              )
-            )
+            // the response format is tested in HateoasDepartureDeclarationResponseSpec
+            contentAsJson(result) mustBe Json.toJson(HateoasDepartureDeclarationResponse(DepartureId("123")))
 
             verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
             verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any())

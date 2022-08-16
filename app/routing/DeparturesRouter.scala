@@ -27,7 +27,6 @@ import models.domain.{MessageId => V1MessageId}
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
-import play.api.mvc.PathBindable
 import v2.controllers.V2DeparturesController
 import v2.controllers.stream.StreamingParsers
 import v2.models.Bindings._

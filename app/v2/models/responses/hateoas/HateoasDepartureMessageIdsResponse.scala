@@ -31,8 +31,12 @@ object HateoasDepartureMessageIdsResponse extends HateoasResponse {
         "self"      -> Json.obj("href" -> messageIdsUri(departureId, receivedSince)),
         "departure" -> Json.obj("href" -> departureUri(departureId))
       ),
-      "departureId" -> departureUri(departureId),
-      "messageIds"  -> messageIds.map(messageUri(departureId, _))
+      "departure" -> Json.obj(
+        "id" -> departureUri(departureId)
+      ),
+      "messages" -> messageIds.map(
+        id => Json.obj("id" -> messageUri(departureId, id))
+      )
     )
 
 }
