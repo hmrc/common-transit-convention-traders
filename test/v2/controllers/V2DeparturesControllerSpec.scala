@@ -35,14 +35,17 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.OngoingStubbing
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
+import play.api.http.HttpVerbs.GET
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.INTERNAL_SERVER_ERROR
@@ -58,9 +61,11 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers
 import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
+import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.TestMetrics
+import v2.base.CommonGenerators
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
@@ -107,7 +112,9 @@ class V2DeparturesControllerSpec
     with MockitoSugar
     with TestActorSystem
     with TestSourceProvider
-    with BeforeAndAfterEach {
+    with BeforeAndAfterEach
+    with ScalaCheckDrivenPropertyChecks
+    with CommonGenerators {
 
   def CC015C: NodeSeq =
     <CC015C>
@@ -862,82 +869,92 @@ class V2DeparturesControllerSpec
 
   }
 
-  "retrieving a single departure/movement" - {
-    "should return ok with json body of departure" in {
-      val createdTime = OffsetDateTime.now()
-      val departureResponse = DepartureResponse(
-        DepartureId("0123456789abcdef"),
-        EORINumber("GB123"),
-        EORINumber("XI456"),
-        Some(MovementReferenceNumber("312")),
-        createdTime,
-        createdTime
-      )
-
-      when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), DepartureId(any()))(any(), any()))
-        .thenAnswer(
-          _ => EitherT.rightT(departureResponse)
+  // for retrieving a single departure/movement
+  "GET  /movements/departures/:departureId" - {
+    "should return ok with json body of departure" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[EORINumber],
+      arbitrary[DepartureId],
+      arbitrary[MovementReferenceNumber]
+    ) {
+      (enrollmentEori, movementEori, departureId, mrn) =>
+        val createdTime = OffsetDateTime.now()
+        val departureResponse = DepartureResponse(
+          departureId,
+          enrollmentEori,
+          movementEori,
+          Some(mrn),
+          createdTime,
+          createdTime
         )
 
-      val request = FakeRequest(
-        "GET",
-        routing.routes.DeparturesRouter.getDeparture("123").url,
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json")),
-        AnyContentAsEmpty
-      )
-      val result = sut.getDeparture(DepartureId("0123456789abcdef"))(request)
+        when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), DepartureId(any()))(any(), any()))
+          .thenAnswer(
+            _ => EitherT.rightT(departureResponse)
+          )
 
-      status(result) mustBe OK
-      contentAsJson(result) mustBe Json.toJson(
-        HateoasDepartureResponse(
-          DepartureId("0123456789abcdef"),
-          DepartureResponse(
-            DepartureId("0123456789abcdef"),
-            EORINumber("GB123"),
-            EORINumber("XI456"),
-            Some(MovementReferenceNumber("312")),
-            createdTime,
-            createdTime
+        val request = FakeRequest(
+          GET,
+          routing.routes.DeparturesRouter.getDeparture(departureId.value).url,
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+          AnyContentAsEmpty
+        )
+        val result = sut.getDeparture(departureId)(request)
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(
+          HateoasDepartureResponse(
+            departureId,
+            DepartureResponse(
+              departureId,
+              enrollmentEori,
+              movementEori,
+              Some(mrn),
+              createdTime,
+              createdTime
+            )
           )
         )
-      )
     }
 
-    "should return departure not found if persistence service returns 404" in {
-      when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), DepartureId(any()))(any(), any()))
-        .thenAnswer {
-          inv =>
-            val d = DepartureId(inv.getArgument[String](1))
-            EitherT.leftT(PersistenceError.DepartureNotFound(d))
-        }
+    "should return departure not found if persistence service returns 404" in forAll(arbitrary[DepartureId]) {
+      departureId =>
+        val FIRST_INVOCATION_ARGUMENT = 1
+        when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), DepartureId(any()))(any(), any()))
+          .thenAnswer {
+            inv =>
+              val d = DepartureId(inv.getArgument[String](FIRST_INVOCATION_ARGUMENT))
+              EitherT.leftT(PersistenceError.DepartureNotFound(d))
+          }
 
-      val request = FakeRequest(
-        "GET",
-        routing.routes.DeparturesRouter.getDeparture("0123456789abcdef").url,
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json")),
-        AnyContentAsEmpty
-      )
-      val result = sut.getDeparture(DepartureId("0123456789abcdef"))(request)
+        val request = FakeRequest(
+          GET,
+          routing.routes.DeparturesRouter.getDeparture(departureId.value).url,
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+          AnyContentAsEmpty
+        )
+        val result = sut.getDeparture(departureId)(request)
 
-      status(result) mustBe NOT_FOUND
+        status(result) mustBe NOT_FOUND
     }
 
-    "should return unexpected error for all other errors" in {
-      when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), DepartureId(any()))(any(), any()))
-        .thenAnswer {
-          _ =>
-            EitherT.leftT(PersistenceError.UnexpectedError(None))
-        }
+    "should return unexpected error for all other errors" in forAll(arbitrary[DepartureId]) {
+      departureId =>
+        when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), DepartureId(any()))(any(), any()))
+          .thenAnswer {
+            _ =>
+              EitherT.leftT(PersistenceError.UnexpectedError(None))
+          }
 
-      val request = FakeRequest(
-        "GET",
-        routing.routes.DeparturesRouter.getDeparture("0123456789abcdef").url,
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json")),
-        AnyContentAsEmpty
-      )
-      val result = sut.getDeparture(DepartureId("0123456789abcdef"))(request)
+        val request = FakeRequest(
+          GET,
+          routing.routes.DeparturesRouter.getDeparture(departureId.value).url,
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+          AnyContentAsEmpty
+        )
+        val result = sut.getDeparture(departureId)(request)
 
-      status(result) mustBe INTERNAL_SERVER_ERROR
+        status(result) mustBe INTERNAL_SERVER_ERROR
     }
   }
 
