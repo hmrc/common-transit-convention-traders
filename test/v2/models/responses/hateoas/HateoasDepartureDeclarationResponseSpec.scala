@@ -27,7 +27,7 @@ import v2.models.DepartureId
 
 import java.time.OffsetDateTime
 
-class HataeoasDepartureDeclarationResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with OptionValues with CommonGenerators {
+class HateoasDepartureDeclarationResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with OptionValues with CommonGenerators {
 
   Seq(arbitrary[OffsetDateTime].sample, None).foreach {
     dateTime =>
@@ -42,16 +42,11 @@ class HataeoasDepartureDeclarationResponseSpec extends AnyFreeSpec with Matchers
         val actual      = HateoasDepartureDeclarationResponse(departureId)
         val expected = Json.obj(
           "_links" -> Json.obj(
-            "self" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
-          ),
-          "departure" -> Json.obj(
-            "id" -> s"/customs/transits/movements/departures/${departureId.value}"
-          ),
-          "_embedded" -> Json.obj(
+            "self" -> Json.obj(
+              "href" -> s"/customs/transits/movements/departures/${departureId.value}"
+            ),
             "messages" -> Json.obj(
-              "_links" -> Json.obj(
-                "href" -> s"/customs/transits/movements/departures/${departureId.value}/messages"
-              )
+              "href" -> s"/customs/transits/movements/departures/${departureId.value}/messages"
             )
           )
         )
