@@ -101,15 +101,10 @@ traits:
                 {
                   "_links": {
                     "self": {
-                      "href": "/customs/transits/movements/departures/0123456789abcdef"
-                    }
-                  },
-                  "id": "/customs/transits/movements/departures/0123456789abcdef",
-                  "_embedded": {
+                      "href": "/customs/transits/movements/departures/62fb8f33d233578e"
+                    },
                     "messages": {
-                      "_links": {
-                        "href": "/customs/transits/movements/departures/0123456789abcdef/messages"
-                      }
+                      "href": "/customs/transits/movements/departures/62fb8f33d233578e/messages"
                     }
                   }
                 }
@@ -142,14 +137,19 @@ traits:
                     {
                       "_links": {
                         "self": {
-                          "href": "/customs/transits/movements/departures/0123456789abcdef/messages"
+                          "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages"
+                        },
+                        "departure": {
+                          "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
                         }
                       },
-                      "departureId": "/customs/transits/movements/departures/0123456789abcdef",
-                      "messageIds": [
-                        "/customs/transits/movements/departures/0123456789abcdef/messages/abcdef0123456789",
-                        "/customs/transits/movements/departures/0123456789abcdef/messages/abcdef0123456788",
-                        "/customs/transits/movements/departures/0123456789abcdef/messages/abcdef0123456787"
+                      "departure": {
+                        "id": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
+                      },
+                      "messages": [
+                        {
+                          "id": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2"
+                        }
                       ]
                     }
             404:
@@ -182,17 +182,19 @@ traits:
                       {
                         "_links": {
                           "self": {
-                            "href": "/customs/transits/movements/departures/0123456789abcdef/messages/abcdef0123456789"
+                            "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2"
                           },
                           "departure": {
-                            "href": "/customs/transits/movements/departures/0123456789abcdef"
+                            "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
                           }
                         },
-                        "departureId": "/customs/transits/movements/departures/0123456789abcdef",
-                        "messageId": "/customs/transits/movements/departures/0123456789abcdef/messages/abcdef0123456789",
-                        "received": "2020-10-10T10:10:10",
+                        "departure": {
+                          "id": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
+                        },
+                        "id": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2",
+                        "received": "2022-08-11T11:44:59.83705",
                         "messageType": "IE015",
-                        "body": "<CC015C>...</CC015C>"
+                        "body": "<ncts:CC015C PhaseID=\"NCTS5.0\" xmlns:ncts=\"http://ncts.dgtaxud.ec\">...</ncts:CC015C>"
                       }
               404:
                 body:
