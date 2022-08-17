@@ -51,6 +51,7 @@ import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
 import v2.models.responses.hateoas.HateoasDepartureMessageResponse
+import v2.models.responses.hateoas.HateoasDepartureResponse
 import v2.services.AuditingService
 import v2.services.ConversionService
 import v2.services.DeparturesService
@@ -64,13 +65,10 @@ import scala.concurrent.Future
 
 @ImplementedBy(classOf[V2DeparturesControllerImpl])
 trait V2DeparturesController {
-
   def submitDeclaration(): Action[Source[ByteString, _]]
-
   def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent]
-
   def getMessageIds(departureId: DepartureId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
-
+  def getDeparture(departureId: DepartureId): Action[AnyContent]
 }
 
 @Singleton
@@ -194,7 +192,6 @@ class V2DeparturesControllerImpl @Inject() (
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
             response => Ok(Json.toJson(HateoasDepartureMessageResponse(departureId, messageId, response)))
           )
-
     }
 
   def getMessageIds(departureId: DepartureId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
@@ -207,9 +204,21 @@ class V2DeparturesControllerImpl @Inject() (
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasDepartureMessageIdsResponse(departureId, response, receivedSince)))
-          )
+            response => Ok(Json.toJson(HateoasDepartureMessageIdsResponse(departureId, response, receivedSince))))
+    }
 
+  def getDeparture(departureId: DepartureId): Action[AnyContent] =
+    authActionNewEnrolmentOnly.async {
+      implicit request =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+        departuresService
+          .getDeparture(request.eoriNumber, departureId)
+          .asPresentation
+          .fold(
+            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+            response => Ok(Json.toJson(HateoasDepartureResponse(departureId, response)))
+          )
     }
 
 }

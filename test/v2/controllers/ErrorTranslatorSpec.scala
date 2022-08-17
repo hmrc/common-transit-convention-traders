@@ -149,6 +149,16 @@ class ErrorTranslatorSpec
       persistenceErrorConverter.convert(input) mustBe output
     }
 
+    "a DepartureNotFound error returns a NOT_FOUND" in {
+      val hexId      = Gen.listOfN(16, Gen.hexChar).map(_.mkString.toLowerCase)
+      val movementId = DepartureId(hexId.sample.getOrElse("1234567890abcedf"))
+
+      val input  = PersistenceError.DepartureNotFound(movementId)
+      val output = PresentationError.notFoundError(s"Departure with ID ${movementId.value} was not found")
+
+      persistenceErrorConverter.convert(input) mustBe output
+    }
+
     "an Unexpected Error with no exception returns an internal service error with no exception" in {
       val input  = PersistenceError.UnexpectedError(None)
       val output = PresentationError.internalServiceError()

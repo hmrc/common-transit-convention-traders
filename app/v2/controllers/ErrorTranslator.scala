@@ -68,7 +68,8 @@ trait ErrorTranslator {
         PresentationError.notFoundError(s"Departure movement with ID ${departureId.value} was not found")
       case PersistenceError.MessageNotFound(movement, message) =>
         PresentationError.notFoundError(s"Message with ID ${message.value} for movement ${movement.value} was not found")
-      case err: PersistenceError.UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
+      case PersistenceError.DepartureNotFound(movementId) => PresentationError.notFoundError(s"Departure with ID ${movementId.value} was not found")
+      case err: PersistenceError.UnexpectedError          => PresentationError.internalServiceError(cause = err.thr)
     }
   }
 

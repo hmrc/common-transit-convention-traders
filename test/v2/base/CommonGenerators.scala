@@ -22,6 +22,7 @@ import v2.models.AuditType
 import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
+import v2.models.MovementReferenceNumber
 import v2.models.request.MessageType
 
 trait CommonGenerators {
@@ -41,6 +42,10 @@ trait CommonGenerators {
 
   implicit lazy val arbitraryEORINumber: Arbitrary[EORINumber] = Arbitrary {
     Gen.alphaNumStr.map(EORINumber(_))
+  }
+
+  implicit lazy val arbitraryMovementReferenceNumber: Arbitrary[MovementReferenceNumber] = Arbitrary {
+    Gen.alphaNumStr.map(MovementReferenceNumber(_))
   }
 
   implicit lazy val arbitraryMessageType: Arbitrary[MessageType] = Arbitrary {

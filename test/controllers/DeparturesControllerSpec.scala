@@ -97,8 +97,8 @@ class DeparturesControllerSpec
 
   val sourceDeparture = Departure(
     DepartureId(123),
-    routes.DeparturesController.getDeparture(DepartureId(123)).urlWithContext,
     routing.routes.DeparturesRouter.getMessageIds("123").urlWithContext,
+    routing.routes.DeparturesRouter.getDeparture(DepartureId(123).toString).urlWithContext,
     Some("MRN"),
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
     LocalDateTime.of(2020, 2, 2, 2, 2, 2)
@@ -226,7 +226,7 @@ class DeparturesControllerSpec
 
               status(result) mustBe ACCEPTED
               contentAsJson(result) mustBe expectedJson
-              headers(result) must contain(LOCATION -> routes.DeparturesController.getDeparture(DepartureId(123)).urlWithContext)
+              headers(result) must contain(LOCATION -> routing.routes.DeparturesRouter.getDeparture(DepartureId(123).toString).urlWithContext)
 
               verify(mockAuditService, times(1)).auditEvent(any(), any())(any())
             }
@@ -254,7 +254,7 @@ class DeparturesControllerSpec
 
               status(result) mustBe ACCEPTED
               contentAsJson(result) mustEqual expectedJson
-              headers(result) must contain(LOCATION -> routes.DeparturesController.getDeparture(DepartureId(123)).urlWithContext)
+              headers(result) must contain(LOCATION -> routing.routes.DeparturesRouter.getDeparture(DepartureId(123).toString).urlWithContext)
 
               verify(mockAuditService, times(0)).auditEvent(any(), any())(any())
             }
@@ -315,7 +315,7 @@ class DeparturesControllerSpec
 
             status(result) mustBe ACCEPTED
             contentAsJson(result) mustEqual expectedJson
-            headers(result) must contain(LOCATION -> routes.DeparturesController.getDeparture(DepartureId(123)).urlWithContext)
+            headers(result) must contain(LOCATION -> routing.routes.DeparturesRouter.getDeparture(DepartureId(123).toString).urlWithContext)
           }
 
           "must return UnsupportedMediaType when Content-Type is JSON" in {
@@ -370,7 +370,7 @@ class DeparturesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.DeparturesController.getDeparture(DepartureId(123)).url,
+        routing.routes.DeparturesRouter.getDeparture(DepartureId(123).toString).url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -386,7 +386,7 @@ class DeparturesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.DeparturesController.getDeparture(DepartureId(123)).url,
+        routing.routes.DeparturesRouter.getDeparture(DepartureId(123).toString).url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -401,7 +401,7 @@ class DeparturesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.DeparturesController.getDeparture(DepartureId(123)).url,
+        routing.routes.DeparturesRouter.getDeparture(DepartureId(123).toString).url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )

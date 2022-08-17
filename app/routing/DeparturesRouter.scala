@@ -81,4 +81,18 @@ class DeparturesRouter @Inject() (
       )
   }
 
+  def getDeparture(departureId: String): Action[Source[ByteString, _]] = route {
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE) =>
+      runIfBound[V2DepartureId](
+        "departureId",
+        departureId,
+        v2Departures.getDeparture
+      )
+    case _ =>
+      runIfBound[V1DepartureId](
+        "departureId",
+        departureId,
+        v1Departures.getDeparture
+      )
+  }
 }

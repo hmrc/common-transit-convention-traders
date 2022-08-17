@@ -47,8 +47,7 @@ trait HateoasResponse {
       )
       .url
 
-  // TODO: When we do the departure endpoint, this needs updating
   def departureUri(departureId: DepartureId) =
-    s"/customs/transits/movements/departures/${departureId.value}"
+    prefix + routing.routes.DeparturesRouter.getDeparture(departureId.value).url
 
 }
