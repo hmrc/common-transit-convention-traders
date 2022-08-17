@@ -38,7 +38,8 @@ object HateoasDepartureResponse {
     Json
       .obj(
         "_links" -> Json.obj(
-          "self" -> Json.obj("href" -> selfUrl(departureId), "messages" -> messagesUri())
+          "self"     -> Json.obj("href" -> selfUrl(departureId)),
+          "messages" -> Json.obj("href" -> messagesUri())
         ),
         "id"                      -> selfUrl(departureId),
         "created"                 -> departureResponse.created,
