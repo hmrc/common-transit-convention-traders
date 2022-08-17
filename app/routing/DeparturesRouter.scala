@@ -70,4 +70,21 @@ class DeparturesRouter @Inject() (
 
   }
 
+  def getDeparture(departureId: String): Action[Source[ByteString, _]] = route {
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE) =>
+      (for {
+        convertedDepartureId <- implicitly[PathBindable[V2DepartureId]].bind("departureId", departureId)
+      } yield convertedDepartureId).fold(
+        bindingFailureAction(_),
+        converted => v2Departures.getDeparture(converted)
+      )
+
+    case _ =>
+      (for {
+        convertedDepartureId <- implicitly[PathBindable[V1DepartureId]].bind("departureId", departureId)
+      } yield convertedDepartureId).fold(
+        bindingFailureAction(_),
+        converted => v1Departures.getDeparture(converted)
+      )
+  }
 }

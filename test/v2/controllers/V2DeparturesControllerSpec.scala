@@ -35,14 +35,17 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.OngoingStubbing
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
+import play.api.http.HttpVerbs.GET
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.INTERNAL_SERVER_ERROR
@@ -51,15 +54,18 @@ import play.api.http.Status.OK
 import play.api.http.Status.UNSUPPORTED_MEDIA_TYPE
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json.Json
+import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.Request
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
 import play.api.test.Helpers
 import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
+import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.TestMetrics
+import v2.base.CommonGenerators
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
@@ -67,6 +73,7 @@ import v2.fakes.controllers.actions.FakeMessageSizeActionProvider
 import v2.models.AuditType
 import v2.models.DepartureId
 import v2.models.EORINumber
+import v2.models.MovementReferenceNumber
 import v2.models.MessageId
 import v2.models.errors.ConversionError
 import v2.models.errors.FailedToValidateError
@@ -76,8 +83,10 @@ import v2.models.errors.RouterError
 import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
+import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
 import v2.models.responses.hateoas.HateoasDepartureMessageResponse
+import v2.models.responses.hateoas.HateoasDepartureResponse
 import v2.services.AuditingService
 import v2.services.ConversionService
 import v2.services.DeparturesService
@@ -103,7 +112,9 @@ class V2DeparturesControllerSpec
     with MockitoSugar
     with TestActorSystem
     with TestSourceProvider
-    with BeforeAndAfterEach {
+    with BeforeAndAfterEach
+    with ScalaCheckDrivenPropertyChecks
+    with CommonGenerators {
 
   def CC015C: NodeSeq =
     <CC015C>
@@ -856,6 +867,95 @@ class V2DeparturesControllerSpec
       )
     }
 
+  }
+
+  // for retrieving a single departure/movement
+  "GET  /movements/departures/:departureId" - {
+    "should return ok with json body of departure" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[EORINumber],
+      arbitrary[DepartureId],
+      arbitrary[MovementReferenceNumber]
+    ) {
+      (enrollmentEori, movementEori, departureId, mrn) =>
+        val createdTime = OffsetDateTime.now()
+        val departureResponse = DepartureResponse(
+          departureId,
+          enrollmentEori,
+          movementEori,
+          Some(mrn),
+          createdTime,
+          createdTime
+        )
+
+        when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), DepartureId(any()))(any(), any()))
+          .thenAnswer(
+            _ => EitherT.rightT(departureResponse)
+          )
+
+        val request = FakeRequest(
+          GET,
+          routing.routes.DeparturesRouter.getDeparture(departureId.value).url,
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+          AnyContentAsEmpty
+        )
+        val result = sut.getDeparture(departureId)(request)
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(
+          HateoasDepartureResponse(
+            departureId,
+            DepartureResponse(
+              departureId,
+              enrollmentEori,
+              movementEori,
+              Some(mrn),
+              createdTime,
+              createdTime
+            )
+          )
+        )
+    }
+
+    "should return departure not found if persistence service returns 404" in forAll(arbitrary[DepartureId]) {
+      departureId =>
+        val FIRST_INVOCATION_ARGUMENT = 1
+        when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), DepartureId(any()))(any(), any()))
+          .thenAnswer {
+            inv =>
+              val d = DepartureId(inv.getArgument[String](FIRST_INVOCATION_ARGUMENT))
+              EitherT.leftT(PersistenceError.DepartureNotFound(d))
+          }
+
+        val request = FakeRequest(
+          GET,
+          routing.routes.DeparturesRouter.getDeparture(departureId.value).url,
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+          AnyContentAsEmpty
+        )
+        val result = sut.getDeparture(departureId)(request)
+
+        status(result) mustBe NOT_FOUND
+    }
+
+    "should return unexpected error for all other errors" in forAll(arbitrary[DepartureId]) {
+      departureId =>
+        when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), DepartureId(any()))(any(), any()))
+          .thenAnswer {
+            _ =>
+              EitherT.leftT(PersistenceError.UnexpectedError(None))
+          }
+
+        val request = FakeRequest(
+          GET,
+          routing.routes.DeparturesRouter.getDeparture(departureId.value).url,
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+          AnyContentAsEmpty
+        )
+        val result = sut.getDeparture(departureId)(request)
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+    }
   }
 
   def validateXmlOkStub(): OngoingStubbing[EitherT[Future, FailedToValidateError, Unit]] =

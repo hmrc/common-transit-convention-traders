@@ -285,7 +285,7 @@ class DepartureMessageConnectorSpec
         LocalDateTime.now
       )
 
-      val response = HateoasResponseDeparture(departure)
+      val response = HateoasDepartureResponse(departure)
       server.stubFor(
         get(
           urlEqualTo("/transits-movements-trader-at-departure/movements/departures/1/messages")
