@@ -131,7 +131,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
         response =>
           response.status match {
             case OK => response.as[Seq[MessageId]]
-            case _ => response.error
+            case _  => response.error
           }
       }
   }

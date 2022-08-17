@@ -103,7 +103,7 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.DepartureNotFound(departureId))
-          case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))
+          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
 

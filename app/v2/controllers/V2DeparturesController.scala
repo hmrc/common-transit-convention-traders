@@ -204,7 +204,8 @@ class V2DeparturesControllerImpl @Inject() (
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasDepartureMessageIdsResponse(departureId, response, receivedSince))))
+            response => Ok(Json.toJson(HateoasDepartureMessageIdsResponse(departureId, response, receivedSince)))
+          )
     }
 
   def getDeparture(departureId: DepartureId): Action[AnyContent] =

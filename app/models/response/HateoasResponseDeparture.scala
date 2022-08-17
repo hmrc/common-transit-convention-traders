@@ -16,7 +16,6 @@
 
 package models.response
 
-import controllers.routes
 import models.domain.Departure
 import models.domain.DepartureId
 import play.api.libs.json._
