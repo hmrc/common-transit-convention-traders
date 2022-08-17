@@ -46,15 +46,17 @@ class HateosDepartureResponseSpec extends AnyFreeSpec with Matchers with ScalaCh
       updated = dateTime
     )
 
-    val actual = HateoasDepartureResponse(departureId, response)
+    val actual  = HateoasDepartureResponse(departureId, response)
+    val selfUri = s"/customs/transits/movements/departures/${departureId.value}"
+
     val expected = Json.obj(
       "_links" -> Json.obj(
         "self" -> Json.obj(
-          "href"     -> s"/customs/transits/movements/departures/${departureId.value}",
+          "href"     -> selfUri,
           "messages" -> "v2-departure-messages-not-yet-implemented"
         )
       ),
-      "_id"                     -> departureId,
+      "id"                      -> selfUri,
       "enrollmentEORINumber"    -> "GB123",
       "movementEORINumber"      -> "GB456",
       "movementReferenceNumber" -> "MRN001",

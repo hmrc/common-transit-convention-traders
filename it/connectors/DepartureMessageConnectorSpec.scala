@@ -20,6 +20,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import config.Constants
 import controllers.routes
 import models.domain._
+import models.response.HateoasResponseDeparture
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -97,7 +98,7 @@ class DepartureMessageConnectorSpec
         LocalDateTime.now
       )
 
-      val response = HateoasDepartureResponse(departure)
+      val response = HateoasResponseDeparture(departure)
       server.stubFor(
         get(
           urlEqualTo("/transits-movements-trader-at-departure/movements/departures/1/messages/1")
