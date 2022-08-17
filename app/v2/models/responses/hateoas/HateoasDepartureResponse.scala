@@ -16,32 +16,21 @@
 
 package v2.models.responses.hateoas
 
-import config.Constants
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.models.DepartureId
 import v2.models.responses.DepartureResponse
 
-object HateoasDepartureResponse {
-
-  def prefix(departureId: DepartureId) =
-    if (routing.routes.DeparturesRouter.getDeparture(departureId.value).url.startsWith(Constants.Context)) ""
-    else Constants.Context
-
-  def selfUrl(departureId: DepartureId) =
-    prefix(departureId) + routing.routes.DeparturesRouter.getDeparture(departureId.value).url
-
-  // TODO: Update when v2 GET departure-messages is available
-  def messagesUri() = "v2-departure-messages-not-yet-implemented"
+object HateoasDepartureResponse extends HateoasResponse {
 
   def apply(departureId: DepartureId, departureResponse: DepartureResponse): JsObject =
     Json
       .obj(
         "_links" -> Json.obj(
-          "self"     -> Json.obj("href" -> selfUrl(departureId)),
-          "messages" -> Json.obj("href" -> messagesUri())
+          "self"     -> Json.obj("href" -> departureUri(departureId)),
+          "messages" -> Json.obj("href" -> messageIdsUri(departureId, None))
         ),
-        "id"                      -> selfUrl(departureId),
+        "id"                      -> departureUri(departureId),
         "created"                 -> departureResponse.created,
         "updated"                 -> departureResponse.updated,
         "enrollmentEORINumber"    -> departureResponse.enrollmentEORINumber,

@@ -54,13 +54,13 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
     with HasMetrics
     with Logging {
 
-  override def post(messageType: MessageType, eoriNumber: EORINumber, movementId: DepartureId, messageId: MessageId, body: Source[ByteString, _])(implicit
+  override def post(messageType: MessageType, eoriNumber: EORINumber, departureId: DepartureId, messageId: MessageId, body: Source[ByteString, _])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): Future[Unit] =
     withMetricsTimerAsync(MetricsKeys.RouterBackend.Post) {
       _ =>
-        val url = appConfig.routerUrl.withPath(routerRoute(eoriNumber, messageType, movementId, messageId))
+        val url = appConfig.routerUrl.withPath(routerRoute(eoriNumber, messageType, departureId, messageId))
 
         httpClientV2
           .post(url"$url")

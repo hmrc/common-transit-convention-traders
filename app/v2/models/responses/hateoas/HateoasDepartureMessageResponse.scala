@@ -22,28 +22,18 @@ import v2.models.MessageId
 import v2.models.DepartureId
 import v2.models.responses.MessageResponse
 
-object HateoasDepartureMessageResponse {
-
-  lazy val prefix =
-    if (routing.routes.DeparturesRouter.submitDeclaration().url.startsWith("/customs/transits")) ""
-    else "/customs/transits"
-
-  def selfUrl(departureId: DepartureId, messageId: MessageId) =
-    prefix + routing.routes.DeparturesRouter.getMessage(departureId.value, messageId.value).url
-
-  // TODO: When we do the departure endpoint, this needs updating
-  def departureUrl(departureId: DepartureId) =
-    s"/customs/transits/movements/departures/${departureId.value}"
-  // prefix + routing.routes.DeparturesRouter.getMessage(departureId.value, "1").url
+object HateoasDepartureMessageResponse extends HateoasResponse {
 
   def apply(departureId: DepartureId, messageId: MessageId, messageResponse: MessageResponse): JsObject =
     Json.obj(
       "_links" -> Json.obj(
-        "self"      -> Json.obj("href" -> selfUrl(departureId, messageId)),
-        "departure" -> Json.obj("href" -> departureUrl(departureId))
+        "self"      -> Json.obj("href" -> messageUri(departureId, messageId)),
+        "departure" -> Json.obj("href" -> departureUri(departureId))
       ),
-      "departureId" -> departureId.value,
-      "messageId"   -> messageResponse.id,
+      "departure" -> Json.obj(
+        "id" -> departureUri(departureId)
+      ),
+      "id"          -> messageUri(departureId, messageId),
       "received"    -> messageResponse.received.toLocalDateTime,
       "messageType" -> messageResponse.messageType
     ) ++ messageResponse.body

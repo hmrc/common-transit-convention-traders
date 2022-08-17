@@ -92,8 +92,8 @@ class DepartureMessagesControllerSpec
 
   val sourceDeparture = DepartureWithMessages(
     DepartureId(123),
+    routing.routes.DeparturesRouter.getMessageIds("123").urlWithContext,
     routing.routes.DeparturesRouter.getDeparture(DepartureId(123).toString).urlWithContext,
-    routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).urlWithContext,
     Some("MRN"),
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
@@ -186,7 +186,7 @@ class DepartureMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).url,
+        routing.routes.DeparturesRouter.getMessageIds("123").url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -205,7 +205,7 @@ class DepartureMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.DepartureMessagesController.getDepartureMessages(DepartureId(123), dateTime).url,
+        routing.routes.DeparturesRouter.getMessageIds("123", dateTime).url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -221,7 +221,7 @@ class DepartureMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).url,
+        routing.routes.DeparturesRouter.getMessageIds("123").url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -236,7 +236,7 @@ class DepartureMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).url,
+        routing.routes.DeparturesRouter.getMessageIds("123").url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -255,7 +255,7 @@ class DepartureMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.DepartureMessagesController.getDepartureMessages(DepartureId(123)).url,
+        routing.routes.DeparturesRouter.getMessageIds("123").url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )

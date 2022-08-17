@@ -25,6 +25,7 @@ import play.api.http.HttpVerbs
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.BaseController
+import play.api.mvc.PathBindable
 import play.api.mvc.Request
 import v2.controllers.stream.StreamingParsers
 import v2.models.errors.PresentationError
@@ -89,5 +90,8 @@ trait VersionedRouting {
         request.body.runWith(Sink.ignore)
         Future.successful(Status(BAD_REQUEST)(Json.toJson(PresentationError.bindingBadRequestError(message))))
     }
+
+  def runIfBound[A](key: String, value: String, action: A => Action[_])(implicit binding: PathBindable[A]): Action[_] =
+    binding.bind(key, value).fold(bindingFailureAction(_), action)
 
 }

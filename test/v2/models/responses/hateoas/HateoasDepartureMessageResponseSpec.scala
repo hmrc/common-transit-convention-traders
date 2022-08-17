@@ -16,11 +16,14 @@
 
 package v2.models.responses.hateoas
 
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
+import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
+import v2.base.CommonGenerators
 import v2.models.MessageId
 import v2.models.DepartureId
 import v2.models.request.MessageType
@@ -29,16 +32,15 @@ import v2.models.responses.MessageResponse
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
-class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with CommonGenerators with OptionValues {
 
-  private val hexId    = Gen.listOfN(16, Gen.hexChar).map(_.mkString.toLowerCase)
   private val dateTime = OffsetDateTime.of(2022, 8, 4, 11, 52, 59, 0, ZoneOffset.UTC)
 
   "with a valid message response, create a valid HateoasDepartureMessageResponse" in {
-    val messageId   = MessageId(hexId.sample.get)
-    val departureId = DepartureId(hexId.sample.get)
-    val triggerId   = MessageId(hexId.sample.get)
-    val body        = Gen.alphaNumStr.sample.get
+    val messageId   = arbitrary[MessageId].sample.value
+    val departureId = arbitrary[DepartureId].sample.value
+    val triggerId   = arbitrary[MessageId].sample.value
+    val body        = Gen.alphaNumStr.sample.value
     val response = MessageResponse(
       messageId,
       dateTime,
@@ -55,8 +57,10 @@ class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with
         "self"      -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}/messages/${messageId.value}"),
         "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
       ),
-      "departureId" -> departureId,
-      "messageId"   -> messageId,
+      "departure" -> Json.obj(
+        "id" -> s"/customs/transits/movements/departures/${departureId.value}"
+      ),
+      "id"          -> s"/customs/transits/movements/departures/${departureId.value}/messages/${messageId.value}",
       "received"    -> "2022-08-04T11:52:59",
       "messageType" -> MessageType.DepartureDeclaration.code,
       "body"        -> body

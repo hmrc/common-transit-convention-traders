@@ -76,7 +76,15 @@ class V2BaseConnectorSpec
     urlPath.toString() mustBe s"/transit-movements/traders/${eori.value}/movements/departures/"
   }
 
-  "the get single departure movement URL on localhost for a given EORI, departure ID or message ID should be as expected" in {
+  "the get movement IDs URL on localhost for a given EORI, departure ID should be as expected" in {
+    val eori        = arbitrary[EORINumber].sample.value
+    val departureId = arbitrary[DepartureId].sample.value
+    val urlPath     = Harness.movementsGetDepartureMessageIds(eori, departureId)
+
+    urlPath.toString() mustBe s"/transit-movements/traders/${eori.value}/movements/departures/${departureId.value}/messages/"
+  }
+
+  "the get single departure movement URL on localhost for a given EORI, departure ID and message ID should be as expected" in {
     val eori        = arbitrary[EORINumber].sample.value
     val departureId = arbitrary[DepartureId].sample.value
     val messageId   = arbitrary[MessageId].sample.value

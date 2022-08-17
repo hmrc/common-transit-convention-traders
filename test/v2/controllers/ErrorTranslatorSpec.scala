@@ -18,6 +18,7 @@ package v2.controllers
 
 import cats.data.NonEmptyList
 import cats.syntax.all._
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -25,6 +26,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import v2.base.CommonGenerators
 import v2.models.MessageId
 import v2.models.DepartureId
 import v2.models.errors.FailedToValidateError
@@ -41,7 +43,14 @@ import v2.models.errors.FailedToValidateError.XmlSchemaFailedToValidateError
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ErrorTranslatorSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar with ScalaCheckDrivenPropertyChecks {
+class ErrorTranslatorSpec
+    extends AnyFreeSpec
+    with Matchers
+    with OptionValues
+    with ScalaFutures
+    with MockitoSugar
+    with ScalaCheckDrivenPropertyChecks
+    with CommonGenerators {
 
   object Harness extends ErrorTranslator
 
@@ -121,23 +130,21 @@ class ErrorTranslatorSpec extends AnyFreeSpec with Matchers with OptionValues wi
   }
 
   "Persistence Error" - {
-    "a MessageNotFound error returns a NOT_FOUND" in {
-      val hexId      = Gen.listOfN(16, Gen.hexChar).map(_.mkString.toLowerCase)
-      val movementId = DepartureId(hexId.sample.getOrElse("1234567890abcedf"))
-      val messageId  = MessageId(hexId.sample.getOrElse("1234567890abcedf"))
+    "a DepartureNotFound error returns a NOT_FOUND" in {
+      val departureId = arbitrary[DepartureId].sample.value
 
-      val input  = PersistenceError.MessageNotFound(movementId, messageId)
-      val output = PresentationError.notFoundError(s"Message with ID ${messageId.value} for movement ${movementId.value} was not found")
+      val input  = PersistenceError.DepartureNotFound(departureId)
+      val output = PresentationError.notFoundError(s"Departure movement with ID ${departureId.value} was not found")
 
       persistenceErrorConverter.convert(input) mustBe output
     }
 
-    "a DepartureNotFound error returns a NOT_FOUND" in {
-      val hexId      = Gen.listOfN(16, Gen.hexChar).map(_.mkString.toLowerCase)
-      val movementId = DepartureId(hexId.sample.getOrElse("1234567890abcedf"))
+    "a MessageNotFound error returns a NOT_FOUND" in {
+      val departureId = arbitrary[DepartureId].sample.value
+      val messageId   = arbitrary[MessageId].sample.value
 
-      val input  = PersistenceError.DepartureNotFound(movementId)
-      val output = PresentationError.notFoundError(s"Departure with ID ${movementId.value} was not found")
+      val input  = PersistenceError.MessageNotFound(departureId, messageId)
+      val output = PresentationError.notFoundError(s"Message with ID ${messageId.value} for movement ${departureId.value} was not found")
 
       persistenceErrorConverter.convert(input) mustBe output
     }

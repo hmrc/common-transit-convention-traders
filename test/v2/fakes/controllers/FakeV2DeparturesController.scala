@@ -31,6 +31,8 @@ import v2.controllers.stream.StreamingParsers
 import v2.models.MessageId
 import v2.models.DepartureId
 
+import java.time.OffsetDateTime
+
 class FakeV2DeparturesController @Inject() ()(implicit val materializer: Materializer)
     extends BaseController
     with V2DeparturesController
@@ -45,6 +47,11 @@ class FakeV2DeparturesController @Inject() ()(implicit val materializer: Materia
   }
 
   override def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent] = Action {
+    _ =>
+      Accepted(Json.obj("version" -> 2))
+  }
+
+  override def getMessageIds(departureId: DepartureId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
     _ =>
       Accepted(Json.obj("version" -> 2))
   }

@@ -85,6 +85,8 @@ import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
+import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
+import v2.models.responses.hateoas.HateoasDepartureMessageIdsResponse
 import v2.models.responses.hateoas.HateoasDepartureMessageResponse
 import v2.models.responses.hateoas.HateoasDepartureResponse
 import v2.services.AuditingService
@@ -267,21 +269,7 @@ class V2DeparturesControllerSpec
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe ACCEPTED
 
-        contentAsJson(result) mustBe Json.obj(
-          "_links" -> Json.obj(
-            "self" -> Json.obj(
-              "href" -> "/customs/transits/movements/departures/123"
-            )
-          ),
-          "id" -> "123",
-          "_embedded" -> Json.obj(
-            "messages" -> Json.obj(
-              "_links" -> Json.obj(
-                "href" -> "/customs/transits/movements/departures/123/messages"
-              )
-            )
-          )
-        )
+        contentAsJson(result) mustBe Json.toJson(HateoasDepartureDeclarationResponse(DepartureId("123")))
 
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
         verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
@@ -321,21 +309,8 @@ class V2DeparturesControllerSpec
             val result  = sut.submitDeclaration()(request)
             status(result) mustBe ACCEPTED
 
-            contentAsJson(result) mustBe Json.obj(
-              "_links" -> Json.obj(
-                "self" -> Json.obj(
-                  "href" -> "/customs/transits/movements/departures/123"
-                )
-              ),
-              "id" -> "123",
-              "_embedded" -> Json.obj(
-                "messages" -> Json.obj(
-                  "_links" -> Json.obj(
-                    "href" -> "/customs/transits/movements/departures/123/messages"
-                  )
-                )
-              )
-            )
+            // the response format is tested in HateoasDepartureDeclarationResponseSpec
+            contentAsJson(result) mustBe Json.toJson(HateoasDepartureDeclarationResponse(DepartureId("123")))
 
             verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
             verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
@@ -807,6 +782,64 @@ class V2DeparturesControllerSpec
       )
 
     }
+  }
+
+  "for retrieving a list of message IDs" - {
+
+    val datetimes = Seq(arbitrary[OffsetDateTime].sample, None)
+
+    "when a departure is found" in datetimes.foreach {
+      dateTime =>
+        val messageResponse = (for {
+          messageId1 <- arbitrary[MessageId]
+          messageId2 <- arbitrary[MessageId]
+          messageId3 <- arbitrary[MessageId]
+        } yield Seq(messageId1, messageId2, messageId3)).sample.value
+
+        when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.rightT(messageResponse)
+          )
+
+        val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+        val result  = sut.getMessageIds(DepartureId("0123456789abcdef"), dateTime)(request)
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(HateoasDepartureMessageIdsResponse(DepartureId("0123456789abcdef"), messageResponse, dateTime))
+    }
+
+    "when no departure is found" in {
+      when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenAnswer(
+          _ => EitherT.leftT(PersistenceError.DepartureNotFound(DepartureId("0123456789abcdef")))
+        )
+
+      val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+      val result  = sut.getMessageIds(DepartureId("0123456789abcdef"), None)(request)
+
+      status(result) mustBe NOT_FOUND
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "NOT_FOUND",
+        "message" -> "Departure movement with ID 0123456789abcdef was not found"
+      )
+    }
+
+    "when an unknown error occurs" in {
+      when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenAnswer(
+          _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
+        )
+
+      val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+      val result  = sut.getMessageIds(DepartureId("0123456789abcdef"), None)(request)
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "INTERNAL_SERVER_ERROR",
+        "message" -> "Internal server error"
+      )
+    }
+
   }
 
   "for retrieving a single message" - {

@@ -19,14 +19,24 @@ package v2.models.responses.hateoas
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.models.DepartureId
+import v2.models.MessageId
 
-object HateoasDepartureDeclarationResponse extends HateoasResponse {
+import java.time.OffsetDateTime
 
-  def apply(departureId: DepartureId): JsObject =
+object HateoasDepartureMessageIdsResponse extends HateoasResponse {
+
+  def apply(departureId: DepartureId, messageIds: Seq[MessageId], receivedSince: Option[OffsetDateTime]): JsObject =
     Json.obj(
       "_links" -> Json.obj(
-        "self"     -> Json.obj("href" -> departureUri(departureId)),
-        "messages" -> Json.obj("href" -> messageIdsUri(departureId, None))
+        "self"      -> Json.obj("href" -> messageIdsUri(departureId, receivedSince)),
+        "departure" -> Json.obj("href" -> departureUri(departureId))
+      ),
+      "departure" -> Json.obj(
+        "id" -> departureUri(departureId)
+      ),
+      "messages" -> messageIds.map(
+        id => Json.obj("id" -> messageUri(departureId, id))
       )
     )
+
 }

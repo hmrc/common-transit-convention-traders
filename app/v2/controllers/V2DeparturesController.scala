@@ -58,13 +58,16 @@ import v2.services.DeparturesService
 import v2.services.RouterService
 import v2.services.ValidationService
 import com.codahale.metrics.Counter
+import v2.models.responses.hateoas.HateoasDepartureMessageIdsResponse
 
+import java.time.OffsetDateTime
 import scala.concurrent.Future
 
 @ImplementedBy(classOf[V2DeparturesControllerImpl])
 trait V2DeparturesController {
   def submitDeclaration(): Action[Source[ByteString, _]]
   def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent]
+  def getMessageIds(departureId: DepartureId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
   def getDeparture(departureId: DepartureId): Action[AnyContent]
 }
 
@@ -189,7 +192,20 @@ class V2DeparturesControllerImpl @Inject() (
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
             response => Ok(Json.toJson(HateoasDepartureMessageResponse(departureId, messageId, response)))
           )
+    }
 
+  def getMessageIds(departureId: DepartureId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
+    authActionNewEnrolmentOnly.async {
+      implicit request =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+        departuresService
+          .getMessageIds(request.eoriNumber, departureId)
+          .asPresentation
+          .fold(
+            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+            response => Ok(Json.toJson(HateoasDepartureMessageIdsResponse(departureId, response, receivedSince)))
+          )
     }
 
   def getDeparture(departureId: DepartureId): Action[AnyContent] =
@@ -204,7 +220,6 @@ class V2DeparturesControllerImpl @Inject() (
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
             response => Ok(Json.toJson(HateoasDepartureResponse(departureId, response)))
           )
-
     }
 
 }

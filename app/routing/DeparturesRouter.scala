@@ -27,12 +27,13 @@ import models.domain.{MessageId => V1MessageId}
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
-import play.api.mvc.PathBindable
 import v2.controllers.V2DeparturesController
 import v2.controllers.stream.StreamingParsers
 import v2.models.Bindings._
 import v2.models.{DepartureId => V2DepartureId}
 import v2.models.{MessageId => V2MessageId}
+
+import java.time.OffsetDateTime
 
 class DeparturesRouter @Inject() (
   val controllerComponents: ControllerComponents,
@@ -52,39 +53,46 @@ class DeparturesRouter @Inject() (
 
   def getMessage(departureId: String, messageId: String): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE) =>
-      (for {
-        convertedDepartureId <- implicitly[PathBindable[V2DepartureId]].bind("departureId", departureId)
-        convertedMessageId   <- implicitly[PathBindable[V2MessageId]].bind("messageId", messageId)
-      } yield (convertedDepartureId, convertedMessageId)).fold(
-        bindingFailureAction(_),
-        converted => v2Departures.getMessage(converted._1, converted._2)
+      runIfBound[V2DepartureId](
+        "departureId",
+        departureId,
+        boundDepartureId => runIfBound[V2MessageId]("messageId", messageId, v2Departures.getMessage(boundDepartureId, _))
       )
     case _ =>
-      (for {
-        convertedDepartureId <- implicitly[PathBindable[V1DepartureId]].bind("departureId", departureId)
-        convertedMessageId   <- implicitly[PathBindable[V1MessageId]].bind("messageId", messageId)
-      } yield (convertedDepartureId, convertedMessageId)).fold(
-        bindingFailureAction(_),
-        converted => v1DepartureMessages.getDepartureMessage(converted._1, converted._2)
+      runIfBound[V1DepartureId](
+        "departureId",
+        departureId,
+        boundDepartureId => runIfBound[V1MessageId]("messageId", messageId, v1DepartureMessages.getDepartureMessage(boundDepartureId, _))
       )
+  }
 
+  def getMessageIds(departureId: String, receivedSince: Option[OffsetDateTime] = None): Action[Source[ByteString, _]] = route {
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE) =>
+      runIfBound[V2DepartureId](
+        "departureId",
+        departureId,
+        v2Departures.getMessageIds(_, receivedSince)
+      )
+    case _ =>
+      runIfBound[V1DepartureId](
+        "departureId",
+        departureId,
+        v1DepartureMessages.getDepartureMessages(_, receivedSince)
+      )
   }
 
   def getDeparture(departureId: String): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE) =>
-      (for {
-        convertedDepartureId <- implicitly[PathBindable[V2DepartureId]].bind("departureId", departureId)
-      } yield convertedDepartureId).fold(
-        bindingFailureAction(_),
-        converted => v2Departures.getDeparture(converted)
+      runIfBound[V2DepartureId](
+        "departureId",
+        departureId,
+        v2Departures.getDeparture
       )
-
     case _ =>
-      (for {
-        convertedDepartureId <- implicitly[PathBindable[V1DepartureId]].bind("departureId", departureId)
-      } yield convertedDepartureId).fold(
-        bindingFailureAction(_),
-        converted => v1Departures.getDeparture(converted)
+      runIfBound[V1DepartureId](
+        "departureId",
+        departureId,
+        v1Departures.getDeparture
       )
   }
 }

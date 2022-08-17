@@ -18,7 +18,6 @@ package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.Constants
-import controllers.routes
 import models.domain._
 import models.response.HateoasResponseDeparture
 import org.scalatest.concurrent.IntegrationPatience
@@ -91,8 +90,8 @@ class DepartureMessageConnectorSpec
       val connector = app.injector.instanceOf[DepartureMessageConnector]
       val departure = Departure(
         DepartureId(1),
-        routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
-        routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
+        routing.routes.DeparturesRouter.getDeparture("1").urlWithContext,
+        routing.routes.DeparturesRouter.getMessageIds("1").urlWithContext,
         Some("MRN"),
         LocalDateTime.now,
         LocalDateTime.now
@@ -179,8 +178,8 @@ class DepartureMessageConnectorSpec
       val connector = app.injector.instanceOf[DepartureMessageConnector]
       val departure = DepartureWithMessages(
         DepartureId(1),
-        routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
-        routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
+        routing.routes.DeparturesRouter.getDeparture("1").urlWithContext,
+        routing.routes.DeparturesRouter.getMessageIds("1").urlWithContext,
         Some("MRN"),
         LocalDateTime.now,
         LocalDateTime.now,
@@ -229,8 +228,8 @@ class DepartureMessageConnectorSpec
       val dateTime  = Some(OffsetDateTime.of(2021, 3, 14, 13, 15, 30, 0, ZoneOffset.ofHours(1)))
       val departure = DepartureWithMessages(
         DepartureId(1),
-        routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
-        routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
+        routing.routes.DeparturesRouter.getDeparture("1").urlWithContext,
+        routing.routes.DeparturesRouter.getMessageIds("1").urlWithContext,
         Some("MRN"),
         LocalDateTime.now,
         LocalDateTime.now,
@@ -278,14 +277,14 @@ class DepartureMessageConnectorSpec
       val connector = app.injector.instanceOf[DepartureMessageConnector]
       val departure = Departure(
         DepartureId(1),
-        routes.DeparturesController.getDeparture(DepartureId(1)).urlWithContext,
-        routes.DepartureMessagesController.getDepartureMessages(DepartureId(1)).urlWithContext,
+        routing.routes.DeparturesRouter.getDeparture("1").urlWithContext,
+        routing.routes.DeparturesRouter.getMessageIds("1").urlWithContext,
         Some("MRN"),
         LocalDateTime.now,
         LocalDateTime.now
       )
 
-      val response = HateoasDepartureResponse(departure)
+      val response = HateoasResponseDeparture(departure)
       server.stubFor(
         get(
           urlEqualTo("/transits-movements-trader-at-departure/movements/departures/1/messages")
