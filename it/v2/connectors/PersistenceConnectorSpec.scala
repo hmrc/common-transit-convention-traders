@@ -63,6 +63,7 @@ import v2.models.responses.MessageResponse
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 
@@ -374,7 +375,11 @@ class PersistenceConnectorSpec
     def targetUrl(eoriNumber: EORINumber, departureId: DepartureId) =
       s"/transit-movements/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/"
 
-    "on successful return of message IDs, return a success" in {
+    def targetUrlWithTime(eoriNumber: EORINumber, departureId: DepartureId, receivedSince: OffsetDateTime) =
+      s"/transit-movements/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/?receivedSince=${DateTimeFormatter.ISO_OFFSET_DATE_TIME
+        .format(receivedSince)}"
+
+    "on successful return of message IDs when no filtering is applied, return a success" in {
       val eori            = arbitrary[EORINumber].sample.get
       val departureId     = arbitrary[DepartureId].sample.get
       val messageResponse = messageIdList.sample.get
@@ -395,7 +400,35 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getDepartureMessageIds(eori, departureId)
+      val result      = persistenceConnector.getDepartureMessageIds(eori, departureId, None)
+      whenReady(result) {
+        _ mustBe messageResponse
+      }
+    }
+
+    "on successful return of message IDs when filtering by received date is applied, return a success" in {
+      val eori            = arbitrary[EORINumber].sample.get
+      val departureId     = arbitrary[DepartureId].sample.get
+      val messageResponse = messageIdList.sample.get
+      val time            = OffsetDateTime.now(ZoneOffset.UTC)
+
+      server.stubFor(
+        get(
+          urlEqualTo(targetUrlWithTime(eori, departureId, time))
+        )
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(
+                // Doing this to ensure we know what the response will be, and not what
+                // Play thinks it will be based on turning an object into Json
+                s"""[ "${messageResponse.head.value}", "${messageResponse(1).value}", "${messageResponse(2).value}" ]""""
+              )
+          )
+      )
+
+      implicit val hc = HeaderCarrier()
+      val result      = persistenceConnector.getDepartureMessageIds(eori, departureId, Some(time))
       whenReady(result) {
         _ mustBe messageResponse
       }
@@ -420,7 +453,7 @@ class PersistenceConnectorSpec
 
       implicit val hc = HeaderCarrier()
       val r = persistenceConnector
-        .getDepartureMessageIds(eori, departureId)
+        .getDepartureMessageIds(eori, departureId, None)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -461,7 +494,7 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val r = persistenceConnector
-          .getDepartureMessageIds(eori, departureId)
+          .getDepartureMessageIds(eori, departureId, None)
           .map(
             _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
           )
@@ -499,7 +532,7 @@ class PersistenceConnectorSpec
 
       implicit val hc = HeaderCarrier()
       val r = persistenceConnector
-        .getDepartureMessageIds(eori, departureId)
+        .getDepartureMessageIds(eori, departureId, None)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )

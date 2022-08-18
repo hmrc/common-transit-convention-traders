@@ -200,7 +200,7 @@ class V2DeparturesControllerImpl @Inject() (
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         departuresService
-          .getMessageIds(request.eoriNumber, departureId)
+          .getMessageIds(request.eoriNumber, departureId, receivedSince)
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),

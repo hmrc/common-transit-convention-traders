@@ -23,6 +23,7 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
+import io.lemonlabs.uri.Url
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
@@ -41,6 +42,8 @@ import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
 
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -57,7 +60,7 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[MessageResponse]
 
-  def getDepartureMessageIds(eori: EORINumber, departureId: DepartureId)(implicit
+  def getDepartureMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MessageId]]
@@ -117,11 +120,15 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       }
   }
 
-  override def getDepartureMessageIds(eori: EORINumber, departureId: DepartureId)(implicit
+  override def getDepartureMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MessageId]] = {
-    val url = appConfig.movementsUrl.withPath(movementsGetDepartureMessageIds(eori, departureId))
+    val url =
+      withReceivedSinceParameter(
+        appConfig.movementsUrl.withPath(movementsGetDepartureMessageIds(eori, departureId)).toUrl,
+        receivedSince
+      )
 
     httpClientV2
       .get(url"$url")
@@ -154,5 +161,12 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
           }
       }
   }
+
+  private def withReceivedSinceParameter(urlPath: Url, dateTime: Option[OffsetDateTime]) =
+    dateTime
+      .map(
+        time => urlPath.addParam("receivedSince", DateTimeFormatter.ISO_DATE_TIME.format(time))
+      )
+      .getOrElse(urlPath)
 
 }
