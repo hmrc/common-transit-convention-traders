@@ -31,8 +31,8 @@ import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.client.RequestBuilder
 import v2.models.AuditType
-import v2.models.EORINumber
 import v2.models.DepartureId
+import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.request.MessageType
 
