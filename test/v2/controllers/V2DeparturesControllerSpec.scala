@@ -796,7 +796,7 @@ class V2DeparturesControllerSpec
           messageId3 <- arbitrary[MessageId]
         } yield Seq(messageId1, messageId2, messageId3)).sample.value
 
-        when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+        when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
             _ => EitherT.rightT(messageResponse)
           )
@@ -809,7 +809,7 @@ class V2DeparturesControllerSpec
     }
 
     "when no departure is found" in {
-      when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
           _ => EitherT.leftT(PersistenceError.DepartureNotFound(DepartureId("0123456789abcdef")))
         )
@@ -825,7 +825,7 @@ class V2DeparturesControllerSpec
     }
 
     "when an unknown error occurs" in {
-      when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
           _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
         )

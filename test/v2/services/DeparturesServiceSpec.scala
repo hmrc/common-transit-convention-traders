@@ -24,6 +24,7 @@ import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -100,6 +101,8 @@ class DeparturesServiceSpec
 
   "Getting a list of Departure message IDs" - {
 
+    val dateTime = Gen.option(arbitrary[OffsetDateTime])
+
     "when a departure is found, should return a Right of the sequence of message IDs" in {
       val expected = (for {
         messageId1 <- arbitrary[MessageId]
@@ -107,20 +110,20 @@ class DeparturesServiceSpec
         messageId3 <- arbitrary[MessageId]
       } yield Seq(messageId1, messageId2, messageId3)).sample.value
 
-      when(mockConnector.getDepartureMessageIds(EORINumber(any()), DepartureId(any()))(any(), any()))
+      when(mockConnector.getDepartureMessageIds(EORINumber(any()), DepartureId(any()), any())(any(), any()))
         .thenReturn(Future.successful(expected))
 
-      val result = sut.getMessageIds(EORINumber("1"), DepartureId("1234567890abcdef"))
+      val result = sut.getMessageIds(EORINumber("1"), DepartureId("1234567890abcdef"), dateTime.sample.get)
       whenReady(result.value) {
         _ mustBe Right(expected)
       }
     }
 
     "when a message is not found, should return a Left with an MessageNotFound" in {
-      when(mockConnector.getDepartureMessageIds(EORINumber(any()), DepartureId(any()))(any(), any()))
+      when(mockConnector.getDepartureMessageIds(EORINumber(any()), DepartureId(any()), any())(any(), any()))
         .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-      val result = sut.getMessageIds(EORINumber("1"), DepartureId("1234567890abcdef"))
+      val result = sut.getMessageIds(EORINumber("1"), DepartureId("1234567890abcdef"), dateTime.sample.get)
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.DepartureNotFound(DepartureId("1234567890abcdef")))
       }
@@ -128,10 +131,10 @@ class DeparturesServiceSpec
 
     "on a failed submission, should return a Left with an UnexpectedError" in {
       val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
-      when(mockConnector.getDepartureMessageIds(EORINumber(any()), DepartureId(any()))(any(), any()))
+      when(mockConnector.getDepartureMessageIds(EORINumber(any()), DepartureId(any()), any())(any(), any()))
         .thenReturn(Future.failed(error))
 
-      val result = sut.getMessageIds(EORINumber("1"), DepartureId("1234567890abcdef"))
+      val result = sut.getMessageIds(EORINumber("1"), DepartureId("1234567890abcdef"), dateTime.sample.get)
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
       }

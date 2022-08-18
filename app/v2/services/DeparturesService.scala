@@ -34,6 +34,7 @@ import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
 
+import java.time.OffsetDateTime
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
@@ -51,7 +52,7 @@ trait DeparturesService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MessageResponse]
 
-  def getMessageIds(eori: EORINumber, departureId: DepartureId)(implicit
+  def getMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MessageId]]
@@ -93,13 +94,13 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
         }
     )
 
-  override def getMessageIds(eori: EORINumber, departureId: DepartureId)(implicit
+  override def getMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MessageId]] =
     EitherT(
       persistenceConnector
-        .getDepartureMessageIds(eori, departureId)
+        .getDepartureMessageIds(eori, departureId, receivedSince)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.DepartureNotFound(departureId))

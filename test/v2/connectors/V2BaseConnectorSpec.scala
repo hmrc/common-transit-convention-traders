@@ -48,6 +48,9 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.request.MessageType
 
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
 
@@ -76,7 +79,7 @@ class V2BaseConnectorSpec
     urlPath.toString() mustBe s"/transit-movements/traders/${eori.value}/movements/departures/"
   }
 
-  "the get movement IDs URL on localhost for a given EORI, departure ID should be as expected" in {
+  "the get movement IDs URL on localhost for a given EORI, departure ID and no filter should be as expected" in {
     val eori        = arbitrary[EORINumber].sample.value
     val departureId = arbitrary[DepartureId].sample.value
     val urlPath     = Harness.movementsGetDepartureMessageIds(eori, departureId)
