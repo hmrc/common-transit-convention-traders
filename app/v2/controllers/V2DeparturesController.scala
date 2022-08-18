@@ -69,6 +69,7 @@ trait V2DeparturesController {
   def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent]
   def getMessageIds(departureId: DepartureId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
   def getDeparture(departureId: DepartureId): Action[AnyContent]
+  def getDeparturesForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
 }
 
 @Singleton
@@ -221,5 +222,7 @@ class V2DeparturesControllerImpl @Inject() (
             response => Ok(Json.toJson(HateoasDepartureResponse(departureId, response)))
           )
     }
+
+  def getDeparturesForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent] = ???
 
 }

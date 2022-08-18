@@ -70,6 +70,11 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[DepartureResponse]
 
+  def getDeparturesForEori(eori: EORINumber)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[DepartureResponse]
+
 }
 
 @Singleton
@@ -161,6 +166,11 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
           }
       }
   }
+
+  override def getDeparturesForEori(eori: EORINumber)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[DepartureResponse] = ???
 
   private def withReceivedSinceParameter(urlPath: Url, dateTime: Option[OffsetDateTime]) =
     dateTime
