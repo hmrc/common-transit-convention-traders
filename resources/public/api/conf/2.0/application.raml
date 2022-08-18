@@ -108,7 +108,75 @@ traits:
                     }
                   }
                 }
+    get:
+      displayName: Get all Movement Departures
+      description:
+        You may opt to filter this list of Departures so that you only receive Movement Departures that have been updated since a specified date and time.
+      
+        Get all Movement Departures sent to the office at departure within 31 days of the goods being released at their final destination. Any movement more than 31 days old will have been archived along with their related messages. Archived Movements will return an HTTP 404 Not Found status.
+      
+        You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Departure.
+        
+        **Note**: The 'movementReferenceNumber' field will only be populated when an MRN is allocated.
 
+      is:
+        - acceptJsonHeader
+        - acceptHeaderInvalid
+#      queryParameters:
+#        updatedSince:
+#          required: false
+#          type: datetime
+#          description: This is an optional filtering parameter. It allows you to request only the Movement Departures which have been updated since the date and time you have given us.
+#          example: 2021-06-21T09:00+00:00
+        (annotations.scope): "common-transit-convention-traders"
+        securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+        responses:
+          200:
+            body:
+              application/json:
+                description: JSON Payload
+                example: |
+                  {
+                    "_links": {
+                      "self": {
+                        "href": "/customs/transits/movements/departures"
+                      }
+                    },
+                    "_embedded": {
+                      "departures": [
+                        {
+                          "id": "1",
+                          "created": "2020-02-02T02:02:02",
+                          "updated": "2020-02-02T02:02:02",
+                          "movementReferenceNumber": "MRN",
+                          "_links": {
+                            "self": {
+                              "href": "/customs/transits/movements/departures/1"
+                            },
+                            "messages": {
+                              "href": "/customs/transits/movements/departures/1/messages"
+                            }
+                          }
+                        },
+                        {
+                          "id": "2",
+                          "created": "2020-02-04T02:02:02",
+                          "updated": "2020-02-04T02:02:02",
+                          "movementReferenceNumber": "MRN",
+                          "_links": {
+                            "self": {
+                              "href": "/customs/transits/movements/departures/2"
+                            },
+                            "messages": {
+                              "href": "/customs/transits/movements/departures/2/messages"
+                            }
+                          }
+                        }
+                      ],
+                      "retrievedDepartures": 2,
+                      "totalDepartures": 2
+                    }
+                  }
     /{departureId}:
       get:
         displayName: Get a Movement Departure for a departure ID
