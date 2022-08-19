@@ -31,4 +31,8 @@ object Binders {
       (param, _) => s"Cannot parse parameter $param as a valid ISO 8601 timestamp, e.g. 2015-09-08T01:55:28+00:00"
     )
   }
+
+  // needed for the reverse routing
+  implicit val optionOffsetDateTimeQueryStringBindable: QueryStringBindable[Option[OffsetDateTime]] =
+    QueryStringBindable.bindableOption[OffsetDateTime]
 }

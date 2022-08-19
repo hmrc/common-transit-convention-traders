@@ -28,7 +28,7 @@ import v2.models.DepartureId
 import v2.models.MessageId
 
 import java.time.OffsetDateTime
-import java.time.temporal.ChronoUnit
+import java.time.format.DateTimeFormatter
 
 class HateoasDepartureMessageIdsResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with OptionValues with CommonGenerators {
 
@@ -70,8 +70,9 @@ class HateoasDepartureMessageIdsResponseSpec extends AnyFreeSpec with Matchers w
 
   private def selfUrl(departureId: DepartureId, dateTime: Option[OffsetDateTime]): JsObject = dateTime match {
     case Some(x) =>
+      val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(x)
       Json.obj(
-        "href" -> s"/customs/transits/movements/departures/${departureId.value}/messages?receivedSince=${x.truncatedTo(ChronoUnit.SECONDS)}"
+        "href" -> s"/customs/transits/movements/departures/${departureId.value}/messages?receivedSince=$time"
       )
     case None => Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}/messages")
   }
