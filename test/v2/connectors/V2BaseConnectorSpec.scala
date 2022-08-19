@@ -48,9 +48,6 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.request.MessageType
 
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
 

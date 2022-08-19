@@ -22,7 +22,6 @@ import v2.models.MessageId
 import v2.models.responses.hateoas.HateoasResponse.prefix
 
 import java.time.OffsetDateTime
-import java.time.temporal.ChronoUnit
 
 object HateoasResponse {
 
@@ -41,9 +40,7 @@ trait HateoasResponse {
     prefix + routing.routes.DeparturesRouter
       .getMessageIds(
         departureId.value,
-        receivedSince.map(
-          x => x.truncatedTo(ChronoUnit.SECONDS)
-        )
+        receivedSince
       )
       .url
 
