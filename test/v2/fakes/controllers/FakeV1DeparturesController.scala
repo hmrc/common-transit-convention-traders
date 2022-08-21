@@ -25,6 +25,7 @@ import play.api.mvc.BaseController
 import play.api.mvc.Request
 import play.api.test.Helpers.stubControllerComponents
 
+import java.time.OffsetDateTime
 import scala.xml.NodeSeq
 
 class FakeV1DeparturesController extends BaseController with V1DeparturesController {
@@ -37,6 +38,11 @@ class FakeV1DeparturesController extends BaseController with V1DeparturesControl
   }
 
   override def getDeparture(departureId: DepartureId): Action[AnyContent] = Action {
+    _ =>
+      Ok(Json.obj("version" -> 1))
+  }
+
+  override def getDeparturesForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
     _ =>
       Ok(Json.obj("version" -> 1))
   }

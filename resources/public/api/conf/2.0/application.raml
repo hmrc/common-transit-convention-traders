@@ -137,45 +137,21 @@ traits:
                 description: JSON Payload
                 example: |
                   {
-                    "_links": {
-                      "self": {
-                        "href": "/customs/transits/movements/departures"
-                      }
-                    },
-                    "_embedded": {
-                      "departures": [
+                    "_links":
+                    {
+                      "self":
                         {
-                          "id": "1",
-                          "created": "2020-02-02T02:02:02",
-                          "updated": "2020-02-02T02:02:02",
-                          "movementReferenceNumber": "MRN",
-                          "_links": {
-                            "self": {
-                              "href": "/customs/transits/movements/departures/1"
-                            },
-                            "messages": {
-                              "href": "/customs/transits/movements/departures/1/messages"
-                            }
-                          }
-                        },
-                        {
-                          "id": "2",
-                          "created": "2020-02-04T02:02:02",
-                          "updated": "2020-02-04T02:02:02",
-                          "movementReferenceNumber": "MRN",
-                          "_links": {
-                            "self": {
-                              "href": "/customs/transits/movements/departures/2"
-                            },
-                            "messages": {
-                              "href": "/customs/transits/movements/departures/2/messages"
-                            }
-                          }
+                          "href":"/customs/transits/movements/departures"
                         }
-                      ],
-                      "retrievedDepartures": 2,
-                      "totalDepartures": 2
-                    }
+                    },
+                    "ids":[
+                      {
+                        "href":"/customs/transits/movementsdepartures/1"
+                      },
+                      {
+                        "href":"/customs/transits/movements/departures/2"
+                      }
+                    ]
                   }
     /{departureId}:
       get:
