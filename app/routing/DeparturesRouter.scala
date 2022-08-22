@@ -95,4 +95,10 @@ class DeparturesRouter @Inject() (
         v1Departures.getDeparture
       )
   }
+
+  def getDeparturesForEori(updatedSince: Option[OffsetDateTime] = None): Action[Source[ByteString, _]] = route {
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE) => v2Departures.getDeparturesForEori(updatedSince)
+    case _                                                    => v1Departures.getDeparturesForEori(updatedSince)
+  }
+
 }
