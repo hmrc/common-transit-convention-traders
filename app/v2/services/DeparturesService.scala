@@ -65,7 +65,7 @@ trait DeparturesService {
   def getDeparturesForEori(eori: EORINumber)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, DepartureResponse]
+  ): EitherT[Future, PersistenceError, Seq[DepartureId]]
 
 }
 
@@ -130,6 +130,14 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
   override def getDeparturesForEori(eori: EORINumber)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, DepartureResponse] = ???
+  ): EitherT[Future, PersistenceError, Seq[DepartureId]] = EitherT(
+    persistenceConnector
+      .getDeparturesForEori(eori)
+      .map(Right(_))
+      .recover {
+        case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.DeparturesNotFound(eori))
+        case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+      }
+  )
 
 }
