@@ -16,7 +16,6 @@
 
 package models.response
 
-import controllers.routes
 import models.domain.Departures
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
@@ -25,7 +24,7 @@ import utils.CallOps._
 object HateoasResponseDepartures {
 
   def apply(departures: Departures): JsObject = {
-    val departureUrl = routes.DeparturesController.getDeparturesForEori().urlWithContext
+    val departureUrl = routing.routes.DeparturesRouter.getDeparturesForEori().urlWithContext
 
     Json.obj(
       "_links" -> Json.obj(

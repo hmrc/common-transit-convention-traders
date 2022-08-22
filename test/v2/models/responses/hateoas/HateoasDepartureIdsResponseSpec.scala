@@ -47,7 +47,7 @@ class HateoasDepartureIdsResponseSpec extends AnyFreeSpec with Matchers with Opt
       )
 
       val actual = HateoasDepartureIdsResponse(departureIds)
-      println(s"ACTUAL: $actual")
+
       actual mustBe expected
     }
   }
