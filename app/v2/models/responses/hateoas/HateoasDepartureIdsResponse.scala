@@ -26,8 +26,8 @@ object HateoasDepartureIdsResponse extends HateoasResponse {
       "_links" -> Json.obj(
         "self" -> Json.obj("href" -> "/customs/transits/movements/departures")
       ),
-      "ids" -> departureIds.map(
-        id => Json.obj("href" -> departureUri(id))
+      "departures" -> departureIds.map(
+        id => Json.obj("id" -> departureUri(id))
       )
     )
 }

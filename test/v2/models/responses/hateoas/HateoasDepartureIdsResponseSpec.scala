@@ -38,10 +38,10 @@ class HateoasDepartureIdsResponseSpec extends AnyFreeSpec with Matchers with Opt
             "href" -> "/customs/transits/movements/departures"
           )
         ),
-        "ids" -> departureIds.map(
+        "departures" -> departureIds.map(
           departureId =>
             Json.obj(
-              "href" -> s"/customs/transits/movements/departures/${departureId.value}"
+              "id" -> s"/customs/transits/movements/departures/${departureId.value}"
             )
         )
       )
