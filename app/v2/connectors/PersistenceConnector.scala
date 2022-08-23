@@ -73,7 +73,7 @@ trait PersistenceConnector {
   def getDeparturesForEori(eori: EORINumber)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[DepartureResponse]
+  ): Future[Seq[DepartureId]]
 
 }
 
@@ -170,7 +170,21 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
   override def getDeparturesForEori(eori: EORINumber)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[DepartureResponse] = ???
+  ): Future[Seq[DepartureId]] = {
+    val url = appConfig.movementsUrl.withPath(movementsGetAllDepartures(eori))
+
+    httpClientV2
+      .get(url"$url")
+      .addHeaders(HeaderNames.ACCEPT -> MimeTypes.JSON)
+      .execute[HttpResponse]
+      .flatMap {
+        response =>
+          response.status match {
+            case OK => response.as[Seq[DepartureId]]
+            case _  => response.error
+          }
+      }
+  }
 
   private def withReceivedSinceParameter(urlPath: Url, dateTime: Option[OffsetDateTime]) =
     dateTime
