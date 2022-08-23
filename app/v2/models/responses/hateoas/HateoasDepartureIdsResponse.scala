@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-package v2.models.errors
+package v2.models.responses.hateoas
 
+import play.api.libs.json._
 import v2.models.DepartureId
-import v2.models.EORINumber
-import v2.models.MessageId
 
-sealed trait PersistenceError
+object HateoasDepartureIdsResponse extends HateoasResponse {
 
-object PersistenceError {
-  case class MessageNotFound(movementId: DepartureId, messageId: MessageId) extends PersistenceError
-  case class DepartureNotFound(departureId: DepartureId)                    extends PersistenceError
-  case class DeparturesNotFound(eori: EORINumber)                           extends PersistenceError
-  case class UnexpectedError(thr: Option[Throwable] = None)                 extends PersistenceError
+  def apply(departureIds: Seq[DepartureId]): JsObject =
+    Json.obj(
+      "_links" -> Json.obj(
+        "self" -> Json.obj("href" -> "/customs/transits/movements/departures")
+      ),
+      "departures" -> departureIds.map(
+        id => Json.obj("id" -> departureUri(id))
+      )
+    )
 }

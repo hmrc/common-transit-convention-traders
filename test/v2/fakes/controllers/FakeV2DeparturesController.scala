@@ -60,4 +60,10 @@ class FakeV2DeparturesController @Inject() ()(implicit val materializer: Materia
     _ =>
       Ok(Json.obj("version" -> 2))
   }
+
+  def getDeparturesForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
+    _ =>
+      Ok(Json.obj("version" -> 2))
+  }
+
 }

@@ -548,6 +548,102 @@ class PersistenceConnectorSpec
 
   }
 
+  "GET /traders/movements/departures" - {
+
+    implicit val hc = HeaderCarrier()
+    val eori        = arbitrary[EORINumber].sample.get
+
+    def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/"
+
+    "on success, return a list of departure IDs" in {
+      lazy val departureIdList = Gen.listOfN(3, arbitrary[DepartureId]).sample.get
+
+      server.stubFor(
+        get(
+          urlEqualTo(targetUrl(eori))
+        )
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(
+                s"""["${departureIdList.head.value}", "${departureIdList(1).value}", "${departureIdList(2).value}"]""""
+              )
+          )
+      )
+
+      implicit val hc = HeaderCarrier()
+      val result      = persistenceConnector.getDeparturesForEori(eori)
+      whenReady(result) {
+        _ mustBe departureIdList
+      }
+    }
+
+    "on incorrect Json, return an error" in {
+      server.stubFor(
+        get(
+          urlEqualTo(targetUrl(eori))
+        )
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(
+                "{ \"test\": \"fail\" }"
+              )
+          )
+      )
+
+      val result = persistenceConnector
+        .getDeparturesForEori(eori)
+        .map(
+          _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
+        )
+        .recover {
+          case JsResult.Exception(_)  => ()
+          case t: TestFailedException => t
+          case thr                    => fail(s"Expected a JsResult.Exception, got $thr")
+        }
+
+      whenReady(result) {
+        _ mustBe (())
+      }
+    }
+
+    "on an internal error, return an UpstreamServerError" in {
+      server.stubFor(
+        get(
+          urlEqualTo(targetUrl(eori))
+        )
+          .willReturn(
+            aResponse()
+              .withStatus(INTERNAL_SERVER_ERROR)
+              .withBody(
+                Json.stringify(
+                  Json.obj(
+                    "code"    -> "INTERNAL_SERVER_ERROR",
+                    "message" -> "Internal server error"
+                  )
+                )
+              )
+          )
+      )
+
+      val result = persistenceConnector
+        .getDeparturesForEori(eori)
+        .map(
+          _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
+        )
+        .recover {
+          case UpstreamErrorResponse(_, status, _, _) => status
+          case thr                                    => fail(s"Expected an UpstreamErrorResponse with a 500, got $thr")
+        }
+
+      whenReady(result) {
+        _ mustBe INTERNAL_SERVER_ERROR
+      }
+    }
+
+  }
+
   override protected def portConfigKey: Seq[String] =
     Seq("microservice.services.transit-movements.port")
 }

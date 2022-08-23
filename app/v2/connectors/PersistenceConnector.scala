@@ -70,6 +70,11 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[DepartureResponse]
 
+  def getDeparturesForEori(eori: EORINumber)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Seq[DepartureId]]
+
 }
 
 @Singleton
@@ -157,6 +162,25 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
         response =>
           response.status match {
             case OK => response.as[DepartureResponse]
+            case _  => response.error
+          }
+      }
+  }
+
+  override def getDeparturesForEori(eori: EORINumber)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Seq[DepartureId]] = {
+    val url = appConfig.movementsUrl.withPath(movementsGetAllDepartures(eori))
+
+    httpClientV2
+      .get(url"$url")
+      .addHeaders(HeaderNames.ACCEPT -> MimeTypes.JSON)
+      .execute[HttpResponse]
+      .flatMap {
+        response =>
+          response.status match {
+            case OK => response.as[Seq[DepartureId]]
             case _  => response.error
           }
       }

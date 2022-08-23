@@ -51,7 +51,7 @@ trait V1DeparturesController {
 
   def submitDeclaration(): Action[NodeSeq]
   def getDeparture(departureId: DepartureId): Action[AnyContent]
-
+  def getDeparturesForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
 }
 
 @Singleton

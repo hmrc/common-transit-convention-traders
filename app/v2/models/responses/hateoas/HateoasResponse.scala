@@ -17,8 +17,7 @@
 package v2.models.responses.hateoas
 
 import config.Constants
-import v2.models.DepartureId
-import v2.models.MessageId
+import v2.models._
 import v2.models.responses.hateoas.HateoasResponse.prefix
 
 import java.time.OffsetDateTime

@@ -86,6 +86,7 @@ import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
 import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
+import v2.models.responses.hateoas.HateoasDepartureIdsResponse
 import v2.models.responses.hateoas.HateoasDepartureMessageIdsResponse
 import v2.models.responses.hateoas.HateoasDepartureMessageResponse
 import v2.models.responses.hateoas.HateoasDepartureResponse
@@ -892,6 +893,80 @@ class V2DeparturesControllerSpec
 
       val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
       val result  = sut.getMessage(DepartureId("0123456789abcdef"), MessageId("0123456789abcdef"))(request)
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "INTERNAL_SERVER_ERROR",
+        "message" -> "Internal server error"
+      )
+    }
+
+  }
+
+  "GET  /traders/:EORI/movements" - {
+    "should return ok with json body for departures" in {
+
+      val departureId1 = DepartureId("11111")
+      val departureId2 = DepartureId("22222")
+
+      val departureIdsResponse = Seq(departureId1, departureId2)
+
+      when(mockDeparturesPersistenceService.getDeparturesForEori(EORINumber(any()))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenAnswer(
+          _ => EitherT.rightT(departureIdsResponse)
+        )
+      val request = FakeRequest(
+        GET,
+        routing.routes.DeparturesRouter.getDeparturesForEori().url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+        AnyContentAsEmpty
+      )
+      val result = sut.getDeparturesForEori(None)(request)
+
+      status(result) mustBe OK
+      contentAsJson(result) mustBe Json.toJson(
+        HateoasDepartureIdsResponse(
+          departureIdsResponse
+        )
+      )
+    }
+
+    "should return departure not found if persistence service returns 404" in {
+      val eori = EORINumber("ERROR")
+
+      when(mockDeparturesPersistenceService.getDeparturesForEori(EORINumber(any()))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenAnswer(
+          _ => EitherT.leftT(PersistenceError.DeparturesNotFound(eori))
+        )
+
+      val request = FakeRequest(
+        GET,
+        routing.routes.DeparturesRouter.getDeparturesForEori().url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+        AnyContentAsEmpty
+      )
+      val result = sut.getDeparturesForEori(None)(request)
+
+      status(result) mustBe NOT_FOUND
+      contentAsJson(result) mustBe Json.obj(
+        "message" -> s"Departure movement IDs for ${eori.value} were not found",
+        "code"    -> "NOT_FOUND"
+      )
+    }
+
+    "should return unexpected error for all other errors" in {
+      when(mockDeparturesPersistenceService.getDeparturesForEori(EORINumber(any()))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenAnswer(
+          _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
+        )
+
+      val request = FakeRequest(
+        GET,
+        routing.routes.DeparturesRouter.getDeparturesForEori().url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+        AnyContentAsEmpty
+      )
+      val result = sut.getDeparturesForEori(None)(request)
 
       status(result) mustBe INTERNAL_SERVER_ERROR
       contentAsJson(result) mustBe Json.obj(
