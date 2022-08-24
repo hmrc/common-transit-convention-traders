@@ -128,31 +128,31 @@ traits:
           type: datetime
           description: This is an optional filtering parameter. It allows you to request only the Movement Departures which have been updated since the date and time you have given us.
           example: 2021-06-21T09:00+00:00
-        (annotations.scope): "common-transit-convention-traders"
-        securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
-        responses:
-          200:
-            body:
-              application/json:
-                description: JSON Payload
-                example: |
+      (annotations.scope): "common-transit-convention-traders"
+      securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+      responses:
+        200:
+          body:
+            application/json:
+              description: JSON Payload
+              example: |
+                {
+                  "_links":
                   {
-                    "_links":
-                    {
-                      "self":
-                        {
-                          "href":"/customs/transits/movements/departures"
-                        }
-                    },
-                    departures":[
+                    "self":
                       {
-                        "id":"/customs/transits/movements/departures/1"
-                      },
-                      {
-                        "id":"/customs/transits/movements/departures/2"
+                        "href":"/customs/transits/movements/departures"
                       }
-                    ]
-                  }
+                  },
+                  departures":[
+                    {
+                      "id":"/customs/transits/movements/departures/1"
+                    },
+                    {
+                      "id":"/customs/transits/movements/departures/2"
+                    }
+                  ]
+                }
     /{departureId}:
       get:
         displayName: Get a Movement Departure for a departure ID
