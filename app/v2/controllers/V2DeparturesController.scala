@@ -71,6 +71,7 @@ trait V2DeparturesController {
   def getMessageIds(departureId: DepartureId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
   def getDeparture(departureId: DepartureId): Action[AnyContent]
   def getDeparturesForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
+  def sendMessageDownstream(departureId: DepartureId): Action[Source[ByteString, _]]
 }
 
 @Singleton
@@ -237,4 +238,8 @@ class V2DeparturesControllerImpl @Inject() (
             response => Ok(Json.toJson(HateoasDepartureIdsResponse(response)))
           )
     }
+
+  def sendMessageDownstream(departureId: DepartureId): Action[Source[ByteString, _]] = Action(streamFromMemory) {
+    _ => Accepted(Json.obj("version" -> 2))
+  }
 }

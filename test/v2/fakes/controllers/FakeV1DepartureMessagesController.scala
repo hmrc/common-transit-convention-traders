@@ -24,8 +24,9 @@ import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
 import play.api.test.Helpers.stubControllerComponents
-
+import play.api.mvc.Request
 import java.time.OffsetDateTime
+import scala.xml.NodeSeq
 
 class FakeV1DepartureMessagesController extends BaseController with V1DepartureMessagesController {
   val controllerComponents = stubControllerComponents()
@@ -36,5 +37,10 @@ class FakeV1DepartureMessagesController extends BaseController with V1DepartureM
 
   override def getDepartureMessages(departureId: DepartureId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
     _ => Accepted(Json.obj("version" -> 1))
+  }
+
+  override def sendMessageDownstream(departureId: DepartureId): Action[NodeSeq] = Action(parse.xml) {
+    _: Request[NodeSeq] =>
+      Accepted(Json.obj("version" -> 1))
   }
 }
