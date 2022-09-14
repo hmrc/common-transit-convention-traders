@@ -268,7 +268,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
     }
   }
 
-  "when submitting a movements departure" - {
+  "when submitting a new message for an existing departure" - {
     // Version 2
     "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
 
@@ -279,8 +279,8 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
       "must route to the v2 controller and return Accepted when successful" in {
 
         val request =
-          FakeRequest(method = "POST", uri = routes.DeparturesRouter.sendMessageDownstream("").url, body = <test></test>, headers = departureHeaders)
-        val result = call(sut.sendMessageDownstream("1234567890abcdef"), request)
+          FakeRequest(method = "POST", uri = routes.DeparturesRouter.attachMessage("").url, body = <test></test>, headers = departureHeaders)
+        val result = call(sut.attachMessage("1234567890abcdef"), request)
 
         status(result) mustBe ACCEPTED
         contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
@@ -303,8 +303,8 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
           "must route to the v1 controller and return Accepted when successful" in {
 
             val request =
-              FakeRequest(method = "POST", uri = routes.DeparturesRouter.sendMessageDownstream("123").url, body = <test></test>, headers = departureHeaders)
-            val result = call(sut.sendMessageDownstream("123"), request)
+              FakeRequest(method = "POST", uri = routes.DeparturesRouter.attachMessage("123").url, body = <test></test>, headers = departureHeaders)
+            val result = call(sut.attachMessage("123"), request)
 
             status(result) mustBe ACCEPTED
             contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action

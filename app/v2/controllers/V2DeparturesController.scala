@@ -19,6 +19,7 @@ package v2.controllers
 import akka.stream.IOResult
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
@@ -71,7 +72,7 @@ trait V2DeparturesController {
   def getMessageIds(departureId: DepartureId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
   def getDeparture(departureId: DepartureId): Action[AnyContent]
   def getDeparturesForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
-  def sendMessageDownstream(departureId: DepartureId): Action[Source[ByteString, _]]
+  def attachMessage(departureId: DepartureId): Action[Source[ByteString, _]]
 }
 
 @Singleton
@@ -239,7 +240,9 @@ class V2DeparturesControllerImpl @Inject() (
           )
     }
 
-  def sendMessageDownstream(departureId: DepartureId): Action[Source[ByteString, _]] = Action(streamFromMemory) {
-    _ => Accepted(Json.obj("version" -> 2))
+  def attachMessage(departureId: DepartureId): Action[Source[ByteString, _]] = Action(streamFromMemory) {
+    implicit request =>
+      request.body.runWith(Sink.ignore)
+      Accepted(Json.obj("version" -> 2))
   }
 }

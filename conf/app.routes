@@ -16,7 +16,7 @@ POST       /movements/departures                                    routing.Depa
 
 GET        /movements/departures/:departureId                       routing.DeparturesRouter.getDeparture(departureId: String)
 
-POST       /movements/departures/:departureId/messages              routing.DeparturesRouter.sendMessageDownstream(departureId: String)
+POST       /movements/departures/:departureId/messages              routing.DeparturesRouter.attachMessage(departureId: String)
 GET        /movements/departures/:departureId/messages              routing.DeparturesRouter.getMessageIds(departureId: String, receivedSince: Option[OffsetDateTime] ?= None)
 
 GET        /movements/departures/:departureId/messages/:messageId   routing.DeparturesRouter.getMessage(departureId: String, messageId: String)

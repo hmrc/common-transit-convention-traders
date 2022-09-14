@@ -101,12 +101,12 @@ class DeparturesRouter @Inject() (
     case _                                                    => v1Departures.getDeparturesForEori(updatedSince)
   }
 
-  def sendMessageDownstream(departureId: String): Action[Source[ByteString, _]] = route {
+  def attachMessage(departureId: String): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE) =>
       runIfBound[V2DepartureId](
         "departureId",
         departureId,
-        v2Departures.sendMessageDownstream
+        v2Departures.attachMessage
       )
     case _ =>
       runIfBound[V1DepartureId](

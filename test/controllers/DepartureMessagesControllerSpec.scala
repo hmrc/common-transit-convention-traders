@@ -383,7 +383,7 @@ class DepartureMessagesControllerSpec
           )
         )
 
-      val request = fakeRequestMessages(method = "POST", uri = routing.routes.DeparturesRouter.sendMessageDownstream("123").url, body = CC014A)
+      val request = fakeRequestMessages(method = "POST", uri = routing.routes.DeparturesRouter.attachMessage("123").url, body = CC014A)
       val result  = route(app, request).value
 
       status(result) mustBe ACCEPTED
@@ -395,7 +395,7 @@ class DepartureMessagesControllerSpec
       when(mockMessageConnector.post(any(), DepartureId(any()))(any(), any()))
         .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "")))
 
-      val request = fakeRequestMessages(method = "POST", uri = routing.routes.DeparturesRouter.sendMessageDownstream("123").url, body = CC014A)
+      val request = fakeRequestMessages(method = "POST", uri = routing.routes.DeparturesRouter.attachMessage("123").url, body = CC014A)
       val result  = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
@@ -405,7 +405,7 @@ class DepartureMessagesControllerSpec
       when(mockMessageConnector.post(any(), DepartureId(any()))(any(), any()))
         .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Headers.create().toMap)))
 
-      val request = fakeRequestMessages(method = "POST", uri = routing.routes.DeparturesRouter.sendMessageDownstream("123").url, body = CC014A)
+      val request = fakeRequestMessages(method = "POST", uri = routing.routes.DeparturesRouter.attachMessage("123").url, body = CC014A)
       val result  = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
@@ -419,7 +419,7 @@ class DepartureMessagesControllerSpec
           )
         )
 
-      val request = fakeRequestMessages(method = "POST", uri = routing.routes.DeparturesRouter.sendMessageDownstream("123").url, body = CC014A)
+      val request = fakeRequestMessages(method = "POST", uri = routing.routes.DeparturesRouter.attachMessage("123").url, body = CC014A)
       val result  = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
@@ -433,7 +433,7 @@ class DepartureMessagesControllerSpec
           )
         )
 
-      val request = fakeRequestMessages(method = "POST", uri = routing.routes.DeparturesRouter.sendMessageDownstream("123").url, body = CC014A)
+      val request = fakeRequestMessages(method = "POST", uri = routing.routes.DeparturesRouter.attachMessage("123").url, body = CC014A)
       val result  = route(app, request).value
 
       status(result) mustBe ACCEPTED
@@ -444,7 +444,7 @@ class DepartureMessagesControllerSpec
     "must return UnsupportedMediaType when Content-Type is JSON" in {
       val request = FakeRequest(
         method = "POST",
-        uri = routing.routes.DeparturesRouter.sendMessageDownstream("123").url,
+        uri = routing.routes.DeparturesRouter.attachMessage("123").url,
         headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")),
         body = AnyContentAsEmpty
       )
@@ -458,7 +458,7 @@ class DepartureMessagesControllerSpec
       val request = fakeRequestMessages(
         method = "POST",
         headers = FakeHeaders(),
-        uri = routing.routes.DeparturesRouter.sendMessageDownstream("123").url,
+        uri = routing.routes.DeparturesRouter.attachMessage("123").url,
         body = ByteString("body")
       )
 
@@ -471,7 +471,7 @@ class DepartureMessagesControllerSpec
       val request = fakeRequestMessages(
         method = "POST",
         headers = FakeHeaders(),
-        uri = routing.routes.DeparturesRouter.sendMessageDownstream("123").url,
+        uri = routing.routes.DeparturesRouter.attachMessage("123").url,
         body = AnyContentAsEmpty
       )
 
@@ -482,7 +482,7 @@ class DepartureMessagesControllerSpec
 
     "must return BadRequest when invalid XML payload is sent" in {
       val request =
-        fakeRequestMessages(method = "POST", uri = routing.routes.DeparturesRouter.sendMessageDownstream("123").url, body = InvalidCC014A)
+        fakeRequestMessages(method = "POST", uri = routing.routes.DeparturesRouter.attachMessage("123").url, body = InvalidCC014A)
 
       val result = route(app, request).value
 

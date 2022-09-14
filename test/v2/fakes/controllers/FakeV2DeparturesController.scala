@@ -66,7 +66,7 @@ class FakeV2DeparturesController @Inject() ()(implicit val materializer: Materia
       Ok(Json.obj("version" -> 2))
   }
 
-  override def sendMessageDownstream(departureId: DepartureId): Action[Source[ByteString, _]] = Action(streamFromMemory) {
+  override def attachMessage(departureId: DepartureId): Action[Source[ByteString, _]] = Action(streamFromMemory) {
     request =>
       request.body.runWith(Sink.ignore)
       Accepted(Json.obj("version" -> 2))
