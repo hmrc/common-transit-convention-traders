@@ -55,7 +55,7 @@ class HateosDepartureResponseSpec extends AnyFreeSpec with Matchers with ScalaCh
         "self"     -> Json.obj("href" -> selfUri),
         "messages" -> Json.obj("href" -> messagesUri)
       ),
-      "id"                      -> departureId.value,
+      "id"                      -> departureId,
       "movementReferenceNumber" -> "MRN001",
       "created"                 -> "2022-08-15T11:45:00Z", // due to OffsetDateTime in UTC
       "updated"                 -> "2022-08-15T11:45:00Z",
