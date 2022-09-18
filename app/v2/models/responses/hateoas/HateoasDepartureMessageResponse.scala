@@ -30,12 +30,10 @@ object HateoasDepartureMessageResponse extends HateoasResponse {
         "self"      -> Json.obj("href" -> messageUri(departureId, messageId)),
         "departure" -> Json.obj("href" -> departureUri(departureId))
       ),
-      "departure" -> Json.obj(
-        "id" -> departureUri(departureId)
-      ),
-      "id"          -> messageUri(departureId, messageId),
+      "id"          -> messageId.value,
+      "departureId" -> departureId.value,
       "received"    -> messageResponse.received.toLocalDateTime,
-      "messageType" -> messageResponse.messageType
+      "type"        -> messageResponse.messageType
     ) ++ messageResponse.body
       .map(
         x => Json.obj("body" -> x)
