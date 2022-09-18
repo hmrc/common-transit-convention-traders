@@ -54,15 +54,13 @@ class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with
     val actual = HateoasDepartureMessageResponse(departureId, messageId, response)
     val expected = Json.obj(
       "_links" -> Json.obj(
-        "self"      -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}/messages/${messageId.value}"),
+        "self"      -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}/message/${messageId.value}"),
         "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
       ),
-      "departure" -> Json.obj(
-        "id" -> s"/customs/transits/movements/departures/${departureId.value}"
-      ),
-      "id"          -> s"/customs/transits/movements/departures/${departureId.value}/messages/${messageId.value}",
+      "id"          -> messageId.value,
+      "departureId" -> departureId.value,
       "received"    -> "2022-08-04T11:52:59",
-      "messageType" -> MessageType.DepartureDeclaration.code,
+      "type" -> MessageType.DepartureDeclaration.code,
       "body"        -> body
     )
 
