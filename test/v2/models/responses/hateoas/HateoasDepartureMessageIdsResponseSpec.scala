@@ -59,7 +59,7 @@ class HateoasDepartureMessageIdsResponseSpec extends AnyFreeSpec with Matchers w
           "messages" -> messageIds.map(
             x =>
               Json.obj(
-                "id" -> s"/customs/transits/movements/departures/${departureId.value}/messages/${x.value}"
+                "id" -> s"/customs/transits/movements/departures/${departureId.value}/message/${x.value}"
               )
           )
         )
