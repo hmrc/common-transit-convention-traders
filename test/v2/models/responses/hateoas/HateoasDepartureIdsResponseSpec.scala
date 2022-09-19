@@ -41,7 +41,18 @@ class HateoasDepartureIdsResponseSpec extends AnyFreeSpec with Matchers with Opt
         "departures" -> departureIds.map(
           departureId =>
             Json.obj(
-              "id" -> s"/customs/transits/movements/departures/${departureId.value}"
+              "_links" -> Json.obj(
+                "self" -> Json.obj(
+                  "href" -> s"/customs/transits/movements/departures/${departureId.value}"
+                ),
+                "messages" -> s"/customs/transits/movements/departures/${departureId.value}/messages"
+              ),
+              "id"                      -> departureId,
+              "movementReferenceNumber" -> "ABC123",
+              "created"                 -> "20220101 101010Z",
+              "updated"                 -> "20220101 101010Z",
+              "enrollmentEORINumber"    -> "GB1234567890",
+              "movementEORINumber"      -> "GB1234567890"
             )
         )
       )
