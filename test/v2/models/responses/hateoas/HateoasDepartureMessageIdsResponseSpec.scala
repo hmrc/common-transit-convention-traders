@@ -26,6 +26,9 @@ import play.api.libs.json.Json
 import v2.base.CommonGenerators
 import v2.models.DepartureId
 import v2.models.MessageId
+import v2.models.formats.CommonFormats
+import v2.models.request.MessageType.DepartureDeclaration
+import v2.models.responses.MessageResponseWithoutBody
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -41,25 +44,32 @@ class HateoasDepartureMessageIdsResponseSpec extends AnyFreeSpec with Matchers w
         .getOrElse("not set")
 
       s"with a valid message response and receivedSince $set, create a valid HateoasDepartureMessageResponse" in {
-        val messageIds = (for {
-          m1 <- arbitrary[MessageId]
-          m2 <- arbitrary[MessageId]
-          m3 <- arbitrary[MessageId]
-        } yield Seq(m1, m2, m3)).sample.value
+
         val departureId = arbitrary[DepartureId].sample.value
-        val actual      = HateoasDepartureMessageIdsResponse(departureId, messageIds, dateTime)
+        val responses = (for {
+          id1 <- arbitrary[MessageId]
+          id2 <- arbitrary[MessageId]
+          id3 <- arbitrary[MessageId]
+        } yield Seq(generateResponse(id1), generateResponse(id2), generateResponse(id3))).sample.value
+
+        val actual = HateoasDepartureMessageIdsResponse(departureId, responses, dateTime)
+
         val expected = Json.obj(
           "_links" -> Json.obj(
-            "self"      -> selfUrl(departureId, dateTime),
+            "self"      -> selfUrl(departureId, Some(responses.head.received)),
             "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
           ),
-          "departure" -> Json.obj(
-            "id" -> s"/customs/transits/movements/departures/${departureId.value}"
-          ),
-          "messages" -> messageIds.map(
-            x =>
+          "messages" -> responses.map(
+            response =>
               Json.obj(
-                "id" -> s"/customs/transits/movements/departures/${departureId.value}/message/${x.value}"
+                "_links" -> Json.obj(
+                  "self"      -> s"/customs/transits/movements/departures/${departureId.value}/message/${response.id.value}",
+                  "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
+                ),
+                "id"       -> response.id.value,
+                "departureId" -> departureId.value,
+                "received" -> CommonFormats.hateoasDateTime.format(response.received),
+                "type"     -> response.messageType.code
               )
           )
         )
@@ -69,12 +79,20 @@ class HateoasDepartureMessageIdsResponseSpec extends AnyFreeSpec with Matchers w
   }
 
   private def selfUrl(departureId: DepartureId, dateTime: Option[OffsetDateTime]): JsObject = dateTime match {
-    case Some(x) =>
-      val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(x)
+    case Some(time) =>
+      val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(time)
       Json.obj(
         "href" -> s"/customs/transits/movements/departures/${departureId.value}/messages?receivedSince=$time"
       )
     case None => Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}/messages")
   }
+
+  private def generateResponse(messageId: MessageId) =
+    MessageResponseWithoutBody(
+      messageId,
+      arbitrary[OffsetDateTime].sample.value,
+      DepartureDeclaration,
+      Some("<CC015C><test>testxml</test></CC015C>")
+    )
 
 }
