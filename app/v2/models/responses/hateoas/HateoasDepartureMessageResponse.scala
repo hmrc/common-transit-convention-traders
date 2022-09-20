@@ -20,6 +20,7 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.models.MessageId
 import v2.models.DepartureId
+import v2.models.formats.CommonFormats
 import v2.models.responses.MessageResponse
 
 object HateoasDepartureMessageResponse extends HateoasResponse {
@@ -32,7 +33,7 @@ object HateoasDepartureMessageResponse extends HateoasResponse {
       ),
       "id"          -> messageId.value,
       "departureId" -> departureId.value,
-      "received"    -> messageResponse.received.toLocalDateTime,
+      "received"    -> CommonFormats.hateoasDateTime.format(messageResponse.received),
       "type"        -> messageResponse.messageType
     ) ++ messageResponse.body
       .map(

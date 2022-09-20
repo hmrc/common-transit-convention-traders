@@ -20,6 +20,8 @@ import cats.data.NonEmptyList
 import play.api.libs.functional.syntax.toInvariantFunctorOps
 import play.api.libs.json.Format
 
+import java.time.format.DateTimeFormatter
+
 object CommonFormats extends CommonFormats
 
 trait CommonFormats {
@@ -32,4 +34,5 @@ trait CommonFormats {
         _.toList
       )
 
+  val hateoasDateTime = DateTimeFormatter.ofPattern("yyyyMMdd HHmmss")
 }

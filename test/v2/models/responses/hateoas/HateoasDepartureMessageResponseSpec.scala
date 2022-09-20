@@ -59,7 +59,7 @@ class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with
       ),
       "id"          -> messageId.value,
       "departureId" -> departureId.value,
-      "received"    -> "2022-08-04T11:52:59",
+      "received"    -> "20220804 115259",
       "type"        -> MessageType.DepartureDeclaration.code,
       "body"        -> body
     )
