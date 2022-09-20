@@ -16,9 +16,7 @@
 
 package v2.controllers
 
-import akka.stream.IOResult
 import akka.stream.Materializer
-import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
@@ -65,7 +63,6 @@ trait V2DeparturesController {
 @Singleton
 class V2DeparturesControllerImpl @Inject() (
   val controllerComponents: ControllerComponents,
-  val temporaryFileCreator: TemporaryFileCreator,
   authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
   validationService: ValidationService,
   conversionService: ConversionService,
@@ -75,14 +72,13 @@ class V2DeparturesControllerImpl @Inject() (
   messageSizeAction: MessageSizeActionProvider,
   val metrics: Metrics,
   xmlParsingService: MessagesXmlParsingService
-)(implicit val materializer: Materializer)
+)(implicit val materializer: Materializer, val temporaryFileCreator: TemporaryFileCreator)
     extends BaseController
     with V2DeparturesController
     with Logging
     with StreamingParsers
     with VersionedRouting
     with ErrorTranslator
-    with TemporaryFiles
     with ContentTypeRouting
     with HasActionMetrics {
 
@@ -96,79 +92,67 @@ class V2DeparturesControllerImpl @Inject() (
     }
 
   def submitDeclarationJSON(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen messageSizeAction()).async(streamFromMemory) {
+    (authActionNewEnrolmentOnly andThen messageSizeAction()).stream {
       implicit request =>
-        withTemporaryFile {
-          (temporaryFile, source) =>
-            implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-            val messageType: MessageType   = MessageType.DeclarationData
-            val fileSource                 = FileIO.fromPath(temporaryFile)
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+        val messageType: MessageType   = MessageType.DeclarationData
 
-            (for {
-              _ <- validationService.validateJson(messageType, source).asPresentation
-              _ = auditService.audit(AuditType.DeclarationData, fileSource, MimeTypes.JSON)
+        (for {
+          _ <- validationService.validateJson(messageType, request.body).asPresentation
+          _ = auditService.audit(AuditType.DeclarationData, request.body, MimeTypes.JSON)
 
-              xmlSource         <- conversionService.jsonToXml(messageType, fileSource).asPresentation
-              declarationResult <- persistAndSendToEIS(xmlSource, messageType)
-            } yield declarationResult).fold[Result](
-              presentationError => {
-                fCounter.inc()
-                Status(presentationError.code.statusCode)(Json.toJson(presentationError))
-              },
-              result => {
-                sCounter.inc()
-                Accepted(HateoasDepartureDeclarationResponse(result.departureId))
-              }
-            )
-        }.toResult
+          xmlSource         <- conversionService.jsonToXml(messageType, request.body).asPresentation
+          declarationResult <- persistAndSendToEIS(xmlSource, messageType)
+        } yield declarationResult).fold[Result](
+          presentationError => {
+            fCounter.inc()
+            Status(presentationError.code.statusCode)(Json.toJson(presentationError))
+          },
+          result => {
+            sCounter.inc()
+            Accepted(HateoasDepartureDeclarationResponse(result.departureId))
+          }
+        )
     }
 
   def persistAndSendToEIS(
     src: Source[ByteString, _],
     messageType: MessageType
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]): EitherT[Future, PresentationError, DeclarationResponse] =
-    withTemporaryFileA(
-      src,
-      (temporaryFile, xmlSource) => {
-        val fileSource = FileIO.fromPath(temporaryFile)
+    withReusableSource(src) {
+      source =>
         for {
-          _      <- validationService.validateXml(messageType, xmlSource).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
-          result <- persistAndSend(fileSource)
+          _      <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
+          result <- persistAndSend(source)
         } yield result
-      }
-    )
+    }
 
   def submitDeclarationXML(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen messageSizeAction()).async(streamFromMemory) {
+    (authActionNewEnrolmentOnly andThen messageSizeAction()).stream {
       implicit request =>
-        withTemporaryFile {
-          (temporaryFile, source) =>
-            implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-            (for {
-              _ <- validationService.validateXml(MessageType.DeclarationData, source).asPresentation
+        (for {
+          _ <- validationService.validateXml(MessageType.DeclarationData, request.body).asPresentation
+          // TODO: See if we can parallelise this call with the one to persistence, below.
+          // Note it's an =, not <-, as we don't care (here) for its response, once it's sent, it should be
+          // non-blocking
+          _ = auditService.audit(AuditType.DeclarationData, request.body, MimeTypes.XML)
 
-              fileSource = FileIO.fromPath(temporaryFile)
-              // TODO: See if we can parallelise this call with the one to persistence, below.
-              // Note it's an =, not <-, as we don't care (here) for its response, once it's sent, it should be
-              // non-blocking
-              _ = auditService.audit(AuditType.DeclarationData, fileSource, MimeTypes.XML)
-
-              declarationResult <- persistAndSend(fileSource)
-            } yield declarationResult).fold[Result](
-              presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-              result => Accepted(HateoasDepartureDeclarationResponse(result.departureId))
-            )
-        }.toResult
+          declarationResult <- persistAndSend(request.body)
+        } yield declarationResult).fold[Result](
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          result => Accepted(HateoasDepartureDeclarationResponse(result.departureId))
+        )
     }
 
   private def persistAndSend(
-    fileSource: Source[ByteString, Future[IOResult]]
+    source: Source[ByteString, _]
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
     for {
-      declarationResult <- departuresService.saveDeclaration(request.eoriNumber, fileSource).asPresentation
+      declarationResult <- departuresService.saveDeclaration(request.eoriNumber, source).asPresentation
       _ <- routerService
-        .send(MessageType.DeclarationData, request.eoriNumber, declarationResult.departureId, declarationResult.messageId, fileSource)
+        .send(MessageType.DeclarationData, request.eoriNumber, declarationResult.departureId, declarationResult.messageId, source)
         .asPresentation
     } yield declarationResult
 
@@ -235,33 +219,29 @@ class V2DeparturesControllerImpl @Inject() (
     }
 
   def attachMessageXML(departureId: DepartureId): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen messageSizeAction()).async(streamFromMemory) {
+    (authActionNewEnrolmentOnly andThen messageSizeAction()).stream {
       implicit request =>
-        withTemporaryFile {
-          (temporaryFile, source) =>
-            implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-            (for {
-              messageType <- xmlParsingService.extractMessageType(source).asPresentation
-              fileSource = FileIO.fromPath(temporaryFile)
-              _ <- validationService.validateXml(messageType, fileSource).asPresentation
-              _ = auditService.audit(messageType.auditType, fileSource, MimeTypes.XML)
-              declarationResult <- updateAndSendDeparture(departureId, messageType, fileSource)
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+        (for {
+          messageType <- xmlParsingService.extractMessageType(request.body).asPresentation
+          _           <- validationService.validateXml(messageType, request.body).asPresentation
+          _ = auditService.audit(messageType.auditType, request.body, MimeTypes.XML)
+          declarationResult <- updateAndSendDeparture(departureId, messageType, request.body)
 
-            } yield declarationResult).fold[Result](
-              presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-              id => Accepted(Json.toJson(HateoasDepartureUpdateMovementResponse(departureId, id.messageId)))
-            )
-        }.toResult
+        } yield declarationResult).fold[Result](
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          id => Accepted(Json.toJson(HateoasDepartureUpdateMovementResponse(departureId, id.messageId)))
+        )
     }
 
-  private def updateAndSendDeparture(departureId: DepartureId, messageType: MessageType, fileSource: Source[ByteString, Future[IOResult]])(implicit
+  private def updateAndSendDeparture(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     request: AuthenticatedRequest[Source[ByteString, _]]
   ) =
     for {
-      declarationResult <- departuresService.updateDeparture(departureId, messageType, fileSource).asPresentation
+      declarationResult <- departuresService.updateDeparture(departureId, messageType, source).asPresentation
       _ <- routerService
-        .send(messageType, request.eoriNumber, departureId, declarationResult.messageId, fileSource)
+        .send(messageType, request.eoriNumber, departureId, declarationResult.messageId, source)
         .asPresentation
     } yield declarationResult
 }

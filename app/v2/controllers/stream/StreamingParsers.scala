@@ -16,23 +16,25 @@
 
 package v2.controllers.stream
 
-import akka.stream.IOResult
 import akka.stream.Materializer
-import akka.stream.scaladsl.FileIO
-import akka.stream.scaladsl.RunnableGraph
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import play.api.libs.Files
+import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.streams.Accumulator
+import play.api.mvc.Action
+import play.api.mvc.ActionBuilder
 import play.api.mvc.BaseControllerHelpers
 import play.api.mvc.BodyParser
-import play.api.mvc.Request
+import play.api.mvc.Result
+import v2.controllers.request.BodyReplaceableRequest
+import v2.utils.FutureConversions
+import v2.utils.StreamWithFile
 
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-trait StreamingParsers {
+trait StreamingParsers extends StreamWithFile with FutureConversions {
   self: BaseControllerHelpers =>
 
   implicit val materializer: Materializer
@@ -43,27 +45,24 @@ trait StreamingParsers {
   implicit val materializerExecutionContext: ExecutionContext =
     ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(4))
 
-  def streamFromTemporaryFile[A](block: Source[ByteString, Future[IOResult]] => RunnableGraph[Future[A]])(implicit
-    request: Request[Files.TemporaryFile]
-  ): Future[A] =
-    block(FileIO.fromPath(request.body.path)).run()
-
   lazy val streamFromMemory: BodyParser[Source[ByteString, _]] = BodyParser {
     _ =>
       Accumulator.source[ByteString].map(Right.apply)
   }
 
-  lazy val streamFromFile: BodyParser[Source[ByteString, _]] = parse.temporaryFile.map {
-    tempFile =>
-      FileIO.fromPath(tempFile.path)
-  }
+  implicit class ActionBuilderStreamHelpers[R[A] <: BodyReplaceableRequest[R, A]](actionBuilder: ActionBuilder[R, _]) {
 
-  lazy val streamIntelligently: BodyParser[Source[ByteString, _]] = streamIntelligently(100000)
+    def stream(
+      block: R[Source[ByteString, _]] => Future[Result]
+    )(implicit temporaryFileCreator: TemporaryFileCreator): Action[Source[ByteString, _]] =
+      actionBuilder.async(streamFromMemory) {
+        request =>
+          withReusableSource(request.body) {
+            memoryOrFileSource =>
+              block(request.replaceBody(memoryOrFileSource))
+          }
+      }
 
-  def streamIntelligently(maxLengthInMemory: Long): BodyParser[Source[ByteString, _]] = parse.using {
-    headers =>
-      if (headers.headers.get(CONTENT_LENGTH).map(_.toLong).exists(_ < maxLengthInMemory)) streamFromMemory
-      else streamFromFile
   }
 
 }

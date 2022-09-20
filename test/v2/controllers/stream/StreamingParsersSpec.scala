@@ -18,53 +18,65 @@ package v2.controllers.stream
 
 import akka.NotUsed
 import akka.stream.Materializer
-import akka.stream.scaladsl.FileIO
-import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import org.scalacheck.Gen
+import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames
 import play.api.http.Status.OK
-import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.Files
 import play.api.libs.Files.SingletonTemporaryFileCreator
-import play.api.libs.json.Json
 import play.api.mvc.Action
+import play.api.mvc.ActionBuilder
+import play.api.mvc.ActionRefiner
+import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
-import play.api.mvc.ControllerComponents
+import play.api.mvc.BodyParser
+import play.api.mvc.Request
+import play.api.mvc.Result
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
 import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.defaultAwaitTimeout
 import play.api.test.Helpers.status
+import play.api.test.Helpers.stubControllerComponents
+import v2.base.TestActorSystem
+import v2.base.TestSourceProvider
+import v2.controllers.request.BodyReplaceableRequest
 
 import java.nio.charset.StandardCharsets
 import scala.annotation.tailrec
 import scala.collection.immutable
-import scala.concurrent.Await
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.concurrent.duration.DurationInt
 
-class StreamingParsersSpec extends AnyFreeSpec with Matchers with GuiceOneAppPerSuite {
+class StreamingParsersSpec extends AnyFreeSpec with Matchers with TestActorSystem with OptionValues with TestSourceProvider {
 
-  override lazy val app                        = GuiceApplicationBuilder().build()
-  lazy val headers                             = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "text/plain", HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json"))
-  implicit lazy val materializer: Materializer = app.materializer
+  lazy val headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "text/plain", HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json"))
 
-  class Harness(val controllerComponents: ControllerComponents)(implicit val materializer: Materializer) extends BaseController with StreamingParsers {
+  case class TestBodyReplaceableRequest[A](request: Request[A]) extends BodyReplaceableRequest[TestBodyReplaceableRequest, A](request) {
+    override def replaceBody(body: A): TestBodyReplaceableRequest[A] = TestBodyReplaceableRequest(request.withBody(body))
+  }
+
+  object TestActionBuilder extends ActionRefiner[Request, TestBodyReplaceableRequest] with ActionBuilder[Request, AnyContent] {
+
+    override protected def refine[A](request: Request[A]): Future[Either[Result, TestBodyReplaceableRequest[A]]] =
+      Future.successful(Right(TestBodyReplaceableRequest(request)))
+
+    override protected def executionContext: ExecutionContext = scala.concurrent.ExecutionContext.global
+
+    override def parser: BodyParser[AnyContent] = stubControllerComponents().parsers.defaultBodyParser
+  }
+
+  object Harness extends BaseController with StreamingParsers {
+
+    override val controllerComponents = stubControllerComponents()
+    implicit val temporaryFileCreator = SingletonTemporaryFileCreator
+    implicit val materializer         = Materializer(TestActorSystem.system)
 
     def testFromMemory: Action[Source[ByteString, _]] = Action.async(streamFromMemory) {
-      request => result.apply(request).run(request.body)(materializer)
-    }
-
-    def testFromFile: Action[Source[ByteString, _]] = Action.async(streamFromFile) {
-      request => result.apply(request).run(request.body)(materializer)
-    }
-
-    def testIntelligence: Action[Source[ByteString, _]] = Action.async(streamIntelligently(2000)) {
       request => result.apply(request).run(request.body)(materializer)
     }
 
@@ -73,21 +85,15 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
         Future.successful(Ok(request.body))
     }
 
-    def testFile: Action[Files.TemporaryFile] = Action.async(parse.temporaryFile) {
-      implicit request =>
-        def stream() = streamFromTemporaryFile {
-          source =>
-            source.toMat(
-              Sink.fold("")(
-                (current: String, in: ByteString) => current + in.decodeString(StandardCharsets.UTF_8)
-              )
-            )(Keep.right)
-        }
-
-        for {
-          firstString  <- stream()
-          secondString <- stream()
-        } yield Ok(Json.obj("first" -> firstString, "second" -> secondString))
+    def resultStream: Action[Source[ByteString, _]] = Action.andThen(TestActionBuilder).stream {
+      request =>
+        (for {
+          a <- request.body.runWith(Sink.head)
+          b <- request.body.runWith(Sink.head)
+        } yield (a ++ b).utf8String)
+          .map(
+            r => Ok(r)
+          )
     }
   }
 
@@ -109,64 +115,19 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with GuiceOneAppPer
           s"~$value kb string is created" in {
             val byteString = generateByteString(value)
             val request    = FakeRequest("POST", "/", headers, generateSource(byteString))
-            val sut        = new Harness(app.injector.instanceOf[ControllerComponents])(app.materializer)
-            val result     = sut.testFromMemory()(request)
+            val result     = Harness.testFromMemory()(request)
             status(result) mustBe OK
-            contentAsString(result) mustBe byteString.decodeString(StandardCharsets.UTF_8)
+            contentAsString(result) mustBe byteString.utf8String
           }
       }
     }
 
-    "from a temporary file" - {
-      (1 to 5).foreach {
-        value =>
-          s"~$value kb string is created" in {
-            val byteString = generateByteString(value)
-            val request    = FakeRequest("POST", "/", headers, generateSource(byteString))
-            val sut        = new Harness(app.injector.instanceOf[ControllerComponents])(app.materializer)
-            val result     = sut.testFromFile()(request)
-            status(result) mustBe OK
-            contentAsString(result) mustBe byteString.decodeString(StandardCharsets.UTF_8)
-          }
-      }
-    }
-
-    "from an intelligent selection" - {
-      (1 to 5).foreach {
-        value =>
-          s"~$value kb string is created" in {
-            val byteString = generateByteString(value)
-            val request    = FakeRequest("POST", "/", headers, generateSource(byteString))
-            val sut        = new Harness(app.injector.instanceOf[ControllerComponents])(app.materializer)
-            val result     = sut.testIntelligence()(request)
-            status(result) mustBe OK
-            contentAsString(result) mustBe byteString.decodeString(StandardCharsets.UTF_8)
-          }
-      }
-    }
-  }
-
-  "From a temporary file" - {
-
-    "test that we can stream from it multiple times" in {
-      val file: Files.TemporaryFile = SingletonTemporaryFileCreator.create()
-      try {
-        import scala.concurrent.ExecutionContext.Implicits.global
-
-        val byteString     = generateByteString(1)
-        val expectedString = byteString.decodeString(StandardCharsets.UTF_8)
-        Await.result(
-          generateSource(byteString).runWith(FileIO.toPath(file.path)).map {
-            _ =>
-              val request = FakeRequest("POST", "/", headers, file)
-              val sut     = new Harness(app.injector.instanceOf[ControllerComponents])(app.materializer)
-              val result  = sut.testFile()(request)
-              status(result) mustBe OK
-              Json.parse(contentAsString(result)) mustBe Json.obj("first" -> expectedString, "second" -> expectedString)
-          },
-          5.seconds
-        )
-      } finally file.delete()
+    "via the stream extension method" in {
+      val string  = Gen.stringOfN(20, Gen.alphaNumChar).sample.value
+      val request = FakeRequest("POST", "/", headers, singleUseStringSource(string))
+      val result  = Harness.resultStream()(request)
+      status(result) mustBe OK
+      contentAsString(result) mustBe (string ++ string)
     }
   }
 
