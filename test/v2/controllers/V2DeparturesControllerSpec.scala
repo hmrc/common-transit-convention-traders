@@ -906,14 +906,31 @@ class V2DeparturesControllerSpec
   "GET  /traders/:EORI/movements" - {
     "should return ok with json body for departures" in {
 
-      val departureId1 = DepartureId("11111")
-      val departureId2 = DepartureId("22222")
+      val enrolmentEORINumber = arbitrary[EORINumber].sample.value
+      val dateTime            = OffsetDateTime.of(2022, 8, 4, 11, 34, 42, 0, ZoneOffset.UTC)
 
-      val departureIdsResponse = Seq(departureId1, departureId2)
+      val departureResponse1 = DepartureResponse(
+        _id = arbitrary[DepartureId].sample.value,
+        enrollmentEORINumber = enrolmentEORINumber,
+        movementEORINumber = arbitrary[EORINumber].sample.value,
+        movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
+        created = dateTime,
+        updated = dateTime.plusHours(1)
+      )
+
+      val departureResponse2 = DepartureResponse(
+        _id = arbitrary[DepartureId].sample.value,
+        enrollmentEORINumber = enrolmentEORINumber,
+        movementEORINumber = arbitrary[EORINumber].sample.value,
+        movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
+        created = dateTime.plusHours(2),
+        updated = dateTime.plusHours(3)
+      )
+      val departureResponses = Seq(departureResponse1, departureResponse2)
 
       when(mockDeparturesPersistenceService.getDeparturesForEori(EORINumber(any()))(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
-          _ => EitherT.rightT(departureIdsResponse)
+          _ => EitherT.rightT(departureResponses)
         )
       val request = FakeRequest(
         GET,
@@ -926,7 +943,7 @@ class V2DeparturesControllerSpec
       status(result) mustBe OK
       contentAsJson(result) mustBe Json.toJson(
         HateoasDepartureIdsResponse(
-          departureIdsResponse
+          departureResponses
         )
       )
     }
