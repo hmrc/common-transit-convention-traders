@@ -25,6 +25,7 @@ import v2.base.CommonGenerators
 import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MovementReferenceNumber
+import v2.models.formats.CommonFormats.hateoasDateTime
 import v2.models.responses.DepartureResponse
 
 import java.time.OffsetDateTime
@@ -69,8 +70,8 @@ class HateoasDepartureIdsResponseSpec extends AnyFreeSpec with Matchers with Opt
               ),
               "id"                      -> departureResponse._id.value,
               "movementReferenceNumber" -> departureResponse.movementReferenceNumber.value,
-              "created"                 -> departureResponse.created,
-              "updated"                 -> departureResponse.updated,
+              "created"                 -> hateoasDateTime.format(departureResponse.created),
+              "updated"                 -> hateoasDateTime.format(departureResponse.updated),
               "enrollmentEORINumber"    -> departureResponse.enrollmentEORINumber,
               "movementEORINumber"      -> departureResponse.movementEORINumber
             )
