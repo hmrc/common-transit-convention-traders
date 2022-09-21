@@ -82,9 +82,11 @@ import v2.models.errors.PersistenceError
 import v2.models.errors.RouterError
 import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
+import v2.models.request.MessageType.DepartureDeclaration
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
+import v2.models.responses.MessageResponseWithoutBody
 import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
 import v2.models.responses.hateoas.HateoasDepartureIdsResponse
 import v2.models.responses.hateoas.HateoasDepartureMessageIdsResponse
@@ -785,6 +787,14 @@ class V2DeparturesControllerSpec
     }
   }
 
+  def generateResponse(messageId: MessageId) =
+    MessageResponseWithoutBody(
+      messageId,
+      arbitrary[OffsetDateTime].sample.value,
+      DepartureDeclaration,
+      Some("<CC015C><test>testxml</test></CC015C>")
+    )
+
   "for retrieving a list of message IDs" - {
 
     val datetimes = Seq(arbitrary[OffsetDateTime].sample, None)
@@ -795,7 +805,7 @@ class V2DeparturesControllerSpec
           messageId1 <- arbitrary[MessageId]
           messageId2 <- arbitrary[MessageId]
           messageId3 <- arbitrary[MessageId]
-        } yield Seq(messageId1, messageId2, messageId3)).sample.value
+        } yield Seq(generateResponse(messageId1), generateResponse(messageId2), generateResponse(messageId3))).sample.value
 
         when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
