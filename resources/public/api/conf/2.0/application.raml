@@ -25,6 +25,13 @@ uses:
   types: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/types.raml
 
 traits:
+  contentXmlHeader:
+    headers:
+      Content-Type:
+        description: Specifies the format of the request body, which must be XML, using UTF-8 character encoding.
+        type: string
+        required: true
+        example: application/xml
   contentXmlJsonHeader:
     headers:
       Content-Type:
