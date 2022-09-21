@@ -19,23 +19,31 @@ package v2.models.responses.hateoas
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.models.DepartureId
-import v2.models.MessageId
+import v2.models.formats.CommonFormats
+import v2.models.responses.MessageResponseWithoutBody
 
 import java.time.OffsetDateTime
 
 object HateoasDepartureMessageIdsResponse extends HateoasResponse {
 
-  def apply(departureId: DepartureId, messageIds: Seq[MessageId], receivedSince: Option[OffsetDateTime]): JsObject =
+  def apply(departureId: DepartureId, messageIds: Seq[MessageResponseWithoutBody], receivedSince: Option[OffsetDateTime]): JsObject =
     Json.obj(
       "_links" -> Json.obj(
         "self"      -> Json.obj("href" -> messageIdsUri(departureId, receivedSince)),
         "departure" -> Json.obj("href" -> departureUri(departureId))
       ),
-      "departure" -> Json.obj(
-        "id" -> departureUri(departureId)
-      ),
       "messages" -> messageIds.map(
-        id => Json.obj("id" -> messageUri(departureId, id))
+        message =>
+          Json.obj(
+            "_links" -> Json.obj(
+              "self"      -> Json.obj("href" -> messageUri(departureId, message.id)),
+              "departure" -> Json.obj("href" -> departureUri(departureId))
+            ),
+            "id"          -> message.id.value,
+            "departureId" -> departureId.value,
+            "received"    -> CommonFormats.hateoasDateTime.format(message.received),
+            "type"        -> message.messageType
+          )
       )
     )
 
