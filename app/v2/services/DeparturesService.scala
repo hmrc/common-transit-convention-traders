@@ -33,6 +33,7 @@ import v2.models.errors.PersistenceError
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
+import v2.models.responses.MessageResponseWithoutBody
 
 import java.time.OffsetDateTime
 import scala.concurrent.ExecutionContext
@@ -55,7 +56,7 @@ trait DeparturesService {
   def getMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[MessageId]]
+  ): EitherT[Future, PersistenceError, Seq[MessageResponseWithoutBody]]
 
   def getDeparture(eori: EORINumber, departureId: DepartureId)(implicit
     hc: HeaderCarrier,
@@ -102,7 +103,7 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
   override def getMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[MessageId]] =
+  ): EitherT[Future, PersistenceError, Seq[MessageResponseWithoutBody]] =
     EitherT(
       persistenceConnector
         .getDepartureMessageIds(eori, departureId, receivedSince)
