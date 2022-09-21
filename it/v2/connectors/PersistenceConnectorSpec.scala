@@ -53,12 +53,16 @@ import v2.utils.CommonGenerators
 import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
+import v2.models.MovementReferenceNumber
 import v2.models.errors.ErrorCode
 import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
+import v2.models.request.MessageType.DepartureDeclaration
 import v2.models.responses.DeclarationResponse
+import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
+import v2.models.responses.MessageResponseWithoutBody
 
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
@@ -380,9 +384,11 @@ class PersistenceConnectorSpec
         .format(receivedSince)}"
 
     "on successful return of message IDs when no filtering is applied, return a success" in {
-      val eori            = arbitrary[EORINumber].sample.get
-      val departureId     = arbitrary[DepartureId].sample.get
-      val messageResponse = messageIdList.sample.get
+      val eori        = arbitrary[EORINumber].sample.get
+      val departureId = arbitrary[DepartureId].sample.get
+      val messageResponse = messageIdList.sample.get.map(
+        id => generateResponseWithoutBody(id)
+      )
 
       server.stubFor(
         get(
@@ -392,9 +398,7 @@ class PersistenceConnectorSpec
             aResponse()
               .withStatus(OK)
               .withBody(
-                // Doing this to ensure we know what the response will be, and not what
-                // Play thinks it will be based on turning an object into Json
-                s"""[ "${messageResponse.head.value}", "${messageResponse(1).value}", "${messageResponse(2).value}" ]""""
+                Json.toJson(messageResponse).toString()
               )
           )
       )
@@ -407,10 +411,12 @@ class PersistenceConnectorSpec
     }
 
     "on successful return of message IDs when filtering by received date is applied, return a success" in {
-      val eori            = arbitrary[EORINumber].sample.get
-      val departureId     = arbitrary[DepartureId].sample.get
-      val messageResponse = messageIdList.sample.get
-      val time            = OffsetDateTime.now(ZoneOffset.UTC)
+      val eori        = arbitrary[EORINumber].sample.get
+      val departureId = arbitrary[DepartureId].sample.get
+      val time        = OffsetDateTime.now(ZoneOffset.UTC)
+      val messageResponse = messageIdList.sample.get.map(
+        id => generateResponseWithoutBody(id)
+      )
 
       server.stubFor(
         get(
@@ -420,9 +426,7 @@ class PersistenceConnectorSpec
             aResponse()
               .withStatus(OK)
               .withBody(
-                // Doing this to ensure we know what the response will be, and not what
-                // Play thinks it will be based on turning an object into Json
-                s"""[ "${messageResponse.head.value}", "${messageResponse(1).value}", "${messageResponse(2).value}" ]""""
+                Json.toJson(messageResponse).toString()
               )
           )
       )
@@ -557,6 +561,9 @@ class PersistenceConnectorSpec
 
     "on success, return a list of departure IDs" in {
       lazy val departureIdList = Gen.listOfN(3, arbitrary[DepartureId]).sample.get
+      lazy val messageResponse = departureIdList.map(
+        id => generateDepartureResponse(id)
+      )
 
       server.stubFor(
         get(
@@ -566,7 +573,7 @@ class PersistenceConnectorSpec
             aResponse()
               .withStatus(OK)
               .withBody(
-                s"""["${departureIdList.head.value}", "${departureIdList(1).value}", "${departureIdList(2).value}"]""""
+                Json.toJson(messageResponse).toString()
               )
           )
       )
@@ -574,7 +581,7 @@ class PersistenceConnectorSpec
       implicit val hc = HeaderCarrier()
       val result      = persistenceConnector.getDeparturesForEori(eori)
       whenReady(result) {
-        _ mustBe departureIdList
+        _ mustBe messageResponse
       }
     }
 
@@ -643,6 +650,24 @@ class PersistenceConnectorSpec
     }
 
   }
+
+  private def generateResponseWithoutBody(messageId: MessageId) =
+    MessageResponseWithoutBody(
+      messageId,
+      arbitrary[OffsetDateTime].sample.get,
+      DepartureDeclaration,
+      Some("<CC015C><test>testxml</test></CC015C>")
+    )
+
+  private def generateDepartureResponse(departureId: DepartureId) =
+    DepartureResponse(
+      _id = departureId,
+      enrollmentEORINumber = arbitrary[EORINumber].sample.get,
+      movementEORINumber = arbitrary[EORINumber].sample.get,
+      movementReferenceNumber = None,
+      created = arbitrary[OffsetDateTime].sample.get,
+      updated = arbitrary[OffsetDateTime].sample.get
+    )
 
   override protected def portConfigKey: Seq[String] =
     Seq("microservice.services.transit-movements.port")
