@@ -245,6 +245,39 @@ traits:
                       description: The requested message does not exist, has been archived, or is not available to the EORI number
                       value:
                         code: NOT_FOUND
+        post:
+          displayName: Send a message related to a Movement Departure
+          description: |
+            Send a message to the Customs Office of Departure about a transit movement departure.
+    
+            For example, if you want to cancel a ‘Declaration Data’ E_DEC_DAT (IE015) message, you must send a ‘Declaration Invalidation Request’ E_DEC_INV (IE014) message to the Office of Departure.
+    
+            A successful response will contain a URI and a message ID related to the departure, which you can use to retrieve the message status.
+    
+            **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
+          is: [ contentXmlHeader ]
+          (annotations.scope): "common-transit-convention-traders"
+          securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+          responses:
+            202:
+              body:
+                application/json:
+                  description: JSON Payload
+                  example: |
+                    {
+                      "_links": {
+                        "self": {
+                          "href": "/customs/transits/movements/departures/1/messages/2"
+                        },
+                        "departure": {
+                          "href": "/customs/transits/movements/departures/1"
+                        }
+                      },
+                      "departureId": "1",
+                      "messageId": "2",
+                      "messageType": "IE014",
+                      "body": "<CC014A>...</CC014A>"
+                    }
         /{messageId}:
           get:
             displayName: Get a message relating to a Movement Departure and message ID
