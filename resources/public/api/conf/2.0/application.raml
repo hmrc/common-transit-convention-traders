@@ -79,12 +79,15 @@ traits:
     post:
       displayName: Send a Declaration Data message
       description: |
-        Send a Declaration Data message, to let the office at destination know that the goods are on their way. This notification will be sent when the goods leave the Office of Departure. It is also called an E_DEC_DAT (IE015).
+        Send a transit declaration to the Customs Office of Departure to notify it that you wish to carry out a transit operation.
 
-        The response will contain a URI and departure ID for the Declaration Data. This will allow you to retrieve messages related to the movement.
-        
-        If the user is not enrolled for an EORI number, they will receive an HTTP Forbidden Status.
+        This request is also called an ‘Declaration Data’ E_DEC_DAT (IE015) message.
 
+        A successful response will contain a URI and a departure ID for the notification, which you can use to retrieve messages related to the movement.
+
+        It will also contain an embedded request ID, box ID and box name, which you can use to match this movement to any messages received from the Push Pull Notifications API.
+
+        **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
       is: 
         - contentXmlJsonHeader
         - acceptJsonHeader
@@ -111,14 +114,15 @@ traits:
     get:
       displayName: Get all Movement Departures
       description: |
-        You may opt to filter this list of Departures so that you only receive Movement Departures that have been updated since a specified date and time.
-      
-        Get all Movement Departures sent to the office at departure within 31 days of the goods being released at their final destination. Any movement more than 31 days old will have been archived along with their related messages. Archived Movements will return an HTTP 404 Not Found status.
-      
-        You will only be able to retrieve these messages if you have the correct Economic Operator Registration and Identification (EORI) number for that Movement Departure.
-        
-        **Note**: The 'movementReferenceNumber' field will only be populated when an MRN is allocated.
+        Retrieve all movement departure declarations sent to the Customs Office of Departure within the past 31 days.
 
+        You can filter for departure declarations updated after a specific date and time.
+
+        Movements older than 31 days and their related messages are archived and cannot be returned by the API.
+
+        A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
+
+        **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
       is:
         - acceptJsonHeader
         - acceptHeaderInvalid
@@ -126,7 +130,7 @@ traits:
         updatedSince:
           required: false
           type: datetime
-          description: This is an optional filtering parameter. It allows you to request only the Movement Departures which have been updated since the date and time you have given us.
+          description: This is an optional query parameter that you can use to filter for departure declarations updated after a specific date and time.
           example: 2021-06-21T09:00+00:00
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -157,11 +161,13 @@ traits:
       get:
         displayName: Get a Movement Departure for a departure ID
         description: |
-          Get a specific Movement Departure which was sent to the office at departure within 31 days of the goods being released at their final destination. Any Movements that are more than 31 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status.
+          Retrieve a specific transit movement departure declaration sent to the Customs Office of Departure within the past 31 days.
 
-          You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
+          Movements older than 31 days and their related messages are archived and cannot be returned by the API.
 
-          **Note**: The 'movementReferenceNumber' field will only be populated when an MRN is allocated.
+          A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
+
+          **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
         is:
           - acceptJsonHeader
           - acceptHeaderInvalid
@@ -196,11 +202,15 @@ traits:
         get:
           displayName: Get all messages relating to a Movement Departure
           description: |
-            Get the IDs of all messages sent within 31 days of the goods being released relating to a Movement Departure. Any Movements that are more than 31 days old will have been archived. Archived notifications will be return an HTTP 404 Not Found status.
+            Retrieve all messages relating to a specific transit movement departure declaration sent to the Customs Office of Departure within the past 31 days.
 
-            You may opt to filter this list of messages so that you only receive messages that have been received since a specified date and time.
+            You can filter for departure declarations received after a specific date and time.
 
-            You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
+            Movements older than 31 days are archived, so any messages to relating to them cannot be returned by the API.
+
+            A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
+
+            **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
           is:
             - acceptJsonHeader
             - acceptHeaderInvalid
@@ -208,7 +218,7 @@ traits:
             receivedSince:
               required: false
               type: datetime
-              description: This is an optional filtering parameter. It allows you to request only the messages relating to a Movement Departure which have been received since the date and time you have given us.
+              description: This is an optional query parameter that you can use to filter for departure declarations received after a specific date and time.
               example: 2021-06-21T09:00+00:00
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
@@ -249,9 +259,13 @@ traits:
           get:
             displayName: Get a message relating to a Movement Departure and message ID
             description: |
-              Get all messages relating to a specific Movement Departure and message ID. For example, this could include declaration rejected or Movement Reference Number (MRN) allocated messages. Any messages more than 31 days old will be archived. Archived notifications will be return an HTTP 404 Not Found status.
+              Retrieve all messages relating to a specific transit movement departure and message ID that have been received within the past 31 days.
 
-              You will only be able to retrieve these messages if you have the EORI number associated with the Movement Departure.
+              For example, this could include ‘Declaration rejected’ or Movement Reference Number (MRN) allocated messages.
+
+              Movements older than 31 days and their related messages are archived and cannot be returned by the API.
+
+              **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
             is:
               - acceptJsonHeader
               - acceptHeaderInvalid
