@@ -33,7 +33,13 @@ import v2.models.responses.MessageResponseWithoutBody
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
-class HateoasDepartureMessageIdsResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with OptionValues with CommonGenerators {
+class HateoasDepartureMessageIdsResponseSpec
+    extends AnyFreeSpec
+    with HateoasResponse
+    with Matchers
+    with ScalaCheckDrivenPropertyChecks
+    with OptionValues
+    with CommonGenerators {
 
   Seq(arbitrary[OffsetDateTime].sample, None).foreach {
     dateTime =>
@@ -56,20 +62,20 @@ class HateoasDepartureMessageIdsResponseSpec extends AnyFreeSpec with Matchers w
 
         val expected = Json.obj(
           "_links" -> Json.obj(
-            "self"      -> selfUrl(departureId, Some(responses.head.received)),
+            "self"      -> selfUrl(departureId, dateTime),
             "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
           ),
           "messages" -> responses.map(
             response =>
               Json.obj(
                 "_links" -> Json.obj(
-                  "self"      -> s"/customs/transits/movements/departures/${departureId.value}/message/${response.id.value}",
+                  "self"      -> Json.obj("href" -> messageUri(departureId, response.id)),
                   "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
                 ),
-                "id"       -> response.id.value,
+                "id"          -> response.id.value,
                 "departureId" -> departureId.value,
-                "received" -> CommonFormats.hateoasDateTime.format(response.received),
-                "type"     -> response.messageType.code
+                "received"    -> CommonFormats.hateoasDateTime.format(response.received),
+                "type"        -> response.messageType.code
               )
           )
         )
@@ -79,8 +85,8 @@ class HateoasDepartureMessageIdsResponseSpec extends AnyFreeSpec with Matchers w
   }
 
   private def selfUrl(departureId: DepartureId, dateTime: Option[OffsetDateTime]): JsObject = dateTime match {
-    case Some(time) =>
-      val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(time)
+    case Some(odt) =>
+      val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(odt)
       Json.obj(
         "href" -> s"/customs/transits/movements/departures/${departureId.value}/messages?receivedSince=$time"
       )
