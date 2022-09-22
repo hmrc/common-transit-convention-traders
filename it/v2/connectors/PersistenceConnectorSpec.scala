@@ -62,7 +62,7 @@ import v2.models.request.MessageType.DepartureDeclaration
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
-import v2.models.responses.MessageResponseWithoutBody
+import v2.models.responses.MessageResponseWithBody
 
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
@@ -652,7 +652,7 @@ class PersistenceConnectorSpec
   }
 
   private def generateResponseWithoutBody(messageId: MessageId) =
-    MessageResponseWithoutBody(
+    MessageResponseWithBody(
       messageId,
       arbitrary[OffsetDateTime].sample.get,
       DepartureDeclaration,

@@ -86,7 +86,7 @@ import v2.models.request.MessageType.DepartureDeclaration
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
-import v2.models.responses.MessageResponseWithoutBody
+import v2.models.responses.MessageResponseWithBody
 import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
 import v2.models.responses.hateoas.HateoasDepartureIdsResponse
 import v2.models.responses.hateoas.HateoasDepartureMessageIdsResponse
@@ -788,7 +788,7 @@ class V2DeparturesControllerSpec
   }
 
   def generateResponse(messageId: MessageId) =
-    MessageResponseWithoutBody(
+    MessageResponseWithBody(
       messageId,
       arbitrary[OffsetDateTime].sample.value,
       DepartureDeclaration,

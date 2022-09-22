@@ -41,7 +41,7 @@ import v2.models.MessageId
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
-import v2.models.responses.MessageResponseWithoutBody
+import v2.models.responses.MessageResponseWithBody
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -64,7 +64,7 @@ trait PersistenceConnector {
   def getDepartureMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Seq[MessageResponseWithoutBody]]
+  ): Future[Seq[MessageResponseWithBody]]
 
   def getDeparture(eori: EORINumber, departureId: DepartureId)(implicit
     hc: HeaderCarrier,
@@ -129,7 +129,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
   override def getDepartureMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Seq[MessageResponseWithoutBody]] = {
+  ): Future[Seq[MessageResponseWithBody]] = {
     val url =
       withReceivedSinceParameter(
         appConfig.movementsUrl.withPath(movementsGetDepartureMessageIds(eori, departureId)).toUrl,
@@ -143,7 +143,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       .flatMap {
         response =>
           response.status match {
-            case OK => response.as[Seq[MessageResponseWithoutBody]]
+            case OK => response.as[Seq[MessageResponseWithBody]]
             case _  => response.error
           }
       }
