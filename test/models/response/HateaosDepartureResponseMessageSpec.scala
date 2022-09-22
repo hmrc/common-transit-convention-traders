@@ -48,7 +48,7 @@ class HateoasDepartureResponseMessageSpec
           |{
           |  "_links": {
           |    "self": {
-          |      "href": "/customs/transits/movements/departures/1/message/1"
+          |      "href": "/customs/transits/movements/departures/1/messages/1"
           |    },
           |    "departure": {
           |      "href": "/customs/transits/movements/departures/1"

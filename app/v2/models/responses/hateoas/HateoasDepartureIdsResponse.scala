@@ -18,7 +18,6 @@ package v2.models.responses.hateoas
 
 import play.api.libs.json._
 import v2.models.responses.DepartureResponse
-import v2.models.formats.CommonFormats.hateoasDateTime
 
 object HateoasDepartureIdsResponse extends HateoasResponse {
 
@@ -36,8 +35,8 @@ object HateoasDepartureIdsResponse extends HateoasResponse {
             ),
             "id"                      -> response._id.value,
             "movementReferenceNumber" -> response.movementReferenceNumber,
-            "created"                 -> hateoasDateTime.format(response.created),
-            "updated"                 -> hateoasDateTime.format(response.updated),
+            "created"                 -> response.created,
+            "updated"                 -> response.updated,
             "enrollmentEORINumber"    -> response.enrollmentEORINumber,
             "movementEORINumber"      -> response.movementEORINumber
           )

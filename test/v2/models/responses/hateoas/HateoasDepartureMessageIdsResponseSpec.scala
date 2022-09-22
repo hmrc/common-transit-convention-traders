@@ -26,7 +26,6 @@ import play.api.libs.json.Json
 import v2.base.CommonGenerators
 import v2.models.DepartureId
 import v2.models.MessageId
-import v2.models.formats.CommonFormats
 import v2.models.request.MessageType.DepartureDeclaration
 import v2.models.responses.MessageResponseWithBody
 
@@ -74,7 +73,7 @@ class HateoasDepartureMessageIdsResponseSpec
                 ),
                 "id"          -> response.id.value,
                 "departureId" -> departureId.value,
-                "received"    -> CommonFormats.hateoasDateTime.format(response.received),
+                "received"    -> response.received,
                 "type"        -> response.messageType.code
               )
           )

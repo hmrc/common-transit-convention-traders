@@ -19,7 +19,6 @@ package v2.models.responses.hateoas
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.models.DepartureId
-import v2.models.formats.CommonFormats
 import v2.models.responses.MessageResponseWithBody
 
 import java.time.OffsetDateTime
@@ -41,7 +40,7 @@ object HateoasDepartureMessageIdsResponse extends HateoasResponse {
             ),
             "id"          -> message.id.value,
             "departureId" -> departureId.value,
-            "received"    -> CommonFormats.hateoasDateTime.format(message.received),
+            "received"    -> message.received,
             "type"        -> message.messageType
           )
       )

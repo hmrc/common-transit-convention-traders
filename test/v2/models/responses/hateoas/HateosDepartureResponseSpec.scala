@@ -24,7 +24,6 @@ import play.api.libs.json.Json
 import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MovementReferenceNumber
-import v2.models.formats.CommonFormats.hateoasDateTime
 import v2.models.responses.DepartureResponse
 
 import java.time.OffsetDateTime
@@ -58,8 +57,8 @@ class HateosDepartureResponseSpec extends AnyFreeSpec with Matchers with ScalaCh
       ),
       "id"                      -> departureId,
       "movementReferenceNumber" -> "MRN001",
-      "created"                 -> "20220815 114500",
-      "updated"                 -> "20220815 114500",
+      "created"                 -> "2022-08-15T11:45:00Z",
+      "updated"                 -> "2022-08-15T11:45:00Z",
       "enrollmentEORINumber"    -> "GB123",
       "movementEORINumber"      -> "GB456"
     )

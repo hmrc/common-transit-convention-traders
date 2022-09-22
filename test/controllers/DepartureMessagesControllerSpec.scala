@@ -106,7 +106,7 @@ class DepartureMessagesControllerSpec
       |{
       |  "_links": {
       |    "self": {
-      |      "href": "/customs/transits/movements/departures/123/message/4"
+      |      "href": "/customs/transits/movements/departures/123/messages/4"
       |    },
       |    "departure": {
       |      "href": "/customs/transits/movements/departures/123"
@@ -131,7 +131,7 @@ class DepartureMessagesControllerSpec
       |      {
       |        "_links": {
       |          "self": {
-      |            "href": "/customs/transits/movements/departures/123/message/4"
+      |            "href": "/customs/transits/movements/departures/123/messages/4"
       |          },
       |          "departure": {
       |            "href": "/customs/transits/movements/departures/123"
@@ -146,7 +146,7 @@ class DepartureMessagesControllerSpec
       |      {
       |        "_links": {
       |          "self": {
-      |            "href": "/customs/transits/movements/departures/123/message/4"
+      |            "href": "/customs/transits/movements/departures/123/messages/4"
       |          },
       |          "departure": {
       |            "href": "/customs/transits/movements/departures/123"
@@ -358,7 +358,7 @@ class DepartureMessagesControllerSpec
         |{
         |  "_links": {
         |    "self": {
-        |      "href": "/customs/transits/movements/departures/123/message/1"
+        |      "href": "/customs/transits/movements/departures/123/messages/1"
         |    },
         |    "departure": {
         |      "href": "/customs/transits/movements/departures/123"

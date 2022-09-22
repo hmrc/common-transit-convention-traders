@@ -40,7 +40,7 @@ class HateoasDepartureMessagesPostResponseMessageSpec
       val expectedJson = Json.parse("""{
           |  "_links": {
           |    "self": {
-          |      "href": "/customs/transits/movements/departures/1/message/2"
+          |      "href": "/customs/transits/movements/departures/1/messages/2"
           |    },
           |    "departure": {
           |      "href": "/customs/transits/movements/departures/1"
