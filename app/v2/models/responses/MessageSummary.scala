@@ -22,11 +22,11 @@ import v2.models.request.MessageType
 
 import java.time.OffsetDateTime
 
-object MessageResponseWithBody {
-  implicit lazy val messageResponseFormatWithoutBody = Json.format[MessageResponseWithBody]
+object MessageSummary {
+  implicit lazy val messageResponseSummary = Json.format[MessageSummary]
 }
 
-case class MessageResponseWithBody(
+case class MessageSummary(
   id: MessageId,
   received: OffsetDateTime,
   messageType: MessageType,

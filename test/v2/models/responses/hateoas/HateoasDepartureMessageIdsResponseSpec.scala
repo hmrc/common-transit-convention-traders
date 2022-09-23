@@ -27,7 +27,7 @@ import v2.base.CommonGenerators
 import v2.models.DepartureId
 import v2.models.MessageId
 import v2.models.request.MessageType.DepartureDeclaration
-import v2.models.responses.MessageResponseWithBody
+import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -93,7 +93,7 @@ class HateoasDepartureMessageIdsResponseSpec
   }
 
   private def generateResponse(messageId: MessageId) =
-    MessageResponseWithBody(
+    MessageSummary(
       messageId,
       arbitrary[OffsetDateTime].sample.value,
       DepartureDeclaration,
