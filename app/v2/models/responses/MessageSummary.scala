@@ -30,5 +30,5 @@ case class MessageSummary(
   id: MessageId,
   received: OffsetDateTime,
   messageType: MessageType,
-  body: Option[String] = None
+  body: Option[String]
 )

@@ -26,8 +26,6 @@ import play.api.libs.json.Json
 import v2.base.CommonGenerators
 import v2.models.DepartureId
 import v2.models.MessageId
-import v2.models.request.MessageType.DepartureDeclaration
-import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -52,10 +50,14 @@ class HateoasDepartureMessageIdsResponseSpec
 
         val departureId = arbitrary[DepartureId].sample.value
         val responses = (for {
-          id1 <- arbitrary[MessageId]
-          id2 <- arbitrary[MessageId]
-          id3 <- arbitrary[MessageId]
-        } yield Seq(generateResponse(id1), generateResponse(id2), generateResponse(id3))).sample.value
+          messageId1 <- arbitrary[MessageId]
+          messageId2 <- arbitrary[MessageId]
+          messageId3 <- arbitrary[MessageId]
+        } yield Seq(
+          genMessageSummary(Some(messageId1)).arbitrary.sample.value,
+          genMessageSummary(Some(messageId2)).arbitrary.sample.value,
+          genMessageSummary(Some(messageId3)).arbitrary.sample.value
+        )).sample.value
 
         val actual = HateoasDepartureMessageIdsResponse(departureId, responses, dateTime)
 
@@ -91,13 +93,5 @@ class HateoasDepartureMessageIdsResponseSpec
       )
     case None => Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}/messages")
   }
-
-  private def generateResponse(messageId: MessageId) =
-    MessageSummary(
-      messageId,
-      arbitrary[OffsetDateTime].sample.value,
-      DepartureDeclaration,
-      Some("<CC015C><test>testxml</test></CC015C>")
-    )
 
 }

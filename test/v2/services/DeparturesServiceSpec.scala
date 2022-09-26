@@ -43,11 +43,9 @@ import v2.models.MessageId
 import v2.models.MovementReferenceNumber
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
-import v2.models.request.MessageType.DepartureDeclaration
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
-import v2.models.responses.MessageSummary
 
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
@@ -110,7 +108,11 @@ class DeparturesServiceSpec
         messageId1 <- arbitrary[MessageId]
         messageId2 <- arbitrary[MessageId]
         messageId3 <- arbitrary[MessageId]
-      } yield Seq(generateResponse(messageId1), generateResponse(messageId2), generateResponse(messageId3))).sample.value
+      } yield Seq(
+        genMessageSummary(Some(messageId1)).arbitrary.sample.value,
+        genMessageSummary(Some(messageId2)).arbitrary.sample.value,
+        genMessageSummary(Some(messageId3)).arbitrary.sample.value
+      )).sample.value
 
       when(mockConnector.getDepartureMessageIds(EORINumber(any()), DepartureId(any()), any())(any(), any()))
         .thenReturn(Future.successful(expected))
@@ -236,13 +238,4 @@ class DeparturesServiceSpec
     }
 
   }
-
-  private def generateResponse(messageId: MessageId) =
-    MessageSummary(
-      messageId,
-      arbitrary[OffsetDateTime].sample.value,
-      DepartureDeclaration,
-      Some("<CC015C><test>testxml</test></CC015C>")
-    )
-
 }

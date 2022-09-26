@@ -17,6 +17,7 @@
 package v2.base
 
 import org.scalacheck.Arbitrary
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import v2.models.AuditType
 import v2.models.DepartureId
@@ -24,6 +25,9 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementReferenceNumber
 import v2.models.request.MessageType
+import v2.models.responses.MessageSummary
+
+import java.time.OffsetDateTime
 
 trait CommonGenerators {
 
@@ -54,6 +58,23 @@ trait CommonGenerators {
 
   implicit lazy val arbitraryAuditType: Arbitrary[AuditType] = Arbitrary {
     Gen.oneOf(AuditType.values)
+  }
+
+  implicit def genMessageSummary(messageId: Option[MessageId]): Arbitrary[MessageSummary] = Arbitrary {
+    for {
+      received    <- arbitrary[OffsetDateTime]
+      messageType <- Gen.oneOf(MessageType.values)
+      body        <- Gen.option(Gen.alphaNumStr)
+    } yield messageId match {
+      case Some(id) => MessageSummary(id, received, messageType, body)
+      case None =>
+        MessageSummary(
+          genShortUUID.map(MessageId(_)).sample.get,
+          received,
+          messageType,
+          body
+        )
+    }
   }
 
 }
