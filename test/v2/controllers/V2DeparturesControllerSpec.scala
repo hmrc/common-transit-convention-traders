@@ -785,14 +785,6 @@ class V2DeparturesControllerSpec
     }
   }
 
-//  def generateResponse(messageId: MessageId) =
-//    MessageSummary(
-//      messageId,
-//      arbitrary[OffsetDateTime].sample.value,
-//      DepartureDeclaration,
-//      Some("<CC015C><test>testxml</test></CC015C>")
-//    )
-
   "for retrieving a list of message IDs" - {
 
     val datetimes = Seq(arbitrary[OffsetDateTime].sample, None)
