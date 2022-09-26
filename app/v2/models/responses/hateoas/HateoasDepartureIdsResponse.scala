@@ -24,13 +24,13 @@ object HateoasDepartureIdsResponse extends HateoasResponse {
   def apply(responses: Seq[DepartureResponse]): JsObject =
     Json.obj(
       "_links" -> Json.obj(
-        "self" -> "/customs/transits/movements/departures"
+        "self" -> Json.obj("href" -> "/customs/transits/movements/departures")
       ),
       "departures" -> responses.map(
         response =>
           Json.obj(
             "_links" -> Json.obj(
-              "self"     -> departureUri(response._id),
+              "self"     -> Json.obj("href" -> departureUri(response._id)),
               "messages" -> s"${departureUri(response._id)}/messages"
             ),
             "id"                      -> response._id.value,

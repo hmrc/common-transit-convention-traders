@@ -58,13 +58,13 @@ class HateoasDepartureIdsResponseSpec extends AnyFreeSpec with Matchers with Opt
 
       val expected = Json.obj(
         "_links" -> Json.obj(
-          "self" -> "/customs/transits/movements/departures"
+          "self" -> Json.obj("href" -> "/customs/transits/movements/departures")
         ),
         "departures" -> responses.map(
           departureResponse =>
             Json.obj(
               "_links" -> Json.obj(
-                "self"     -> s"/customs/transits/movements/departures/${departureResponse._id.value}",
+                "self"     -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureResponse._id.value}"),
                 "messages" -> s"/customs/transits/movements/departures/${departureResponse._id.value}/messages"
               ),
               "id"                      -> departureResponse._id.value,
