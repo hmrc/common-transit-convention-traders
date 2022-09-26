@@ -57,7 +57,7 @@ traits:
 /customs/transits/movements:
   /arrivals:
     post:
-      displayName: Send an Arrival Notification message
+      displayName: Send an arrival notification message
       description: |
         Notify the Customs Office of Destination that a transit movement has arrived at its final destination.
 
@@ -96,7 +96,7 @@ traits:
                   }
                 }
     get:
-      displayName: Get all Movement Arrivals
+      displayName: Get all cached movement arrivals
       description: |
         Retrieve all transit movement arrivals that have been updated within the past 31 days.
 
@@ -172,7 +172,7 @@ traits:
           example: "1"
           required: true
       put:
-        displayName: Resubmit an Arrival Notification message
+        displayName: Resubmit an arrival notification message
         description: |
           Resend a notification to the Customs Office of Destination that a transit movement has arrived at its final destination.
 
@@ -202,7 +202,7 @@ traits:
                   }
 
       get:
-        displayName: Get a Movement Arrival for an arrival ID
+        displayName: Get a cached movement arrival for an arrival ID
         description: |
           Retrieve a specific transit movement arrival that has been updated within the past 31 days.
 
@@ -238,7 +238,7 @@ traits:
             description: When a Movement Arrival does not exist, has been archived or is not available to the EORI number.
       /messages:
         post:
-          displayName: Send a message related to an Movement Arrival
+          displayName: Send a message related to a movement arrival
           description: |
             Send a message to the Customs Office of Destination about a transit movement arrival.
 
@@ -271,13 +271,13 @@ traits:
                       "body": "<CC044A>...</CC044A>"
                     }
         get:
-          displayName: Get all messages that relate to a Movement Arrival
+          displayName: Get all cached messages related to a movement arrival
           description: |
-            Retrieve all messages relating to a specific transit movement arrival that have been received within the past 31 days.
+            Retrieve all messages related to a specific transit movement arrival that have been received within the past 31 days.
 
             You can filter for arrivals received after a specific date and time.
 
-            Movements older than 31 days are archived, so any messages to relating to them cannot be returned by the API.
+            Movements older than 31 days are archived, so any messages to related to them cannot be returned by the API.
 
             **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
           is:
@@ -347,9 +347,9 @@ traits:
               example: "1"
               required: true
           get:
-            displayName: Get a message relating to a Movement Arrival and message ID
+            displayName: Get a cached message related to a movement arrival and message ID
             description: |
-              Retrieve all messages relating to a specific transit movement arrival and message ID that have been received within the past 31 days.
+              Retrieve all messages related to a specific transit movement arrival and message ID that have been received within the past 31 days.
 
               For example, this could include messages about route diversions or unloading permissions.
 
@@ -386,7 +386,7 @@ traits:
                 description: When a message does not exist, has been archived or is not available to the EORI number.
   /departures:
     post:
-      displayName: Send a Declaration Data message
+      displayName: Send a declaration data message
       description: |
         Send a transit declaration to the Customs Office of Departure to notify it that you wish to carry out a transit operation.
 
@@ -425,7 +425,7 @@ traits:
                   }
                 }
     get:
-      displayName: Get all Movement Departures
+      displayName: Get all cached movement departures
       description: |
         Retrieve all movement departure declarations sent to the Customs Office of Departure within the past 31 days.
 
@@ -496,7 +496,7 @@ traits:
                 }
     /{departureId}:
       get:
-        displayName: Get a Movement Departure for a departure ID
+        displayName: Get a cached movement departure for a departure ID
         description: |
           Retrieve a specific transit movement departure declaration sent to the Customs Office of Departure within the past 31 days.
 
@@ -535,7 +535,7 @@ traits:
             description: When a Departure Movement does not exist, has been archived or is not available to the EORI number.
       /messages:
         post:
-          displayName: Send a message related to a Movement Departure
+          displayName: Send a message related to a movement departure
           description: |
             Send a message to the Customs Office of Departure about a transit movement departure.
 
@@ -568,13 +568,13 @@ traits:
                       "body": "<CC014A>...</CC014A>"
                     }
         get:
-          displayName: Get all messages relating to a Movement Departure
+          displayName: Get all cached messages related to a movement departure
           description: |
-            Retrieve all messages relating to a specific transit movement departure declaration sent to the Customs Office of Departure within the past 31 days.
+            Retrieve all messages related to a specific transit movement departure declaration sent to the Customs Office of Departure within the past 31 days.
 
             You can filter for departure declarations received after a specific date and time.
 
-            Movements older than 31 days are archived, so any messages to relating to them cannot be returned by the API.
+            Movements older than 31 days are archived, so any messages to related to them cannot be returned by the API.
 
             A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
 
@@ -640,9 +640,9 @@ traits:
               description: When the movement does not exist, has been archived or is not available to the EORI number.
         /{messageId}:
           get:
-            displayName: Get a message relating to a Movement Departure and message ID
+            displayName: Get a cached message related to a movement departure and message ID
             description: |
-              Retrieve all messages relating to a specific transit movement departure and message ID that have been received within the past 31 days.
+              Retrieve all messages related to a specific transit movement departure and message ID that have been received within the past 31 days.
 
               For example, this could include ‘Declaration rejected’ or Movement Reference Number (MRN) allocated messages.
 
@@ -679,7 +679,7 @@ traits:
                 description: When message does not exist, has been archived or is not available to the EORI number.
   /push-pull-notifications/box:
     get:
-      displayName: Get Box Info
+      displayName: Get box information for application
       description: |
         Get box information for the application if there is a Push-Pull-Notification Service (PPNS) box.
       is:
