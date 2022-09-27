@@ -25,7 +25,8 @@ object Constants {
 
   val Context = "/customs/transits"
 
-  val XClientIdHeader = "X-Client-Id"
+  val XClientIdHeader    = "X-Client-Id"
+  val XMessageTypeHeader = "X-Message-Type"
 
   val ChannelHeader = "channel"
 
