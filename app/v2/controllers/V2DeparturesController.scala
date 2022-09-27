@@ -189,13 +189,16 @@ class V2DeparturesControllerImpl @Inject() (
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-        departuresService
+        val res = departuresService
           .getMessage(request.eoriNumber, departureId, messageId)
           .asPresentation
-          .fold(
-            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasDepartureMessageResponse(departureId, messageId, response)))
-          )
+        scala.concurrent.Await.ready(res.value, scala.concurrent.duration.Duration.Inf)
+        println(s"the result is :$res")
+        res.fold(
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          response => Ok(Json.toJson(HateoasDepartureMessageResponse(departureId, messageId, response)))
+        )
+
     }
 
   def getMessageIds(departureId: DepartureId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =

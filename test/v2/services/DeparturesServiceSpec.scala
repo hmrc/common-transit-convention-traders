@@ -46,6 +46,7 @@ import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
+import v2.models.responses.MessageSummary
 
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
@@ -151,13 +152,10 @@ class DeparturesServiceSpec
     val now = OffsetDateTime.now(ZoneOffset.UTC)
 
     "when a message is found, should return a Right" in {
-      val successResponse = MessageResponse(
+      val successResponse = MessageSummary(
         MessageId("1234567890abcdef"),
         now,
-        now,
         MessageType.DepartureDeclaration,
-        None,
-        None,
         Some("<test></test>")
       )
 

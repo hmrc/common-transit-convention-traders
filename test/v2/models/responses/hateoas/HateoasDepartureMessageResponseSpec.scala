@@ -28,6 +28,7 @@ import v2.models.MessageId
 import v2.models.DepartureId
 import v2.models.request.MessageType
 import v2.models.responses.MessageResponse
+import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -41,13 +42,10 @@ class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with
     val departureId = arbitrary[DepartureId].sample.value
     val triggerId   = arbitrary[MessageId].sample.value
     val body        = Gen.alphaNumStr.sample.value
-    val response = MessageResponse(
+    val response = MessageSummary(
       messageId,
       dateTime,
-      dateTime,
       MessageType.DepartureDeclaration,
-      Some(triggerId),
-      None,
       Some(body)
     )
 

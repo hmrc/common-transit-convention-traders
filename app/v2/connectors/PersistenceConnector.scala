@@ -59,7 +59,7 @@ trait PersistenceConnector {
   def getDepartureMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[MessageResponse]
+  ): Future[MessageSummary]
 
   def getDepartureMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
@@ -110,20 +110,22 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
   override def getDepartureMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[MessageResponse] = {
+  ): Future[MessageSummary] = {
     val url = appConfig.movementsUrl.withPath(movementsGetDepartureMessage(eori, departureId, messageId))
-
-    httpClientV2
+    println(s"TRANSITMOVEMENTS:$url")
+    val res = httpClientV2
       .get(url"$url")
       .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
       .execute[HttpResponse]
-      .flatMap {
-        response =>
-          response.status match {
-            case OK => response.as[MessageResponse]
-            case _  => response.error
-          }
-      }
+    scala.concurrent.Await.ready(res, scala.concurrent.duration.Duration.Inf)
+    println(s"ZZZZZZZ:$res")
+    res.flatMap {
+      response =>
+        response.status match {
+          case OK => println(response); response.as[MessageSummary]
+          case _  => response.error
+        }
+    }
   }
 
   override def getDepartureMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit

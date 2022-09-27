@@ -51,7 +51,7 @@ trait DeparturesService {
   def getMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, MessageResponse]
+  ): EitherT[Future, PersistenceError, MessageSummary]
 
   def getMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
@@ -89,7 +89,7 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
   override def getMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, MessageResponse] =
+  ): EitherT[Future, PersistenceError, MessageSummary] =
     EitherT(
       persistenceConnector
         .getDepartureMessage(eori, departureId, messageId)
