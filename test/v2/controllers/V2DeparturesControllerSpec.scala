@@ -85,6 +85,7 @@ import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
+import v2.models.responses.MessageSummary
 import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
 import v2.models.responses.hateoas.HateoasDepartureIdsResponse
 import v2.models.responses.hateoas.HateoasDepartureMessageIdsResponse
@@ -852,25 +853,22 @@ class V2DeparturesControllerSpec
     val dateTime = OffsetDateTime.of(2022, 8, 4, 11, 34, 42, 0, ZoneOffset.UTC)
 
     "when the message is found" in {
-      val messageResponse = MessageResponse(
+      val messageSummary = MessageSummary(
         MessageId("0123456789abcdef"),
         dateTime,
-        dateTime,
         MessageType.DepartureDeclaration,
-        None,
-        None,
         Some("<test></test>")
       )
       when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), DepartureId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
-          _ => EitherT.rightT(messageResponse)
+          _ => EitherT.rightT(messageSummary)
         )
 
       val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
       val result  = sut.getMessage(DepartureId("0123456789abcdef"), MessageId("0123456789abcdef"))(request)
 
       status(result) mustBe OK
-      contentAsJson(result) mustBe Json.toJson(HateoasDepartureMessageResponse(DepartureId("0123456789abcdef"), MessageId("0123456789abcdef"), messageResponse))
+      contentAsJson(result) mustBe Json.toJson(HateoasDepartureMessageResponse(DepartureId("0123456789abcdef"), MessageId("0123456789abcdef"), messageSummary))
     }
 
     "when no message is found" in {

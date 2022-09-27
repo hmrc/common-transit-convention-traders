@@ -20,14 +20,12 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.models.MessageId
 import v2.models.DepartureId
-import v2.models.responses.MessageResponse
 import v2.models.responses.MessageSummary
 
 object HateoasDepartureMessageResponse extends HateoasResponse {
 
-  def apply(departureId: DepartureId, messageId: MessageId, messageSummary: MessageSummary): JsObject = {
-
-    val res = Json.obj(
+  def apply(departureId: DepartureId, messageId: MessageId, messageSummary: MessageSummary): JsObject =
+    Json.obj(
       "_links" -> Json.obj(
         "self"      -> Json.obj("href" -> messageUri(departureId, messageId)),
         "departure" -> Json.obj("href" -> departureUri(departureId))
@@ -41,7 +39,4 @@ object HateoasDepartureMessageResponse extends HateoasResponse {
         x => Json.obj("body" -> x)
       )
       .getOrElse(Json.obj())
-    println(s"HateoasDepartureMessageResponse:$res")
-    res
-  }
 }

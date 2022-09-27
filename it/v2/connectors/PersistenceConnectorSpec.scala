@@ -233,7 +233,8 @@ class PersistenceConnectorSpec
     "on successful message, return a success" in {
       val eori            = arbitrary[EORINumber].sample.get
       val departureId     = arbitrary[DepartureId].sample.get
-      val messageResponse = okResultGen.sample.get
+      val messageId       = arbitrary[MessageId].sample.get
+      val messageResponse = generateResponseWithoutBody(messageId) //okResultGen.sample.get
 
       server.stubFor(
         get(

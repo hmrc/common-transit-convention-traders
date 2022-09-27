@@ -32,7 +32,6 @@ import v2.models.DepartureId
 import v2.models.errors.PersistenceError
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
-import v2.models.responses.MessageResponse
 import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime

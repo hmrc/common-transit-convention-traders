@@ -40,7 +40,6 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
-import v2.models.responses.MessageResponse
 import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime
@@ -112,20 +111,17 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     ec: ExecutionContext
   ): Future[MessageSummary] = {
     val url = appConfig.movementsUrl.withPath(movementsGetDepartureMessage(eori, departureId, messageId))
-    println(s"TRANSITMOVEMENTS:$url")
-    val res = httpClientV2
+    httpClientV2
       .get(url"$url")
       .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
       .execute[HttpResponse]
-    scala.concurrent.Await.ready(res, scala.concurrent.duration.Duration.Inf)
-    println(s"ZZZZZZZ:$res")
-    res.flatMap {
-      response =>
-        response.status match {
-          case OK => println(response); response.as[MessageSummary]
-          case _  => response.error
-        }
-    }
+      .flatMap {
+        response =>
+          response.status match {
+            case OK => response.as[MessageSummary]
+            case _  => response.error
+          }
+      }
   }
 
   override def getDepartureMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit
