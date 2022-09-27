@@ -84,7 +84,7 @@ traits:
 /customs/transits/movements:
   /departures:
     post:
-      displayName: Send a Declaration Data message
+      displayName: Send a declaration data message
       description: |
         Send a transit declaration to the Customs Office of Departure to notify it that you wish to carry out a transit operation.
 
@@ -119,9 +119,9 @@ traits:
                   }
                 }
     get:
-      displayName: Get all Movement Departures
+      displayName: Get all cached departures
       description: |
-        Retrieve all movement departure declarations sent to the Customs Office of Departure within the past 31 days.
+        Retrieve all departure declarations sent to the Customs Office of Departure within the past 31 days.
 
         You can filter for departure declarations updated after a specific date and time.
 
@@ -166,9 +166,9 @@ traits:
                 }
     /{departureId}:
       get:
-        displayName: Get a Movement Departure for a departure ID
+        displayName: Get a cached departure for a departure ID
         description: |
-          Retrieve a specific transit movement departure declaration sent to the Customs Office of Departure within the past 31 days.
+          Retrieve a specific departure declaration sent to the Customs Office of Departure within the past 31 days.
 
           Movements older than 31 days and their related messages are archived and cannot be returned by the API.
 
@@ -204,16 +204,16 @@ traits:
                   }
 
           404:
-            description: When a Departure Movement does not exist, has been archived or is not available to the EORI number.
+            description: When a departure does not exist, has been archived or is not available to the EORI number.
       /messages:
         get:
-          displayName: Get all messages relating to a Movement Departure
+          displayName: Get all cached messages related to a departure
           description: |
-            Retrieve all messages relating to a specific transit movement departure declaration sent to the Customs Office of Departure within the past 31 days.
+            Retrieve all messages related to a specific departure declaration sent to the Customs Office of Departure within the past 31 days.
 
             You can filter for departure declarations received after a specific date and time.
 
-            Movements older than 31 days are archived, so any messages to relating to them cannot be returned by the API.
+            Movements older than 31 days are archived, so any messages to related to them cannot be returned by the API.
 
             A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
 
@@ -263,9 +263,9 @@ traits:
                       value:
                         code: NOT_FOUND
         post:
-          displayName: Send a message related to a Movement Departure
+          displayName: Send a message related to a departure
           description: |
-            Send a message to the Customs Office of Departure about a transit movement departure.
+            Send a message to the Customs Office of Departure about a departure.
     
             For example, if you want to cancel a ‘Declaration Data’ E_DEC_DAT (IE015) message, you must send a ‘Declaration Invalidation Request’ E_DEC_INV (IE014) message to the Office of Departure.
     
@@ -297,9 +297,9 @@ traits:
                     }
         /{messageId}:
           get:
-            displayName: Get a message relating to a Movement Departure and message ID
+            displayName: Get a cached message related to a departure and message ID
             description: |
-              Retrieve all messages relating to a specific transit movement departure and message ID that have been received within the past 31 days.
+              Retrieve all messages related to a specific departure and message ID that have been received within the past 31 days.
 
               For example, this could include ‘Declaration rejected’ or Movement Reference Number (MRN) allocated messages.
 
