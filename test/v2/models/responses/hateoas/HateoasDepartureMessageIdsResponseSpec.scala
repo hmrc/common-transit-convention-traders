@@ -17,6 +17,7 @@
 package v2.models.responses.hateoas
 
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -25,7 +26,7 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.base.CommonGenerators
 import v2.models.DepartureId
-import v2.models.MessageId
+import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -46,42 +47,34 @@ class HateoasDepartureMessageIdsResponseSpec
         )
         .getOrElse("not set")
 
-      s"with a valid message response and receivedSince $set, create a valid HateoasDepartureMessageResponse" in {
+      s"with a valid message response and receivedSince $set, create a valid HateoasDepartureMessageResponse" in forAll(
+        arbitrary[DepartureId],
+        Gen.listOfN(3, arbitrary[MessageSummary])
+      ) {
+        (departureId, responses) =>
+          val actual = HateoasDepartureMessageIdsResponse(departureId, responses, dateTime)
 
-        val departureId = arbitrary[DepartureId].sample.value
-        val responses = (for {
-          messageId1 <- arbitrary[MessageId]
-          messageId2 <- arbitrary[MessageId]
-          messageId3 <- arbitrary[MessageId]
-        } yield Seq(
-          genMessageSummary(Some(messageId1)).arbitrary.sample.value,
-          genMessageSummary(Some(messageId2)).arbitrary.sample.value,
-          genMessageSummary(Some(messageId3)).arbitrary.sample.value
-        )).sample.value
-
-        val actual = HateoasDepartureMessageIdsResponse(departureId, responses, dateTime)
-
-        val expected = Json.obj(
-          "_links" -> Json.obj(
-            "self"      -> selfUrl(departureId, dateTime),
-            "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
-          ),
-          "messages" -> responses.map(
-            response =>
-              Json.obj(
-                "_links" -> Json.obj(
-                  "self"      -> Json.obj("href" -> messageUri(departureId, response.id)),
-                  "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
-                ),
-                "id"          -> response.id.value,
-                "departureId" -> departureId.value,
-                "received"    -> response.received,
-                "type"        -> response.messageType.code
-              )
+          val expected = Json.obj(
+            "_links" -> Json.obj(
+              "self"      -> selfUrl(departureId, dateTime),
+              "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
+            ),
+            "messages" -> responses.map(
+              response =>
+                Json.obj(
+                  "_links" -> Json.obj(
+                    "self"      -> Json.obj("href" -> messageUri(departureId, response.id)),
+                    "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
+                  ),
+                  "id"          -> response.id.value,
+                  "departureId" -> departureId.value,
+                  "received"    -> response.received,
+                  "type"        -> response.messageType.code
+                )
+            )
           )
-        )
 
-        actual mustBe expected
+          actual mustBe expected
       }
   }
 

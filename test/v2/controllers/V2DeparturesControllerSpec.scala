@@ -36,6 +36,7 @@ import org.mockito.Mockito.when
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.OngoingStubbing
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -790,28 +791,25 @@ class V2DeparturesControllerSpec
 
     val datetimes = Seq(arbitrary[OffsetDateTime].sample, None)
 
-    "when a departure is found" in datetimes.foreach {
+    datetimes.foreach {
       dateTime =>
-        val messageResponse = (for {
-          messageId1 <- arbitrary[MessageId]
-          messageId2 <- arbitrary[MessageId]
-          messageId3 <- arbitrary[MessageId]
-        } yield Seq(
-          genMessageSummary(Some(messageId1)).arbitrary.sample.value,
-          genMessageSummary(Some(messageId2)).arbitrary.sample.value,
-          genMessageSummary(Some(messageId3)).arbitrary.sample.value
-        )).sample.value
-
-        when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
-          .thenAnswer(
-            _ => EitherT.rightT(messageResponse)
+        s"when a departure is found ${dateTime
+          .map(
+            _ => "with"
           )
+          .getOrElse("without")} a date filter" in forAll(Gen.listOfN(3, arbitrary[MessageSummary])) {
+          messageResponse =>
+            when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
+              .thenAnswer(
+                _ => EitherT.rightT(messageResponse)
+              )
 
-        val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-        val result  = sut.getMessageIds(DepartureId("0123456789abcdef"), dateTime)(request)
+            val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+            val result  = sut.getMessageIds(DepartureId("0123456789abcdef"), dateTime)(request)
 
-        status(result) mustBe OK
-        contentAsJson(result) mustBe Json.toJson(HateoasDepartureMessageIdsResponse(DepartureId("0123456789abcdef"), messageResponse, dateTime))
+            status(result) mustBe OK
+            contentAsJson(result) mustBe Json.toJson(HateoasDepartureMessageIdsResponse(DepartureId("0123456789abcdef"), messageResponse, dateTime))
+        }
     }
 
     "when no departure is found" in {

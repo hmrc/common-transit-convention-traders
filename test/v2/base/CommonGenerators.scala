@@ -60,21 +60,13 @@ trait CommonGenerators {
     Gen.oneOf(AuditType.values)
   }
 
-  implicit def genMessageSummary(messageId: Option[MessageId]): Arbitrary[MessageSummary] = Arbitrary {
+  implicit lazy val genMessageSummary: Arbitrary[MessageSummary] = Arbitrary {
     for {
       received    <- arbitrary[OffsetDateTime]
       messageType <- Gen.oneOf(MessageType.values)
       body        <- Gen.option(Gen.alphaNumStr)
-    } yield messageId match {
-      case Some(id) => MessageSummary(id, received, messageType, body)
-      case None =>
-        MessageSummary(
-          genShortUUID.map(MessageId(_)).sample.get,
-          received,
-          messageType,
-          body
-        )
-    }
+      messageId   <- genShortUUID.map(MessageId(_))
+    } yield MessageSummary(messageId, received, messageType, body)
   }
 
 }
