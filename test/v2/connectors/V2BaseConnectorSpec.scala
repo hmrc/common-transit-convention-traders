@@ -64,7 +64,7 @@ class V2BaseConnectorSpec
   object Harness extends V2BaseConnector
 
   "the validation URL for an IE015 message type on localhost should be as expected" in {
-    val urlPath = Harness.validationRoute(MessageType.IE015)
+    val urlPath = Harness.validationRoute(MessageType.DeclarationData)
 
     urlPath.toString() mustBe "/transit-movements-validator/messages/IE015/validation"
   }

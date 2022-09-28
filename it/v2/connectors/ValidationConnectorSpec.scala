@@ -87,7 +87,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8)) // TODO: IE015C
 
-        whenReady(validationConnector.postXml(MessageType.IE015, source)) {
+        whenReady(validationConnector.postXml(MessageType.DeclarationData, source)) {
           result =>
             result mustBe None
         }
@@ -117,7 +117,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
 
-        whenReady(validationConnector.postXml(MessageType.IE015, source)) {
+        whenReady(validationConnector.postXml(MessageType.DeclarationData, source)) {
           result =>
             result mustBe Some(XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)))
         }
@@ -147,7 +147,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
 
-        val future = validationConnector.postXml(MessageType.IE015, source).map(Right(_)).recover {
+        val future = validationConnector.postXml(MessageType.DeclarationData, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -181,7 +181,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8)) // TODO: IE015C
 
-        val future = validationConnector.postXml(MessageType.IE015, source).map(Right(_)).recover {
+        val future = validationConnector.postXml(MessageType.DeclarationData, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -210,7 +210,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString("{}", StandardCharsets.UTF_8)) // TODO: IE015C
 
-        whenReady(validationConnector.postJson(MessageType.IE015, source)) {
+        whenReady(validationConnector.postJson(MessageType.DeclarationData, source)) {
           result =>
             result mustBe None
         }
@@ -240,7 +240,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString("{", StandardCharsets.UTF_8)) // TODO: IE015C
 
-        whenReady(validationConnector.postJson(MessageType.IE015, source)) {
+        whenReady(validationConnector.postJson(MessageType.DeclarationData, source)) {
           result =>
             result mustBe Some(JsonValidationResponse(NonEmptyList(JsonValidationError("path", "error"), Nil)))
         }
@@ -270,7 +270,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString("{}", StandardCharsets.UTF_8)) // TODO: IE015C
 
-        val future = validationConnector.postJson(MessageType.IE015, source).map(Right(_)).recover {
+        val future = validationConnector.postJson(MessageType.DeclarationData, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -304,7 +304,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString("{}", StandardCharsets.UTF_8)) // TODO: IE015C
 
-        val future = validationConnector.postJson(MessageType.IE015, source).map(Right(_)).recover {
+        val future = validationConnector.postJson(MessageType.DeclarationData, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 

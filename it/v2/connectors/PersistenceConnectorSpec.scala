@@ -49,20 +49,19 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.GuiceWiremockSuite
 import utils.TestMetrics
-import v2.utils.CommonGenerators
 import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
-import v2.models.MovementReferenceNumber
 import v2.models.errors.ErrorCode
 import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
-import v2.models.request.MessageType.IE015
+import v2.models.request.MessageType.DeclarationData
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
 import v2.models.responses.MessageSummary
+import v2.utils.CommonGenerators
 
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
@@ -656,7 +655,7 @@ class PersistenceConnectorSpec
     MessageSummary(
       messageId,
       arbitrary[OffsetDateTime].sample.get,
-      IE015,
+      DeclarationData,
       Some("<CC015C><test>testxml</test></CC015C>")
     )
 

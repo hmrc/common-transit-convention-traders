@@ -45,7 +45,7 @@ class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with
     val response = MessageSummary(
       messageId,
       dateTime,
-      MessageType.IE015,
+      MessageType.DeclarationData,
       Some(body)
     )
 
@@ -58,7 +58,7 @@ class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with
       "id"          -> messageId.value,
       "departureId" -> departureId.value,
       "received"    -> "2022-08-04T11:52:59Z",
-      "type"        -> MessageType.IE015.code,
+      "type"        -> MessageType.DeclarationData.code,
       "body"        -> body
     )
 
