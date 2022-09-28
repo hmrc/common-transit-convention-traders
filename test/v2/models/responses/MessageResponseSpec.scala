@@ -42,7 +42,7 @@ class MessageResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrive
         messageId,
         dateTime,
         dateTime,
-        MessageType.DepartureDeclaration,
+        MessageType.IE015,
         Some(triggerId),
         None,
         Some(body)
@@ -68,7 +68,7 @@ class MessageResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrive
         messageId,
         dateTime,
         dateTime,
-        MessageType.DepartureDeclaration,
+        MessageType.IE015,
         Some(triggerId),
         None,
         Some(body)

@@ -44,7 +44,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
 
   "On converting a message" - {
     "a successful conversion, should return a Right" in new Setup {
-      val result = sut.convert(MessageType.DepartureDeclaration, jsonPayload, jsonToXml)
+      val result = sut.convert(MessageType.IE015, jsonPayload, jsonToXml)
       whenReady(result.value) {
         _.right.get
           .reduce(_ ++ _)
@@ -60,7 +60,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
     "a failed conversion, should return a Left" in new Setup {
       when(mockConnector.post(any[MessageType], any[Source[ByteString, _]](), any[HeaderType])(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result = sut.convert(MessageType.DepartureDeclaration, jsonPayload, jsonToXml)
+      val result = sut.convert(MessageType.IE015, jsonPayload, jsonToXml)
       whenReady(result.value) {
         _.left.get mustBe ConversionError.UnexpectedError(Some(upstreamErrorResponse))
       }

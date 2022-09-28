@@ -177,7 +177,7 @@ class V2DeparturesControllerSpec
     reset(mockRouterService)
     when(
       mockRouterService.send(
-        eqTo(MessageType.DepartureDeclaration),
+        eqTo(MessageType.IE015),
         any[String].asInstanceOf[EORINumber],
         any[String].asInstanceOf[DepartureId],
         any[String].asInstanceOf[MessageId],
@@ -261,7 +261,7 @@ class V2DeparturesControllerSpec
       )
 
       "must return Accepted when body length is within limits and is considered valid" in {
-        when(mockValidationService.validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+        when(mockValidationService.validateXml(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
             _ => EitherT.rightT(())
           )
@@ -274,9 +274,9 @@ class V2DeparturesControllerSpec
         contentAsJson(result) mustBe Json.toJson(HateoasDepartureDeclarationResponse(DepartureId("123")))
 
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
-        verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
+        verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.IE015), any())(any(), any())
         verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
-        verify(mockRouterService, times(1)).send(eqTo(MessageType.DepartureDeclaration), EORINumber(any()), DepartureId(any()), MessageId(any()), any())(
+        verify(mockRouterService, times(1)).send(eqTo(MessageType.IE015), EORINumber(any()), DepartureId(any()), MessageId(any()), any())(
           any(),
           any()
         )
@@ -286,7 +286,7 @@ class V2DeparturesControllerSpec
         auditEnabled =>
           when(
             mockValidationService
-              .validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+              .validateXml(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
           ).thenAnswer {
             invocation =>
               xmlValidationMockAnswer(invocation)
@@ -297,7 +297,7 @@ class V2DeparturesControllerSpec
           s"when auditing $success" in {
             beforeEach()
             when(
-              mockValidationService.validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+              mockValidationService.validateXml(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
             )
               .thenAnswer(
                 _ => EitherT.rightT(())
@@ -315,15 +315,15 @@ class V2DeparturesControllerSpec
             contentAsJson(result) mustBe Json.toJson(HateoasDepartureDeclarationResponse(DepartureId("123")))
 
             verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
-            verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
+            verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.IE015), any())(any(), any())
             verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
             verify(mockRouterService, times(1))
-              .send(eqTo(MessageType.DepartureDeclaration), EORINumber(any()), DepartureId(any()), MessageId(any()), any())(any(), any())
+              .send(eqTo(MessageType.IE015), EORINumber(any()), DepartureId(any()), MessageId(any()), any())(any(), any())
           }
       }
 
       "must return Bad Request when body is not an XML document" in {
-        when(mockValidationService.validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+        when(mockValidationService.validateXml(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
             _ => EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList(XmlValidationError(42, 27, "invalid XML"), Nil)))
           )
@@ -345,7 +345,7 @@ class V2DeparturesControllerSpec
       }
 
       "must return Bad Request when body is an XML document that would fail schema validation" in {
-        when(mockValidationService.validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+        when(mockValidationService.validateXml(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
             _ => EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList(XmlValidationError(1, 1, "an error"), Nil)))
           )
@@ -368,7 +368,7 @@ class V2DeparturesControllerSpec
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
-        when(mockValidationService.validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+        when(mockValidationService.validateXml(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
             _ => EitherT.rightT(())
           )
@@ -398,12 +398,12 @@ class V2DeparturesControllerSpec
 
       "must return Internal Service Error if the router service reports an error" in {
         when(
-          mockValidationService.validateJson(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+          mockValidationService.validateJson(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         )
           .thenAnswer(
             _ => EitherT.rightT(())
           )
-        when(mockValidationService.validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+        when(mockValidationService.validateXml(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
             _ => EitherT.rightT(())
           )
@@ -448,7 +448,7 @@ class V2DeparturesControllerSpec
 
         when(
           mockValidationService
-            .validateJson(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .validateJson(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer {
           invocation =>
             jsonValidationMockAnswer(invocation)
@@ -462,7 +462,7 @@ class V2DeparturesControllerSpec
 
         when(
           mockConversionService
-            .jsonToXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
+            .jsonToXml(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -476,16 +476,16 @@ class V2DeparturesControllerSpec
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe ACCEPTED
 
-        verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
-        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
-        verify(mockConversionService).jsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
+        verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.IE015), any())(any(), any(), any())
+        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.IE015), any())(any(), any())
+        verify(mockConversionService).jsonToXml(eqTo(MessageType.IE015), any())(any(), any(), any())
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.JSON))(any(), any())
       }
 
       "must return Bad Request when body is not an JSON document" in {
         when(
           mockValidationService
-            .validateJson(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .validateJson(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer {
           invocation =>
             jsonValidationMockAnswer(invocation)
@@ -505,13 +505,13 @@ class V2DeparturesControllerSpec
           )
         )
 
-        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
+        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.IE015), any())(any(), any())
       }
 
       "must return Bad Request when body is an JSON document that would fail schema validation" in {
         when(
           mockValidationService
-            .validateJson(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .validateJson(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer {
           invocation =>
             jsonValidationMockAnswer(invocation)
@@ -532,13 +532,13 @@ class V2DeparturesControllerSpec
           )
         )
 
-        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
+        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.IE015), any())(any(), any())
       }
 
       "must return Internal Service Error if the JSON to XML conversion service reports an error" in {
         when(
           mockValidationService
-            .validateJson(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .validateJson(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer {
           invocation =>
             jsonValidationMockAnswer(invocation)
@@ -547,7 +547,7 @@ class V2DeparturesControllerSpec
 
         when(
           mockConversionService
-            .jsonToXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
+            .jsonToXml(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -561,15 +561,15 @@ class V2DeparturesControllerSpec
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe INTERNAL_SERVER_ERROR
 
-        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
-        verify(mockConversionService).jsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
+        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.IE015), any())(any(), any())
+        verify(mockConversionService).jsonToXml(eqTo(MessageType.IE015), any())(any(), any(), any())
       }
 
       "must return Internal Service Error after JSON to XML conversion if the XML validation service reports an error" in {
         validateXmlNotOkStub()
         when(
           mockValidationService
-            .validateJson(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .validateJson(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer {
           invocation =>
             jsonValidationMockAnswer(invocation)
@@ -577,7 +577,7 @@ class V2DeparturesControllerSpec
 
         when(
           mockConversionService
-            .jsonToXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
+            .jsonToXml(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -598,9 +598,9 @@ class V2DeparturesControllerSpec
           "message" -> "Internal server error"
         )
 
-        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
-        verify(mockConversionService).jsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
-        verify(mockValidationService).validateXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
+        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.IE015), any())(any(), any())
+        verify(mockConversionService).jsonToXml(eqTo(MessageType.IE015), any())(any(), any(), any())
+        verify(mockValidationService).validateXml(eqTo(MessageType.IE015), any())(any(), any())
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
@@ -608,7 +608,7 @@ class V2DeparturesControllerSpec
 
         when(
           mockValidationService
-            .validateJson(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .validateJson(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer {
           invocation =>
             jsonValidationMockAnswer(invocation)
@@ -616,7 +616,7 @@ class V2DeparturesControllerSpec
 
         when(
           mockConversionService
-            .jsonToXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
+            .jsonToXml(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -640,8 +640,8 @@ class V2DeparturesControllerSpec
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe INTERNAL_SERVER_ERROR
 
-        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
-        verify(mockConversionService).jsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
+        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.IE015), any())(any(), any())
+        verify(mockConversionService).jsonToXml(eqTo(MessageType.IE015), any())(any(), any(), any())
         verify(mockDeparturesPersistenceService).saveDeclaration(any[String].asInstanceOf[EORINumber], any())(any(), any())
       }
 
@@ -650,7 +650,7 @@ class V2DeparturesControllerSpec
 
         when(
           mockValidationService
-            .validateJson(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .validateJson(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer {
           invocation =>
             jsonValidationMockAnswer(invocation)
@@ -658,7 +658,7 @@ class V2DeparturesControllerSpec
 
         when(
           mockConversionService
-            .jsonToXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(
+            .jsonToXml(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -683,7 +683,7 @@ class V2DeparturesControllerSpec
 
         when(
           mockRouterService.send(
-            eqTo(MessageType.DepartureDeclaration),
+            eqTo(MessageType.IE015),
             any[String].asInstanceOf[EORINumber],
             any[String].asInstanceOf[DepartureId],
             any[String].asInstanceOf[MessageId],
@@ -699,11 +699,11 @@ class V2DeparturesControllerSpec
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe INTERNAL_SERVER_ERROR
 
-        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DepartureDeclaration), any())(any(), any())
-        verify(mockConversionService).jsonToXml(eqTo(MessageType.DepartureDeclaration), any())(any(), any(), any())
+        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.IE015), any())(any(), any())
+        verify(mockConversionService).jsonToXml(eqTo(MessageType.IE015), any())(any(), any(), any())
         verify(mockDeparturesPersistenceService).saveDeclaration(any[String].asInstanceOf[EORINumber], any())(any(), any())
         verify(mockRouterService).send(
-          eqTo(MessageType.DepartureDeclaration),
+          eqTo(MessageType.IE015),
           any[String].asInstanceOf[EORINumber],
           any[String].asInstanceOf[DepartureId],
           any[String].asInstanceOf[MessageId],
@@ -751,7 +751,7 @@ class V2DeparturesControllerSpec
         Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
       )
 
-      when(mockValidationService.validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockValidationService.validateXml(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
           _ => EitherT.rightT(())
         )
@@ -856,7 +856,7 @@ class V2DeparturesControllerSpec
       val messageSummary = MessageSummary(
         MessageId("0123456789abcdef"),
         dateTime,
-        MessageType.DepartureDeclaration,
+        MessageType.IE015,
         Some("<test></test>")
       )
       when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), DepartureId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
@@ -1088,7 +1088,7 @@ class V2DeparturesControllerSpec
   def validateXmlOkStub(): OngoingStubbing[EitherT[Future, FailedToValidateError, Unit]] =
     when(
       mockValidationService
-        .validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+        .validateXml(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
     ).thenAnswer {
       _ =>
         EitherT.rightT(())
@@ -1097,7 +1097,7 @@ class V2DeparturesControllerSpec
   def validateXmlNotOkStub(): OngoingStubbing[EitherT[Future, FailedToValidateError, Unit]] =
     when(
       mockValidationService
-        .validateXml(eqTo(MessageType.DepartureDeclaration), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+        .validateXml(eqTo(MessageType.IE015), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
     ).thenAnswer {
       _ =>
         EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList(XmlValidationError(1, 1, "invalid XML"), Nil)))

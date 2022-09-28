@@ -32,10 +32,44 @@ sealed abstract class DepartureMessageType(val code: String) extends MessageType
 }
 
 object MessageType {
-  case object DepartureDeclaration extends DepartureMessageType("IE015")
+  case object IE004 extends DepartureMessageType("IE004")
+  case object IE009 extends DepartureMessageType("IE009")
+  case object IE013 extends DepartureMessageType("IE013")
+  case object IE014 extends DepartureMessageType("IE014")
+  case object IE015 extends DepartureMessageType("IE015")
+  case object IE019 extends DepartureMessageType("IE019")
+  case object IE028 extends DepartureMessageType("IE028")
+  case object IE029 extends DepartureMessageType("IE029")
+  case object IE035 extends DepartureMessageType("IE035")
+  case object IE045 extends DepartureMessageType("IE045")
+  case object IE051 extends DepartureMessageType("IE051")
+  case object IE054 extends DepartureMessageType("IE054")
+  case object IE055 extends DepartureMessageType("IE055")
+  case object IE056 extends DepartureMessageType("IE056")
+  case object IE060 extends DepartureMessageType("IE060")
+  case object IE170 extends DepartureMessageType("IE170")
+  case object IE906 extends DepartureMessageType("IE906")
+  case object IE928 extends DepartureMessageType("IE928")
 
   val values: Seq[MessageType] = Seq(
-    DepartureDeclaration
+    IE004,
+    IE009,
+    IE013,
+    IE014,
+    IE015,
+    IE019,
+    IE028,
+    IE029,
+    IE035,
+    IE045,
+    IE051,
+    IE054,
+    IE055,
+    IE056,
+    IE060,
+    IE170,
+    IE906,
+    IE928
   )
 
   def find(code: String): Option[MessageType] =

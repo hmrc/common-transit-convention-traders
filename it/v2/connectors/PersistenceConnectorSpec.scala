@@ -58,7 +58,7 @@ import v2.models.errors.ErrorCode
 import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
-import v2.models.request.MessageType.DepartureDeclaration
+import v2.models.request.MessageType.IE015
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
@@ -656,7 +656,7 @@ class PersistenceConnectorSpec
     MessageSummary(
       messageId,
       arbitrary[OffsetDateTime].sample.get,
-      DepartureDeclaration,
+      IE015,
       Some("<CC015C><test>testxml</test></CC015C>")
     )
 

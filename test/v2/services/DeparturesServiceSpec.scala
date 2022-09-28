@@ -155,7 +155,7 @@ class DeparturesServiceSpec
       val successResponse = MessageSummary(
         MessageId("1234567890abcdef"),
         now,
-        MessageType.DepartureDeclaration,
+        MessageType.IE015,
         Some("<test></test>")
       )
 
