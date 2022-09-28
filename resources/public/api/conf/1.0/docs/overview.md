@@ -1,13 +1,17 @@
-This API will allow you to send departure and arrival movement notifications to the New Computerised Transit System (NCTS). It will also let you retrieve messages sent from the offices of departure and destination.
+Use the CTC Traders API to:
 
-We have now released the API with working arrivals and departures endpoints for Great Britain and Northern Ireland. You can now also run tests for Great Britain and Northern Ireland movements in HMRC's sandbox environment.
+- send departure and arrival movement notifications to the New Computerised Transit System (NCTS)
+- retrieve messages sent from customs offices of departure and destination
 
-* Read our [Roadmap](https://developer.service.hmrc.gov.uk/roadmaps/common-transit-convention-traders-roadmap/) for important dates and service updates
-* Read our [Service Guide](https://developer.service.hmrc.gov.uk/guides/common-transit-convention-traders-service-guide/) to the CTC Traders API
-* Read our step by step [Testing Guide](https://developer.service.hmrc.gov.uk/guides/common-transit-convention-traders-testing-guide/) to learn how to test your software and ensure it is compatible
+The API endpoints relate only to Great Britain and Northern Ireland.
 
-Further details of the User Restricted Authentication are given on the
-[Authorisation](https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation) page.
+You can also use the HMRC sandbox environment to run tests for Great Britain and Northern Ireland transit movements.
 
-For more information about how to develop your own client applications, including example clients for this API,
-see [Tutorials](https://developer.service.hmrc.gov.uk/api-documentation/docs/tutorials).
+You should read:
+
+- [Authorisation](/api-documentation/docs/authorisation/user-restricted-endpoints) for information about user-restricted API authentication
+- [Roadmap](/roadmaps/common-transit-convention-traders-roadmap/) for information about CTC Traders API releases
+- [Service Guide](/guides/ctc-traders-phase5-service-guide) to learn how to use the CTC Traders API with your software
+- [Tutorials](/api-documentation/docs/tutorials) to learn how to develop your own client applications, including example clients, for the CTC Traders API
+
+<!--[Testing Guide](/guides/ctc-traders-phase5-testing-guide/) to check that your software is compatible with the CTC Traders API. P5 GUIDE NOT YET IN PROD. -->
