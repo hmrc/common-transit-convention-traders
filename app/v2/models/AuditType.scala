@@ -21,10 +21,20 @@ sealed abstract class AuditType(val name: String)
 object AuditType {
 
   // IE015
-  case object DeclarationData extends AuditType("DeclarationData")
+  case object DeclarationData                                 extends AuditType("DeclarationData")
+  case object DeclarationAmendment                            extends AuditType("DeclarationAmendment")
+  case object DeclarationInvalidationRequest                  extends AuditType("DeclarationInvalidationRequest")
+  case object PresentationNotificationForThePreLodgedDecision extends AuditType("PresentationNotificationForThePreLodgedDecision")
+  case object RequestOfRelease                                extends AuditType("RequestOfRelease")
 
   val values: Seq[AuditType] = Seq(
-    DeclarationData
+    DeclarationData,
+    DeclarationAmendment,
+    DeclarationInvalidationRequest,
+    PresentationNotificationForThePreLodgedDecision,
+    RequestOfRelease
   )
 
+  def find(code: String): Option[AuditType] =
+    values.find(_.name == code)
 }

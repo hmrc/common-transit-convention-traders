@@ -67,6 +67,11 @@ trait DeparturesService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[DepartureResponse]]
 
+  def updateDeparture(departureId: DepartureId, messageTypeCode: String, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, MessageId]
+
 }
 
 @Singleton
@@ -139,5 +144,18 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
         case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
       }
   )
+
+  override def updateDeparture(departureId: DepartureId, messageTypeCode: String, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, MessageId] =
+    EitherT(
+      persistenceConnector
+        .post(departureId, messageTypeCode, source)
+        .map(Right(_))
+        .recover {
+          case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))
+        }
+    )
 
 }

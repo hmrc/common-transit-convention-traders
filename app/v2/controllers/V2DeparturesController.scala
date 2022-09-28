@@ -58,6 +58,7 @@ import v2.models.responses.hateoas.HateoasDepartureResponse
 import v2.services.AuditingService
 import v2.services.ConversionService
 import v2.services.DeparturesService
+import v2.services.MessagesXmlParsingService
 import v2.services.RouterService
 import v2.services.ValidationService
 import com.codahale.metrics.Counter
@@ -86,7 +87,8 @@ class V2DeparturesControllerImpl @Inject() (
   routerService: RouterService,
   auditService: AuditingService,
   messageSizeAction: MessageSizeActionProvider,
-  val metrics: Metrics
+  val metrics: Metrics,
+  xmlParsingService: MessagesXmlParsingService
 )(implicit val materializer: Materializer)
     extends BaseController
     with V2DeparturesController
@@ -241,9 +243,37 @@ class V2DeparturesControllerImpl @Inject() (
           )
     }
 
-  def attachMessage(departureId: DepartureId): Action[Source[ByteString, _]] = Action(streamFromMemory) {
-    implicit request =>
-      request.body.runWith(Sink.ignore)
-      Accepted(Json.obj("version" -> 2))
-  }
+  def attachMessage(departureId: DepartureId): Action[Source[ByteString, _]] =
+    (authActionNewEnrolmentOnly andThen messageSizeAction()).async(streamFromMemory) {
+      implicit request =>
+        withTemporaryFile {
+          (temporaryFile, source) =>
+            implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+            (for {
+              messageType <- xmlParsingService.validateMessageType(source).asPresentation
+              _           <- validationService.validateXml(messageType, source).asPresentation
+
+              fileSource = FileIO.fromPath(temporaryFile)
+              auditType <- auditService.getAuditType(messageType.name).asPresentation
+              _ = auditService.audit(auditType, fileSource, MimeTypes.XML)
+              declarationResult <- updateAndSendDeparture(departureId, messageType, fileSource)
+
+            } yield declarationResult).fold[Result](
+              presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+              id => Accepted(Json.toJson(id))
+            )
+        }.toResult
+    }
+
+  private def updateAndSendDeparture(departureId: DepartureId, messageType: MessageType, fileSource: Source[ByteString, Future[IOResult]])(implicit
+    hc: HeaderCarrier,
+    request: AuthenticatedRequest[Source[ByteString, _]]
+  ) =
+    for {
+      declarationResult <- departuresService.updateDeparture(departureId, messageType.code, fileSource).asPresentation
+      _ <- routerService
+        .send(messageType, request.eoriNumber, departureId, declarationResult, fileSource)
+        .asPresentation
+    } yield declarationResult
 }

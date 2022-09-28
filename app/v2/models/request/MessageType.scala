@@ -25,36 +25,44 @@ import play.api.libs.json.Writes
 sealed trait MessageType {
   def code: String
   def movementType: String
+  def rootNode: String
+  def name: String
 }
 
-sealed abstract class DepartureMessageType(val code: String) extends MessageType {
+sealed abstract class DepartureMessageType(val code: String, val rootNode: String, val name: String) extends MessageType {
   val movementType: String = "departures"
 }
 
 object MessageType {
-  case object AmendmentAcceptance                             extends DepartureMessageType("IE004")
-  case object InvalidationDecision                            extends DepartureMessageType("IE009")
-  case object DeclarationAmendment                            extends DepartureMessageType("IE013")
-  case object DeclarationInvalidationRequest                  extends DepartureMessageType("IE014")
-  case object DeclarationData                                 extends DepartureMessageType("IE015")
-  case object Discrepancies                                   extends DepartureMessageType("IE019")
-  case object MRNAllocated                                    extends DepartureMessageType("IE028")
-  case object ReleaseForTransit                               extends DepartureMessageType("IE029")
-  case object RecoveryNotification                            extends DepartureMessageType("IE035")
-  case object WriteOffNotification                            extends DepartureMessageType("IE045")
-  case object NoReleaseForTransit                             extends DepartureMessageType("IE051")
-  case object GuaranteeNotValid                               extends DepartureMessageType("IE055")
-  case object RejectionFromOfficeOfDeparture                  extends DepartureMessageType("IE056")
-  case object ControlDecisionNotification                     extends DepartureMessageType("IE060")
-  case object PresentationNotificationForThePreLodgedDecision extends DepartureMessageType("IE170")
-  case object FunctionalNack                                  extends DepartureMessageType("IE906") // TODO: This is also an arrival message
-  case object PositiveAcknowledge                             extends DepartureMessageType("IE928") // TODO: This is also an arrival message
+  case object AmendmentAcceptance                             extends DepartureMessageType("IE004", "CC004C", "AmendmentAcceptance")
+  case object InvalidationDecision                            extends DepartureMessageType("IE009", "CC009C", "InvalidationDecision")
+  case object DeclarationAmendment                            extends DepartureMessageType("IE013", "CC013C", "DeclarationAmendment")
+  case object DeclarationInvalidationRequest                  extends DepartureMessageType("IE014", "CC014C", "DeclarationInvalidationRequest")
+  case object DeclarationData                                 extends DepartureMessageType("IE015", "CC015C", "DeclarationData")
+  case object Discrepancies                                   extends DepartureMessageType("IE019", "CC019C", "Discrepancies")
+  case object MRNAllocated                                    extends DepartureMessageType("IE028", "CC028C", "MRNAllocated")
+  case object ReleaseForTransit                               extends DepartureMessageType("IE029", "CC029C", "ReleaseForTransit")
+  case object RecoveryNotification                            extends DepartureMessageType("IE035", "CC035C", "RecoveryNotification")
+  case object WriteOffNotification                            extends DepartureMessageType("IE045", "CC045C", "WriteOffNotification")
+  case object NoReleaseForTransit                             extends DepartureMessageType("IE051", "CC051C", "NoReleaseForTransit")
+  case object RequestOfRelease                                extends DepartureMessageType("IE054", "CC054C", "RequestOfRelease")
+  case object GuaranteeNotValid                               extends DepartureMessageType("IE055", "CC055C", "GuaranteeNotValid")
+  case object RejectionFromOfficeOfDeparture                  extends DepartureMessageType("IE056", "CC056C", "RejectionFromOfficeOfDeparture")
+  case object ControlDecisionNotification                     extends DepartureMessageType("IE060", "CC060C", "ControlDecisionNotification")
+  case object PresentationNotificationForThePreLodgedDecision extends DepartureMessageType("IE170", "CC170C", "PresentationNotificationForThePreLodgedDecision")
+  case object FunctionalNack                                  extends DepartureMessageType("IE906", "CC906C", "FunctionalNack")      // TODO: This is also an arrival message
+  case object PositiveAcknowledge                             extends DepartureMessageType("IE928", "CC928C", "PositiveAcknowledge") // TODO: This is also an arrival message
 
-  val values: Seq[MessageType] = Seq(
-    AmendmentAcceptance,
-    InvalidationDecision,
+  val updateDepartureValues = Seq(
     DeclarationAmendment,
     DeclarationInvalidationRequest,
+    RequestOfRelease,
+    PresentationNotificationForThePreLodgedDecision
+  )
+
+  val departureValues: Seq[MessageType] = Seq(
+    AmendmentAcceptance,
+    InvalidationDecision,
     DeclarationData,
     Discrepancies,
     MRNAllocated,
@@ -62,13 +70,14 @@ object MessageType {
     RecoveryNotification,
     WriteOffNotification,
     NoReleaseForTransit,
+    PositiveAcknowledge,
     GuaranteeNotValid,
     RejectionFromOfficeOfDeparture,
     ControlDecisionNotification,
-    PresentationNotificationForThePreLodgedDecision,
     FunctionalNack,
     PositiveAcknowledge
   )
+  val values = updateDepartureValues ++ departureValues
 
   def find(code: String): Option[MessageType] =
     values.find(_.code == code)

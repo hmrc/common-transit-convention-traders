@@ -229,4 +229,33 @@ class DeparturesServiceSpec
     }
 
   }
+
+  "When Updating departure with departureId and messageType" - {
+
+    val validRequest: Source[ByteString, NotUsed]   = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
+    val invalidRequest: Source[ByteString, NotUsed] = Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8))
+
+    val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
+
+    "on a successful submission, should return a Right" in {
+      when(mockConnector.post(DepartureId(any[String]), any[String], eqTo(validRequest))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenReturn(Future.successful((MessageId("123"))))
+      val result                                        = sut.updateDeparture(DepartureId("abc"), "IE014C", validRequest)
+      val expected: Either[PersistenceError, MessageId] = Right(MessageId("123"))
+      whenReady(result.value) {
+        _ mustBe expected
+      }
+    }
+
+    "on a failed submission, should return a Left with an UnexpectedError" in {
+      when(mockConnector.post(DepartureId(any[String]), any[String], eqTo(invalidRequest))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenReturn(Future.failed(upstreamErrorResponse))
+      val result                                        = sut.updateDeparture(DepartureId("abc"), "IE014C", invalidRequest)
+      val expected: Either[PersistenceError, MessageId] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
+      whenReady(result.value) {
+        _ mustBe expected
+      }
+    }
+  }
+
 }

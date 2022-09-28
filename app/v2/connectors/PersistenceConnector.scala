@@ -26,6 +26,7 @@ import config.AppConfig
 import io.lemonlabs.uri.Url
 import metrics.HasMetrics
 import metrics.MetricsKeys
+import config.Constants
 import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
@@ -75,6 +76,10 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[Seq[DepartureResponse]]
 
+  def post(departureId: DepartureId, messageTypeCode: String, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[MessageId]
 }
 
 @Singleton
@@ -184,6 +189,27 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
           }
       }
   }
+
+  override def post(departureId: DepartureId, messageTypeCode: String, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[MessageId] =
+    withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
+      _ =>
+        val url = appConfig.movementsUrl.withPath(movementsPostDeparture(departureId))
+        httpClientV2
+          .post(url"$url")
+          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageTypeCode)
+          .withBody(source)
+          .execute[HttpResponse]
+          .flatMap {
+            response =>
+              response.status match {
+                case OK => response.as[MessageId]
+                case _  => response.error
+              }
+          }
+    }
 
   private def withReceivedSinceParameter(urlPath: Url, dateTime: Option[OffsetDateTime]) =
     dateTime
