@@ -233,7 +233,7 @@ class PersistenceConnectorSpec
       val eori            = arbitrary[EORINumber].sample.get
       val departureId     = arbitrary[DepartureId].sample.get
       val messageId       = arbitrary[MessageId].sample.get
-      val messageResponse = generateResponseWithoutBody(messageId) //okResultGen.sample.get
+      val messageResponse = generateResponseWithoutBody(messageId)
 
       server.stubFor(
         get(

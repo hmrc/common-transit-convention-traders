@@ -140,7 +140,6 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       .execute[HttpResponse]
       .flatMap {
         response =>
-          println(response.body)
           response.status match {
             case OK => response.as[Seq[MessageSummary]]
             case _  => response.error
