@@ -30,12 +30,12 @@ object HateoasDepartureResponse extends HateoasResponse {
           "self"     -> Json.obj("href" -> departureUri(departureId)),
           "messages" -> Json.obj("href" -> messageIdsUri(departureId, None))
         ),
-        "id"                      -> departureUri(departureId),
+        "id"                      -> departureId,
+        "movementReferenceNumber" -> departureResponse.movementReferenceNumber,
         "created"                 -> departureResponse.created,
         "updated"                 -> departureResponse.updated,
         "enrollmentEORINumber"    -> departureResponse.enrollmentEORINumber,
-        "movementEORINumber"      -> departureResponse.movementEORINumber,
-        "movementReferenceNumber" -> departureResponse.movementReferenceNumber
+        "movementEORINumber"      -> departureResponse.movementEORINumber
       )
 
 }

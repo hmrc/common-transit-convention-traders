@@ -19,8 +19,8 @@ package v2.models
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 
-case class MovementReferenceNumber(value: String) extends AnyVal
-
 object MovementReferenceNumber {
   implicit val movementReferenceNumberFormat: Format[MovementReferenceNumber] = Json.valueFormat[MovementReferenceNumber]
 }
+
+case class MovementReferenceNumber(value: String) extends AnyVal

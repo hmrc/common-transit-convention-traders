@@ -109,11 +109,11 @@ traits:
               description: JSON Payload
               example: |
                 {
-                  "_links": {
-                    "self": {
+                  "_links":{
+                    "self":{
                       "href": "/customs/transits/movements/departures/62fb8f33d233578e"
                     },
-                    "messages": {
+                    "messages":{
                       "href": "/customs/transits/movements/departures/62fb8f33d233578e/messages"
                     }
                   }
@@ -148,20 +148,26 @@ traits:
               description: JSON Payload
               example: |
                 {
-                  "_links":
-                  {
-                    "self":
-                      {
-                        "href":"/customs/transits/movements/departures"
-                      }
+                  "_links":{
+                    "self":{
+                      href":"/customs/transits/movements/departures"
+                    }
                   },
                   departures":[
-                    {
-                      "id":"/customs/transits/movements/departures/1"
+                   "_links":{
+                      "self":{
+                        "href":"/customs/transits/movements/departures/123"
+                      },
+                      "messages":{
+                        "href":"/customs/transits/movements/departures/123/messages"
+                      }
                     },
-                    {
-                      "id":"/customs/transits/movements/departures/2"
-                    }
+                    "id":"123",
+                    "movementReferenceNumber":"ABC123",
+                    "created":"20220101 101010",
+                    "updated":"20220101 101010",
+                    "enrollmentEORINumber": "GB1234567890",
+                    "movementEORINumber": "GB1234567890"
                   ]
                 }
     /{departureId}:
@@ -186,23 +192,22 @@ traits:
               application/json:
                 description: JSON Payload
                 example: |
-                  {
-                    "id": "/customs/transits/movements/departures/0123456789abcdef",
-                    "enrollmentEORINumber": "GB002",
-                    "movementEORINumber": "GB001",
-                    "movementReferenceNumber": "MRN001",
-                    "created": "2022-08-14T00:00:00",
-                    "updated": "2020-08-15T01:23:45",
-                    "_links": {
-                      "self": {
-                        "href": "/customs/transits/movements/departures/0123456789abcdef"
+                    {
+                      "_links":{
+                        "self":{
+                          "href":"/customs/transits/movements/departures/123"
+                        },
+                        "messages":{
+                          "href":"/customs/transits/movements/departures/123/messages"
+                        }
                       },
-                      "messages": {
-                        "href": "/customs/transits/movements/departures/0123456789abcdef/messages"
-                      }
+                      "id":"123",
+                      "movementReferenceNumber":"ABC123",
+                      "created":"20220101 101010",
+                      "updated":"20220101 101010",
+                      "enrollmentEORINumber": "GB1234567890",
+                      "movementEORINumber": "GB1234567890"
                     }
-                  }
-
           404:
             description: When a departure does not exist, has been archived or is not available to the EORI number.
       /messages:
@@ -236,20 +241,28 @@ traits:
                   description: JSON Payload
                   example: |
                     {
-                      "_links": {
-                        "self": {
-                          "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages"
+                      "_links":{
+                        "self":{
+                          "href":"/customs/transits/movements/departures/123/messages"
                         },
-                        "departure": {
-                          "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
+                        "departure":{
+                          "href":"/customs/transits/movements/departures/123"
                         }
                       },
-                      "departure": {
-                        "id": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
-                      },
-                      "messages": [
+                      "messages":[
                         {
-                          "id": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2"
+                          "_links":{
+                            "self":{
+                              "href":"/customs/transits/movements/departures/123/message/111"
+                            },
+                            "departure":{
+                              "href":"/customs/transits/movements/departures/123"
+                            }
+                          },
+                          "id":"111",
+                          "departureId":"123",
+                          "received":"20220101 100903",
+                          "type":"IE015"
                         }
                       ]
                     }
@@ -318,15 +331,15 @@ traits:
                     description: JSON Payload
                     example: |
                       {
-                        "_links": {
-                          "self": {
+                        "_links":{
+                          "self":{
                             "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2"
                           },
-                          "departure": {
+                          "departure":{
                             "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
                           }
                         },
-                        "departure": {
+                        "departure":{
                           "id": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
                         },
                         "id": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2",

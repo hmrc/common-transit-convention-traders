@@ -20,26 +20,23 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.models.MessageId
 import v2.models.DepartureId
-import v2.models.responses.MessageResponse
+import v2.models.responses.MessageSummary
 
 object HateoasDepartureMessageResponse extends HateoasResponse {
 
-  def apply(departureId: DepartureId, messageId: MessageId, messageResponse: MessageResponse): JsObject =
+  def apply(departureId: DepartureId, messageId: MessageId, messageSummary: MessageSummary): JsObject =
     Json.obj(
       "_links" -> Json.obj(
         "self"      -> Json.obj("href" -> messageUri(departureId, messageId)),
         "departure" -> Json.obj("href" -> departureUri(departureId))
       ),
-      "departure" -> Json.obj(
-        "id" -> departureUri(departureId)
-      ),
-      "id"          -> messageUri(departureId, messageId),
-      "received"    -> messageResponse.received.toLocalDateTime,
-      "messageType" -> messageResponse.messageType
-    ) ++ messageResponse.body
+      "id"          -> messageId.value,
+      "departureId" -> departureId.value,
+      "received"    -> messageSummary.received,
+      "type"        -> messageSummary.messageType
+    ) ++ messageSummary.body
       .map(
         x => Json.obj("body" -> x)
       )
       .getOrElse(Json.obj())
-
 }

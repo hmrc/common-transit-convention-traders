@@ -113,7 +113,7 @@ class V2DeparturesControllerImpl @Inject() (
         withTemporaryFile {
           (temporaryFile, source) =>
             implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-            val messageType: MessageType   = MessageType.DepartureDeclaration
+            val messageType: MessageType   = MessageType.DeclarationData
             val fileSource                 = FileIO.fromPath(temporaryFile)
 
             (for {
@@ -158,7 +158,7 @@ class V2DeparturesControllerImpl @Inject() (
             implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
             (for {
-              _ <- validationService.validateXml(MessageType.DepartureDeclaration, source).asPresentation
+              _ <- validationService.validateXml(MessageType.DeclarationData, source).asPresentation
 
               fileSource = FileIO.fromPath(temporaryFile)
               // TODO: See if we can parallelise this call with the one to persistence, below.
@@ -180,7 +180,7 @@ class V2DeparturesControllerImpl @Inject() (
     for {
       declarationResult <- departuresService.saveDeclaration(request.eoriNumber, fileSource).asPresentation
       _ <- routerService
-        .send(MessageType.DepartureDeclaration, request.eoriNumber, declarationResult.departureId, declarationResult.messageId, fileSource)
+        .send(MessageType.DeclarationData, request.eoriNumber, declarationResult.departureId, declarationResult.messageId, fileSource)
         .asPresentation
     } yield declarationResult
 
@@ -196,6 +196,7 @@ class V2DeparturesControllerImpl @Inject() (
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
             response => Ok(Json.toJson(HateoasDepartureMessageResponse(departureId, messageId, response)))
           )
+
     }
 
   def getMessageIds(departureId: DepartureId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =

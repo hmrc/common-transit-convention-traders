@@ -32,10 +32,42 @@ sealed abstract class DepartureMessageType(val code: String) extends MessageType
 }
 
 object MessageType {
-  case object DepartureDeclaration extends DepartureMessageType("IE015")
+  case object AmendmentAcceptance                             extends DepartureMessageType("IE004")
+  case object InvalidationDecision                            extends DepartureMessageType("IE009")
+  case object DeclarationAmendment                            extends DepartureMessageType("IE013")
+  case object DeclarationInvalidationRequest                  extends DepartureMessageType("IE014")
+  case object DeclarationData                                 extends DepartureMessageType("IE015")
+  case object Discrepancies                                   extends DepartureMessageType("IE019")
+  case object MRNAllocated                                    extends DepartureMessageType("IE028")
+  case object ReleaseForTransit                               extends DepartureMessageType("IE029")
+  case object RecoveryNotification                            extends DepartureMessageType("IE035")
+  case object WriteOffNotification                            extends DepartureMessageType("IE045")
+  case object NoReleaseForTransit                             extends DepartureMessageType("IE051")
+  case object GuaranteeNotValid                               extends DepartureMessageType("IE055")
+  case object RejectionFromOfficeOfDeparture                  extends DepartureMessageType("IE056")
+  case object ControlDecisionNotification                     extends DepartureMessageType("IE060")
+  case object PresentationNotificationForThePreLodgedDecision extends DepartureMessageType("IE170")
+  case object FunctionalNack                                  extends DepartureMessageType("IE906") // TODO: This is also an arrival message
+  case object PositiveAcknowledge                             extends DepartureMessageType("IE928") // TODO: This is also an arrival message
 
   val values: Seq[MessageType] = Seq(
-    DepartureDeclaration
+    AmendmentAcceptance,
+    InvalidationDecision,
+    DeclarationAmendment,
+    DeclarationInvalidationRequest,
+    DeclarationData,
+    Discrepancies,
+    MRNAllocated,
+    ReleaseForTransit,
+    RecoveryNotification,
+    WriteOffNotification,
+    NoReleaseForTransit,
+    GuaranteeNotValid,
+    RejectionFromOfficeOfDeparture,
+    ControlDecisionNotification,
+    PresentationNotificationForThePreLodgedDecision,
+    FunctionalNack,
+    PositiveAcknowledge
   )
 
   def find(code: String): Option[MessageType] =

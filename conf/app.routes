@@ -19,6 +19,6 @@ GET        /movements/departures/:departureId                       routing.Depa
 POST       /movements/departures/:departureId/messages              routing.DeparturesRouter.attachMessage(departureId: String)
 GET        /movements/departures/:departureId/messages              routing.DeparturesRouter.getMessageIds(departureId: String, receivedSince: Option[OffsetDateTime] ?= None)
 
-GET        /movements/departures/:departureId/messages/:messageId   routing.DeparturesRouter.getMessage(departureId: String, messageId: String)
+GET        /movements/departures/:departureId/messages/:messageId    routing.DeparturesRouter.getMessage(departureId: String, messageId: String)
 
 GET        /movements/push-pull-notifications/box                   controllers.PushPullNotificationController.getBoxInfo()

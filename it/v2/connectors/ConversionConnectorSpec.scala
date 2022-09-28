@@ -48,7 +48,7 @@ class ConversionConnectorSpec
   implicit lazy val materializer = app.materializer
   implicit lazy val ec           = materializer.executionContext
   implicit lazy val hc           = HeaderCarrier()
-  lazy val messageType           = MessageType.DepartureDeclaration
+  lazy val messageType           = MessageType.DeclarationData
   lazy val jsonStream            = Source.single(ByteString("{}", StandardCharsets.UTF_8))
 
   lazy val sut: ConversionConnectorImpl = new ConversionConnectorImpl(httpClientV2, appConfig, new TestMetrics)
@@ -63,7 +63,7 @@ class ConversionConnectorSpec
         )
       )
 
-      whenReady(sut.post(MessageType.DepartureDeclaration, jsonStream, jsonToXml)) {
+      whenReady(sut.post(MessageType.DeclarationData, jsonStream, jsonToXml)) {
         _.reduce(_ ++ _)
           .map(_.utf8String)
           .runWith(Sink.last)
@@ -82,7 +82,7 @@ class ConversionConnectorSpec
         )
       )
 
-      val postResponse = sut.post(MessageType.DepartureDeclaration, jsonStream, jsonToXml)
+      val postResponse = sut.post(MessageType.DeclarationData, jsonStream, jsonToXml)
       val failedResponse = postResponse
         .map(
           _ => fail("Future unexpectedly succeeded, expected and UpstreamErrorResponse")

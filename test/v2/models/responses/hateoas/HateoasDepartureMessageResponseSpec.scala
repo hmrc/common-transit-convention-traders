@@ -28,6 +28,7 @@ import v2.models.MessageId
 import v2.models.DepartureId
 import v2.models.request.MessageType
 import v2.models.responses.MessageResponse
+import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -41,13 +42,10 @@ class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with
     val departureId = arbitrary[DepartureId].sample.value
     val triggerId   = arbitrary[MessageId].sample.value
     val body        = Gen.alphaNumStr.sample.value
-    val response = MessageResponse(
+    val response = MessageSummary(
       messageId,
       dateTime,
-      dateTime,
-      MessageType.DepartureDeclaration,
-      Some(triggerId),
-      None,
+      MessageType.DeclarationData,
       Some(body)
     )
 
@@ -57,12 +55,10 @@ class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with
         "self"      -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}/messages/${messageId.value}"),
         "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
       ),
-      "departure" -> Json.obj(
-        "id" -> s"/customs/transits/movements/departures/${departureId.value}"
-      ),
-      "id"          -> s"/customs/transits/movements/departures/${departureId.value}/messages/${messageId.value}",
-      "received"    -> "2022-08-04T11:52:59",
-      "messageType" -> MessageType.DepartureDeclaration.code,
+      "id"          -> messageId.value,
+      "departureId" -> departureId.value,
+      "received"    -> "2022-08-04T11:52:59Z",
+      "type"        -> MessageType.DeclarationData.code,
       "body"        -> body
     )
 

@@ -89,7 +89,7 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
     "should return a right with no validation errors" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
-      val result = sut.validateXml(MessageType.DepartureDeclaration, SchemaValidXml)
+      val result = sut.validateXml(MessageType.DeclarationData, SchemaValidXml)
 
       whenReady(result.value) {
         result => result mustBe Right(())
@@ -98,7 +98,7 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
     "non-conforming XML should return a left with a SchemaFailedToValidateError" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
-      val result = sut.validateXml(MessageType.DepartureDeclaration, SchemaInvalidXml)
+      val result = sut.validateXml(MessageType.DeclarationData, SchemaInvalidXml)
 
       whenReady(result.value) {
         result => result mustBe Left(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)))
@@ -107,7 +107,7 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
     "an upstream error should return a left with an UnexpectedError" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
-      val result = sut.validateXml(MessageType.DepartureDeclaration, UpstreamError)
+      val result = sut.validateXml(MessageType.DeclarationData, UpstreamError)
 
       whenReady(result.value) {
         result => result mustBe Left(FailedToValidateError.UnexpectedError(Some(upstreamErrorResponse)))
@@ -116,7 +116,7 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
     "an internal exception should return a left with an UnexpectedError" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
-      val result = sut.validateXml(MessageType.DepartureDeclaration, InternalServiceError)
+      val result = sut.validateXml(MessageType.DeclarationData, InternalServiceError)
 
       whenReady(result.value) {
         result => result mustBe Left(FailedToValidateError.UnexpectedError(Some(internalException)))
@@ -129,7 +129,7 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
     "should return a right with no validation errors" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
-      val result = sut.validateJson(MessageType.DepartureDeclaration, SchemaValidJson)
+      val result = sut.validateJson(MessageType.DeclarationData, SchemaValidJson)
 
       whenReady(result.value) {
         result => result mustBe Right(())
@@ -138,7 +138,7 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
     "non-conforming JSON should return a left with a SchemaFailedToValidateError" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
-      val result = sut.validateJson(MessageType.DepartureDeclaration, SchemaInvalidJson)
+      val result = sut.validateJson(MessageType.DeclarationData, SchemaInvalidJson)
 
       whenReady(result.value) {
         result =>
@@ -150,7 +150,7 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
     "an upstream error should return a left with an UnexpectedError" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
-      val result = sut.validateJson(MessageType.DepartureDeclaration, UpstreamError)
+      val result = sut.validateJson(MessageType.DeclarationData, UpstreamError)
 
       whenReady(result.value) {
         result =>
@@ -160,7 +160,7 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
     "an internal exception should return a left with an UnexpectedError" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
-      val result = sut.validateJson(MessageType.DepartureDeclaration, InternalServiceError)
+      val result = sut.validateJson(MessageType.DeclarationData, InternalServiceError)
 
       whenReady(result.value) {
         result =>

@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package v2.models.formats
+package v2.models.responses
 
-import cats.data.NonEmptyList
-import play.api.libs.functional.syntax.toInvariantFunctorOps
-import play.api.libs.json.Format
+import play.api.libs.json.Json
+import v2.models.MessageId
+import v2.models.request.MessageType
 
-object CommonFormats extends CommonFormats
+import java.time.OffsetDateTime
 
-trait CommonFormats {
-
-  implicit def nonEmptyListFormat[A: Format]: Format[NonEmptyList[A]] =
-    Format
-      .of[List[A]]
-      .inmap(
-        NonEmptyList.fromListUnsafe,
-        _.toList
-      )
+object MessageSummary {
+  implicit lazy val messageResponseSummary = Json.format[MessageSummary]
 }
+
+case class MessageSummary(
+  id: MessageId,
+  received: OffsetDateTime,
+  messageType: MessageType,
+  body: Option[String]
+)

@@ -17,6 +17,7 @@
 package v2.models.responses.hateoas
 
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -25,12 +26,18 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.base.CommonGenerators
 import v2.models.DepartureId
-import v2.models.MessageId
+import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
-class HateoasDepartureMessageIdsResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with OptionValues with CommonGenerators {
+class HateoasDepartureMessageIdsResponseSpec
+    extends AnyFreeSpec
+    with HateoasResponse
+    with Matchers
+    with ScalaCheckDrivenPropertyChecks
+    with OptionValues
+    with CommonGenerators {
 
   Seq(arbitrary[OffsetDateTime].sample, None).foreach {
     dateTime =>
@@ -40,37 +47,40 @@ class HateoasDepartureMessageIdsResponseSpec extends AnyFreeSpec with Matchers w
         )
         .getOrElse("not set")
 
-      s"with a valid message response and receivedSince $set, create a valid HateoasDepartureMessageResponse" in {
-        val messageIds = (for {
-          m1 <- arbitrary[MessageId]
-          m2 <- arbitrary[MessageId]
-          m3 <- arbitrary[MessageId]
-        } yield Seq(m1, m2, m3)).sample.value
-        val departureId = arbitrary[DepartureId].sample.value
-        val actual      = HateoasDepartureMessageIdsResponse(departureId, messageIds, dateTime)
-        val expected = Json.obj(
-          "_links" -> Json.obj(
-            "self"      -> selfUrl(departureId, dateTime),
-            "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
-          ),
-          "departure" -> Json.obj(
-            "id" -> s"/customs/transits/movements/departures/${departureId.value}"
-          ),
-          "messages" -> messageIds.map(
-            x =>
-              Json.obj(
-                "id" -> s"/customs/transits/movements/departures/${departureId.value}/messages/${x.value}"
-              )
-          )
-        )
+      s"with a valid message response and receivedSince $set, create a valid HateoasDepartureMessageResponse" in forAll(
+        arbitrary[DepartureId],
+        Gen.listOfN(3, arbitrary[MessageSummary])
+      ) {
+        (departureId, responses) =>
+          val actual = HateoasDepartureMessageIdsResponse(departureId, responses, dateTime)
 
-        actual mustBe expected
+          val expected = Json.obj(
+            "_links" -> Json.obj(
+              "self"      -> selfUrl(departureId, dateTime),
+              "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
+            ),
+            "messages" -> responses.map(
+              response =>
+                Json.obj(
+                  "_links" -> Json.obj(
+                    "self"      -> Json.obj("href" -> messageUri(departureId, response.id)),
+                    "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
+                  ),
+                  "id"          -> response.id.value,
+                  "departureId" -> departureId.value,
+                  "received"    -> response.received,
+                  "type"        -> response.messageType.code
+                )
+            )
+          )
+
+          actual mustBe expected
       }
   }
 
   private def selfUrl(departureId: DepartureId, dateTime: Option[OffsetDateTime]): JsObject = dateTime match {
-    case Some(x) =>
-      val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(x)
+    case Some(odt) =>
+      val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(odt)
       Json.obj(
         "href" -> s"/customs/transits/movements/departures/${departureId.value}/messages?receivedSince=$time"
       )

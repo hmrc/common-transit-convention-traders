@@ -31,6 +31,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.Status.NOT_FOUND
 import uk.gov.hmrc.http.HeaderCarrier
@@ -46,6 +47,7 @@ import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
+import v2.models.responses.MessageSummary
 
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
@@ -61,6 +63,7 @@ class DeparturesServiceSpec
     with ScalaFutures
     with MockitoSugar
     with CommonGenerators
+    with ScalaCheckDrivenPropertyChecks
     with BeforeAndAfterEach {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -103,20 +106,15 @@ class DeparturesServiceSpec
 
     val dateTime = Gen.option(arbitrary[OffsetDateTime])
 
-    "when a departure is found, should return a Right of the sequence of message IDs" in {
-      val expected = (for {
-        messageId1 <- arbitrary[MessageId]
-        messageId2 <- arbitrary[MessageId]
-        messageId3 <- arbitrary[MessageId]
-      } yield Seq(messageId1, messageId2, messageId3)).sample.value
+    "when a departure is found, should return a Right of the sequence of message IDs" in forAll(Gen.listOfN(3, arbitrary[MessageSummary])) {
+      expected =>
+        when(mockConnector.getDepartureMessageIds(EORINumber(any()), DepartureId(any()), any())(any(), any()))
+          .thenReturn(Future.successful(expected))
 
-      when(mockConnector.getDepartureMessageIds(EORINumber(any()), DepartureId(any()), any())(any(), any()))
-        .thenReturn(Future.successful(expected))
-
-      val result = sut.getMessageIds(EORINumber("1"), DepartureId("1234567890abcdef"), dateTime.sample.get)
-      whenReady(result.value) {
-        _ mustBe Right(expected)
-      }
+        val result = sut.getMessageIds(EORINumber("1"), DepartureId("1234567890abcdef"), dateTime.sample.get)
+        whenReady(result.value) {
+          _ mustBe Right(expected)
+        }
     }
 
     "when a message is not found, should return a Left with an MessageNotFound" in {
@@ -147,13 +145,10 @@ class DeparturesServiceSpec
     val now = OffsetDateTime.now(ZoneOffset.UTC)
 
     "when a message is found, should return a Right" in {
-      val successResponse = MessageResponse(
+      val successResponse = MessageSummary(
         MessageId("1234567890abcdef"),
         now,
-        now,
-        MessageType.DepartureDeclaration,
-        None,
-        None,
+        MessageType.DeclarationData,
         Some("<test></test>")
       )
 
@@ -234,5 +229,4 @@ class DeparturesServiceSpec
     }
 
   }
-
 }

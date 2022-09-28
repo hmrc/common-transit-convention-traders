@@ -76,7 +76,7 @@ class RouterConnectorSpec
 
   "POST /traders/:eori/message/:movementType/:messageId/movements/:movementId" - {
 
-    lazy val messageTypeGen = Gen.oneOf(Seq(MessageType.DepartureDeclaration))
+    lazy val messageTypeGen = Gen.oneOf(Seq(MessageType.DeclarationData))
 
     def targetUrl(eoriNumber: EORINumber, messageType: MessageType, movementId: DepartureId, messageId: MessageId) =
       s"/transit-movements-router/traders/${eoriNumber.value}/movements/${messageType.movementType}/${movementId.value}/messages/${messageId.value}/"

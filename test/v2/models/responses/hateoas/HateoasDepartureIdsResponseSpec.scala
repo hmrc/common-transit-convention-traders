@@ -23,30 +23,61 @@ import org.scalatest.matchers.must.Matchers
 import play.api.libs.json.Json
 import v2.base.CommonGenerators
 import v2.models.DepartureId
+import v2.models.EORINumber
+import v2.models.MovementReferenceNumber
+import v2.models.responses.DepartureResponse
+
+import java.time.OffsetDateTime
 
 class HateoasDepartureIdsResponseSpec extends AnyFreeSpec with Matchers with OptionValues with CommonGenerators {
 
-  "A departureId" - {
-    "should produce a valid Hateoas response" in {
-      val departureId  = arbitrary[DepartureId].sample.value
-      val departureId2 = arbitrary[DepartureId].sample.value
-      val departureIds = Seq(departureId, departureId2)
+  "DepartureResponses" - {
+    "should produce valid Hateoas responses" in {
+
+      val now           = OffsetDateTime.now()
+      val enrolmentEori = arbitrary[EORINumber].sample.value
+
+      val departureResponse1 = DepartureResponse(
+        _id = arbitrary[DepartureId].sample.value,
+        enrollmentEORINumber = enrolmentEori,
+        movementEORINumber = arbitrary[EORINumber].sample.value,
+        movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
+        created = now,
+        updated = now
+      )
+
+      val departureResponse2 = DepartureResponse(
+        _id = arbitrary[DepartureId].sample.value,
+        enrollmentEORINumber = enrolmentEori,
+        movementEORINumber = arbitrary[EORINumber].sample.value,
+        movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
+        created = now,
+        updated = now
+      )
+      val responses = Seq(departureResponse1, departureResponse2)
 
       val expected = Json.obj(
         "_links" -> Json.obj(
-          "self" -> Json.obj(
-            "href" -> "/customs/transits/movements/departures"
-          )
+          "self" -> Json.obj("href" -> "/customs/transits/movements/departures")
         ),
-        "departures" -> departureIds.map(
-          departureId =>
+        "departures" -> responses.map(
+          departureResponse =>
             Json.obj(
-              "id" -> s"/customs/transits/movements/departures/${departureId.value}"
+              "_links" -> Json.obj(
+                "self"     -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureResponse._id.value}"),
+                "messages" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureResponse._id.value}/messages")
+              ),
+              "id"                      -> departureResponse._id.value,
+              "movementReferenceNumber" -> departureResponse.movementReferenceNumber.value,
+              "created"                 -> departureResponse.created,
+              "updated"                 -> departureResponse.updated,
+              "enrollmentEORINumber"    -> departureResponse.enrollmentEORINumber,
+              "movementEORINumber"      -> departureResponse.movementEORINumber
             )
         )
       )
 
-      val actual = HateoasDepartureIdsResponse(departureIds)
+      val actual = HateoasDepartureIdsResponse(responses)
 
       actual mustBe expected
     }

@@ -32,7 +32,7 @@ import v2.models.DepartureId
 import v2.models.errors.PersistenceError
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
-import v2.models.responses.MessageResponse
+import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime
 import scala.concurrent.ExecutionContext
@@ -50,12 +50,12 @@ trait DeparturesService {
   def getMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, MessageResponse]
+  ): EitherT[Future, PersistenceError, MessageSummary]
 
   def getMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[MessageId]]
+  ): EitherT[Future, PersistenceError, Seq[MessageSummary]]
 
   def getDeparture(eori: EORINumber, departureId: DepartureId)(implicit
     hc: HeaderCarrier,
@@ -65,7 +65,7 @@ trait DeparturesService {
   def getDeparturesForEori(eori: EORINumber)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[DepartureId]]
+  ): EitherT[Future, PersistenceError, Seq[DepartureResponse]]
 
 }
 
@@ -88,7 +88,7 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
   override def getMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, MessageResponse] =
+  ): EitherT[Future, PersistenceError, MessageSummary] =
     EitherT(
       persistenceConnector
         .getDepartureMessage(eori, departureId, messageId)
@@ -102,7 +102,7 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
   override def getMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[MessageId]] =
+  ): EitherT[Future, PersistenceError, Seq[MessageSummary]] =
     EitherT(
       persistenceConnector
         .getDepartureMessageIds(eori, departureId, receivedSince)
@@ -130,7 +130,7 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
   override def getDeparturesForEori(eori: EORINumber)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[DepartureId]] = EitherT(
+  ): EitherT[Future, PersistenceError, Seq[DepartureResponse]] = EitherT(
     persistenceConnector
       .getDeparturesForEori(eori)
       .map(Right(_))
