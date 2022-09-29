@@ -45,14 +45,14 @@ class MessagesXmlParsingServiceImpl @Inject() (implicit materializer: Materializ
 
   val messageSink = Sink.head[Either[ExtractionError, MessageType]]
 
-  private val officeOfDepartureSink: Sink[ByteString, Future[Either[ExtractionError, MessageType]]] = Sink.fromGraph(
+  private val messageTypeSink: Sink[ByteString, Future[Either[ExtractionError, MessageType]]] = Sink.fromGraph(
     GraphDSL.createGraph(messageSink) {
-      implicit builder => officeShape =>
+      implicit builder => messageShape =>
         import GraphDSL.Implicits._
 
-        val xmlParsing: FlowShape[ByteString, ParseEvent]                                  = builder.add(XmlParsing.parser)
-        val officeOfDeparture: FlowShape[ParseEvent, Either[ExtractionError, MessageType]] = builder.add(XmlParsers.messageTypeExtractor)
-        xmlParsing ~> officeOfDeparture ~> officeShape
+        val xmlParsing: FlowShape[ByteString, ParseEvent]                                     = builder.add(XmlParsing.parser)
+        val messageTypeDeparture: FlowShape[ParseEvent, Either[ExtractionError, MessageType]] = builder.add(XmlParsers.messageTypeExtractor)
+        xmlParsing ~> messageTypeDeparture ~> messageShape
 
         SinkShape(xmlParsing.in)
     }
@@ -61,7 +61,7 @@ class MessagesXmlParsingServiceImpl @Inject() (implicit materializer: Materializ
   override def extractMessageType(source: Source[ByteString, _]): EitherT[Future, ExtractionError, MessageType] =
     EitherT(
       source
-        .toMat(officeOfDepartureSink)(Keep.right)
+        .toMat(messageTypeSink)(Keep.right)
         .run()
     )
 
