@@ -16,10 +16,13 @@
 
 package v2.services
 
+import akka.stream.FlowShape
 import akka.stream.Materializer
-import akka.stream.alpakka.xml.StartElement
-import akka.stream.alpakka.xml.StartDocument
+import akka.stream.SinkShape
+import akka.stream.alpakka.xml.ParseEvent
 import akka.stream.alpakka.xml.scaladsl.XmlParsing
+import akka.stream.scaladsl.GraphDSL
+import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
@@ -40,25 +43,26 @@ trait MessagesXmlParsingService {
 @Singleton
 class MessagesXmlParsingServiceImpl @Inject() (implicit materializer: Materializer) extends MessagesXmlParsingService {
 
+  val messageSink = Sink.head[Either[ExtractionError, MessageType]]
+
+  private val officeOfDepartureSink: Sink[ByteString, Future[Either[ExtractionError, MessageType]]] = Sink.fromGraph(
+    GraphDSL.createGraph(messageSink) {
+      implicit builder => officeShape =>
+        import GraphDSL.Implicits._
+
+        val xmlParsing: FlowShape[ByteString, ParseEvent]                                  = builder.add(XmlParsing.parser)
+        val officeOfDeparture: FlowShape[ParseEvent, Either[ExtractionError, MessageType]] = builder.add(XmlParsers.messageTypeExtractor)
+        xmlParsing ~> officeOfDeparture ~> officeShape
+
+        SinkShape(xmlParsing.in)
+    }
+  )
+
   override def extractMessageType(source: Source[ByteString, _]): EitherT[Future, ExtractionError, MessageType] =
     EitherT(
       source
-        .via(XmlParsing.parser)
-        .mapConcat {
-          case s: StartElement
-              if MessageType.updateDepartureValues
-                .exists(_.rootNode == s.localName) =>
-            Seq(MessageType.updateDepartureValues.find(_.rootNode == s.localName).get)
-          case _ => Seq.empty
-        }
-        .take(1)
-        .fold[Either[ExtractionError, MessageType]](Left(ExtractionError.MessageTypeNotFound("Message Type")))(
-          (current, next) =>
-            current match {
-              case Left(ExtractionError.MessageTypeNotFound(_)) => Right(next)
-              case _                                            => Left(ExtractionError.MessageTypeNotFound("Message type"))
-            }
-        )
-        .runWith(Sink.head[Either[ExtractionError, MessageType]])
+        .toMat(officeOfDepartureSink)(Keep.right)
+        .run()
     )
+
 }

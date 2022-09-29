@@ -36,39 +36,39 @@ class MessagesXmlParsingServiceSpec
     with ScalaCheckPropertyChecks {
 
   val validXml: NodeSeq =
-    <CC013C>
+    <ncts:CC013C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
       <HolderOfTheTransitProcedure>
         <identificationNumber>GB1234</identificationNumber>
       </HolderOfTheTransitProcedure>
-    </CC013C>
+    </ncts:CC013C>
 
   val invalidMessageType: NodeSeq =
     <CC015C>
-      <HolderOfTheTransitProcedure>
+      <CC013C>
         <identificationNumber>GB1234</identificationNumber>
-      </HolderOfTheTransitProcedure>
+      </CC013C>
     </CC015C>
 
   "When handed an XML stream" - {
-    val service = new MessagesXmlParsingServiceImpl
+    "if it is valid, return an appropriate Message Type" in {
+      val xmlParsingService = new MessagesXmlParsingServiceImpl()
+      val payload           = createStream(validXml)
+      val response =
+        xmlParsingService.extractMessageType(payload)
 
-    "if it is valid, return an appropriate Message Data" in {
-      val source = createStream(validXml)
-
-      val result = service.extractMessageType(source)
-
-      whenReady(result.value) {
+      whenReady(response.value) {
         _ mustBe Right(MessageType.DeclarationAmendment)
       }
     }
 
-    "if it doesn't have a valid message type, return ParseError.MessageTypeNotFound" in {
-      val source = createStream(invalidMessageType)
+    "if it doesn't have a valid message type, return ExtractionError.MessageTypeNotFound" in {
+      val xmlParsingService = new MessagesXmlParsingServiceImpl()
+      val payload           = createStream(invalidMessageType)
+      val response =
+        xmlParsingService.extractMessageType(payload)
 
-      val result = service.extractMessageType(source)
-
-      whenReady(result.value) {
-        _ mustBe Left(ExtractionError.MessageTypeNotFound("Message Type"))
+      whenReady(response.value) {
+        _ mustBe Left(ExtractionError.MessageTypeNotFound("CC015C"))
       }
     }
   }
