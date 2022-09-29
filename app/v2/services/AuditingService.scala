@@ -18,14 +18,12 @@ package v2.services
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.connectors.AuditingConnector
 import v2.models.AuditType
-import v2.models.errors.FailedToValidateError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -35,7 +33,6 @@ import scala.util.control.NonFatal
 trait AuditingService {
 
   def audit(auditType: AuditType, source: Source[ByteString, _], contentType: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit]
-  def getAuditType(messageType: String): EitherT[Future, FailedToValidateError, AuditType]
 }
 
 class AuditingServiceImpl @Inject() (auditingConnector: AuditingConnector) extends AuditingService with Logging {
@@ -44,18 +41,5 @@ class AuditingServiceImpl @Inject() (auditingConnector: AuditingConnector) exten
     auditingConnector.post(auditType, source, contentType).recover {
       case NonFatal(e) =>
         logger.warn("Unable to audit payload due to an exception", e)
-    }
-
-  def getAuditType(messageType: String): EitherT[Future, FailedToValidateError, AuditType] =
-    EitherT {
-
-      AuditType.values
-        .filterNot(
-          auditType => messageType.equals("DeclarationData")
-        )
-        .find(_.name == messageType) match {
-        case None            => Future.successful(Left(FailedToValidateError.InvalidMessageTypeError(s"Invalid Message Type for auditing : $messageType")))
-        case Some(auditType) => Future.successful(Right(auditType))
-      }
     }
 }

@@ -18,6 +18,7 @@ package v2.services
 
 import akka.stream.Materializer
 import akka.stream.alpakka.xml.StartElement
+import akka.stream.alpakka.xml.StartDocument
 import akka.stream.alpakka.xml.scaladsl.XmlParsing
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
@@ -25,7 +26,7 @@ import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
-import v2.models.errors.FailedToValidateError
+import v2.models.errors.ExtractionError
 import v2.models.request.MessageType
 
 import javax.inject.Singleton
@@ -33,13 +34,13 @@ import scala.concurrent.Future
 
 @ImplementedBy(classOf[MessagesXmlParsingServiceImpl])
 trait MessagesXmlParsingService {
-  def validateMessageType(source: Source[ByteString, _]): EitherT[Future, FailedToValidateError, MessageType]
+  def extractMessageType(source: Source[ByteString, _]): EitherT[Future, ExtractionError, MessageType]
 }
 
 @Singleton
 class MessagesXmlParsingServiceImpl @Inject() (implicit materializer: Materializer) extends MessagesXmlParsingService {
 
-  override def validateMessageType(source: Source[ByteString, _]): EitherT[Future, FailedToValidateError, MessageType] =
+  override def extractMessageType(source: Source[ByteString, _]): EitherT[Future, ExtractionError, MessageType] =
     EitherT(
       source
         .via(XmlParsing.parser)
@@ -51,14 +52,13 @@ class MessagesXmlParsingServiceImpl @Inject() (implicit materializer: Materializ
           case _ => Seq.empty
         }
         .take(1)
-        .fold[Either[FailedToValidateError, MessageType]](Left(FailedToValidateError.InvalidMessageTypeError("Message Type")))(
+        .fold[Either[ExtractionError, MessageType]](Left(ExtractionError.MessageTypeNotFound("Message Type")))(
           (current, next) =>
             current match {
-              case Left(FailedToValidateError.InvalidMessageTypeError(_)) => Right(next)
-              case _                                                      => Left(FailedToValidateError.UnexpectedError(None))
+              case Left(ExtractionError.MessageTypeNotFound(_)) => Right(next)
+              case _                                            => Left(ExtractionError.MessageTypeNotFound("Message type"))
             }
         )
-        .runWith(Sink.head[Either[FailedToValidateError, MessageType]])
+        .runWith(Sink.head[Either[ExtractionError, MessageType]])
     )
-
 }

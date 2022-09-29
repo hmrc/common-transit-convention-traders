@@ -17,7 +17,9 @@
 package v2.controllers
 
 import cats.data.EitherT
+import v2.models.errors.ExtractionError.MessageTypeNotFound
 import v2.models.errors.ConversionError
+import v2.models.errors.ExtractionError
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.PersistenceError
 import v2.models.errors.PresentationError
@@ -85,6 +87,14 @@ trait ErrorTranslator {
 
     override def convert(routerError: ConversionError): PresentationError = routerError match {
       case err: ConversionError.UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
+    }
+  }
+
+  implicit val extractionError = new Converter[ExtractionError] {
+
+    def convert(extractionError: ExtractionError): PresentationError = extractionError match {
+      case err: UnexpectedError             => PresentationError.internalServiceError(cause = err.thr)
+      case MessageTypeNotFound(messageType) => PresentationError.badRequestError(s"$messageType is not a valid message type")
     }
   }
 

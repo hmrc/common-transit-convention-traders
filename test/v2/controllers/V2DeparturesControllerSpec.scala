@@ -78,6 +78,7 @@ import v2.models.EORINumber
 import v2.models.MovementReferenceNumber
 import v2.models.MessageId
 import v2.models.errors.ConversionError
+import v2.models.errors.ExtractionError
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.JsonValidationError
 import v2.models.errors.PersistenceError
@@ -146,7 +147,7 @@ class V2DeparturesControllerSpec
   lazy val auditType: AuditType     = AuditType.DeclarationAmendment
   lazy val departureId              = DepartureId("123")
 
-  lazy val messageDataEither: EitherT[Future, FailedToValidateError, MessageType] =
+  lazy val messageDataEither: EitherT[Future, ExtractionError, MessageType] =
     EitherT.rightT(messageType)
 
   lazy val auditTypeEither: EitherT[Future, FailedToValidateError, AuditType] =
@@ -1124,15 +1125,13 @@ class V2DeparturesControllerSpec
       )
 
       "must return Accepted when body length is within limits and is considered valid" in {
-        when(mockXmlParsingService.validateMessageType(any[Source[ByteString, _]]))
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]]))
           .thenReturn(messageDataEither)
 
         when(mockValidationService.validateXml(eqTo(MessageType.DeclarationAmendment), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
             _ => EitherT.rightT(())
           )
-        when(mockAuditService.getAuditType(anyString()))
-          .thenReturn(auditTypeEither)
         when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
 
         when(
@@ -1156,9 +1155,9 @@ class V2DeparturesControllerSpec
       }
 
       "must return Bad Request when body is not an XML document" in {
-        when(mockXmlParsingService.validateMessageType(any[Source[ByteString, _]]()))
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]]()))
           .thenAnswer(
-            _ => EitherT.leftT(FailedToValidateError.InvalidMessageTypeError("Message Type"))
+            _ => EitherT.leftT(ExtractionError.MessageTypeNotFound("Message Type"))
           )
 
         val request = fakeAttachDepartures(method = "POST", body = singleUseStringSource("notxml"), headers = standardHeaders)
@@ -1171,14 +1170,12 @@ class V2DeparturesControllerSpec
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
-        when(mockXmlParsingService.validateMessageType(any[Source[ByteString, _]]))
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]]))
           .thenReturn(messageDataEither)
         when(mockValidationService.validateXml(eqTo(MessageType.DeclarationAmendment), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
             _ => EitherT.rightT(())
           )
-        when(mockAuditService.getAuditType(anyString()))
-          .thenReturn(auditTypeEither)
         when(
           mockDeparturesPersistenceService
             .updateDeparture(any[String].asInstanceOf[DepartureId], anyString(), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])

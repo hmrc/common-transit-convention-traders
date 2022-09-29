@@ -19,10 +19,10 @@ package v2.controllers
 import akka.stream.IOResult
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
-import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
+import com.codahale.metrics.Counter
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
@@ -32,11 +32,7 @@ import play.api.Logging
 import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.Json
-import play.api.mvc.Action
-import play.api.mvc.AnyContent
-import play.api.mvc.BaseController
-import play.api.mvc.ControllerComponents
-import play.api.mvc.Result
+import play.api.mvc._
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
@@ -45,23 +41,13 @@ import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models.AuditType
-import v2.models.errors.PresentationError
-import v2.models.MessageId
 import v2.models.DepartureId
+import v2.models.MessageId
+import v2.models.errors.PresentationError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
-import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
-import v2.models.responses.hateoas.HateoasDepartureIdsResponse
-import v2.models.responses.hateoas.HateoasDepartureMessageIdsResponse
-import v2.models.responses.hateoas.HateoasDepartureMessageResponse
-import v2.models.responses.hateoas.HateoasDepartureResponse
-import v2.services.AuditingService
-import v2.services.ConversionService
-import v2.services.DeparturesService
-import v2.services.MessagesXmlParsingService
-import v2.services.RouterService
-import v2.services.ValidationService
-import com.codahale.metrics.Counter
+import v2.models.responses.hateoas._
+import v2.services._
 
 import java.time.OffsetDateTime
 import scala.concurrent.Future
@@ -251,12 +237,10 @@ class V2DeparturesControllerImpl @Inject() (
             implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
             (for {
-              messageType <- xmlParsingService.validateMessageType(source).asPresentation
-              _           <- validationService.validateXml(messageType, source).asPresentation
-
+              messageType <- xmlParsingService.extractMessageType(source).asPresentation
               fileSource = FileIO.fromPath(temporaryFile)
-              auditType <- auditService.getAuditType(messageType.name).asPresentation
-              _ = auditService.audit(auditType, fileSource, MimeTypes.XML)
+              _ <- validationService.validateXml(messageType, fileSource).asPresentation
+              _ = auditService.audit(messageType.auditType, fileSource, MimeTypes.XML)
               declarationResult <- updateAndSendDeparture(departureId, messageType, fileSource)
 
             } yield declarationResult).fold[Result](
