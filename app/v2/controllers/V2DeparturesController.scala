@@ -255,7 +255,7 @@ class V2DeparturesControllerImpl @Inject() (
     request: AuthenticatedRequest[Source[ByteString, _]]
   ) =
     for {
-      declarationResult <- departuresService.updateDeparture(departureId, messageType.code, fileSource).asPresentation
+      declarationResult <- departuresService.updateDeparture(departureId, messageType, fileSource).asPresentation
       _ <- routerService
         .send(messageType, request.eoriNumber, departureId, declarationResult, fileSource)
         .asPresentation

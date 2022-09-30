@@ -38,6 +38,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.base.CommonGenerators
 import v2.connectors.PersistenceConnector
+import v2.models.AuditType
 import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
@@ -230,7 +231,7 @@ class DeparturesServiceSpec
 
   }
 
-  "When Updating departure with departureId and messageType" - {
+  "Updating departure with departureId and messageType" - {
 
     val validRequest: Source[ByteString, NotUsed]   = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
     val invalidRequest: Source[ByteString, NotUsed] = Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8))
@@ -238,9 +239,14 @@ class DeparturesServiceSpec
     val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
 
     "on a successful submission, should return a Right" in {
-      when(mockConnector.post(DepartureId(any[String]), any[String], eqTo(validRequest))(any[HeaderCarrier], any[ExecutionContext]))
+      when(
+        mockConnector.post(DepartureId(any[String]), any[MessageType], eqTo(validRequest))(
+          any[HeaderCarrier],
+          any[ExecutionContext]
+        )
+      )
         .thenReturn(Future.successful((MessageId("123"))))
-      val result                                        = sut.updateDeparture(DepartureId("abc"), "IE014C", validRequest)
+      val result                                        = sut.updateDeparture(DepartureId("abc"), MessageType.DeclarationInvalidationRequest, validRequest)
       val expected: Either[PersistenceError, MessageId] = Right(MessageId("123"))
       whenReady(result.value) {
         _ mustBe expected
@@ -248,9 +254,14 @@ class DeparturesServiceSpec
     }
 
     "on a failed submission, should return a Left with an UnexpectedError" in {
-      when(mockConnector.post(DepartureId(any[String]), any[String], eqTo(invalidRequest))(any[HeaderCarrier], any[ExecutionContext]))
+      when(
+        mockConnector.post(DepartureId(any[String]), any[MessageType], eqTo(invalidRequest))(
+          any[HeaderCarrier],
+          any[ExecutionContext]
+        )
+      )
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result                                        = sut.updateDeparture(DepartureId("abc"), "IE014C", invalidRequest)
+      val result                                        = sut.updateDeparture(DepartureId("abc"), MessageType.DeclarationInvalidationRequest, invalidRequest)
       val expected: Either[PersistenceError, MessageId] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected

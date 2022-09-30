@@ -33,13 +33,8 @@ object XmlParsers {
     }
     .take(1)
     .map {
-      _ match {
-        case s: StartElement =>
-          if (MessageType.updateDepartureValues.exists(_.rootNode == s.localName)) {
-            Right(MessageType.values.find(_.rootNode == s.localName).get)
-          } else Left(ExtractionError.MessageTypeNotFound(s.localName))
-
-        case _ => Left(ExtractionError.UnexpectedError())
-      }
+      case s: StartElement =>
+        MessageType.values.find(_.rootNode == s.localName).map(Right(_)).getOrElse(Left(ExtractionError.MessageTypeNotFound(s.localName)))
+      case _ => Left(ExtractionError.UnexpectedError())
     }
 }

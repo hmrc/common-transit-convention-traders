@@ -73,7 +73,6 @@ object MessageType {
     RecoveryNotification,
     WriteOffNotification,
     NoReleaseForTransit,
-    PositiveAcknowledge,
     GuaranteeNotValid,
     RejectionFromOfficeOfDeparture,
     ControlDecisionNotification,

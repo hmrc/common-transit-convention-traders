@@ -29,7 +29,7 @@ import v2.models.request.MessageType
 import scala.xml.NodeSeq
 
 class XmlParsersSpec extends AnyFreeSpec with TestActorSystem with Matchers with StreamTestHelpers with ScalaFutures with ScalaCheckPropertyChecks {
-  "MessageType parser" - {
+  "messageTypeExtractor parser" - {
 
     val validMessageType: NodeSeq =
       <ncts:CC014C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">

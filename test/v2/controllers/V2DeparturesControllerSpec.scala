@@ -1115,7 +1115,6 @@ class V2DeparturesControllerSpec
     }
   }
 
-  // Version 2
   "for a departure update with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
     "with content type set to application/xml" - {
 
@@ -1136,7 +1135,10 @@ class V2DeparturesControllerSpec
 
         when(
           mockDeparturesPersistenceService
-            .updateDeparture(any[String].asInstanceOf[DepartureId], anyString(), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .updateDeparture(any[String].asInstanceOf[DepartureId], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, MessageId](MessageId("456"))))
 
         val request = fakeAttachDepartures(method = "POST", body = singleUseStringSource(CC013C.mkString), headers = standardHeaders)
@@ -1178,7 +1180,10 @@ class V2DeparturesControllerSpec
           )
         when(
           mockDeparturesPersistenceService
-            .updateDeparture(any[String].asInstanceOf[DepartureId], anyString(), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .updateDeparture(any[String].asInstanceOf[DepartureId], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, MessageId](MessageId("456"))))
 
         val sut = new V2DeparturesControllerImpl(

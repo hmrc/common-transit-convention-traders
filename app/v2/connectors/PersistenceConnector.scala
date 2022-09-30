@@ -39,6 +39,7 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
+import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageSummary
@@ -76,7 +77,7 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[Seq[DepartureResponse]]
 
-  def post(departureId: DepartureId, messageTypeCode: String, source: Source[ByteString, _])(implicit
+  def post(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[MessageId]
@@ -190,7 +191,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       }
   }
 
-  override def post(departureId: DepartureId, messageTypeCode: String, source: Source[ByteString, _])(implicit
+  override def post(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[MessageId] =
@@ -199,7 +200,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
         val url = appConfig.movementsUrl.withPath(movementsPostDeparture(departureId))
         httpClientV2
           .post(url"$url")
-          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageTypeCode)
+          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code)
           .withBody(source)
           .execute[HttpResponse]
           .flatMap {

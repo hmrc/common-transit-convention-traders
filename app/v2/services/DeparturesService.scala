@@ -30,6 +30,7 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.DepartureId
 import v2.models.errors.PersistenceError
+import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageSummary
@@ -67,7 +68,7 @@ trait DeparturesService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[DepartureResponse]]
 
-  def updateDeparture(departureId: DepartureId, messageTypeCode: String, source: Source[ByteString, _])(implicit
+  def updateDeparture(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MessageId]
@@ -145,13 +146,13 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
       }
   )
 
-  override def updateDeparture(departureId: DepartureId, messageTypeCode: String, source: Source[ByteString, _])(implicit
+  override def updateDeparture(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MessageId] =
     EitherT(
       persistenceConnector
-        .post(departureId, messageTypeCode, source)
+        .post(departureId, messageType, source)
         .map(Right(_))
         .recover {
           case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))

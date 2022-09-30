@@ -49,7 +49,7 @@ class MessagesXmlParsingServiceSpec
       </CC013C>
     </CC015C>
 
-  "When handed an XML stream" - {
+  "extractMessageType and then" - {
     "if it is valid, return an appropriate Message Type" in {
       val xmlParsingService = new MessagesXmlParsingServiceImpl()
       val payload           = createStream(validXml)

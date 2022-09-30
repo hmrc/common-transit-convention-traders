@@ -82,13 +82,13 @@ class PersistenceConnectorSpec
     with CommonGenerators {
 
   lazy val appConfig: AppConfig                           = app.injector.instanceOf[AppConfig]
-  lazy val messageTypeGen                                 = Gen.oneOf(Seq(MessageType.DeclarationAmendment))
+  lazy val messageType                                    = MessageType.DeclarationAmendment
   lazy val persistenceConnector: PersistenceConnectorImpl = new PersistenceConnectorImpl(httpClientV2, appConfig, new TestMetrics())
   implicit lazy val ec: ExecutionContext                  = app.materializer.executionContext
 
   "POST /traders/:eori/movements/departures" - {
 
-    lazy val okResultGen =
+    lazy val okResult =
       for {
         movementId <- arbitrary[DepartureId]
         messageId  <- arbitrary[MessageId]
@@ -96,7 +96,7 @@ class PersistenceConnectorSpec
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures/"
 
-    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen) {
+    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResult) {
       (eoriNumber, okResult) =>
         server.stubFor(
           post(
@@ -219,7 +219,7 @@ class PersistenceConnectorSpec
 
     val now = OffsetDateTime.now(ZoneOffset.UTC)
 
-    lazy val okResultGen =
+    lazy val okResult =
       for {
         messageId   <- arbitrary[MessageId]
         body        <- Gen.alphaNumStr
@@ -660,14 +660,12 @@ class PersistenceConnectorSpec
     )
 
   "POST /traders/movements/:movementId/messages" - {
-    lazy val okResultGen =
-      for {
-        messageId <- arbitrary[MessageId]
-      } yield messageId
+
+    val messageId = arbitrary[MessageId]
 
     def targetUrl(departureId: DepartureId) = s"/transit-movements/traders/movements/${departureId.value}/messages/"
 
-    "On successful update of an element, must return ACCEPTED" in forAll(arbitrary[DepartureId], messageTypeGen, okResultGen) {
+    "On successful update of an element, must return ACCEPTED" in forAll(arbitrary[DepartureId], messageType, messageId) {
       (departureId, messageType, resultRes) =>
         server.stubFor(
           post(
@@ -683,13 +681,13 @@ class PersistenceConnectorSpec
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
-        whenReady(persistenceConnector.post(departureId, messageType.code, source)) {
+        whenReady(persistenceConnector.post(departureId, messageType, source)) {
           result =>
             result mustBe resultRes
         }
     }
 
-    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[DepartureId], messageTypeGen) {
+    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[DepartureId], messageType) {
       (departureId, messageType) =>
         server.stubFor(
           post(
@@ -710,7 +708,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.post(departureId, messageType.code, source).map(Right(_)).recover {
+        val future = persistenceConnector.post(departureId, messageType, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -723,7 +721,7 @@ class PersistenceConnectorSpec
         }
     }
 
-    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[DepartureId], messageTypeGen) {
+    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[DepartureId], messageType) {
       (departureId, messageType) =>
         server.stubFor(
           post(
@@ -744,7 +742,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.post(departureId, messageType.code, source).map(Right(_)).recover {
+        val future = persistenceConnector.post(departureId, messageType, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -756,7 +754,7 @@ class PersistenceConnectorSpec
             Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
         }
     }
-    "On an incorrect Json fragment, must return a JsResult.Exception" in forAll(arbitrary[DepartureId], messageTypeGen) {
+    "On an incorrect Json fragment, must return a JsResult.Exception" in forAll(arbitrary[DepartureId], messageType) {
       (departureId, messageType) =>
         server.stubFor(
           post(
@@ -777,7 +775,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.post(departureId, messageType.code, source).map(Right(_)).recover {
+        val future = persistenceConnector.post(departureId, messageType, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
