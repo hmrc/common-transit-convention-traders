@@ -43,11 +43,16 @@ class MessagesXmlParsingServiceSpec
     </ncts:CC013C>
 
   val invalidMessageType: NodeSeq =
-    <CC015C>
+    <ncts:CC015C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
       <CC013C>
         <identificationNumber>GB1234</identificationNumber>
       </CC013C>
-    </CC015C>
+    </ncts:CC015C>
+
+  val withNoMessageTypeEntry: NodeSeq =
+    <ncts:HolderOfTheTransitProcedure PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
+      <identificationNumber>GB1234</identificationNumber>
+    </ncts:HolderOfTheTransitProcedure>
 
   "extractMessageType and then" - {
     "if it is valid, return an appropriate Message Type" in {
@@ -69,6 +74,17 @@ class MessagesXmlParsingServiceSpec
 
       whenReady(response.value) {
         _ mustBe Left(ExtractionError.MessageTypeNotFound("CC015C"))
+      }
+    }
+
+    "if it doesn't have a message type entry, return ExtractionError.MessageTypeNotFound" in {
+      val xmlParsingService = new MessagesXmlParsingServiceImpl()
+      val payload           = createStream(withNoMessageTypeEntry)
+      val response =
+        xmlParsingService.extractMessageType(payload)
+
+      whenReady(response.value) {
+        _ mustBe Left(ExtractionError.MessageTypeNotFound("HolderOfTheTransitProcedure"))
       }
     }
   }
