@@ -182,10 +182,9 @@ class V2DeparturesControllerSpec
   def fakeAttachDepartures[A](
     method: String,
     headers: FakeHeaders,
-    uri: String = routing.routes.DeparturesRouter.attachMessage("123").url,
     body: A
   ): Request[A] =
-    FakeRequest(method = method, uri = uri, headers = headers, body = body)
+    FakeRequest(method = method, uri = routing.routes.DeparturesRouter.attachMessage("123").url, headers = headers, body = body)
 
   override def beforeEach(): Unit = {
     reset(mockValidationService)

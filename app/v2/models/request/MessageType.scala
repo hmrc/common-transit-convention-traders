@@ -56,14 +56,14 @@ object MessageType {
   case object FunctionalNack      extends DepartureMessageType("IE906", "CC906C", AuditType.FunctionalNack)      // TODO: This is also an arrival message
   case object PositiveAcknowledge extends DepartureMessageType("IE928", "CC928C", AuditType.PositiveAcknowledge) // TODO: This is also an arrival message
 
-  val updateDepartureValues = Seq(
+  val messageTypeSentByDepartureTrader = Seq(
     DeclarationAmendment,
     DeclarationInvalidationRequest,
     RequestOfRelease,
     PresentationNotificationForThePreLodgedDecision
   )
 
-  val departureValues: Seq[MessageType] = Seq(
+  val messageTypeSentToDepartureTrader: Seq[MessageType] = Seq(
     AmendmentAcceptance,
     InvalidationDecision,
     DeclarationData,
@@ -79,7 +79,7 @@ object MessageType {
     FunctionalNack,
     PositiveAcknowledge
   )
-  val values = updateDepartureValues ++ departureValues
+  val values = messageTypeSentByDepartureTrader ++ messageTypeSentToDepartureTrader
 
   def find(code: String): Option[MessageType] =
     values.find(_.code == code)
