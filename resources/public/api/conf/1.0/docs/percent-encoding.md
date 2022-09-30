@@ -15,13 +15,13 @@ Below are examples in different programming languages.
 
 Java
 
-```
+```java
 java.net.URLEncoder.encode("2021-04-30T16:08:31+00:00");
 ```
 
 Python
 
-```
+```python
 from urllib.parse import quote
 
 quote('2021-04-30T16:08:31+00:00')
@@ -29,7 +29,7 @@ quote('2021-04-30T16:08:31+00:00')
 
 C#
 
-```
+```c#
 Uri.EscapeDataString("2021-04-30T16:08:31+00:00");
 ```
 
