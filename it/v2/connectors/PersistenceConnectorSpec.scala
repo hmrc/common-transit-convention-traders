@@ -88,7 +88,7 @@ class PersistenceConnectorSpec
 
   "POST /traders/:eori/movements/departures" - {
 
-    lazy val okResult =
+    lazy val okResultGen =
       for {
         movementId <- arbitrary[DepartureId]
         messageId  <- arbitrary[MessageId]
@@ -96,7 +96,7 @@ class PersistenceConnectorSpec
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures/"
 
-    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResult) {
+    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen) {
       (eoriNumber, okResult) =>
         server.stubFor(
           post(
