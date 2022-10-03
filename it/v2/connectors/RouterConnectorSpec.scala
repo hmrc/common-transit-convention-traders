@@ -24,6 +24,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
+import config.Constants
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.concurrent.IntegrationPatience
@@ -93,6 +94,7 @@ class RouterConnectorSpec
             urlEqualTo(targetUrl(eoriNumber, messageType, movementId, messageId))
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .withHeader(Constants.XMessageTypeHeader, equalTo(messageType.code))
             .willReturn(aResponse().withStatus(ACCEPTED))
         )
 
@@ -124,6 +126,7 @@ class RouterConnectorSpec
             urlEqualTo(targetUrl(eoriNumber, messageType, movementId, messageId))
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .withHeader(Constants.XMessageTypeHeader, equalTo(messageType.code))
             .willReturn(
               aResponse()
                 .withStatus(INTERNAL_SERVER_ERROR)
