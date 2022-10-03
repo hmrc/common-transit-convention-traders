@@ -61,6 +61,7 @@ import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
 import v2.models.responses.MessageSummary
+import v2.models.responses.UpdateMovementResponse
 import v2.utils.CommonGenerators
 
 import java.nio.charset.StandardCharsets
@@ -661,11 +662,14 @@ class PersistenceConnectorSpec
 
   "POST /traders/movements/:movementId/messages" - {
 
-    val messageId = arbitrary[MessageId]
+    lazy val okResultGen =
+      for {
+        messageId <- arbitrary[MessageId]
+      } yield UpdateMovementResponse(messageId)
 
     def targetUrl(departureId: DepartureId) = s"/transit-movements/traders/movements/${departureId.value}/messages/"
 
-    "On successful update of an element, must return ACCEPTED" in forAll(arbitrary[DepartureId], messageType, messageId) {
+    "On successful update of an element, must return ACCEPTED" in forAll(arbitrary[DepartureId], messageType, okResultGen) {
       (departureId, messageType, resultRes) =>
         server.stubFor(
           post(
