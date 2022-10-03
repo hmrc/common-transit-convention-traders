@@ -28,7 +28,6 @@ import cats.data.NonEmptyList
 import cats.implicits.catsStdInstancesForFuture
 import cats.implicits.toBifunctorOps
 import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.anyString
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.times
@@ -45,15 +44,10 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import play.api.http.HttpVerbs.GET
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
-import play.api.http.HttpVerbs.GET
-import play.api.http.Status.ACCEPTED
-import play.api.http.Status.BAD_REQUEST
-import play.api.http.Status.INTERNAL_SERVER_ERROR
-import play.api.http.Status.NOT_FOUND
-import play.api.http.Status.OK
-import play.api.http.Status.UNSUPPORTED_MEDIA_TYPE
+import play.api.http.Status._
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
@@ -72,40 +66,21 @@ import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeMessageSizeActionProvider
-import v2.models.AuditType
-import v2.models.DepartureId
-import v2.models.EORINumber
-import v2.models.MovementReferenceNumber
-import v2.models.MessageId
-import v2.models.errors.ConversionError
-import v2.models.errors.ExtractionError
-import v2.models.errors.FailedToValidateError
-import v2.models.errors.JsonValidationError
-import v2.models.errors.PersistenceError
-import v2.models.errors.RouterError
-import v2.models.errors.XmlValidationError
+import v2.models._
+import v2.models.errors._
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
-import v2.models.responses.MessageResponse
 import v2.models.responses.MessageSummary
-import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
-import v2.models.responses.hateoas.HateoasDepartureIdsResponse
-import v2.models.responses.hateoas.HateoasDepartureMessageIdsResponse
-import v2.models.responses.hateoas.HateoasDepartureMessageResponse
-import v2.models.responses.hateoas.HateoasDepartureResponse
-import v2.services.AuditingService
-import v2.services.ConversionService
-import v2.services.DeparturesService
-import v2.services.MessagesXmlParsingService
-import v2.services.RouterService
-import v2.services.ValidationService
+import v2.models.responses.UpdateMovementResponse
+import v2.models.responses.hateoas._
+import v2.services._
 
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
-import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.Try
@@ -1138,13 +1113,13 @@ class V2DeparturesControllerSpec
               any[HeaderCarrier],
               any[ExecutionContext]
             )
-        ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, MessageId](MessageId("456"))))
+        ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, UpdateMovementResponse](UpdateMovementResponse(MessageId("456")))))
 
         val request = fakeAttachDepartures(method = "POST", body = singleUseStringSource(CC013C.mkString), headers = standardHeaders)
         val result  = sut.attachMessage(departureId)(request)
         status(result) mustBe ACCEPTED
 
-        contentAsJson(result) mustBe Json.toJson(MessageId("456"))
+        contentAsJson(result) mustBe Json.toJson(UpdateMovementResponse(MessageId("456")))
 
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationAmendment), any(), eqTo(MimeTypes.XML))(any(), any())
         verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
@@ -1183,7 +1158,7 @@ class V2DeparturesControllerSpec
               any[HeaderCarrier],
               any[ExecutionContext]
             )
-        ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, MessageId](MessageId("456"))))
+        ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, UpdateMovementResponse](UpdateMovementResponse(MessageId("456")))))
 
         val sut = new V2DeparturesControllerImpl(
           Helpers.stubControllerComponents(),

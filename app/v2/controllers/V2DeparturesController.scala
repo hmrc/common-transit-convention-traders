@@ -235,7 +235,6 @@ class V2DeparturesControllerImpl @Inject() (
         withTemporaryFile {
           (temporaryFile, source) =>
             implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
             (for {
               messageType <- xmlParsingService.extractMessageType(source).asPresentation
               fileSource = FileIO.fromPath(temporaryFile)
@@ -257,7 +256,7 @@ class V2DeparturesControllerImpl @Inject() (
     for {
       declarationResult <- departuresService.updateDeparture(departureId, messageType, fileSource).asPresentation
       _ <- routerService
-        .send(messageType, request.eoriNumber, departureId, declarationResult, fileSource)
+        .send(messageType, request.eoriNumber, departureId, declarationResult.messageId, fileSource)
         .asPresentation
     } yield declarationResult
 }

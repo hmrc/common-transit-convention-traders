@@ -43,6 +43,7 @@ import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageSummary
+import v2.models.responses.UpdateMovementResponse
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -80,7 +81,7 @@ trait PersistenceConnector {
   def post(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[MessageId]
+  ): Future[UpdateMovementResponse]
 }
 
 @Singleton
@@ -194,7 +195,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
   override def post(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[MessageId] =
+  ): Future[UpdateMovementResponse] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
         val url = appConfig.movementsUrl.withPath(movementsPostDeparture(departureId))
@@ -206,7 +207,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
           .flatMap {
             response =>
               response.status match {
-                case OK => response.as[MessageId]
+                case OK => response.as[UpdateMovementResponse]
                 case _  => response.error
               }
           }

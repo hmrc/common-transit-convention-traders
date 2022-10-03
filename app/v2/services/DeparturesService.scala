@@ -34,6 +34,7 @@ import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageSummary
+import v2.models.responses.UpdateMovementResponse
 
 import java.time.OffsetDateTime
 import scala.concurrent.ExecutionContext
@@ -71,7 +72,7 @@ trait DeparturesService {
   def updateDeparture(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, MessageId]
+  ): EitherT[Future, PersistenceError, UpdateMovementResponse]
 
 }
 
@@ -149,7 +150,7 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
   override def updateDeparture(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, MessageId] =
+  ): EitherT[Future, PersistenceError, UpdateMovementResponse] =
     EitherT(
       persistenceConnector
         .post(departureId, messageType, source)

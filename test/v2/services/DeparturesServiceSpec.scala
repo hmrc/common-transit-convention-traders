@@ -38,7 +38,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.base.CommonGenerators
 import v2.connectors.PersistenceConnector
-import v2.models.AuditType
 import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
@@ -47,15 +46,15 @@ import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
-import v2.models.responses.MessageResponse
 import v2.models.responses.MessageSummary
+import v2.models.responses.UpdateMovementResponse
 
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class DeparturesServiceSpec
     extends AnyFreeSpec
@@ -245,9 +244,9 @@ class DeparturesServiceSpec
           any[ExecutionContext]
         )
       )
-        .thenReturn(Future.successful((MessageId("123"))))
-      val result                                        = sut.updateDeparture(DepartureId("abc"), MessageType.DeclarationInvalidationRequest, validRequest)
-      val expected: Either[PersistenceError, MessageId] = Right(MessageId("123"))
+        .thenReturn(Future.successful(UpdateMovementResponse(MessageId("123"))))
+      val result                                                     = sut.updateDeparture(DepartureId("abc"), MessageType.DeclarationInvalidationRequest, validRequest)
+      val expected: Either[PersistenceError, UpdateMovementResponse] = Right(UpdateMovementResponse(MessageId("123")))
       whenReady(result.value) {
         _ mustBe expected
       }
@@ -261,8 +260,8 @@ class DeparturesServiceSpec
         )
       )
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result                                        = sut.updateDeparture(DepartureId("abc"), MessageType.DeclarationInvalidationRequest, invalidRequest)
-      val expected: Either[PersistenceError, MessageId] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
+      val result                                                     = sut.updateDeparture(DepartureId("abc"), MessageType.DeclarationInvalidationRequest, invalidRequest)
+      val expected: Either[PersistenceError, UpdateMovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected
       }
