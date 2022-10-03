@@ -46,15 +46,15 @@ import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
-import v2.models.responses.MessageResponse
 import v2.models.responses.MessageSummary
+import v2.models.responses.UpdateMovementResponse
 
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class DeparturesServiceSpec
     extends AnyFreeSpec
@@ -229,4 +229,43 @@ class DeparturesServiceSpec
     }
 
   }
+
+  "Updating departure with departureId and messageType" - {
+
+    val validRequest: Source[ByteString, NotUsed]   = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
+    val invalidRequest: Source[ByteString, NotUsed] = Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8))
+
+    val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
+
+    "on a successful submission, should return a Right" in {
+      when(
+        mockConnector.post(DepartureId(any[String]), any[MessageType], eqTo(validRequest))(
+          any[HeaderCarrier],
+          any[ExecutionContext]
+        )
+      )
+        .thenReturn(Future.successful(UpdateMovementResponse(MessageId("123"))))
+      val result                                                     = sut.updateDeparture(DepartureId("abc"), MessageType.DeclarationInvalidationRequest, validRequest)
+      val expected: Either[PersistenceError, UpdateMovementResponse] = Right(UpdateMovementResponse(MessageId("123")))
+      whenReady(result.value) {
+        _ mustBe expected
+      }
+    }
+
+    "on a failed submission, should return a Left with an UnexpectedError" in {
+      when(
+        mockConnector.post(DepartureId(any[String]), any[MessageType], eqTo(invalidRequest))(
+          any[HeaderCarrier],
+          any[ExecutionContext]
+        )
+      )
+        .thenReturn(Future.failed(upstreamErrorResponse))
+      val result                                                     = sut.updateDeparture(DepartureId("abc"), MessageType.DeclarationInvalidationRequest, invalidRequest)
+      val expected: Either[PersistenceError, UpdateMovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
+      whenReady(result.value) {
+        _ mustBe expected
+      }
+    }
+  }
+
 }

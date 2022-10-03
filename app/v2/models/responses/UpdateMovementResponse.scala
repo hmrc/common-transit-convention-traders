@@ -14,26 +14,14 @@
  * limitations under the License.
  */
 
-package config
+package v2.models.responses
 
-object Constants {
-  val AcceptHeaderPattern = "^application/vnd[.]{1}hmrc[.]{1}(.*?)[+]{1}(.*)$".r
+import play.api.libs.json.Json
+import play.api.libs.json.OFormat
+import v2.models.MessageId
 
-  val AcceptHeaderMissing = "The accept header is missing or invalid"
+case class UpdateMovementResponse(messageId: MessageId)
 
-  val BoxName = "customs/transits##1.0##notificationUrl"
-
-  val Context = "/customs/transits"
-
-  val XClientIdHeader = "X-Client-Id"
-
-  val XMessageTypeHeader = "X-Message-Type"
-
-  val ChannelHeader = "channel"
-
-  val LegacyEnrolmentKey: String   = "HMCE-NCTS-ORG"
-  val LegacyEnrolmentIdKey: String = "VATRegNoTURN"
-
-  val NewEnrolmentKey: String   = "HMRC-CTC-ORG"
-  val NewEnrolmentIdKey: String = "EORINumber"
+object UpdateMovementResponse {
+  implicit val declarationResponseFormat: OFormat[UpdateMovementResponse] = Json.format[UpdateMovementResponse]
 }

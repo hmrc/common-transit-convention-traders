@@ -11,7 +11,8 @@ object AppDependencies {
     "org.typelevel"      %% "cats-core"                 % catsVersion,
     "org.json"            % "json"                      % "20210307",
     "io.lemonlabs"       %% "scala-uri"                 % "3.6.0",
-    "com.typesafe.akka"  %% "akka-stream-contrib"       % "0.11+4-91b2f9fa"
+    "com.typesafe.akka"  %% "akka-stream-contrib"       % "0.11+4-91b2f9fa",
+    "com.lightbend.akka" %% "akka-stream-alpakka-xml"   % "3.0.4"
   )
 
   val test = Seq(

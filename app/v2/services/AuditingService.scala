@@ -33,7 +33,6 @@ import scala.util.control.NonFatal
 trait AuditingService {
 
   def audit(auditType: AuditType, source: Source[ByteString, _], contentType: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit]
-
 }
 
 class AuditingServiceImpl @Inject() (auditingConnector: AuditingConnector) extends AuditingService with Logging {

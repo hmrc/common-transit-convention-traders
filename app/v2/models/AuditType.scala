@@ -21,10 +21,33 @@ sealed abstract class AuditType(val name: String)
 object AuditType {
 
   // IE015
-  case object DeclarationData extends AuditType("DeclarationData")
+  case object AmendmentAcceptance                             extends AuditType("AmendmentAcceptance")
+  case object InvalidationDecision                            extends AuditType("InvalidationDecision")
+  case object DeclarationAmendment                            extends AuditType("DeclarationAmendment")
+  case object DeclarationInvalidationRequest                  extends AuditType("DeclarationInvalidationRequest")
+  case object DeclarationData                                 extends AuditType("DeclarationData")
+  case object Discrepancies                                   extends AuditType("Discrepancies")
+  case object MRNAllocated                                    extends AuditType("MRNAllocated")
+  case object ReleaseForTransit                               extends AuditType("ReleaseForTransit")
+  case object RecoveryNotification                            extends AuditType("RecoveryNotification")
+  case object WriteOffNotification                            extends AuditType("WriteOffNotification")
+  case object NoReleaseForTransit                             extends AuditType("NoReleaseForTransit")
+  case object RequestOfRelease                                extends AuditType("RequestOfRelease")
+  case object GuaranteeNotValid                               extends AuditType("GuaranteeNotValid")
+  case object RejectionFromOfficeOfDeparture                  extends AuditType("RejectionFromOfficeOfDeparture")
+  case object ControlDecisionNotification                     extends AuditType("ControlDecisionNotification")
+  case object PresentationNotificationForThePreLodgedDecision extends AuditType("PresentationNotificationForThePreLodgedDecision")
+  case object FunctionalNack                                  extends AuditType("FunctionalNack")
+  case object PositiveAcknowledge                             extends AuditType("PositiveAcknowledge")
 
   val values: Seq[AuditType] = Seq(
-    DeclarationData
+    DeclarationData,
+    DeclarationAmendment,
+    DeclarationInvalidationRequest,
+    PresentationNotificationForThePreLodgedDecision,
+    RequestOfRelease
   )
 
+  def find(code: String): Option[AuditType] =
+    values.find(_.name == code)
 }

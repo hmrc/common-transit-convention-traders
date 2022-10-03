@@ -30,9 +30,11 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.DepartureId
 import v2.models.errors.PersistenceError
+import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageSummary
+import v2.models.responses.UpdateMovementResponse
 
 import java.time.OffsetDateTime
 import scala.concurrent.ExecutionContext
@@ -66,6 +68,11 @@ trait DeparturesService {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[DepartureResponse]]
+
+  def updateDeparture(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, UpdateMovementResponse]
 
 }
 
@@ -139,5 +146,18 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
         case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
       }
   )
+
+  override def updateDeparture(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, UpdateMovementResponse] =
+    EitherT(
+      persistenceConnector
+        .post(departureId, messageType, source)
+        .map(Right(_))
+        .recover {
+          case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))
+        }
+    )
 
 }

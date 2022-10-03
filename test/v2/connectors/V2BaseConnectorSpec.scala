@@ -132,6 +132,13 @@ class V2BaseConnectorSpec
       urlPath.toString() mustBe s"/transit-movements-converter/messages/${messageType.code}"
   }
 
+  "the post departure movements URL on localhost for a given departureId should be as expected" in {
+    val departureId = arbitrary[DepartureId].sample.value
+    val urlPath     = Harness.movementsPostDeparture(departureId)
+
+    urlPath.toString() mustBe s"/transit-movements/traders/movements/${departureId.value}/messages/"
+  }
+
   "HttpResponseHelpers" - new V2BaseConnector() {
 
     case class TestObject(string: String, int: Int)

@@ -26,6 +26,7 @@ import config.AppConfig
 import io.lemonlabs.uri.Url
 import metrics.HasMetrics
 import metrics.MetricsKeys
+import config.Constants
 import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
@@ -38,9 +39,11 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
+import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageSummary
+import v2.models.responses.UpdateMovementResponse
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -75,6 +78,10 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[Seq[DepartureResponse]]
 
+  def post(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[UpdateMovementResponse]
 }
 
 @Singleton
@@ -184,6 +191,27 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
           }
       }
   }
+
+  override def post(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[UpdateMovementResponse] =
+    withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
+      _ =>
+        val url = appConfig.movementsUrl.withPath(movementsPostDeparture(departureId))
+        httpClientV2
+          .post(url"$url")
+          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code)
+          .withBody(source)
+          .execute[HttpResponse]
+          .flatMap {
+            response =>
+              response.status match {
+                case OK => response.as[UpdateMovementResponse]
+                case _  => response.error
+              }
+          }
+    }
 
   private def withReceivedSinceParameter(urlPath: Url, dateTime: Option[OffsetDateTime]) =
     dateTime

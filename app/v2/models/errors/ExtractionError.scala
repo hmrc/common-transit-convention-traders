@@ -14,26 +14,13 @@
  * limitations under the License.
  */
 
-package config
+package v2.models.errors
 
-object Constants {
-  val AcceptHeaderPattern = "^application/vnd[.]{1}hmrc[.]{1}(.*?)[+]{1}(.*)$".r
+import cats.data.NonEmptyList
 
-  val AcceptHeaderMissing = "The accept header is missing or invalid"
+sealed trait ExtractionError
 
-  val BoxName = "customs/transits##1.0##notificationUrl"
-
-  val Context = "/customs/transits"
-
-  val XClientIdHeader = "X-Client-Id"
-
-  val XMessageTypeHeader = "X-Message-Type"
-
-  val ChannelHeader = "channel"
-
-  val LegacyEnrolmentKey: String   = "HMCE-NCTS-ORG"
-  val LegacyEnrolmentIdKey: String = "VATRegNoTURN"
-
-  val NewEnrolmentKey: String   = "HMRC-CTC-ORG"
-  val NewEnrolmentIdKey: String = "EORINumber"
+object ExtractionError {
+  case class UnexpectedError(thr: Option[Throwable] = None) extends ExtractionError
+  case class MessageTypeNotFound(messageType: String)       extends ExtractionError
 }

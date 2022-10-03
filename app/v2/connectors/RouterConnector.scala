@@ -22,6 +22,7 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
+import config.Constants
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
@@ -64,7 +65,7 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
 
         httpClientV2
           .post(url"$url")
-          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code)
           .withBody(body)
           .executeAccepted
     }

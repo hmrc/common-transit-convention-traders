@@ -44,15 +44,10 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import play.api.http.HttpVerbs.GET
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
-import play.api.http.HttpVerbs.GET
-import play.api.http.Status.ACCEPTED
-import play.api.http.Status.BAD_REQUEST
-import play.api.http.Status.INTERNAL_SERVER_ERROR
-import play.api.http.Status.NOT_FOUND
-import play.api.http.Status.OK
-import play.api.http.Status.UNSUPPORTED_MEDIA_TYPE
+import play.api.http.Status._
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
@@ -71,38 +66,21 @@ import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeMessageSizeActionProvider
-import v2.models.AuditType
-import v2.models.DepartureId
-import v2.models.EORINumber
-import v2.models.MovementReferenceNumber
-import v2.models.MessageId
-import v2.models.errors.ConversionError
-import v2.models.errors.FailedToValidateError
-import v2.models.errors.JsonValidationError
-import v2.models.errors.PersistenceError
-import v2.models.errors.RouterError
-import v2.models.errors.XmlValidationError
+import v2.models._
+import v2.models.errors._
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
-import v2.models.responses.MessageResponse
 import v2.models.responses.MessageSummary
-import v2.models.responses.hateoas.HateoasDepartureDeclarationResponse
-import v2.models.responses.hateoas.HateoasDepartureIdsResponse
-import v2.models.responses.hateoas.HateoasDepartureMessageIdsResponse
-import v2.models.responses.hateoas.HateoasDepartureMessageResponse
-import v2.models.responses.hateoas.HateoasDepartureResponse
-import v2.services.AuditingService
-import v2.services.ConversionService
-import v2.services.DeparturesService
-import v2.services.RouterService
-import v2.services.ValidationService
+import v2.models.responses.UpdateMovementResponse
+import v2.models.responses.hateoas._
+import v2.services._
 
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
-import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.Try
@@ -126,13 +104,29 @@ class V2DeparturesControllerSpec
       <test>testxml</test>
     </CC015C>
 
+  def CC013C: NodeSeq =
+    <CC013C>
+      <test>testxml</test>
+    </CC013C>
+
   val CC015Cjson = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
 
-  val mockValidationService: ValidationService = mock[ValidationService]
-  val mockDeparturesPersistenceService         = mock[DeparturesService]
-  val mockRouterService                        = mock[RouterService]
-  val mockAuditService                         = mock[AuditingService]
-  val mockConversionService                    = mock[ConversionService]
+  val mockValidationService            = mock[ValidationService]
+  val mockDeparturesPersistenceService = mock[DeparturesService]
+  val mockRouterService                = mock[RouterService]
+  val mockAuditService                 = mock[AuditingService]
+  val mockConversionService            = mock[ConversionService]
+  val mockXmlParsingService            = mock[MessagesXmlParsingService]
+
+  lazy val messageType: MessageType = MessageType.DeclarationAmendment
+  lazy val auditType: AuditType     = AuditType.DeclarationAmendment
+  lazy val departureId              = DepartureId("123")
+
+  lazy val messageDataEither: EitherT[Future, ExtractionError, MessageType] =
+    EitherT.rightT(messageType)
+
+  lazy val auditTypeEither: EitherT[Future, FailedToValidateError, AuditType] =
+    EitherT.rightT(auditType)
 
   lazy val sut: V2DeparturesController = new V2DeparturesControllerImpl(
     Helpers.stubControllerComponents(),
@@ -144,7 +138,8 @@ class V2DeparturesControllerSpec
     mockRouterService,
     mockAuditService,
     FakeMessageSizeActionProvider,
-    new TestMetrics()
+    new TestMetrics(),
+    mockXmlParsingService
   )
 
   implicit val timeout: Timeout = 5.seconds
@@ -158,6 +153,13 @@ class V2DeparturesControllerSpec
     body: A
   ): Request[A] =
     FakeRequest(method = method, uri = uri, headers = headers, body = body)
+
+  def fakeAttachDepartures[A](
+    method: String,
+    headers: FakeHeaders,
+    body: A
+  ): Request[A] =
+    FakeRequest(method = method, uri = routing.routes.DeparturesRouter.attachMessage("123").url, headers = headers, body = body)
 
   override def beforeEach(): Unit = {
     reset(mockValidationService)
@@ -178,7 +180,7 @@ class V2DeparturesControllerSpec
     reset(mockRouterService)
     when(
       mockRouterService.send(
-        eqTo(MessageType.DeclarationData),
+        any[String].asInstanceOf[MessageType],
         any[String].asInstanceOf[EORINumber],
         any[String].asInstanceOf[DepartureId],
         any[String].asInstanceOf[MessageId],
@@ -192,6 +194,7 @@ class V2DeparturesControllerSpec
       }
 
     reset(mockAuditService)
+    reset(mockXmlParsingService)
   }
 
   val testSinkXml: Sink[ByteString, Future[Either[FailedToValidateError, Unit]]] =
@@ -384,7 +387,8 @@ class V2DeparturesControllerSpec
           mockRouterService,
           mockAuditService,
           FakeMessageSizeActionProvider,
-          new TestMetrics()
+          new TestMetrics(),
+          mockXmlParsingService
         )
 
         val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
@@ -425,7 +429,8 @@ class V2DeparturesControllerSpec
           mockRouterService,
           mockAuditService,
           FakeMessageSizeActionProvider,
-          new TestMetrics()
+          new TestMetrics(),
+          mockXmlParsingService
         )
 
         val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
@@ -773,7 +778,8 @@ class V2DeparturesControllerSpec
         mockRouterService,
         mockAuditService,
         FakeMessageSizeActionProvider,
-        new TestMetrics()
+        new TestMetrics(),
+        mockXmlParsingService
       )
 
       val request  = fakeRequestDepartures("POST", body = singleUseStringSource(CC015C.mkString), headers = standardHeaders)
@@ -1080,6 +1086,104 @@ class V2DeparturesControllerSpec
         val result = sut.getDeparture(departureId)(request)
 
         status(result) mustBe INTERNAL_SERVER_ERROR
+    }
+  }
+
+  "for a departure update with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
+    "with content type set to application/xml" - {
+
+      // For the content length headers, we have to ensure that we send something
+      val standardHeaders = FakeHeaders(
+        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
+      )
+
+      "must return Accepted when body length is within limits and is considered valid" in {
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]]))
+          .thenReturn(messageDataEither)
+
+        when(mockValidationService.validateXml(eqTo(MessageType.DeclarationAmendment), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.rightT(())
+          )
+        when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
+
+        when(
+          mockDeparturesPersistenceService
+            .updateDeparture(any[String].asInstanceOf[DepartureId], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+        ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, UpdateMovementResponse](UpdateMovementResponse(MessageId("456")))))
+
+        val request = fakeAttachDepartures(method = "POST", body = singleUseStringSource(CC013C.mkString), headers = standardHeaders)
+        val result  = sut.attachMessage(departureId)(request)
+        status(result) mustBe ACCEPTED
+
+        contentAsJson(result) mustBe Json.toJson(UpdateMovementResponse(MessageId("456")))
+
+        verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationAmendment), any(), eqTo(MimeTypes.XML))(any(), any())
+        verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
+        verify(mockDeparturesPersistenceService, times(1)).updateDeparture(DepartureId(any()), any(), any())(any(), any())
+        verify(mockRouterService, times(1)).send(eqTo(MessageType.DeclarationAmendment), EORINumber(any()), DepartureId(any()), MessageId(any()), any())(
+          any(),
+          any()
+        )
+      }
+
+      "must return Bad Request when body is not an XML document" in {
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]]()))
+          .thenAnswer(
+            _ => EitherT.leftT(ExtractionError.MessageTypeNotFound("Message Type"))
+          )
+
+        val request = fakeAttachDepartures(method = "POST", body = singleUseStringSource("notxml"), headers = standardHeaders)
+        val result  = sut.attachMessage(departureId)(request)
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "BAD_REQUEST",
+          "message" -> "Message Type is not a valid message type"
+        )
+      }
+
+      "must return Internal Service Error if the persistence service reports an error" in {
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]]))
+          .thenReturn(messageDataEither)
+        when(mockValidationService.validateXml(eqTo(MessageType.DeclarationAmendment), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.rightT(())
+          )
+        when(
+          mockDeparturesPersistenceService
+            .updateDeparture(any[String].asInstanceOf[DepartureId], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+        ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, UpdateMovementResponse](UpdateMovementResponse(MessageId("456")))))
+
+        val sut = new V2DeparturesControllerImpl(
+          Helpers.stubControllerComponents(),
+          SingletonTemporaryFileCreator,
+          FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
+          mockValidationService,
+          mockConversionService,
+          mockDeparturesPersistenceService,
+          mockRouterService,
+          mockAuditService,
+          FakeMessageSizeActionProvider,
+          new TestMetrics(),
+          mockXmlParsingService
+        )
+
+        val request  = fakeAttachDepartures("POST", body = Source.single(ByteString(CC013C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
+        val response = sut.attachMessage(departureId)(request)
+
+        status(response) mustBe INTERNAL_SERVER_ERROR
+        contentAsJson(response) mustBe Json.obj(
+          "code"    -> "INTERNAL_SERVER_ERROR",
+          "message" -> "Internal server error"
+        )
+      }
+
     }
   }
 
