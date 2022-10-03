@@ -1,65 +1,60 @@
-Here is the list of error codes that we will keep updating.
-We use standard HTTP status codes to show whether an API request has succeeded or not:
+We use standard HTTP status codes to indicate whether an API request completed successfully.
 
-**POST**
+The following list of standard error codes is subject to change.
 
-400 BadRequest: The "code" field in the Json body provides the exact cause:
+<table>
+    <tr>
+        <th>Status code</td>
+        <th>Description</td>
+        <th>Explanation</td>
+    </tr>
+    <tr>
+        <td>400</td>
+        <td>Bad Request</td>
+        <td>The <code>code</code> field in the JSON body provides the exact cause.  <code>SCHEMA_VALIDATION</code>: The request body failed to validate against the appropriate schema. Check the <code>validationErrors</code> field for more details</td>
+    </tr>
+    <tr>
+        <td>401</td>
+        <td>Unauthorized</td>
+        <td>Invalid authentication credentials.</td>
+    </tr>
+    <tr>
+        <td>403</td>
+        <td>Forbidden</td>
+        <td>Authentication token doesn't contain a valid Economic Operators Registration and Identification (EORI) number.</td>
+    </tr>
+    <tr>
+        <td>404</td>
+        <td>Not Found</td>
+        <td>No object with specified ID found in the NCTS database, or a client passed an <code>Accept</code> header that contains the wrong API version number.</td>
+    </tr>
+    <tr>
+        <td>413</td>
+        <td>Request Entity Too Large</td>
+        <td>A client request body is too large for the given endpoint.</td>
+    </tr>
+    <tr>
+        <td>415</td>
+        <td>Unsupported Media Type</td>
+        <td>A client specified an invalid <code>Content-Type</code> header, or <code>Accept</code> header contains an invalid type.</td>
+    </tr>
+    <tr>
+        <td>500</td>
+        <td>Internal Server Error</td>
+        <td>Code exception.</td>
+    </tr>
+    <tr>
+        <td>501</td>
+        <td>Not Implemented</td>
+        <td>A user tried to <code>POST</code>  a message but the message type isn't currently supported.</td>
+    </tr>
+</table>
 
-* `SCHEMA_VALIDATION`: The request body failed to validate against the appropriate schema. Check the `validationErrors` field for more details.
+**Schema validation error responses**
 
-401 Unauthorized: If client passes invalid auth credentials
+If a request fails validation, the response body will contain a list of validation errors in the `validationErrors` field. Each error will contain the fields `lineNumber`, `columnNumber` and `message`. 
 
-403 Forbidden: If supplied auth token doesn't contain valid enrolment
-
-404 Not Found: If no object with specified ID found in database
-
-413 Request Entity Too Large: If the client request body is too large for the given endpoint
-
-415 Unsupported Media Type: If the client specified an invalid ``Content-Type`` header
-
-500 Internal Server Error: If exception in code occurs
-
-501 Not Implemented: If user attempts to ``POST`` a message and the message type isn't currently supported
-
-**PUT**
-
-400 BadRequest: The "code" field in the Json body provides the exact cause:
-
-* `SCHEMA_VALIDATION`: The request body failed to validate against the appropriate schema. Check the `validationErrors` field for more details.
-
-401 Unauthorized: If client passes invalid auth credentials
-
-403 Forbidden: If supplied auth token doesn't contain valid enrolment
-
-404 Not Found: If no object with specified ID found in database
-
-413 Request Entity Too Large: If the client request body is too large for the given endpoint
-
-415 Unsupported Media Type: If the client specified an invalid ``Content-Type`` header
-
-500 Internal Server Error: If exception in code occurs
-
-**GET**
-
-401 Unauthorized: If client passes invalid auth credentials
-
-403 Forbidden: If supplied auth token doesn't contain valid enrolment
-
-404 Not Found: If no object with specified ID found in database. Or if client passes in an ``Accept`` header which contains the wrong API version number.
-
-415 Unsupported Media Type: If ``Accept`` header contains invalid type
-
-500 Internal Server Error: If exception in code occurs
-
-
-Errors specific to each API are shown in the Endpoints section, under Response.
-See our [reference guide](https://developer.service.hmrc.gov.uk/api-documentation/docs/reference-guide#errors) for more on errors.
-
-### Schema Validation Error Responses
-
-If a request fails to pass validation, the response body will contain a list of validation errors in the "validationErrors" field. Each error will contain the fields "lineNumber", "columnNumber" and "message". 
-
-An example response for a request that failed to validate can be found below:
+Below is an example response for a request that failed validation.
 
 ```json
 {

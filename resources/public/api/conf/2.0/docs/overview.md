@@ -1,11 +1,17 @@
-This API will allow you to send departure and arrival movement notifications to the New Computerised Transit System (NCTS). It will also let you retrieve messages sent from the offices of departure and destination.
+Use the CTC Traders API to:
 
-We are releasing Phase 5 functionality incrementally starting with the IE015C Departure Declaration endpoint to create a new departure movement.
+- send departure and arrival movement notifications to the New Computerised Transit System (NCTS)
+- retrieve messages sent from customs offices of departure and destination
 
-* Read our [Roadmap](https://developer.service.hmrc.gov.uk/roadmaps/common-transit-convention-traders-roadmap/) for important dates and service updates
+The API endpoints relate only to Great Britain and Northern Ireland.
 
-Further details of the User Restricted Authentication are given on the
-[Authorisation](https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation) page.
+You can also use the HMRC sandbox environment to run tests for Great Britain and Northern Ireland transit movements.
 
-For more information about how to develop your own client applications, including example clients for this API,
-see [Tutorials](https://developer.service.hmrc.gov.uk/api-documentation/docs/tutorials).
+**Please note:** This version of the API supports only NCTS Phase 5. We are releasing Phase 5 functionality incrementally. Version 1.0 of the API supports NCTS Phase 4.
+
+You should read:
+
+- [Authorisation](/api-documentation/docs/authorisation/user-restricted-endpoints) for information about user-restricted API authentication
+- [Roadmap](/roadmaps/common-transit-convention-traders-roadmap/) for information about CTC Traders API releases
+- [Service Guide](/guides/ctc-traders-phase5-service-guide) to learn how to use the CTC Traders API with your software
+- [Tutorials](/api-documentation/docs/tutorials) to learn how to develop your own client applications, including example clients, for the CTC Traders API
