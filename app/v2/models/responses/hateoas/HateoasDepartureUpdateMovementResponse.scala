@@ -26,8 +26,8 @@ object HateoasDepartureUpdateMovementResponse extends HateoasResponse {
   def apply(departureId: DepartureId, messageId: MessageId): JsObject =
     Json.obj(
       "_links" -> Json.obj(
-        "self"     -> Json.obj("href" -> departureUri(departureId)),
-        "messages" -> Json.obj("href" -> messageUri(departureId, messageId))
+        "self"      -> Json.obj("href" -> messageUri(departureId, messageId)),
+        "departure" -> Json.obj("href" -> departureUri(departureId))
       )
     )
 }

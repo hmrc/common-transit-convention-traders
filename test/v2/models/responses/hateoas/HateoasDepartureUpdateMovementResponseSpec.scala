@@ -33,10 +33,10 @@ class HateoasDepartureUpdateMovementResponseSpec extends AnyFreeSpec with Matche
     val actual      = HateoasDepartureUpdateMovementResponse(departureId, messageId)
     val expected = Json.obj(
       "_links" -> Json.obj(
-        "self" -> Json.obj(
+        "departure" -> Json.obj(
           "href" -> s"/customs/transits/movements/departures/${departureId.value}"
         ),
-        "messages" -> Json.obj(
+        "self" -> Json.obj(
           "href" -> s"/customs/transits/movements/departures/${departureId.value}/messages/${messageId.value}"
         )
       )
