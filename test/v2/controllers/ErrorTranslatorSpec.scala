@@ -163,6 +163,15 @@ class ErrorTranslatorSpec
 
       persistenceErrorConverter.convert(input) mustBe output
     }
+
+    "a DepartureDoesNotExist error returns a BAD_REQUEST" in {
+      val departureId = arbitrary[DepartureId].sample.value
+
+      val input  = PersistenceError.DepartureDoesNotExist(departureId)
+      val output = PresentationError.badRequestError(s"Departure movement with ID ${departureId.value} was not found")
+
+      persistenceErrorConverter.convert(input) mustBe output
+    }
   }
 
   "Router Error" - {

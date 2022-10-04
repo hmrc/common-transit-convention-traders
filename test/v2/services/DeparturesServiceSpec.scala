@@ -252,6 +252,20 @@ class DeparturesServiceSpec
       }
     }
 
+    "on departure does not exist, should return DepartureDoesNotExist" in {
+      when(
+        mockConnector.post(DepartureId(any[String]), any[MessageType], eqTo(validRequest))(
+          any[HeaderCarrier],
+          any[ExecutionContext]
+        )
+      ).thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
+
+      val result = sut.updateDeparture(DepartureId("1234567890abcdef"), MessageType.DeclarationInvalidationRequest, validRequest)
+      whenReady(result.value) {
+        _ mustBe Left(PersistenceError.DepartureDoesNotExist(DepartureId("1234567890abcdef")))
+      }
+    }
+
     "on a failed submission, should return a Left with an UnexpectedError" in {
       when(
         mockConnector.post(DepartureId(any[String]), any[MessageType], eqTo(invalidRequest))(
