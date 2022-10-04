@@ -25,7 +25,6 @@ sealed trait PersistenceError
 object PersistenceError {
   case class MessageNotFound(movementId: DepartureId, messageId: MessageId) extends PersistenceError
   case class DepartureNotFound(departureId: DepartureId)                    extends PersistenceError
-  case class DepartureDoesNotExist(departureId: DepartureId)                extends PersistenceError
   case class DeparturesNotFound(eori: EORINumber)                           extends PersistenceError
   case class UnexpectedError(thr: Option[Throwable] = None)                 extends PersistenceError
 }
