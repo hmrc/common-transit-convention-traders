@@ -244,7 +244,7 @@ class V2DeparturesControllerImpl @Inject() (
 
             } yield declarationResult).fold[Result](
               presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-              id => Accepted(Json.toJson(id))
+              id => Accepted(Json.toJson(HateoasDepartureUpdateMovementResponse(departureId, id.messageId)))
             )
         }.toResult
     }
