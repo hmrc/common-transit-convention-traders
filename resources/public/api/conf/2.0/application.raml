@@ -285,7 +285,10 @@ traits:
             A successful response will contain a URI and a message ID related to the departure, which you can use to retrieve the message status.
     
             **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
-          is: [ contentXmlHeader ]
+          is:
+            - acceptJsonHeader
+            - acceptJsonHeader
+            - requestTooLarge
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
