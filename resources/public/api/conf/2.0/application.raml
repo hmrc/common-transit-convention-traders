@@ -302,12 +302,26 @@ traits:
                         "departure": {
                           "href": "/customs/transits/movements/departures/1"
                         }
-                      },
-                      "departureId": "1",
-                      "messageId": "2",
-                      "messageType": "IE014",
-                      "body": "<CC014A>...</CC014A>"
+                      }
                     }
+            404:
+              body:
+                application/json:
+                  type: types.errorResponse
+                  examples:
+                    notFound:
+                      description: When a departure does not exist, has been archived or is not available
+                      value:
+                        code: NOT_FOUND
+            400:
+              body:
+                application/json:
+                  type: types.errorResponse
+                  examples:
+                    badRequest:
+                      description: When sent by departure message type not available within xml or xml schema validation failed
+                      value:
+                        code: BAD_REQUEST
         /{messageId}:
           get:
             displayName: Get a cached message related to a departure and message ID

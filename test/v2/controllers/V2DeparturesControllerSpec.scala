@@ -1119,7 +1119,7 @@ class V2DeparturesControllerSpec
         val result  = sut.attachMessage(departureId)(request)
         status(result) mustBe ACCEPTED
 
-        contentAsJson(result) mustBe Json.toJson(UpdateMovementResponse(MessageId("456")))
+        contentAsJson(result) mustBe Json.toJson(HateoasDepartureUpdateMovementResponse(departureId, MessageId("456")))
 
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationAmendment), any(), eqTo(MimeTypes.XML))(any(), any())
         verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
