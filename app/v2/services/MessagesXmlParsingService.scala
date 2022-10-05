@@ -74,7 +74,7 @@ class MessagesXmlParsingServiceImpl @Inject() (implicit materializer: Materializ
         .toMat(messageTypeSink)(Keep.right)
         .run()
         .recover {
-          case NonFatal(e) => Left(ExtractionError.InvalidInputType())
+          case NonFatal(e) => Left(ExtractionError.MalformedInput())
         }
     )
 

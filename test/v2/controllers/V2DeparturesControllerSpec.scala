@@ -1133,7 +1133,7 @@ class V2DeparturesControllerSpec
       "must return Bad Request when body is not an XML document" in {
         when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]]())(any(), any()))
           .thenAnswer(
-            _ => EitherT.leftT(ExtractionError.InvalidInputType())
+            _ => EitherT.leftT(ExtractionError.MalformedInput())
           )
 
         val request = fakeAttachDepartures(method = "POST", body = singleUseStringSource("notxml"), headers = standardHeaders)
@@ -1141,7 +1141,7 @@ class V2DeparturesControllerSpec
         status(result) mustBe BAD_REQUEST
         contentAsJson(result) mustBe Json.obj(
           "code"    -> "BAD_REQUEST",
-          "message" -> "Invalid Input type error"
+          "message" -> "Input was malformed"
         )
       }
 

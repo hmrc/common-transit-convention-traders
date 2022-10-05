@@ -19,6 +19,6 @@ package v2.models.errors
 sealed trait ExtractionError
 
 object ExtractionError {
-  case class InvalidInputType()                       extends ExtractionError
+  case class MalformedInput()                         extends ExtractionError
   case class MessageTypeNotFound(messageType: String) extends ExtractionError
 }
