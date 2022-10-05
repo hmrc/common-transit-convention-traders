@@ -29,15 +29,22 @@ import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
+import uk.gov.hmrc.http.HeaderCarrier
 import v2.models.errors.ExtractionError
 import v2.models.request.MessageType
 
 import javax.inject.Singleton
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[MessagesXmlParsingServiceImpl])
 trait MessagesXmlParsingService {
-  def extractMessageType(source: Source[ByteString, _]): EitherT[Future, ExtractionError, MessageType]
+
+  def extractMessageType(source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, ExtractionError, MessageType]
 }
 
 @Singleton
@@ -58,11 +65,17 @@ class MessagesXmlParsingServiceImpl @Inject() (implicit materializer: Materializ
     }
   )
 
-  override def extractMessageType(source: Source[ByteString, _]): EitherT[Future, ExtractionError, MessageType] =
+  override def extractMessageType(source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, ExtractionError, MessageType] =
     EitherT(
       source
         .toMat(messageTypeSink)(Keep.right)
         .run()
+        .recover {
+          case NonFatal(e) => Left(ExtractionError.MalformedInput())
+        }
     )
 
 }

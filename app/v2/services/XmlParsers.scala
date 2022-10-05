@@ -38,6 +38,6 @@ object XmlParsers {
           .find(_.rootNode == s.localName)
           .map(Right(_))
           .getOrElse(Left(ExtractionError.MessageTypeNotFound(s.localName)))
-      case _ => Left(ExtractionError.UnexpectedError())
+      case _ => Left(ExtractionError.MalformedInput())
     }
 }

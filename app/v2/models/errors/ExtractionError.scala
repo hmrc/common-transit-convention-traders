@@ -16,11 +16,9 @@
 
 package v2.models.errors
 
-import cats.data.NonEmptyList
-
 sealed trait ExtractionError
 
 object ExtractionError {
-  case class UnexpectedError(thr: Option[Throwable] = None) extends ExtractionError
-  case class MessageTypeNotFound(messageType: String)       extends ExtractionError
+  case class MalformedInput()                         extends ExtractionError
+  case class MessageTypeNotFound(messageType: String) extends ExtractionError
 }

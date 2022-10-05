@@ -230,6 +230,11 @@ class V2DeparturesControllerImpl @Inject() (
     }
 
   def attachMessage(departureId: DepartureId): Action[Source[ByteString, _]] =
+    contentTypeRoute {
+      case Some(MimeTypes.XML) => attachMessageXML(departureId)
+    }
+
+  def attachMessageXML(departureId: DepartureId): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen messageSizeAction()).async(streamFromMemory) {
       implicit request =>
         withTemporaryFile {
