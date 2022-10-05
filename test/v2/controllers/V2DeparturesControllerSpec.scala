@@ -1098,7 +1098,7 @@ class V2DeparturesControllerSpec
       )
 
       "must return Accepted when body length is within limits and is considered valid" in {
-        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]]))
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]])(any(), any()))
           .thenReturn(messageDataEither)
 
         when(mockValidationService.validateXml(eqTo(MessageType.DeclarationAmendment), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
@@ -1131,9 +1131,9 @@ class V2DeparturesControllerSpec
       }
 
       "must return Bad Request when body is not an XML document" in {
-        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]]()))
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]]())(any(), any()))
           .thenAnswer(
-            _ => EitherT.leftT(ExtractionError.MessageTypeNotFound("Message Type"))
+            _ => EitherT.leftT(ExtractionError.InvalidInputType())
           )
 
         val request = fakeAttachDepartures(method = "POST", body = singleUseStringSource("notxml"), headers = standardHeaders)
@@ -1141,12 +1141,12 @@ class V2DeparturesControllerSpec
         status(result) mustBe BAD_REQUEST
         contentAsJson(result) mustBe Json.obj(
           "code"    -> "BAD_REQUEST",
-          "message" -> "Message Type is not a valid message type"
+          "message" -> "Invalid Input type error"
         )
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
-        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]]))
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]])(any(), any()))
           .thenReturn(messageDataEither)
         when(mockValidationService.validateXml(eqTo(MessageType.DeclarationAmendment), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
@@ -1181,6 +1181,20 @@ class V2DeparturesControllerSpec
         contentAsJson(response) mustBe Json.obj(
           "code"    -> "INTERNAL_SERVER_ERROR",
           "message" -> "Internal server error"
+        )
+      }
+
+      "must return UNSUPPORTED_MEDIA_TYPE when the content type is invalid" in {
+        val standardHeaders = FakeHeaders(
+          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "invalid", HeaderNames.CONTENT_LENGTH -> "1000")
+        )
+
+        val request  = fakeAttachDepartures("POST", body = Source.single(ByteString(CC013C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
+        val response = sut.attachMessage(departureId)(request)
+        status(response) mustBe UNSUPPORTED_MEDIA_TYPE
+        contentAsJson(response) mustBe Json.obj(
+          "code"    -> "UNSUPPORTED_MEDIA_TYPE",
+          "message" -> "Content-type header invalid is not supported!"
         )
       }
 

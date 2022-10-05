@@ -20,11 +20,12 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import uk.gov.hmrc.http.HeaderCarrier
 import v2.base.StreamTestHelpers
 import v2.base.TestActorSystem
 import v2.models.errors.ExtractionError
 import v2.models.request.MessageType
-
+import concurrent.ExecutionContext.Implicits.global
 import scala.xml.NodeSeq
 
 class MessagesXmlParsingServiceSpec
@@ -53,6 +54,7 @@ class MessagesXmlParsingServiceSpec
     <ncts:HolderOfTheTransitProcedure PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
       <identificationNumber>GB1234</identificationNumber>
     </ncts:HolderOfTheTransitProcedure>
+  implicit val hc: HeaderCarrier = HeaderCarrier()
 
   "extractMessageType and then" - {
     "if it is valid, return an appropriate Message Type" in {

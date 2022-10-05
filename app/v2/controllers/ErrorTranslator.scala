@@ -17,17 +17,11 @@
 package v2.controllers
 
 import cats.data.EitherT
-import v2.models.errors.ExtractionError.MessageTypeNotFound
-import v2.models.errors.ConversionError
-import v2.models.errors.ExtractionError
-import v2.models.errors.FailedToValidateError
-import v2.models.errors.PersistenceError
-import v2.models.errors.PresentationError
-import v2.models.errors.RouterError
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
 import v2.models.errors.FailedToValidateError.JsonSchemaFailedToValidateError
 import v2.models.errors.FailedToValidateError.UnexpectedError
 import v2.models.errors.FailedToValidateError.XmlSchemaFailedToValidateError
+import v2.models.errors._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -92,9 +86,9 @@ trait ErrorTranslator {
 
   implicit val extractionError = new Converter[ExtractionError] {
 
-    def convert(extractionError: ExtractionError): PresentationError = extractionError match {
-      case err: UnexpectedError             => PresentationError.internalServiceError(cause = err.thr)
-      case MessageTypeNotFound(messageType) => PresentationError.badRequestError(s"$messageType is not a valid message type")
+    override def convert(extractionError: ExtractionError): PresentationError = extractionError match {
+      case ExtractionError.InvalidInputType()               => PresentationError.badRequestError("Invalid Input type error")
+      case ExtractionError.MessageTypeNotFound(messageType) => PresentationError.badRequestError(s"$messageType is not a valid message type")
     }
   }
 
