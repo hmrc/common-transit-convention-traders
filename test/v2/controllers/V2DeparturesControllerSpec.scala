@@ -117,6 +117,7 @@ class V2DeparturesControllerSpec
   val mockAuditService                 = mock[AuditingService]
   val mockConversionService            = mock[ConversionService]
   val mockXmlParsingService            = mock[MessagesXmlParsingService]
+  implicit val temporaryFileCreator    = SingletonTemporaryFileCreator
 
   lazy val messageType: MessageType = MessageType.DeclarationAmendment
   lazy val auditType: AuditType     = AuditType.DeclarationAmendment
@@ -130,7 +131,6 @@ class V2DeparturesControllerSpec
 
   lazy val sut: V2DeparturesController = new V2DeparturesControllerImpl(
     Helpers.stubControllerComponents(),
-    SingletonTemporaryFileCreator,
     FakeAuthNewEnrolmentOnlyAction(),
     mockValidationService,
     mockConversionService,
@@ -379,7 +379,6 @@ class V2DeparturesControllerSpec
 
         val sut = new V2DeparturesControllerImpl(
           Helpers.stubControllerComponents(),
-          SingletonTemporaryFileCreator,
           FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
           mockValidationService,
           mockConversionService,
@@ -421,7 +420,6 @@ class V2DeparturesControllerSpec
 
         val sut = new V2DeparturesControllerImpl(
           Helpers.stubControllerComponents(),
-          SingletonTemporaryFileCreator,
           FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
           mockValidationService,
           mockConversionService,
@@ -770,7 +768,6 @@ class V2DeparturesControllerSpec
 
       val sut = new V2DeparturesControllerImpl(
         Helpers.stubControllerComponents(),
-        SingletonTemporaryFileCreator,
         FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
         mockValidationService,
         mockConversionService,
@@ -1162,7 +1159,6 @@ class V2DeparturesControllerSpec
 
         val sut = new V2DeparturesControllerImpl(
           Helpers.stubControllerComponents(),
-          SingletonTemporaryFileCreator,
           FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
           mockValidationService,
           mockConversionService,
