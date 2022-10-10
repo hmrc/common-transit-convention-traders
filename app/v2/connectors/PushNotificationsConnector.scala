@@ -16,58 +16,53 @@
 
 package v2.connectors
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
-import config.Constants
 import metrics.HasMetrics
 import metrics.MetricsKeys
-import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
-import play.api.http.Status.ACCEPTED
+import play.api.http.Status.CREATED
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
-import v2.models.EORINumber
-import v2.models.MessageId
 import v2.models.MovementId
-import v2.models.request.MessageType
+import v2.models.request.PushNotificationsAssociation
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-@ImplementedBy(classOf[RouterConnectorImpl])
-trait RouterConnector {
+@ImplementedBy(classOf[PushNotificationsConnectorImpl])
+trait PushNotificationsConnector {
 
-  def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
-    ec: ExecutionContext,
-    hc: HeaderCarrier
+  def postAssociation(movementId: MovementId, pushNotificationsAssociation: PushNotificationsAssociation)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
   ): Future[Unit]
 
 }
 
-class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig, httpClientV2: HttpClientV2)
-    extends RouterConnector
+class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClientV2: HttpClientV2, val metrics: Metrics)
+    extends PushNotificationsConnector
     with V2BaseConnector
-    with HasMetrics
-    with Logging {
+    with HasMetrics {
 
-  override def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
-    ec: ExecutionContext,
-    hc: HeaderCarrier
+  override def postAssociation(movementId: MovementId, pushNotificationsAssociation: PushNotificationsAssociation)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
   ): Future[Unit] =
-    withMetricsTimerAsync(MetricsKeys.RouterBackend.Post) {
+    withMetricsTimerAsync(MetricsKeys.PushNotificationsBacked.Post) {
       _ =>
-        val url = appConfig.routerUrl.withPath(routerRoute(eoriNumber, messageType, movementId, messageId))
+        val url = appConfig.pushNotificationsUrl.withPath(pushNotificationsRoute(movementId))
 
         httpClientV2
           .post(url"$url")
-          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code)
-          .withBody(body)
-          .executeAndExpect(ACCEPTED)
+          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
+          .withBody(Json.toJson(pushNotificationsAssociation))
+          .executeAndExpect(CREATED)
     }
+
 }

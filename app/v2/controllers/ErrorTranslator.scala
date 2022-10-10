@@ -92,7 +92,7 @@ trait ErrorTranslator {
   implicit val extractionError = new Converter[ExtractionError] {
 
     override def convert(extractionError: ExtractionError): PresentationError = extractionError match {
-      case ExtractionError.MalformedInput()                 => PresentationError.badRequestError("Input was malformed")
+      case ExtractionError.MalformedInput                   => PresentationError.badRequestError("Input was malformed")
       case ExtractionError.MessageTypeNotFound(messageType) => PresentationError.badRequestError(s"$messageType is not a valid message type")
     }
   }

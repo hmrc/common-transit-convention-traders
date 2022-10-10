@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package v2.models.errors
+package v2.models.request
 
-sealed trait ExtractionError
+import play.api.libs.json.Json
+import v2.models.BoxId
+import v2.models.ClientId
 
-object ExtractionError {
-  case object MalformedInput                          extends ExtractionError
-  case class MessageTypeNotFound(messageType: String) extends ExtractionError
+object PushNotificationsAssociation {
+  implicit val pushNotificationsAssociationFormat = Json.format[PushNotificationsAssociation]
 }
+
+case class PushNotificationsAssociation(clientId: ClientId, boxId: Option[BoxId])

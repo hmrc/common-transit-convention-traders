@@ -252,7 +252,7 @@ class V2BaseConnectorSpec
       val sut = mock[RequestBuilder]
       when(sut.execute[HttpResponse](any(), any())).thenReturn(Future.successful(response))
 
-      whenReady(sut.executeAccepted) {
+      whenReady(sut.executeAndExpect(ACCEPTED)) {
         unit => unit mustBe a[Unit]
       }
 
@@ -265,7 +265,8 @@ class V2BaseConnectorSpec
       val sut = mock[RequestBuilder]
       when(sut.execute[HttpResponse](any(), any())).thenReturn(Future.successful(response))
 
-      sut.executeAccepted
+      sut
+        .executeAndExpect(ACCEPTED)
         .map(
           _ => fail("This should have failed")
         )

@@ -25,6 +25,7 @@ import v2.base.StreamTestHelpers
 import v2.base.TestActorSystem
 import v2.models.errors.ExtractionError
 import v2.models.request.MessageType
+
 import concurrent.ExecutionContext.Implicits.global
 import scala.xml.NodeSeq
 
@@ -88,6 +89,18 @@ class XmlMessageParsingServiceSpec
       whenReady(response.value) {
         _ mustBe Left(ExtractionError.MessageTypeNotFound("HolderOfTheTransitProcedure"))
       }
+    }
+
+    "if the input is malformed, return EctractionError.MalformedInput" in {
+      val xmlParsingService = new MessagesXmlParsingServiceImpl()
+      val payload           = createStream("malformed")
+      val response =
+        xmlParsingService.extractMessageType(payload)
+
+      whenReady(response.value) {
+        r => r mustBe Left(ExtractionError.MalformedInput)
+      }
+
     }
   }
 }

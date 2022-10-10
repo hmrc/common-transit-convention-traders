@@ -71,6 +71,7 @@ class V2DeparturesControllerImpl @Inject() (
   departuresService: DeparturesService,
   routerService: RouterService,
   auditService: AuditingService,
+  pushNotificationsService: PushNotificationsService,
   messageSizeAction: MessageSizeActionProvider,
   val metrics: Metrics,
   xmlParsingService: XmlMessageParsingService,
@@ -154,6 +155,7 @@ class V2DeparturesControllerImpl @Inject() (
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
     for {
       declarationResult <- departuresService.saveDeclaration(request.eoriNumber, source).asPresentation
+      _ = pushNotificationsService.associate(declarationResult.departureId, request.headers)
       _ <- routerService
         .send(MessageType.DeclarationData, request.eoriNumber, declarationResult.departureId, declarationResult.messageId, source)
         .asPresentation

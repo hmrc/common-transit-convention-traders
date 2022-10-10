@@ -18,15 +18,20 @@ package v2.utils
 
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
+import v2.models.BoxId
+import v2.models.ClientId
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.request.PushNotificationsAssociation
+
+import scala.math.abs
 
 trait CommonGenerators {
 
   lazy val genShortUUID: Gen[String] = Gen.long.map {
     l: Long =>
-      f"${BigInt(l)}%016x"
+      f"${BigInt(abs(l))}%016x"
   }
 
   implicit lazy val arbitraryMessageId: Arbitrary[MessageId] = Arbitrary {
@@ -41,4 +46,10 @@ trait CommonGenerators {
     Gen.alphaNumStr.map(MovementId(_))
   }
 
+  implicit lazy val arbitraryPushNotificationsAssociation: Arbitrary[PushNotificationsAssociation] = Arbitrary {
+    for {
+      clientId <- Gen.alphaNumStr.map(ClientId.apply)
+      boxId    <- Gen.option(Gen.uuid.map(_.toString).map(BoxId.apply))
+    } yield PushNotificationsAssociation(clientId, boxId)
+  }
 }

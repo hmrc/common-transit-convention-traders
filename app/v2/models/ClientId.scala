@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package v2.models.errors
+package v2.models
 
-sealed trait ExtractionError
+import play.api.libs.json.Json
 
-object ExtractionError {
-  case object MalformedInput                          extends ExtractionError
-  case class MessageTypeNotFound(messageType: String) extends ExtractionError
+object ClientId {
+  implicit val clientIdFormat = Json.valueFormat[ClientId]
 }
+
+case class ClientId(value: String) extends AnyVal

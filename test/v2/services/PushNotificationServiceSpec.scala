@@ -1,0 +1,132 @@
+/*
+ * Copyright 2022 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package v2.services
+
+import config.Constants
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyString
+import org.mockito.ArgumentMatchers.{eq => eqTo}
+import org.mockito.Mockito.reset
+import org.mockito.Mockito.when
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import play.api.test.FakeHeaders
+import uk.gov.hmrc.http.HeaderCarrier
+import v2.base.CommonGenerators
+import v2.connectors.PushNotificationsConnector
+import v2.models.BoxId
+import v2.models.ClientId
+import v2.models.MovementId
+import v2.models.errors.PushNotificationError
+import v2.models.request.PushNotificationsAssociation
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+class PushNotificationServiceSpec
+    extends AnyFreeSpec
+    with Matchers
+    with OptionValues
+    with ScalaFutures
+    with MockitoSugar
+    with CommonGenerators
+    with ScalaCheckDrivenPropertyChecks
+    with BeforeAndAfterEach {
+
+  implicit val hc: HeaderCarrier = HeaderCarrier()
+
+  val mockConnector: PushNotificationsConnector = mock[PushNotificationsConnector]
+
+  val sut = new PushNotificationsServiceImpl(mockConnector)
+
+  override protected def beforeEach(): Unit =
+    reset(mockConnector)
+
+  "associate" - {
+
+    "when there is no client ID, return a left with MissingClientId" in forAll(arbitrary[MovementId]) {
+      movementId =>
+        val headers = FakeHeaders()
+
+        val result = sut.associate(movementId, headers)
+
+        whenReady(result.value) {
+          r => r mustBe Left(PushNotificationError.MissingClientId)
+        }
+    }
+
+    "when there is no box ID, assert that the association has no box ID and return a right" in forAll(arbitrary[MovementId], Gen.alphaNumStr) {
+      (movementId, clientId) =>
+        val headers = FakeHeaders(Seq(Constants.XClientIdHeader -> clientId))
+
+        val expectedAssociation = PushNotificationsAssociation(ClientId(clientId), None)
+
+        when(mockConnector.postAssociation(MovementId(anyString()), any())(any(), any()))
+          .thenReturn(Future.failed(new Exception()))
+        when(mockConnector.postAssociation(MovementId(anyString()), eqTo(expectedAssociation))(any(), any()))
+          .thenReturn(Future.successful(())) // last wins
+
+        val result = sut.associate(movementId, headers)
+        whenReady(result.value) {
+          r => r mustBe Right(())
+        }
+    }
+
+    "when there is a box ID, assert that the association has a box ID and return a right" in forAll(
+      arbitrary[MovementId],
+      Gen.alphaNumStr,
+      Gen.uuid.map(_.toString)
+    ) {
+      (movementId, clientId, boxId) =>
+        val headers = FakeHeaders(Seq(Constants.XClientIdHeader -> clientId, Constants.XClientBoxIdHeader -> boxId))
+
+        val expectedAssociation = PushNotificationsAssociation(ClientId(clientId), Some(BoxId(boxId)))
+
+        when(mockConnector.postAssociation(MovementId(anyString()), any())(any(), any()))
+          .thenReturn(Future.failed(new Exception()))
+        when(mockConnector.postAssociation(MovementId(anyString()), eqTo(expectedAssociation))(any(), any()))
+          .thenReturn(Future.successful(())) // last wins
+
+        val result = sut.associate(movementId, headers)
+        whenReady(result.value) {
+          r => r mustBe Right(())
+        }
+    }
+
+    "when an error occurs, return a Left of Unexpected" in forAll(arbitrary[MovementId], Gen.alphaNumStr, Gen.uuid.map(_.toString)) {
+      (movementId, clientId, boxId) =>
+        val headers = FakeHeaders(Seq(Constants.XClientIdHeader -> clientId, Constants.XClientBoxIdHeader -> boxId))
+
+        val expectedException = new Exception()
+
+        when(mockConnector.postAssociation(MovementId(anyString()), any())(any(), any())).thenReturn(Future.failed(expectedException))
+
+        val result = sut.associate(movementId, headers)
+        whenReady(result.value) {
+          r => r mustBe Left(PushNotificationError.UnexpectedError(thr = Some(expectedException)))
+        }
+    }
+  }
+
+}

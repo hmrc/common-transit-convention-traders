@@ -26,6 +26,7 @@ import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
 import play.api.http.HeaderNames
+import play.api.http.Status.ACCEPTED
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -56,7 +57,7 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, appConfig: AppC
           .post(url"$url")
           .addHeaders(HeaderNames.CONTENT_TYPE -> contentType)
           .withBody(source)
-          .executeAccepted
+          .executeAndExpect(ACCEPTED)
     }
 
 }
