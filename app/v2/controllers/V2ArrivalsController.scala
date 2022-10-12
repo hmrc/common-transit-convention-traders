@@ -80,8 +80,8 @@ class V2ArrivalsControllerImpl @Inject() (
           _ <- validationService.validateXml(MessageType.ArrivalNotification, request.body).asPresentation
           _ = auditService.audit(AuditType.ArrivalNotification, request.body, MimeTypes.XML)
 
-          declarationResult <- persistAndSend(request.body)
-        } yield declarationResult).fold[Result](
+          arrivalNotificationResult <- persistAndSend(request.body)
+        } yield arrivalNotificationResult).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           result => Accepted(HateoasArrivalNotificationResponse(result.arrivalId))
         )
