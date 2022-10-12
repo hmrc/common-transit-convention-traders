@@ -39,6 +39,7 @@ object AuditType {
   case object PresentationNotificationForThePreLodgedDecision extends AuditType("PresentationNotificationForThePreLodgedDecision")
   case object FunctionalNack                                  extends AuditType("FunctionalNack")
   case object PositiveAcknowledge                             extends AuditType("PositiveAcknowledge")
+  case object ArrivalNotification                             extends AuditType("ArrivalNotification")
 
   val values: Seq[AuditType] = Seq(
     DeclarationData,

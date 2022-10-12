@@ -21,8 +21,8 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
-import v2.models.DepartureId
 import v2.models.EORINumber
+import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.responses.DepartureResponse
 
@@ -35,7 +35,7 @@ class HateosDepartureResponseSpec extends AnyFreeSpec with Matchers with ScalaCh
   private val dateTime = OffsetDateTime.of(2022, 8, 15, 11, 45, 0, 0, ZoneOffset.UTC)
 
   "with a valid departure response, create a valid HateoasDepartureResponse" in {
-    val departureId = DepartureId(hexId.sample.get)
+    val departureId = MovementId(hexId.sample.get)
 
     val response = DepartureResponse(
       _id = departureId,

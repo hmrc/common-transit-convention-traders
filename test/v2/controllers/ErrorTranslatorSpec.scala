@@ -28,7 +28,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import v2.base.CommonGenerators
 import v2.models.MessageId
-import v2.models.DepartureId
+import v2.models.MovementId
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.JsonValidationError
 import v2.models.errors.PersistenceError
@@ -131,7 +131,7 @@ class ErrorTranslatorSpec
 
   "Persistence Error" - {
     "a DepartureNotFound error returns a NOT_FOUND" in {
-      val departureId = arbitrary[DepartureId].sample.value
+      val departureId = arbitrary[MovementId].sample.value
 
       val input  = PersistenceError.DepartureNotFound(departureId)
       val output = PresentationError.notFoundError(s"Departure movement with ID ${departureId.value} was not found")
@@ -140,7 +140,7 @@ class ErrorTranslatorSpec
     }
 
     "a MessageNotFound error returns a NOT_FOUND" in {
-      val departureId = arbitrary[DepartureId].sample.value
+      val departureId = arbitrary[MovementId].sample.value
       val messageId   = arbitrary[MessageId].sample.value
 
       val input  = PersistenceError.MessageNotFound(departureId, messageId)

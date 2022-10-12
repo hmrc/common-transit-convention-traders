@@ -39,8 +39,8 @@ import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models.AuditType
-import v2.models.DepartureId
 import v2.models.MessageId
+import v2.models.MovementId
 import v2.models.errors.PresentationError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
@@ -53,11 +53,11 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[V2DeparturesControllerImpl])
 trait V2DeparturesController {
   def submitDeclaration(): Action[Source[ByteString, _]]
-  def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent]
-  def getMessageIds(departureId: DepartureId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
-  def getDeparture(departureId: DepartureId): Action[AnyContent]
+  def getMessage(departureId: MovementId, messageId: MessageId): Action[AnyContent]
+  def getMessageIds(departureId: MovementId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
+  def getDeparture(departureId: MovementId): Action[AnyContent]
   def getDeparturesForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
-  def attachMessage(departureId: DepartureId): Action[Source[ByteString, _]]
+  def attachMessage(departureId: MovementId): Action[Source[ByteString, _]]
 }
 
 @Singleton
@@ -156,7 +156,7 @@ class V2DeparturesControllerImpl @Inject() (
         .asPresentation
     } yield declarationResult
 
-  def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent] =
+  def getMessage(departureId: MovementId, messageId: MessageId): Action[AnyContent] =
     authActionNewEnrolmentOnly.async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -171,7 +171,7 @@ class V2DeparturesControllerImpl @Inject() (
 
     }
 
-  def getMessageIds(departureId: DepartureId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
+  def getMessageIds(departureId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
     authActionNewEnrolmentOnly.async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -185,7 +185,7 @@ class V2DeparturesControllerImpl @Inject() (
           )
     }
 
-  def getDeparture(departureId: DepartureId): Action[AnyContent] =
+  def getDeparture(departureId: MovementId): Action[AnyContent] =
     authActionNewEnrolmentOnly.async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -213,12 +213,12 @@ class V2DeparturesControllerImpl @Inject() (
           )
     }
 
-  def attachMessage(departureId: DepartureId): Action[Source[ByteString, _]] =
+  def attachMessage(departureId: MovementId): Action[Source[ByteString, _]] =
     contentTypeRoute {
       case Some(MimeTypes.XML) => attachMessageXML(departureId)
     }
 
-  def attachMessageXML(departureId: DepartureId): Action[Source[ByteString, _]] =
+  def attachMessageXML(departureId: MovementId): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen messageSizeAction()).stream {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -234,7 +234,7 @@ class V2DeparturesControllerImpl @Inject() (
         )
     }
 
-  private def updateAndSendDeparture(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
+  private def updateAndSendDeparture(departureId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     request: AuthenticatedRequest[Source[ByteString, _]]
   ) =

@@ -31,9 +31,9 @@ import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.client.RequestBuilder
 import v2.models.AuditType
-import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
+import v2.models.MovementId
 import v2.models.request.MessageType
 
 import scala.concurrent.ExecutionContext
@@ -49,24 +49,27 @@ trait V2BaseConnector extends HttpErrorFunctions {
   def movementsPostDepartureDeclaration(eoriNumber: EORINumber): UrlPath =
     UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/")
 
-  def movementsGetDepartureMessage(eoriNumber: EORINumber, departureId: DepartureId, messageId: MessageId): UrlPath =
-    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/${messageId.value}/")
+  def movementsGetDepartureMessage(eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/${movementId.value}/messages/${messageId.value}/")
 
-  def movementsGetDepartureMessageIds(eoriNumber: EORINumber, departureId: DepartureId): UrlPath =
-    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/")
+  def movementsGetDepartureMessageIds(eoriNumber: EORINumber, movementId: MovementId): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/${movementId.value}/messages/")
 
-  def movementsGetDeparture(eoriNumber: EORINumber, departureId: DepartureId): UrlPath =
-    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/${departureId.value}/")
+  def movementsGetDeparture(eoriNumber: EORINumber, movementId: MovementId): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/${movementId.value}/")
 
   def movementsGetAllDepartures(eoriNumber: EORINumber): UrlPath =
     UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/")
 
-  def movementsPostDeparture(departureId: DepartureId): UrlPath =
-    UrlPath.parse(s"$movementsBaseRoute/traders/movements/${departureId.value}/messages/")
+  def movementsPostDeparture(movementId: MovementId): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/movements/${movementId.value}/messages/")
+
+  def movementsPostArrivalNotification(eoriNumber: EORINumber): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/arrivals/")
 
   def routerBaseRoute: String = "/transit-movements-router"
 
-  def routerRoute(eoriNumber: EORINumber, messageType: MessageType, movementId: DepartureId, messageId: MessageId): UrlPath =
+  def routerRoute(eoriNumber: EORINumber, messageType: MessageType, movementId: MovementId, messageId: MessageId): UrlPath =
     UrlPath.parse(s"$routerBaseRoute/traders/${eoriNumber.value}/movements/${messageType.movementType}/${movementId.value}/messages/${messageId.value}/")
 
   def auditingBaseRoute: String = "/transit-movements-auditing"

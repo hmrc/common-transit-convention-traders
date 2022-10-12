@@ -110,7 +110,7 @@ class ArrivalMovementControllerSpec
   def fakeRequestArrivals[A](
     method: String,
     headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")),
-    uri: String = routes.ArrivalMovementController.createArrivalNotification().url,
+    uri: String = routing.routes.ArrivalsRouter.createArrivalNotification().url,
     body: A
   ) =
     FakeRequest(method = method, uri = uri, headers, body = body)

@@ -43,9 +43,9 @@ import uk.gov.hmrc.http.client.RequestBuilder
 import v2.base.CommonGenerators
 import v2.base.TestActorSystem
 import v2.models.AuditType
-import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
+import v2.models.MovementId
 import v2.models.request.MessageType
 
 import scala.concurrent.ExecutionContext.Implicits._
@@ -78,7 +78,7 @@ class V2BaseConnectorSpec
 
   "the get movement IDs URL on localhost for a given EORI, departure ID and no filter should be as expected" in {
     val eori        = arbitrary[EORINumber].sample.value
-    val departureId = arbitrary[DepartureId].sample.value
+    val departureId = arbitrary[MovementId].sample.value
     val urlPath     = Harness.movementsGetDepartureMessageIds(eori, departureId)
 
     urlPath.toString() mustBe s"/transit-movements/traders/${eori.value}/movements/departures/${departureId.value}/messages/"
@@ -86,7 +86,7 @@ class V2BaseConnectorSpec
 
   "the get single departure movement URL on localhost for a given EORI, departure ID and message ID should be as expected" in {
     val eori        = arbitrary[EORINumber].sample.value
-    val departureId = arbitrary[DepartureId].sample.value
+    val departureId = arbitrary[MovementId].sample.value
     val messageId   = arbitrary[MessageId].sample.value
     val urlPath     = Harness.movementsGetDepartureMessage(eori, departureId, messageId)
 
@@ -95,7 +95,7 @@ class V2BaseConnectorSpec
 
   "the get single departure URL on localhost for a given EORI or departure ID should be as expected" in {
     val eori        = arbitrary[EORINumber].sample.value
-    val departureId = arbitrary[DepartureId].sample.value
+    val departureId = arbitrary[MovementId].sample.value
     val urlPath     = Harness.movementsGetDeparture(eori, departureId)
 
     urlPath.toString() mustBe s"/transit-movements/traders/${eori.value}/movements/departures/${departureId.value}/"
@@ -111,7 +111,7 @@ class V2BaseConnectorSpec
   "the router message submission URL on localhost for a given EORI, departure ID or message ID should be as expected" in forAll(arbitrary[MessageType]) {
     messageType =>
       val eori        = arbitrary[EORINumber].sample.value
-      val departureId = arbitrary[DepartureId].sample.value
+      val departureId = arbitrary[MovementId].sample.value
       val messageId   = arbitrary[MessageId].sample.value
       val urlPath     = Harness.routerRoute(eori, messageType, departureId, messageId)
       urlPath
@@ -133,10 +133,17 @@ class V2BaseConnectorSpec
   }
 
   "the post departure movements URL on localhost for a given departureId should be as expected" in {
-    val departureId = arbitrary[DepartureId].sample.value
+    val departureId = arbitrary[MovementId].sample.value
     val urlPath     = Harness.movementsPostDeparture(departureId)
 
     urlPath.toString() mustBe s"/transit-movements/traders/movements/${departureId.value}/messages/"
+  }
+
+  "the post arrival notification URL on localhost for a given EORI should be as expected" in {
+    val eori    = arbitrary[EORINumber].sample.value
+    val urlPath = Harness.movementsPostArrivalNotification(eori)
+
+    urlPath.toString() mustBe s"/transit-movements/traders/${eori.value}/movements/arrivals/"
   }
 
   "HttpResponseHelpers" - new V2BaseConnector() {

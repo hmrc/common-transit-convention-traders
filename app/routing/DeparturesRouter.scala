@@ -30,7 +30,7 @@ import play.api.mvc.ControllerComponents
 import v2.controllers.V2DeparturesController
 import v2.controllers.stream.StreamingParsers
 import v2.models.Bindings._
-import v2.models.{DepartureId => V2DepartureId}
+import v2.models.{MovementId => V2DepartureId}
 import v2.models.{MessageId => V2MessageId}
 
 import java.time.OffsetDateTime

@@ -34,6 +34,10 @@ sealed abstract class DepartureMessageType(val code: String, val rootNode: Strin
   val movementType: String = "departures"
 }
 
+sealed abstract class ArrivalMessageType(val code: String, val rootNode: String, val auditType: AuditType) extends MessageType {
+  val movementType: String = "arrivals"
+}
+
 object MessageType {
   case object AmendmentAcceptance            extends DepartureMessageType("IE004", "CC004C", AuditType.AmendmentAcceptance)
   case object InvalidationDecision           extends DepartureMessageType("IE009", "CC009C", AuditType.InvalidationDecision)
@@ -55,6 +59,8 @@ object MessageType {
       extends DepartureMessageType("IE170", "CC170C", AuditType.PresentationNotificationForThePreLodgedDecision)
   case object FunctionalNack      extends DepartureMessageType("IE906", "CC906C", AuditType.FunctionalNack)      // TODO: This is also an arrival message
   case object PositiveAcknowledge extends DepartureMessageType("IE928", "CC928C", AuditType.PositiveAcknowledge) // TODO: This is also an arrival message
+
+  case object ArrivalNotification extends ArrivalMessageType("IE007", "CC007C", AuditType.ArrivalNotification)
 
   val messageTypeSentByDepartureTrader = Seq(
     DeclarationAmendment,
@@ -79,7 +85,11 @@ object MessageType {
     FunctionalNack,
     PositiveAcknowledge
   )
-  val values = messageTypeSentByDepartureTrader ++ messageTypeSentToDepartureTrader
+
+  val arrivalValues = Seq(
+    ArrivalNotification
+  )
+  val values = messageTypeSentByDepartureTrader ++ messageTypeSentToDepartureTrader ++ arrivalValues
 
   def find(code: String): Option[MessageType] =
     values.find(_.code == code)

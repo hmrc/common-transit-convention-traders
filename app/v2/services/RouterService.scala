@@ -25,7 +25,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import v2.connectors.RouterConnector
 import v2.models.EORINumber
 import v2.models.MessageId
-import v2.models.DepartureId
+import v2.models.MovementId
 import v2.models.errors.RouterError
 import v2.models.request.MessageType
 
@@ -36,7 +36,7 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[RouterServiceImpl])
 trait RouterService {
 
-  def send(messageType: MessageType, eoriNumber: EORINumber, movementId: DepartureId, messageId: MessageId, body: Source[ByteString, _])(implicit
+  def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): EitherT[Future, RouterError, Unit]
@@ -45,7 +45,7 @@ trait RouterService {
 
 class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends RouterService {
 
-  def send(messageType: MessageType, eoriNumber: EORINumber, movementId: DepartureId, messageId: MessageId, body: Source[ByteString, _])(implicit
+  def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): EitherT[Future, RouterError, Unit] =
@@ -60,5 +60,4 @@ class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends Rou
             Left(RouterError.UnexpectedError(thr = Some(e)))
         }
     )
-
 }

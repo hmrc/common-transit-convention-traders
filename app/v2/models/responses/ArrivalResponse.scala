@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package v2.models.responses.hateoas
+package v2.models.responses
 
-import play.api.libs.json.JsObject
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
+import v2.models.MessageId
 import v2.models.MovementId
 
-object HateoasDepartureDeclarationResponse extends HateoasResponse {
-
-  def apply(departureId: MovementId): JsObject =
-    Json.obj(
-      "_links" -> Json.obj(
-        "self"     -> Json.obj("href" -> departureUri(departureId)),
-        "messages" -> Json.obj("href" -> messageIdsUri(departureId, None))
-      )
-    )
+object ArrivalResponse {
+  implicit lazy val arrivalResponseFormat: OFormat[ArrivalResponse] = Json.format[ArrivalResponse]
 }
+
+case class ArrivalResponse(arrivalId: MovementId, messageId: MessageId)

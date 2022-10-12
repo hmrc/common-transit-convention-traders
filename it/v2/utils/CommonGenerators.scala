@@ -18,9 +18,9 @@ package v2.utils
 
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
-import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
+import v2.models.MovementId
 
 trait CommonGenerators {
 
@@ -29,16 +29,16 @@ trait CommonGenerators {
       f"${BigInt(l)}%016x"
   }
 
-  implicit lazy val arbitraryDepartureId: Arbitrary[DepartureId] = Arbitrary {
-    genShortUUID.map(DepartureId(_))
-  }
-
   implicit lazy val arbitraryMessageId: Arbitrary[MessageId] = Arbitrary {
     genShortUUID.map(MessageId(_))
   }
 
   implicit lazy val arbitraryEORINumber: Arbitrary[EORINumber] = Arbitrary {
     Gen.alphaNumStr.map(EORINumber(_))
+  }
+
+  implicit lazy val arbitraryMovementId: Arbitrary[MovementId] = Arbitrary {
+    Gen.alphaNumStr.map(MovementId(_))
   }
 
 }

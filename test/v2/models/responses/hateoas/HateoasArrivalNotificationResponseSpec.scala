@@ -20,24 +20,23 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import v2.base.CommonGenerators
-import v2.models.MessageId
 import v2.models.MovementId
 
-class HateoasDepartureUpdateMovementResponseSpec extends AnyFreeSpec with Matchers with OptionValues with CommonGenerators {
+class HateoasArrivalNotificationResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with OptionValues with CommonGenerators {
 
-  "with a valid departure and message response create a valid HateoasDepartureUpdateMovementResponse" in {
-    val departureId = arbitrary[MovementId].sample.value
-    val messageId   = arbitrary[MessageId].sample.value
-    val actual      = HateoasDepartureUpdateMovementResponse(departureId, messageId)
+  "with a valid message response, create a valid HateoasArrivalNotificationResponse" in {
+    val movementId = arbitrary[MovementId].sample.value
+    val actual     = HateoasArrivalNotificationResponse(movementId)
     val expected = Json.obj(
       "_links" -> Json.obj(
-        "departure" -> Json.obj(
-          "href" -> s"/customs/transits/movements/departures/${departureId.value}"
-        ),
         "self" -> Json.obj(
-          "href" -> s"/customs/transits/movements/departures/${departureId.value}/messages/${messageId.value}"
+          "href" -> s"/customs/transits/movements/arrivals/${movementId.value}"
+        ),
+        "messages" -> Json.obj(
+          "href" -> s"/customs/transits/movements/arrivals/${movementId.value}/messages"
         )
       )
     )

@@ -121,7 +121,7 @@ class V2DeparturesControllerSpec
 
   lazy val messageType: MessageType = MessageType.DeclarationAmendment
   lazy val auditType: AuditType     = AuditType.DeclarationAmendment
-  lazy val departureId              = DepartureId("123")
+  lazy val departureId              = MovementId("123")
 
   lazy val messageDataEither: EitherT[Future, ExtractionError, MessageType] =
     EitherT.rightT(messageType)
@@ -173,7 +173,7 @@ class V2DeparturesControllerSpec
       .thenAnswer {
         invocation: InvocationOnMock =>
           // we're using Mockito, so don't use AnyVal class stuff
-          if (invocation.getArgument(0, classOf[String]) == "id") EitherT.rightT(DeclarationResponse(DepartureId("123"), MessageId("456")))
+          if (invocation.getArgument(0, classOf[String]) == "id") EitherT.rightT(DeclarationResponse(MovementId("123"), MessageId("456")))
           else EitherT.leftT(PersistenceError.UnexpectedError(None))
       }
 
@@ -182,7 +182,7 @@ class V2DeparturesControllerSpec
       mockRouterService.send(
         any[String].asInstanceOf[MessageType],
         any[String].asInstanceOf[EORINumber],
-        any[String].asInstanceOf[DepartureId],
+        any[String].asInstanceOf[MovementId],
         any[String].asInstanceOf[MessageId],
         any[Source[ByteString, _]]
       )(any[ExecutionContext], any[HeaderCarrier])
@@ -275,12 +275,12 @@ class V2DeparturesControllerSpec
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe ACCEPTED
 
-        contentAsJson(result) mustBe Json.toJson(HateoasDepartureDeclarationResponse(DepartureId("123")))
+        contentAsJson(result) mustBe Json.toJson(HateoasDepartureDeclarationResponse(MovementId("123")))
 
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
         verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
         verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
-        verify(mockRouterService, times(1)).send(eqTo(MessageType.DeclarationData), EORINumber(any()), DepartureId(any()), MessageId(any()), any())(
+        verify(mockRouterService, times(1)).send(eqTo(MessageType.DeclarationData), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
           any(),
           any()
         )
@@ -316,13 +316,13 @@ class V2DeparturesControllerSpec
             status(result) mustBe ACCEPTED
 
             // the response format is tested in HateoasDepartureDeclarationResponseSpec
-            contentAsJson(result) mustBe Json.toJson(HateoasDepartureDeclarationResponse(DepartureId("123")))
+            contentAsJson(result) mustBe Json.toJson(HateoasDepartureDeclarationResponse(MovementId("123")))
 
             verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
             verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
             verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
             verify(mockRouterService, times(1))
-              .send(eqTo(MessageType.DeclarationData), EORINumber(any()), DepartureId(any()), MessageId(any()), any())(any(), any())
+              .send(eqTo(MessageType.DeclarationData), EORINumber(any()), MovementId(any()), MessageId(any()), any())(any(), any())
           }
       }
 
@@ -416,7 +416,7 @@ class V2DeparturesControllerSpec
         when(
           mockDeparturesPersistenceService
             .saveDeclaration(any[String].asInstanceOf[EORINumber], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-        ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, DeclarationResponse](DeclarationResponse(DepartureId("123"), MessageId("456")))))
+        ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, DeclarationResponse](DeclarationResponse(MovementId("123"), MessageId("456")))))
 
         val sut = new V2DeparturesControllerImpl(
           Helpers.stubControllerComponents(),
@@ -681,7 +681,7 @@ class V2DeparturesControllerSpec
           .thenAnswer(
             _ =>
               EitherT.rightT(
-                DeclarationResponse(DepartureId("123"), MessageId("456"))
+                DeclarationResponse(MovementId("123"), MessageId("456"))
               )
           )
 
@@ -689,7 +689,7 @@ class V2DeparturesControllerSpec
           mockRouterService.send(
             eqTo(MessageType.DeclarationData),
             any[String].asInstanceOf[EORINumber],
-            any[String].asInstanceOf[DepartureId],
+            any[String].asInstanceOf[MovementId],
             any[String].asInstanceOf[MessageId],
             any[Source[ByteString, _]]
           )(any[ExecutionContext], any[HeaderCarrier])
@@ -709,7 +709,7 @@ class V2DeparturesControllerSpec
         verify(mockRouterService).send(
           eqTo(MessageType.DeclarationData),
           any[String].asInstanceOf[EORINumber],
-          any[String].asInstanceOf[DepartureId],
+          any[String].asInstanceOf[MovementId],
           any[String].asInstanceOf[MessageId],
           any[Source[ByteString, _]]
         )(any[ExecutionContext], any[HeaderCarrier])
@@ -764,7 +764,7 @@ class V2DeparturesControllerSpec
       when(
         mockDeparturesPersistenceService
           .saveDeclaration(any[String].asInstanceOf[EORINumber], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-      ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, DeclarationResponse](DeclarationResponse(DepartureId("123"), MessageId("456")))))
+      ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, DeclarationResponse](DeclarationResponse(MovementId("123"), MessageId("456")))))
 
       val sut = new V2DeparturesControllerImpl(
         Helpers.stubControllerComponents(),
@@ -802,27 +802,27 @@ class V2DeparturesControllerSpec
           )
           .getOrElse("without")} a date filter" in forAll(Gen.listOfN(3, arbitrary[MessageSummary])) {
           messageResponse =>
-            when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
+            when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), MovementId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
               .thenAnswer(
                 _ => EitherT.rightT(messageResponse)
               )
 
             val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-            val result  = sut.getMessageIds(DepartureId("0123456789abcdef"), dateTime)(request)
+            val result  = sut.getMessageIds(MovementId("0123456789abcdef"), dateTime)(request)
 
             status(result) mustBe OK
-            contentAsJson(result) mustBe Json.toJson(HateoasDepartureMessageIdsResponse(DepartureId("0123456789abcdef"), messageResponse, dateTime))
+            contentAsJson(result) mustBe Json.toJson(HateoasDepartureMessageIdsResponse(MovementId("0123456789abcdef"), messageResponse, dateTime))
         }
     }
 
     "when no departure is found" in {
-      when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), MovementId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
-          _ => EitherT.leftT(PersistenceError.DepartureNotFound(DepartureId("0123456789abcdef")))
+          _ => EitherT.leftT(PersistenceError.DepartureNotFound(MovementId("0123456789abcdef")))
         )
 
       val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-      val result  = sut.getMessageIds(DepartureId("0123456789abcdef"), None)(request)
+      val result  = sut.getMessageIds(MovementId("0123456789abcdef"), None)(request)
 
       status(result) mustBe NOT_FOUND
       contentAsJson(result) mustBe Json.obj(
@@ -832,13 +832,13 @@ class V2DeparturesControllerSpec
     }
 
     "when an unknown error occurs" in {
-      when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), DepartureId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), MovementId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
           _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
         )
 
       val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-      val result  = sut.getMessageIds(DepartureId("0123456789abcdef"), None)(request)
+      val result  = sut.getMessageIds(MovementId("0123456789abcdef"), None)(request)
 
       status(result) mustBe INTERNAL_SERVER_ERROR
       contentAsJson(result) mustBe Json.obj(
@@ -860,26 +860,26 @@ class V2DeparturesControllerSpec
         MessageType.DeclarationData,
         Some("<test></test>")
       )
-      when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), DepartureId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
           _ => EitherT.rightT(messageSummary)
         )
 
       val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-      val result  = sut.getMessage(DepartureId("0123456789abcdef"), MessageId("0123456789abcdef"))(request)
+      val result  = sut.getMessage(MovementId("0123456789abcdef"), MessageId("0123456789abcdef"))(request)
 
       status(result) mustBe OK
-      contentAsJson(result) mustBe Json.toJson(HateoasDepartureMessageResponse(DepartureId("0123456789abcdef"), MessageId("0123456789abcdef"), messageSummary))
+      contentAsJson(result) mustBe Json.toJson(HateoasDepartureMessageResponse(MovementId("0123456789abcdef"), MessageId("0123456789abcdef"), messageSummary))
     }
 
     "when no message is found" in {
-      when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), DepartureId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
-          _ => EitherT.leftT(PersistenceError.MessageNotFound(DepartureId("0123456789abcdef"), MessageId("0123456789abcdef")))
+          _ => EitherT.leftT(PersistenceError.MessageNotFound(MovementId("0123456789abcdef"), MessageId("0123456789abcdef")))
         )
 
       val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-      val result  = sut.getMessage(DepartureId("0123456789abcdef"), MessageId("0123456789abcdef"))(request)
+      val result  = sut.getMessage(MovementId("0123456789abcdef"), MessageId("0123456789abcdef"))(request)
 
       status(result) mustBe NOT_FOUND
       contentAsJson(result) mustBe Json.obj(
@@ -889,13 +889,13 @@ class V2DeparturesControllerSpec
     }
 
     "when an unknown error occurs" in {
-      when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), DepartureId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
           _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
         )
 
       val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-      val result  = sut.getMessage(DepartureId("0123456789abcdef"), MessageId("0123456789abcdef"))(request)
+      val result  = sut.getMessage(MovementId("0123456789abcdef"), MessageId("0123456789abcdef"))(request)
 
       status(result) mustBe INTERNAL_SERVER_ERROR
       contentAsJson(result) mustBe Json.obj(
@@ -913,7 +913,7 @@ class V2DeparturesControllerSpec
       val dateTime            = OffsetDateTime.of(2022, 8, 4, 11, 34, 42, 0, ZoneOffset.UTC)
 
       val departureResponse1 = DepartureResponse(
-        _id = arbitrary[DepartureId].sample.value,
+        _id = arbitrary[MovementId].sample.value,
         enrollmentEORINumber = enrolmentEORINumber,
         movementEORINumber = arbitrary[EORINumber].sample.value,
         movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
@@ -922,7 +922,7 @@ class V2DeparturesControllerSpec
       )
 
       val departureResponse2 = DepartureResponse(
-        _id = arbitrary[DepartureId].sample.value,
+        _id = arbitrary[MovementId].sample.value,
         enrollmentEORINumber = enrolmentEORINumber,
         movementEORINumber = arbitrary[EORINumber].sample.value,
         movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
@@ -1002,7 +1002,7 @@ class V2DeparturesControllerSpec
     "should return ok with json body of departure" in forAll(
       arbitrary[EORINumber],
       arbitrary[EORINumber],
-      arbitrary[DepartureId],
+      arbitrary[MovementId],
       arbitrary[MovementReferenceNumber]
     ) {
       (enrollmentEori, movementEori, departureId, mrn) =>
@@ -1016,7 +1016,7 @@ class V2DeparturesControllerSpec
           createdTime
         )
 
-        when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), DepartureId(any()))(any(), any()))
+        when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), MovementId(any()))(any(), any()))
           .thenAnswer(
             _ => EitherT.rightT(departureResponse)
           )
@@ -1045,13 +1045,13 @@ class V2DeparturesControllerSpec
         )
     }
 
-    "should return departure not found if persistence service returns 404" in forAll(arbitrary[DepartureId]) {
+    "should return departure not found if persistence service returns 404" in forAll(arbitrary[MovementId]) {
       departureId =>
         val FIRST_INVOCATION_ARGUMENT = 1
-        when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), DepartureId(any()))(any(), any()))
+        when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), MovementId(any()))(any(), any()))
           .thenAnswer {
             inv =>
-              val d = DepartureId(inv.getArgument[String](FIRST_INVOCATION_ARGUMENT))
+              val d = MovementId(inv.getArgument[String](FIRST_INVOCATION_ARGUMENT))
               EitherT.leftT(PersistenceError.DepartureNotFound(d))
           }
 
@@ -1066,9 +1066,9 @@ class V2DeparturesControllerSpec
         status(result) mustBe NOT_FOUND
     }
 
-    "should return unexpected error for all other errors" in forAll(arbitrary[DepartureId]) {
+    "should return unexpected error for all other errors" in forAll(arbitrary[MovementId]) {
       departureId =>
-        when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), DepartureId(any()))(any(), any()))
+        when(mockDeparturesPersistenceService.getDeparture(EORINumber(any()), MovementId(any()))(any(), any()))
           .thenAnswer {
             _ =>
               EitherT.leftT(PersistenceError.UnexpectedError(None))
@@ -1106,7 +1106,7 @@ class V2DeparturesControllerSpec
 
         when(
           mockDeparturesPersistenceService
-            .updateDeparture(any[String].asInstanceOf[DepartureId], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
+            .updateDeparture(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
               any[HeaderCarrier],
               any[ExecutionContext]
             )
@@ -1120,8 +1120,8 @@ class V2DeparturesControllerSpec
 
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationAmendment), any(), eqTo(MimeTypes.XML))(any(), any())
         verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
-        verify(mockDeparturesPersistenceService, times(1)).updateDeparture(DepartureId(any()), any(), any())(any(), any())
-        verify(mockRouterService, times(1)).send(eqTo(MessageType.DeclarationAmendment), EORINumber(any()), DepartureId(any()), MessageId(any()), any())(
+        verify(mockDeparturesPersistenceService, times(1)).updateDeparture(MovementId(any()), any(), any())(any(), any())
+        verify(mockRouterService, times(1)).send(eqTo(MessageType.DeclarationAmendment), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
           any(),
           any()
         )
@@ -1151,7 +1151,7 @@ class V2DeparturesControllerSpec
           )
         when(
           mockDeparturesPersistenceService
-            .updateDeparture(any[String].asInstanceOf[DepartureId], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
+            .updateDeparture(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
               any[HeaderCarrier],
               any[ExecutionContext]
             )

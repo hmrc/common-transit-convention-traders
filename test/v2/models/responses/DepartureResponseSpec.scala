@@ -22,8 +22,8 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
-import v2.models.DepartureId
 import v2.models.EORINumber
+import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 
 import java.time.OffsetDateTime
@@ -35,7 +35,7 @@ class DepartureResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDri
   private val dateTime = OffsetDateTime.of(2022, 8, 15, 11, 30, 0, 0, ZoneOffset.UTC)
 
   "when DepartureResponse is serialized, return an appropriate JsObject" in {
-    val departureId = DepartureId(hexId.sample.get)
+    val departureId = MovementId(hexId.sample.get)
 
     val actual = DepartureResponse.departureResponseFormat.writes(
       DepartureResponse(
@@ -60,7 +60,7 @@ class DepartureResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDri
   }
 
   "when an appropriate JsObject is deserialized, return a DepartureResponse" in {
-    val departureId = DepartureId(hexId.sample.get)
+    val departureId = MovementId(hexId.sample.get)
 
     val expected =
       DepartureResponse(

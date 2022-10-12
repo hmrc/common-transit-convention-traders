@@ -25,21 +25,21 @@ import play.api.libs.json.Json
 import v2.models.MessageId
 import v2.models.MovementId
 
-class DeclarationResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class ArrivalResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   private val gen = Gen.listOfN(10, Gen.alphaChar).map(_.mkString)
 
   "when MessageID is serialized, return an appropriate JsObject" in forAll(gen, gen) {
     (movement, message) =>
-      val actual   = DeclarationResponse.declarationResponseFormat.writes(DeclarationResponse(MovementId(movement), MessageId(message)))
-      val expected = Json.obj("departureId" -> movement, "messageId" -> message)
+      val actual   = ArrivalResponse.arrivalResponseFormat.writes(ArrivalResponse(MovementId(movement), MessageId(message)))
+      val expected = Json.obj("arrivalId" -> movement, "messageId" -> message)
       actual mustBe expected
   }
 
   "when an appropriate JsObject is deserialized, return a MessageId" in forAll(gen, gen) {
     (movement, message) =>
-      val actual   = DeclarationResponse.declarationResponseFormat.reads(Json.obj("departureId" -> movement, "messageId" -> message))
-      val expected = DeclarationResponse(MovementId(movement), MessageId(message))
+      val actual   = ArrivalResponse.arrivalResponseFormat.reads(Json.obj("arrivalId" -> movement, "messageId" -> message))
+      val expected = ArrivalResponse(MovementId(movement), MessageId(message))
       actual mustBe JsSuccess(expected)
   }
 

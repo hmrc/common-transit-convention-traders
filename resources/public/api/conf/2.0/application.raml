@@ -373,3 +373,39 @@ traits:
                         description: The requested message does not exist, has been archived, or is not available to the EORI number
                         value:
                           code: NOT_FOUND
+  /arrivals:
+    post:
+      displayName: Send an arrival notification message
+      description: |
+        Notify the Customs Office of Destination that a transit movement has arrived at its final destination.
+
+        This request is also called an ‘Arrival Notification’ E_ARR_NOT (IE007) message.
+
+        A successful response will contain a URI and an arrival ID for the notification, which you can use to retrieve the message status.
+
+        It will also contain an embedded request ID, box ID and box name, which you can use to match this movement to any messages received from the Push Pull Notifications API.
+
+        **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
+      is:
+        - contentXmlHeader
+        - acceptJsonHeader
+        - requestTooLarge
+        - schemaValidation
+      (annotations.scope): "common-transit-convention-traders"
+      securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+      responses:
+        202:
+          body:
+            application/json:
+              description: JSON Payload
+              example: |
+                {
+                "_links":{
+                "self":{
+                "href": "/customs/transits/movements/arrivals/62fb8f33d233578e"
+                },
+                "messages":{
+                "href": "/customs/transits/movements/arrivals/62fb8f33d233578e/messages"
+                }
+                }
+                }

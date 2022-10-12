@@ -28,7 +28,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
 import v2.models.MessageId
-import v2.models.DepartureId
+import v2.models.MovementId
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
@@ -49,17 +49,17 @@ trait DeparturesService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, DeclarationResponse]
 
-  def getMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
+  def getMessage(eori: EORINumber, departureId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MessageSummary]
 
-  def getMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit
+  def getMessageIds(eori: EORINumber, departureId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MessageSummary]]
 
-  def getDeparture(eori: EORINumber, departureId: DepartureId)(implicit
+  def getDeparture(eori: EORINumber, departureId: MovementId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, DepartureResponse]
@@ -69,7 +69,7 @@ trait DeparturesService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[DepartureResponse]]
 
-  def updateDeparture(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
+  def updateDeparture(departureId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, UpdateMovementResponse]
@@ -92,7 +92,7 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
         }
     )
 
-  override def getMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
+  override def getMessage(eori: EORINumber, departureId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MessageSummary] =
@@ -106,7 +106,7 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
         }
     )
 
-  override def getMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit
+  override def getMessageIds(eori: EORINumber, departureId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MessageSummary]] =
@@ -120,7 +120,7 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
         }
     )
 
-  override def getDeparture(eori: EORINumber, departureId: DepartureId)(implicit
+  override def getDeparture(eori: EORINumber, departureId: MovementId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, DepartureResponse] =
@@ -147,7 +147,7 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
       }
   )
 
-  override def updateDeparture(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
+  override def updateDeparture(departureId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, UpdateMovementResponse] =

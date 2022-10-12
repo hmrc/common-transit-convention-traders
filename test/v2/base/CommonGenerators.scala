@@ -20,9 +20,9 @@ import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import v2.models.AuditType
-import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
+import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.request.MessageType
 import v2.models.responses.MessageSummary
@@ -34,10 +34,6 @@ trait CommonGenerators {
   lazy val genShortUUID: Gen[String] = Gen.long.map {
     l: Long =>
       f"${BigInt(l)}%016x"
-  }
-
-  implicit lazy val arbitraryDepartureId: Arbitrary[DepartureId] = Arbitrary {
-    genShortUUID.map(DepartureId(_))
   }
 
   implicit lazy val arbitraryMessageId: Arbitrary[MessageId] = Arbitrary {
@@ -67,6 +63,10 @@ trait CommonGenerators {
       body        <- Gen.option(Gen.alphaNumStr)
       messageId   <- genShortUUID.map(MessageId(_))
     } yield MessageSummary(messageId, received, messageType, body)
+  }
+
+  implicit lazy val arbitraryMovementId: Arbitrary[MovementId] = Arbitrary {
+    genShortUUID.map(MovementId(_))
   }
 
 }

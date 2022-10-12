@@ -25,7 +25,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.base.CommonGenerators
-import v2.models.DepartureId
+import v2.models.MovementId
 import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime
@@ -48,7 +48,7 @@ class HateoasDepartureMessageIdsResponseSpec
         .getOrElse("not set")
 
       s"with a valid message response and receivedSince $set, create a valid HateoasDepartureMessageResponse" in forAll(
-        arbitrary[DepartureId],
+        arbitrary[MovementId],
         Gen.listOfN(3, arbitrary[MessageSummary])
       ) {
         (departureId, responses) =>
@@ -78,7 +78,7 @@ class HateoasDepartureMessageIdsResponseSpec
       }
   }
 
-  private def selfUrl(departureId: DepartureId, dateTime: Option[OffsetDateTime]): JsObject = dateTime match {
+  private def selfUrl(departureId: MovementId, dateTime: Option[OffsetDateTime]): JsObject = dateTime match {
     case Some(odt) =>
       val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(odt)
       Json.obj(
