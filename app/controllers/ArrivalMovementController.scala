@@ -17,6 +17,7 @@
 package controllers
 
 import com.google.inject.ImplementedBy
+import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
 import connectors.ArrivalConnector
 import controllers.actions.AnalyseMessageActionProvider
@@ -51,6 +52,7 @@ trait V1ArrivalMovementController {
   def createArrivalNotification(): Action[NodeSeq]
 }
 
+@Singleton
 class ArrivalMovementController @Inject() (
   cc: ControllerComponents,
   authAction: AuthAction,
