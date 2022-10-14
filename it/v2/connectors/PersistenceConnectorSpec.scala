@@ -889,7 +889,7 @@ class PersistenceConnectorSpec
         }
     }
 
-    "On an incorrect Json fragment, must return a JsResult.Exception" in forAll(arbitrary[EORINumber]) {
+    "On an incorrect Json fragment from transit-movements, must return a JsonParseException" in forAll(arbitrary[EORINumber]) {
       eoriNumber =>
         server.stubFor(
           post(
