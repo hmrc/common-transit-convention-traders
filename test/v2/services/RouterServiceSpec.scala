@@ -104,7 +104,7 @@ class RouterServiceSpec extends AnyFreeSpec with Matchers with OptionValues with
         any[HeaderCarrier]
       )
     )
-      .thenReturn(Future.failed(UpstreamErrorResponse("not found", BAD_REQUEST)))
+      .thenReturn(Future.failed(UpstreamErrorResponse("bad request", BAD_REQUEST)))
 
     val sut = new RouterServiceImpl(mockConnector)
 
