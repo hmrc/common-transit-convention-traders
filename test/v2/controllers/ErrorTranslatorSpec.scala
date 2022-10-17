@@ -180,6 +180,14 @@ class ErrorTranslatorSpec
 
       routerErrorConverter.convert(input) mustBe output
     }
+
+    "an UnrecognisedOffice error returns a BAD_REQUEST" in {
+
+      val input  = RouterError.UnrecognisedOffice("Unrecognised Office either should start with GB or XI")
+      val output = PresentationError.badRequestError("Unrecognised Office either should start with GB or XI")
+
+      routerErrorConverter.convert(input) mustBe output
+    }
   }
 
 }

@@ -21,7 +21,9 @@ import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
+import play.api.http.Status.BAD_REQUEST
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.RouterConnector
 import v2.models.EORINumber
 import v2.models.MessageId
@@ -56,6 +58,8 @@ class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends Rou
           _ => Right(())
         )
         .recover {
+          case UpstreamErrorResponse(_, BAD_REQUEST, _, _) =>
+            Left(RouterError.UnrecognisedOffice("Unrecognised Office either should start with GB or XI"))
           case NonFatal(e) =>
             Left(RouterError.UnexpectedError(thr = Some(e)))
         }
