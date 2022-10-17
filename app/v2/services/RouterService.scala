@@ -59,7 +59,7 @@ class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends Rou
         )
         .recover {
           case UpstreamErrorResponse(_, BAD_REQUEST, _, _) =>
-            Left(RouterError.UnrecognisedOffice("Unrecognised Office either should start with GB or XI"))
+            Left(RouterError.UnrecognisedOffice)
           case NonFatal(e) =>
             Left(RouterError.UnexpectedError(thr = Some(e)))
         }

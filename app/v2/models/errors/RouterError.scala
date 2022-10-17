@@ -20,5 +20,5 @@ sealed trait RouterError
 
 object RouterError {
   case class UnexpectedError(thr: Option[Throwable] = None) extends RouterError
-  case class UnrecognisedOffice(message: String)            extends RouterError
+  case object UnrecognisedOffice                            extends RouterError
 }

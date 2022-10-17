@@ -126,7 +126,7 @@ class RouterServiceSpec extends AnyFreeSpec with Matchers with OptionValues with
 
     "on a failed submission with validation error, should return a Left with an UnrecognisedOffice" in {
       val result                              = sut.send(MessageType.DeclarationData, EORINumber("1"), MovementId("1"), MessageId("1"), unrecognisedOfficeRequest)
-      val expected: Either[RouterError, Unit] = Left(RouterError.UnrecognisedOffice("Unrecognised Office either should start with GB or XI"))
+      val expected: Either[RouterError, Unit] = Left(RouterError.UnrecognisedOffice)
       whenReady(result.value) {
         _ mustBe expected
       }
