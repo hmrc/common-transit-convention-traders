@@ -28,6 +28,7 @@ import cats.data.NonEmptyList
 import cats.implicits.catsStdInstancesForFuture
 import cats.implicits.toBifunctorOps
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.times
@@ -54,6 +55,7 @@ import play.api.test.Helpers
 import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.TestMetrics
 import v2.base.CommonGenerators
 import v2.base.TestActorSystem
@@ -98,6 +100,7 @@ class V2ArrivalsControllerSpec
   val mockRouterService              = mock[RouterService]
   val mockAuditService               = mock[AuditingService]
   val mockConversionService          = mock[ConversionService]
+  val mockPushNotificationService    = mock[PushNotificationsService]
   implicit val temporaryFileCreator  = SingletonTemporaryFileCreator
 
   lazy val sut: V2ArrivalsController = new V2ArrivalsControllerImpl(
@@ -108,6 +111,7 @@ class V2ArrivalsControllerSpec
     mockRouterService,
     mockAuditService,
     mockConversionService,
+    mockPushNotificationService,
     FakeMessageSizeActionProvider,
     new TestMetrics()
   )
@@ -152,6 +156,11 @@ class V2ArrivalsControllerSpec
       }
 
     reset(mockAuditService)
+    reset(mockPushNotificationService)
+    when(mockPushNotificationService.associate(MovementId(anyString()), any())(any(), any()))
+      .thenAnswer(
+        _ => EitherT.rightT(())
+      )
 
   }
 
@@ -215,6 +224,47 @@ class V2ArrivalsControllerSpec
           any(),
           any()
         )
+        verify(mockPushNotificationService, times(1)).associate(MovementId(eqTo("123")), any())(any(), any())
+      }
+
+      "must return Accepted when body length is within limits and is considered valid" - Seq(true, false).foreach {
+        auditEnabled =>
+          when(
+            mockValidationService
+              .validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+          ).thenAnswer {
+            invocation =>
+              xmlValidationMockAnswer(invocation)
+          }
+          when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
+
+          val success = if (auditEnabled) "is successful" else "fails"
+          s"when auditing $success" in {
+            beforeEach()
+            when(
+              mockValidationService.validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            )
+              .thenAnswer(
+                _ => EitherT.rightT(())
+              )
+
+            if (!auditEnabled) {
+              reset(mockAuditService)
+              when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.failed(UpstreamErrorResponse("error", 500)))
+            }
+            val request = fakeRequestArrivalNotification(method = "POST", body = singleUseStringSource(CC007C.mkString), headers = standardHeadersXML)
+            val result  = sut.createArrivalNotification()(request)
+            status(result) mustBe ACCEPTED
+
+            contentAsJson(result) mustBe Json.toJson(HateoasArrivalNotificationResponse(MovementId("123")))
+
+            verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.XML))(any(), any())
+            verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
+            verify(mockArrivalsPersistenceService, times(1)).createArrival(EORINumber(any()), any())(any(), any())
+            verify(mockRouterService, times(1))
+              .send(eqTo(MessageType.ArrivalNotification), EORINumber(any()), MovementId(any()), MessageId(any()), any())(any(), any())
+            verify(mockPushNotificationService, times(1)).associate(MovementId(eqTo("123")), any())(any(), any())
+          }
       }
 
       "must return Bad Request when body is an XML document that would fail schema validation" in {
@@ -238,6 +288,8 @@ class V2ArrivalsControllerSpec
             )
           )
         )
+
+        verify(mockPushNotificationService, times(0)).associate(MovementId(anyString()), any())(any(), any())
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
@@ -254,6 +306,7 @@ class V2ArrivalsControllerSpec
           mockRouterService,
           mockAuditService,
           mockConversionService,
+          mockPushNotificationService,
           FakeMessageSizeActionProvider,
           new TestMetrics()
         )
@@ -289,6 +342,7 @@ class V2ArrivalsControllerSpec
           mockRouterService,
           mockAuditService,
           mockConversionService,
+          mockPushNotificationService,
           FakeMessageSizeActionProvider,
           new TestMetrics()
         )
@@ -414,6 +468,7 @@ class V2ArrivalsControllerSpec
             )
           )
         )
+        verify(mockPushNotificationService, times(0)).associate(MovementId(anyString()), any())(any(), any())
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
@@ -438,6 +493,7 @@ class V2ArrivalsControllerSpec
           mockRouterService,
           mockAuditService,
           mockConversionService,
+          mockPushNotificationService,
           FakeMessageSizeActionProvider,
           new TestMetrics()
         )
@@ -480,6 +536,7 @@ class V2ArrivalsControllerSpec
           mockRouterService,
           mockAuditService,
           mockConversionService,
+          mockPushNotificationService,
           FakeMessageSizeActionProvider,
           new TestMetrics()
         )
@@ -493,6 +550,7 @@ class V2ArrivalsControllerSpec
           "code"    -> "INTERNAL_SERVER_ERROR",
           "message" -> "Internal server error"
         )
+        verify(mockPushNotificationService, times(0)).associate(MovementId(anyString()), any())(any(), any())
       }
 
       "must return Internal Service Error if the router service reports an error" in {
@@ -518,12 +576,13 @@ class V2ArrivalsControllerSpec
           mockRouterService,
           mockAuditService,
           mockConversionService,
+          mockPushNotificationService,
           FakeMessageSizeActionProvider,
           new TestMetrics()
         )
 
         val request =
-          fakeRequestArrivalNotification("POST", body = Source.single(ByteString(CC007C.mkString, StandardCharsets.UTF_8)), headers = standardHeadersJSON)
+          fakeRequestArrivalNotification("POST", body = singleUseStringSource(CC007C.mkString), headers = standardHeadersJSON)
         val response = sut.createArrivalNotification()(request)
 
         status(response) mustBe INTERNAL_SERVER_ERROR
@@ -551,7 +610,7 @@ class V2ArrivalsControllerSpec
         "code"    -> "UNSUPPORTED_MEDIA_TYPE",
         "message" -> "Content-type header invalid is not supported!"
       )
-
+      verify(mockPushNotificationService, times(0)).associate(MovementId(anyString()), any())(any(), any())
     }
 
     "must return UNSUPPORTED_MEDIA_TYPE when the content type is not supplied" in {
@@ -569,6 +628,7 @@ class V2ArrivalsControllerSpec
         "code"    -> "UNSUPPORTED_MEDIA_TYPE",
         "message" -> "A content-type header is required!"
       )
+      verify(mockPushNotificationService, times(0)).associate(MovementId(anyString()), any())(any(), any())
     }
 
     "must return Internal Service Error if the router service reports an error" in {
@@ -599,6 +659,7 @@ class V2ArrivalsControllerSpec
         mockRouterService,
         mockAuditService,
         mockConversionService,
+        mockPushNotificationService,
         FakeMessageSizeActionProvider,
         new TestMetrics()
       )

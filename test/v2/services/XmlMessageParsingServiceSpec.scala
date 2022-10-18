@@ -91,7 +91,7 @@ class XmlMessageParsingServiceSpec
       }
     }
 
-    "if the input is malformed, return EctractionError.MalformedInput" in {
+    "if the input is malformed, return ExtractionError.MalformedInput" in {
       val xmlParsingService = new MessagesXmlParsingServiceImpl()
       val payload           = createStream("malformed")
       val response =
