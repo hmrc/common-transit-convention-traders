@@ -185,7 +185,7 @@ class ErrorTranslatorSpec
 
       val input = RouterError.UnrecognisedOffice
       val output = PresentationError.badRequestError(
-        "The customs office specified at ([\"CustomsOfficeOfDestinationActual\" or \"CustomsOfficeOfDeparture\"]\"referenceNumber\" must be a office in the UK"
+        "The customs office specified for CustomsOfficeOfDestinationActual or CustomsOfficeOfDeparture must be a customs office located in the United Kingdom"
       )
 
       routerErrorConverter.convert(input) mustBe output
