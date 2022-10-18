@@ -23,7 +23,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import v2.base.CommonGenerators
-import v2.models.DepartureId
+import v2.models.MovementId
 
 import java.time.OffsetDateTime
 
@@ -38,7 +38,7 @@ class HateoasDepartureDeclarationResponseSpec extends AnyFreeSpec with Matchers 
         .getOrElse("not set")
 
       s"with a valid message response and receivedSince $set, create a valid HateoasDepartureMessageResponse" in {
-        val departureId = arbitrary[DepartureId].sample.value
+        val departureId = arbitrary[MovementId].sample.value
         val actual      = HateoasDepartureDeclarationResponse(departureId)
         val expected = Json.obj(
           "_links" -> Json.obj(

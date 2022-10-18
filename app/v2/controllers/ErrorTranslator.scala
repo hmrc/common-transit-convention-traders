@@ -21,6 +21,7 @@ import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
 import v2.models.errors.FailedToValidateError.JsonSchemaFailedToValidateError
 import v2.models.errors.FailedToValidateError.UnexpectedError
 import v2.models.errors.FailedToValidateError.XmlSchemaFailedToValidateError
+import v2.models.errors.RouterError.UnrecognisedOffice
 import v2.models.errors._
 
 import scala.concurrent.ExecutionContext
@@ -74,6 +75,10 @@ trait ErrorTranslator {
 
     override def convert(routerError: RouterError): PresentationError = routerError match {
       case err: RouterError.UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
+      case UnrecognisedOffice =>
+        PresentationError.badRequestError(
+          "The customs office specified for CustomsOfficeOfDestinationActual or CustomsOfficeOfDeparture must be a customs office located in the United Kingdom"
+        )
     }
   }
 

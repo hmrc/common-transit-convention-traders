@@ -19,10 +19,10 @@ package v2.models.responses
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import v2.models.MessageId
-import v2.models.DepartureId
+import v2.models.MovementId
 
 object DeclarationResponse {
   implicit lazy val declarationResponseFormat: OFormat[DeclarationResponse] = Json.format[DeclarationResponse]
 }
 
-case class DeclarationResponse(departureId: DepartureId, messageId: MessageId)
+case class DeclarationResponse(departureId: MovementId, messageId: MessageId)

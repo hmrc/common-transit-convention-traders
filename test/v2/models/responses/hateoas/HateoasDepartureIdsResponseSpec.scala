@@ -22,8 +22,8 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.libs.json.Json
 import v2.base.CommonGenerators
-import v2.models.DepartureId
 import v2.models.EORINumber
+import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.responses.DepartureResponse
 
@@ -38,7 +38,7 @@ class HateoasDepartureIdsResponseSpec extends AnyFreeSpec with Matchers with Opt
       val enrolmentEori = arbitrary[EORINumber].sample.value
 
       val departureResponse1 = DepartureResponse(
-        _id = arbitrary[DepartureId].sample.value,
+        _id = arbitrary[MovementId].sample.value,
         enrollmentEORINumber = enrolmentEori,
         movementEORINumber = arbitrary[EORINumber].sample.value,
         movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
@@ -47,7 +47,7 @@ class HateoasDepartureIdsResponseSpec extends AnyFreeSpec with Matchers with Opt
       )
 
       val departureResponse2 = DepartureResponse(
-        _id = arbitrary[DepartureId].sample.value,
+        _id = arbitrary[MovementId].sample.value,
         enrollmentEORINumber = enrolmentEori,
         movementEORINumber = arbitrary[EORINumber].sample.value,
         movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),

@@ -32,10 +32,10 @@ object HateoasResponse {
 
 trait HateoasResponse {
 
-  def messageUri(departureId: DepartureId, messageId: MessageId) =
+  def messageUri(departureId: MovementId, messageId: MessageId) =
     prefix + routing.routes.DeparturesRouter.getMessage(departureId.value, messageId.value).url
 
-  def messageIdsUri(departureId: DepartureId, receivedSince: Option[OffsetDateTime]) =
+  def messageIdsUri(departureId: MovementId, receivedSince: Option[OffsetDateTime]) =
     prefix + routing.routes.DeparturesRouter
       .getMessageIds(
         departureId.value,
@@ -43,7 +43,15 @@ trait HateoasResponse {
       )
       .url
 
-  def departureUri(departureId: DepartureId) =
+  def departureUri(departureId: MovementId) =
     prefix + routing.routes.DeparturesRouter.getDeparture(departureId.value).url
+
+  // TODO: When we do the arrival endpoint, this needs updating
+  def arrivalUri(arrivalId: MovementId) =
+    s"/customs/transits/movements/arrivals/${arrivalId.value}"
+
+  // TODO: When we do the arrival endpoint, this needs updating
+  def arrivalMessageIdsUri(arrivalId: MovementId) =
+    s"/customs/transits/movements/arrivals/${arrivalId.value}/messages"
 
 }

@@ -21,11 +21,13 @@ import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
+import play.api.http.Status.BAD_REQUEST
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.RouterConnector
 import v2.models.EORINumber
 import v2.models.MessageId
-import v2.models.DepartureId
+import v2.models.MovementId
 import v2.models.errors.RouterError
 import v2.models.request.MessageType
 
@@ -36,7 +38,7 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[RouterServiceImpl])
 trait RouterService {
 
-  def send(messageType: MessageType, eoriNumber: EORINumber, movementId: DepartureId, messageId: MessageId, body: Source[ByteString, _])(implicit
+  def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): EitherT[Future, RouterError, Unit]
@@ -45,7 +47,7 @@ trait RouterService {
 
 class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends RouterService {
 
-  def send(messageType: MessageType, eoriNumber: EORINumber, movementId: DepartureId, messageId: MessageId, body: Source[ByteString, _])(implicit
+  def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): EitherT[Future, RouterError, Unit] =
@@ -56,9 +58,10 @@ class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends Rou
           _ => Right(())
         )
         .recover {
+          case UpstreamErrorResponse(_, BAD_REQUEST, _, _) =>
+            Left(RouterError.UnrecognisedOffice)
           case NonFatal(e) =>
             Left(RouterError.UnexpectedError(thr = Some(e)))
         }
     )
-
 }

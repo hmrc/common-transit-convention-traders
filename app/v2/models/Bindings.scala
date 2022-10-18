@@ -32,6 +32,6 @@ object Bindings {
   }
 
   implicit val messageIdBinding  = hexBinding[MessageId](MessageId.apply, _.value)
-  implicit val movementIdBinding = hexBinding[DepartureId](DepartureId.apply, _.value)
+  implicit val movementIdBinding = hexBinding[MovementId](MovementId.apply, _.value)
 
 }

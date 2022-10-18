@@ -29,7 +29,7 @@ import play.api.test.Helpers.stubControllerComponents
 import v2.controllers.V2DeparturesController
 import v2.controllers.stream.StreamingParsers
 import v2.models.MessageId
-import v2.models.DepartureId
+import v2.models.MovementId
 
 import java.time.OffsetDateTime
 
@@ -46,17 +46,17 @@ class FakeV2DeparturesController @Inject() ()(implicit val materializer: Materia
       Accepted(Json.obj("version" -> 2))
   }
 
-  override def getMessage(departureId: DepartureId, messageId: MessageId): Action[AnyContent] = Action {
+  override def getMessage(departureId: MovementId, messageId: MessageId): Action[AnyContent] = Action {
     _ =>
       Accepted(Json.obj("version" -> 2))
   }
 
-  override def getMessageIds(departureId: DepartureId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
+  override def getMessageIds(departureId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
     _ =>
       Accepted(Json.obj("version" -> 2))
   }
 
-  override def getDeparture(departureId: DepartureId): Action[AnyContent] = Action {
+  override def getDeparture(departureId: MovementId): Action[AnyContent] = Action {
     _ =>
       Ok(Json.obj("version" -> 2))
   }
@@ -66,7 +66,7 @@ class FakeV2DeparturesController @Inject() ()(implicit val materializer: Materia
       Ok(Json.obj("version" -> 2))
   }
 
-  override def attachMessage(departureId: DepartureId): Action[Source[ByteString, _]] = Action(streamFromMemory) {
+  override def attachMessage(departureId: MovementId): Action[Source[ByteString, _]] = Action(streamFromMemory) {
     request =>
       request.body.runWith(Sink.ignore)
       Accepted(Json.obj("version" -> 2))

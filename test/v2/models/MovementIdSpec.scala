@@ -23,16 +23,16 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsString
 import play.api.libs.json.JsSuccess
 
-class DepartureIdSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class MovementIdSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
-  "when DepartureId is serialized, return a JsString" in forAll(Gen.listOfN(16, Gen.hexChar).map(_.mkString.toLowerCase)) {
+  "when MovementId is serialized, return a JsString" in forAll(Gen.listOfN(16, Gen.hexChar).map(_.mkString.toLowerCase)) {
     string =>
-      DepartureId.departureIdFormat.writes(DepartureId(string)) mustBe JsString(string)
+      MovementId.movementIdFormat.writes(MovementId(string)) mustBe JsString(string)
   }
 
-  "when JsString is deserialized, return a DepartureId" in forAll(Gen.listOfN(16, Gen.hexChar).map(_.mkString.toLowerCase)) {
+  "when JsString is deserialized, return a MovementId" in forAll(Gen.listOfN(16, Gen.hexChar).map(_.mkString.toLowerCase)) {
     string =>
-      DepartureId.departureIdFormat.reads(JsString(string)) mustBe JsSuccess(DepartureId(string))
+      MovementId.movementIdFormat.reads(JsString(string)) mustBe JsSuccess(MovementId(string))
   }
 
 }

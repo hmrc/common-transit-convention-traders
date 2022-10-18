@@ -49,14 +49,15 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.GuiceWiremockSuite
 import utils.TestMetrics
-import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
+import v2.models.MovementId
 import v2.models.errors.ErrorCode
 import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
 import v2.models.request.MessageType.DeclarationData
+import v2.models.responses.ArrivalResponse
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageResponse
@@ -91,7 +92,7 @@ class PersistenceConnectorSpec
 
     lazy val okResultGen =
       for {
-        movementId <- arbitrary[DepartureId]
+        movementId <- arbitrary[MovementId]
         messageId  <- arbitrary[MessageId]
       } yield DeclarationResponse(movementId, messageId)
 
@@ -227,12 +228,12 @@ class PersistenceConnectorSpec
         messageType <- Gen.oneOf(MessageType.values)
       } yield MessageResponse(messageId, now, now, messageType, None, None, Some(s"<test>$body</test>"))
 
-    def targetUrl(eoriNumber: EORINumber, departureId: DepartureId, messageId: MessageId) =
+    def targetUrl(eoriNumber: EORINumber, departureId: MovementId, messageId: MessageId) =
       s"/transit-movements/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/${messageId.value}/"
 
     "on successful message, return a success" in {
       val eori            = arbitrary[EORINumber].sample.get
-      val departureId     = arbitrary[DepartureId].sample.get
+      val departureId     = arbitrary[MovementId].sample.get
       val messageId       = arbitrary[MessageId].sample.get
       val messageResponse = generateResponseWithoutBody(messageId)
 
@@ -259,7 +260,7 @@ class PersistenceConnectorSpec
     "on incorrect Json, return an error" in {
 
       val eori        = arbitrary[EORINumber].sample.get
-      val departureId = arbitrary[DepartureId].sample.get
+      val departureId = arbitrary[MovementId].sample.get
       val messageId   = arbitrary[MessageId].sample.get
       server.stubFor(
         get(
@@ -294,7 +295,7 @@ class PersistenceConnectorSpec
 
     "on not found, return an UpstreamServerError" in forAll(
       arbitrary[EORINumber],
-      arbitrary[DepartureId],
+      arbitrary[MovementId],
       arbitrary[MessageId]
     ) {
       (eori, departureId, messageId) =>
@@ -334,7 +335,7 @@ class PersistenceConnectorSpec
 
     "on an internal error, return an UpstreamServerError" in {
       val eori        = arbitrary[EORINumber].sample.get
-      val departureId = arbitrary[DepartureId].sample.get
+      val departureId = arbitrary[MovementId].sample.get
       val messageId   = arbitrary[MessageId].sample.get
 
       server.stubFor(
@@ -377,16 +378,16 @@ class PersistenceConnectorSpec
 
     lazy val messageIdList = Gen.listOfN(3, arbitrary[MessageId])
 
-    def targetUrl(eoriNumber: EORINumber, departureId: DepartureId) =
+    def targetUrl(eoriNumber: EORINumber, departureId: MovementId) =
       s"/transit-movements/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/"
 
-    def targetUrlWithTime(eoriNumber: EORINumber, departureId: DepartureId, receivedSince: OffsetDateTime) =
+    def targetUrlWithTime(eoriNumber: EORINumber, departureId: MovementId, receivedSince: OffsetDateTime) =
       s"/transit-movements/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/?receivedSince=${DateTimeFormatter.ISO_OFFSET_DATE_TIME
         .format(receivedSince)}"
 
     "on successful return of message IDs when no filtering is applied, return a success" in {
       val eori        = arbitrary[EORINumber].sample.get
-      val departureId = arbitrary[DepartureId].sample.get
+      val departureId = arbitrary[MovementId].sample.get
       val messageResponse = messageIdList.sample.get.map(
         id => generateResponseWithoutBody(id)
       )
@@ -413,7 +414,7 @@ class PersistenceConnectorSpec
 
     "on successful return of message IDs when filtering by received date is applied, return a success" in {
       val eori        = arbitrary[EORINumber].sample.get
-      val departureId = arbitrary[DepartureId].sample.get
+      val departureId = arbitrary[MovementId].sample.get
       val time        = OffsetDateTime.now(ZoneOffset.UTC)
       val messageResponse = messageIdList.sample.get.map(
         id => generateResponseWithoutBody(id)
@@ -442,7 +443,7 @@ class PersistenceConnectorSpec
     "on incorrect Json, return an error" in {
 
       val eori        = arbitrary[EORINumber].sample.get
-      val departureId = arbitrary[DepartureId].sample.get
+      val departureId = arbitrary[MovementId].sample.get
       server.stubFor(
         get(
           urlEqualTo(targetUrl(eori, departureId))
@@ -476,7 +477,7 @@ class PersistenceConnectorSpec
 
     "on not found, return an UpstreamServerError" in forAll(
       arbitrary[EORINumber],
-      arbitrary[DepartureId]
+      arbitrary[MovementId]
     ) {
       (eori, departureId) =>
         server.stubFor(
@@ -515,7 +516,7 @@ class PersistenceConnectorSpec
 
     "on an internal error, return an UpstreamServerError" in {
       val eori        = arbitrary[EORINumber].sample.get
-      val departureId = arbitrary[DepartureId].sample.get
+      val departureId = arbitrary[MovementId].sample.get
 
       server.stubFor(
         get(
@@ -561,7 +562,7 @@ class PersistenceConnectorSpec
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/"
 
     "on success, return a list of departure IDs" in {
-      lazy val departureIdList = Gen.listOfN(3, arbitrary[DepartureId]).sample.get
+      lazy val departureIdList = Gen.listOfN(3, arbitrary[MovementId]).sample.get
       lazy val messageResponse = departureIdList.map(
         id => generateDepartureResponse(id)
       )
@@ -667,9 +668,9 @@ class PersistenceConnectorSpec
         messageId <- arbitrary[MessageId]
       } yield UpdateMovementResponse(messageId)
 
-    def targetUrl(departureId: DepartureId) = s"/transit-movements/traders/movements/${departureId.value}/messages/"
+    def targetUrl(departureId: MovementId) = s"/transit-movements/traders/movements/${departureId.value}/messages/"
 
-    "On successful update of an element, must return ACCEPTED" in forAll(arbitrary[DepartureId], messageType, okResultGen) {
+    "On successful update of an element, must return ACCEPTED" in forAll(arbitrary[MovementId], messageType, okResultGen) {
       (departureId, messageType, resultRes) =>
         server.stubFor(
           post(
@@ -691,7 +692,7 @@ class PersistenceConnectorSpec
         }
     }
 
-    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[DepartureId], messageType) {
+    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[MovementId], messageType) {
       (departureId, messageType) =>
         server.stubFor(
           post(
@@ -725,7 +726,7 @@ class PersistenceConnectorSpec
         }
     }
 
-    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[DepartureId], messageType) {
+    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[MovementId], messageType) {
       (departureId, messageType) =>
         server.stubFor(
           post(
@@ -758,7 +759,7 @@ class PersistenceConnectorSpec
             Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
         }
     }
-    "On an incorrect Json fragment, must return a JsResult.Exception" in forAll(arbitrary[DepartureId], messageType) {
+    "On an incorrect Json fragment, must return a JsResult.Exception" in forAll(arbitrary[MovementId], messageType) {
       (departureId, messageType) =>
         server.stubFor(
           post(
@@ -790,7 +791,136 @@ class PersistenceConnectorSpec
     }
   }
 
-  private def generateDepartureResponse(departureId: DepartureId) =
+  "POST /traders/:eori/movements/arrivals" - {
+
+    lazy val okResultGen =
+      for {
+        movementId <- arbitrary[MovementId]
+        messageId  <- arbitrary[MessageId]
+      } yield ArrivalResponse(movementId, messageId)
+
+    def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals/"
+
+    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen) {
+      (eoriNumber, okResult) =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(okResult)))
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
+
+        whenReady(persistenceConnector.postArrival(eoriNumber, source)) {
+          result =>
+            result mustBe okResult
+        }
+    }
+
+    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse()
+                .withStatus(INTERNAL_SERVER_ERROR)
+                .withBody(
+                  Json.stringify(Json.toJson(PresentationError.internalServiceError()))
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
+
+        val future = persistenceConnector.postArrival(eoriNumber, source).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            response.statusCode mustBe INTERNAL_SERVER_ERROR
+            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+        }
+    }
+
+    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse()
+                .withStatus(BAD_REQUEST)
+                .withBody(
+                  Json.stringify(Json.toJson(PresentationError.badRequestError("Bad request")))
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
+
+        val future = persistenceConnector.postArrival(eoriNumber, source).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            response.statusCode mustBe BAD_REQUEST
+            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+        }
+    }
+
+    "On an incorrect Json fragment from transit-movements, must return a JsonParseException" in forAll(arbitrary[EORINumber]) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  "{ hello"
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
+
+        val future = persistenceConnector.postArrival(eoriNumber, source).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[JsonParseException]
+        }
+    }
+  }
+
+  private def generateDepartureResponse(departureId: MovementId) =
     DepartureResponse(
       _id = departureId,
       enrollmentEORINumber = arbitrary[EORINumber].sample.get,

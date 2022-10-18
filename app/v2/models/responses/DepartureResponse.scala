@@ -17,7 +17,7 @@
 package v2.models.responses
 
 import v2.models.EORINumber
-import v2.models.DepartureId
+import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import play.api.libs.json.Json
 
@@ -28,7 +28,7 @@ object DepartureResponse {
 }
 
 case class DepartureResponse(
-  _id: DepartureId,
+  _id: MovementId,
   enrollmentEORINumber: EORINumber,
   movementEORINumber: EORINumber,
   movementReferenceNumber: Option[MovementReferenceNumber],

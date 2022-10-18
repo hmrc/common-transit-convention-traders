@@ -18,12 +18,12 @@ package v2.models.responses.hateoas
 
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import v2.models.DepartureId
 import v2.models.MessageId
+import v2.models.MovementId
 
 object HateoasDepartureUpdateMovementResponse extends HateoasResponse {
 
-  def apply(departureId: DepartureId, messageId: MessageId): JsObject =
+  def apply(departureId: MovementId, messageId: MessageId): JsObject =
     Json.obj(
       "_links" -> Json.obj(
         "self"      -> Json.obj("href" -> messageUri(departureId, messageId)),

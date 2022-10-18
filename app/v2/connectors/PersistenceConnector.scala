@@ -36,10 +36,11 @@ import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
-import v2.models.DepartureId
 import v2.models.EORINumber
 import v2.models.MessageId
+import v2.models.MovementId
 import v2.models.request.MessageType
+import v2.models.responses.ArrivalResponse
 import v2.models.responses.DeclarationResponse
 import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageSummary
@@ -58,17 +59,17 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[DeclarationResponse]
 
-  def getDepartureMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
+  def getDepartureMessage(eori: EORINumber, movementId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[MessageSummary]
 
-  def getDepartureMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit
+  def getDepartureMessageIds(eori: EORINumber, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MessageSummary]]
 
-  def getDeparture(eori: EORINumber, departureId: DepartureId)(implicit
+  def getDeparture(eori: EORINumber, movementId: MovementId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[DepartureResponse]
@@ -78,10 +79,15 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[Seq[DepartureResponse]]
 
-  def post(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
+  def post(movementId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[UpdateMovementResponse]
+
+  def postArrival(eori: EORINumber, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[ArrivalResponse]
 }
 
 @Singleton
@@ -113,11 +119,11 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
           }
     }
 
-  override def getDepartureMessage(eori: EORINumber, departureId: DepartureId, messageId: MessageId)(implicit
+  override def getDepartureMessage(eori: EORINumber, movementId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[MessageSummary] = {
-    val url = appConfig.movementsUrl.withPath(movementsGetDepartureMessage(eori, departureId, messageId))
+    val url = appConfig.movementsUrl.withPath(movementsGetDepartureMessage(eori, movementId, messageId))
     httpClientV2
       .get(url"$url")
       .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
@@ -131,13 +137,13 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       }
   }
 
-  override def getDepartureMessageIds(eori: EORINumber, departureId: DepartureId, receivedSince: Option[OffsetDateTime])(implicit
+  override def getDepartureMessageIds(eori: EORINumber, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MessageSummary]] = {
     val url =
       withReceivedSinceParameter(
-        appConfig.movementsUrl.withPath(movementsGetDepartureMessageIds(eori, departureId)).toUrl,
+        appConfig.movementsUrl.withPath(movementsGetDepartureMessageIds(eori, movementId)).toUrl,
         receivedSince
       )
 
@@ -154,11 +160,11 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       }
   }
 
-  override def getDeparture(eori: EORINumber, departureId: DepartureId)(implicit
+  override def getDeparture(eori: EORINumber, movementId: MovementId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[DepartureResponse] = {
-    val url = appConfig.movementsUrl.withPath(movementsGetDeparture(eori, departureId))
+    val url = appConfig.movementsUrl.withPath(movementsGetDeparture(eori, movementId))
 
     httpClientV2
       .get(url"$url")
@@ -192,13 +198,13 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       }
   }
 
-  override def post(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
+  override def post(movementId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[UpdateMovementResponse] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
-        val url = appConfig.movementsUrl.withPath(movementsPostDeparture(departureId))
+        val url = appConfig.movementsUrl.withPath(movementsPostDeparture(movementId))
         httpClientV2
           .post(url"$url")
           .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code)
@@ -208,6 +214,28 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
             response =>
               response.status match {
                 case OK => response.as[UpdateMovementResponse]
+                case _  => response.error
+              }
+          }
+    }
+
+  override def postArrival(eori: EORINumber, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[ArrivalResponse] =
+    withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
+      _ =>
+        val url = appConfig.movementsUrl.withPath(movementsPostArrivalNotification(eori))
+
+        httpClientV2
+          .post(url"$url")
+          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+          .withBody(source)
+          .execute[HttpResponse]
+          .flatMap {
+            response =>
+              response.status match {
+                case OK => response.as[ArrivalResponse]
                 case _  => response.error
               }
           }

@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 
-package v2.models.responses.hateoas
+package v2.fakes.controllers
 
-import play.api.libs.json.JsObject
+import controllers.V1ArrivalMovementController
 import play.api.libs.json.Json
-import v2.models.MovementId
+import play.api.mvc.Action
+import play.api.mvc.BaseController
+import play.api.mvc.Request
+import play.api.test.Helpers.stubControllerComponents
 
-object HateoasDepartureDeclarationResponse extends HateoasResponse {
+import scala.xml.NodeSeq
 
-  def apply(departureId: MovementId): JsObject =
-    Json.obj(
-      "_links" -> Json.obj(
-        "self"     -> Json.obj("href" -> departureUri(departureId)),
-        "messages" -> Json.obj("href" -> messageIdsUri(departureId, None))
-      )
-    )
+class FakeV1ArrivalsController extends BaseController with V1ArrivalMovementController {
+
+  override val controllerComponents = stubControllerComponents()
+
+  override def createArrivalNotification(): Action[NodeSeq] = Action(parse.xml) {
+    _: Request[NodeSeq] =>
+      Accepted(Json.obj("version" -> 1))
+  }
 }
