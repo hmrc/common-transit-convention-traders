@@ -425,7 +425,6 @@ class V2DeparturesControllerSpec
             .saveDeclaration(any[String].asInstanceOf[EORINumber], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, DeclarationResponse](DeclarationResponse(MovementId("123"), MessageId("456")))))
 
-        //TODO: Tech Debt? Clean these up to use a defaulting builder method so we can focus on what's changed in this test
         val sut = new V2DeparturesControllerImpl(
           Helpers.stubControllerComponents(),
           FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
