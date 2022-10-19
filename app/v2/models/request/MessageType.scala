@@ -55,8 +55,8 @@ object MessageType {
   case object RejectionFromOfficeOfDeparture extends DepartureMessageType("IE056", "CC056C", AuditType.RejectionFromOfficeOfDeparture)
   case object ControlDecisionNotification    extends DepartureMessageType("IE060", "CC060C", AuditType.ControlDecisionNotification)
 
-  case object PresentationNotificationForThePreLodgedDecision
-      extends DepartureMessageType("IE170", "CC170C", AuditType.PresentationNotificationForThePreLodgedDecision)
+  case object PresentationNotificationForThePreLodgedDeclaration
+      extends DepartureMessageType("IE170", "CC170C", AuditType.PresentationNotificationForThePreLodgedDeclaration)
   case object FunctionalNack      extends DepartureMessageType("IE906", "CC906C", AuditType.FunctionalNack)      // TODO: This is also an arrival message
   case object PositiveAcknowledge extends DepartureMessageType("IE928", "CC928C", AuditType.PositiveAcknowledge) // TODO: This is also an arrival message
 
@@ -66,7 +66,7 @@ object MessageType {
     DeclarationAmendment,
     DeclarationInvalidationRequest,
     RequestOfRelease,
-    PresentationNotificationForThePreLodgedDecision
+    PresentationNotificationForThePreLodgedDeclaration
   )
 
   val messageTypeSentToDepartureTrader: Seq[MessageType] = Seq(
