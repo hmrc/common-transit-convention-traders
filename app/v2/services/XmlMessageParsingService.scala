@@ -39,7 +39,7 @@ import scala.concurrent.Future
 import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[XmlMessageParsingServiceImpl])
-trait XmlMessageParsingService { //TODO: Merge the traits and have multiple implementations? Unite and drive via MIMEType?
+trait XmlMessageParsingService {
 
   def extractMessageType(source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
