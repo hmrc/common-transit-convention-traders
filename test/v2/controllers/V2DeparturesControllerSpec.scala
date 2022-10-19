@@ -49,6 +49,7 @@ import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status._
 import play.api.libs.Files.SingletonTemporaryFileCreator
+import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.Request
@@ -67,6 +68,9 @@ import v2.base.TestSourceProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeMessageSizeActionProvider
 import v2.models._
+import v2.models.errors.ExtractionError.MessageTypeNotFound
+import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
+import v2.models.errors.FailedToValidateError.JsonSchemaFailedToValidateError
 import v2.models.errors._
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
@@ -110,13 +114,15 @@ class V2DeparturesControllerSpec
     </CC013C>
 
   val CC015Cjson = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
+  val CC013Cjson = Json.stringify(Json.obj("CC013" -> Json.obj("field" -> "value")))
 
   val mockValidationService            = mock[ValidationService]
   val mockDeparturesPersistenceService = mock[DeparturesService]
   val mockRouterService                = mock[RouterService]
   val mockAuditService                 = mock[AuditingService]
   val mockConversionService            = mock[ConversionService]
-  val mockXmlParsingService            = mock[MessagesXmlParsingService]
+  val mockXmlParsingService            = mock[XmlMessageParsingService]
+  val mockJsonParsingService           = mock[JsonMessageParsingService]
   implicit val temporaryFileCreator    = SingletonTemporaryFileCreator
 
   lazy val messageType: MessageType = MessageType.DeclarationAmendment
@@ -139,7 +145,8 @@ class V2DeparturesControllerSpec
     mockAuditService,
     FakeMessageSizeActionProvider,
     new TestMetrics(),
-    mockXmlParsingService
+    mockXmlParsingService,
+    mockJsonParsingService
   )
 
   implicit val timeout: Timeout = 5.seconds
@@ -387,7 +394,8 @@ class V2DeparturesControllerSpec
           mockAuditService,
           FakeMessageSizeActionProvider,
           new TestMetrics(),
-          mockXmlParsingService
+          mockXmlParsingService,
+          mockJsonParsingService
         )
 
         val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
@@ -418,6 +426,7 @@ class V2DeparturesControllerSpec
             .saveDeclaration(any[String].asInstanceOf[EORINumber], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, DeclarationResponse](DeclarationResponse(MovementId("123"), MessageId("456")))))
 
+        //TODO: Tech Debt? Clean these up to use a defaulting builder method so we can focus on what's changed in this test
         val sut = new V2DeparturesControllerImpl(
           Helpers.stubControllerComponents(),
           FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
@@ -428,7 +437,8 @@ class V2DeparturesControllerSpec
           mockAuditService,
           FakeMessageSizeActionProvider,
           new TestMetrics(),
-          mockXmlParsingService
+          mockXmlParsingService,
+          mockJsonParsingService
         )
 
         val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
@@ -776,7 +786,8 @@ class V2DeparturesControllerSpec
         mockAuditService,
         FakeMessageSizeActionProvider,
         new TestMetrics(),
-        mockXmlParsingService
+        mockXmlParsingService,
+        mockJsonParsingService
       )
 
       val request  = fakeRequestDepartures("POST", body = singleUseStringSource(CC015C.mkString), headers = standardHeaders)
@@ -1086,7 +1097,7 @@ class V2DeparturesControllerSpec
     }
   }
 
-  "for a departure update with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
+  "POST /movements/departures/:departureId/messages" - {
     "with content type set to application/xml" - {
 
       // For the content length headers, we have to ensure that we send something
@@ -1167,7 +1178,8 @@ class V2DeparturesControllerSpec
           mockAuditService,
           FakeMessageSizeActionProvider,
           new TestMetrics(),
-          mockXmlParsingService
+          mockXmlParsingService,
+          mockJsonParsingService
         )
 
         val request  = fakeAttachDepartures("POST", body = Source.single(ByteString(CC013C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
@@ -1180,21 +1192,239 @@ class V2DeparturesControllerSpec
         )
       }
 
-      "must return UNSUPPORTED_MEDIA_TYPE when the content type is invalid" in {
-        val standardHeaders = FakeHeaders(
-          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "invalid", HeaderNames.CONTENT_LENGTH -> "1000")
-        )
+    }
 
-        val request  = fakeAttachDepartures("POST", body = Source.single(ByteString(CC013C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
-        val response = sut.attachMessage(departureId)(request)
-        status(response) mustBe UNSUPPORTED_MEDIA_TYPE
-        contentAsJson(response) mustBe Json.obj(
-          "code"    -> "UNSUPPORTED_MEDIA_TYPE",
-          "message" -> "Content-type header invalid is not supported!"
+    "with content type set to application/json" - {
+
+      def setup(
+        extractMessageTypeXml: EitherT[Future, ExtractionError, MessageType] = messageDataEither,
+        extractMessageTypeJson: EitherT[Future, ExtractionError, MessageType] = messageDataEither,
+        validateXml: EitherT[Future, FailedToValidateError, Unit] = EitherT.rightT(()),
+        validateJson: EitherT[Future, FailedToValidateError, Unit] = EitherT.rightT(()),
+        conversion: EitherT[Future, ConversionError, Source[ByteString, _]] = EitherT.rightT(singleUseStringSource(CC013C.mkString)),
+        persistence: EitherT[Future, PersistenceError, UpdateMovementResponse] = EitherT.rightT(UpdateMovementResponse(MessageId("456"))),
+        router: EitherT[Future, RouterError, Unit] = EitherT.rightT(())
+      ): Unit = {
+
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]])(any(), any())).thenReturn(extractMessageTypeXml)
+        when(mockJsonParsingService.extractMessageType(any[Source[ByteString, _]])(any(), any())).thenReturn(extractMessageTypeJson)
+
+        when(mockValidationService.validateXml(eqTo(MessageType.DeclarationAmendment), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => validateXml
+          )
+
+        when(
+          mockValidationService.validateJson(eqTo(MessageType.DeclarationAmendment), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+        )
+          .thenAnswer(
+            _ => validateJson
+          )
+
+        when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())).thenReturn(Future.successful(()))
+
+        when(mockConversionService.jsonToXml(any(), any())(any(), any(), any())).thenReturn(conversion)
+
+        when(
+          mockDeparturesPersistenceService
+            .updateDeparture(any[String].asInstanceOf[DepartureId], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+        ).thenReturn(persistence)
+
+        when(
+          mockRouterService.send(
+            any[String].asInstanceOf[MessageType],
+            any[String].asInstanceOf[EORINumber],
+            any[String].asInstanceOf[DepartureId],
+            any[String].asInstanceOf[MessageId],
+            any()
+          )(any(), any())
+        )
+          .thenReturn(router)
+
+      }
+
+      // For the content length headers, we have to ensure that we send something
+      val standardHeaders = FakeHeaders(
+        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.JSON, HeaderNames.CONTENT_LENGTH -> "1000")
+      )
+
+      def fakeJsonAttachRequest(content: String = CC013Cjson): Request[Source[ByteString, _]] =
+        fakeAttachDepartures(method = "POST", body = singleUseStringSource(content), headers = standardHeaders)
+
+      "must return Accepted when body length is within limits and is considered valid" in {
+
+        setup()
+
+        val request = fakeJsonAttachRequest()
+        val result  = sut.attachMessage(departureId)(request)
+        status(result) mustBe ACCEPTED
+
+        contentAsJson(result) mustBe Json.toJson(HateoasDepartureUpdateMovementResponse(departureId, MessageId("456")))
+
+        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
+        verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationAmendment), any(), eqTo(MimeTypes.JSON))(any(), any())
+        verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DeclarationAmendment), any())(any(), any(), any())
+        verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
+        verify(mockDeparturesPersistenceService, times(1)).updateDeparture(DepartureId(any()), any(), any())(any(), any())
+        verify(mockRouterService, times(1)).send(eqTo(MessageType.DeclarationAmendment), EORINumber(any()), DepartureId(any()), MessageId(any()), any())(
+          any(),
+          any()
         )
       }
 
+      "must return Bad Request when body is not an JSON document" in {
+
+        setup(extractMessageTypeJson = EitherT.leftT(ExtractionError.MalformedInput()))
+
+        val request = fakeJsonAttachRequest("notJson")
+        val result  = sut.attachMessage(departureId)(request)
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "BAD_REQUEST",
+          "message" -> "Input was malformed"
+        )
+      }
+
+      "must return Bad Request when unable to find a message type " in {
+        setup(extractMessageTypeJson = EitherT.leftT(MessageTypeNotFound("CC013C")))
+
+        val request = fakeJsonAttachRequest()
+        val result  = sut.attachMessage(departureId)(request)
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "BAD_REQUEST",
+          "message" -> "CC013C is not a valid message type"
+        )
+      }
+
+      "must return BadRequest when JsonValidation service doesn't recognise message type" in {
+
+        setup(validateJson = EitherT.leftT(InvalidMessageTypeError("CC013C")))
+
+        val request = fakeJsonAttachRequest()
+        val result  = sut.attachMessage(departureId)(request)
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "BAD_REQUEST",
+          "message" -> "CC013C is not a valid message type"
+        )
+      }
+
+      "must return BadRequest when json fails to validate" in {
+
+        setup(validateJson = EitherT.leftT(JsonSchemaFailedToValidateError(NonEmptyList.one(JsonValidationError("sample", "message")))))
+
+        val request = fakeJsonAttachRequest()
+        val result  = sut.attachMessage(departureId)(request)
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "message"          -> "Request failed schema validation",
+          "code"             -> ErrorCode.SchemaValidation.code,
+          "validationErrors" -> Json.arr(Json.obj("schemaPath" -> "sample", "message" -> "message"))
+        )
+      }
+
+      "must return InternalServerError when Unexpected error validating the json" in {
+
+        setup(validateJson = EitherT.leftT(FailedToValidateError.UnexpectedError(None)))
+
+        val request = fakeJsonAttachRequest()
+        val result  = sut.attachMessage(departureId)(request)
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+      }
+
+      "must return InternalServerError when Unexpected error converting the json to xml" in {
+        setup(conversion = EitherT.leftT(ConversionError.UnexpectedError(None)))
+
+        val request = fakeJsonAttachRequest()
+        val result  = sut.attachMessage(departureId)(request)
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+      }
+
+      "must return InternalServerError when xml failed validation" in {
+        setup(validateXml = EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList.one(XmlValidationError(1, 1, "message")))))
+
+        val request = fakeJsonAttachRequest()
+        val result  = sut.attachMessage(departureId)(request)
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+      }
+
+      "must return BadRequest when message type not recognised by xml validator" in {
+        setup(validateXml = EitherT.leftT(FailedToValidateError.InvalidMessageTypeError("test")))
+
+        val request = fakeJsonAttachRequest()
+        val result  = sut.attachMessage(departureId)(request)
+
+        status(result) mustBe BAD_REQUEST
+      }
+
+      "must return InternalServerError when unexpected error from xml validator" in {
+        setup(validateXml = EitherT.leftT(FailedToValidateError.UnexpectedError(None)))
+
+        val request = fakeJsonAttachRequest()
+        val result  = sut.attachMessage(departureId)(request)
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+      }
+
+      "must return NotFound when Departure not found by Persistence" in {
+        setup(persistence = EitherT.leftT(PersistenceError.DepartureNotFound(departureId)))
+
+        val request = fakeJsonAttachRequest()
+        val result  = sut.attachMessage(departureId)(request)
+
+        status(result) mustBe NOT_FOUND
+      }
+
+      "must return InternalServerError when Persistence return Unexpected Error" in {
+        setup(persistence = EitherT.leftT(PersistenceError.UnexpectedError(None)))
+
+        val request = fakeJsonAttachRequest()
+        val result  = sut.attachMessage(departureId)(request)
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+      }
+
+      "must return InternalServerError when router throws unexpected error" in {
+        setup(router = EitherT.leftT(RouterError.UnexpectedError(None)))
+
+        val request = fakeJsonAttachRequest()
+        val result  = sut.attachMessage(departureId)(request)
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+      }
+
+      "must return InternalServerError when router returns BadRequest" in {
+        setup(router = EitherT.leftT(RouterError.UnrecognisedOffice("test")))
+
+        val request = fakeJsonAttachRequest()
+        val result  = sut.attachMessage(departureId)(request)
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+      }
+
     }
+
+    "must return UNSUPPORTED_MEDIA_TYPE when the content type is invalid" in {
+      val standardHeaders = FakeHeaders(
+        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "invalid", HeaderNames.CONTENT_LENGTH -> "1000")
+      )
+
+      val request  = fakeAttachDepartures("POST", body = Source.single(ByteString(CC013C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
+      val response = sut.attachMessage(departureId)(request)
+      status(response) mustBe UNSUPPORTED_MEDIA_TYPE
+      contentAsJson(response) mustBe Json.obj(
+        "code"    -> "UNSUPPORTED_MEDIA_TYPE",
+        "message" -> "Content-type header invalid is not supported!"
+      )
+    }
+
   }
 
   def validateXmlOkStub(): OngoingStubbing[EitherT[Future, FailedToValidateError, Unit]] =

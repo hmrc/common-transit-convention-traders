@@ -81,8 +81,9 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
       validationConnector
         .postJson(messageType, source)
         .map {
-          case None           => Right(())
-          case Some(response) => Left(FailedToValidateError.JsonSchemaFailedToValidateError(response.validationErrors))
+          case None => Right(())
+          case Some(response) =>
+            Left(FailedToValidateError.JsonSchemaFailedToValidateError(response.validationErrors))
         }
         .recover {
           // A bad request might be returned if the stream doesn't contain XML/JSON, in which case, we need to return a bad request.

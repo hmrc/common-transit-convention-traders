@@ -28,7 +28,7 @@ import v2.models.request.MessageType
 import concurrent.ExecutionContext.Implicits.global
 import scala.xml.NodeSeq
 
-class MessagesXmlParsingServiceSpec
+class XmlMessageParsingServiceSpec
     extends AnyFreeSpec
     with TestActorSystem
     with Matchers
@@ -58,7 +58,7 @@ class MessagesXmlParsingServiceSpec
 
   "extractMessageType and then" - {
     "if it is valid, return an appropriate Message Type" in {
-      val xmlParsingService = new MessagesXmlParsingServiceImpl()
+      val xmlParsingService = new XmlMessageParsingServiceImpl()
       val payload           = createStream(validXml)
       val response =
         xmlParsingService.extractMessageType(payload)
@@ -69,7 +69,7 @@ class MessagesXmlParsingServiceSpec
     }
 
     "if it doesn't have a valid message type, return ExtractionError.MessageTypeNotFound" in {
-      val xmlParsingService = new MessagesXmlParsingServiceImpl()
+      val xmlParsingService = new XmlMessageParsingServiceImpl()
       val payload           = createStream(invalidMessageType)
       val response =
         xmlParsingService.extractMessageType(payload)
@@ -80,7 +80,7 @@ class MessagesXmlParsingServiceSpec
     }
 
     "if it doesn't have a message type entry, return ExtractionError.MessageTypeNotFound" in {
-      val xmlParsingService = new MessagesXmlParsingServiceImpl()
+      val xmlParsingService = new XmlMessageParsingServiceImpl()
       val payload           = createStream(withNoMessageTypeEntry)
       val response =
         xmlParsingService.extractMessageType(payload)
