@@ -19,7 +19,6 @@ package v2.models.errors
 sealed trait RouterError
 
 object RouterError {
-  case class UnrecognisedOffice(message: String)            extends RouterError
-  case class UnexpectedError(thr: Option[Throwable] = None) extends RouterError
   case object UnrecognisedOffice                            extends RouterError
+  case class UnexpectedError(thr: Option[Throwable] = None) extends RouterError
 }

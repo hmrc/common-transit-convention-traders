@@ -17,10 +17,6 @@
 package v2.controllers
 
 import akka.stream.Materializer
-import akka.stream.alpakka.json.scaladsl.JsonReader
-import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Keep
-import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
@@ -43,6 +39,7 @@ import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models.AuditType
+import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.errors.PresentationError
@@ -241,7 +238,7 @@ class V2DeparturesControllerImpl @Inject() (
         )
     }
 
-  def attachMessageJSON(id: DepartureId): Action[Source[ByteString, _]] = {
+  def attachMessageJSON(id: MovementId): Action[Source[ByteString, _]] = {
 
     def handleJson(messageType: MessageType, source: Source[ByteString, _])(implicit
       hc: HeaderCarrier
@@ -252,7 +249,7 @@ class V2DeparturesControllerImpl @Inject() (
         converted <- conversionService.jsonToXml(messageType, source).asPresentation
       } yield converted
 
-    def handleXml(departureId: DepartureId, eoriNumber: EORINumber, messageType: MessageType, src: Source[ByteString, _])(implicit
+    def handleXml(departureId: MovementId, eoriNumber: EORINumber, messageType: MessageType, src: Source[ByteString, _])(implicit
       hc: HeaderCarrier
     ): EitherT[Future, PresentationError, UpdateMovementResponse] =
       withReusableSource(src) {
@@ -280,7 +277,7 @@ class V2DeparturesControllerImpl @Inject() (
     }
   }
 
-  private def updateAndSendDeparture(departureId: DepartureId, messageType: MessageType, source: Source[ByteString, _])(implicit
+  private def updateAndSendDeparture(departureId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     request: AuthenticatedRequest[Source[ByteString, _]]
   ) =

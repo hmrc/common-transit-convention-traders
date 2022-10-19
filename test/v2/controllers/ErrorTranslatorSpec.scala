@@ -167,8 +167,10 @@ class ErrorTranslatorSpec
 
   "Router Error" - {
     "an UnrecognisedOffice Error becomes an InternalServerError" in {
-      val input  = RouterError.UnrecognisedOffice("test")
-      val output = PresentationError.internalServiceError("test")
+      val input = RouterError.UnrecognisedOffice
+      val output = PresentationError.badRequestError(
+        "The customs office specified for CustomsOfficeOfDestinationActual or CustomsOfficeOfDeparture must be a customs office located in the United Kingdom"
+      )
 
       routerErrorConverter.convert(input) mustBe output
     }

@@ -27,7 +27,6 @@ import v2.base.CommonGenerators
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.request.MessageType
-import v2.models.responses.MessageResponse
 import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime
@@ -40,7 +39,6 @@ class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with
   "with a valid message response, create a valid HateoasDepartureMessageResponse" in {
     val messageId   = arbitrary[MessageId].sample.value
     val departureId = arbitrary[MovementId].sample.value
-    val triggerId   = arbitrary[MessageId].sample.value
     val body        = Gen.alphaNumStr.sample.value
     val response = MessageSummary(
       messageId,

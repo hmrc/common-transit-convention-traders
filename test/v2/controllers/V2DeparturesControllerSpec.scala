@@ -49,7 +49,6 @@ import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status._
 import play.api.libs.Files.SingletonTemporaryFileCreator
-import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.Request
@@ -1227,7 +1226,7 @@ class V2DeparturesControllerSpec
 
         when(
           mockDeparturesPersistenceService
-            .updateDeparture(any[String].asInstanceOf[DepartureId], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
+            .updateDeparture(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
               any[HeaderCarrier],
               any[ExecutionContext]
             )
@@ -1237,7 +1236,7 @@ class V2DeparturesControllerSpec
           mockRouterService.send(
             any[String].asInstanceOf[MessageType],
             any[String].asInstanceOf[EORINumber],
-            any[String].asInstanceOf[DepartureId],
+            any[String].asInstanceOf[MovementId],
             any[String].asInstanceOf[MessageId],
             any()
           )(any(), any())
@@ -1268,8 +1267,8 @@ class V2DeparturesControllerSpec
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationAmendment), any(), eqTo(MimeTypes.JSON))(any(), any())
         verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DeclarationAmendment), any())(any(), any(), any())
         verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
-        verify(mockDeparturesPersistenceService, times(1)).updateDeparture(DepartureId(any()), any(), any())(any(), any())
-        verify(mockRouterService, times(1)).send(eqTo(MessageType.DeclarationAmendment), EORINumber(any()), DepartureId(any()), MessageId(any()), any())(
+        verify(mockDeparturesPersistenceService, times(1)).updateDeparture(MovementId(any()), any(), any())(any(), any())
+        verify(mockRouterService, times(1)).send(eqTo(MessageType.DeclarationAmendment), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
           any(),
           any()
         )
@@ -1400,13 +1399,13 @@ class V2DeparturesControllerSpec
         status(result) mustBe INTERNAL_SERVER_ERROR
       }
 
-      "must return InternalServerError when router returns BadRequest" in {
-        setup(router = EitherT.leftT(RouterError.UnrecognisedOffice("test")))
+      "must return BadRequest when router returns BadRequest" in {
+        setup(router = EitherT.leftT(RouterError.UnrecognisedOffice))
 
         val request = fakeJsonAttachRequest()
         val result  = sut.attachMessage(departureId)(request)
 
-        status(result) mustBe INTERNAL_SERVER_ERROR
+        status(result) mustBe BAD_REQUEST
       }
 
     }
