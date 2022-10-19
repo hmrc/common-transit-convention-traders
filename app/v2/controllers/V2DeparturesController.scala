@@ -111,12 +111,10 @@ class V2DeparturesControllerImpl @Inject() (
           declarationResult <- persistAndSendToEIS(xmlSource, messageType)
         } yield declarationResult).fold[Result](
           presentationError => {
-            println(s"please be here: ${presentationError.message} ${presentationError.code}")
             fCounter.inc()
             Status(presentationError.code.statusCode)(Json.toJson(presentationError))
           },
           result => {
-            println("nonsense")
             sCounter.inc()
             Accepted(HateoasDepartureDeclarationResponse(result.departureId))
           }
@@ -130,8 +128,7 @@ class V2DeparturesControllerImpl @Inject() (
     withReusableSource(src) {
       source =>
         for {
-          _ <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
-          _ = println("about to persist and send")
+          _      <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
           result <- persistAndSend(source)
         } yield result
     }
@@ -160,7 +157,6 @@ class V2DeparturesControllerImpl @Inject() (
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
     for {
       declarationResult <- departuresService.saveDeclaration(request.eoriNumber, source).asPresentation
-      _ = println("about to forward")
       _ <- routerService
         .send(MessageType.DeclarationData, request.eoriNumber, declarationResult.departureId, declarationResult.messageId, source)
         .asPresentation

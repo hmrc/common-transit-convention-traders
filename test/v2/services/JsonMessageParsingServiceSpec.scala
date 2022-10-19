@@ -79,7 +79,6 @@ class JsonMessageParsingServiceSpec
 
       whenReady(response.value) {
         res =>
-          println(res)
           res mustBe a[Right[_, MessageType]]
           res.right.get mustBe MessageType.DeclarationAmendment
       }
@@ -93,7 +92,6 @@ class JsonMessageParsingServiceSpec
 
       whenReady(response.value) {
         res =>
-          println(res)
           res mustBe a[Left[MessageTypeNotFound, _]]
           res.left.get mustBe ExtractionError.MessageTypeNotFound("CC015C")
       }
