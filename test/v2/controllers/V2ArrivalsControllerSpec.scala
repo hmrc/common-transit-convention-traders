@@ -381,7 +381,6 @@ class V2ArrivalsControllerSpec
         val request = fakeRequestArrivalNotification(method = "POST", body = singleUseStringSource(CC007C), headers = standardHeadersJSON)
         val result  = sut.createArrivalNotification()(request)
         status(result) mustBe ACCEPTED
-        //{"_links":{"self":{"href":"/customs/transits/movements/arrivals/123"},"messages":{"href":"/customs/transits/movements/arrivals/123/messages"}}}
         contentAsJson(result) mustBe Json.obj(
           "_links" -> Json.obj(
             "self"     -> Json.obj("href" -> "/customs/transits/movements/arrivals/123"),
