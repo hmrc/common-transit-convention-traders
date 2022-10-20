@@ -190,9 +190,10 @@ class EnrolmentLoggingServiceSpec
           .thenReturn(Future.successful(enrolments))
 
         val redactedGaUserId = gaUserId
-          .map(
-            x => s"***${x.takeRight(3)}"
-          )
+          .map {
+            case x if x.length > 3 => s"***${x.takeRight(3)}"
+            case _                 => "***"
+          }
           .getOrElse("Not provided")
 
         val message: String =
