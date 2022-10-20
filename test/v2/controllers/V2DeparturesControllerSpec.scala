@@ -286,46 +286,6 @@ class V2DeparturesControllerSpec
         )
       }
 
-      "must return Accepted when body length is within limits and is considered valid" - Seq(true, false).foreach {
-        auditEnabled =>
-          when(
-            mockValidationService
-              .validateXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-          ).thenAnswer {
-            invocation =>
-              xmlValidationMockAnswer(invocation)
-          }
-          when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
-
-          val success = if (auditEnabled) "is successful" else "fails"
-          s"when auditing $success" in {
-            beforeEach()
-            when(
-              mockValidationService.validateXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-            )
-              .thenAnswer(
-                _ => EitherT.rightT(())
-              )
-
-            if (!auditEnabled) {
-              reset(mockAuditService)
-              when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.failed(UpstreamErrorResponse("error", 500)))
-            }
-            val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource(CC015C.mkString), headers = standardHeaders)
-            val result  = sut.submitDeclaration()(request)
-            status(result) mustBe ACCEPTED
-
-            // the response format is tested in HateoasDepartureDeclarationResponseSpec
-            contentAsJson(result) mustBe Json.toJson(HateoasDepartureDeclarationResponse(MovementId("123")))
-
-            verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
-            verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
-            verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
-            verify(mockRouterService, times(1))
-              .send(eqTo(MessageType.DeclarationData), EORINumber(any()), MovementId(any()), MessageId(any()), any())(any(), any())
-          }
-      }
-
       "must return Bad Request when body is not an XML document" in {
         when(mockValidationService.validateXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(

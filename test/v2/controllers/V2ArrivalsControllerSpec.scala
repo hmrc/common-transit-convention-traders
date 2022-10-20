@@ -16,6 +16,7 @@
 
 package v2.controllers
 
+import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
@@ -33,6 +34,7 @@ import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import org.mockito.invocation.InvocationOnMock
+import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -52,7 +54,6 @@ import play.api.test.Helpers
 import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.TestMetrics
 import v2.base.CommonGenerators
 import v2.base.TestActorSystem
@@ -96,6 +97,7 @@ class V2ArrivalsControllerSpec
   val mockArrivalsPersistenceService = mock[ArrivalsService]
   val mockRouterService              = mock[RouterService]
   val mockAuditService               = mock[AuditingService]
+  val mockConversionService          = mock[ConversionService]
   implicit val temporaryFileCreator  = SingletonTemporaryFileCreator
 
   lazy val sut: V2ArrivalsController = new V2ArrivalsControllerImpl(
@@ -105,13 +107,12 @@ class V2ArrivalsControllerSpec
     mockArrivalsPersistenceService,
     mockRouterService,
     mockAuditService,
+    mockConversionService,
     FakeMessageSizeActionProvider,
     new TestMetrics()
   )
 
   implicit val timeout: Timeout = 5.seconds
-
-  def fakeHeaders(contentType: String) = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> contentType))
 
   def fakeRequestArrivalNotification[A](
     method: String,
@@ -170,7 +171,7 @@ class V2ArrivalsControllerSpec
       }
       .toMat(Sink.last)(Keep.right)
 
-  val xmlValidationMockAnswer = (invocation: InvocationOnMock) =>
+  lazy val xmlValidationMockAnswer = (invocation: InvocationOnMock) =>
     EitherT(
       invocation
         .getArgument[Source[ByteString, _]](1)
@@ -180,22 +181,29 @@ class V2ArrivalsControllerSpec
         .runWith(testSinkXml)
     )
 
+  val contentLength = Gen.chooseNum(1, 50000).toString
+
   "for a arrival notification with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
+
     "with content type set to application/xml" - {
 
       // For the content length headers, we have to ensure that we send something
-      val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
+      val standardHeadersXML = FakeHeaders(
+        Seq(
+          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.0+json",
+          HeaderNames.CONTENT_TYPE   -> MimeTypes.XML,
+          HeaderNames.CONTENT_LENGTH -> contentLength
+        )
       )
 
-      "must return Accepted when body length is within limits and is considered valid" in {
+      "must return Accepted when xml arrival notification is considered valid" in {
         when(mockValidationService.validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
             _ => EitherT.rightT(())
           )
         when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
 
-        val request = fakeRequestArrivalNotification(method = "POST", body = singleUseStringSource(CC007C.mkString), headers = standardHeaders)
+        val request = fakeRequestArrivalNotification(method = "POST", body = singleUseStringSource(CC007C.mkString), headers = standardHeadersXML)
         val result  = sut.createArrivalNotification()(request)
         status(result) mustBe ACCEPTED
 
@@ -210,67 +218,6 @@ class V2ArrivalsControllerSpec
         )
       }
 
-      "must return Accepted when body length is within limits and is considered valid" - Seq(true, false).foreach {
-        auditEnabled =>
-          when(
-            mockValidationService
-              .validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-          ).thenAnswer {
-            invocation =>
-              xmlValidationMockAnswer(invocation)
-          }
-          when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
-
-          val success = if (auditEnabled) "is successful" else "fails"
-          s"when auditing $success" in {
-            beforeEach()
-            when(
-              mockValidationService.validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-            )
-              .thenAnswer(
-                _ => EitherT.rightT(())
-              )
-
-            if (!auditEnabled) {
-              reset(mockAuditService)
-              when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.failed(UpstreamErrorResponse("error", 500)))
-            }
-            val request = fakeRequestArrivalNotification(method = "POST", body = singleUseStringSource(CC007C.mkString), headers = standardHeaders)
-            val result  = sut.createArrivalNotification()(request)
-            status(result) mustBe ACCEPTED
-
-            contentAsJson(result) mustBe Json.toJson(HateoasArrivalNotificationResponse(MovementId("123")))
-
-            verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.XML))(any(), any())
-            verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
-            verify(mockArrivalsPersistenceService, times(1)).createArrival(EORINumber(any()), any())(any(), any())
-            verify(mockRouterService, times(1))
-              .send(eqTo(MessageType.ArrivalNotification), EORINumber(any()), MovementId(any()), MessageId(any()), any())(any(), any())
-          }
-      }
-
-      "must return Bad Request when body is not an XML document" in {
-        when(mockValidationService.validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
-          .thenAnswer(
-            _ => EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList(XmlValidationError(42, 27, "invalid XML"), Nil)))
-          )
-
-        val request = fakeRequestArrivalNotification(method = "POST", body = singleUseStringSource("notxml"), headers = standardHeaders)
-        val result  = sut.createArrivalNotification()(request)
-        status(result) mustBe BAD_REQUEST
-        contentAsJson(result) mustBe Json.obj(
-          "code"    -> "SCHEMA_VALIDATION",
-          "message" -> "Request failed schema validation",
-          "validationErrors" -> Seq(
-            Json.obj(
-              "lineNumber"   -> 42,
-              "columnNumber" -> 27,
-              "message"      -> "invalid XML"
-            )
-          )
-        )
-      }
-
       "must return Bad Request when body is an XML document that would fail schema validation" in {
         when(mockValidationService.validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
@@ -278,7 +225,7 @@ class V2ArrivalsControllerSpec
           )
 
         val request =
-          fakeRequestArrivalNotification(method = "POST", body = singleUseStringSource(<test></test>.mkString), headers = standardHeaders)
+          fakeRequestArrivalNotification(method = "POST", body = singleUseStringSource(<test></test>.mkString), headers = standardHeadersXML)
         val result = sut.createArrivalNotification()(request)
         status(result) mustBe BAD_REQUEST
         contentAsJson(result) mustBe Json.obj(
@@ -307,12 +254,13 @@ class V2ArrivalsControllerSpec
           mockArrivalsPersistenceService,
           mockRouterService,
           mockAuditService,
+          mockConversionService,
           FakeMessageSizeActionProvider,
           new TestMetrics()
         )
 
         val request =
-          fakeRequestArrivalNotification("POST", body = Source.single(ByteString(CC007C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
+          fakeRequestArrivalNotification("POST", body = Source.single(ByteString(CC007C.mkString, StandardCharsets.UTF_8)), headers = standardHeadersXML)
         val response = sut.createArrivalNotification()(request)
 
         status(response) mustBe INTERNAL_SERVER_ERROR
@@ -325,6 +273,223 @@ class V2ArrivalsControllerSpec
       "must return Internal Service Error if the router service reports an error" in {
 
         when(mockValidationService.validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.rightT(())
+          )
+
+        when(
+          mockArrivalsPersistenceService
+            .createArrival(any[String].asInstanceOf[EORINumber], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+        ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, ArrivalResponse](ArrivalResponse(MovementId("123"), MessageId("456")))))
+
+        val sut = new V2ArrivalsControllerImpl(
+          Helpers.stubControllerComponents(),
+          FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
+          mockValidationService,
+          mockArrivalsPersistenceService,
+          mockRouterService,
+          mockAuditService,
+          mockConversionService,
+          FakeMessageSizeActionProvider,
+          new TestMetrics()
+        )
+
+        val request =
+          fakeRequestArrivalNotification("POST", body = Source.single(ByteString(CC007C.mkString, StandardCharsets.UTF_8)), headers = standardHeadersXML)
+        val response = sut.createArrivalNotification()(request)
+
+        status(response) mustBe INTERNAL_SERVER_ERROR
+        contentAsJson(response) mustBe Json.obj(
+          "code"    -> "INTERNAL_SERVER_ERROR",
+          "message" -> "Internal server error"
+        )
+      }
+    }
+
+    "with content type set to application/json" - {
+
+      val testSinkJson: Sink[ByteString, Future[Either[FailedToValidateError, Unit]]] =
+        Flow
+          .fromFunction {
+            input: ByteString =>
+              Try(Json.parse(input.utf8String)).toEither
+                .leftMap(
+                  _ =>
+                    FailedToValidateError
+                      .JsonSchemaFailedToValidateError(NonEmptyList(JsonValidationError("path", "Invalid JSON"), Nil))
+                )
+                .flatMap {
+                  jsVal =>
+                    if ((jsVal \ "CC007").isDefined) Right(())
+                    else
+                      Left(
+                        FailedToValidateError
+                          .JsonSchemaFailedToValidateError(validationErrors = NonEmptyList(JsonValidationError("CC007", "CC007 expected but not present"), Nil))
+                      )
+                }
+          }
+          .toMat(Sink.last)(Keep.right)
+
+      val jsonValidationMockAnswer = (invocation: InvocationOnMock) =>
+        EitherT(
+          invocation
+            .getArgument[Source[ByteString, _]](1)
+            .fold(ByteString())(
+              (current, next) => current ++ next
+            )
+            .runWith(testSinkJson)
+        )
+
+      val CC007C = Json.stringify(Json.obj("CC007" -> Json.obj("test" -> "testJSON")))
+
+      val standardHeadersJSON = FakeHeaders(
+        Seq(
+          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.0+json",
+          HeaderNames.CONTENT_TYPE   -> MimeTypes.JSON,
+          HeaderNames.CONTENT_LENGTH -> contentLength
+        )
+      )
+
+      "must return Accepted when json arrival notification is considered valid" in {
+
+        when(
+          mockValidationService
+            .validateJson(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+        ).thenAnswer {
+          invocation =>
+            jsonValidationMockAnswer(invocation)
+        }
+        when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())).thenReturn(Future.successful(()))
+
+        val jsonToXmlConversion = (invocation: InvocationOnMock) =>
+          EitherT.rightT(
+            invocation.getArgument[Source[ByteString, _]](1)
+          )
+
+        when(
+          mockConversionService
+            .jsonToXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext],
+              any[Materializer]
+            )
+        ).thenAnswer {
+          invocation =>
+            jsonToXmlConversion(invocation)
+        }
+
+        val request = fakeRequestArrivalNotification(method = "POST", body = singleUseStringSource(CC007C), headers = standardHeadersJSON)
+        val result  = sut.createArrivalNotification()(request)
+        status(result) mustBe ACCEPTED
+        //{"_links":{"self":{"href":"/customs/transits/movements/arrivals/123"},"messages":{"href":"/customs/transits/movements/arrivals/123/messages"}}}
+        contentAsJson(result) mustBe Json.obj(
+          "_links" -> Json.obj(
+            "self"     -> Json.obj("href" -> "/customs/transits/movements/arrivals/123"),
+            "messages" -> Json.obj("href" -> "/customs/transits/movements/arrivals/123/messages")
+          )
+        )
+        verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.ArrivalNotification), any())(any(), any(), any())
+        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
+        verify(mockConversionService).jsonToXml(eqTo(MessageType.ArrivalNotification), any())(any(), any(), any())
+        verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.JSON))(any(), any())
+
+      }
+
+      "must return Bad Request when body is a JSON document that would fail schema validation" in {
+        when(mockValidationService.validateJson(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.leftT(FailedToValidateError.JsonSchemaFailedToValidateError(NonEmptyList(JsonValidationError("path", "error message"), Nil)))
+          )
+
+        val request = fakeRequestArrivalNotification(method = "POST", body = singleUseStringSource("notjson"), headers = standardHeadersJSON)
+        val result  = sut.createArrivalNotification()(request)
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "SCHEMA_VALIDATION",
+          "message" -> "Request failed schema validation",
+          "validationErrors" -> Seq(
+            Json.obj(
+              "schemaPath" -> "path",
+              "message"    -> "error message"
+            )
+          )
+        )
+      }
+
+      "must return Internal Service Error if the persistence service reports an error" in {
+        when(mockValidationService.validateJson(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.rightT(())
+          )
+
+        val sut = new V2ArrivalsControllerImpl(
+          Helpers.stubControllerComponents(),
+          FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
+          mockValidationService,
+          mockArrivalsPersistenceService,
+          mockRouterService,
+          mockAuditService,
+          mockConversionService,
+          FakeMessageSizeActionProvider,
+          new TestMetrics()
+        )
+
+        val request =
+          fakeRequestArrivalNotification("POST", body = Source.single(ByteString(CC007C.mkString, StandardCharsets.UTF_8)), headers = standardHeadersJSON)
+        val response = sut.createArrivalNotification()(request)
+
+        status(response) mustBe INTERNAL_SERVER_ERROR
+        contentAsJson(response) mustBe Json.obj(
+          "code"    -> "INTERNAL_SERVER_ERROR",
+          "message" -> "Internal server error"
+        )
+      }
+
+      "must return Internal Service Error if the conversion service reports an error" in {
+
+        when(mockValidationService.validateJson(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.rightT(())
+          )
+
+        when(
+          mockConversionService
+            .jsonToXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]])(
+              any[HeaderCarrier],
+              any[ExecutionContext],
+              any[Materializer]
+            )
+        )
+          .thenAnswer(
+            _ => EitherT.leftT(ConversionError.UnexpectedError(thr = Some(new Exception("Failed to convert json to xml"))))
+          )
+
+        val sut = new V2ArrivalsControllerImpl(
+          Helpers.stubControllerComponents(),
+          FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
+          mockValidationService,
+          mockArrivalsPersistenceService,
+          mockRouterService,
+          mockAuditService,
+          mockConversionService,
+          FakeMessageSizeActionProvider,
+          new TestMetrics()
+        )
+
+        val request =
+          fakeRequestArrivalNotification("POST", body = Source.single(ByteString(CC007C.mkString, StandardCharsets.UTF_8)), headers = standardHeadersJSON)
+        val response = sut.createArrivalNotification()(request)
+
+        status(response) mustBe INTERNAL_SERVER_ERROR
+        contentAsJson(response) mustBe Json.obj(
+          "code"    -> "INTERNAL_SERVER_ERROR",
+          "message" -> "Internal server error"
+        )
+      }
+
+      "must return Internal Service Error if the router service reports an error" in {
+
+        when(mockValidationService.validateJson(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
             _ => EitherT.rightT(())
           )
@@ -342,12 +507,13 @@ class V2ArrivalsControllerSpec
           mockArrivalPersistenceService,
           mockRouterService,
           mockAuditService,
+          mockConversionService,
           FakeMessageSizeActionProvider,
           new TestMetrics()
         )
 
         val request =
-          fakeRequestArrivalNotification("POST", body = Source.single(ByteString(CC007C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
+          fakeRequestArrivalNotification("POST", body = Source.single(ByteString(CC007C.mkString, StandardCharsets.UTF_8)), headers = standardHeadersJSON)
         val response = sut.createArrivalNotification()(request)
 
         status(response) mustBe INTERNAL_SERVER_ERROR
@@ -360,7 +526,11 @@ class V2ArrivalsControllerSpec
 
     "must return UNSUPPORTED_MEDIA_TYPE when the content type is invalid" in {
       val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "invalid", HeaderNames.CONTENT_LENGTH -> "1000")
+        Seq(
+          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.0+json",
+          HeaderNames.CONTENT_TYPE   -> "invalid",
+          HeaderNames.CONTENT_LENGTH -> contentLength
+        )
       )
 
       val json    = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
@@ -376,7 +546,7 @@ class V2ArrivalsControllerSpec
 
     "must return UNSUPPORTED_MEDIA_TYPE when the content type is not supplied" in {
       val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_LENGTH -> "1000")
+        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_LENGTH -> contentLength)
       )
 
       // We emulate no ContentType by sending in a stream directly, without going through Play's request builder
@@ -393,7 +563,11 @@ class V2ArrivalsControllerSpec
 
     "must return Internal Service Error if the router service reports an error" in {
       val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
+        Seq(
+          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.0+json",
+          HeaderNames.CONTENT_TYPE   -> MimeTypes.XML,
+          HeaderNames.CONTENT_LENGTH -> contentLength
+        )
       )
 
       when(mockValidationService.validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
@@ -414,6 +588,7 @@ class V2ArrivalsControllerSpec
         mockArrivalPersistenceService,
         mockRouterService,
         mockAuditService,
+        mockConversionService,
         FakeMessageSizeActionProvider,
         new TestMetrics()
       )

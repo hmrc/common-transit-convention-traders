@@ -54,6 +54,7 @@ class V2ArrivalsControllerImpl @Inject() (
   arrivalsService: ArrivalsService,
   routerService: RouterService,
   auditService: AuditingService,
+  conversionService: ConversionService,
   messageSizeAction: MessageSizeActionProvider,
   val metrics: Metrics
 )(implicit val materializer: Materializer, val temporaryFileCreator: TemporaryFileCreator)
@@ -68,7 +69,8 @@ class V2ArrivalsControllerImpl @Inject() (
 
   def createArrivalNotification(): Action[Source[ByteString, _]] =
     contentTypeRoute {
-      case Some(MimeTypes.XML) => createArrivalNotificationXML()
+      case Some(MimeTypes.XML)  => createArrivalNotificationXML()
+      case Some(MimeTypes.JSON) => createArrivalNotificationJSON()
     }
 
   def createArrivalNotificationXML(): Action[Source[ByteString, _]] =
@@ -79,8 +81,23 @@ class V2ArrivalsControllerImpl @Inject() (
         (for {
           _ <- validationService.validateXml(MessageType.ArrivalNotification, request.body).asPresentation
           _ = auditService.audit(AuditType.ArrivalNotification, request.body, MimeTypes.XML)
-
           arrivalNotificationResult <- persistAndSend(request.body)
+        } yield arrivalNotificationResult).fold[Result](
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          result => Accepted(HateoasArrivalNotificationResponse(result.arrivalId))
+        )
+    }
+
+  def createArrivalNotificationJSON(): Action[Source[ByteString, _]] =
+    (authActionNewEnrolmentOnly andThen messageSizeAction()).stream {
+      implicit request =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+        (for {
+          _ <- validationService.validateJson(MessageType.ArrivalNotification, request.body).asPresentation
+          _ = auditService.audit(AuditType.ArrivalNotification, request.body, MimeTypes.JSON)
+          xmlSouce                  <- conversionService.jsonToXml(MessageType.ArrivalNotification, request.body).asPresentation
+          arrivalNotificationResult <- persistAndSend(xmlSouce)
         } yield arrivalNotificationResult).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           result => Accepted(HateoasArrivalNotificationResponse(result.arrivalId))
