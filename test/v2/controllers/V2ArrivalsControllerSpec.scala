@@ -358,7 +358,6 @@ class V2ArrivalsControllerSpec
           invocation =>
             jsonValidationMockAnswer(invocation)
         }
-
         when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())).thenReturn(Future.successful(()))
 
         when(
@@ -373,11 +372,6 @@ class V2ArrivalsControllerSpec
           EitherT.rightT[Future, ConversionError](source)
         }
 
-        when(
-          mockValidationService
-            .validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-        ).thenReturn(EitherT.rightT[Future, FailedToValidateError](()))
-
         val request = fakeRequestArrivalNotification(method = "POST", body = singleUseStringSource(CC007C), headers = standardHeadersJSON)
         val result  = sut.createArrivalNotification()(request)
         status(result) mustBe ACCEPTED
@@ -388,7 +382,6 @@ class V2ArrivalsControllerSpec
           )
         )
         verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.ArrivalNotification), any())(any(), any(), any())
-        verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
         verify(mockConversionService).jsonToXml(eqTo(MessageType.ArrivalNotification), any())(any(), any(), any())
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.JSON))(any(), any())
@@ -417,18 +410,10 @@ class V2ArrivalsControllerSpec
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
-        when(
-          mockValidationService
-            .validateJson(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-        ).thenAnswer {
-          invocation =>
-            jsonValidationMockAnswer(invocation)
-        }
-
-        when(
-          mockValidationService
-            .validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-        ).thenReturn(EitherT.rightT[Future, FailedToValidateError](()))
+        when(mockValidationService.validateJson(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.rightT(())
+          )
 
         val sut = new V2ArrivalsControllerImpl(
           Helpers.stubControllerComponents(),
@@ -497,13 +482,10 @@ class V2ArrivalsControllerSpec
 
       "must return Internal Service Error if the router service reports an error" in {
 
-        when(
-          mockValidationService
-            .validateJson(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-        ).thenAnswer {
-          invocation =>
-            jsonValidationMockAnswer(invocation)
-        }
+        when(mockValidationService.validateJson(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.rightT(())
+          )
 
         when(
           mockArrivalsPersistenceService
