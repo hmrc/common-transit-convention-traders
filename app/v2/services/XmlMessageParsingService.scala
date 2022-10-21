@@ -38,8 +38,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-@ImplementedBy(classOf[MessagesXmlParsingServiceImpl])
-trait MessagesXmlParsingService {
+@ImplementedBy(classOf[XmlMessageParsingServiceImpl])
+trait XmlMessageParsingService {
 
   def extractMessageType(source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
@@ -48,7 +48,7 @@ trait MessagesXmlParsingService {
 }
 
 @Singleton
-class MessagesXmlParsingServiceImpl @Inject() (implicit materializer: Materializer) extends MessagesXmlParsingService {
+class XmlMessageParsingServiceImpl @Inject() (implicit materializer: Materializer) extends XmlMessageParsingService {
 
   val messageSink = Sink.head[Either[ExtractionError, MessageType]]
 

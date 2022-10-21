@@ -58,8 +58,7 @@ class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends Rou
           _ => Right(())
         )
         .recover {
-          case UpstreamErrorResponse(_, BAD_REQUEST, _, _) =>
-            Left(RouterError.UnrecognisedOffice)
+          case UpstreamErrorResponse(_, BAD_REQUEST, _, _) => Left(RouterError.UnrecognisedOffice)
           case NonFatal(e) =>
             Left(RouterError.UnexpectedError(thr = Some(e)))
         }
