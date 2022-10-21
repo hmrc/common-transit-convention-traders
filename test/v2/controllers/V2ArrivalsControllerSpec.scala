@@ -201,6 +201,7 @@ class V2ArrivalsControllerSpec
           .thenAnswer(
             _ => EitherT.rightT(())
           )
+        when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
 
         val request = fakeRequestArrivalNotification(method = "POST", body = singleUseStringSource(CC007C.mkString), headers = standardHeadersXML)
         val result  = sut.createArrivalNotification()(request)
@@ -360,6 +361,11 @@ class V2ArrivalsControllerSpec
         }
         when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())).thenReturn(Future.successful(()))
 
+        val jsonToXmlConversion = (invocation: InvocationOnMock) =>
+          EitherT.rightT(
+            invocation.getArgument[Source[ByteString, _]](1)
+          )
+
         when(
           mockConversionService
             .jsonToXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(
@@ -367,9 +373,9 @@ class V2ArrivalsControllerSpec
               any[ExecutionContext],
               any[Materializer]
             )
-        ).thenReturn {
-          val source = singleUseStringSource(CC007C.mkString)
-          EitherT.rightT[Future, ConversionError](source)
+        ).thenAnswer {
+          invocation =>
+            jsonToXmlConversion(invocation)
         }
 
         val request = fakeRequestArrivalNotification(method = "POST", body = singleUseStringSource(CC007C), headers = standardHeadersJSON)
@@ -385,7 +391,7 @@ class V2ArrivalsControllerSpec
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
         verify(mockConversionService).jsonToXml(eqTo(MessageType.ArrivalNotification), any())(any(), any(), any())
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.JSON))(any(), any())
-        verify(mockArrivalsPersistenceService, times(1)).createArrival(EORINumber(any()), any())(any(), any())
+
       }
 
       "must return Bad Request when body is a JSON document that would fail schema validation" in {
@@ -487,8 +493,9 @@ class V2ArrivalsControllerSpec
             _ => EitherT.rightT(())
           )
 
+        val mockArrivalPersistenceService = mock[ArrivalsService]
         when(
-          mockArrivalsPersistenceService
+          mockArrivalPersistenceService
             .createArrival(any[String].asInstanceOf[EORINumber], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, ArrivalResponse](ArrivalResponse(MovementId("123"), MessageId("456")))))
 
@@ -496,7 +503,7 @@ class V2ArrivalsControllerSpec
           Helpers.stubControllerComponents(),
           FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
           mockValidationService,
-          mockArrivalsPersistenceService,
+          mockArrivalPersistenceService,
           mockRouterService,
           mockAuditService,
           mockConversionService,
