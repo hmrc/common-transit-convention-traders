@@ -19,6 +19,7 @@ package v2.controllers
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
@@ -34,12 +35,14 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.MessageSizeActionProvider
-import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
+import v2.models.errors.PresentationError
 import v2.models.AuditType
 import v2.models.request.MessageType
 import v2.models.responses.hateoas._
 import v2.services._
+
+import scala.concurrent.Future
 
 @ImplementedBy(classOf[V2ArrivalsControllerImpl])
 trait V2ArrivalsController {
@@ -81,8 +84,11 @@ class V2ArrivalsControllerImpl @Inject() (
         (for {
           _ <- validationService.validateXml(MessageType.ArrivalNotification, request.body).asPresentation
           _ = auditService.audit(AuditType.ArrivalNotification, request.body, MimeTypes.XML)
-          arrivalNotificationResult <- persistAndSend(request.body)
-        } yield arrivalNotificationResult).fold[Result](
+          arrivalResult <- arrivalsService.createArrival(request.eoriNumber, request.body).asPresentation
+          _ <- routerService
+            .send(MessageType.ArrivalNotification, request.eoriNumber, arrivalResult.arrivalId, arrivalResult.messageId, request.body)
+            .asPresentation
+        } yield arrivalResult).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           result => Accepted(HateoasArrivalNotificationResponse(result.arrivalId))
         )
@@ -93,24 +99,35 @@ class V2ArrivalsControllerImpl @Inject() (
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-        (for {
-          _ <- validationService.validateJson(MessageType.ArrivalNotification, request.body).asPresentation
-          _ = auditService.audit(AuditType.ArrivalNotification, request.body, MimeTypes.JSON)
-          xmlSouce                  <- conversionService.jsonToXml(MessageType.ArrivalNotification, request.body).asPresentation
-          arrivalNotificationResult <- persistAndSend(xmlSouce)
-        } yield arrivalNotificationResult).fold[Result](
-          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          result => Accepted(HateoasArrivalNotificationResponse(result.arrivalId))
-        )
+        handleJson(MessageType.ArrivalNotification, request.body)
+          .flatMap {
+            src =>
+              withReusableSource(src) {
+                xmlSource =>
+                  for {
+                    _ <- validationService
+                      .validateXml(MessageType.ArrivalNotification, xmlSource)
+                      .asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
+                    arrivalResult <- arrivalsService.createArrival(request.eoriNumber, xmlSource).asPresentation
+                    _ <- routerService
+                      .send(MessageType.ArrivalNotification, request.eoriNumber, arrivalResult.arrivalId, arrivalResult.messageId, xmlSource)
+                      .asPresentation
+                  } yield arrivalResult
+              }
+          }
+          .fold[Result](
+            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+            result => Accepted(HateoasArrivalNotificationResponse(result.arrivalId))
+          )
     }
 
-  private def persistAndSend(
-    source: Source[ByteString, _]
-  )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
+  def handleJson(messageType: MessageType, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier
+  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
     for {
-      arrivalResult <- arrivalsService.createArrival(request.eoriNumber, source).asPresentation
-      _ <- routerService
-        .send(MessageType.ArrivalNotification, request.eoriNumber, arrivalResult.arrivalId, arrivalResult.messageId, source)
-        .asPresentation
-    } yield arrivalResult
+      _ <- validationService.validateJson(messageType, source).asPresentation
+      _ = auditService.audit(messageType.auditType, source, MimeTypes.JSON)
+      xmlSource <- conversionService.jsonToXml(messageType, source).asPresentation
+    } yield xmlSource
+
 }
