@@ -100,7 +100,7 @@ class V2ArrivalsControllerImpl @Inject() (
 
         (for {
           xmlSource     <- handleJson(MessageType.ArrivalNotification, request.body)
-          arrivalResult <- persistAndSend(xmlSource)
+          arrivalResult <- handleXml(xmlSource)
         } yield arrivalResult).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           result => Accepted(HateoasArrivalNotificationResponse(result.arrivalId))
