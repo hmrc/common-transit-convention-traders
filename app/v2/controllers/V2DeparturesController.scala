@@ -39,11 +39,13 @@ import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models.AuditType
+import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.errors.PresentationError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
+import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
 import v2.services._
 
@@ -71,7 +73,8 @@ class V2DeparturesControllerImpl @Inject() (
   auditService: AuditingService,
   messageSizeAction: MessageSizeActionProvider,
   val metrics: Metrics,
-  xmlParsingService: MessagesXmlParsingService
+  xmlParsingService: XmlMessageParsingService,
+  jsonParsingService: JsonMessageParsingService
 )(implicit val materializer: Materializer, val temporaryFileCreator: TemporaryFileCreator)
     extends BaseController
     with V2DeparturesController
@@ -215,7 +218,8 @@ class V2DeparturesControllerImpl @Inject() (
 
   def attachMessage(departureId: MovementId): Action[Source[ByteString, _]] =
     contentTypeRoute {
-      case Some(MimeTypes.XML) => attachMessageXML(departureId)
+      case Some(MimeTypes.XML)  => attachMessageXML(departureId)
+      case Some(MimeTypes.JSON) => attachMessageJSON(departureId)
     }
 
   def attachMessageXML(departureId: MovementId): Action[Source[ByteString, _]] =
@@ -233,6 +237,45 @@ class V2DeparturesControllerImpl @Inject() (
           id => Accepted(Json.toJson(HateoasDepartureUpdateMovementResponse(departureId, id.messageId)))
         )
     }
+
+  def attachMessageJSON(id: MovementId): Action[Source[ByteString, _]] = {
+
+    def handleJson(messageType: MessageType, source: Source[ByteString, _])(implicit
+      hc: HeaderCarrier
+    ): EitherT[Future, PresentationError, Source[ByteString, _]] =
+      for {
+        _ <- validationService.validateJson(messageType, source).asPresentation
+        _ = auditService.audit(messageType.auditType, source, MimeTypes.JSON)
+        converted <- conversionService.jsonToXml(messageType, source).asPresentation
+      } yield converted
+
+    def handleXml(departureId: MovementId, eoriNumber: EORINumber, messageType: MessageType, src: Source[ByteString, _])(implicit
+      hc: HeaderCarrier
+    ): EitherT[Future, PresentationError, UpdateMovementResponse] =
+      withReusableSource(src) {
+        source =>
+          for {
+            _              <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
+            updateResponse <- departuresService.updateDeparture(departureId, messageType, source).asPresentation
+            _              <- routerService.send(messageType, eoriNumber, departureId, updateResponse.messageId, source).asPresentation
+          } yield updateResponse
+      }
+
+    (authActionNewEnrolmentOnly andThen messageSizeAction()).stream {
+      implicit request =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+        (for {
+          messageType    <- jsonParsingService.extractMessageType(request.body).asPresentation
+          converted      <- handleJson(messageType, request.body)
+          updateResponse <- handleXml(id, request.eoriNumber, messageType, converted)
+        } yield updateResponse).fold[Result](
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          updateResponse => Accepted(Json.toJson(HateoasDepartureUpdateMovementResponse(id, updateResponse.messageId)))
+        )
+
+    }
+  }
 
   private def updateAndSendDeparture(departureId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,

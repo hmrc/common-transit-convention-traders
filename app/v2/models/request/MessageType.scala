@@ -91,11 +91,14 @@ object MessageType {
   )
   val values = messageTypeSentByDepartureTrader ++ messageTypeSentToDepartureTrader ++ arrivalValues
 
-  def find(code: String): Option[MessageType] =
+  def findByCode(code: String): Option[MessageType] =
     values.find(_.code == code)
 
+  def findByRootNode(root: String): Option[MessageType] =
+    values.find(_.rootNode == root)
+
   implicit val messageTypeReads: Reads[MessageType] = Reads {
-    case JsString(value) => find(value).map(JsSuccess(_)).getOrElse(JsError())
+    case JsString(value) => findByCode(value).map(JsSuccess(_)).getOrElse(JsError())
     case _               => JsError()
   }
 

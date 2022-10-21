@@ -20,6 +20,8 @@ import akka.stream.alpakka.xml.ParseEvent
 import akka.stream.alpakka.xml.scaladsl.XmlParsing
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 
 import java.nio.charset.StandardCharsets
 import scala.xml.NodeSeq
@@ -29,6 +31,8 @@ object StreamTestHelpers extends StreamTestHelpers
 trait StreamTestHelpers {
 
   def createStream(node: NodeSeq): Source[ByteString, _] = createStream(node.mkString)
+
+  def createStream(json: JsObject): Source[ByteString, _] = createStream(Json.stringify(json))
 
   def createStream(string: String): Source[ByteString, _] =
     Source.single(ByteString(string, StandardCharsets.UTF_8))
