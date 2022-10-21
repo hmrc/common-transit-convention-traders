@@ -286,6 +286,28 @@ class V2DeparturesControllerSpec
         )
       }
 
+      "must return Bad Request when body is not an XML document" in {
+        when(mockValidationService.validateXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList(XmlValidationError(42, 27, "invalid XML"), Nil)))
+          )
+
+        val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource("notxml"), headers = standardHeaders)
+        val result  = sut.submitDeclaration()(request)
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "SCHEMA_VALIDATION",
+          "message" -> "Request failed schema validation",
+          "validationErrors" -> Seq(
+            Json.obj(
+              "lineNumber"   -> 42,
+              "columnNumber" -> 27,
+              "message"      -> "invalid XML"
+            )
+          )
+        )
+      }
+
       "must return Bad Request when body is an XML document that would fail schema validation" in {
         when(mockValidationService.validateXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
