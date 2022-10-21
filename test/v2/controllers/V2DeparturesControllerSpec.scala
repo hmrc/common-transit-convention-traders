@@ -101,7 +101,7 @@ class V2DeparturesControllerSpec
 
   def CC015C: NodeSeq =
     <CC015C>
-      <test>testxml</test>
+      <SynIdeMES1>UNOC</SynIdeMES1>
     </CC015C>
 
   def CC013C: NodeSeq =
@@ -397,11 +397,6 @@ class V2DeparturesControllerSpec
         }
         when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())).thenReturn(Future.successful(()))
 
-        val jsonToXmlConversion = (invocation: InvocationOnMock) =>
-          EitherT.rightT(
-            invocation.getArgument[Source[ByteString, _]](1)
-          )
-
         when(
           mockConversionService
             .jsonToXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(
@@ -409,9 +404,9 @@ class V2DeparturesControllerSpec
               any[ExecutionContext],
               any[Materializer]
             )
-        ).thenAnswer {
-          invocation =>
-            jsonToXmlConversion(invocation)
+        ).thenReturn {
+          val source = singleUseStringSource(CC015C.mkString)
+          EitherT.rightT[Future, ConversionError](source)
         }
 
         val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource(CC015Cjson), headers = standardHeaders)
