@@ -50,7 +50,7 @@ traits:
             type: types.errorResponse
             examples:
               badRequest:
-                description: The accept header is missing or invalid
+                description: The accept header is missing or invalid.
                 value:
                   code : ACCEPT_HEADER_INVALID
 
@@ -75,7 +75,7 @@ traits:
         202:
           body:
             application/json:
-              description: JSON Payload
+              description: JSON payload
               example: |
                 {
                   "_links": {
@@ -120,7 +120,7 @@ traits:
         200:
           body:
             application/json:
-              description: JSON Payload
+              description: JSON payload
               example: |
                 {
                   "_links": {
@@ -188,7 +188,7 @@ traits:
           202:
             body:
               application/json:
-                description: JSON Payload
+                description: JSON payload
                 example: |
                   {
                     "_links": {
@@ -218,7 +218,7 @@ traits:
           200:
             body:
               application/json:
-                description: JSON Payload
+                description: JSON payload
                 example: |
                   {
                     "id": "1",
@@ -235,7 +235,7 @@ traits:
                     }
                   }
           404:
-            description: When an arrival does not exist, has been archived or is not available to the EORI number.
+            description: The specified arrival does not exist, has been archived or is not available to the EORI number.
       /messages:
         post:
           displayName: Send a message related to an arrival
@@ -254,7 +254,7 @@ traits:
             202:
               body:
                 application/json:
-                  description: JSON Payload
+                  description: JSON payload
                   example: |
                     {
                       "_links": {
@@ -295,7 +295,7 @@ traits:
             200:
               body:
                 application/json:
-                  description: JSON Payload
+                  description: JSON payload
                   example: |
                     {
                       "_links": {
@@ -338,7 +338,7 @@ traits:
                       }
                     }
             404:
-              description: When the arrival does not exist, has been archived or is not available to the EORI number.
+              description: The specified arrival does not exist, has been archived or is not available to the EORI number.
         /{messageId}:
           uriParameters:
             messageId:
@@ -365,7 +365,7 @@ traits:
               200:
                 body:
                   application/json:
-                    description: JSON Payload
+                    description: JSON payload
                     example: |
                       {
                         "_links": {
@@ -383,7 +383,7 @@ traits:
                         "body": "<CC007A>...</CC007A>"
                       }
               404:
-                description: When a message does not exist, has been archived or is not available to the EORI number.
+                description: The specified message does not exist, has been archived or is not available to the EORI number.
   /departures:
     post:
       displayName: Send a declaration data message
@@ -404,7 +404,7 @@ traits:
         202:
           body:
             application/json:
-              description: JSON Payload
+              description: JSON payload
               example: |
                 {
                   "_links": {
@@ -451,7 +451,7 @@ traits:
         200:
           body:
             application/json:
-              description: JSON Payload
+              description: JSON payload
               example: |
                 {
                   "_links": {
@@ -514,7 +514,7 @@ traits:
           200:
             body:
               application/json:
-                description: JSON Payload
+                description: JSON payload
                 example: |
                   {
                     "id": "1",
@@ -532,7 +532,7 @@ traits:
                   }
 
           404:
-            description: When a departure does not exist, has been archived or is not available to the EORI number.
+            description: The specified departure does not exist, has been archived or is not available to the EORI number.
       /messages:
         post:
           displayName: Send a message related to a departure
@@ -551,7 +551,7 @@ traits:
             202:
               body:
                 application/json:
-                  description: JSON Payload
+                  description: JSON payload
                   example: |
                     {
                       "_links": {
@@ -594,7 +594,7 @@ traits:
             200:
               body:
                 application/json:
-                  description: JSON Payload
+                  description: JSON payload
                   example: |
                     {
                       "_links": {
@@ -637,7 +637,7 @@ traits:
                       }
                     }
             404:
-              description: When the movement does not exist, has been archived or is not available to the EORI number.
+              description: The specified departure does not exist, has been archived or is not available to the EORI number.
         /{messageId}:
           get:
             displayName: Get a cached message related to a departure and message ID
@@ -658,7 +658,7 @@ traits:
               200:
                 body:
                   application/json:
-                    description: JSON Payload
+                    description: JSON payload
                     example: |
                       {
                         "_links": {
@@ -676,7 +676,7 @@ traits:
                         "body": "<CC015B>...</CC015B>"
                       }
               404:
-                description: When message does not exist, has been archived or is not available to the EORI number.
+                description: The specified message does not exist, has been archived or is not available to the EORI number.
   /push-pull-notifications/box:
     get:
       displayName: Get box information for application
@@ -691,7 +691,7 @@ traits:
         200:
           body:
             application/json:
-              description: JSON Payload
+              description: JSON payload
               example: |
                 {
                     "boxId": "5fb4b568-b5ff-4475-bd29-0a3e70abb6d6",
