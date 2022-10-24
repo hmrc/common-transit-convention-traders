@@ -52,7 +52,9 @@ class DeparturesRouter @Inject() (
   }
 
   def getMessage(departureId: String, messageId: String): Action[Source[ByteString, _]] = route {
-    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE) =>
+    case headerValue
+        if headerValue == Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)
+          || headerValue == Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML) =>
       runIfBound[V2DepartureId](
         "departureId",
         departureId,

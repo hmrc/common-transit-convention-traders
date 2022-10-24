@@ -55,7 +55,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[V2DeparturesControllerImpl])
 trait V2DeparturesController {
   def submitDeclaration(): Action[Source[ByteString, _]]
-  def getMessage(departureId: MovementId, messageId: MessageId): Action[AnyContent]
+  def getMessage(acceptHeaderValue: String, departureId: MovementId, messageId: MessageId): Action[AnyContent]
   def getMessageIds(departureId: MovementId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
   def getDeparture(departureId: MovementId): Action[AnyContent]
   def getDeparturesForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
@@ -159,15 +159,14 @@ class V2DeparturesControllerImpl @Inject() (
         .asPresentation
     } yield declarationResult
 
-  def getMessage(departureId: MovementId, messageId: MessageId): Action[AnyContent] =
+  def getMessage(acceptHeaderValue: String, departureId: MovementId, messageId: MessageId): Action[AnyContent] =
     authActionNewEnrolmentOnly.async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-        departuresService
-          .getMessage(request.eoriNumber, departureId, messageId)
-          .asPresentation
-          .fold(
+        (for {
+          s <-  departuresService.getMessage(request.eoriNumber, departureId, messageId).asPresentation
+        }).fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
             response => Ok(Json.toJson(HateoasDepartureMessageResponse(departureId, messageId, response)))
           )
