@@ -104,7 +104,7 @@ class V2DeparturesControllerSpec
 
   def CC015C: NodeSeq =
     <CC015C>
-      <test>testxml</test>
+      <SynIdeMES1>UNOC</SynIdeMES1>
     </CC015C>
 
   def CC013C: NodeSeq =
@@ -292,68 +292,6 @@ class V2DeparturesControllerSpec
         )
       }
 
-      "must return Accepted when body length is within limits and is considered valid" - Seq(true, false).foreach {
-        auditEnabled =>
-          when(
-            mockValidationService
-              .validateXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-          ).thenAnswer {
-            invocation =>
-              xmlValidationMockAnswer(invocation)
-          }
-          when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
-
-          val success = if (auditEnabled) "is successful" else "fails"
-          s"when auditing $success" in {
-            beforeEach()
-            when(
-              mockValidationService.validateXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-            )
-              .thenAnswer(
-                _ => EitherT.rightT(())
-              )
-
-            if (!auditEnabled) {
-              reset(mockAuditService)
-              when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.failed(UpstreamErrorResponse("error", 500)))
-            }
-            val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource(CC015C.mkString), headers = standardHeaders)
-            val result  = sut.submitDeclaration()(request)
-            status(result) mustBe ACCEPTED
-
-            // the response format is tested in HateoasDepartureDeclarationResponseSpec
-            contentAsJson(result) mustBe Json.toJson(HateoasDepartureDeclarationResponse(MovementId("123")))
-
-            verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
-            verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
-            verify(mockDeparturesPersistenceService, times(1)).saveDeclaration(EORINumber(any()), any())(any(), any())
-            verify(mockRouterService, times(1))
-              .send(eqTo(MessageType.DeclarationData), EORINumber(any()), MovementId(any()), MessageId(any()), any())(any(), any())
-          }
-      }
-
-      "must return Bad Request when body is not an XML document" in {
-        when(mockValidationService.validateXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
-          .thenAnswer(
-            _ => EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList(XmlValidationError(42, 27, "invalid XML"), Nil)))
-          )
-
-        val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource("notxml"), headers = standardHeaders)
-        val result  = sut.submitDeclaration()(request)
-        status(result) mustBe BAD_REQUEST
-        contentAsJson(result) mustBe Json.obj(
-          "code"    -> "SCHEMA_VALIDATION",
-          "message" -> "Request failed schema validation",
-          "validationErrors" -> Seq(
-            Json.obj(
-              "lineNumber"   -> 42,
-              "columnNumber" -> 27,
-              "message"      -> "invalid XML"
-            )
-          )
-        )
-      }
-
       "must return Bad Request when body is an XML document that would fail schema validation" in {
         when(mockValidationService.validateXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
@@ -467,11 +405,6 @@ class V2DeparturesControllerSpec
         }
         when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())).thenReturn(Future.successful(()))
 
-        val jsonToXmlConversion = (invocation: InvocationOnMock) =>
-          EitherT.rightT(
-            invocation.getArgument[Source[ByteString, _]](1)
-          )
-
         when(
           mockConversionService
             .jsonToXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(
@@ -479,9 +412,9 @@ class V2DeparturesControllerSpec
               any[ExecutionContext],
               any[Materializer]
             )
-        ).thenAnswer {
-          invocation =>
-            jsonToXmlConversion(invocation)
+        ).thenReturn {
+          val source = singleUseStringSource(CC015C.mkString)
+          EitherT.rightT[Future, ConversionError](source)
         }
 
         val request = fakeRequestDepartures(method = "POST", body = singleUseStringSource(CC015Cjson), headers = standardHeaders)

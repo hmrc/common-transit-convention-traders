@@ -19,6 +19,7 @@ package v2.controllers
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
@@ -36,10 +37,14 @@ import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
+import v2.models.errors.PresentationError
 import v2.models.AuditType
 import v2.models.request.MessageType
+import v2.models.responses.ArrivalResponse
 import v2.models.responses.hateoas._
 import v2.services._
+
+import scala.concurrent.Future
 
 @ImplementedBy(classOf[V2ArrivalsControllerImpl])
 trait V2ArrivalsController {
@@ -54,6 +59,7 @@ class V2ArrivalsControllerImpl @Inject() (
   arrivalsService: ArrivalsService,
   routerService: RouterService,
   auditService: AuditingService,
+  conversionService: ConversionService,
   messageSizeAction: MessageSizeActionProvider,
   val metrics: Metrics
 )(implicit val materializer: Materializer, val temporaryFileCreator: TemporaryFileCreator)
@@ -68,7 +74,8 @@ class V2ArrivalsControllerImpl @Inject() (
 
   def createArrivalNotification(): Action[Source[ByteString, _]] =
     contentTypeRoute {
-      case Some(MimeTypes.XML) => createArrivalNotificationXML()
+      case Some(MimeTypes.XML)  => createArrivalNotificationXML()
+      case Some(MimeTypes.JSON) => createArrivalNotificationJSON()
     }
 
   def createArrivalNotificationXML(): Action[Source[ByteString, _]] =
@@ -79,21 +86,58 @@ class V2ArrivalsControllerImpl @Inject() (
         (for {
           _ <- validationService.validateXml(MessageType.ArrivalNotification, request.body).asPresentation
           _ = auditService.audit(AuditType.ArrivalNotification, request.body, MimeTypes.XML)
-
-          arrivalNotificationResult <- persistAndSend(request.body)
-        } yield arrivalNotificationResult).fold[Result](
+          arrivalResult <- persistAndSend(request.body)
+        } yield arrivalResult).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           result => Accepted(HateoasArrivalNotificationResponse(result.arrivalId))
         )
     }
 
+  def createArrivalNotificationJSON(): Action[Source[ByteString, _]] =
+    (authActionNewEnrolmentOnly andThen messageSizeAction()).stream {
+      implicit request =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+        (for {
+          xmlSource     <- handleJson(MessageType.ArrivalNotification, request.body)
+          arrivalResult <- handleXml(xmlSource)
+        } yield arrivalResult).fold[Result](
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          result => Accepted(HateoasArrivalNotificationResponse(result.arrivalId))
+        )
+    }
+
+  def handleJson(messageType: MessageType, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier
+  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
+    for {
+      _ <- validationService.validateJson(messageType, source).asPresentation
+      _ = auditService.audit(messageType.auditType, source, MimeTypes.JSON)
+      xmlSource <- conversionService.jsonToXml(messageType, source).asPresentation
+    } yield xmlSource
+
+  def handleXml(src: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    request: AuthenticatedRequest[Source[ByteString, _]]
+  ): EitherT[Future, PresentationError, ArrivalResponse] =
+    withReusableSource(src) {
+      xmlSource =>
+        for {
+          _ <- validationService
+            .validateXml(MessageType.ArrivalNotification, xmlSource)
+            .asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
+          arrivalResult <- persistAndSend(xmlSource)
+        } yield arrivalResult
+    }
+
   private def persistAndSend(
     source: Source[ByteString, _]
-  )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
+  )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]): EitherT[Future, PresentationError, ArrivalResponse] =
     for {
       arrivalResult <- arrivalsService.createArrival(request.eoriNumber, source).asPresentation
       _ <- routerService
         .send(MessageType.ArrivalNotification, request.eoriNumber, arrivalResult.arrivalId, arrivalResult.messageId, source)
         .asPresentation
     } yield arrivalResult
+
 }
