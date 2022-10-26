@@ -294,7 +294,7 @@ class V2DeparturesControllerSpec
           any(),
           any()
         )
-        verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), any())(any(), any())
+        verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
       }
 
       "must return Bad Request when body is an XML document that would fail schema validation" in {
@@ -432,7 +432,7 @@ class V2DeparturesControllerSpec
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
         verify(mockConversionService).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.JSON))(any(), any())
-        verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), any())(any(), any())
+        verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
       }
 
       "must return Bad Request when body is not an JSON document" in {

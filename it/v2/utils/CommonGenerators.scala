@@ -23,6 +23,7 @@ import v2.models.ClientId
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementType
 import v2.models.request.PushNotificationsAssociation
 
 import scala.math.abs
@@ -48,8 +49,9 @@ trait CommonGenerators {
 
   implicit lazy val arbitraryPushNotificationsAssociation: Arbitrary[PushNotificationsAssociation] = Arbitrary {
     for {
-      clientId <- Gen.alphaNumStr.map(ClientId.apply)
-      boxId    <- Gen.option(Gen.uuid.map(_.toString).map(BoxId.apply))
-    } yield PushNotificationsAssociation(clientId, boxId)
+      clientId     <- Gen.alphaNumStr.map(ClientId.apply)
+      movementType <- Gen.oneOf(MovementType.values)
+      boxId        <- Gen.option(Gen.uuid.map(_.toString).map(BoxId.apply))
+    } yield PushNotificationsAssociation(clientId, movementType, boxId)
   }
 }

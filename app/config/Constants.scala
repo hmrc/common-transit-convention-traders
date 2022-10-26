@@ -29,7 +29,7 @@ object Constants {
 
   val XMessageTypeHeader = "X-Message-Type"
 
-  val XClientBoxIdHeader = "X-Callback-Box-Id"
+  val XCallbackBoxIdHeader = "X-Callback-Box-Id"
 
   val ChannelHeader = "channel"
 

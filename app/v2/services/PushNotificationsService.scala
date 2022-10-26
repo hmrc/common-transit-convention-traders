@@ -26,6 +26,7 @@ import v2.connectors.PushNotificationsConnector
 import v2.models.BoxId
 import v2.models.ClientId
 import v2.models.MovementId
+import v2.models.MovementType
 import v2.models.errors.PushNotificationError
 import v2.models.request.PushNotificationsAssociation
 
@@ -36,7 +37,7 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[PushNotificationsServiceImpl])
 trait PushNotificationsService {
 
-  def associate(movementId: MovementId, headers: Headers)(implicit
+  def associate(movementId: MovementId, movementType: MovementType, headers: Headers)(implicit
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
   ): EitherT[Future, PushNotificationError, Unit]
@@ -45,7 +46,7 @@ trait PushNotificationsService {
 
 class PushNotificationsServiceImpl @Inject() (pushNotificationsConnector: PushNotificationsConnector) extends PushNotificationsService {
 
-  override def associate(movementId: MovementId, headers: Headers)(implicit
+  override def associate(movementId: MovementId, movementType: MovementType, headers: Headers)(implicit
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
   ): EitherT[Future, PushNotificationError, Unit] =
@@ -57,7 +58,7 @@ class PushNotificationsServiceImpl @Inject() (pushNotificationsConnector: PushNo
             pushNotificationsConnector
               .postAssociation(
                 movementId,
-                PushNotificationsAssociation(ClientId(clientId), headers.get(Constants.XClientBoxIdHeader).map(BoxId.apply))
+                PushNotificationsAssociation(ClientId(clientId), movementType, headers.get(Constants.XCallbackBoxIdHeader).map(BoxId.apply))
               )
               .map(Right(_))
               .recover {

@@ -38,6 +38,7 @@ import v2.connectors.PushNotificationsConnector
 import v2.models.BoxId
 import v2.models.ClientId
 import v2.models.MovementId
+import v2.models.MovementType
 import v2.models.errors.PushNotificationError
 import v2.models.request.PushNotificationsAssociation
 
@@ -65,29 +66,33 @@ class PushNotificationServiceSpec
 
   "associate" - {
 
-    "when there is no client ID, return a left with MissingClientId" in forAll(arbitrary[MovementId]) {
-      movementId =>
+    "when there is no client ID, return a left with MissingClientId" in forAll(arbitrary[MovementId], arbitrary[MovementType]) {
+      (movementId, movementType) =>
         val headers = FakeHeaders()
 
-        val result = sut.associate(movementId, headers)
+        val result = sut.associate(movementId, movementType, headers)
 
         whenReady(result.value) {
           r => r mustBe Left(PushNotificationError.MissingClientId)
         }
     }
 
-    "when there is no box ID, assert that the association has no box ID and return a right" in forAll(arbitrary[MovementId], Gen.alphaNumStr) {
-      (movementId, clientId) =>
+    "when there is no box ID, assert that the association has no box ID and return a right" in forAll(
+      arbitrary[MovementId],
+      arbitrary[MovementType],
+      Gen.alphaNumStr
+    ) {
+      (movementId, movementType, clientId) =>
         val headers = FakeHeaders(Seq(Constants.XClientIdHeader -> clientId))
 
-        val expectedAssociation = PushNotificationsAssociation(ClientId(clientId), None)
+        val expectedAssociation = PushNotificationsAssociation(ClientId(clientId), movementType, None)
 
         when(mockConnector.postAssociation(MovementId(anyString()), any())(any(), any()))
           .thenReturn(Future.failed(new Exception()))
         when(mockConnector.postAssociation(MovementId(anyString()), eqTo(expectedAssociation))(any(), any()))
           .thenReturn(Future.successful(())) // last wins
 
-        val result = sut.associate(movementId, headers)
+        val result = sut.associate(movementId, movementType, headers)
         whenReady(result.value) {
           r => r mustBe Right(())
         }
@@ -95,34 +100,35 @@ class PushNotificationServiceSpec
 
     "when there is a box ID, assert that the association has a box ID and return a right" in forAll(
       arbitrary[MovementId],
+      arbitrary[MovementType],
       Gen.alphaNumStr,
       Gen.uuid.map(_.toString)
     ) {
-      (movementId, clientId, boxId) =>
-        val headers = FakeHeaders(Seq(Constants.XClientIdHeader -> clientId, Constants.XClientBoxIdHeader -> boxId))
+      (movementId, movementType, clientId, boxId) =>
+        val headers = FakeHeaders(Seq(Constants.XClientIdHeader -> clientId, Constants.XCallbackBoxIdHeader -> boxId))
 
-        val expectedAssociation = PushNotificationsAssociation(ClientId(clientId), Some(BoxId(boxId)))
+        val expectedAssociation = PushNotificationsAssociation(ClientId(clientId), movementType, Some(BoxId(boxId)))
 
         when(mockConnector.postAssociation(MovementId(anyString()), any())(any(), any()))
           .thenReturn(Future.failed(new Exception()))
         when(mockConnector.postAssociation(MovementId(anyString()), eqTo(expectedAssociation))(any(), any()))
           .thenReturn(Future.successful(())) // last wins
 
-        val result = sut.associate(movementId, headers)
+        val result = sut.associate(movementId, movementType, headers)
         whenReady(result.value) {
           r => r mustBe Right(())
         }
     }
 
-    "when an error occurs, return a Left of Unexpected" in forAll(arbitrary[MovementId], Gen.alphaNumStr, Gen.uuid.map(_.toString)) {
-      (movementId, clientId, boxId) =>
-        val headers = FakeHeaders(Seq(Constants.XClientIdHeader -> clientId, Constants.XClientBoxIdHeader -> boxId))
+    "when an error occurs, return a Left of Unexpected" in forAll(arbitrary[MovementId], arbitrary[MovementType], Gen.alphaNumStr, Gen.uuid.map(_.toString)) {
+      (movementId, movementType, clientId, boxId) =>
+        val headers = FakeHeaders(Seq(Constants.XClientIdHeader -> clientId, Constants.XCallbackBoxIdHeader -> boxId))
 
         val expectedException = new Exception()
 
         when(mockConnector.postAssociation(MovementId(anyString()), any())(any(), any())).thenReturn(Future.failed(expectedException))
 
-        val result = sut.associate(movementId, headers)
+        val result = sut.associate(movementId, movementType, headers)
         whenReady(result.value) {
           r => r mustBe Left(PushNotificationError.UnexpectedError(thr = Some(expectedException)))
         }

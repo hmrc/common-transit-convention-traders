@@ -24,6 +24,7 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
+import v2.models.MovementType
 import v2.models.request.MessageType
 import v2.models.responses.MessageSummary
 
@@ -67,6 +68,10 @@ trait CommonGenerators {
 
   implicit lazy val arbitraryMovementId: Arbitrary[MovementId] = Arbitrary {
     genShortUUID.map(MovementId(_))
+  }
+
+  implicit lazy val arbitraryMovementType: Arbitrary[MovementType] = Arbitrary {
+    Gen.oneOf(MovementType.values)
   }
 
 }

@@ -157,7 +157,7 @@ class V2ArrivalsControllerSpec
 
     reset(mockAuditService)
     reset(mockPushNotificationService)
-    when(mockPushNotificationService.associate(MovementId(anyString()), any())(any(), any()))
+    when(mockPushNotificationService.associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any()))
       .thenAnswer(
         _ => EitherT.rightT(())
       )
@@ -180,7 +180,7 @@ class V2ArrivalsControllerSpec
       }
       .toMat(Sink.last)(Keep.right)
 
-  lazy val xmlValidationMockAnswer = (invocation: InvocationOnMock) =>
+  lazy val xmlValidationMockAnswer: InvocationOnMock => EitherT[Future, FailedToValidateError, Unit] = (invocation: InvocationOnMock) =>
     EitherT(
       invocation
         .getArgument[Source[ByteString, _]](1)
@@ -224,7 +224,7 @@ class V2ArrivalsControllerSpec
           any(),
           any()
         )
-        verify(mockPushNotificationService, times(1)).associate(MovementId(eqTo("123")), any())(any(), any())
+        verify(mockPushNotificationService, times(1)).associate(MovementId(eqTo("123")), eqTo(MovementType.Arrival), any())(any(), any())
       }
 
       "must return Accepted when body length is within limits and is considered valid" - Seq(true, false).foreach {
@@ -263,7 +263,7 @@ class V2ArrivalsControllerSpec
             verify(mockArrivalsPersistenceService, times(1)).createArrival(EORINumber(any()), any())(any(), any())
             verify(mockRouterService, times(1))
               .send(eqTo(MessageType.ArrivalNotification), EORINumber(any()), MovementId(any()), MessageId(any()), any())(any(), any())
-            verify(mockPushNotificationService, times(1)).associate(MovementId(eqTo("123")), any())(any(), any())
+            verify(mockPushNotificationService, times(1)).associate(MovementId(eqTo("123")), eqTo(MovementType.Arrival), any())(any(), any())
           }
       }
 
@@ -289,7 +289,7 @@ class V2ArrivalsControllerSpec
           )
         )
 
-        verify(mockPushNotificationService, times(0)).associate(MovementId(anyString()), any())(any(), any())
+        verify(mockPushNotificationService, times(0)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
@@ -468,7 +468,7 @@ class V2ArrivalsControllerSpec
             )
           )
         )
-        verify(mockPushNotificationService, times(0)).associate(MovementId(anyString()), any())(any(), any())
+        verify(mockPushNotificationService, times(0)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
@@ -550,7 +550,7 @@ class V2ArrivalsControllerSpec
           "code"    -> "INTERNAL_SERVER_ERROR",
           "message" -> "Internal server error"
         )
-        verify(mockPushNotificationService, times(0)).associate(MovementId(anyString()), any())(any(), any())
+        verify(mockPushNotificationService, times(0)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
       }
 
       "must return Internal Service Error if the router service reports an error" in {
@@ -610,7 +610,7 @@ class V2ArrivalsControllerSpec
         "code"    -> "UNSUPPORTED_MEDIA_TYPE",
         "message" -> "Content-type header invalid is not supported!"
       )
-      verify(mockPushNotificationService, times(0)).associate(MovementId(anyString()), any())(any(), any())
+      verify(mockPushNotificationService, times(0)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
     }
 
     "must return UNSUPPORTED_MEDIA_TYPE when the content type is not supplied" in {
@@ -628,7 +628,7 @@ class V2ArrivalsControllerSpec
         "code"    -> "UNSUPPORTED_MEDIA_TYPE",
         "message" -> "A content-type header is required!"
       )
-      verify(mockPushNotificationService, times(0)).associate(MovementId(anyString()), any())(any(), any())
+      verify(mockPushNotificationService, times(0)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
     }
 
     "must return Internal Service Error if the router service reports an error" in {
