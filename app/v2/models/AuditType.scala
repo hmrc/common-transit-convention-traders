@@ -20,7 +20,6 @@ sealed abstract class AuditType(val name: String)
 
 object AuditType {
 
-  // IE015
   case object AmendmentAcceptance                                extends AuditType("AmendmentAcceptance")
   case object InvalidationDecision                               extends AuditType("InvalidationDecision")
   case object DeclarationAmendment                               extends AuditType("DeclarationAmendment")
@@ -36,17 +35,31 @@ object AuditType {
   case object GuaranteeNotValid                                  extends AuditType("GuaranteeNotValid")
   case object RejectionFromOfficeOfDeparture                     extends AuditType("RejectionFromOfficeOfDeparture")
   case object ControlDecisionNotification                        extends AuditType("ControlDecisionNotification")
-  case object PresentationNotificationForThePreLodgedDeclaration extends AuditType("PresentationNotificationForThePreLodgedDecision")
+  case object PresentationNotificationForThePreLodgedDeclaration extends AuditType("PresentationNotificationForThePreLodgedDeclaration")
   case object FunctionalNack                                     extends AuditType("FunctionalNack")
   case object PositiveAcknowledge                                extends AuditType("PositiveAcknowledge")
   case object ArrivalNotification                                extends AuditType("ArrivalNotification")
 
   val values: Seq[AuditType] = Seq(
-    DeclarationData,
+    AmendmentAcceptance,
+    InvalidationDecision,
     DeclarationAmendment,
     DeclarationInvalidationRequest,
+    DeclarationData,
+    Discrepancies,
+    MRNAllocated,
+    ReleaseForTransit,
+    RecoveryNotification,
+    WriteOffNotification,
+    NoReleaseForTransit,
+    RequestOfRelease,
+    GuaranteeNotValid,
+    RejectionFromOfficeOfDeparture,
+    ControlDecisionNotification,
     PresentationNotificationForThePreLodgedDeclaration,
-    RequestOfRelease
+    FunctionalNack,
+    PositiveAcknowledge,
+    ArrivalNotification
   )
 
   def find(code: String): Option[AuditType] =
