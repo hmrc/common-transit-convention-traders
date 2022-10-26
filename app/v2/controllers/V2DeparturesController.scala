@@ -172,13 +172,12 @@ class V2DeparturesControllerImpl @Inject() (
           .flatMap {
             messageSummary =>
               acceptHeaderValue match {
-                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML =>
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML && messageSummary.body.isDefined =>
                   XmlMessage
                     .convertToJson(messageSummary.messageType, messageSummary.body, conversionService)
                     .map(
                       jsonBody => messageSummary.copy(body = jsonBody)
                     )
-                case _ => EitherT.rightT(messageSummary)
               }
           }
           .fold(

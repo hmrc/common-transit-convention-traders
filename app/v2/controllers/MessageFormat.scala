@@ -49,16 +49,14 @@ sealed trait MessageFormat extends ErrorTranslator {
 
 object XmlMessage extends MessageFormat {
 
-  def convertToJson(messageType: MessageType, body: Option[String], conversionService: ConversionService)(implicit
+  def convertToJson(messageType: MessageType, body: String, conversionService: ConversionService)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer
-  ): EitherT[Future, PresentationError, Option[String]] = {
-    if (body.isEmpty) EitherT.rightT(None)
+  ): EitherT[Future, PresentationError, String] =
     for {
-      jsonSource <- conversionService.xmlToJson(messageType, Source.single(ByteString(body.get))).asPresentation
+      jsonSource <- conversionService.xmlToJson(messageType, Source.single(ByteString(body))).asPresentation
       jsonBody   <- convertSourceToString(jsonSource)
     } yield jsonBody
-  }
 
 }
