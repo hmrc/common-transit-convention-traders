@@ -17,6 +17,7 @@
 package v2.controllers
 
 import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
@@ -45,17 +46,18 @@ import v2.models.MovementId
 import v2.models.errors.PresentationError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
+import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
 import v2.services._
-
 import java.time.OffsetDateTime
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[V2DeparturesControllerImpl])
 trait V2DeparturesController {
   def submitDeclaration(): Action[Source[ByteString, _]]
-  def getMessage(acceptHeaderValue: String, departureId: MovementId, messageId: MessageId): Action[AnyContent]
+  def getMessage(departureId: MovementId, messageId: MessageId, convertBodyToJson: Boolean): Action[AnyContent]
   def getMessageIds(departureId: MovementId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
   def getDeparture(departureId: MovementId): Action[AnyContent]
   def getDeparturesForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
@@ -159,19 +161,42 @@ class V2DeparturesControllerImpl @Inject() (
         .asPresentation
     } yield declarationResult
 
-  def getMessage(acceptHeaderValue: String, departureId: MovementId, messageId: MessageId): Action[AnyContent] =
+  def getMessage(departureId: MovementId, messageId: MessageId, convertBodyToJson: Boolean): Action[AnyContent] = {
+
+    def checkAndConvertBodyToJson(messageSummary: MessageSummary)(implicit hc: HeaderCarrier): EitherT[Future, PresentationError, MessageSummary] =
+      if (!convertBodyToJson || messageSummary.body.isEmpty) EitherT.rightT(messageSummary)
+      else {
+        for {
+          jsonSource <- conversionService.jsonToXml(messageSummary.messageType, Source.single(ByteString(messageSummary.body.get))).asPresentation
+          jsonBody <- EitherT {
+            jsonSource
+              .fold("")(
+                (acc, byteStr) => acc + byteStr.utf8String
+              )
+              .runWith(Sink.head[String])
+              .map(Right[PresentationError, String](_))
+              .recover {
+                case NonFatal(ex) => Left[PresentationError, String](PresentationError.internalServiceError(cause = Some(ex)))
+              }
+          }
+          messageSummaryWithJsonBody = messageSummary.copy(body = Some(jsonBody))
+        } yield messageSummaryWithJsonBody
+      }
+
     authActionNewEnrolmentOnly.async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         (for {
-          s <-  departuresService.getMessage(request.eoriNumber, departureId, messageId).asPresentation
-        }).fold(
-            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasDepartureMessageResponse(departureId, messageId, response)))
-          )
+          messageSummary        <- departuresService.getMessage(request.eoriNumber, departureId, messageId).asPresentation
+          updatedMessageSummary <- checkAndConvertBodyToJson(messageSummary)
+        } yield updatedMessageSummary).fold(
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          response => Ok(Json.toJson(HateoasDepartureMessageResponse(departureId, messageId, response)))
+        )
 
     }
+  }
 
   def getMessageIds(departureId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
     authActionNewEnrolmentOnly.async {
