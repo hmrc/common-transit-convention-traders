@@ -18,6 +18,7 @@ package v2.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
+import com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
@@ -67,13 +68,23 @@ class PushNotificationsConnectorSpec
 
   "when sending a result that returns Created, unit is returned" in forAll(arbitrary[MovementId], arbitrary[PushNotificationsAssociation]) {
     (movementId, assoc) =>
-      // given this endpoint
-      server.stubFor(
+      val mapping =
         post(
           urlEqualTo(targetUrl(movementId))
         )
           .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.JSON))
+          .withRequestBody(matchingJsonPath(s"$$[?(@.clientId == '${assoc.clientId.value}')]"))
+          .withRequestBody(matchingJsonPath(s"$$[?(@.movementType == '${assoc.movementType.movementType}')]"))
           .willReturn(aResponse().withStatus(CREATED))
+
+      // given this endpoint
+      server.stubFor(
+        // ifwe have a box, make sure that is in the Json too.
+        assoc.boxId
+          .map(
+            box => mapping.withRequestBody(matchingJsonPath(s"$$[?(@.boxId == '${box.value}')]"))
+          )
+          .getOrElse(mapping)
       )
 
       implicit val hc = HeaderCarrier()
