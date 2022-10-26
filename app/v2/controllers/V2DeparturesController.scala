@@ -17,7 +17,6 @@
 package v2.controllers
 
 import akka.stream.Materializer
-import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
@@ -46,7 +45,6 @@ import v2.models.MovementId
 import v2.models.errors.PresentationError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
-import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
 import v2.services._
@@ -172,12 +170,13 @@ class V2DeparturesControllerImpl @Inject() (
           .flatMap {
             messageSummary =>
               acceptHeaderValue match {
-                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML && messageSummary.body.isDefined =>
+                case value if value == VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML && messageSummary.body.isDefined =>
                   XmlMessage
-                    .convertToJson(messageSummary.messageType, messageSummary.body, conversionService)
+                    .convertToJson(messageSummary.messageType, messageSummary.body.get, conversionService)
                     .map(
-                      jsonBody => messageSummary.copy(body = jsonBody)
+                      jsonBody => messageSummary.copy(body = Some(jsonBody))
                     )
+                case _ => EitherT.rightT[Future, PresentationError](messageSummary)
               }
           }
           .fold(

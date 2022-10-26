@@ -22,7 +22,6 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
 import uk.gov.hmrc.http.HeaderCarrier
-import v2.models.errors.ConversionError
 import v2.models.errors.PresentationError
 import v2.models.request.MessageType
 import v2.services.ConversionService

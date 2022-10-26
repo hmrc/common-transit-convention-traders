@@ -870,7 +870,7 @@ class V2DeparturesControllerSpec
       val request =
         FakeRequest("GET", routing.routes.DeparturesRouter.getMessage(movementId.value, messageId.value).url, headers, Source.empty[ByteString])
 
-      s"for retrieving a single message $acceptHeaderValue" - {
+      s"for retrieving a single message when the accept header equals $acceptHeaderValue" - {
 
         "when the message is found" in {
 
@@ -886,7 +886,7 @@ class V2DeparturesControllerSpec
               )
           }
 
-          val result = sut.getMessage(movementId, messageId, convertBodyToJson)(request)
+          val result = sut.getMessage(movementId, messageId, acceptHeaderValue)(request)
 
           status(result) mustBe OK
           contentAsJson(result) mustBe Json.toJson(
@@ -904,7 +904,7 @@ class V2DeparturesControllerSpec
               _ => EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))
             )
 
-          val result = sut.getMessage(movementId, messageId, convertBodyToJson)(request)
+          val result = sut.getMessage(movementId, messageId, acceptHeaderValue)(request)
 
           status(result) mustBe NOT_FOUND
           contentAsJson(result) mustBe Json.obj(
@@ -919,7 +919,7 @@ class V2DeparturesControllerSpec
               _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
             )
 
-          val result = sut.getMessage(movementId, messageId, convertBodyToJson)(request)
+          val result = sut.getMessage(movementId, messageId, acceptHeaderValue)(request)
 
           status(result) mustBe INTERNAL_SERVER_ERROR
           contentAsJson(result) mustBe Json.obj(
