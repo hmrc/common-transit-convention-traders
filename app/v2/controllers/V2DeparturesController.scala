@@ -162,23 +162,24 @@ class V2DeparturesControllerImpl @Inject() (
     } yield declarationResult
 
   def getMessage(departureId: MovementId, messageId: MessageId, convertBodyToJson: Boolean): Action[AnyContent] = {
+    def convertSourceToString(source: Source[ByteString, _]): EitherT[Future, PresentationError, String] = EitherT {
+      source
+        .fold("")(
+          (acc, byteStr) => acc + byteStr.utf8String
+        )
+        .runWith(Sink.head[String])
+        .map(Right[PresentationError, String])
+        .recover {
+          case NonFatal(ex) => Left[PresentationError, String](PresentationError.internalServiceError(cause = Some(ex)))
+        }
+    }
 
     def checkAndConvertBodyToJson(messageSummary: MessageSummary)(implicit hc: HeaderCarrier): EitherT[Future, PresentationError, MessageSummary] =
       if (!convertBodyToJson || messageSummary.body.isEmpty) EitherT.rightT(messageSummary)
       else {
         for {
-          jsonSource <- conversionService.jsonToXml(messageSummary.messageType, Source.single(ByteString(messageSummary.body.get))).asPresentation
-          jsonBody <- EitherT {
-            jsonSource
-              .fold("")(
-                (acc, byteStr) => acc + byteStr.utf8String
-              )
-              .runWith(Sink.head[String])
-              .map(Right[PresentationError, String](_))
-              .recover {
-                case NonFatal(ex) => Left[PresentationError, String](PresentationError.internalServiceError(cause = Some(ex)))
-              }
-          }
+          jsonSource <- conversionService.xmlToJson(messageSummary.messageType, Source.single(ByteString(messageSummary.body.get))).asPresentation
+          jsonBody   <- convertSourceToString(jsonSource)
           messageSummaryWithJsonBody = messageSummary.copy(body = Some(jsonBody))
         } yield messageSummaryWithJsonBody
       }
@@ -194,7 +195,6 @@ class V2DeparturesControllerImpl @Inject() (
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Ok(Json.toJson(HateoasDepartureMessageResponse(departureId, messageId, response)))
         )
-
     }
   }
 
