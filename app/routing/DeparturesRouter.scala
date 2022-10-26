@@ -51,21 +51,21 @@ class DeparturesRouter @Inject() (
     case _                                                    => v1Departures.submitDeclaration()
   }
 
-  def getMessage(departureId: String, messageId: String): Action[Source[ByteString, _]] = {
-    def routeToVersion2(convertBodyToJson: Boolean) = runIfBound[V2DepartureId](
-      "departureId",
-      departureId,
-      boundDepartureId =>
-        runIfBound[V2MessageId](
-          "messageId",
-          messageId,
-          v2Departures.getMessage(boundDepartureId, _, convertBodyToJson)
-        )
-    )
+  def isValidVersionTwoAcceptHeader(headerValue: String) = "^application/vnd\\.hrmc\\.2\\.0\\+.+$".r.pattern.matcher(headerValue).matches
 
+  def getMessage(departureId: String, messageId: String): Action[Source[ByteString, _]] =
     route {
-      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)          => routeToVersion2(false)
-      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML) => routeToVersion2(true)
+      case Some(acceptHeaderValue) if isValidVersionTwoAcceptHeader(acceptHeaderValue) =>
+        runIfBound[V2DepartureId](
+          "departureId",
+          departureId,
+          boundDepartureId =>
+            runIfBound[V2MessageId](
+              "messageId",
+              messageId,
+              v2Departures.getMessage(boundDepartureId, _, acceptHeaderValue)
+            )
+        )
       case _ =>
         runIfBound[V1DepartureId](
           "departureId",
@@ -73,7 +73,6 @@ class DeparturesRouter @Inject() (
           boundDepartureId => runIfBound[V1MessageId]("messageId", messageId, v1DepartureMessages.getDepartureMessage(boundDepartureId, _))
         )
     }
-  }
 
   def getMessageIds(departureId: String, receivedSince: Option[OffsetDateTime] = None): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE) =>

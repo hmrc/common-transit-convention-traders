@@ -50,14 +50,14 @@ import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
 import v2.services._
+
 import java.time.OffsetDateTime
 import scala.concurrent.Future
-import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[V2DeparturesControllerImpl])
 trait V2DeparturesController {
   def submitDeclaration(): Action[Source[ByteString, _]]
-  def getMessage(departureId: MovementId, messageId: MessageId, convertBodyToJson: Boolean): Action[AnyContent]
+  def getMessage(departureId: MovementId, messageId: MessageId, acceptHeaderValue: String): Action[AnyContent]
   def getMessageIds(departureId: MovementId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
   def getDeparture(departureId: MovementId): Action[AnyContent]
   def getDeparturesForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
@@ -161,42 +161,31 @@ class V2DeparturesControllerImpl @Inject() (
         .asPresentation
     } yield declarationResult
 
-  def getMessage(departureId: MovementId, messageId: MessageId, convertBodyToJson: Boolean): Action[AnyContent] = {
-    def convertSourceToString(source: Source[ByteString, _]): EitherT[Future, PresentationError, String] = EitherT {
-      source
-        .fold("")(
-          (acc, byteStr) => acc + byteStr.utf8String
-        )
-        .runWith(Sink.head[String])
-        .map(Right[PresentationError, String])
-        .recover {
-          case NonFatal(ex) => Left[PresentationError, String](PresentationError.internalServiceError(cause = Some(ex)))
-        }
-    }
-
-    def checkAndConvertBodyToJson(messageSummary: MessageSummary)(implicit hc: HeaderCarrier): EitherT[Future, PresentationError, MessageSummary] =
-      if (!convertBodyToJson || messageSummary.body.isEmpty) EitherT.rightT(messageSummary)
-      else {
-        for {
-          jsonSource <- conversionService.xmlToJson(messageSummary.messageType, Source.single(ByteString(messageSummary.body.get))).asPresentation
-          jsonBody   <- convertSourceToString(jsonSource)
-          messageSummaryWithJsonBody = messageSummary.copy(body = Some(jsonBody))
-        } yield messageSummaryWithJsonBody
-      }
-
+  def getMessage(departureId: MovementId, messageId: MessageId, acceptHeaderValue: String): Action[AnyContent] =
     authActionNewEnrolmentOnly.async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-        (for {
-          messageSummary        <- departuresService.getMessage(request.eoriNumber, departureId, messageId).asPresentation
-          updatedMessageSummary <- checkAndConvertBodyToJson(messageSummary)
-        } yield updatedMessageSummary).fold(
-          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          response => Ok(Json.toJson(HateoasDepartureMessageResponse(departureId, messageId, response)))
-        )
+        departuresService
+          .getMessage(request.eoriNumber, departureId, messageId)
+          .asPresentation
+          .flatMap {
+            messageSummary =>
+              acceptHeaderValue match {
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML =>
+                  XmlMessage
+                    .convertToJson(messageSummary.messageType, messageSummary.body, conversionService)
+                    .map(
+                      jsonBody => messageSummary.copy(body = jsonBody)
+                    )
+                case _ => EitherT.rightT(messageSummary)
+              }
+          }
+          .fold(
+            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+            response => Ok(Json.toJson(HateoasDepartureMessageResponse(departureId, messageId, response)))
+          )
     }
-  }
 
   def getMessageIds(departureId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
     authActionNewEnrolmentOnly.async {
