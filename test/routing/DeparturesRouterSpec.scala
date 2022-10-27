@@ -17,12 +17,14 @@
 package routing
 
 import akka.util.Timeout
+import generators.ModelGenerators
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames
+import play.api.http.MimeTypes
 import play.api.http.Status.OK
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.BAD_REQUEST
@@ -40,7 +42,7 @@ import v2.fakes.controllers.FakeV2DeparturesController
 
 import scala.concurrent.duration.DurationInt
 
-class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar with TestActorSystem {
+class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar with TestActorSystem with ModelGenerators {
 
   implicit private val timeout: Timeout = 5.seconds
 
@@ -102,7 +104,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
         s"with accept header set to $acceptHeaderValue (version two)" - {
 
           val departureHeaders =
-            FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue, HeaderNames.CONTENT_TYPE -> "application/xml"))
+            FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
 
           "must route to the v2 controller and return Accepted when successful" in {
 
@@ -118,7 +120,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
               method = "POST",
               uri = routes.DeparturesRouter.getMessage("01", "0123456789abcdef").url,
               body = <test></test>,
-              headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE, HeaderNames.CONTENT_TYPE -> "application/xml"))
+              headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE))
             )
             val result = sut.getMessage("01", "01234567890bcdef")(request)
 
@@ -135,7 +137,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
               method = "POST",
               uri = routes.DeparturesRouter.getMessage("0123456789abcdef", "01").url,
               body = <test></test>,
-              headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE, HeaderNames.CONTENT_TYPE -> "application/xml"))
+              headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE))
             )
             val result = sut.getMessage("01234567890bcdef", "01")(request)
 
