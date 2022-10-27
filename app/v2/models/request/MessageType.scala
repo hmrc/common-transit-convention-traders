@@ -22,20 +22,21 @@ import play.api.libs.json.JsSuccess
 import play.api.libs.json.Reads
 import play.api.libs.json.Writes
 import v2.models.AuditType
+import v2.models.MovementType
 
 sealed trait MessageType {
   def code: String
-  def movementType: String
+  def movementType: MovementType
   def rootNode: String
   def auditType: AuditType
 }
 
 sealed abstract class DepartureMessageType(val code: String, val rootNode: String, val auditType: AuditType) extends MessageType {
-  val movementType: String = "departures"
+  val movementType: MovementType = MovementType.Departure
 }
 
 sealed abstract class ArrivalMessageType(val code: String, val rootNode: String, val auditType: AuditType) extends MessageType {
-  val movementType: String = "arrivals"
+  val movementType: MovementType = MovementType.Arrival
 }
 
 object MessageType {

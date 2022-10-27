@@ -22,11 +22,11 @@ import play.api.libs.json.JsSuccess
 import play.api.libs.json.Reads
 import play.api.libs.json.Writes
 
-sealed abstract class MovementType(val movementType: String)
+sealed abstract class MovementType(val movementType: String, val urlFragment: String)
 
 object MovementType {
-  case object Departure extends MovementType("departure")
-  case object Arrival   extends MovementType("arrival")
+  case object Departure extends MovementType("departure", "departures")
+  case object Arrival   extends MovementType("arrival", "arrivals")
 
   implicit val movementTypeReads: Reads[MovementType] = Reads {
     case x: JsString => MovementType.findByName(x.value).map(JsSuccess(_)).getOrElse(JsError())

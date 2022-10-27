@@ -115,7 +115,7 @@ class V2BaseConnectorSpec
       val messageId   = arbitrary[MessageId].sample.value
       val urlPath     = Harness.routerRoute(eori, messageType, departureId, messageId)
       urlPath
-        .toString() mustBe s"/transit-movements-router/traders/${eori.value}/movements/${messageType.movementType}/${departureId.value}/messages/${messageId.value}/"
+        .toString() mustBe s"/transit-movements-router/traders/${eori.value}/movements/${messageType.movementType.urlFragment}/${departureId.value}/messages/${messageId.value}/"
   }
 
   "the auditing URL on localhost for a given audit type should be as expected" in forAll(arbitrary[AuditType]) {
