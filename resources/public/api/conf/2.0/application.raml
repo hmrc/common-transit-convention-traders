@@ -57,7 +57,7 @@ traits:
             type: types.errorResponse
             examples:
               badRequest:
-                description: The accept header is missing or invalid
+                description: The accept header is missing or invalid.
                 value:
                   code : ACCEPT_HEADER_INVALID
   requestTooLarge:
@@ -68,7 +68,7 @@ traits:
             type: types.errorResponse
             examples:
               requestEntityTooLarge:
-                description: The request body is too large
+                description: The request body is too large.
                 value:
                   code: REQUEST_ENTITY_TOO_LARGE
   schemaValidation:
@@ -79,7 +79,7 @@ traits:
             type: types.errorResponse
             examples:
               schemaValidation:
-                description: The request body failed schema validation
+                description: The request body failed schema validation.
                 value:
                   code: SCHEMA_VALIDATION
 
@@ -108,7 +108,7 @@ traits:
         202:
           body:
             application/json:
-              description: JSON Payload
+              description: JSON payload
               example: |
                 {
                   "_links":{
@@ -147,7 +147,7 @@ traits:
         200:
           body:
             application/json:
-              description: JSON Payload
+              description: JSON payload
               example: |
                 {
                   "_links":{
@@ -192,7 +192,7 @@ traits:
           200:
             body:
               application/json:
-                description: JSON Payload
+                description: JSON payload
                 example: |
                     {
                       "_links":{
@@ -211,7 +211,7 @@ traits:
                       "movementEORINumber": "GB1234567890"
                     }
           404:
-            description: When a departure does not exist, has been archived or is not available to the EORI number.
+            description: The specified departure does not exist, has been archived or is not available to the EORI number.
       /messages:
         get:
           displayName: Get all cached messages related to a departure
@@ -240,7 +240,7 @@ traits:
             200:
               body:
                 application/json:
-                  description: JSON Payload
+                  description: JSON payload
                   example: |
                     {
                       "_links":{
@@ -274,7 +274,7 @@ traits:
                   type: types.errorResponse
                   examples:
                     notFound:
-                      description: The requested message does not exist, has been archived, or is not available to the EORI number
+                      description: The specified departure does not exist, has been archived or is not available to the EORI number.
                       value:
                         code: NOT_FOUND
         post:
@@ -288,7 +288,7 @@ traits:
     
             **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
           is:
-            - contentXmlHeader
+            - contentXmlJsonHeader
             - acceptJsonHeader
             - requestTooLarge
           (annotations.scope): "common-transit-convention-traders"
@@ -297,7 +297,7 @@ traits:
             202:
               body:
                 application/json:
-                  description: JSON Payload
+                  description: JSON payload
                   example: |
                     {
                       "_links": {
@@ -315,7 +315,7 @@ traits:
                   type: types.errorResponse
                   examples:
                     notFound:
-                      description: When a departure does not exist, has been archived or is not available
+                      description: The specified departure does not exist, has been archived or is not available.
                       value:
                         code: NOT_FOUND
             400:
@@ -324,7 +324,7 @@ traits:
                   type: types.errorResponse
                   examples:
                     badRequest:
-                      description: When sent by departure message type not available within xml or xml schema validation failed
+                      description: The departure message type is not available within XML or the message failed schema validation.
                       value:
                         code: BAD_REQUEST
         /{messageId}:
@@ -347,7 +347,7 @@ traits:
               200:
                 body:
                   application/json:
-                    description: JSON Payload
+                    description: JSON payload
                     example: |
                       {
                         "_links":{
@@ -372,7 +372,7 @@ traits:
                     type: types.errorResponse
                     examples:
                       notFound:
-                        description: The requested message does not exist, has been archived, or is not available to the EORI number
+                        description: The specified message does not exist, has been archived or is not available to the EORI number.
                         value:
                           code: NOT_FOUND
   /arrivals:
@@ -397,7 +397,7 @@ traits:
         202:
           body:
             application/json:
-              description: JSON Payload
+              description: JSON payload
               example: |
                 {
                   "_links":{
