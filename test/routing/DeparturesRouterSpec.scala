@@ -17,14 +17,12 @@
 package routing
 
 import akka.util.Timeout
-import generators.ModelGenerators
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames
-import play.api.http.MimeTypes
 import play.api.http.Status.OK
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.BAD_REQUEST
@@ -42,7 +40,7 @@ import v2.fakes.controllers.FakeV2DeparturesController
 
 import scala.concurrent.duration.DurationInt
 
-class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar with TestActorSystem with ModelGenerators {
+class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar with TestActorSystem {
 
   implicit private val timeout: Timeout = 5.seconds
 
