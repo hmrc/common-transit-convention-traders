@@ -27,6 +27,7 @@ import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
 import metrics.HasActionMetrics
 import play.api.Logging
+import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.Json
@@ -45,9 +46,11 @@ import v2.models.MovementId
 import v2.models.errors.PresentationError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
+import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
 import v2.services._
+import v2.utils.MessageFormat
 
 import java.time.OffsetDateTime
 import scala.concurrent.Future
@@ -55,7 +58,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[V2DeparturesControllerImpl])
 trait V2DeparturesController {
   def submitDeclaration(): Action[Source[ByteString, _]]
-  def getMessage(departureId: MovementId, messageId: MessageId, acceptHeaderValue: String): Action[AnyContent]
+  def getMessage(departureId: MovementId, messageId: MessageId): Action[Source[ByteString, _]]
   def getMessageIds(departureId: MovementId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
   def getDeparture(departureId: MovementId): Action[AnyContent]
   def getDeparturesForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
@@ -83,6 +86,8 @@ class V2DeparturesControllerImpl @Inject() (
     with VersionedRouting
     with ErrorTranslator
     with ContentTypeRouting
+    with AcceptHeaderRouting
+    with MessageFormat
     with HasActionMetrics {
 
   lazy val sCounter: Counter = counter(s"success-counter")
@@ -159,29 +164,44 @@ class V2DeparturesControllerImpl @Inject() (
         .asPresentation
     } yield declarationResult
 
-  def getMessage(departureId: MovementId, messageId: MessageId, acceptHeaderValue: String): Action[AnyContent] =
+  def getMessage(movementId: MovementId, messageId: MessageId): Action[Source[ByteString, _]] =
+    acceptHeaderRoute {
+      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)     => getMessageJson(movementId, messageId)
+      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML) => getMessageJsonWrappedXml(movementId, messageId)
+    }
+
+  def getMessageJsonWrappedXml(movementId: MovementId, messageId: MessageId) =
+    authActionNewEnrolmentOnly.async {
+      implicit request =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+        (for {
+          messageSummary <- departuresService.getMessage(request.eoriNumber, movementId, messageId).asPresentation
+        } yield messageSummary).fold(
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          response => Ok(Json.toJson(HateoasDepartureMessageResponse(movementId, messageId, response)))
+        )
+    }
+
+  def getMessageJson(movementId: MovementId, messageId: MessageId) =
     authActionNewEnrolmentOnly.async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         departuresService
-          .getMessage(request.eoriNumber, departureId, messageId)
+          .getMessage(request.eoriNumber, movementId, messageId)
           .asPresentation
           .flatMap {
-            messageSummary =>
-              acceptHeaderValue match {
-                case value if value == VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML && messageSummary.body.isDefined =>
-                  XmlMessage
-                    .convertToJson(messageSummary.messageType, messageSummary.body.get, conversionService)
-                    .map(
-                      jsonBody => messageSummary.copy(body = Some(jsonBody))
-                    )
-                case _ => EitherT.rightT[Future, PresentationError](messageSummary)
-              }
+            case messageSummary @ MessageSummary(_, _, messageType, Some(body)) =>
+              for {
+                jsonSource <- conversionService.xmlToJson(messageType, Source.single(ByteString(body))).asPresentation
+                jsonBody   <- convertSourceToString(jsonSource).asPresentation
+              } yield messageSummary.copy(body = Some(jsonBody))
+            case messageSummary => EitherT.rightT[Future, PresentationError](messageSummary)
           }
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasDepartureMessageResponse(departureId, messageId, response)))
+            response => Ok(Json.toJson(HateoasDepartureMessageResponse(movementId, messageId, response)))
           )
     }
 

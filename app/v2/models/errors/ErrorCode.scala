@@ -35,6 +35,7 @@ object ErrorCode {
   case object EntityTooLarge       extends ErrorCode("REQUEST_ENTITY_TOO_LARGE", REQUEST_ENTITY_TOO_LARGE)
   case object UnsupportedMediaType extends ErrorCode("UNSUPPORTED_MEDIA_TYPE", UNSUPPORTED_MEDIA_TYPE)
   case object Unauthorized         extends ErrorCode("UNAUTHORIZED", UNAUTHORIZED)
+  case object NotAcceptable        extends ErrorCode("NOT_ACCEPTABLE", NOT_ACCEPTABLE)
 
   lazy val errorCodes: Seq[ErrorCode] = Seq(
     BadRequest,
@@ -45,7 +46,8 @@ object ErrorCode {
     SchemaValidation,
     EntityTooLarge,
     UnsupportedMediaType,
-    Unauthorized
+    Unauthorized,
+    NotAcceptable
   )
 
   implicit val errorCodeWrites: Writes[ErrorCode] = Writes {

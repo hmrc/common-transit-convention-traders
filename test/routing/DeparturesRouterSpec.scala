@@ -56,7 +56,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
     "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
 
       val departureHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE, HeaderNames.CONTENT_TYPE -> "application/xml")
+        Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, HeaderNames.CONTENT_TYPE -> "application/xml")
       )
 
       "must route to the v2 controller and return Accepted when successful" in {
@@ -97,7 +97,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
   "when getting a single message" - {
 
-    Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML).foreach {
+    Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML).foreach {
       acceptHeaderValue =>
         s"with accept header set to $acceptHeaderValue (version two)" - {
 
@@ -118,7 +118,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
               method = "POST",
               uri = routes.DeparturesRouter.getMessage("01", "0123456789abcdef").url,
               body = <test></test>,
-              headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE))
+              headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON))
             )
             val result = sut.getMessage("01", "01234567890bcdef")(request)
 
@@ -135,7 +135,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
               method = "POST",
               uri = routes.DeparturesRouter.getMessage("0123456789abcdef", "01").url,
               body = <test></test>,
-              headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE))
+              headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON))
             )
             val result = sut.getMessage("01234567890bcdef", "01")(request)
 
@@ -215,7 +215,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
   "when getting a departure/movement" - {
     "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
-      val departureHeaders = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE))
+      val departureHeaders = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON))
 
       "must route to the v2 controller and return Ok when successful" in {
         val request = FakeRequest(method = "GET", body = "", uri = routes.DeparturesRouter.getDeparture("").url, headers = departureHeaders)
@@ -277,7 +277,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
     "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
 
       val departureHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE, HeaderNames.CONTENT_TYPE -> "application/xml")
+        Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, HeaderNames.CONTENT_TYPE -> "application/xml")
       )
 
       "must route to the v2 controller and return Accepted when successful" in {

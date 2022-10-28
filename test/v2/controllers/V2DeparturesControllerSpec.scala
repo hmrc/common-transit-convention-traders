@@ -791,7 +791,7 @@ class V2DeparturesControllerSpec
 
   }
 
-  Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML).foreach {
+  Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML).foreach {
     acceptHeaderValue =>
       val convertBodyToJson = acceptHeaderValue == VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML
       val movementId        = arbitraryMovementId.arbitrary.sample.value
@@ -896,7 +896,7 @@ class V2DeparturesControllerSpec
       val request = FakeRequest(
         GET,
         routing.routes.DeparturesRouter.getDeparturesForEori().url,
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
         AnyContentAsEmpty
       )
       val result = sut.getDeparturesForEori(None)(request)
@@ -920,7 +920,7 @@ class V2DeparturesControllerSpec
       val request = FakeRequest(
         GET,
         routing.routes.DeparturesRouter.getDeparturesForEori().url,
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
         AnyContentAsEmpty
       )
       val result = sut.getDeparturesForEori(None)(request)
@@ -941,7 +941,7 @@ class V2DeparturesControllerSpec
       val request = FakeRequest(
         GET,
         routing.routes.DeparturesRouter.getDeparturesForEori().url,
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
         AnyContentAsEmpty
       )
       val result = sut.getDeparturesForEori(None)(request)
@@ -982,7 +982,7 @@ class V2DeparturesControllerSpec
         val request = FakeRequest(
           GET,
           routing.routes.DeparturesRouter.getDeparture(departureId.value).url,
-          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
         val result = sut.getDeparture(departureId)(request)
@@ -1016,7 +1016,7 @@ class V2DeparturesControllerSpec
         val request = FakeRequest(
           GET,
           routing.routes.DeparturesRouter.getDeparture(departureId.value).url,
-          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
         val result = sut.getDeparture(departureId)(request)
@@ -1035,7 +1035,7 @@ class V2DeparturesControllerSpec
         val request = FakeRequest(
           GET,
           routing.routes.DeparturesRouter.getDeparture(departureId.value).url,
-          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
         val result = sut.getDeparture(departureId)(request)

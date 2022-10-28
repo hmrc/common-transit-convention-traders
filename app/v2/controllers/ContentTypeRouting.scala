@@ -51,9 +51,9 @@ trait ContentTypeRouting {
                     request.headers
                       .get(HeaderNames.CONTENT_TYPE)
                       .map(
-                        header => s"Content-type header $header is not supported!"
+                        headerValue => s"Content-type header $headerValue is not supported!"
                       )
-                      .getOrElse("A content-type header is required!")
+                      .getOrElse(s"A content-type header is required!")
                   )
                 )
               )
