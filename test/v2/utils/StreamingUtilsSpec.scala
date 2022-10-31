@@ -24,7 +24,7 @@ import play.api.libs.json.Json
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
 
-class MessageFormatSpec extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFutures with TestActorSystem with TestSourceProvider {
+class StreamingUtilsSpec extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFutures with TestActorSystem with TestSourceProvider {
 
   "MessageFormat" - {
 
@@ -36,7 +36,7 @@ class MessageFormatSpec extends AnyFreeSpec with Matchers with MockitoSugar with
         val jsonString = Json.stringify(Json.obj("testKey" -> "testValue"))
         val jsonSource = singleUseStringSource(jsonString)
 
-        whenReady(MessageFormat.convertSourceToString(jsonSource).value) {
+        whenReady(StreamingUtils.convertSourceToString(jsonSource).value) {
           result =>
             result mustBe Right(jsonString)
         }

@@ -46,11 +46,9 @@ import v2.models.MovementId
 import v2.models.errors.PresentationError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
-import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
 import v2.services._
-import v2.utils.MessageFormat
 
 import java.time.OffsetDateTime
 import scala.concurrent.Future
@@ -167,38 +165,18 @@ class V2DeparturesControllerImpl @Inject() (
     authActionNewEnrolmentOnly.async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
         acceptHeaderRoute {
-          case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)     => getMessageJson(movementId, messageId)
-          case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML) => getMessageJsonWrappedXml(movementId, messageId)
+          case acceptHeaderValue @ (Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) |
+              Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML)) =>
+            (for {
+              messageSummary <- departuresService.getMessage(request.eoriNumber, movementId, messageId).asPresentation
+              response       <- ResponseFormatter.formatMessageSummaryResponse(conversionService, movementId, messageId, messageSummary, acceptHeaderValue.get)
+            } yield response).fold(
+              presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+              response => Ok(Json.toJson(response))
+            )
         }
     }
-
-  def getMessageJsonWrappedXml(movementId: MovementId, messageId: MessageId)(implicit hc: HeaderCarrier, request: AuthenticatedRequest[_]): Future[Result] =
-    departuresService
-        .getMessage(request.eoriNumber, movementId, messageId)
-        .asPresentation
-        .fold(
-            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasDepartureMessageResponse(movementId, messageId, response))
-        )
-
-  def getMessageJson(movementId: MovementId, messageId: MessageId)(implicit hc: HeaderCarrier, request: AuthenticatedRequest[_]): Future[Result] =
-    departuresService
-      .getMessage(request.eoriNumber, movementId, messageId)
-      .asPresentation
-      .flatMap {
-        case messageSummary @ MessageSummary(_, _, messageType, Some(body)) =>
-          for {
-            jsonSource <- conversionService.xmlToJson(messageType, Source.single(ByteString(body))).asPresentation
-            jsonBody   <- MessageFormat.convertSourceToString(jsonSource).asPresentation
-          } yield messageSummary.copy(body = Some(jsonBody))
-        case messageSummary => EitherT.rightT[Future, PresentationError](messageSummary)
-      }
-      .fold(
-        presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-        response => Ok(Json.toJson(HateoasDepartureMessageResponse(movementId, messageId, response)))
-      )
 
   def getMessageIds(departureId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
     authActionNewEnrolmentOnly.async {

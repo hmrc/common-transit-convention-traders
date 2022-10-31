@@ -17,23 +17,16 @@
 package v2.controllers
 
 import akka.stream.Materializer
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
 import play.api.http.HeaderNames
 import play.api.libs.json.Json
-import play.api.mvc.Action
-import play.api.mvc.AnyContent
-import play.api.mvc.BaseController
 import play.api.mvc.Request
 import play.api.mvc.Result
-import v2.controllers.stream.StreamingParsers
+import play.api.mvc.Results.NotAcceptable
 import v2.models.errors.PresentationError
 
 import scala.concurrent.Future
 
 trait AcceptHeaderRouting {
-  self: BaseController with StreamingParsers =>
 
   def acceptHeaderRoute(
     routes: PartialFunction[Option[String], Future[Result]]
@@ -50,7 +43,7 @@ trait AcceptHeaderRouting {
                   .map(
                     headerValue => s"Accept header $headerValue is not supported!"
                   )
-                  .getOrElse(s"Accept header is required!")
+                  .getOrElse("Accept header is required!")
               )
             )
           )

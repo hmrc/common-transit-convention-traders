@@ -29,7 +29,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-object MessageFormat extends ErrorTranslator {
+object StreamingUtils extends ErrorTranslator {
 
   def convertSourceToString(
     source: Source[ByteString, _]
