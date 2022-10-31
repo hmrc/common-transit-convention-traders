@@ -46,7 +46,7 @@ class FakeV2DeparturesController @Inject() ()(implicit val materializer: Materia
       Accepted(Json.obj("version" -> 2))
   }
 
-  override def getMessage(departureId: MovementId, messageId: MessageId, acceptHeaderValue: String): Action[AnyContent] = Action {
+  override def getMessage(departureId: MovementId, messageId: MessageId): Action[AnyContent] = Action {
     _ =>
       Accepted(Json.obj("version" -> 2))
   }

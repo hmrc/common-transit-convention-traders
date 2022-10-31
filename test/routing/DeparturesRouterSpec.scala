@@ -118,7 +118,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
               method = "POST",
               uri = routes.DeparturesRouter.getMessage("01", "0123456789abcdef").url,
               body = <test></test>,
-              headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON))
+              headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
             )
             val result = sut.getMessage("01", "01234567890bcdef")(request)
 
@@ -135,7 +135,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
               method = "POST",
               uri = routes.DeparturesRouter.getMessage("0123456789abcdef", "01").url,
               body = <test></test>,
-              headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON))
+              headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
             )
             val result = sut.getMessage("01234567890bcdef", "01")(request)
 

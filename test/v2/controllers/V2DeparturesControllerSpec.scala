@@ -791,77 +791,93 @@ class V2DeparturesControllerSpec
 
   }
 
-  Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML).foreach {
-    acceptHeaderValue =>
-      val convertBodyToJson = acceptHeaderValue == VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML
-      val movementId        = arbitraryMovementId.arbitrary.sample.value
-      val messageId         = arbitraryMessageId.arbitrary.sample.value
-      val messageSummary    = genMessageSummary.arbitrary.sample.value.copy(id = messageId, body = Some("<test>ABC</test>"))
+  "for retrieving a single message" - {
+    val movementId     = arbitraryMovementId.arbitrary.sample.value
+    val messageId      = arbitraryMessageId.arbitrary.sample.value
+    val messageSummary = genMessageSummary.arbitrary.sample.value.copy(id = messageId, body = Some("<test>ABC</test>"))
 
+    Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML).foreach {
+      acceptHeaderValue =>
+        val headers =
+          FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
+        val request =
+          FakeRequest("GET", routing.routes.DeparturesRouter.getMessage(movementId.value, messageId.value).url, headers, Source.empty[ByteString])
+        val convertBodyToJson = acceptHeaderValue == VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON
+
+        s"when the accept header equals $acceptHeaderValue" - {
+
+          "when the message is found" in {
+            when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+              .thenAnswer(
+                _ => EitherT.rightT(messageSummary)
+              )
+
+            if (convertBodyToJson) {
+              when(mockConversionService.xmlToJson(any[MessageType], any[Source[ByteString, _]])(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
+                .thenAnswer(
+                  _ => EitherT.rightT(singleUseStringSource("{'test': 'ABC'}"))
+                )
+            }
+
+            val result = sut.getMessage(movementId, messageId)(request)
+
+            status(result) mustBe OK
+            contentAsJson(result) mustBe Json.toJson(
+              HateoasDepartureMessageResponse(
+                movementId,
+                messageId,
+                if (convertBodyToJson) messageSummary.copy(body = Some("{'test': 'ABC'}")) else messageSummary
+              )
+            )
+          }
+
+          "when no message is found" in {
+            when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+              .thenAnswer(
+                _ => EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))
+              )
+
+            val result = sut.getMessage(movementId, messageId)(request)
+
+            status(result) mustBe NOT_FOUND
+            contentAsJson(result) mustBe Json.obj(
+              "code"    -> "NOT_FOUND",
+              "message" -> s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
+            )
+          }
+
+          "when an unknown error occurs" in {
+            when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+              .thenAnswer(
+                _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
+              )
+
+            val result = sut.getMessage(movementId, messageId)(request)
+
+            status(result) mustBe INTERNAL_SERVER_ERROR
+            contentAsJson(result) mustBe Json.obj(
+              "code"    -> "INTERNAL_SERVER_ERROR",
+              "message" -> "Internal server error"
+            )
+          }
+
+        }
+    }
+
+    "when the accept header is invalid return not acceptable" in {
       val headers =
-        FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
+        FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+text"))
       val request =
         FakeRequest("GET", routing.routes.DeparturesRouter.getMessage(movementId.value, messageId.value).url, headers, Source.empty[ByteString])
 
-      s"for retrieving a single message when the accept header equals $acceptHeaderValue" - {
+      val result = sut.getMessage(movementId, messageId)(request)
 
-        "when the message is found" in {
-
-          when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
-            .thenAnswer(
-              _ => EitherT.rightT(messageSummary)
-            )
-
-          if (convertBodyToJson) {
-            when(mockConversionService.xmlToJson(any[MessageType], any[Source[ByteString, _]])(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
-              .thenAnswer(
-                _ => EitherT.rightT(singleUseStringSource("{'test': 'ABC'}"))
-              )
-          }
-
-          val result = sut.getMessage(movementId, messageId, acceptHeaderValue)(request)
-
-          status(result) mustBe OK
-          contentAsJson(result) mustBe Json.toJson(
-            HateoasDepartureMessageResponse(
-              movementId,
-              messageId,
-              if (convertBodyToJson) messageSummary.copy(body = Some("{'test': 'ABC'}")) else messageSummary
-            )
-          )
-        }
-
-        "when no message is found" in {
-          when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
-            .thenAnswer(
-              _ => EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))
-            )
-
-          val result = sut.getMessage(movementId, messageId, acceptHeaderValue)(request)
-
-          status(result) mustBe NOT_FOUND
-          contentAsJson(result) mustBe Json.obj(
-            "code"    -> "NOT_FOUND",
-            "message" -> s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
-          )
-        }
-
-        "when an unknown error occurs" in {
-          when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
-            .thenAnswer(
-              _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
-            )
-
-          val result = sut.getMessage(movementId, messageId, acceptHeaderValue)(request)
-
-          status(result) mustBe INTERNAL_SERVER_ERROR
-          contentAsJson(result) mustBe Json.obj(
-            "code"    -> "INTERNAL_SERVER_ERROR",
-            "message" -> "Internal server error"
-          )
-        }
-
-      }
+      status(result) mustBe NOT_ACCEPTABLE
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "NOT_ACCEPTABLE",
+        "message" -> "Accept header application/vnd.hmrc.2.0+text is not supported!"
+      )
+    }
   }
 
   "GET  /traders/:EORI/movements" - {
