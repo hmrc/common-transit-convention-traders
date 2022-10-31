@@ -175,12 +175,13 @@ class V2DeparturesControllerImpl @Inject() (
     }
 
   def getMessageJsonWrappedXml(movementId: MovementId, messageId: MessageId)(implicit hc: HeaderCarrier, request: AuthenticatedRequest[_]): Future[Result] =
-    (for {
-      messageSummary <- departuresService.getMessage(request.eoriNumber, movementId, messageId).asPresentation
-    } yield messageSummary).fold(
-      presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-      response => Ok(Json.toJson(HateoasDepartureMessageResponse(movementId, messageId, response)))
-    )
+    departuresService
+        .getMessage(request.eoriNumber, movementId, messageId)
+        .asPresentation
+        .fold(
+            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+            response => Ok(Json.toJson(HateoasDepartureMessageResponse(movementId, messageId, response))
+        )
 
   def getMessageJson(movementId: MovementId, messageId: MessageId)(implicit hc: HeaderCarrier, request: AuthenticatedRequest[_]): Future[Result] =
     departuresService
