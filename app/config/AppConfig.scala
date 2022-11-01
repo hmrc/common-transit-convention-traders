@@ -18,27 +18,27 @@ package config
 
 import io.lemonlabs.uri.Url
 import play.api.Configuration
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig) {
+class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesConfig) {
 
   val authBaseUrl: String = servicesConfig.baseUrl("auth")
 
   val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
   val graphiteHost: String     = config.get[String]("microservice.metrics.graphite.host")
 
-  val traderAtDestinationUrl = Url.parse(servicesConfig.baseUrl("transit-movement-trader-at-destination"))
-  val traderAtDeparturesUrl  = Url.parse(servicesConfig.baseUrl("transits-movements-trader-at-departure"))
-  val validatorUrl           = Url.parse(servicesConfig.baseUrl("transit-movements-validator"))
-  val converterUrl           = Url.parse(servicesConfig.baseUrl("transit-movements-converter"))
-  val movementsUrl           = Url.parse(servicesConfig.baseUrl("transit-movements"))
-  val routerUrl              = Url.parse(servicesConfig.baseUrl("transit-movements-router"))
-  val auditingUrl            = Url.parse(servicesConfig.baseUrl("transit-movements-auditing"))
-  val pushNotificationsUrl   = Url.parse(servicesConfig.baseUrl("transit-movements-push-notifications"))
+  val traderAtDestinationUrl   = Url.parse(servicesConfig.baseUrl("transit-movement-trader-at-destination"))
+  val traderAtDeparturesUrl    = Url.parse(servicesConfig.baseUrl("transits-movements-trader-at-departure"))
+  val validatorUrl             = Url.parse(servicesConfig.baseUrl("transit-movements-validator"))
+  val converterUrl             = Url.parse(servicesConfig.baseUrl("transit-movements-converter"))
+  val movementsUrl             = Url.parse(servicesConfig.baseUrl("transit-movements"))
+  val routerUrl                = Url.parse(servicesConfig.baseUrl("transit-movements-router"))
+  val auditingUrl              = Url.parse(servicesConfig.baseUrl("transit-movements-auditing"))
+  val pushNotificationsUrl     = Url.parse(servicesConfig.baseUrl("transit-movements-push-notifications"))
+  val pushNotificationsEnabled = servicesConfig.config("transit-movements-push-notifications").get[Boolean]("enabled")
 
   lazy val enrolmentKey: String = config.get[String]("security.enrolmentKey")
 

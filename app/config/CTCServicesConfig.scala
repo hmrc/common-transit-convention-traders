@@ -16,17 +16,16 @@
 
 package config
 
-import com.google.inject.AbstractModule
-import utils.JsonHelper
-import utils.MessageTranslation
+import com.google.inject.Inject
+import play.api.Configuration
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-class Module extends AbstractModule {
+/*
+ * This class exists simply to expose the config function, which allows us to
+ * avoid a magic string already present in the ServicesConfig object.
+ */
+class CTCServicesConfig @Inject() (config: Configuration) extends ServicesConfig(config) {
 
-  override def configure(): Unit = {
-
-    bind(classOf[JsonHelper]).asEagerSingleton()
-    bind(classOf[MessageTranslation]).asEagerSingleton()
-    bind(classOf[CTCServicesConfig])
-  }
+  override def config(serviceName: String): Configuration = super.config(serviceName)
 
 }

@@ -16,6 +16,7 @@
 
 package v2.services
 
+import config.AppConfig
 import config.Constants
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
@@ -58,16 +59,32 @@ class PushNotificationServiceSpec
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   val mockConnector: PushNotificationsConnector = mock[PushNotificationsConnector]
+  val mockAppConfig: AppConfig                  = mock[AppConfig]
 
-  val sut = new PushNotificationsServiceImpl(mockConnector)
+  val sut = new PushNotificationsServiceImpl(mockConnector, mockAppConfig)
 
-  override protected def beforeEach(): Unit =
+  override protected def beforeEach(): Unit = {
     reset(mockConnector)
+    reset(mockAppConfig)
+  }
 
   "associate" - {
 
+    "when the service is disabled, return a unit" in forAll(arbitrary[MovementId], arbitrary[MovementType]) {
+      (movementId, movementType) =>
+        when(mockAppConfig.pushNotificationsEnabled).thenReturn(false)
+        val headers = FakeHeaders()
+
+        val result = sut.associate(movementId, movementType, headers)
+
+        whenReady(result.value) {
+          r => r mustBe Right(())
+        }
+    }
+
     "when there is no client ID, return a left with MissingClientId" in forAll(arbitrary[MovementId], arbitrary[MovementType]) {
       (movementId, movementType) =>
+        when(mockAppConfig.pushNotificationsEnabled).thenReturn(true)
         val headers = FakeHeaders()
 
         val result = sut.associate(movementId, movementType, headers)
@@ -83,6 +100,7 @@ class PushNotificationServiceSpec
       Gen.alphaNumStr
     ) {
       (movementId, movementType, clientId) =>
+        when(mockAppConfig.pushNotificationsEnabled).thenReturn(true)
         val headers = FakeHeaders(Seq(Constants.XClientIdHeader -> clientId))
 
         val expectedAssociation = PushNotificationsAssociation(ClientId(clientId), movementType, None)
@@ -105,6 +123,7 @@ class PushNotificationServiceSpec
       Gen.uuid.map(_.toString)
     ) {
       (movementId, movementType, clientId, boxId) =>
+        when(mockAppConfig.pushNotificationsEnabled).thenReturn(true)
         val headers = FakeHeaders(Seq(Constants.XClientIdHeader -> clientId, Constants.XCallbackBoxIdHeader -> boxId))
 
         val expectedAssociation = PushNotificationsAssociation(ClientId(clientId), movementType, Some(BoxId(boxId)))
@@ -122,6 +141,7 @@ class PushNotificationServiceSpec
 
     "when an error occurs, return a Left of Unexpected" in forAll(arbitrary[MovementId], arbitrary[MovementType], Gen.alphaNumStr, Gen.uuid.map(_.toString)) {
       (movementId, movementType, clientId, boxId) =>
+        when(mockAppConfig.pushNotificationsEnabled).thenReturn(true)
         val headers = FakeHeaders(Seq(Constants.XClientIdHeader -> clientId, Constants.XCallbackBoxIdHeader -> boxId))
 
         val expectedException = new Exception()

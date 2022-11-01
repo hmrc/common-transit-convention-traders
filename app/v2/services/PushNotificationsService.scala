@@ -19,6 +19,7 @@ package v2.services
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
+import config.AppConfig
 import config.Constants
 import play.api.mvc.Headers
 import uk.gov.hmrc.http.HeaderCarrier
@@ -44,28 +45,33 @@ trait PushNotificationsService {
 
 }
 
-class PushNotificationsServiceImpl @Inject() (pushNotificationsConnector: PushNotificationsConnector) extends PushNotificationsService {
+class PushNotificationsServiceImpl @Inject() (
+  pushNotificationsConnector: PushNotificationsConnector,
+  appConfig: AppConfig
+) extends PushNotificationsService {
 
   override def associate(movementId: MovementId, movementType: MovementType, headers: Headers)(implicit
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
   ): EitherT[Future, PushNotificationError, Unit] =
-    EitherT {
-      headers
-        .get(Constants.XClientIdHeader)
-        .map {
-          clientId =>
-            pushNotificationsConnector
-              .postAssociation(
-                movementId,
-                PushNotificationsAssociation(ClientId(clientId), movementType, headers.get(Constants.XCallbackBoxIdHeader).map(BoxId.apply))
-              )
-              .map(Right(_))
-              .recover {
-                case NonFatal(thr) => Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
-              }
-        }
-        .getOrElse(Future.successful(Left(PushNotificationError.MissingClientId)))
-    }
+    if (!appConfig.pushNotificationsEnabled) EitherT.rightT(())
+    else
+      EitherT {
+        headers
+          .get(Constants.XClientIdHeader)
+          .map {
+            clientId =>
+              pushNotificationsConnector
+                .postAssociation(
+                  movementId,
+                  PushNotificationsAssociation(ClientId(clientId), movementType, headers.get(Constants.XCallbackBoxIdHeader).map(BoxId.apply))
+                )
+                .map(Right(_))
+                .recover {
+                  case NonFatal(thr) => Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
+                }
+          }
+          .getOrElse(Future.successful(Left(PushNotificationError.MissingClientId)))
+      }
 
 }
