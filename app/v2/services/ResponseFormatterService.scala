@@ -14,43 +14,49 @@
  * limitations under the License.
  */
 
-package v2.controllers
+package v2.services
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
-import play.api.libs.json.JsObject
+import com.google.inject.ImplementedBy
+import com.google.inject.Inject
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
-import v2.models.MessageId
-import v2.models.MovementId
+import v2.controllers.ErrorTranslator
 import v2.models.errors.PresentationError
 import v2.models.responses.MessageSummary
-import v2.models.responses.hateoas.HateoasDepartureMessageResponse
-import v2.services.ConversionService
 import v2.utils.StreamingUtils
 
+import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-object ResponseFormatter extends ErrorTranslator {
+@ImplementedBy(classOf[ResponseFormatterServiceImpl])
+trait ResponseFormatterService {
 
-  def formatMessageSummaryResponse(
-    conversionService: ConversionService,
-    movementId: MovementId,
-    messageId: MessageId,
+  def formatMessageSummary(
     messageSummary: MessageSummary,
     acceptHeaderValue: String
-  )(implicit ec: ExecutionContext, hc: HeaderCarrier, mat: Materializer): EitherT[Future, PresentationError, JsObject] =
+  )(implicit ec: ExecutionContext, hc: HeaderCarrier, mat: Materializer): EitherT[Future, PresentationError, MessageSummary]
+}
+
+@Singleton
+class ResponseFormatterServiceImpl @Inject() (conversionService: ConversionService) extends ResponseFormatterService with ErrorTranslator {
+
+  override def formatMessageSummary(
+    messageSummary: MessageSummary,
+    acceptHeaderValue: String
+  )(implicit ec: ExecutionContext, hc: HeaderCarrier, mat: Materializer): EitherT[Future, PresentationError, MessageSummary] =
     (acceptHeaderValue, messageSummary) match {
       case (VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, MessageSummary(_, _, messageType, Some(body))) =>
         for {
           jsonSource <- conversionService.xmlToJson(messageType, Source.single(ByteString(body))).asPresentation
           jsonBody   <- StreamingUtils.convertSourceToString(jsonSource).asPresentation
-        } yield HateoasDepartureMessageResponse(movementId, messageId, messageSummary.copy(body = Some(jsonBody)))
+        } yield messageSummary.copy(body = Some(jsonBody))
       case _ =>
-        EitherT.rightT(HateoasDepartureMessageResponse(movementId, messageId, messageSummary))
+        EitherT.rightT(messageSummary)
     }
 
 }

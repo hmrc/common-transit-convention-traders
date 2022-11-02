@@ -36,6 +36,7 @@ import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
+import v2.controllers.actions.providers.AcceptHeaderActionProvider
 import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
@@ -73,9 +74,11 @@ class V2DeparturesControllerImpl @Inject() (
   routerService: RouterService,
   auditService: AuditingService,
   messageSizeAction: MessageSizeActionProvider,
+  acceptHeaderActionProvider: AcceptHeaderActionProvider,
   val metrics: Metrics,
   xmlParsingService: XmlMessageParsingService,
-  jsonParsingService: JsonMessageParsingService
+  jsonParsingService: JsonMessageParsingService,
+  responseFormatterService: ResponseFormatterService
 )(implicit val materializer: Materializer, val temporaryFileCreator: TemporaryFileCreator)
     extends BaseController
     with V2DeparturesController
@@ -84,7 +87,6 @@ class V2DeparturesControllerImpl @Inject() (
     with VersionedRouting
     with ErrorTranslator
     with ContentTypeRouting
-    with AcceptHeaderRouting
     with HasActionMetrics {
 
   lazy val sCounter: Counter = counter(s"success-counter")
@@ -162,20 +164,16 @@ class V2DeparturesControllerImpl @Inject() (
     } yield declarationResult
 
   def getMessage(movementId: MovementId, messageId: MessageId): Action[AnyContent] =
-    authActionNewEnrolmentOnly.async {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider()).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        acceptHeaderRoute {
-          case acceptHeaderValue @ (Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) |
-              Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML)) =>
-            (for {
-              messageSummary <- departuresService.getMessage(request.eoriNumber, movementId, messageId).asPresentation
-              response       <- ResponseFormatter.formatMessageSummaryResponse(conversionService, movementId, messageId, messageSummary, acceptHeaderValue.get)
-            } yield response).fold(
-              presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-              response => Ok(Json.toJson(response))
-            )
-        }
+        (for {
+          messageSummary          <- departuresService.getMessage(request.eoriNumber, movementId, messageId).asPresentation
+          formattedMessageSummary <- responseFormatterService.formatMessageSummary(messageSummary, request.acceptHeader.get)
+        } yield formattedMessageSummary).fold(
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          response => Ok(Json.toJson(HateoasDepartureMessageResponse(movementId, messageId, response)))
+        )
     }
 
   def getMessageIds(departureId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =

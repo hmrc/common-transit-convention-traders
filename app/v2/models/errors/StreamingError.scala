@@ -16,8 +16,8 @@
 
 package v2.models.errors
 
-sealed trait MessageFormatError
+sealed trait StreamingError
 
-object MessageFormatError {
-  case class UnexpectedError(thr: Option[Throwable] = None) extends MessageFormatError
+object StreamingError {
+  case class UnexpectedError(thr: Option[Throwable] = None) extends StreamingError
 }

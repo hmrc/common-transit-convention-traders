@@ -20,7 +20,7 @@ import cats.data.EitherT
 import v2.models.errors.ConversionError
 import v2.models.errors.ExtractionError
 import v2.models.errors.FailedToValidateError
-import v2.models.errors.MessageFormatError
+import v2.models.errors.StreamingError
 import v2.models.errors.PersistenceError
 import v2.models.errors.PresentationError
 import v2.models.errors.RouterError
@@ -100,10 +100,10 @@ trait ErrorTranslator {
     }
   }
 
-  implicit val messageFormatError = new Converter[MessageFormatError] {
-    import v2.models.errors.MessageFormatError._
+  implicit val messageFormatError = new Converter[StreamingError] {
+    import v2.models.errors.StreamingError._
 
-    override def convert(messageFormatError: MessageFormatError): PresentationError = messageFormatError match {
+    override def convert(messageFormatError: StreamingError): PresentationError = messageFormatError match {
       case UnexpectedError(ex) => PresentationError.internalServiceError(cause = ex)
     }
   }

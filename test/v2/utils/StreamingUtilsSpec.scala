@@ -26,7 +26,7 @@ import v2.base.TestSourceProvider
 
 class StreamingUtilsSpec extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFutures with TestActorSystem with TestSourceProvider {
 
-  "MessageFormat" - {
+  "StreamingUtils" - {
 
     "convertSourceToString" - {
 

@@ -22,8 +22,7 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
 import v2.controllers.ErrorTranslator
-import v2.models.errors.MessageFormatError
-import v2.models.errors.PresentationError
+import v2.models.errors.StreamingError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -33,14 +32,14 @@ object StreamingUtils extends ErrorTranslator {
 
   def convertSourceToString(
     source: Source[ByteString, _]
-  )(implicit ec: ExecutionContext, mat: Materializer): EitherT[Future, MessageFormatError, String] = EitherT {
+  )(implicit ec: ExecutionContext, mat: Materializer): EitherT[Future, StreamingError, String] = EitherT {
     source
       .reduce(_ ++ _)
       .map(_.utf8String)
       .runWith(Sink.head[String])
-      .map(Right[MessageFormatError, String])
+      .map(Right[StreamingError, String])
       .recover {
-        case NonFatal(ex) => Left[MessageFormatError, String](MessageFormatError.UnexpectedError(Some(ex)))
+        case NonFatal(ex) => Left[StreamingError, String](StreamingError.UnexpectedError(Some(ex)))
       }
   }
 }
