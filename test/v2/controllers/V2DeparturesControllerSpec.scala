@@ -59,11 +59,11 @@ import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.TestMetrics
 import v2.base.CommonGenerators
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
+import v2.fakes.controllers.actions.FakeAcceptHeaderActionProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeMessageSizeActionProvider
 import v2.models._
@@ -77,6 +77,7 @@ import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
+import v2.services.ResponseFormatterService
 import v2.services._
 
 import java.nio.charset.StandardCharsets
@@ -122,6 +123,7 @@ class V2DeparturesControllerSpec
   val mockConversionService            = mock[ConversionService]
   val mockXmlParsingService            = mock[XmlMessageParsingService]
   val mockJsonParsingService           = mock[JsonMessageParsingService]
+  val mockResponseFormatterService     = mock[ResponseFormatterService]
   implicit val temporaryFileCreator    = SingletonTemporaryFileCreator
 
   lazy val messageType: MessageType = MessageType.DeclarationAmendment
@@ -143,9 +145,11 @@ class V2DeparturesControllerSpec
     mockRouterService,
     mockAuditService,
     FakeMessageSizeActionProvider,
+    FakeAcceptHeaderActionProvider,
     new TestMetrics(),
     mockXmlParsingService,
-    mockJsonParsingService
+    mockJsonParsingService,
+    mockResponseFormatterService
   )
 
   implicit val timeout: Timeout = 5.seconds
@@ -330,9 +334,11 @@ class V2DeparturesControllerSpec
           mockRouterService,
           mockAuditService,
           FakeMessageSizeActionProvider,
+          FakeAcceptHeaderActionProvider,
           new TestMetrics(),
           mockXmlParsingService,
-          mockJsonParsingService
+          mockJsonParsingService,
+          mockResponseFormatterService
         )
 
         val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
@@ -372,9 +378,11 @@ class V2DeparturesControllerSpec
           mockRouterService,
           mockAuditService,
           FakeMessageSizeActionProvider,
+          FakeAcceptHeaderActionProvider,
           new TestMetrics(),
           mockXmlParsingService,
-          mockJsonParsingService
+          mockJsonParsingService,
+          mockResponseFormatterService
         )
 
         val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
@@ -716,9 +724,11 @@ class V2DeparturesControllerSpec
         mockRouterService,
         mockAuditService,
         FakeMessageSizeActionProvider,
+        FakeAcceptHeaderActionProvider,
         new TestMetrics(),
         mockXmlParsingService,
-        mockJsonParsingService
+        mockJsonParsingService,
+        mockResponseFormatterService
       )
 
       val request  = fakeRequestDepartures("POST", body = singleUseStringSource(CC015C.mkString), headers = standardHeaders)
@@ -792,9 +802,10 @@ class V2DeparturesControllerSpec
   }
 
   "for retrieving a single message" - {
-    val movementId     = arbitraryMovementId.arbitrary.sample.value
-    val messageId      = arbitraryMessageId.arbitrary.sample.value
-    val messageSummary = genMessageSummary.arbitrary.sample.value.copy(id = messageId, body = Some("<test>ABC</test>"))
+    val movementId             = arbitraryMovementId.arbitrary.sample.value
+    val messageId              = arbitraryMessageId.arbitrary.sample.value
+    val messageSummary         = genMessageSummary.arbitrary.sample.value.copy(id = messageId, body = Some("<test>ABC</test>"))
+    val messageSummaryJsonBody = messageSummary.copy(body = Some("{'test': 'ABC'}"))
 
     Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML).foreach {
       acceptHeaderValue =>
@@ -812,12 +823,16 @@ class V2DeparturesControllerSpec
                 _ => EitherT.rightT(messageSummary)
               )
 
-            if (convertBodyToJson) {
-              when(mockConversionService.xmlToJson(any[MessageType], any[Source[ByteString, _]])(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
-                .thenAnswer(
-                  _ => EitherT.rightT(singleUseStringSource("{'test': 'ABC'}"))
-                )
-            }
+            when(
+              mockResponseFormatterService.formatMessageSummary(any[MessageSummary], eqTo(acceptHeaderValue))(
+                any[ExecutionContext],
+                any[HeaderCarrier],
+                any[Materializer]
+              )
+            )
+              .thenAnswer(
+                _ => if (convertBodyToJson) EitherT.rightT(messageSummaryJsonBody) else EitherT.rightT(messageSummary)
+              )
 
             val result = sut.getMessage(movementId, messageId)(request)
 
@@ -826,7 +841,7 @@ class V2DeparturesControllerSpec
               HateoasDepartureMessageResponse(
                 movementId,
                 messageId,
-                if (convertBodyToJson) messageSummary.copy(body = Some("{'test': 'ABC'}")) else messageSummary
+                if (convertBodyToJson) messageSummaryJsonBody else messageSummary
               )
             )
           }
@@ -862,21 +877,6 @@ class V2DeparturesControllerSpec
           }
 
         }
-    }
-
-    "when the accept header is invalid return not acceptable" in {
-      val headers =
-        FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+text"))
-      val request =
-        FakeRequest("GET", routing.routes.DeparturesRouter.getMessage(movementId.value, messageId.value).url, headers, Source.empty[ByteString])
-
-      val result = sut.getMessage(movementId, messageId)(request)
-
-      status(result) mustBe NOT_ACCEPTABLE
-      contentAsJson(result) mustBe Json.obj(
-        "code"    -> "NOT_ACCEPTABLE",
-        "message" -> "Accept header application/vnd.hmrc.2.0+text is not supported!"
-      )
     }
   }
 
@@ -1140,9 +1140,11 @@ class V2DeparturesControllerSpec
           mockRouterService,
           mockAuditService,
           FakeMessageSizeActionProvider,
+          FakeAcceptHeaderActionProvider,
           new TestMetrics(),
           mockXmlParsingService,
-          mockJsonParsingService
+          mockJsonParsingService,
+          mockResponseFormatterService
         )
 
         val request  = fakeAttachDepartures("POST", body = Source.single(ByteString(CC013C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
