@@ -29,6 +29,8 @@ object Constants {
 
   val XMessageTypeHeader = "X-Message-Type"
 
+  val XCallbackBoxIdHeader = "X-Callback-Box-Id"
+
   val ChannelHeader = "channel"
 
   val LegacyEnrolmentKey: String   = "HMCE-NCTS-ORG"

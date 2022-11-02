@@ -18,20 +18,26 @@ package v2.connectors
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import org.bouncycastle.util.test.TestFailedException
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.exceptions.TestFailedException
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.Status.ACCEPTED
+import play.api.http.Status.BAD_GATEWAY
+import play.api.http.Status.BAD_REQUEST
+import play.api.http.Status.CREATED
 import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.http.Status.NOT_FOUND
+import play.api.http.Status.NO_CONTENT
 import play.api.http.Status.OK
+import play.api.http.Status.SERVICE_UNAVAILABLE
 import play.api.libs.json.JsResult
 import play.api.libs.json.Json
 import play.api.libs.json.Reads
@@ -115,7 +121,7 @@ class V2BaseConnectorSpec
       val messageId   = arbitrary[MessageId].sample.value
       val urlPath     = Harness.routerRoute(eori, messageType, departureId, messageId)
       urlPath
-        .toString() mustBe s"/transit-movements-router/traders/${eori.value}/movements/${messageType.movementType}/${departureId.value}/messages/${messageId.value}/"
+        .toString() mustBe s"/transit-movements-router/traders/${eori.value}/movements/${messageType.movementType.urlFragment}/${departureId.value}/messages/${messageId.value}/"
   }
 
   "the auditing URL on localhost for a given audit type should be as expected" in forAll(arbitrary[AuditType]) {
@@ -246,35 +252,42 @@ class V2BaseConnectorSpec
 
   "RequestBuilderHelpers" - new V2BaseConnector {
 
-    "executeAccepted returns a unit when accepted" in {
-      val response = mock[HttpResponse]
-      when(response.status).thenReturn(ACCEPTED)
-      val sut = mock[RequestBuilder]
-      when(sut.execute[HttpResponse](any(), any())).thenReturn(Future.successful(response))
+    "executeAndExpect returns a unit when the expected response is returned" in forAll(
+      Gen.oneOf(Seq(ACCEPTED, CREATED, OK, NO_CONTENT))
+    ) {
+      status =>
+        val response = mock[HttpResponse]
+        when(response.status).thenReturn(status)
+        val sut = mock[RequestBuilder]
+        when(sut.execute[HttpResponse](any(), any())).thenReturn(Future.successful(response))
 
-      whenReady(sut.executeAccepted) {
-        unit => unit mustBe a[Unit]
-      }
+        whenReady(sut.executeAndExpect(status)) {
+          unit => unit mustBe a[Unit]
+        }
 
     }
 
-    "executeAccepted returns an error when not accepted" in {
-      val response = mock[HttpResponse]
-      when(response.status).thenReturn(INTERNAL_SERVER_ERROR)
-      when(response.body).thenReturn("error")
-      val sut = mock[RequestBuilder]
-      when(sut.execute[HttpResponse](any(), any())).thenReturn(Future.successful(response))
+    "executeAndExpect returns an error when the expected response is not returned" in forAll(
+      Gen.oneOf(Seq(INTERNAL_SERVER_ERROR, BAD_REQUEST, BAD_GATEWAY, SERVICE_UNAVAILABLE, NOT_FOUND))
+    ) {
+      status =>
+        val response = mock[HttpResponse]
+        when(response.status).thenReturn(status)
+        when(response.body).thenReturn("error")
+        val sut = mock[RequestBuilder]
+        when(sut.execute[HttpResponse](any(), any())).thenReturn(Future.successful(response))
 
-      sut.executeAccepted
-        .map(
-          _ => fail("This should have failed")
-        )
-        .recover {
-          case UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR, _, _) => // success
-          case x: TestFailedException                                      => x
-          case thr =>
-            fail(s"Test failed in an unexpected way: $thr")
-        }
+        sut
+          .executeAndExpect(ACCEPTED)
+          .map(
+            _ => fail("This should have failed")
+          )
+          .recover {
+            case UpstreamErrorResponse("error", `status`, _, _) => // success
+            case x: TestFailedException                         => x
+            case thr =>
+              fail(s"Test failed in an unexpected way: $thr")
+          }
 
     }
 

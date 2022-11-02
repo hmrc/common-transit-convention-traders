@@ -26,6 +26,7 @@ class Module extends AbstractModule {
 
     bind(classOf[JsonHelper]).asEagerSingleton()
     bind(classOf[MessageTranslation]).asEagerSingleton()
+    bind(classOf[CTCServicesConfig])
   }
 
 }

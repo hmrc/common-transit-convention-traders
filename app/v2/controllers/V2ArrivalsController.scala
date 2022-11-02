@@ -39,6 +39,7 @@ import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models.errors.PresentationError
 import v2.models.AuditType
+import v2.models.MovementType
 import v2.models.request.MessageType
 import v2.models.responses.ArrivalResponse
 import v2.models.responses.hateoas._
@@ -60,6 +61,7 @@ class V2ArrivalsControllerImpl @Inject() (
   routerService: RouterService,
   auditService: AuditingService,
   conversionService: ConversionService,
+  pushNotificationsService: PushNotificationsService,
   messageSizeAction: MessageSizeActionProvider,
   val metrics: Metrics
 )(implicit val materializer: Materializer, val temporaryFileCreator: TemporaryFileCreator)
@@ -135,6 +137,7 @@ class V2ArrivalsControllerImpl @Inject() (
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]): EitherT[Future, PresentationError, ArrivalResponse] =
     for {
       arrivalResult <- arrivalsService.createArrival(request.eoriNumber, source).asPresentation
+      _ = pushNotificationsService.associate(arrivalResult.arrivalId, MovementType.Arrival, request.headers)
       _ <- routerService
         .send(MessageType.ArrivalNotification, request.eoriNumber, arrivalResult.arrivalId, arrivalResult.messageId, source)
         .asPresentation

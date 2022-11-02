@@ -65,7 +65,7 @@ class JsonMessageParsingServiceImpl @Inject() (implicit materializer: Materializ
             }
         }
         .recover {
-          case e => Left(ExtractionError.MalformedInput())
+          case _ => Left(ExtractionError.MalformedInput)
         }
     )
 }

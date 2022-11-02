@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
-package v2.models.errors
+package config
 
-sealed trait ExtractionError
+import com.google.inject.Inject
+import play.api.Configuration
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-object ExtractionError {
-  case object MalformedInput                          extends ExtractionError
-  case class MessageTypeNotFound(messageType: String) extends ExtractionError
+/*
+ * This class exists simply to expose the config function, which allows us to
+ * avoid a magic string already present in the ServicesConfig object.
+ */
+class CTCServicesConfig @Inject() (config: Configuration) extends ServicesConfig(config) {
+
+  override def config(serviceName: String): Configuration = super.config(serviceName)
+
 }

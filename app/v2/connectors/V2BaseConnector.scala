@@ -21,7 +21,6 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import io.lemonlabs.uri.UrlPath
-import play.api.http.Status.ACCEPTED
 import play.api.http.Status.OK
 import play.api.libs.json.JsResult
 import play.api.libs.json.Reads
@@ -44,7 +43,7 @@ trait V2BaseConnector extends HttpErrorFunctions {
   def validationRoute(messageType: MessageType): UrlPath =
     UrlPath.parse(s"/transit-movements-validator/messages/${messageType.code}/validation")
 
-  def movementsBaseRoute: String = "/transit-movements"
+  val movementsBaseRoute: String = "/transit-movements"
 
   def movementsPostDepartureDeclaration(eoriNumber: EORINumber): UrlPath =
     UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/")
@@ -67,18 +66,27 @@ trait V2BaseConnector extends HttpErrorFunctions {
   def movementsPostArrivalNotification(eoriNumber: EORINumber): UrlPath =
     UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/arrivals/")
 
-  def routerBaseRoute: String = "/transit-movements-router"
+  val routerBaseRoute: String = "/transit-movements-router"
 
   def routerRoute(eoriNumber: EORINumber, messageType: MessageType, movementId: MovementId, messageId: MessageId): UrlPath =
-    UrlPath.parse(s"$routerBaseRoute/traders/${eoriNumber.value}/movements/${messageType.movementType}/${movementId.value}/messages/${messageId.value}/")
+    UrlPath.parse(
+      s"$routerBaseRoute/traders/${eoriNumber.value}/movements/${messageType.movementType.urlFragment}/${movementId.value}/messages/${messageId.value}/"
+    )
 
-  def auditingBaseRoute: String = "/transit-movements-auditing"
+  val auditingBaseRoute: String = "/transit-movements-auditing"
 
   def auditingRoute(auditType: AuditType): UrlPath =
     UrlPath.parse(s"$auditingBaseRoute/audit/${auditType.name}")
 
+  val conversionBaseRoute: String = "/transit-movements-converter"
+
   def conversionRoute(messageType: MessageType): UrlPath =
-    UrlPath.parse(s"/transit-movements-converter/messages/${messageType.code}")
+    UrlPath.parse(s"$conversionBaseRoute/messages/${messageType.code}")
+
+  val pushNotificationsBaseRoute: String = "/transit-movements-push-notifications"
+
+  def pushNotificationsRoute(movementId: MovementId): UrlPath =
+    UrlPath.parse(s"$pushNotificationsBaseRoute/traders/movements/${movementId.value}/box")
 
   implicit class HttpResponseHelpers(response: HttpResponse) {
 
@@ -108,14 +116,14 @@ trait V2BaseConnector extends HttpErrorFunctions {
 
   implicit class RequestBuilderHelpers(requestBuilder: RequestBuilder) {
 
-    def executeAccepted(implicit ec: ExecutionContext): Future[Unit] =
+    def executeAndExpect(expected: Int)(implicit ec: ExecutionContext): Future[Unit] =
       requestBuilder
         .execute[HttpResponse]
         .flatMap {
           response =>
             response.status match {
-              case ACCEPTED => Future.successful(())
-              case _        => response.error
+              case `expected` => Future.successful(())
+              case _          => response.error
             }
         }
 
