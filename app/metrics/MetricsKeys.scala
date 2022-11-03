@@ -49,6 +49,10 @@ object MetricsKeys {
     val Post = "auditing-backend-post"
   }
 
+  object PushNotificationsBacked {
+    val Post = "push-notifications-backend-post"
+  }
+
   object Endpoints {
     def count(metricKey: String) = s"$metricKey-count"
     // Arrivals

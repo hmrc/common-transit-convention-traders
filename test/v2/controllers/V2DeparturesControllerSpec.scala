@@ -28,6 +28,7 @@ import cats.data.NonEmptyList
 import cats.implicits.catsStdInstancesForFuture
 import cats.implicits.toBifunctorOps
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.times
@@ -124,6 +125,7 @@ class V2DeparturesControllerSpec
   val mockXmlParsingService            = mock[XmlMessageParsingService]
   val mockJsonParsingService           = mock[JsonMessageParsingService]
   val mockResponseFormatterService     = mock[ResponseFormatterService]
+  val mockPushNotificationService      = mock[PushNotificationsService]
   implicit val temporaryFileCreator    = SingletonTemporaryFileCreator
 
   lazy val messageType: MessageType = MessageType.DeclarationAmendment
@@ -144,6 +146,7 @@ class V2DeparturesControllerSpec
     mockDeparturesPersistenceService,
     mockRouterService,
     mockAuditService,
+    mockPushNotificationService,
     FakeMessageSizeActionProvider,
     FakeAcceptHeaderActionProvider,
     new TestMetrics(),
@@ -205,6 +208,7 @@ class V2DeparturesControllerSpec
 
     reset(mockAuditService)
     reset(mockXmlParsingService)
+    reset(mockPushNotificationService)
   }
 
   val testSinkXml: Sink[ByteString, Future[Either[FailedToValidateError, Unit]]] =
@@ -294,6 +298,7 @@ class V2DeparturesControllerSpec
           any(),
           any()
         )
+        verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
       }
 
       "must return Bad Request when body is an XML document that would fail schema validation" in {
@@ -333,6 +338,7 @@ class V2DeparturesControllerSpec
           mockDeparturesPersistenceService,
           mockRouterService,
           mockAuditService,
+          mockPushNotificationService,
           FakeMessageSizeActionProvider,
           FakeAcceptHeaderActionProvider,
           new TestMetrics(),
@@ -377,6 +383,7 @@ class V2DeparturesControllerSpec
           mockDeparturesPersistenceService,
           mockRouterService,
           mockAuditService,
+          mockPushNotificationService,
           FakeMessageSizeActionProvider,
           FakeAcceptHeaderActionProvider,
           new TestMetrics(),
@@ -433,6 +440,7 @@ class V2DeparturesControllerSpec
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
         verify(mockConversionService).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.JSON))(any(), any())
+        verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
       }
 
       "must return Bad Request when body is not an JSON document" in {
@@ -723,6 +731,7 @@ class V2DeparturesControllerSpec
         mockDeparturesPersistenceService,
         mockRouterService,
         mockAuditService,
+        mockPushNotificationService,
         FakeMessageSizeActionProvider,
         FakeAcceptHeaderActionProvider,
         new TestMetrics(),
@@ -1104,7 +1113,7 @@ class V2DeparturesControllerSpec
       "must return Bad Request when body is not an XML document" in {
         when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]]())(any(), any()))
           .thenAnswer(
-            _ => EitherT.leftT(ExtractionError.MalformedInput())
+            _ => EitherT.leftT(ExtractionError.MalformedInput)
           )
 
         val request = fakeAttachDepartures(method = "POST", body = singleUseStringSource("notxml"), headers = standardHeaders)
@@ -1139,6 +1148,7 @@ class V2DeparturesControllerSpec
           mockDeparturesPersistenceService,
           mockRouterService,
           mockAuditService,
+          mockPushNotificationService,
           FakeMessageSizeActionProvider,
           FakeAcceptHeaderActionProvider,
           new TestMetrics(),
@@ -1242,7 +1252,7 @@ class V2DeparturesControllerSpec
 
       "must return Bad Request when body is not an JSON document" in {
 
-        setup(extractMessageTypeJson = EitherT.leftT(ExtractionError.MalformedInput()))
+        setup(extractMessageTypeJson = EitherT.leftT(ExtractionError.MalformedInput))
 
         val request = fakeJsonAttachRequest("notJson")
         val result  = sut.attachMessage(departureId)(request)

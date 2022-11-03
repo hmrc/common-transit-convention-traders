@@ -16,9 +16,11 @@
 
 package v2.models.errors
 
-sealed trait ExtractionError
+sealed trait PushNotificationError
 
-object ExtractionError {
-  case object MalformedInput                          extends ExtractionError
-  case class MessageTypeNotFound(messageType: String) extends ExtractionError
+object PushNotificationError {
+
+  case object MissingClientId                               extends PushNotificationError
+  case class UnexpectedError(thr: Option[Throwable] = None) extends PushNotificationError
+
 }

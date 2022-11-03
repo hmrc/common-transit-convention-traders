@@ -44,6 +44,7 @@ import v2.models.AuditType
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementType
 import v2.models.errors.PresentationError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
@@ -73,6 +74,7 @@ class V2DeparturesControllerImpl @Inject() (
   departuresService: DeparturesService,
   routerService: RouterService,
   auditService: AuditingService,
+  pushNotificationsService: PushNotificationsService,
   messageSizeAction: MessageSizeActionProvider,
   acceptHeaderActionProvider: AcceptHeaderActionProvider,
   val metrics: Metrics,
@@ -158,6 +160,7 @@ class V2DeparturesControllerImpl @Inject() (
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
     for {
       declarationResult <- departuresService.saveDeclaration(request.eoriNumber, source).asPresentation
+      _ = pushNotificationsService.associate(declarationResult.departureId, MovementType.Departure, request.headers)
       _ <- routerService
         .send(MessageType.DeclarationData, request.eoriNumber, declarationResult.departureId, declarationResult.messageId, source)
         .asPresentation

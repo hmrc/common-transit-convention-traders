@@ -106,7 +106,7 @@ class JsonMessageParsingServiceSpec
       whenReady(response.value) {
         res =>
           res mustBe a[Left[MessageTypeNotFound, _]]
-          res.left.get mustBe ExtractionError.MalformedInput()
+          res.left.get mustBe ExtractionError.MalformedInput
       }
     }
   }
