@@ -52,6 +52,7 @@ import utils.TestMetrics
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.Payload
 import v2.models.errors.ErrorCode
 import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
@@ -658,7 +659,7 @@ class PersistenceConnectorSpec
       messageId,
       arbitrary[OffsetDateTime].sample.get,
       DeclarationData,
-      Some("<CC015C><test>testxml</test></CC015C>")
+      Some(Payload("<CC015C><test>testxml</test></CC015C>"))
     )
 
   "POST /traders/movements/:movementId/messages" - {

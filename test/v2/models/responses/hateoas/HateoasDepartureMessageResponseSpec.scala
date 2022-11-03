@@ -26,10 +26,9 @@ import play.api.libs.json.JsString
 import play.api.libs.json.Json
 import routing.VersionedRouting
 import v2.base.CommonGenerators
-import v2.base.TestActorSystem
-import v2.base.TestSourceProvider
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.Payload
 import v2.models.request.MessageType
 import v2.models.responses.MessageSummary
 
@@ -50,7 +49,7 @@ class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with
       messageId,
       dateTime,
       MessageType.DeclarationData,
-      Some(jsonString)
+      Some(Payload(jsonString))
     )
 
     val actual = HateoasDepartureMessageResponse(departureId, messageId, response, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)
@@ -77,7 +76,7 @@ class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with
       messageId,
       dateTime,
       MessageType.DeclarationData,
-      Some(body)
+      Some(Payload(body))
     )
 
     val actual = HateoasDepartureMessageResponse(departureId, messageId, response, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML)

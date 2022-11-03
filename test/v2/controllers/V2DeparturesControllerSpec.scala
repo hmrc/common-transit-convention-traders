@@ -804,8 +804,8 @@ class V2DeparturesControllerSpec
   "for retrieving a single message" - {
     val movementId             = arbitraryMovementId.arbitrary.sample.value
     val messageId              = arbitraryMessageId.arbitrary.sample.value
-    val messageSummary         = genMessageSummary.arbitrary.sample.value.copy(id = messageId, body = Some("<test>ABC</test>"))
-    val messageSummaryJsonBody = messageSummary.copy(body = Some("""{"test": "ABC"}"""))
+    val messageSummary         = genMessageSummary.arbitrary.sample.value.copy(id = messageId, body = Some(Payload("<test>ABC</test>")))
+    val messageSummaryJsonBody = messageSummary.copy(body = Some(Payload("""{"test": "ABC"}""")))
 
     Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML).foreach {
       acceptHeaderValue =>

@@ -25,6 +25,7 @@ import com.google.inject.Inject
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.controllers.ErrorTranslator
+import v2.models.Payload
 import v2.models.errors.PresentationError
 import v2.models.responses.MessageSummary
 import v2.utils.StreamingUtils
@@ -50,11 +51,11 @@ class ResponseFormatterServiceImpl @Inject() (conversionService: ConversionServi
     acceptHeaderValue: String
   )(implicit ec: ExecutionContext, hc: HeaderCarrier, mat: Materializer): EitherT[Future, PresentationError, MessageSummary] =
     (acceptHeaderValue, messageSummary) match {
-      case (VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, MessageSummary(_, _, messageType, Some(body))) =>
+      case (VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, MessageSummary(_, _, messageType, Some(Payload(body)))) =>
         for {
           jsonSource <- conversionService.xmlToJson(messageType, Source.single(ByteString(body))).asPresentation
           jsonBody   <- StreamingUtils.convertSourceToString(jsonSource).asPresentation
-        } yield messageSummary.copy(body = Some(jsonBody))
+        } yield messageSummary.copy(body = Some(Payload(jsonBody)))
       case _ =>
         EitherT.rightT(messageSummary)
     }

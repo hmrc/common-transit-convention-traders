@@ -14,22 +14,17 @@
  * limitations under the License.
  */
 
-package v2.models.responses
+package v2.models
 
+import play.api.libs.json.Format
+import play.api.libs.json.JsString
 import play.api.libs.json.Json
-import v2.models.MessageId
-import v2.models.Payload
-import v2.models.request.MessageType
 
-import java.time.OffsetDateTime
-
-object MessageSummary {
-  implicit lazy val messageResponseSummary = Json.format[MessageSummary]
+object Payload {
+  implicit lazy val payloadFormat: Format[Payload] = Json.valueFormat[Payload]
 }
 
-case class MessageSummary(
-  id: MessageId,
-  received: OffsetDateTime,
-  messageType: MessageType,
-  body: Option[Payload]
-)
+case class Payload(value: String) {
+  lazy val asJson = Json.parse(value)
+  lazy val asXml  = JsString(value)
+}

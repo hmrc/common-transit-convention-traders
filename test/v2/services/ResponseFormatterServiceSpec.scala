@@ -34,6 +34,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import v2.base.CommonGenerators
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider.singleUseStringSource
+import v2.models.Payload
 import v2.models.errors.ConversionError
 import v2.models.errors.PresentationError
 import v2.models.request.MessageType
@@ -62,7 +63,7 @@ class ResponseFormatterServiceSpec
     val xmlString                 = "<test>example</test>"
     val jsonString                = Json.stringify(Json.obj("test" -> "example"))
     val sourceJson                = singleUseStringSource(jsonString)
-    val messageSummary            = genMessageSummary.arbitrary.sample.get.copy(body = Some(xmlString))
+    val messageSummary            = genMessageSummary.arbitrary.sample.get.copy(body = Some(Payload(xmlString)))
     val messageSummaryWithoutBody = messageSummary.copy(body = None)
 
     "when accept header equals application/vnd.hmrc.2.0+json" - {
@@ -73,7 +74,7 @@ class ResponseFormatterServiceSpec
             _ => EitherT.rightT[Future, ConversionError](sourceJson)
           )
 
-        val expected = messageSummary.copy(body = Some(jsonString))
+        val expected = messageSummary.copy(body = Some(Payload(jsonString)))
 
         whenReady(
           responseFormatterService.formatMessageSummary(messageSummary, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON).value

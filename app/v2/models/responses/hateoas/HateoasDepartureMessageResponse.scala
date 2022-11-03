@@ -17,17 +17,17 @@
 package v2.models.responses.hateoas
 
 import play.api.libs.json.JsObject
-import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import routing.VersionedRouting
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.Payload
 import v2.models.responses.MessageSummary
 
 object HateoasDepartureMessageResponse extends HateoasResponse {
 
-  def apply[A](departureId: MovementId, messageId: MessageId, messageSummary: MessageSummary, acceptHeader: String): JsObject =
+  def apply(departureId: MovementId, messageId: MessageId, messageSummary: MessageSummary, acceptHeader: String): JsObject =
     Json.obj(
       "_links" -> Json.obj(
         "self"      -> Json.obj("href" -> messageUri(departureId, messageId)),
@@ -39,13 +39,13 @@ object HateoasDepartureMessageResponse extends HateoasResponse {
       "type"        -> messageSummary.messageType
     ) ++ messageSummary.body
       .map(
-        x => Json.obj("body" -> formatBody(acceptHeader, x))
+        payload => Json.obj("body" -> formatBody(acceptHeader, payload))
       )
       .getOrElse(Json.obj())
 
-  private def formatBody(acceptHeader: String, body: String): JsValue =
+  private def formatBody(acceptHeader: String, body: Payload): JsValue =
     acceptHeader match {
-      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON     => Json.parse(body)
-      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML => JsString(body)
+      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON     => body.asJson
+      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML => body.asXml
     }
 }

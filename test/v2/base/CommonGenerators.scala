@@ -24,6 +24,7 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
+import v2.models.Payload
 import v2.models.request.MessageType
 import v2.models.responses.MessageSummary
 
@@ -60,7 +61,7 @@ trait CommonGenerators {
     for {
       received    <- arbitrary[OffsetDateTime]
       messageType <- Gen.oneOf(MessageType.values)
-      body        <- Gen.option(Gen.alphaNumStr)
+      body        <- Gen.option(Gen.alphaNumStr.map(Payload(_)))
       messageId   <- genShortUUID.map(MessageId(_))
     } yield MessageSummary(messageId, received, messageType, body)
   }
