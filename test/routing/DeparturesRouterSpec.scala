@@ -56,7 +56,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
     "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
 
       val departureHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml")
+        Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, HeaderNames.CONTENT_TYPE -> "application/xml")
       )
 
       "must route to the v2 controller and return Accepted when successful" in {
@@ -97,53 +97,57 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
   "when getting a single message" - {
 
-    "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
+    Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML).foreach {
+      acceptHeaderValue =>
+        s"with accept header set to $acceptHeaderValue (version two)" - {
 
-      val departureHeaders = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml"))
+          val departureHeaders =
+            FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
 
-      "must route to the v2 controller and return Accepted when successful" in {
+          "must route to the v2 controller and return Accepted when successful" in {
 
-        val request = FakeRequest(method = "POST", uri = routes.DeparturesRouter.submitDeclaration().url, body = <test></test>, headers = departureHeaders)
-        val result  = sut.getMessage("1234567890abcdef", "1234567890abcdef")(request)
+            val request = FakeRequest(method = "POST", uri = routes.DeparturesRouter.submitDeclaration().url, body = <test></test>, headers = departureHeaders)
+            val result  = sut.getMessage("1234567890abcdef", "1234567890abcdef")(request)
 
-        status(result) mustBe ACCEPTED
-        contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
-      }
+            status(result) mustBe ACCEPTED
+            contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
+          }
 
-      "if the departure ID is not the correct format, return a bad request of the appropriate format" in {
-        val request = FakeRequest(
-          method = "POST",
-          uri = routes.DeparturesRouter.getMessage("01", "0123456789abcdef").url,
-          body = <test></test>,
-          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml"))
-        )
-        val result = sut.getMessage("01", "01234567890bcdef")(request)
+          "if the departure ID is not the correct format, return a bad request of the appropriate format" in {
+            val request = FakeRequest(
+              method = "POST",
+              uri = routes.DeparturesRouter.getMessage("01", "0123456789abcdef").url,
+              body = <test></test>,
+              headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
+            )
+            val result = sut.getMessage("01", "01234567890bcdef")(request)
 
-        status(result) mustBe BAD_REQUEST
-        contentAsJson(result) mustBe Json.obj(
-          "code"       -> "BAD_REQUEST",
-          "statusCode" -> 400,
-          "message"    -> "departureId: Value 01 is not a 16 character hexadecimal string"
-        )
-      }
+            status(result) mustBe BAD_REQUEST
+            contentAsJson(result) mustBe Json.obj(
+              "code"       -> "BAD_REQUEST",
+              "statusCode" -> 400,
+              "message"    -> "departureId: Value 01 is not a 16 character hexadecimal string"
+            )
+          }
 
-      "if the message ID is not the correct format, return a bad request of the appropriate format" in {
-        val request = FakeRequest(
-          method = "POST",
-          uri = routes.DeparturesRouter.getMessage("0123456789abcdef", "01").url,
-          body = <test></test>,
-          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml"))
-        )
-        val result = sut.getMessage("01234567890bcdef", "01")(request)
+          "if the message ID is not the correct format, return a bad request of the appropriate format" in {
+            val request = FakeRequest(
+              method = "POST",
+              uri = routes.DeparturesRouter.getMessage("0123456789abcdef", "01").url,
+              body = <test></test>,
+              headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
+            )
+            val result = sut.getMessage("01234567890bcdef", "01")(request)
 
-        status(result) mustBe BAD_REQUEST
-        contentAsJson(result) mustBe Json.obj(
-          "code"       -> "BAD_REQUEST",
-          "statusCode" -> 400,
-          "message"    -> "messageId: Value 01 is not a 16 character hexadecimal string"
-        )
-      }
+            status(result) mustBe BAD_REQUEST
+            contentAsJson(result) mustBe Json.obj(
+              "code"       -> "BAD_REQUEST",
+              "statusCode" -> 400,
+              "message"    -> "messageId: Value 01 is not a 16 character hexadecimal string"
+            )
+          }
 
+        }
     }
 
     Seq(None, Some("application/vnd.hmrc.1.0+json"), Some("text/html"), Some("application/vnd.hmrc.1.0+xml"), Some("text/javascript")).foreach {
@@ -211,7 +215,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
   "when getting a departure/movement" - {
     "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
-      val departureHeaders = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json"))
+      val departureHeaders = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON))
 
       "must route to the v2 controller and return Ok when successful" in {
         val request = FakeRequest(method = "GET", body = "", uri = routes.DeparturesRouter.getDeparture("").url, headers = departureHeaders)
@@ -273,7 +277,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
     "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
 
       val departureHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml")
+        Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, HeaderNames.CONTENT_TYPE -> "application/xml")
       )
 
       "must route to the v2 controller and return Accepted when successful" in {

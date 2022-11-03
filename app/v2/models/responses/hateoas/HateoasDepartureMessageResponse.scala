@@ -36,7 +36,7 @@ object HateoasDepartureMessageResponse extends HateoasResponse {
       "type"        -> messageSummary.messageType
     ) ++ messageSummary.body
       .map(
-        x => Json.obj("body" -> x)
+        payload => Json.obj("body" -> payload.asJson)
       )
       .getOrElse(Json.obj())
 }

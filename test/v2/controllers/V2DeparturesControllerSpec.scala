@@ -60,11 +60,11 @@ import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.TestMetrics
 import v2.base.CommonGenerators
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
+import v2.fakes.controllers.actions.FakeAcceptHeaderActionProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeMessageSizeActionProvider
 import v2.models._
@@ -78,6 +78,7 @@ import v2.models.responses.DepartureResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
+import v2.services.ResponseFormatterService
 import v2.services._
 
 import java.nio.charset.StandardCharsets
@@ -123,6 +124,7 @@ class V2DeparturesControllerSpec
   val mockConversionService            = mock[ConversionService]
   val mockXmlParsingService            = mock[XmlMessageParsingService]
   val mockJsonParsingService           = mock[JsonMessageParsingService]
+  val mockResponseFormatterService     = mock[ResponseFormatterService]
   val mockPushNotificationService      = mock[PushNotificationsService]
   implicit val temporaryFileCreator    = SingletonTemporaryFileCreator
 
@@ -146,9 +148,11 @@ class V2DeparturesControllerSpec
     mockAuditService,
     mockPushNotificationService,
     FakeMessageSizeActionProvider,
+    FakeAcceptHeaderActionProvider,
     new TestMetrics(),
     mockXmlParsingService,
-    mockJsonParsingService
+    mockJsonParsingService,
+    mockResponseFormatterService
   )
 
   implicit val timeout: Timeout = 5.seconds
@@ -336,9 +340,11 @@ class V2DeparturesControllerSpec
           mockAuditService,
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
+          FakeAcceptHeaderActionProvider,
           new TestMetrics(),
           mockXmlParsingService,
-          mockJsonParsingService
+          mockJsonParsingService,
+          mockResponseFormatterService
         )
 
         val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
@@ -379,9 +385,11 @@ class V2DeparturesControllerSpec
           mockAuditService,
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
+          FakeAcceptHeaderActionProvider,
           new TestMetrics(),
           mockXmlParsingService,
-          mockJsonParsingService
+          mockJsonParsingService,
+          mockResponseFormatterService
         )
 
         val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
@@ -725,9 +733,11 @@ class V2DeparturesControllerSpec
         mockAuditService,
         mockPushNotificationService,
         FakeMessageSizeActionProvider,
+        FakeAcceptHeaderActionProvider,
         new TestMetrics(),
         mockXmlParsingService,
-        mockJsonParsingService
+        mockJsonParsingService,
+        mockResponseFormatterService
       )
 
       val request  = fakeRequestDepartures("POST", body = singleUseStringSource(CC015C.mkString), headers = standardHeaders)
@@ -751,7 +761,7 @@ class V2DeparturesControllerSpec
           .map(
             _ => "with"
           )
-          .getOrElse("without")} a date filter" in forAll(Gen.listOfN(3, arbitrary[MessageSummary])) {
+          .getOrElse("without")} a date filter" in forAll(Gen.listOfN(3, genMessageSummaryXml.arbitrary.sample.head)) {
           messageResponse =>
             when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), MovementId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
               .thenAnswer(
@@ -801,60 +811,82 @@ class V2DeparturesControllerSpec
   }
 
   "for retrieving a single message" - {
+    val movementId         = arbitraryMovementId.arbitrary.sample.value
+    val messageId          = arbitraryMessageId.arbitrary.sample.value
+    val messageSummaryXml  = genMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = Some(XmlPayload("<test>ABC</test>")))
+    val messageSummaryJson = messageSummaryXml.copy(body = Some(JsonPayload("""{"test": "ABC"}""")))
 
-    val dateTime = OffsetDateTime.of(2022, 8, 4, 11, 34, 42, 0, ZoneOffset.UTC)
+    Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML).foreach {
+      acceptHeaderValue =>
+        val headers =
+          FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
+        val request =
+          FakeRequest("GET", routing.routes.DeparturesRouter.getMessage(movementId.value, messageId.value).url, headers, Source.empty[ByteString])
+        val convertBodyToJson = acceptHeaderValue == VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON
 
-    "when the message is found" in {
-      val messageSummary = MessageSummary(
-        MessageId("0123456789abcdef"),
-        dateTime,
-        MessageType.DeclarationData,
-        Some("<test></test>")
-      )
-      when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
-        .thenAnswer(
-          _ => EitherT.rightT(messageSummary)
-        )
+        s"when the accept header equals $acceptHeaderValue" - {
 
-      val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-      val result  = sut.getMessage(MovementId("0123456789abcdef"), MessageId("0123456789abcdef"))(request)
+          "when the message is found" in {
+            when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+              .thenAnswer(
+                _ => EitherT.rightT(messageSummaryXml)
+              )
 
-      status(result) mustBe OK
-      contentAsJson(result) mustBe Json.toJson(HateoasDepartureMessageResponse(MovementId("0123456789abcdef"), MessageId("0123456789abcdef"), messageSummary))
+            when(
+              mockResponseFormatterService.formatMessageSummary(any[MessageSummary], eqTo(acceptHeaderValue))(
+                any[ExecutionContext],
+                any[HeaderCarrier],
+                any[Materializer]
+              )
+            )
+              .thenAnswer(
+                _ => if (convertBodyToJson) EitherT.rightT(messageSummaryJson) else EitherT.rightT(messageSummaryXml)
+              )
+
+            val result = sut.getMessage(movementId, messageId)(request)
+
+            status(result) mustBe OK
+            contentAsJson(result) mustBe Json.toJson(
+              HateoasDepartureMessageResponse(
+                movementId,
+                messageId,
+                if (convertBodyToJson) messageSummaryJson else messageSummaryXml
+              )
+            )
+          }
+
+          "when no message is found" in {
+            when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+              .thenAnswer(
+                _ => EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))
+              )
+
+            val result = sut.getMessage(movementId, messageId)(request)
+
+            status(result) mustBe NOT_FOUND
+            contentAsJson(result) mustBe Json.obj(
+              "code"    -> "NOT_FOUND",
+              "message" -> s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
+            )
+          }
+
+          "when an unknown error occurs" in {
+            when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
+              .thenAnswer(
+                _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
+              )
+
+            val result = sut.getMessage(movementId, messageId)(request)
+
+            status(result) mustBe INTERNAL_SERVER_ERROR
+            contentAsJson(result) mustBe Json.obj(
+              "code"    -> "INTERNAL_SERVER_ERROR",
+              "message" -> "Internal server error"
+            )
+          }
+
+        }
     }
-
-    "when no message is found" in {
-      when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
-        .thenAnswer(
-          _ => EitherT.leftT(PersistenceError.MessageNotFound(MovementId("0123456789abcdef"), MessageId("0123456789abcdef")))
-        )
-
-      val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-      val result  = sut.getMessage(MovementId("0123456789abcdef"), MessageId("0123456789abcdef"))(request)
-
-      status(result) mustBe NOT_FOUND
-      contentAsJson(result) mustBe Json.obj(
-        "code"    -> "NOT_FOUND",
-        "message" -> "Message with ID 0123456789abcdef for movement 0123456789abcdef was not found"
-      )
-    }
-
-    "when an unknown error occurs" in {
-      when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
-        .thenAnswer(
-          _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
-        )
-
-      val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-      val result  = sut.getMessage(MovementId("0123456789abcdef"), MessageId("0123456789abcdef"))(request)
-
-      status(result) mustBe INTERNAL_SERVER_ERROR
-      contentAsJson(result) mustBe Json.obj(
-        "code"    -> "INTERNAL_SERVER_ERROR",
-        "message" -> "Internal server error"
-      )
-    }
-
   }
 
   "GET  /traders/:EORI/movements" - {
@@ -889,7 +921,7 @@ class V2DeparturesControllerSpec
       val request = FakeRequest(
         GET,
         routing.routes.DeparturesRouter.getDeparturesForEori().url,
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
         AnyContentAsEmpty
       )
       val result = sut.getDeparturesForEori(None)(request)
@@ -913,7 +945,7 @@ class V2DeparturesControllerSpec
       val request = FakeRequest(
         GET,
         routing.routes.DeparturesRouter.getDeparturesForEori().url,
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
         AnyContentAsEmpty
       )
       val result = sut.getDeparturesForEori(None)(request)
@@ -934,7 +966,7 @@ class V2DeparturesControllerSpec
       val request = FakeRequest(
         GET,
         routing.routes.DeparturesRouter.getDeparturesForEori().url,
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
         AnyContentAsEmpty
       )
       val result = sut.getDeparturesForEori(None)(request)
@@ -975,7 +1007,7 @@ class V2DeparturesControllerSpec
         val request = FakeRequest(
           GET,
           routing.routes.DeparturesRouter.getDeparture(departureId.value).url,
-          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
         val result = sut.getDeparture(departureId)(request)
@@ -1009,7 +1041,7 @@ class V2DeparturesControllerSpec
         val request = FakeRequest(
           GET,
           routing.routes.DeparturesRouter.getDeparture(departureId.value).url,
-          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
         val result = sut.getDeparture(departureId)(request)
@@ -1028,7 +1060,7 @@ class V2DeparturesControllerSpec
         val request = FakeRequest(
           GET,
           routing.routes.DeparturesRouter.getDeparture(departureId.value).url,
-          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
         val result = sut.getDeparture(departureId)(request)
@@ -1118,9 +1150,11 @@ class V2DeparturesControllerSpec
           mockAuditService,
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
+          FakeAcceptHeaderActionProvider,
           new TestMetrics(),
           mockXmlParsingService,
-          mockJsonParsingService
+          mockJsonParsingService,
+          mockResponseFormatterService
         )
 
         val request  = fakeAttachDepartures("POST", body = Source.single(ByteString(CC013C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
