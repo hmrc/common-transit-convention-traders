@@ -24,11 +24,11 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsString
 import play.api.libs.json.Json
-import routing.VersionedRouting
 import v2.base.CommonGenerators
+import v2.models.JsonPayload
 import v2.models.MessageId
 import v2.models.MovementId
-import v2.models.Payload
+import v2.models.XmlPayload
 import v2.models.request.MessageType
 import v2.models.responses.MessageSummary
 
@@ -39,7 +39,7 @@ class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with
 
   private val dateTime = OffsetDateTime.of(2022, 8, 4, 11, 52, 59, 0, ZoneOffset.UTC)
 
-  "when the accept header equals application/vnd.hmrc.2.0+json, create a valid HateoasDepartureMessageResponse with the body as a JsValue" in {
+  "when the MessageSummary contains a json payload, create a valid HateoasDepartureMessageResponse with the body as a JsValue" in {
     val messageId   = arbitrary[MessageId].sample.value
     val departureId = arbitrary[MovementId].sample.value
     val json        = Json.obj("test" -> "body")
@@ -49,10 +49,10 @@ class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with
       messageId,
       dateTime,
       MessageType.DeclarationData,
-      Some(Payload(jsonString))
+      Some(JsonPayload(jsonString))
     )
 
-    val actual = HateoasDepartureMessageResponse(departureId, messageId, response, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)
+    val actual = HateoasDepartureMessageResponse(departureId, messageId, response)
     val expected = Json.obj(
       "_links" -> Json.obj(
         "self"      -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}/messages/${messageId.value}"),
@@ -68,7 +68,7 @@ class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with
     actual mustBe expected
   }
 
-  "when the accept header equals application/vnd.hmrc.2.0+json+xml, create a valid HateoasDepartureMessageResponse with the body as a JsValue" in {
+  "when the MessageSummary contains a xml payload, create a valid HateoasDepartureMessageResponse with the body as a JsValue" in {
     val messageId   = arbitrary[MessageId].sample.value
     val departureId = arbitrary[MovementId].sample.value
     val body        = Gen.alphaNumStr.sample.value
@@ -76,10 +76,10 @@ class HateoasDepartureMessageResponseSpec extends AnyFreeSpec with Matchers with
       messageId,
       dateTime,
       MessageType.DeclarationData,
-      Some(Payload(body))
+      Some(XmlPayload(body))
     )
 
-    val actual = HateoasDepartureMessageResponse(departureId, messageId, response, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML)
+    val actual = HateoasDepartureMessageResponse(departureId, messageId, response)
     val expected = Json.obj(
       "_links" -> Json.obj(
         "self"      -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}/messages/${messageId.value}"),

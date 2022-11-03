@@ -16,15 +16,31 @@
 
 package v2.models.responses
 
-import play.api.libs.json.Json
+import play.api.libs.json.JsPath
+import play.api.libs.json.OWrites
+import play.api.libs.json.Reads
 import v2.models.MessageId
 import v2.models.Payload
+import v2.models.XmlPayload
 import v2.models.request.MessageType
+import play.api.libs.functional.syntax._
 
 import java.time.OffsetDateTime
 
 object MessageSummary {
-  implicit lazy val messageResponseSummary = Json.format[MessageSummary]
+
+  implicit val messageSummaryReads: Reads[MessageSummary] =
+    ((JsPath \ "id").read[MessageId] and
+      (JsPath \ "received").read[OffsetDateTime] and
+      (JsPath \ "messageType").read[MessageType] and
+      (JsPath \ "body").readNullable[XmlPayload])(MessageSummary.apply _)
+
+  implicit val messageSummaryWrites: OWrites[MessageSummary] =
+    ((JsPath \ "id").write[MessageId] and
+      (JsPath \ "received").write[OffsetDateTime] and
+      (JsPath \ "messageType").write[MessageType] and
+      (JsPath \ "body").writeNullable[Payload])(unlift(MessageSummary.unapply))
+
 }
 
 case class MessageSummary(

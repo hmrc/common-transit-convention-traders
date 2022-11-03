@@ -752,7 +752,7 @@ class V2DeparturesControllerSpec
           .map(
             _ => "with"
           )
-          .getOrElse("without")} a date filter" in forAll(Gen.listOfN(3, arbitrary[MessageSummary])) {
+          .getOrElse("without")} a date filter" in forAll(Gen.listOfN(3, genMessageSummaryXml.arbitrary.sample.head)) {
           messageResponse =>
             when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), MovementId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
               .thenAnswer(
@@ -802,10 +802,10 @@ class V2DeparturesControllerSpec
   }
 
   "for retrieving a single message" - {
-    val movementId             = arbitraryMovementId.arbitrary.sample.value
-    val messageId              = arbitraryMessageId.arbitrary.sample.value
-    val messageSummary         = genMessageSummary.arbitrary.sample.value.copy(id = messageId, body = Some(Payload("<test>ABC</test>")))
-    val messageSummaryJsonBody = messageSummary.copy(body = Some(Payload("""{"test": "ABC"}""")))
+    val movementId         = arbitraryMovementId.arbitrary.sample.value
+    val messageId          = arbitraryMessageId.arbitrary.sample.value
+    val messageSummaryXml  = genMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = Some(XmlPayload("<test>ABC</test>")))
+    val messageSummaryJson = messageSummaryXml.copy(body = Some(JsonPayload("""{"test": "ABC"}""")))
 
     Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML).foreach {
       acceptHeaderValue =>
@@ -820,7 +820,7 @@ class V2DeparturesControllerSpec
           "when the message is found" in {
             when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
               .thenAnswer(
-                _ => EitherT.rightT(messageSummary)
+                _ => EitherT.rightT(messageSummaryXml)
               )
 
             when(
@@ -831,7 +831,7 @@ class V2DeparturesControllerSpec
               )
             )
               .thenAnswer(
-                _ => if (convertBodyToJson) EitherT.rightT(messageSummaryJsonBody) else EitherT.rightT(messageSummary)
+                _ => if (convertBodyToJson) EitherT.rightT(messageSummaryJson) else EitherT.rightT(messageSummaryXml)
               )
 
             val result = sut.getMessage(movementId, messageId)(request)
@@ -841,8 +841,7 @@ class V2DeparturesControllerSpec
               HateoasDepartureMessageResponse(
                 movementId,
                 messageId,
-                if (convertBodyToJson) messageSummaryJsonBody else messageSummary,
-                acceptHeaderValue
+                if (convertBodyToJson) messageSummaryJson else messageSummaryXml
               )
             )
           }

@@ -172,7 +172,7 @@ class V2DeparturesControllerImpl @Inject() (
           formattedMessageSummary <- responseFormatterService.formatMessageSummary(messageSummary, request.acceptHeader.get)
         } yield formattedMessageSummary).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          response => Ok(Json.toJson(HateoasDepartureMessageResponse(movementId, messageId, response, request.acceptHeader.get)))
+          response => Ok(Json.toJson(HateoasDepartureMessageResponse(movementId, messageId, response)))
         )
     }
 

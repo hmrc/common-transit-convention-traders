@@ -16,15 +16,37 @@
 
 package v2.models
 
-import play.api.libs.json.Format
+import play.api.libs.json.JsError
 import play.api.libs.json.JsString
+import play.api.libs.json.JsSuccess
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
+import play.api.libs.json.Reads
+import play.api.libs.json.Writes
 
 object Payload {
-  implicit lazy val payloadFormat: Format[Payload] = Json.valueFormat[Payload]
+
+  implicit val payloadWrites: Writes[Payload] = Writes {
+    value => value.asJson
+  }
 }
 
-case class Payload(value: String) {
+object XmlPayload {
+
+  implicit val xmlPayloadReads: Reads[XmlPayload] = Reads {
+    case JsString(value) => JsSuccess(XmlPayload(value))
+    case _               => JsError()
+  }
+}
+
+abstract class Payload(val value: String) {
+  def asJson: JsValue
+}
+
+case class XmlPayload(override val value: String) extends Payload(value) {
+  lazy val asJson = JsString(value)
+}
+
+case class JsonPayload(override val value: String) extends Payload(value) {
   lazy val asJson = Json.parse(value)
-  lazy val asXml  = JsString(value)
 }
