@@ -16,7 +16,6 @@
 
 package v2.controllers.request
 
-import play.api.http.HeaderNames
 import play.api.mvc.Request
 import play.api.mvc.WrappedRequest
 import v2.models.EORINumber
@@ -27,5 +26,4 @@ abstract class BodyReplaceableRequest[+R[_], B](request: Request[B]) extends Wra
 
 case class AuthenticatedRequest[A](eoriNumber: EORINumber, request: Request[A]) extends BodyReplaceableRequest[AuthenticatedRequest, A](request) {
   override def replaceBody(body: A): AuthenticatedRequest[A] = AuthenticatedRequest(eoriNumber, request.withBody(body))
-  val acceptHeader                                           = request.headers.get(HeaderNames.ACCEPT)
 }

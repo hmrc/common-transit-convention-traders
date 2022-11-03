@@ -51,11 +51,11 @@ class DeparturesRouter @Inject() (
     case _                                                         => v1Departures.submitDeclaration()
   }
 
-  def isValidVersionTwoAcceptHeader(headerValue: String) = """^application\/vnd\.hmrc\.2\.0\+.+$""".r.pattern.matcher(headerValue).matches
+  val VERSION_2_ACCEPT_HEADER_PATTERN = """^application\/vnd\.hmrc\.2\.0\+.+$""".r
 
   def getMessage(departureId: String, messageId: String): Action[Source[ByteString, _]] =
     route {
-      case Some(acceptHeaderValue) if isValidVersionTwoAcceptHeader(acceptHeaderValue) =>
+      case Some(VERSION_2_ACCEPT_HEADER_PATTERN()) =>
         runIfBound[V2DepartureId](
           "departureId",
           departureId,
