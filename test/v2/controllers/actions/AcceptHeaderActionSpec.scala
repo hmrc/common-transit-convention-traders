@@ -64,7 +64,13 @@ class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures
 
   "AcceptHeaderAction " - {
 
-    for (acceptHeader <- Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML))
+    for (
+      acceptHeader <- Seq(
+        VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
+        VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML,
+        VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
+      )
+    )
       s"must allow valid accept header $acceptHeader" in {
 
         val controller = new Harness(acceptHeaderAction(), cc)

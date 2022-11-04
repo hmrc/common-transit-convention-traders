@@ -106,24 +106,28 @@ class ResponseFormatterServiceSpec
       }
     }
 
-    "when accept header equals application/vnd.hmrc.2.0+json+xml" - {
+    Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)
+      .foreach {
+        acceptHeader =>
+          s"when accept header equals $acceptHeader" - {
 
-      "when the body in message summary is empty, it returns the given messageSummary" in {
-        whenReady(
-          responseFormatterService.formatMessageSummary(messageSummaryWithoutBody, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML).value
-        ) {
-          result => result mustEqual Right(messageSummaryWithoutBody)
-        }
-      }
+            "when the body in message summary is empty, it returns the given messageSummary" in {
+              whenReady(
+                responseFormatterService.formatMessageSummary(messageSummaryWithoutBody, acceptHeader).value
+              ) {
+                result => result mustEqual Right(messageSummaryWithoutBody)
+              }
+            }
 
-      "when the body in message summary is defined, it returns the given messageSummary" in {
-        whenReady(
-          responseFormatterService.formatMessageSummary(messageSummary, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML).value
-        ) {
-          result => result mustEqual Right(messageSummary)
-        }
+            "when the body in message summary is defined, it returns the given messageSummary" in {
+              whenReady(
+                responseFormatterService.formatMessageSummary(messageSummary, acceptHeader).value
+              ) {
+                result => result mustEqual Right(messageSummary)
+              }
+            }
+          }
       }
-    }
 
   }
 
