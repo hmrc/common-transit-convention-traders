@@ -26,5 +26,6 @@ object PersistenceError {
   case class MessageNotFound(movementId: MovementId, messageId: MessageId) extends PersistenceError
   case class DepartureNotFound(departureId: MovementId)                    extends PersistenceError
   case class DeparturesNotFound(eori: EORINumber)                          extends PersistenceError
+  case class ArrivalsNotFound(eori: EORINumber)                            extends PersistenceError
   case class UnexpectedError(thr: Option[Throwable] = None)                extends PersistenceError
 }

@@ -23,10 +23,13 @@ import akka.util.ByteString
 import com.google.inject.Inject
 import play.api.libs.json.Json
 import play.api.mvc.Action
+import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
 import play.api.test.Helpers.stubControllerComponents
 import v2.controllers.V2ArrivalsController
 import v2.controllers.stream.StreamingParsers
+
+import java.time.OffsetDateTime
 
 class FakeV2ArrivalsController @Inject() ()(implicit val materializer: Materializer) extends BaseController with V2ArrivalsController with StreamingParsers {
 
@@ -36,5 +39,10 @@ class FakeV2ArrivalsController @Inject() ()(implicit val materializer: Materiali
     request =>
       request.body.runWith(Sink.ignore)
       Accepted(Json.obj("version" -> 2))
+  }
+
+  override def getArrivalsForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
+    _ =>
+      Ok(Json.obj("version" -> 2))
   }
 }

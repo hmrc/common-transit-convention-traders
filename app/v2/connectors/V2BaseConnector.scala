@@ -66,6 +66,9 @@ trait V2BaseConnector extends HttpErrorFunctions {
   def movementsPostArrivalNotification(eoriNumber: EORINumber): UrlPath =
     UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/arrivals/")
 
+  def movementsGetAllArrivals(eoriNumber: EORINumber): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/arrivals")
+
   val routerBaseRoute: String = "/transit-movements-router"
 
   def routerRoute(eoriNumber: EORINumber, messageType: MessageType, movementId: MovementId, messageId: MessageId): UrlPath =

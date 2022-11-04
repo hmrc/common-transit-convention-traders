@@ -22,11 +22,14 @@ import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import play.api.http.Status.NOT_FOUND
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
 import v2.models.errors.PersistenceError
 import v2.models.responses.ArrivalResponse
+import v2.models.responses.MovementResponse
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -39,6 +42,11 @@ trait ArrivalsService {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, ArrivalResponse]
+
+  def getArrivalsForEori(eori: EORINumber)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, Seq[MovementResponse]]
 }
 
 @Singleton
@@ -56,4 +64,17 @@ class ArrivalsServiceImpl @Inject() (persistenceConnector: PersistenceConnector)
           case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
+
+  override def getArrivalsForEori(eori: EORINumber)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, Seq[MovementResponse]] = EitherT(
+    persistenceConnector
+      .getArrivalsForEori(eori)
+      .map(Right(_))
+      .recover {
+        case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.ArrivalsNotFound(eori))
+        case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+      }
+  )
 }

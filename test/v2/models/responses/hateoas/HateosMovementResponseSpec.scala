@@ -24,12 +24,12 @@ import play.api.libs.json.Json
 import v2.models.EORINumber
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
-import v2.models.responses.DepartureResponse
+import v2.models.responses.MovementResponse
 
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
-class HateosDepartureResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   private val hexId    = Gen.listOfN(16, Gen.hexChar).map(_.mkString.toLowerCase)
   private val dateTime = OffsetDateTime.of(2022, 8, 15, 11, 45, 0, 0, ZoneOffset.UTC)
@@ -37,7 +37,7 @@ class HateosDepartureResponseSpec extends AnyFreeSpec with Matchers with ScalaCh
   "with a valid departure response, create a valid HateoasDepartureResponse" in {
     val departureId = MovementId(hexId.sample.get)
 
-    val response = DepartureResponse(
+    val response = MovementResponse(
       _id = departureId,
       enrollmentEORINumber = EORINumber("GB123"),
       movementEORINumber = EORINumber("GB456"),
