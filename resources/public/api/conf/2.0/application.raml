@@ -49,6 +49,16 @@ traits:
         type: string
         required: true
         example: application/vnd.hmrc.2.0+json
+  acceptSingleMessageGetHeader:
+    headers:
+      Accept:
+        description: |
+          Specifies the response format, which must be JSON or JSON+XML, and the [version](/api-documentation/docs/reference-guide#versioning) of the API to be used.
+          
+          Acceptable values are "application/vnd.hmrc.2.0+json" or "application/vnd.hmrc.2.0+json-xml"
+        type: string
+        required: true
+        example: application/vnd.hmrc.2.0+json-xml
   acceptHeaderInvalid:
     responses:
       406:
@@ -130,7 +140,7 @@ traits:
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
 
         A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
-
+        
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
       is:
         - acceptJsonHeader
@@ -336,16 +346,41 @@ traits:
               For example, this could include ‘Declaration rejected’ or Movement Reference Number (MRN) allocated messages.
 
               Movements older than 31 days and their related messages are archived and cannot be returned by the API.
-
+              
+              The response can be returned in one of the following formats based on the provided accept header:
+        
+              * `application/vnd.hmrc.2.0+json-xml`: Json wrapped XML, where the message is provided as an XML string, sent as part of a Json payload containing other metadata
+              * `application/vnd.hmrc.2.0+json`: Json, where the message is provided as a sub document sent as part of a Json payload containing other metadata
+               
               **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
             is:
-              - acceptJsonHeader
+              - acceptSingleMessageGetHeader
               - acceptHeaderInvalid
             (annotations.scope): "common-transit-convention-traders"
             securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
             responses:
               200:
                 body:
+                  application/json+xml:
+                    description: JSON+XML payload
+                    example: |
+                      {
+                        "_links":{
+                          "self":{
+                            "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2"
+                          },
+                          "departure":{
+                            "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
+                          }
+                        },
+                        "departure":{
+                          "id": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
+                        },
+                        "id": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2",
+                        "received": "2022-08-11T11:44:59.83705",
+                        "messageType": "IE015",
+                        "body": "<ncts:CC015C PhaseID=\"NCTS5.0\" xmlns:ncts=\"http://ncts.dgtaxud.ec\">...</ncts:CC015C>"
+                      }
                   application/json:
                     description: JSON payload
                     example: |
@@ -364,7 +399,12 @@ traits:
                         "id": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2",
                         "received": "2022-08-11T11:44:59.83705",
                         "messageType": "IE015",
-                        "body": "<ncts:CC015C PhaseID=\"NCTS5.0\" xmlns:ncts=\"http://ncts.dgtaxud.ec\">...</ncts:CC015C>"
+                        "body":{
+                          "n1.CC015C": {
+                            "@PhaseID": "NCTS5.0",
+                            ...
+                          }
+                        }
                       }
               404:
                 body:
