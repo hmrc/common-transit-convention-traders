@@ -76,7 +76,7 @@ trait CommonGenerators {
     Gen.oneOf(MovementType.values)
   }
 
-  implicit lazy val genMovementResponse: Arbitrary[MovementResponse] = Arbitrary {
+  implicit lazy val arbitraryMovementResponse: Arbitrary[MovementResponse] = Arbitrary {
     for {
       id                      <- arbitrary[MovementId]
       enrollmentEORINumber    <- arbitrary[EORINumber]

@@ -94,7 +94,7 @@ class ArrivalMovementController @Inject() (
                             response.responseData
                           )
                         )
-                      ).withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext)
+                      ).withHeaders(LOCATION -> routing.routes.ArrivalsRouter.getArrival(arrivalId.toString).urlWithContext)
                     case None =>
                       InternalServerError
                   }
@@ -126,7 +126,7 @@ class ArrivalMovementController @Inject() (
                             response.responseData
                           )
                         )
-                      ).withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext)
+                      ).withHeaders(LOCATION -> routing.routes.ArrivalsRouter.getArrival(arrivalId.toString).urlWithContext)
                     case None =>
                       InternalServerError
                   }

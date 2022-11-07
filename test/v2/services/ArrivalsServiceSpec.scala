@@ -41,10 +41,8 @@ import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
-import v2.models.MovementReferenceNumber
 import v2.models.errors.PersistenceError
 import v2.models.responses.ArrivalResponse
-import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 
 import java.nio.charset.StandardCharsets

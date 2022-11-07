@@ -16,19 +16,18 @@
 
 package models.response
 
-import controllers.routes
 import models.Box
 import models.domain.ArrivalId
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import utils.CallOps._
+import utils.CallOps.CallOps
 
 import scala.xml.NodeSeq
 
 object HateoasArrivalMovementPostResponseMessage {
 
   def apply(arrivalId: ArrivalId, messageType: String, message: NodeSeq, notificationsBox: Option[Box]): JsObject = {
-    val arrivalUrl = routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext
+    val arrivalUrl = routing.routes.ArrivalsRouter.getArrival(arrivalId.toString).urlWithContext
 
     val embedded = notificationsBox
       .map {

@@ -19,23 +19,24 @@ package v2.models.responses.hateoas
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.models.MovementId
+import v2.models.MovementType
 import v2.models.responses.MovementResponse
 
-object HateoasDepartureResponse extends HateoasResponse {
+object HateoasMovementResponse extends HateoasResponse {
 
-  def apply(departureId: MovementId, departureResponse: MovementResponse): JsObject =
+  def apply(movementId: MovementId, movementResponse: MovementResponse, movementType: MovementType): JsObject =
     Json
       .obj(
         "_links" -> Json.obj(
-          "self"     -> Json.obj("href" -> departureUri(departureId)),
-          "messages" -> Json.obj("href" -> messageIdsUri(departureId, None))
+          "self"     -> Json.obj("href" -> (if (movementType == MovementType.Departure) departureUri(movementId) else arrivalUri(movementId))),
+          "messages" -> Json.obj("href" -> messageIdsUri(movementId, None))
         ),
-        "id"                      -> departureId,
-        "movementReferenceNumber" -> departureResponse.movementReferenceNumber,
-        "created"                 -> departureResponse.created,
-        "updated"                 -> departureResponse.updated,
-        "enrollmentEORINumber"    -> departureResponse.enrollmentEORINumber,
-        "movementEORINumber"      -> departureResponse.movementEORINumber
+        "id"                      -> movementId,
+        "movementReferenceNumber" -> movementResponse.movementReferenceNumber,
+        "created"                 -> movementResponse.created,
+        "updated"                 -> movementResponse.updated,
+        "enrollmentEORINumber"    -> movementResponse.enrollmentEORINumber,
+        "movementEORINumber"      -> movementResponse.movementEORINumber
       )
 
 }

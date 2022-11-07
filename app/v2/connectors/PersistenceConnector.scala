@@ -93,6 +93,11 @@ trait PersistenceConnector {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MovementResponse]]
+
+  def getArrival(eori: EORINumber, movementId: MovementId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[MovementResponse]
 }
 
 @Singleton
@@ -275,8 +280,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
   override def getArrival(eori: EORINumber, movementId: MovementId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[DepartureResponse] = {
-    val url = appConfig.movementsUrl.withPath(movementsGetDeparture(eori, movementId))
+  ): Future[MovementResponse] = {
+    val url = appConfig.movementsUrl.withPath(movementsGetArrival(eori, movementId))
 
     httpClientV2
       .get(url"$url")
@@ -285,7 +290,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       .flatMap {
         response =>
           response.status match {
-            case OK => response.as[DepartureResponse]
+            case OK => response.as[MovementResponse]
             case _  => response.error
           }
       }

@@ -714,7 +714,7 @@ class V2ArrivalsControllerSpec
       val request = FakeRequest(
         GET,
         routing.routes.ArrivalsRouter.getArrivalsForEori().url,
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
         AnyContentAsEmpty
       )
       val result = sut.getArrivalsForEori(None)(request)
@@ -738,7 +738,7 @@ class V2ArrivalsControllerSpec
       val request = FakeRequest(
         GET,
         routing.routes.ArrivalsRouter.getArrivalsForEori().url,
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
         AnyContentAsEmpty
       )
       val result = sut.getArrivalsForEori(None)(request)
@@ -759,7 +759,7 @@ class V2ArrivalsControllerSpec
       val request = FakeRequest(
         GET,
         routing.routes.ArrivalsRouter.getArrivalsForEori().url,
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
         AnyContentAsEmpty
       )
       val result = sut.getArrivalsForEori(None)(request)
@@ -771,6 +771,75 @@ class V2ArrivalsControllerSpec
       )
     }
 
+  }
+
+  "GET /movements/arrivals/:arrivalId" - {
+    "should return ok with json body of arrival" in {
+      val movementResponse = arbitraryMovementResponse.arbitrary.sample.value
+
+      arbitraryMovementId
+      when(mockArrivalsPersistenceService.getArrival(EORINumber(any()), MovementId(any()))(any(), any()))
+        .thenAnswer(
+          _ => EitherT.rightT(movementResponse)
+        )
+
+      val request = FakeRequest(
+        GET,
+        routing.routes.ArrivalsRouter.getArrival(movementResponse._id.value).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
+        AnyContentAsEmpty
+      )
+      val result = sut.getArrival(movementResponse._id)(request)
+
+      status(result) mustBe OK
+      contentAsJson(result) mustBe Json.toJson(
+        HateoasMovementResponse(
+          movementResponse._id,
+          movementResponse,
+          MovementType.Arrival
+        )
+      )
+    }
+
+    "should return arrival not found if persistence service returns 404" in {
+      val movementId = arbitraryMovementId.arbitrary.sample.value
+
+      when(mockArrivalsPersistenceService.getArrival(EORINumber(any()), MovementId(any()))(any(), any()))
+        .thenAnswer {
+          inv =>
+            EitherT.leftT(PersistenceError.ArrivalNotFound(movementId))
+        }
+
+      val request = FakeRequest(
+        GET,
+        routing.routes.ArrivalsRouter.getArrival(movementId.value).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
+        AnyContentAsEmpty
+      )
+      val result = sut.getArrival(movementId)(request)
+
+      status(result) mustBe NOT_FOUND
+    }
+
+    "should return unexpected error for all other errors" in {
+      when(mockArrivalsPersistenceService.getArrival(EORINumber(any()), MovementId(any()))(any(), any()))
+        .thenAnswer {
+          _ =>
+            EitherT.leftT(PersistenceError.UnexpectedError(None))
+        }
+
+      val movementId = arbitraryMovementId.arbitrary.sample.value
+
+      val request = FakeRequest(
+        GET,
+        routing.routes.ArrivalsRouter.getArrival(movementId.value).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
+        AnyContentAsEmpty
+      )
+      val result = sut.getArrival(movementId)(request)
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+    }
   }
 
 }

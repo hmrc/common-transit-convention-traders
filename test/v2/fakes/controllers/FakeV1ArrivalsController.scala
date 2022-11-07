@@ -17,6 +17,7 @@
 package v2.fakes.controllers
 
 import controllers.V1ArrivalMovementController
+import models.domain.ArrivalId
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
@@ -37,6 +38,11 @@ class FakeV1ArrivalsController extends BaseController with V1ArrivalMovementCont
   }
 
   override def getArrivalsForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
+    _ =>
+      Ok(Json.obj("version" -> 1))
+  }
+
+  override def getArrival(arrivalId: ArrivalId): Action[AnyContent] = Action {
     _ =>
       Ok(Json.obj("version" -> 1))
   }

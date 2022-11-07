@@ -47,48 +47,55 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
     new FakeV2ArrivalsController()
   )
 
-  "when creating a Arrival Notification" - {
-    "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
+  for (
+    url <- Seq(
+      routes.ArrivalsRouter.createArrivalNotification().url,
+      routes.ArrivalsRouter.getArrival("123").url,
+      routes.ArrivalsRouter.getArrivalsForEori().url
+    )
+  )
+    s"$url" - {
+      "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
 
-      val arrivalsHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml")
-      )
+        val arrivalsHeaders = FakeHeaders(
+          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml")
+        )
 
-      "must route to the v2 controller and return Accepted when successful" in {
+        "must route to the v2 controller and return Accepted when successful" in {
 
-        val request =
-          FakeRequest(method = "POST", uri = routes.ArrivalsRouter.createArrivalNotification().url, body = <test></test>, headers = arrivalsHeaders)
-        val result = call(sut.createArrivalNotification(), request)
+          val request =
+            FakeRequest(method = "POST", uri = url, body = <test></test>, headers = arrivalsHeaders)
+          val result = call(sut.createArrivalNotification(), request)
 
-        status(result) mustBe ACCEPTED
-        contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
+          status(result) mustBe ACCEPTED
+          contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
+        }
+
       }
 
-    }
+      Seq(None, Some("application/vnd.hmrc.1.0+json"), Some("text/html"), Some("application/vnd.hmrc.1.0+xml"), Some("text/javascript")).foreach {
+        acceptHeaderValue =>
+          val acceptHeader = acceptHeaderValue
+            .map(
+              header => Seq(HeaderNames.ACCEPT -> header)
+            )
+            .getOrElse(Seq.empty)
+          val arrivalHeaders = FakeHeaders(acceptHeader ++ Seq(HeaderNames.CONTENT_TYPE -> "application/xml"))
+          val withString = acceptHeaderValue
+            .getOrElse("nothing")
+          s"with accept header set to $withString" - {
 
-    Seq(None, Some("application/vnd.hmrc.1.0+json"), Some("text/html"), Some("application/vnd.hmrc.1.0+xml"), Some("text/javascript")).foreach {
-      acceptHeaderValue =>
-        val acceptHeader = acceptHeaderValue
-          .map(
-            header => Seq(HeaderNames.ACCEPT -> header)
-          )
-          .getOrElse(Seq.empty)
-        val arrivalHeaders = FakeHeaders(acceptHeader ++ Seq(HeaderNames.CONTENT_TYPE -> "application/xml"))
-        val withString = acceptHeaderValue
-          .getOrElse("nothing")
-        s"with accept header set to $withString" - {
+            "must route to the v1 controller and return Accepted when successful" in {
 
-          "must route to the v1 controller and return Accepted when successful" in {
+              val request =
+                FakeRequest(method = "POST", uri = routes.ArrivalsRouter.createArrivalNotification().url, body = <test></test>, headers = arrivalHeaders)
+              val result = call(sut.createArrivalNotification(), request)
 
-            val request =
-              FakeRequest(method = "POST", uri = routes.ArrivalsRouter.createArrivalNotification().url, body = <test></test>, headers = arrivalHeaders)
-            val result = call(sut.createArrivalNotification(), request)
-
-            status(result) mustBe ACCEPTED
-            contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
+              status(result) mustBe ACCEPTED
+              contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
+            }
           }
-        }
-    }
-  }
 
+      }
+    }
 }

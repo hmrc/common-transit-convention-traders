@@ -25,7 +25,6 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
 import metrics.HasActionMetrics
-import models.domain.ArrivalId
 import play.api.Logging
 import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
@@ -40,6 +39,7 @@ import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models.errors.PresentationError
 import v2.models.AuditType
+import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.request.MessageType
 import v2.models.responses.ArrivalResponse
@@ -52,7 +52,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[V2ArrivalsControllerImpl])
 trait V2ArrivalsController {
   def createArrivalNotification(): Action[Source[ByteString, _]]
-  def getArrival(arrivalId: ArrivalId): Action[AnyContent]
+  def getArrival(arrivalId: MovementId): Action[AnyContent]
   def getArrivalsForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
 }
 
@@ -161,7 +161,7 @@ class V2ArrivalsControllerImpl @Inject() (
         .asPresentation
     } yield arrivalResult
 
-  def getArrival(arrivalId: ArrivalId): Action[AnyContent] = authActionNewEnrolmentOnly.async {
+  def getArrival(arrivalId: MovementId): Action[AnyContent] = authActionNewEnrolmentOnly.async {
     implicit request =>
       implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -170,7 +170,7 @@ class V2ArrivalsControllerImpl @Inject() (
         .asPresentation
         .fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          response => Ok(Json.toJson(HateoasDepartureResponse(departureId, response)))
+          response => Ok(Json.toJson(HateoasMovementResponse(arrivalId, response, MovementType.Arrival)))
         )
   }
 }

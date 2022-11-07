@@ -204,7 +204,7 @@ class V2DeparturesControllerImpl @Inject() (
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasDepartureResponse(departureId, response)))
+            response => Ok(Json.toJson(HateoasMovementResponse(departureId, response, MovementType.Departure)))
           )
     }
 
