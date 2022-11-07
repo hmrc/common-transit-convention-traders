@@ -34,12 +34,6 @@ trait AcceptHeaderAction[R[_] <: Request[_]] extends ActionRefiner[R, R]
 
 class AcceptHeaderActionImpl[R[_] <: Request[_]] @Inject() (implicit val executionContext: ExecutionContext) extends AcceptHeaderAction[R] {
 
-  private lazy val acceptedHeaders = Seq(
-    VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
-    VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML,
-    VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
-  )
-
   override protected def refine[A](request: R[A]): Future[Either[Result, R[A]]] =
     request.headers.get(HeaderNames.ACCEPT) match {
       case Some(value) => Future.successful(checkAcceptHeader(value, request))
@@ -56,7 +50,9 @@ class AcceptHeaderActionImpl[R[_] <: Request[_]] @Inject() (implicit val executi
     }
 
   private def checkAcceptHeader[A](acceptHeaderValue: String, request: R[A]): Either[Result, R[A]] =
-    if (acceptedHeaders.contains(acceptHeaderValue)) Right(request)
-    else Left(NotAcceptable(Json.toJson(PresentationError.notAcceptableError(s"Accept header $acceptHeaderValue is not supported!"))))
-
+    acceptHeaderValue match {
+      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML =>
+        Right(request)
+      case _ => Left(NotAcceptable(Json.toJson(PresentationError.notAcceptableError(s"Accept header $acceptHeaderValue is not supported!"))))
+    }
 }

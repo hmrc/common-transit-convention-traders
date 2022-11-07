@@ -816,12 +816,7 @@ class V2DeparturesControllerSpec
     val messageSummaryXml  = genMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = Some(XmlPayload("<test>ABC</test>")))
     val messageSummaryJson = messageSummaryXml.copy(body = Some(JsonPayload("""{"test": "ABC"}""")))
 
-    Seq(
-      VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
-      VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML,
-      VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
-    ).foreach {
-
+    Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML).foreach {
       acceptHeaderValue =>
         val headers =
           FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))

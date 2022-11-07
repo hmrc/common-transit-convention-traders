@@ -32,8 +32,6 @@ import v2.models.MovementId
 
 import java.time.OffsetDateTime
 
-import java.time.OffsetDateTime
-
 class FakeV2ArrivalsController @Inject() ()(implicit val materializer: Materializer) extends BaseController with V2ArrivalsController with StreamingParsers {
 
   override val controllerComponents = stubControllerComponents()
@@ -48,12 +46,9 @@ class FakeV2ArrivalsController @Inject() ()(implicit val materializer: Materiali
     _ =>
       Ok(Json.obj("version" -> 2))
   }
-<<<<<<< HEAD
 
   override def getArrival(arrivalId: MovementId): Action[AnyContent] = Action {
     _ =>
       Ok(Json.obj("version" -> 2))
   }
-=======
->>>>>>> origin/CTCP-1452-get-arrivals-eori
 }

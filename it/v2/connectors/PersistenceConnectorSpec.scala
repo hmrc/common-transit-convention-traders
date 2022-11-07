@@ -921,7 +921,7 @@ class PersistenceConnectorSpec
     }
   }
 
-  "GET /traders/:EORI/movements/arrivals" - {
+  "GET /traders/movements/arrivals" - {
 
     implicit val hc = HeaderCarrier()
     val eori        = arbitrary[EORINumber].sample.get

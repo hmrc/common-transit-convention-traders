@@ -31,8 +31,6 @@ import models.domain.{ArrivalId => V1ArrivalId}
 
 import java.time.OffsetDateTime
 
-import java.time.OffsetDateTime
-
 class ArrivalsRouter @Inject() (
   val controllerComponents: ControllerComponents,
   v1Arrivals: V1ArrivalMovementController,
@@ -49,7 +47,6 @@ class ArrivalsRouter @Inject() (
       case _                                                         => v1Arrivals.createArrivalNotification()
     }
 
-<<<<<<< HEAD
   def getArrival(arrivalId: String): Action[Source[ByteString, _]] =
     route {
       case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) =>
@@ -66,8 +63,6 @@ class ArrivalsRouter @Inject() (
         )
     }
 
-=======
->>>>>>> origin/CTCP-1452-get-arrivals-eori
   def getArrivalsForEori(updatedSince: Option[OffsetDateTime] = None): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Arrivals.getArrivalsForEori(updatedSince)
     case _                                                         => v1Arrivals.getArrivalsForEori(updatedSince)

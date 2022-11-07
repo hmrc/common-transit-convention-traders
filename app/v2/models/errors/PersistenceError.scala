@@ -26,10 +26,7 @@ object PersistenceError {
   case class MessageNotFound(movementId: MovementId, messageId: MessageId) extends PersistenceError
   case class DepartureNotFound(departureId: MovementId)                    extends PersistenceError
   case class DeparturesNotFound(eori: EORINumber)                          extends PersistenceError
-<<<<<<< HEAD
   case class ArrivalNotFound(movementId: MovementId)                       extends PersistenceError
-=======
->>>>>>> origin/CTCP-1452-get-arrivals-eori
   case class ArrivalsNotFound(eori: EORINumber)                            extends PersistenceError
   case class UnexpectedError(thr: Option[Throwable] = None)                extends PersistenceError
 }

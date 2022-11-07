@@ -685,7 +685,27 @@ class V2ArrivalsControllerSpec
   "GET  /traders/:EORI/movements/arrivals" - {
     "should return ok with json body for arrivals" in {
 
-      val movementResponses = Seq(arbitraryMovementResponse.arbitrary.sample.get, arbitraryMovementResponse.arbitrary.sample.get)
+      val enrolmentEORINumber = arbitrary[EORINumber].sample.value
+      val dateTime            = OffsetDateTime.of(2022, 8, 4, 11, 34, 42, 0, ZoneOffset.UTC)
+
+      val movementResponse1 = MovementResponse(
+        _id = arbitrary[MovementId].sample.value,
+        enrollmentEORINumber = enrolmentEORINumber,
+        movementEORINumber = arbitrary[EORINumber].sample.value,
+        movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
+        created = dateTime,
+        updated = dateTime.plusHours(1)
+      )
+
+      val movementResponse2 = MovementResponse(
+        _id = arbitrary[MovementId].sample.value,
+        enrollmentEORINumber = enrolmentEORINumber,
+        movementEORINumber = arbitrary[EORINumber].sample.value,
+        movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
+        created = dateTime.plusHours(2),
+        updated = dateTime.plusHours(3)
+      )
+      val movementResponses = Seq(movementResponse1, movementResponse2)
 
       when(mockArrivalsPersistenceService.getArrivalsForEori(EORINumber(any()))(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
@@ -708,7 +728,6 @@ class V2ArrivalsControllerSpec
     }
 
     "should return arrival not found if persistence service returns 404" in {
-
       val eori = EORINumber("ERROR")
 
       when(mockArrivalsPersistenceService.getArrivalsForEori(EORINumber(any()))(any[HeaderCarrier], any[ExecutionContext]))
