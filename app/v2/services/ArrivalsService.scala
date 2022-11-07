@@ -22,12 +22,12 @@ import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
-import models.domain.ArrivalId
 import play.api.http.Status.NOT_FOUND
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
+import v2.models.MovementId
 import v2.models.errors.PersistenceError
 import v2.models.responses.ArrivalResponse
 import v2.models.responses.MovementResponse
@@ -44,10 +44,10 @@ trait ArrivalsService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, ArrivalResponse]
 
-  def getArrival(arrivalId: ArrivalId)(implicit
+  def getArrival(eori: EORINumber, arrivalId: MovementId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, ArrivalResponse]
+  ): EitherT[Future, PersistenceError, MovementResponse]
 
   def getArrivalsForEori(eori: EORINumber)(implicit
     hc: HeaderCarrier,
@@ -71,15 +71,16 @@ class ArrivalsServiceImpl @Inject() (persistenceConnector: PersistenceConnector)
         }
     )
 
-  override def getArrival(arrivalId: ArrivalId)(implicit
+  override def getArrival(eori: EORINumber, arrivalId: MovementId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, ArrivalResponse] = EitherT(
+  ): EitherT[Future, PersistenceError, MovementResponse] = EitherT(
     persistenceConnector
-      .postArrival(eori, source)
+      .getArrival(eori, arrivalId)
       .map(Right(_))
       .recover {
-        case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))
+        case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.ArrivalNotFound(arrivalId))
+        case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
       }
   )
 

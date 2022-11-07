@@ -29,7 +29,7 @@ object HateoasArrivalMessagesPostResponseMessage {
 
   def apply(arrivalId: ArrivalId, messageId: MessageId, messageType: String, message: NodeSeq): JsObject = {
     val messageUrl = routes.ArrivalMessagesController.getArrivalMessage(arrivalId, messageId).urlWithContext
-    val arrivalUrl = routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext
+    val arrivalUrl = routing.routes.ArrivalsRouter.getArrival(arrivalId.toString).urlWithContext
 
     Json.obj(
       "_links" -> Json.obj(

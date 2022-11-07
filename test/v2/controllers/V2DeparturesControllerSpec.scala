@@ -1014,7 +1014,7 @@ class V2DeparturesControllerSpec
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(
-          HateoasDepartureResponse(
+          HateoasMovementResponse(
             departureId,
             MovementResponse(
               departureId,
@@ -1023,7 +1023,8 @@ class V2DeparturesControllerSpec
               Some(mrn),
               createdTime,
               createdTime
-            )
+            ),
+            MovementType.Departure
           )
         )
     }

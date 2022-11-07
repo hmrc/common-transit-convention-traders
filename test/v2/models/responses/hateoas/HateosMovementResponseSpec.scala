@@ -16,53 +16,36 @@
 
 package v2.models.responses.hateoas
 
-import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
-import v2.models.EORINumber
-import v2.models.MovementId
-import v2.models.MovementReferenceNumber
-import v2.models.responses.MovementResponse
+import v2.models.MovementType
+import v2.utils.CommonGenerators
 
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
+class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with CommonGenerators {
 
-class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+  for (movementType <- Seq(MovementType.Arrival, MovementType.Departure))
+    s"with a valid ${movementType.movementType} response, create a valid HateoasDepartureResponse" in {
+      val movementResponse = arbitraryMovementResponse.arbitrary.sample.get
 
-  private val hexId    = Gen.listOfN(16, Gen.hexChar).map(_.mkString.toLowerCase)
-  private val dateTime = OffsetDateTime.of(2022, 8, 15, 11, 45, 0, 0, ZoneOffset.UTC)
+      val actual      = HateoasMovementResponse(movementResponse._id, movementResponse, movementType)
+      val selfUri     = s"/customs/transits/movements/departures/${movementResponse._id}"
+      val messagesUri = s"/customs/transits/movements/departures/${movementResponse._id}/messages"
 
-  "with a valid departure response, create a valid HateoasDepartureResponse" in {
-    val departureId = MovementId(hexId.sample.get)
+      val expected = Json.obj(
+        "_links" -> Json.obj(
+          "self"     -> Json.obj("href" -> selfUri),
+          "messages" -> Json.obj("href" -> messagesUri)
+        ),
+        "id"                      -> movementResponse._id.value,
+        "movementReferenceNumber" -> movementResponse.movementReferenceNumber.get.value,
+        "created"                 -> movementResponse.created.toString,
+        "updated"                 -> movementResponse.created.toString,
+        "enrollmentEORINumber"    -> movementResponse.enrollmentEORINumber.value,
+        "movementEORINumber"      -> movementResponse.movementReferenceNumber.get
+      )
 
-    val response = MovementResponse(
-      _id = departureId,
-      enrollmentEORINumber = EORINumber("GB123"),
-      movementEORINumber = EORINumber("GB456"),
-      movementReferenceNumber = Some(MovementReferenceNumber("MRN001")),
-      created = dateTime,
-      updated = dateTime
-    )
-
-    val actual      = HateoasDepartureResponse(departureId, response)
-    val selfUri     = s"/customs/transits/movements/departures/${departureId.value}"
-    val messagesUri = s"/customs/transits/movements/departures/${departureId.value}/messages"
-
-    val expected = Json.obj(
-      "_links" -> Json.obj(
-        "self"     -> Json.obj("href" -> selfUri),
-        "messages" -> Json.obj("href" -> messagesUri)
-      ),
-      "id"                      -> departureId,
-      "movementReferenceNumber" -> "MRN001",
-      "created"                 -> "2022-08-15T11:45:00Z",
-      "updated"                 -> "2022-08-15T11:45:00Z",
-      "enrollmentEORINumber"    -> "GB123",
-      "movementEORINumber"      -> "GB456"
-    )
-
-    actual mustBe expected
-  }
+      actual mustBe expected
+    }
 }

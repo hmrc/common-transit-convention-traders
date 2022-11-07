@@ -2,7 +2,7 @@ GET        /movements/arrivals                                      routing.Arri
 POST       /movements/arrivals                                      routing.ArrivalsRouter.createArrivalNotification()
 
 PUT        /movements/arrivals/:arrivalId                           controllers.ArrivalMovementController.resubmitArrivalNotification(arrivalId: ArrivalId)
-GET        /movements/arrivals/:arrivalId                           controllers.ArrivalMovementController.getArrival(arrivalId: ArrivalId)
+GET        /movements/arrivals/:arrivalId                           routing.ArrivalsRouter.getArrival(arrivalId: String)
 
 POST       /movements/arrivals/:arrivalId/messages                  controllers.ArrivalMessagesController.sendMessageDownstream(arrivalId: ArrivalId)
 GET        /movements/arrivals/:arrivalId/messages                  controllers.ArrivalMessagesController.getArrivalMessages(arrivalId: ArrivalId, receivedSince: Option[OffsetDateTime] ?= None)
