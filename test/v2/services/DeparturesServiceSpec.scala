@@ -42,6 +42,7 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
+import v2.models.XmlPayload
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
@@ -149,7 +150,7 @@ class DeparturesServiceSpec
         MessageId("1234567890abcdef"),
         now,
         MessageType.DeclarationData,
-        Some("<test></test>")
+        Some(XmlPayload("<test></test>"))
       )
 
       when(mockConnector.getDepartureMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any(), any()))

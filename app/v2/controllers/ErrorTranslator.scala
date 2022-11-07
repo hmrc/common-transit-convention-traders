@@ -17,13 +17,13 @@
 package v2.controllers
 
 import cats.data.EitherT
-import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
-import v2.models.errors.FailedToValidateError.JsonSchemaFailedToValidateError
-import v2.models.errors.FailedToValidateError.UnexpectedError
-import v2.models.errors.FailedToValidateError.XmlSchemaFailedToValidateError
-import v2.models.errors.RouterError.UnrecognisedOffice
-import v2.models.errors._
-
+import v2.models.errors.ConversionError
+import v2.models.errors.ExtractionError
+import v2.models.errors.FailedToValidateError
+import v2.models.errors.StreamingError
+import v2.models.errors.PersistenceError
+import v2.models.errors.PresentationError
+import v2.models.errors.RouterError
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -40,6 +40,7 @@ trait ErrorTranslator {
   }
 
   val jsonToXmlValidationErrorConverter = new Converter[FailedToValidateError] {
+    import v2.models.errors.FailedToValidateError._
 
     def convert(validationError: FailedToValidateError): PresentationError = validationError match {
       case XmlSchemaFailedToValidateError(_) => PresentationError.internalServiceError(cause = None) // TODO: Determine error message
@@ -48,6 +49,7 @@ trait ErrorTranslator {
   }
 
   implicit val validationErrorConverter = new Converter[FailedToValidateError] {
+    import v2.models.errors.FailedToValidateError._
 
     def convert(validationError: FailedToValidateError): PresentationError = validationError match {
       case err: UnexpectedError                              => PresentationError.internalServiceError(cause = err.thr)
@@ -74,6 +76,7 @@ trait ErrorTranslator {
   }
 
   implicit val routerErrorConverter = new Converter[RouterError] {
+    import v2.models.errors.RouterError._
 
     override def convert(routerError: RouterError): PresentationError = routerError match {
       case err: RouterError.UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
@@ -99,4 +102,11 @@ trait ErrorTranslator {
     }
   }
 
+  implicit val messageFormatError = new Converter[StreamingError] {
+    import v2.models.errors.StreamingError._
+
+    override def convert(messageFormatError: StreamingError): PresentationError = messageFormatError match {
+      case UnexpectedError(ex) => PresentationError.internalServiceError(cause = ex)
+    }
+  }
 }

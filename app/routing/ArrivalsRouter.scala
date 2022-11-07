@@ -41,8 +41,8 @@ class ArrivalsRouter @Inject() (
 
   def createArrivalNotification(): Action[Source[ByteString, _]] =
     route {
-      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE) => v2Arrivals.createArrivalNotification()
-      case _                                                    => v1Arrivals.createArrivalNotification()
+      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Arrivals.createArrivalNotification()
+      case _                                                         => v1Arrivals.createArrivalNotification()
     }
 
   def getArrivalsForEori(updatedSince: Option[OffsetDateTime] = None): Action[Source[ByteString, _]] = route {
