@@ -51,6 +51,7 @@ import scala.xml.NodeSeq
 trait V1ArrivalMovementController {
   def createArrivalNotification(): Action[NodeSeq]
   def getArrival(arrivalId: ArrivalId): Action[AnyContent]
+  def getArrivalsForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
 }
 
 @Singleton

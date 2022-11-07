@@ -30,7 +30,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 
-class HateoasDepartureResponseMessageSpec
+class HateoasMovementResponseMessageSpec
     extends AnyFreeSpec
     with Matchers
     with GuiceOneAppPerSuite

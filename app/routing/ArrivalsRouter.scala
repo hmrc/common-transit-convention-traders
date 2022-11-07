@@ -28,6 +28,8 @@ import play.api.mvc.ControllerComponents
 import v2.controllers.V2ArrivalsController
 import v2.controllers.stream.StreamingParsers
 
+import java.time.OffsetDateTime
+
 class ArrivalsRouter @Inject() (
   val controllerComponents: ControllerComponents,
   v1Arrivals: V1ArrivalMovementController,
@@ -49,5 +51,10 @@ class ArrivalsRouter @Inject() (
       case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Arrivals.getArrival(arrivalId)
       case _                                                         => v1Arrivals.getArrival(arrivalId)
     }
+
+  def getArrivalsForEori(updatedSince: Option[OffsetDateTime] = None): Action[Source[ByteString, _]] = route {
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Arrivals.getArrivalsForEori(updatedSince)
+    case _                                                         => v1Arrivals.getArrivalsForEori(updatedSince)
+  }
 
 }

@@ -46,12 +46,14 @@ import v2.models.responses.ArrivalResponse
 import v2.models.responses.hateoas._
 import v2.services._
 
+import java.time.OffsetDateTime
 import scala.concurrent.Future
 
 @ImplementedBy(classOf[V2ArrivalsControllerImpl])
 trait V2ArrivalsController {
   def createArrivalNotification(): Action[Source[ByteString, _]]
   def getArrival(arrivalId: ArrivalId): Action[AnyContent]
+  def getArrivalsForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
 }
 
 @Singleton
@@ -132,6 +134,20 @@ class V2ArrivalsControllerImpl @Inject() (
             .asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
           arrivalResult <- persistAndSend(xmlSource)
         } yield arrivalResult
+    }
+
+  def getArrivalsForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent] =
+    authActionNewEnrolmentOnly.async {
+      implicit request =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+        arrivalsService
+          .getArrivalsForEori(request.eoriNumber)
+          .asPresentation
+          .fold(
+            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+            response => Ok(Json.toJson(HateoasArrivalIdsResponse(response)))
+          )
     }
 
   private def persistAndSend(
