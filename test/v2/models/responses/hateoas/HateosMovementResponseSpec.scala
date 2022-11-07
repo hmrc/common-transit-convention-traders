@@ -17,10 +17,12 @@
 package v2.models.responses.hateoas
 
 import org.scalacheck.Gen
+import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
+import v2.base.CommonGenerators
 import v2.models.EORINumber
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
@@ -29,16 +31,15 @@ import v2.models.responses.MovementResponse
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
-class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with CommonGenerators with OptionValues {
 
-  private val hexId    = Gen.listOfN(16, Gen.hexChar).map(_.mkString.toLowerCase)
   private val dateTime = OffsetDateTime.of(2022, 8, 15, 11, 45, 0, 0, ZoneOffset.UTC)
 
   "with a valid departure response, create a valid HateoasDepartureResponse" in {
-    val departureId = MovementId(hexId.sample.get)
+    val movementId = arbitraryMovementId.arbitrary.sample.value
 
     val response = MovementResponse(
-      _id = departureId,
+      _id = movementId,
       enrollmentEORINumber = EORINumber("GB123"),
       movementEORINumber = EORINumber("GB456"),
       movementReferenceNumber = Some(MovementReferenceNumber("MRN001")),
@@ -46,16 +47,16 @@ class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaChe
       updated = dateTime
     )
 
-    val actual      = HateoasDepartureResponse(departureId, response)
-    val selfUri     = s"/customs/transits/movements/departures/${departureId.value}"
-    val messagesUri = s"/customs/transits/movements/departures/${departureId.value}/messages"
+    val actual      = HateoasDepartureResponse(movementId, response)
+    val selfUri     = s"/customs/transits/movements/departures/${movementId.value}"
+    val messagesUri = s"/customs/transits/movements/departures/${movementId.value}/messages"
 
     val expected = Json.obj(
       "_links" -> Json.obj(
         "self"     -> Json.obj("href" -> selfUri),
         "messages" -> Json.obj("href" -> messagesUri)
       ),
-      "id"                      -> departureId,
+      "id"                      -> movementId,
       "movementReferenceNumber" -> "MRN001",
       "created"                 -> "2022-08-15T11:45:00Z",
       "updated"                 -> "2022-08-15T11:45:00Z",

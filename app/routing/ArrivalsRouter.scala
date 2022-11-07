@@ -46,8 +46,8 @@ class ArrivalsRouter @Inject() (
     }
 
   def getArrivalsForEori(updatedSince: Option[OffsetDateTime] = None): Action[Source[ByteString, _]] = route {
-    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE) => v2Arrivals.getArrivalsForEori(updatedSince)
-    case _                                                    => v1Arrivals.getArrivalsForEori(updatedSince)
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Arrivals.getArrivalsForEori(updatedSince)
+    case _                                                         => v1Arrivals.getArrivalsForEori(updatedSince)
   }
 
 }

@@ -685,27 +685,12 @@ class V2ArrivalsControllerSpec
   "GET  /traders/:EORI/movements/arrivals" - {
     "should return ok with json body for arrivals" in {
 
-      val enrolmentEORINumber = arbitrary[EORINumber].sample.value
-      val dateTime            = OffsetDateTime.of(2022, 8, 4, 11, 34, 42, 0, ZoneOffset.UTC)
+      val dateTime = OffsetDateTime.of(2022, 8, 4, 11, 34, 42, 0, ZoneOffset.UTC)
 
-      val movementResponse1 = MovementResponse(
-        _id = arbitrary[MovementId].sample.value,
-        enrollmentEORINumber = enrolmentEORINumber,
-        movementEORINumber = arbitrary[EORINumber].sample.value,
-        movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
-        created = dateTime,
-        updated = dateTime.plusHours(1)
+      val movementResponses = Seq(
+        arbitraryMovementResponse.arbitrary.sample.value.copy(created = dateTime, updated = dateTime.plusHours(1)),
+        arbitraryMovementResponse.arbitrary.sample.value.copy(created = dateTime.plusHours(2), updated = dateTime.plusHours(3))
       )
-
-      val movementResponse2 = MovementResponse(
-        _id = arbitrary[MovementId].sample.value,
-        enrollmentEORINumber = enrolmentEORINumber,
-        movementEORINumber = arbitrary[EORINumber].sample.value,
-        movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
-        created = dateTime.plusHours(2),
-        updated = dateTime.plusHours(3)
-      )
-      val movementResponses = Seq(movementResponse1, movementResponse2)
 
       when(mockArrivalsPersistenceService.getArrivalsForEori(EORINumber(any()))(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
@@ -714,7 +699,7 @@ class V2ArrivalsControllerSpec
       val request = FakeRequest(
         GET,
         routing.routes.ArrivalsRouter.getArrivalsForEori().url,
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
         AnyContentAsEmpty
       )
       val result = sut.getArrivalsForEori(None)(request)
@@ -727,7 +712,7 @@ class V2ArrivalsControllerSpec
       )
     }
 
-    "should return arrival not found if persistence service returns 404" in {
+    "should return arrivals not found if persistence service returns 404" in {
       val eori = EORINumber("ERROR")
 
       when(mockArrivalsPersistenceService.getArrivalsForEori(EORINumber(any()))(any[HeaderCarrier], any[ExecutionContext]))
@@ -738,7 +723,7 @@ class V2ArrivalsControllerSpec
       val request = FakeRequest(
         GET,
         routing.routes.ArrivalsRouter.getArrivalsForEori().url,
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
         AnyContentAsEmpty
       )
       val result = sut.getArrivalsForEori(None)(request)
@@ -759,7 +744,7 @@ class V2ArrivalsControllerSpec
       val request = FakeRequest(
         GET,
         routing.routes.ArrivalsRouter.getArrivalsForEori().url,
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE)),
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
         AnyContentAsEmpty
       )
       val result = sut.getArrivalsForEori(None)(request)
