@@ -74,7 +74,7 @@ import v2.models.errors.FailedToValidateError.JsonSchemaFailedToValidateError
 import v2.models.errors._
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
-import v2.models.responses.DepartureResponse
+import v2.models.responses.MovementResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
@@ -895,7 +895,7 @@ class V2DeparturesControllerSpec
       val enrolmentEORINumber = arbitrary[EORINumber].sample.value
       val dateTime            = OffsetDateTime.of(2022, 8, 4, 11, 34, 42, 0, ZoneOffset.UTC)
 
-      val departureResponse1 = DepartureResponse(
+      val departureResponse1 = MovementResponse(
         _id = arbitrary[MovementId].sample.value,
         enrollmentEORINumber = enrolmentEORINumber,
         movementEORINumber = arbitrary[EORINumber].sample.value,
@@ -904,7 +904,7 @@ class V2DeparturesControllerSpec
         updated = dateTime.plusHours(1)
       )
 
-      val departureResponse2 = DepartureResponse(
+      val departureResponse2 = MovementResponse(
         _id = arbitrary[MovementId].sample.value,
         enrollmentEORINumber = enrolmentEORINumber,
         movementEORINumber = arbitrary[EORINumber].sample.value,
@@ -990,7 +990,7 @@ class V2DeparturesControllerSpec
     ) {
       (enrollmentEori, movementEori, departureId, mrn) =>
         val createdTime = OffsetDateTime.now()
-        val departureResponse = DepartureResponse(
+        val departureResponse = MovementResponse(
           departureId,
           enrollmentEori,
           movementEori,
@@ -1016,7 +1016,7 @@ class V2DeparturesControllerSpec
         contentAsJson(result) mustBe Json.toJson(
           HateoasDepartureResponse(
             departureId,
-            DepartureResponse(
+            MovementResponse(
               departureId,
               enrollmentEori,
               movementEori,

@@ -19,11 +19,11 @@ package v2.models.responses.hateoas
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.models.MovementId
-import v2.models.responses.DepartureResponse
+import v2.models.responses.MovementResponse
 
 object HateoasDepartureResponse extends HateoasResponse {
 
-  def apply(departureId: MovementId, departureResponse: DepartureResponse): JsObject =
+  def apply(departureId: MovementId, departureResponse: MovementResponse): JsObject =
     Json
       .obj(
         "_links" -> Json.obj(
