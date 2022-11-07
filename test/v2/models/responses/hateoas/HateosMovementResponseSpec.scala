@@ -20,8 +20,8 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
+import v2.base.CommonGenerators
 import v2.models.MovementType
-import v2.utils.CommonGenerators
 
 class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with CommonGenerators {
 
@@ -30,8 +30,8 @@ class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaChe
       val movementResponse = arbitraryMovementResponse.arbitrary.sample.get
 
       val actual      = HateoasMovementResponse(movementResponse._id, movementResponse, movementType)
-      val selfUri     = s"/customs/transits/movements/departures/${movementResponse._id}"
-      val messagesUri = s"/customs/transits/movements/departures/${movementResponse._id}/messages"
+      val selfUri     = s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse._id.value}"
+      val messagesUri = s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse._id.value}/messages"
 
       val expected = Json.obj(
         "_links" -> Json.obj(
@@ -41,9 +41,9 @@ class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaChe
         "id"                      -> movementResponse._id.value,
         "movementReferenceNumber" -> movementResponse.movementReferenceNumber.get.value,
         "created"                 -> movementResponse.created.toString,
-        "updated"                 -> movementResponse.created.toString,
+        "updated"                 -> movementResponse.updated.toString,
         "enrollmentEORINumber"    -> movementResponse.enrollmentEORINumber.value,
-        "movementEORINumber"      -> movementResponse.movementReferenceNumber.get
+        "movementEORINumber"      -> movementResponse.movementEORINumber.value
       )
 
       actual mustBe expected

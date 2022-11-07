@@ -29,7 +29,7 @@ object HateoasMovementResponse extends HateoasResponse {
       .obj(
         "_links" -> Json.obj(
           "self"     -> Json.obj("href" -> (if (movementType == MovementType.Departure) departureUri(movementId) else arrivalUri(movementId))),
-          "messages" -> Json.obj("href" -> messageIdsUri(movementId, None))
+          "messages" -> Json.obj("href" -> (if (movementType == MovementType.Arrival) arrivalMessageIdsUri(movementId) else messageIdsUri(movementId, None)))
         ),
         "id"                      -> movementId,
         "movementReferenceNumber" -> movementResponse.movementReferenceNumber,

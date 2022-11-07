@@ -81,10 +81,10 @@ trait CommonGenerators {
       id                      <- arbitrary[MovementId]
       enrollmentEORINumber    <- arbitrary[EORINumber]
       movementEORINumber      <- arbitrary[EORINumber]
-      movementReferenceNumber <- arbitrary[Option[MovementReferenceNumber]]
+      movementReferenceNumber <- arbitrary[MovementReferenceNumber]
       created                 <- arbitrary[OffsetDateTime]
       updated                 <- arbitrary[OffsetDateTime]
-    } yield MovementResponse(id, enrollmentEORINumber, movementEORINumber, movementReferenceNumber, created, updated)
+    } yield MovementResponse(id, enrollmentEORINumber, movementEORINumber, Some(movementReferenceNumber), created, updated)
   }
 
 }

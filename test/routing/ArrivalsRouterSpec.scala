@@ -48,13 +48,13 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
   )
 
   for (
-    url <- Seq(
-      routes.ArrivalsRouter.createArrivalNotification().url,
-      routes.ArrivalsRouter.getArrival("123").url,
-      routes.ArrivalsRouter.getArrivalsForEori().url
+    endpoint <- Seq(
+      routes.ArrivalsRouter.createArrivalNotification(),
+      routes.ArrivalsRouter.getArrival("123"),
+      routes.ArrivalsRouter.getArrivalsForEori()
     )
   )
-    s"$url" - {
+    s"${endpoint.method} ${endpoint.url}" - {
       "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
 
         val arrivalsHeaders = FakeHeaders(
@@ -64,7 +64,7 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
         "must route to the v2 controller and return Accepted when successful" in {
 
           val request =
-            FakeRequest(method = "POST", uri = url, body = <test></test>, headers = arrivalsHeaders)
+            FakeRequest(method = "POST", uri = endpoint.url, body = <test></test>, headers = arrivalsHeaders)
           val result = call(sut.createArrivalNotification(), request)
 
           status(result) mustBe ACCEPTED

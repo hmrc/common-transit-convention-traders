@@ -19,6 +19,7 @@ package v2.utils
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
+import org.scalacheck.Gen.option
 import v2.models.BoxId
 import v2.models.ClientId
 import v2.models.EORINumber
@@ -58,6 +59,19 @@ trait CommonGenerators {
       boxId        <- Gen.option(Gen.uuid.map(_.toString).map(BoxId.apply))
     } yield PushNotificationsAssociation(clientId, movementType, boxId)
   }
+
+  implicit lazy val arbitraryMovementReferenceNumber: Arbitrary[MovementReferenceNumber] =
+    Arbitrary {
+      for {
+        year <- Gen
+          .choose(0, 99)
+          .map(
+            y => f"$y%02d"
+          )
+        country <- Gen.pick(2, 'A' to 'Z')
+        serial  <- Gen.pick(13, ('A' to 'Z') ++ ('0' to '9'))
+      } yield MovementReferenceNumber(year ++ country.mkString ++ serial.mkString)
+    }
 
   implicit lazy val arbitraryMovementResponse: Arbitrary[MovementResponse] = Arbitrary {
     for {

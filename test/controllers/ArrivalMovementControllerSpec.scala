@@ -354,7 +354,7 @@ class ArrivalMovementControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routing.routes.ArrivalsRouter.getArrival(ArrivalId(123).toString).urlWithContext,
+        routing.routes.ArrivalsRouter.getArrival(ArrivalId(123).toString).url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -370,7 +370,7 @@ class ArrivalMovementControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routing.routes.ArrivalsRouter.getArrival(ArrivalId(123).toString).urlWithContext,
+        routing.routes.ArrivalsRouter.getArrival(ArrivalId(123).toString).url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -385,7 +385,7 @@ class ArrivalMovementControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routing.routes.ArrivalsRouter.getArrival(ArrivalId(123).toString).urlWithContext,
+        routing.routes.ArrivalsRouter.getArrival(ArrivalId(123).toString).url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
