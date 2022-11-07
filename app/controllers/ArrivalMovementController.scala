@@ -50,7 +50,10 @@ import scala.xml.NodeSeq
 @ImplementedBy(classOf[ArrivalMovementController])
 trait V1ArrivalMovementController {
   def createArrivalNotification(): Action[NodeSeq]
+<<<<<<< HEAD
   def getArrival(arrivalId: ArrivalId): Action[AnyContent]
+=======
+>>>>>>> origin/CTCP-1452-get-arrivals-eori
   def getArrivalsForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
 }
 

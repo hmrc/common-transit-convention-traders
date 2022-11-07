@@ -41,9 +41,12 @@ class FakeV1ArrivalsController extends BaseController with V1ArrivalMovementCont
     _ =>
       Ok(Json.obj("version" -> 1))
   }
+<<<<<<< HEAD
 
   override def getArrival(arrivalId: ArrivalId): Action[AnyContent] = Action {
     _ =>
       Ok(Json.obj("version" -> 1))
   }
+=======
+>>>>>>> origin/CTCP-1452-get-arrivals-eori
 }

@@ -41,8 +41,10 @@ import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementReferenceNumber
 import v2.models.errors.PersistenceError
 import v2.models.responses.ArrivalResponse
+import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 
 import java.nio.charset.StandardCharsets
@@ -100,11 +102,7 @@ class ArrivalsServiceSpec
 
   "Getting a list of Arrivals (Movement) by EORI" - {
 
-    val dateTime = Gen.option(arbitrary[OffsetDateTime])
-
-    val now = OffsetDateTime.now(ZoneOffset.UTC)
-
-    "when a departure (movement) is found, should return a Right" in forAll(Gen.listOfN(3, arbitrary[MovementResponse])) {
+    "when a arrival (movement) is found, should return a Right" in forAll(Gen.listOfN(3, arbitrary[MovementResponse])) {
 
       expected =>
         when(mockConnector.getArrivalsForEori(EORINumber("1")))
@@ -116,7 +114,7 @@ class ArrivalsServiceSpec
         }
     }
 
-    "when a arrival is not found, should return a Left with an ArrivalNotFound" in {
+    "when an arrival is not found, should return a Left with an ArrivalNotFound" in {
       when(mockConnector.getArrivalsForEori(EORINumber("1")))
         .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
