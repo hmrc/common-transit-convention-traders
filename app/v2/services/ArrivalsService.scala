@@ -22,6 +22,7 @@ import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import models.domain.ArrivalId
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
@@ -36,6 +37,11 @@ import scala.util.control.NonFatal
 trait ArrivalsService {
 
   def createArrival(eori: EORINumber, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, ArrivalResponse]
+
+  def getArrival(arrivalId: ArrivalId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, ArrivalResponse]
@@ -56,4 +62,16 @@ class ArrivalsServiceImpl @Inject() (persistenceConnector: PersistenceConnector)
           case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
+
+  override def getArrival(arrivalId: ArrivalId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, ArrivalResponse] = EitherT(
+    persistenceConnector
+      .postArrival(eori, source)
+      .map(Right(_))
+      .recover {
+        case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))
+      }
+  )
 }

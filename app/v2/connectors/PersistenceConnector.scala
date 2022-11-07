@@ -248,4 +248,22 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       )
       .getOrElse(urlPath)
 
+  override def getArrival(eori: EORINumber, movementId: MovementId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[DepartureResponse] = {
+    val url = appConfig.movementsUrl.withPath(movementsGetDeparture(eori, movementId))
+
+    httpClientV2
+      .get(url"$url")
+      .addHeaders(HeaderNames.ACCEPT -> MimeTypes.JSON)
+      .execute[HttpResponse]
+      .flatMap {
+        response =>
+          response.status match {
+            case OK => response.as[DepartureResponse]
+            case _  => response.error
+          }
+      }
+  }
 }

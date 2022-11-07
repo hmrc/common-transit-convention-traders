@@ -25,6 +25,7 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
 import metrics.HasActionMetrics
+import models.domain.ArrivalId
 import play.api.Logging
 import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
@@ -50,6 +51,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[V2ArrivalsControllerImpl])
 trait V2ArrivalsController {
   def createArrivalNotification(): Action[Source[ByteString, _]]
+  def getArrival(arrivalId: ArrivalId): Action[AnyContent]
 }
 
 @Singleton
@@ -143,4 +145,16 @@ class V2ArrivalsControllerImpl @Inject() (
         .asPresentation
     } yield arrivalResult
 
+  def getArrival(arrivalId: ArrivalId): Action[AnyContent] = authActionNewEnrolmentOnly.async {
+    implicit request =>
+      implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+      arrivalsService
+        .getArrival(request.eoriNumber, arrivalId)
+        .asPresentation
+        .fold(
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          response => Ok(Json.toJson(HateoasDepartureResponse(departureId, response)))
+        )
+  }
 }
