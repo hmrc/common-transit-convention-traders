@@ -21,6 +21,7 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.google.inject.Inject
 import controllers.V1ArrivalMovementController
+import models.domain.ArrivalId
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
@@ -42,4 +43,11 @@ class ArrivalsRouter @Inject() (
       case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Arrivals.createArrivalNotification()
       case _                                                         => v1Arrivals.createArrivalNotification()
     }
+
+  def getArrival(arrivalId: ArrivalId): Action[Source[ByteString, _]] =
+    route {
+      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Arrivals.getArrival(arrivalId)
+      case _                                                         => v1Arrivals.getArrival(arrivalId)
+    }
+
 }
