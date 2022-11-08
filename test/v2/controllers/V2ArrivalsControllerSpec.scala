@@ -820,7 +820,7 @@ class V2ArrivalsControllerSpec
       status(result) mustBe NOT_FOUND
     }
 
-    "should return unexpected error for all other errors" in {
+    "should return internal server error for all other failures" in {
       when(mockArrivalsPersistenceService.getArrival(EORINumber(any()), MovementId(any()))(any(), any()))
         .thenAnswer {
           _ =>

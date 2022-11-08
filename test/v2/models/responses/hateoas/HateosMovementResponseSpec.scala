@@ -23,11 +23,17 @@ import play.api.libs.json.Json
 import v2.base.CommonGenerators
 import v2.models.MovementType
 
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+
 class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with CommonGenerators {
+
+  lazy val dateTime = OffsetDateTime.of(2022, 8, 15, 11, 45, 0, 0, ZoneOffset.UTC)
 
   for (movementType <- Seq(MovementType.Arrival, MovementType.Departure))
     s"with a valid ${movementType.movementType} response, create a valid HateoasDepartureResponse" in {
-      val movementResponse = arbitraryMovementResponse.arbitrary.sample.get
+      val movementResponse = arbitraryMovementResponse.arbitrary.sample.get.copy(created = dateTime, updated = dateTime)
 
       val actual      = HateoasMovementResponse(movementResponse._id, movementResponse, movementType)
       val selfUri     = s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse._id.value}"
@@ -40,8 +46,8 @@ class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaChe
         ),
         "id"                      -> movementResponse._id.value,
         "movementReferenceNumber" -> movementResponse.movementReferenceNumber.get.value,
-        "created"                 -> movementResponse.created.toString,
-        "updated"                 -> movementResponse.updated.toString,
+        "created"                 -> DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(movementResponse.created),
+        "updated"                 -> DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(movementResponse.updated),
         "enrollmentEORINumber"    -> movementResponse.enrollmentEORINumber.value,
         "movementEORINumber"      -> movementResponse.movementEORINumber.value
       )
