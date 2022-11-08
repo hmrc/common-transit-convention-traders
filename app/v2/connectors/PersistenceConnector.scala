@@ -258,7 +258,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .get(url"$url")
-      .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+      .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
       .execute[HttpResponse]
       .flatMap {
         response =>

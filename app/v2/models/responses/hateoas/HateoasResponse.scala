@@ -24,12 +24,7 @@ import java.time.OffsetDateTime
 object HateoasResponse {
 
   lazy val prefix =
-    if (
-      routing.routes.DeparturesRouter
-        .submitDeclaration()
-        .url
-        .startsWith(Constants.Context) || routing.routes.ArrivalsRouter.createArrivalNotification().url.startsWith(Constants.Context)
-    ) ""
+    if (routing.routes.DeparturesRouter.submitDeclaration().url.startsWith(Constants.Context)) ""
     else Constants.Context
 }
 
