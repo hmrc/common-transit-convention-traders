@@ -34,6 +34,7 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.request.MessageType
+import v2.models.responses.MessageSummary
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -53,6 +54,9 @@ trait V2BaseConnector extends HttpErrorFunctions {
 
   def movementsGetDepartureMessageIds(eoriNumber: EORINumber, movementId: MovementId): UrlPath =
     UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/${movementId.value}/messages/")
+
+  def movementsGetArrivalMessageIds(eoriNumber: EORINumber, movementId: MovementId): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/arrivals/${movementId.value}/messages/")
 
   def movementsGetDeparture(eoriNumber: EORINumber, movementId: MovementId): UrlPath =
     UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/${movementId.value}/")
@@ -137,7 +141,6 @@ trait V2BaseConnector extends HttpErrorFunctions {
               case _  => response.errorFromStream
             }
         }
-
   }
 
 }

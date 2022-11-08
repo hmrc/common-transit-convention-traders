@@ -23,6 +23,8 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.when
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -31,6 +33,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.http.Status.NOT_FOUND
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.base.CommonGenerators
@@ -40,8 +43,10 @@ import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.errors.PersistenceError
 import v2.models.responses.ArrivalResponse
+import v2.models.responses.MessageSummary
 
 import java.nio.charset.StandardCharsets
+import java.time.OffsetDateTime
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -90,6 +95,57 @@ class ArrivalsServiceSpec
         _ mustBe expected
       }
     }
+  }
+
+  "Getting a list of Arrival message IDs" - {
+
+    "when an arrival is found, should return a Right of the sequence of message IDs" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId],
+      Gen.option(arbitrary[OffsetDateTime]),
+      Gen.listOfN(3, arbitrary[MessageSummary])
+    ) {
+      (eori, arrivalId, receivedSince, expected) =>
+        when(mockConnector.getArrivalMessageIds(EORINumber(any()), MovementId(any()), any())(any(), any()))
+          .thenReturn(Future.successful(expected))
+
+        val result = sut.getArrivalMessageIds(eori, arrivalId, receivedSince)
+        whenReady(result.value) {
+          _ mustBe Right(expected)
+        }
+    }
+
+    "when an arrival is not found, should return a Left with ArrivalNotFound" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId],
+      Gen.option(arbitrary[OffsetDateTime])
+    ) {
+      (eori, arrivalId, receivedSince) =>
+        when(mockConnector.getArrivalMessageIds(EORINumber(any()), MovementId(any()), any())(any(), any()))
+          .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
+
+        val result = sut.getArrivalMessageIds(eori, arrivalId, receivedSince)
+        whenReady(result.value) {
+          _ mustBe Left(PersistenceError.ArrivalNotFound(arrivalId))
+        }
+    }
+
+    "on a failed submission, should return a Left with an UnexpectedError" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId],
+      Gen.option(arbitrary[OffsetDateTime])
+    ) {
+      (eori, arrivalId, receivedSince) =>
+        val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
+        when(mockConnector.getArrivalMessageIds(EORINumber(any()), MovementId(any()), any())(any(), any()))
+          .thenReturn(Future.failed(error))
+
+        val result = sut.getArrivalMessageIds(eori, arrivalId, receivedSince)
+        whenReady(result.value) {
+          _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
+        }
+    }
+
   }
 
 }

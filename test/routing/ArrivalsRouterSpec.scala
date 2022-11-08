@@ -24,6 +24,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames
 import play.api.http.Status.ACCEPTED
+import play.api.http.Status.BAD_REQUEST
 import play.api.libs.json.Json
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
@@ -32,6 +33,7 @@ import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
 import v2.base.TestActorSystem
+import v2.fakes.controllers.FakeV1ArrivalMessagesController
 import v2.fakes.controllers.FakeV1ArrivalsController
 import v2.fakes.controllers.FakeV2ArrivalsController
 
@@ -44,7 +46,8 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
   val sut = new ArrivalsRouter(
     stubControllerComponents(),
     new FakeV1ArrivalsController(),
-    new FakeV2ArrivalsController()
+    new FakeV2ArrivalsController(),
+    new FakeV1ArrivalMessagesController()
   )
 
   "when creating a Arrival Notification" - {
@@ -89,6 +92,78 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
           }
         }
     }
+  }
+
+  "get list of arrival messages with given arrivalId" - {
+    "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
+
+      val acceptHeaderValue = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON))
+
+      "must route to the v2 controller and return Accepted when successful" in {
+
+        val request =
+          FakeRequest(method = "GET", body = "", uri = routes.ArrivalsRouter.getArrivalMessageIds("1234567890abcdef").url, headers = acceptHeaderValue)
+        val result = sut.getArrivalMessageIds("1234567890abcdef")(request)
+
+        status(result) mustBe ACCEPTED
+        contentAsJson(result) mustBe Json.obj("version" -> 2)
+      }
+
+      "if the arrival ID is not in correct format, return a bad request" in {
+        val request = FakeRequest(
+          method = "GET",
+          uri = routes.ArrivalsRouter.getArrivalMessageIds("01").url,
+          body = "",
+          headers = acceptHeaderValue
+        )
+        val result = sut.getArrivalMessageIds("01")(request)
+
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "code"       -> "BAD_REQUEST",
+          "statusCode" -> 400,
+          "message"    -> "arrivalId: Value 01 is not a 16 character hexadecimal string"
+        )
+      }
+
+    }
+
+    Seq(None, Some("application/vnd.hmrc.1.0+json"), Some("text/html"), Some("application/vnd.hmrc.1.0+xml"), Some("text/javascript")).foreach {
+      acceptHeaderValue =>
+        val acceptHeader = acceptHeaderValue
+          .map(
+            header => Seq(HeaderNames.ACCEPT -> header)
+          )
+          .getOrElse(Seq.empty)
+        val arrivalHeaders = FakeHeaders(acceptHeader)
+        val withString = acceptHeaderValue
+          .getOrElse("nothing")
+        s"with accept header set to $withString" - {
+
+          "must route to the v1 controller and return Accepted when successful" in {
+
+            val request =
+              FakeRequest(method = "GET", uri = routes.ArrivalsRouter.getArrivalMessageIds("123").url, body = "", headers = arrivalHeaders)
+            val result = call(sut.getArrivalMessageIds("123"), request)
+
+            status(result) mustBe ACCEPTED
+            contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
+          }
+
+          "must route to the v1 controller and return 400 with invalid id" in {
+            val request = FakeRequest(method = "GET", body = "", uri = routes.ArrivalsRouter.getArrivalMessageIds("").url, headers = arrivalHeaders)
+            val result  = sut.getArrivalMessageIds("1234567890abc")(request)
+
+            status(result) mustBe BAD_REQUEST
+            contentAsJson(result) mustBe Json.obj(
+              "message"    -> "Cannot parse parameter arrivalId as Int: For input string: \"1234567890abc\"",
+              "statusCode" -> 400,
+              "code"       -> "BAD_REQUEST"
+            )
+          }
+        }
+    }
+
   }
 
 }

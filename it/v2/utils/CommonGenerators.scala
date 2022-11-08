@@ -17,6 +17,7 @@
 package v2.utils
 
 import org.scalacheck.Arbitrary
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import v2.models.BoxId
 import v2.models.ClientId
@@ -24,8 +25,11 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
+import v2.models.request.MessageType
 import v2.models.request.PushNotificationsAssociation
+import v2.models.responses.MessageSummary
 
+import java.time.OffsetDateTime
 import scala.math.abs
 
 trait CommonGenerators {
@@ -47,6 +51,9 @@ trait CommonGenerators {
     Gen.alphaNumStr.map(MovementId(_))
   }
 
+  implicit lazy val arbitraryMessageType: Arbitrary[MessageType] =
+    Arbitrary(Gen.oneOf(MessageType.values))
+
   implicit lazy val arbitraryPushNotificationsAssociation: Arbitrary[PushNotificationsAssociation] = Arbitrary {
     for {
       clientId     <- Gen.alphaNumStr.map(ClientId.apply)
@@ -54,4 +61,13 @@ trait CommonGenerators {
       boxId        <- Gen.option(Gen.uuid.map(_.toString).map(BoxId.apply))
     } yield PushNotificationsAssociation(clientId, movementType, boxId)
   }
+
+  implicit lazy val arbitraryMessageSummary: Arbitrary[MessageSummary] =
+    Arbitrary {
+      for {
+        id             <- arbitrary[MessageId]
+        offsetDateTime <- arbitrary[OffsetDateTime]
+        messageType    <- arbitrary[MessageType]
+      } yield MessageSummary(id, offsetDateTime, messageType, None)
+    }
 }

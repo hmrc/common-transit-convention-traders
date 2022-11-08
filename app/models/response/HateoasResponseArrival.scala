@@ -27,7 +27,7 @@ object HateoasResponseArrival {
 
   def apply(arrivalId: ArrivalId, created: String, updated: String, movementReferenceNumber: String): JsObject = {
     val arrivalUrl  = routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext
-    val messagesUrl = routes.ArrivalMessagesController.getArrivalMessages(arrivalId).urlWithContext
+    val messagesUrl = routing.routes.ArrivalsRouter.getArrivalMessageIds(arrivalId.toString).urlWithContext
 
     Json.obj(
       "id"                      -> arrivalId.toString,

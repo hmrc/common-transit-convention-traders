@@ -88,6 +88,11 @@ trait PersistenceConnector {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[ArrivalResponse]
+
+  def getArrivalMessageIds(eori: EORINumber, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Seq[MessageSummary]]
 }
 
 @Singleton
@@ -240,6 +245,29 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
               }
           }
     }
+
+  override def getArrivalMessageIds(eori: EORINumber, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Seq[MessageSummary]] = {
+    val url =
+      withReceivedSinceParameter(
+        appConfig.movementsUrl.withPath(movementsGetArrivalMessageIds(eori, movementId)).toUrl,
+        receivedSince
+      )
+
+    httpClientV2
+      .get(url"$url")
+      .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+      .execute[HttpResponse]
+      .flatMap {
+        response =>
+          response.status match {
+            case OK => response.as[Seq[MessageSummary]]
+            case _  => response.error
+          }
+      }
+  }
 
   private def withReceivedSinceParameter(urlPath: Url, dateTime: Option[OffsetDateTime]) =
     dateTime

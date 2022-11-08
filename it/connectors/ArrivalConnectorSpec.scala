@@ -206,7 +206,7 @@ class ArrivalConnectorSpec
       val arrival = Arrival(
         ArrivalId(1),
         routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
-        routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+        routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
         "MRN",
         LocalDateTime.now,
         LocalDateTime.now
@@ -239,7 +239,7 @@ class ArrivalConnectorSpec
       val arrival = Arrival(
         ArrivalId(1),
         routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
-        routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+        routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
         "MRN",
         LocalDateTime.now,
         LocalDateTime.now
@@ -326,7 +326,7 @@ class ArrivalConnectorSpec
           Arrival(
             ArrivalId(1),
             routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
-            routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+            routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
             "MRN",
             LocalDateTime.now,
             LocalDateTime.now
@@ -365,7 +365,7 @@ class ArrivalConnectorSpec
           Arrival(
             ArrivalId(1),
             routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
-            routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+            routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
             "MRN",
             LocalDateTime.now,
             LocalDateTime.now
@@ -405,7 +405,7 @@ class ArrivalConnectorSpec
           Arrival(
             ArrivalId(1),
             routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
-            routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+            routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
             "MRN",
             LocalDateTime.now,
             LocalDateTime.now

@@ -17,7 +17,6 @@
 package v2.controllers.actions
 
 import com.google.inject.Inject
-import config.AppConfig
 import play.api.http.HeaderNames
 import play.api.libs.json.Json
 import play.api.mvc.ActionRefiner
