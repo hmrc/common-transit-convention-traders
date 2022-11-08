@@ -777,7 +777,6 @@ class V2ArrivalsControllerSpec
     "should return ok with json body of arrival" in {
       val movementResponse = arbitraryMovementResponse.arbitrary.sample.value
 
-      arbitraryMovementId
       when(mockArrivalsPersistenceService.getArrival(EORINumber(any()), MovementId(any()))(any(), any()))
         .thenAnswer(
           _ => EitherT.rightT(movementResponse)
