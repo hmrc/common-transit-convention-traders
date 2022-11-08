@@ -54,7 +54,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[PersistenceConnectorImpl])
 trait PersistenceConnector {
 
-  def post(eori: EORINumber, source: Source[ByteString, _])(implicit
+  def postDeparture(eori: EORINumber, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[DeclarationResponse]
@@ -79,7 +79,7 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[Seq[MovementResponse]]
 
-  def post(movementId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
+  def postMessage(movementId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[UpdateMovementResponse]
@@ -107,7 +107,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     with V2BaseConnector
     with Logging {
 
-  override def post(eori: EORINumber, source: Source[ByteString, _])(implicit
+  override def postDeparture(eori: EORINumber, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[DeclarationResponse] =
@@ -208,7 +208,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       }
   }
 
-  override def post(movementId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
+  override def postMessage(movementId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[UpdateMovementResponse] =

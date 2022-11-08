@@ -85,7 +85,7 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
   ): EitherT[Future, PersistenceError, DeclarationResponse] =
     EitherT(
       persistenceConnector
-        .post(eori, source)
+        .postDeparture(eori, source)
         .map(Right(_))
         .recover {
           case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))
@@ -153,7 +153,7 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
   ): EitherT[Future, PersistenceError, UpdateMovementResponse] =
     EitherT(
       persistenceConnector
-        .post(departureId, messageType, source)
+        .postMessage(departureId, messageType, source)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.DepartureNotFound(departureId))

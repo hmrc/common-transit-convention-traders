@@ -52,6 +52,7 @@ import utils.TestMetrics
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementType
 import v2.models.XmlPayload
 import v2.models.errors.ErrorCode
 import v2.models.errors.PresentationError
@@ -60,7 +61,6 @@ import v2.models.request.MessageType
 import v2.models.request.MessageType.DeclarationData
 import v2.models.responses.ArrivalResponse
 import v2.models.responses.DeclarationResponse
-import v2.models.responses.MovementResponse
 import v2.models.responses.MessageResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
@@ -115,7 +115,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        whenReady(persistenceConnector.post(eoriNumber, source)) {
+        whenReady(persistenceConnector.postDeparture(eoriNumber, source)) {
           result =>
             result mustBe okResult
         }
@@ -141,7 +141,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.post(eoriNumber, source).map(Right(_)).recover {
+        val future = persistenceConnector.postDeparture(eoriNumber, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -174,7 +174,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.post(eoriNumber, source).map(Right(_)).recover {
+        val future = persistenceConnector.postDeparture(eoriNumber, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -207,7 +207,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.post(eoriNumber, source).map(Right(_)).recover {
+        val future = persistenceConnector.postDeparture(eoriNumber, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -555,22 +555,18 @@ class PersistenceConnectorSpec
 
   }
 
-  "GET /traders/movements/departures" - {
+  "GET /traders/movements/departures/:departureId" - {
 
-    implicit val hc = HeaderCarrier()
-    val eori        = arbitrary[EORINumber].sample.get
+    implicit val hc          = HeaderCarrier()
+    lazy val messageResponse = arbitraryMovementResponse.arbitrary.sample.get
 
-    def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/"
+    lazy val targetUrl = s"/transit-movements/traders/${messageResponse.enrollmentEORINumber.value}/movements/departures/${messageResponse._id.value}/"
 
-    "on success, return a list of departure IDs" in {
-      lazy val departureIdList = Gen.listOfN(3, arbitrary[MovementId]).sample.get
-      lazy val messageResponse = departureIdList.map(
-        id => generateMovementResponse(id)
-      )
+    "on success, return a MovementResponse" in {
 
       server.stubFor(
         get(
-          urlEqualTo(targetUrl(eori))
+          urlEqualTo(targetUrl)
         )
           .willReturn(
             aResponse()
@@ -582,9 +578,104 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getDeparturesForEori(eori)
+      val result      = persistenceConnector.getDeparture(messageResponse.enrollmentEORINumber, messageResponse._id)
       whenReady(result) {
         _ mustBe messageResponse
+      }
+    }
+
+    "on incorrect Json, return an error" in {
+      server.stubFor(
+        get(
+          urlEqualTo(targetUrl)
+        )
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(
+                "{ \"test\": \"fail\" }"
+              )
+          )
+      )
+
+      val result = persistenceConnector
+        .getDeparture(messageResponse.enrollmentEORINumber, messageResponse._id)
+        .map(
+          _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
+        )
+        .recover {
+          case JsResult.Exception(_) => ()
+          case thr                   => fail(s"Expected a JsResult.Exception, got $thr")
+        }
+
+      whenReady(result) {
+        _ mustBe (())
+      }
+    }
+
+    "on an internal error, return an UpstreamServerError" in {
+      server.stubFor(
+        get(
+          urlEqualTo(targetUrl)
+        )
+          .willReturn(
+            aResponse()
+              .withStatus(INTERNAL_SERVER_ERROR)
+              .withBody(
+                Json.stringify(
+                  Json.obj(
+                    "code"    -> "INTERNAL_SERVER_ERROR",
+                    "message" -> "Internal server error"
+                  )
+                )
+              )
+          )
+      )
+
+      val result = persistenceConnector
+        .getDeparture(messageResponse.enrollmentEORINumber, messageResponse._id)
+        .map(
+          _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
+        )
+        .recover {
+          case UpstreamErrorResponse(_, status, _, _) => status
+          case thr                                    => fail(s"Expected an UpstreamErrorResponse with a 500, got $thr")
+        }
+
+      whenReady(result) {
+        _ mustBe INTERNAL_SERVER_ERROR
+      }
+    }
+
+  }
+
+  "GET /traders/movements/departures" - {
+
+    implicit val hc = HeaderCarrier()
+    val eori        = arbitrary[EORINumber].sample.get
+
+    def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/"
+
+    "on success, return a list of departure IDs" in {
+      lazy val messageResponseList = Gen.listOfN(3, arbitraryMovementResponse.arbitrary).sample.get
+
+      server.stubFor(
+        get(
+          urlEqualTo(targetUrl(eori))
+        )
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(
+                Json.toJson(messageResponseList).toString()
+              )
+          )
+      )
+
+      implicit val hc = HeaderCarrier()
+      val result      = persistenceConnector.getDeparturesForEori(eori)
+      whenReady(result) {
+        _ mustBe messageResponseList
       }
     }
 
@@ -687,7 +778,7 @@ class PersistenceConnectorSpec
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
-        whenReady(persistenceConnector.post(departureId, messageType, source)) {
+        whenReady(persistenceConnector.postMessage(departureId, messageType, source)) {
           result =>
             result mustBe resultRes
         }
@@ -714,7 +805,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.post(departureId, messageType, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMessage(departureId, messageType, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -748,7 +839,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.post(departureId, messageType, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMessage(departureId, messageType, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -781,7 +872,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.post(departureId, messageType, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMessage(departureId, messageType, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -929,10 +1020,7 @@ class PersistenceConnectorSpec
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals"
 
     "on success, return a list of arrival IDs" in {
-      lazy val arrivalIdList = Gen.listOfN(3, arbitrary[MovementId]).sample.get
-      lazy val messageResponse = arrivalIdList.map(
-        id => generateMovementResponse(id)
-      )
+      lazy val messageResponseList = Gen.listOfN(3, arbitraryMovementResponse.arbitrary).sample.get
 
       server.stubFor(
         get(
@@ -942,7 +1030,7 @@ class PersistenceConnectorSpec
             aResponse()
               .withStatus(OK)
               .withBody(
-                Json.toJson(messageResponse).toString()
+                Json.toJson(messageResponseList).toString()
               )
           )
       )
@@ -950,7 +1038,7 @@ class PersistenceConnectorSpec
       implicit val hc = HeaderCarrier()
       val result      = persistenceConnector.getArrivalsForEori(eori)
       whenReady(result) {
-        _ mustBe messageResponse
+        _ mustBe messageResponseList
       }
     }
 
@@ -1020,15 +1108,99 @@ class PersistenceConnectorSpec
 
   }
 
-  private def generateMovementResponse(movementId: MovementId) =
-    MovementResponse(
-      _id = movementId,
-      enrollmentEORINumber = arbitrary[EORINumber].sample.get,
-      movementEORINumber = arbitrary[EORINumber].sample.get,
-      movementReferenceNumber = None,
-      created = arbitrary[OffsetDateTime].sample.get,
-      updated = arbitrary[OffsetDateTime].sample.get
-    )
+  "GET /traders/movements/arrivals/:arrivalId" - {
+
+    implicit val hc          = HeaderCarrier()
+    lazy val messageResponse = arbitraryMovementResponse.arbitrary.sample.get
+
+    lazy val targetUrl = s"/transit-movements/traders/${messageResponse.enrollmentEORINumber.value}/movements/arrivals/${messageResponse._id.value}/"
+
+    "on success, return a MovementResponse" in {
+
+      server.stubFor(
+        get(
+          urlEqualTo(targetUrl)
+        )
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(
+                Json.toJson(messageResponse).toString()
+              )
+          )
+      )
+
+      implicit val hc = HeaderCarrier()
+      val result      = persistenceConnector.getArrival(messageResponse.enrollmentEORINumber, messageResponse._id)
+      whenReady(result) {
+        _ mustBe messageResponse
+      }
+    }
+
+    "on incorrect Json, return an error" in {
+      server.stubFor(
+        get(
+          urlEqualTo(targetUrl)
+        )
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(
+                "{ \"test\": \"fail\" }"
+              )
+          )
+      )
+
+      val result = persistenceConnector
+        .getArrival(messageResponse.enrollmentEORINumber, messageResponse._id)
+        .map(
+          _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
+        )
+        .recover {
+          case JsResult.Exception(_) => ()
+          case thr                   => fail(s"Expected a JsResult.Exception, got $thr")
+        }
+
+      whenReady(result) {
+        _ mustBe (())
+      }
+    }
+
+    "on an internal error, return an UpstreamServerError" in {
+      server.stubFor(
+        get(
+          urlEqualTo(targetUrl)
+        )
+          .willReturn(
+            aResponse()
+              .withStatus(INTERNAL_SERVER_ERROR)
+              .withBody(
+                Json.stringify(
+                  Json.obj(
+                    "code"    -> "INTERNAL_SERVER_ERROR",
+                    "message" -> "Internal server error"
+                  )
+                )
+              )
+          )
+      )
+
+      val result = persistenceConnector
+        .getArrival(messageResponse.enrollmentEORINumber, messageResponse._id)
+        .map(
+          _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
+        )
+        .recover {
+          case UpstreamErrorResponse(_, status, _, _) => status
+          case thr                                    => fail(s"Expected an UpstreamErrorResponse with a 500, got $thr")
+        }
+
+      whenReady(result) {
+        _ mustBe INTERNAL_SERVER_ERROR
+      }
+    }
+
+  }
 
   override protected def portConfigKey: Seq[String] =
     Seq("microservice.services.transit-movements.port")

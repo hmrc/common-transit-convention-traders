@@ -19,7 +19,6 @@ package v2.utils
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
-import org.scalacheck.Gen.option
 import v2.models.BoxId
 import v2.models.ClientId
 import v2.models.EORINumber
@@ -49,7 +48,7 @@ trait CommonGenerators {
   }
 
   implicit lazy val arbitraryMovementId: Arbitrary[MovementId] = Arbitrary {
-    Gen.alphaNumStr.map(MovementId(_))
+    genShortUUID.map(MovementId(_))
   }
 
   implicit lazy val arbitraryPushNotificationsAssociation: Arbitrary[PushNotificationsAssociation] = Arbitrary {

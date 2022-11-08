@@ -83,7 +83,7 @@ class DeparturesServiceSpec
     val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
 
     "on a successful submission, should return a Right" in {
-      when(mockConnector.post(EORINumber(any[String]), eqTo(validRequest))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockConnector.postDeparture(EORINumber(any[String]), eqTo(validRequest))(any[HeaderCarrier], any[ExecutionContext]))
         .thenReturn(Future.successful(DeclarationResponse(MovementId("ABC"), MessageId("123"))))
       val result                                                  = sut.saveDeclaration(EORINumber("1"), validRequest)
       val expected: Either[PersistenceError, DeclarationResponse] = Right(DeclarationResponse(MovementId("ABC"), MessageId("123")))
@@ -93,7 +93,7 @@ class DeparturesServiceSpec
     }
 
     "on a failed submission, should return a Left with an UnexpectedError" in {
-      when(mockConnector.post(EORINumber(any[String]), eqTo(invalidRequest))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockConnector.postDeparture(EORINumber(any[String]), eqTo(invalidRequest))(any[HeaderCarrier], any[ExecutionContext]))
         .thenReturn(Future.failed(upstreamErrorResponse))
       val result                                                  = sut.saveDeclaration(EORINumber("1"), invalidRequest)
       val expected: Either[PersistenceError, DeclarationResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
@@ -240,7 +240,7 @@ class DeparturesServiceSpec
 
     "on a successful submission, should return a Right" in {
       when(
-        mockConnector.post(MovementId(any[String]), any[MessageType], eqTo(validRequest))(
+        mockConnector.postMessage(MovementId(any[String]), any[MessageType], eqTo(validRequest))(
           any[HeaderCarrier],
           any[ExecutionContext]
         )
@@ -255,7 +255,7 @@ class DeparturesServiceSpec
 
     "on a departure is not found, should return DepartureNotFound" in {
       when(
-        mockConnector.post(MovementId(any[String]), any[MessageType], eqTo(validRequest))(
+        mockConnector.postMessage(MovementId(any[String]), any[MessageType], eqTo(validRequest))(
           any[HeaderCarrier],
           any[ExecutionContext]
         )
@@ -269,7 +269,7 @@ class DeparturesServiceSpec
 
     "on a failed submission, should return a Left with an UnexpectedError" in {
       when(
-        mockConnector.post(MovementId(any[String]), any[MessageType], eqTo(invalidRequest))(
+        mockConnector.postMessage(MovementId(any[String]), any[MessageType], eqTo(invalidRequest))(
           any[HeaderCarrier],
           any[ExecutionContext]
         )
