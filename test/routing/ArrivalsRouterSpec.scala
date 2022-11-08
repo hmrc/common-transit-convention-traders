@@ -96,7 +96,7 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
 
     "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
       val arrivalsHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, HeaderNames.CONTENT_TYPE -> "application/xml")
+        Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)
       )
 
       "must route to the v2 controller and return Ok when successful" in {

@@ -682,7 +682,7 @@ class V2ArrivalsControllerSpec
     }
   }
 
-  "GET  /traders/:EORI/movements/arrivals" - {
+  "GET  /traders/movements/arrivals" - {
     "should return ok with json body for arrivals" in {
 
       val dateTime = OffsetDateTime.of(2022, 8, 4, 11, 34, 42, 0, ZoneOffset.UTC)
