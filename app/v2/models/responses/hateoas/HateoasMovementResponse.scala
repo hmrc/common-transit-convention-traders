@@ -24,12 +24,15 @@ import v2.models.responses.MovementResponse
 
 object HateoasMovementResponse extends HateoasResponse {
 
-  def apply(movementId: MovementId, movementResponse: MovementResponse, movementType: MovementType): JsObject =
+  def apply(movementId: MovementId, movementResponse: MovementResponse, movementType: MovementType): JsObject = {
+    val selfLink     = if (movementType == MovementType.Arrival) arrivalUri(movementId) else departureUri(movementId)
+    val messagesLink = if (movementType == MovementType.Arrival) arrivalMessageIdsUri(movementId) else messageIdsUri(movementId, None)
+
     Json
       .obj(
         "_links" -> Json.obj(
-          "self"     -> Json.obj("href" -> (if (movementType == MovementType.Departure) departureUri(movementId) else arrivalUri(movementId))),
-          "messages" -> Json.obj("href" -> (if (movementType == MovementType.Arrival) arrivalMessageIdsUri(movementId) else messageIdsUri(movementId, None)))
+          "self"     -> Json.obj("href" -> selfLink),
+          "messages" -> Json.obj("href" -> messagesLink)
         ),
         "id"                      -> movementId,
         "movementReferenceNumber" -> movementResponse.movementReferenceNumber,
@@ -38,5 +41,6 @@ object HateoasMovementResponse extends HateoasResponse {
         "enrollmentEORINumber"    -> movementResponse.enrollmentEORINumber,
         "movementEORINumber"      -> movementResponse.movementEORINumber
       )
+  }
 
 }
