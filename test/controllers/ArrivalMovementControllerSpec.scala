@@ -53,7 +53,7 @@ import play.api.test.Helpers.headers
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
-import utils.CallOps._
+import v2.utils.CallOps._
 import utils.TestMetrics
 
 import scala.concurrent.Future

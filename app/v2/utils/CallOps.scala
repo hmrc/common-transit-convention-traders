@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package utils
+package v2.utils
 
 import config.Constants
 import play.api.mvc.Call

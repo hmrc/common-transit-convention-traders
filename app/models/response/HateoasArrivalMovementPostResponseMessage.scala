@@ -20,7 +20,7 @@ import models.Box
 import models.domain.ArrivalId
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import utils.CallOps.CallOps
+import v2.utils.CallOps.CallOps
 
 import scala.xml.NodeSeq
 

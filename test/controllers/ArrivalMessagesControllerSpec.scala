@@ -53,7 +53,7 @@ import play.api.test.Helpers._
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HttpResponse
-import utils.CallOps._
+import v2.utils.CallOps._
 import utils.TestMetrics
 
 import scala.concurrent.Future

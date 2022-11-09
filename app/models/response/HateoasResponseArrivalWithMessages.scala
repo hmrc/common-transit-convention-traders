@@ -21,7 +21,7 @@ import models.domain.ArrivalWithMessages
 import models.domain.MessageId
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import utils.CallOps._
+import v2.utils.CallOps._
 import utils.Utils
 
 object HateoasResponseArrivalWithMessages {

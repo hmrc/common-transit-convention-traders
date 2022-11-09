@@ -16,38 +16,29 @@
 
 package v2.models.responses.hateoas
 
-import config.Constants
 import v2.models._
-import v2.models.responses.hateoas.HateoasResponse.prefix
+import v2.utils.CallOps._
 
 import java.time.OffsetDateTime
-
-object HateoasResponse {
-
-  lazy val prefix =
-    if (routing.routes.DeparturesRouter.submitDeclaration().url.startsWith(Constants.Context)) ""
-    else Constants.Context
-
-}
 
 trait HateoasResponse {
 
   def messageUri(departureId: MovementId, messageId: MessageId) =
-    prefix + routing.routes.DeparturesRouter.getMessage(departureId.value, messageId.value).url
+    routing.routes.DeparturesRouter.getMessage(departureId.value, messageId.value).urlWithContext
 
   def messageIdsUri(departureId: MovementId, receivedSince: Option[OffsetDateTime]) =
-    prefix + routing.routes.DeparturesRouter
+    routing.routes.DeparturesRouter
       .getMessageIds(
         departureId.value,
         receivedSince
       )
-      .url
+      .urlWithContext
 
   def departureUri(departureId: MovementId) =
-    prefix + routing.routes.DeparturesRouter.getDeparture(departureId.value).url
+    routing.routes.DeparturesRouter.getDeparture(departureId.value).urlWithContext
 
   def arrivalUri(arrivalId: MovementId) =
-    prefix + routing.routes.ArrivalsRouter.getArrival(arrivalId.value).url
+    routing.routes.ArrivalsRouter.getArrival(arrivalId.value).urlWithContext
 
   // TODO: When we do the arrival endpoint, this needs updating
   def arrivalMessageIdsUri(arrivalId: MovementId) =
