@@ -46,7 +46,7 @@ import v2.models.XmlPayload
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
-import v2.models.responses.DepartureResponse
+import v2.models.responses.MovementResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
 
@@ -190,7 +190,7 @@ class DeparturesServiceSpec
     val now = OffsetDateTime.now(ZoneOffset.UTC)
 
     "when a departure (movement) is found, should return a Right" in {
-      val successResponse = DepartureResponse(
+      val successResponse = MovementResponse(
         _id = MovementId("1234567890abcdef"),
         enrollmentEORINumber = EORINumber("GB123"),
         movementEORINumber = EORINumber("GB456"),

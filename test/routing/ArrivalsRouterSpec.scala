@@ -24,7 +24,10 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames
 import play.api.http.Status.ACCEPTED
+
 import play.api.http.Status.BAD_REQUEST
+
+import play.api.http.Status.OK
 import play.api.libs.json.Json
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
@@ -162,6 +165,35 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
             )
           }
         }
+    }
+  }
+
+  "when fetching arrivals by EORI " - {
+
+    "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
+      val arrivalsHeaders = FakeHeaders(
+        Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)
+      )
+
+      "must route to the v2 controller and return Ok when successful" in {
+        val request = FakeRequest(method = "GET", body = "", uri = routes.ArrivalsRouter.getArrivalsForEori().url, headers = arrivalsHeaders)
+        val result  = call(sut.getArrivalsForEori(), request)
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
+      }
+    }
+
+    "with accept header set to application/vnd.hmrc.1.0+json (version one)" - {
+      val arrivalsHeaders = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json"))
+
+      "must route to the v1 controller and return Ok when successful" in {
+        val request = FakeRequest(method = "GET", body = "", uri = routes.ArrivalsRouter.getArrivalsForEori().url, headers = arrivalsHeaders)
+        val result  = call(sut.getArrivalsForEori(), request)
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
+      }
     }
 
   }

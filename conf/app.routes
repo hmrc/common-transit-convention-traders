@@ -1,4 +1,4 @@
-GET        /movements/arrivals                                      controllers.ArrivalMovementController.getArrivalsForEori(updatedSince: Option[OffsetDateTime] ?= None)
+GET        /movements/arrivals                                      routing.ArrivalsRouter.getArrivalsForEori(updatedSince: Option[OffsetDateTime] ?= None)
 POST       /movements/arrivals                                      routing.ArrivalsRouter.createArrivalNotification()
 
 PUT        /movements/arrivals/:arrivalId                           controllers.ArrivalMovementController.resubmitArrivalNotification(arrivalId: ArrivalId)

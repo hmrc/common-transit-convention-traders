@@ -16,7 +16,6 @@
 
 package models.response
 
-import controllers.routes
 import models.domain.ArrivalWithMessages
 import models.domain.MessageId
 import play.api.libs.json.JsObject

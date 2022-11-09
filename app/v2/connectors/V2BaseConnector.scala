@@ -24,8 +24,8 @@ import io.lemonlabs.uri.UrlPath
 import play.api.http.Status.OK
 import play.api.libs.json.JsResult
 import play.api.libs.json.Reads
-import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.client.RequestBuilder
@@ -34,7 +34,6 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.request.MessageType
-import v2.models.responses.MessageSummary
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -69,6 +68,9 @@ trait V2BaseConnector extends HttpErrorFunctions {
 
   def movementsPostArrivalNotification(eoriNumber: EORINumber): UrlPath =
     UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/arrivals/")
+
+  def movementsGetAllArrivals(eoriNumber: EORINumber): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/arrivals")
 
   val routerBaseRoute: String = "/transit-movements-router"
 

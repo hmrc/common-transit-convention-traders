@@ -23,11 +23,11 @@ import play.api.libs.json.Json
 
 import java.time.OffsetDateTime
 
-object DepartureResponse {
-  implicit lazy val departureResponseFormat = Json.format[DepartureResponse]
+object MovementResponse {
+  implicit lazy val movementResponseFormat = Json.format[MovementResponse]
 }
 
-case class DepartureResponse(
+case class MovementResponse(
   _id: MovementId,
   enrollmentEORINumber: EORINumber,
   movementEORINumber: EORINumber,

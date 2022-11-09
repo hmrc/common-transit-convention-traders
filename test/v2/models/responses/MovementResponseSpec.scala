@@ -29,7 +29,7 @@ import v2.models.MovementReferenceNumber
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
-class DepartureResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class MovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   private val hexId    = Gen.listOfN(16, Gen.hexChar).map(_.mkString.toLowerCase)
   private val dateTime = OffsetDateTime.of(2022, 8, 15, 11, 30, 0, 0, ZoneOffset.UTC)
@@ -37,8 +37,8 @@ class DepartureResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDri
   "when DepartureResponse is serialized, return an appropriate JsObject" in {
     val departureId = MovementId(hexId.sample.get)
 
-    val actual = DepartureResponse.departureResponseFormat.writes(
-      DepartureResponse(
+    val actual = MovementResponse.movementResponseFormat.writes(
+      MovementResponse(
         _id = departureId,
         enrollmentEORINumber = EORINumber("GB123"),
         movementEORINumber = EORINumber("GB456"),
@@ -63,7 +63,7 @@ class DepartureResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDri
     val departureId = MovementId(hexId.sample.get)
 
     val expected =
-      DepartureResponse(
+      MovementResponse(
         _id = departureId,
         enrollmentEORINumber = EORINumber("GB123"),
         movementEORINumber = EORINumber("GB456"),
@@ -72,7 +72,7 @@ class DepartureResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDri
         updated = dateTime
       )
 
-    val actual = DepartureResponse.departureResponseFormat.reads(
+    val actual = MovementResponse.movementResponseFormat.reads(
       Json.obj(
         "_id"                     -> departureId,
         "enrollmentEORINumber"    -> "GB123",

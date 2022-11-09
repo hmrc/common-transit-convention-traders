@@ -46,4 +46,9 @@ class FakeV2ArrivalsController @Inject() ()(implicit val materializer: Materiali
     _ =>
       Accepted(Json.obj("version" -> 2))
   }
+
+  override def getArrivalsForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
+    _ =>
+      Ok(Json.obj("version" -> 2))
+  }
 }

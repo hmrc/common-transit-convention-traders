@@ -30,7 +30,9 @@ import v2.models.EORINumber
 import v2.models.MovementId
 import v2.models.errors.PersistenceError
 import v2.models.responses.ArrivalResponse
+
 import v2.models.responses.MessageSummary
+import v2.models.responses.MovementResponse
 
 import java.time.OffsetDateTime
 import scala.concurrent.ExecutionContext
@@ -49,6 +51,12 @@ trait ArrivalsService {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MessageSummary]]
+
+  def getArrivalsForEori(eori: EORINumber)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, Seq[MovementResponse]]
+
 }
 
 @Singleton
@@ -80,4 +88,17 @@ class ArrivalsServiceImpl @Inject() (persistenceConnector: PersistenceConnector)
           case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
+
+  override def getArrivalsForEori(eori: EORINumber)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, Seq[MovementResponse]] = EitherT(
+    persistenceConnector
+      .getArrivalsForEori(eori)
+      .map(Right(_))
+      .recover {
+        case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.ArrivalsNotFound(eori))
+        case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+      }
+  )
 }
