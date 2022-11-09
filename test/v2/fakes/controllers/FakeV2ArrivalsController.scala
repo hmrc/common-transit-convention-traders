@@ -29,7 +29,6 @@ import play.api.test.Helpers.stubControllerComponents
 import v2.controllers.V2ArrivalsController
 import v2.controllers.stream.StreamingParsers
 import v2.models.MovementId
-
 import java.time.OffsetDateTime
 
 class FakeV2ArrivalsController @Inject() ()(implicit val materializer: Materializer) extends BaseController with V2ArrivalsController with StreamingParsers {

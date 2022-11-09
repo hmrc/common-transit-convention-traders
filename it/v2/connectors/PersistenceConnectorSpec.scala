@@ -52,7 +52,6 @@ import utils.TestMetrics
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
-import v2.models.MovementType
 import v2.models.XmlPayload
 import v2.models.errors.ErrorCode
 import v2.models.errors.PresentationError
@@ -61,6 +60,7 @@ import v2.models.request.MessageType
 import v2.models.request.MessageType.DeclarationData
 import v2.models.responses.ArrivalResponse
 import v2.models.responses.DeclarationResponse
+import v2.models.responses.MovementResponse
 import v2.models.responses.MessageResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
@@ -1012,7 +1012,7 @@ class PersistenceConnectorSpec
     }
   }
 
-  "GET /traders/movements/arrivals" - {
+  "GET /traders/:EORI/movements/arrivals" - {
 
     implicit val hc = HeaderCarrier()
     val eori        = arbitrary[EORINumber].sample.get
