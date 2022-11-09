@@ -66,7 +66,7 @@ object StreamingUtils extends ErrorTranslator {
       Source.single(ByteString(s""""$fieldName":"""".stripMargin)) ++
       // our XML stream that we escape
       stream.map(
-        bs => ByteString(bs.utf8String.replace("\"", "\\\""))
+        bs => ByteString(bs.utf8String.replace(raw"\", raw"\\").replace("\"", "\\\""))
       ) ++
       // and the stream that ends our Json document
       END_TOKEN_SOURCE

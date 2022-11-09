@@ -97,7 +97,7 @@ class StreamingUtilsSpec extends AnyFreeSpec with Matchers with MockitoSugar wit
           )
         )
 
-        val sampleXML = """<ncts:CC004C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec"><messageRecipient>3YDhC2ur8ES</messageRecipient></ncts:CC004C>"""
+        val sampleXML = """<ncts:CC004C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec"><messageRecipient>3YDhC\2ur8ES</messageRecipient></ncts:CC004C>"""
 
         val stream: Source[ByteString, _] = Source.single(ByteString(sampleXML))
 
