@@ -43,9 +43,8 @@ import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.errors.PersistenceError
 import v2.models.responses.ArrivalResponse
-import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
-
+import v2.models.responses.MessageSummary
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
 import scala.concurrent.ExecutionContext.Implicits.global

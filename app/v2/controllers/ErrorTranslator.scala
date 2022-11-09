@@ -17,9 +17,7 @@
 package v2.controllers
 
 import cats.data.EitherT
-import v2.models.errors
 import v2.models.errors._
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 

@@ -16,7 +16,6 @@
 
 package v2.models.responses.hateoas
 
-import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -24,7 +23,6 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import v2.base.CommonGenerators
 import v2.models.EORINumber
-import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.responses.MovementResponse
 

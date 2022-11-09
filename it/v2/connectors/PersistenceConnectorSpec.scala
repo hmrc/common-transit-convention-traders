@@ -66,6 +66,7 @@ import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
 import v2.utils.CommonGenerators
 
+import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -929,9 +930,11 @@ class PersistenceConnectorSpec
       s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals/${arrivalId.value}/messages/"
 
     def targetUrlWithTime(eoriNumber: EORINumber, arrivalId: MovementId, receivedSince: OffsetDateTime) =
-      s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals/${arrivalId.value}/messages/?receivedSince=${DateTimeFormatter.ISO_OFFSET_DATE_TIME
-        .format(receivedSince)}"
-
+      s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals/${arrivalId.value}/messages/?receivedSince=${URLEncoder.encode(
+        DateTimeFormatter.ISO_OFFSET_DATE_TIME
+          .format(receivedSince),
+        StandardCharsets.UTF_8.name()
+      )}"
     "on successful return of message IDs when no filtering is applied, return a success" in forAll(
       arbitrary[EORINumber],
       arbitrary[MovementId],
