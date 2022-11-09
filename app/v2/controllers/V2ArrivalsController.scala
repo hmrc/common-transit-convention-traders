@@ -25,9 +25,6 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
 import metrics.HasActionMetrics
-import metrics.MetricsKeys.Endpoints.GetArrivalsForEori
-import models.domain.Arrivals
-import models.response.HateoasResponseArrivals
 import play.api.Logging
 import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator

@@ -450,70 +450,70 @@ traits:
                   }
                 }
     get:
-       displayName: Get all cached arrivals
-              description: |
-                Retrieve all arrivals that have been updated within the past 31 days.
+      displayName: Get all cached arrivals
+      description: |
+        Retrieve all arrivals that have been updated within the past 31 days.
 
-                You can filter for arrivals updated after a specific date and time.
+        You can filter for arrivals updated after a specific date and time.
 
-                Movements older than 31 days and their related messages are archived and cannot be returned by the API.
+        Movements older than 31 days and their related messages are archived and cannot be returned by the API.
 
-                **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
-              is:
-                - acceptJsonHeader
-                - acceptHeaderInvalid
-              queryParameters:
-                updatedSince:
-                  required: false
-                  type: datetime
-                  description: This is an optional query parameter that you can use to filter for arrivals updated after a specific date and time.
-                  example: 2021-06-21T09:00+00:00
-              (annotations.scope): "common-transit-convention-traders"
-              securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
-              responses:
-                200:
-                  body:
-                    application/json:
-                      description: JSON payload
-                      example: |
-                        {
-                            "_links": {
-                              "self": {
-                                "href": "/customs/transits/movements/arrivals"
-                              }
-                            },
-                            "arrivals": [
-                              {
-                                "_links": {
-                                  "self": {
-                                    "href": "/customs/transits/movements/arrivals/63651574c3447b12"
-                                  },
-                                  "messages": {
-                                    "href": "/customs/transits/movements/arrivals/63651574c3447b12/messages"
-                                  }
-                                },
-                                "id": "63651574c3447b12",
-                                "movementReferenceNumber": "27WF9X1FQ9RCKN0TM3",
-                                "created": "2022-11-04T13:36:52.332Z",
-                                "updated": "2022-11-04T13:36:52.332Z",
-                                "enrollmentEORINumber": "9999912345",
-                                "movementEORINumber": "ezv3Z"
-                              },
-                              {
-                                "_links": {
-                                  "self": {
-                                    "href": "/customs/transits/movements/arrivals/6365135ba5e821ee"
-                                  },
-                                  "messages": {
-                                    "href": "/customs/transits/movements/arrivals/6365135ba5e821ee/messages"
-                                  }
-                                },
-                                "id": "6365135ba5e821ee",
-                                "movementReferenceNumber": "27WF9X1FQ9RCKN0TM3",
-                                "created": "2022-11-04T13:27:55.522Z",
-                                "updated": "2022-11-04T13:27:55.522Z",
-                                "enrollmentEORINumber": "9999912345",
-                                "movementEORINumber": "ezv3Z"
-                              }
-                            ]
-                          }
+        **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
+      is:
+        - acceptJsonHeader
+        - acceptHeaderInvalid
+      queryParameters:
+        updatedSince:
+          required: false
+          type: datetime
+          description: This is an optional query parameter that you can use to filter for arrivals updated after a specific date and time.
+          example: 2021-06-21T09:00+00:00
+      (annotations.scope): "common-transit-convention-traders"
+      securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+      responses:
+        200:
+          body:
+            application/json:
+              description: JSON payload
+              example: |
+                {
+                  "_links": {
+                    "self": {
+                      "href": "/customs/transits/movements/arrivals"
+                    }
+                  },
+                  "arrivals": [
+                    {
+                      "_links": {
+                        "self": {
+                          "href": "/customs/transits/movements/arrivals/63651574c3447b12"
+                        },
+                        "messages": {
+                          "href": "/customs/transits/movements/arrivals/63651574c3447b12/messages"
+                        }
+                      },
+                      "id": "63651574c3447b12",
+                      "movementReferenceNumber": "27WF9X1FQ9RCKN0TM3",
+                      "created": "2022-11-04T13:36:52.332Z",
+                      "updated": "2022-11-04T13:36:52.332Z",
+                      "enrollmentEORINumber": "9999912345",
+                      "movementEORINumber": "ezv3Z"
+                    },
+                    {
+                      "_links": {
+                        "self": {
+                          "href": "/customs/transits/movements/arrivals/6365135ba5e821ee"
+                        },
+                        "messages": {
+                          "href": "/customs/transits/movements/arrivals/6365135ba5e821ee/messages"
+                        }
+                      },
+                      "id": "6365135ba5e821ee",
+                      "movementReferenceNumber": "27WF9X1FQ9RCKN0TM3",
+                      "created": "2022-11-04T13:27:55.522Z",
+                      "updated": "2022-11-04T13:27:55.522Z",
+                      "enrollmentEORINumber": "9999912345",
+                      "movementEORINumber": "ezv3Z"
+                    }
+                  ]
+                }
