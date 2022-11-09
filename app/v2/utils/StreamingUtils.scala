@@ -46,31 +46,29 @@ object StreamingUtils extends ErrorTranslator {
       }
   }
 
-  val START_TOKEN: ByteString                       = ByteString("{")
+  val START_TOKEN: Source[ByteString, NotUsed]      = Source.single(ByteString("{"))
   val END_TOKEN_SOURCE: Source[ByteString, NotUsed] = Source.single(ByteString("\"}"))
 
-  def mergeStreamIntoJson(fields: Seq[(String, JsValue)], fieldName: String, stream: Source[ByteString, _]): Source[ByteString, _] = {
-    // convert fields to bytestrings with their values, need to ensure we keep the field names quoted,
-    // separate with a colon and end with a comma, as per the Json spec
-    val stringifiedFields = fields
-      .map {
-        tuple =>
-          ByteString(s""""${tuple._1}":${Json.stringify(tuple._2)},""")
-      }
-
+  def mergeStreamIntoJson(fields: Seq[(String, JsValue)], fieldName: String, stream: Source[ByteString, _]): Source[ByteString, _] =
     // We need to start the document and add the final field, and prepare for the string data coming in
-    val s: Seq[ByteString] = START_TOKEN +: stringifiedFields :+ ByteString(s""""$fieldName":"""".stripMargin)
-
-    // We will effectively have three streams -- the stream created above...
-    Source.fromIterator[ByteString](
-      () => s.iterator
-    ) ++
+    START_TOKEN ++
+      Source
+        .fromIterator(
+          () => fields.iterator
+        )
+        .map {
+          // convert fields to bytestrings with their values, need to ensure we keep the field names quoted,
+          // separate with a colon and end with a comma, as per the Json spec
+          tuple =>
+            ByteString(s""""${tuple._1}":${Json.stringify(tuple._2)},""")
+        } ++
+      // start adding the new field
+      Source.single(ByteString(s""""$fieldName":"""".stripMargin)) ++
       // our XML stream that we escape
       stream.map(
         bs => ByteString(bs.utf8String.replace("\"", "\\\""))
       ) ++
       // and the stream that ends our Json document
       END_TOKEN_SOURCE
-  }
 
 }
