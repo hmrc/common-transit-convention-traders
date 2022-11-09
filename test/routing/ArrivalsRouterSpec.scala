@@ -24,9 +24,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames
 import play.api.http.Status.ACCEPTED
-
 import play.api.http.Status.BAD_REQUEST
-
 import play.api.http.Status.OK
 import play.api.libs.json.Json
 import play.api.test.FakeHeaders

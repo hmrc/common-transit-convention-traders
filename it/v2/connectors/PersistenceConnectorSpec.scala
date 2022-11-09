@@ -958,7 +958,7 @@ class PersistenceConnectorSpec
     "on successful return of arrival message IDs when filtering by received date is applied, return a success" in forAll(
       arbitrary[EORINumber],
       arbitrary[MovementId],
-      OffsetDateTime.now(ZoneOffset.UTC),
+      arbitrary[OffsetDateTime].sample.get,
       Gen.nonEmptyListOf(arbitrary[MessageSummary])
     ) {
       (eori, arrivalId, time, messageResponse) =>
