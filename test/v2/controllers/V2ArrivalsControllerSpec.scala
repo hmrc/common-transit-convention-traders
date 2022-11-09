@@ -35,6 +35,7 @@ import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import org.mockito.invocation.InvocationOnMock
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
@@ -44,16 +45,19 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.HeaderNames
+import play.api.http.HttpVerbs.GET
 import play.api.http.MimeTypes
 import play.api.http.Status._
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json.Json
+import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.Request
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
 import play.api.test.Helpers
 import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
+import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.TestMetrics
@@ -66,10 +70,13 @@ import v2.models._
 import v2.models.errors._
 import v2.models.request.MessageType
 import v2.models.responses.ArrivalResponse
+import v2.models.responses.MovementResponse
 import v2.models.responses.hateoas._
 import v2.services._
 
 import java.nio.charset.StandardCharsets
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -673,6 +680,82 @@ class V2ArrivalsControllerSpec
       )
 
     }
+  }
+
+  "GET  /traders/movements/arrivals" - {
+    "should return ok with json body for arrivals" in {
+
+      val dateTime = OffsetDateTime.of(2022, 8, 4, 11, 34, 42, 0, ZoneOffset.UTC)
+
+      val movementResponses = Seq(
+        arbitraryMovementResponse.arbitrary.sample.value.copy(created = dateTime, updated = dateTime.plusHours(1)),
+        arbitraryMovementResponse.arbitrary.sample.value.copy(created = dateTime.plusHours(2), updated = dateTime.plusHours(3))
+      )
+
+      when(mockArrivalsPersistenceService.getArrivalsForEori(EORINumber(any()))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenAnswer(
+          _ => EitherT.rightT(movementResponses)
+        )
+      val request = FakeRequest(
+        GET,
+        routing.routes.ArrivalsRouter.getArrivalsForEori().url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
+        AnyContentAsEmpty
+      )
+      val result = sut.getArrivalsForEori(None)(request)
+
+      status(result) mustBe OK
+      contentAsJson(result) mustBe Json.toJson(
+        HateoasArrivalIdsResponse(
+          movementResponses
+        )
+      )
+    }
+
+    "should return arrivals not found if persistence service returns 404" in {
+      val eori = EORINumber("ERROR")
+
+      when(mockArrivalsPersistenceService.getArrivalsForEori(EORINumber(any()))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenAnswer(
+          _ => EitherT.leftT(PersistenceError.ArrivalsNotFound(eori))
+        )
+
+      val request = FakeRequest(
+        GET,
+        routing.routes.ArrivalsRouter.getArrivalsForEori().url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
+        AnyContentAsEmpty
+      )
+      val result = sut.getArrivalsForEori(None)(request)
+
+      status(result) mustBe NOT_FOUND
+      contentAsJson(result) mustBe Json.obj(
+        "message" -> s"Arrival movement IDs for ${eori.value} were not found",
+        "code"    -> "NOT_FOUND"
+      )
+    }
+
+    "should return unexpected error for all other errors" in {
+      when(mockArrivalsPersistenceService.getArrivalsForEori(EORINumber(any()))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenAnswer(
+          _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
+        )
+
+      val request = FakeRequest(
+        GET,
+        routing.routes.ArrivalsRouter.getArrivalsForEori().url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
+        AnyContentAsEmpty
+      )
+      val result = sut.getArrivalsForEori(None)(request)
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "INTERNAL_SERVER_ERROR",
+        "message" -> "Internal server error"
+      )
+    }
+
   }
 
 }

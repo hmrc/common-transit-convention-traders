@@ -32,7 +32,7 @@ import v2.models.MovementId
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
 import v2.models.responses.DeclarationResponse
-import v2.models.responses.DepartureResponse
+import v2.models.responses.MovementResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
 
@@ -62,12 +62,12 @@ trait DeparturesService {
   def getDeparture(eori: EORINumber, departureId: MovementId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, DepartureResponse]
+  ): EitherT[Future, PersistenceError, MovementResponse]
 
   def getDeparturesForEori(eori: EORINumber)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[DepartureResponse]]
+  ): EitherT[Future, PersistenceError, Seq[MovementResponse]]
 
   def updateDeparture(departureId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
@@ -123,7 +123,7 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
   override def getDeparture(eori: EORINumber, departureId: MovementId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, DepartureResponse] =
+  ): EitherT[Future, PersistenceError, MovementResponse] =
     EitherT(
       persistenceConnector
         .getDeparture(eori, departureId)
@@ -137,7 +137,7 @@ class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnecto
   override def getDeparturesForEori(eori: EORINumber)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[DepartureResponse]] = EitherT(
+  ): EitherT[Future, PersistenceError, Seq[MovementResponse]] = EitherT(
     persistenceConnector
       .getDeparturesForEori(eori)
       .map(Right(_))

@@ -25,7 +25,7 @@ import v2.base.CommonGenerators
 import v2.models.EORINumber
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
-import v2.models.responses.DepartureResponse
+import v2.models.responses.MovementResponse
 
 import java.time.OffsetDateTime
 
@@ -37,7 +37,7 @@ class HateoasDepartureIdsResponseSpec extends AnyFreeSpec with Matchers with Opt
       val now           = OffsetDateTime.now()
       val enrolmentEori = arbitrary[EORINumber].sample.value
 
-      val departureResponse1 = DepartureResponse(
+      val departureResponse1 = MovementResponse(
         _id = arbitrary[MovementId].sample.value,
         enrollmentEORINumber = enrolmentEori,
         movementEORINumber = arbitrary[EORINumber].sample.value,
@@ -46,7 +46,7 @@ class HateoasDepartureIdsResponseSpec extends AnyFreeSpec with Matchers with Opt
         updated = now
       )
 
-      val departureResponse2 = DepartureResponse(
+      val departureResponse2 = MovementResponse(
         _id = arbitrary[MovementId].sample.value,
         enrollmentEORINumber = enrolmentEori,
         movementEORINumber = arbitrary[EORINumber].sample.value,

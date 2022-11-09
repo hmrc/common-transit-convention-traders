@@ -42,7 +42,7 @@ import v2.models.MovementId
 import v2.models.request.MessageType
 import v2.models.responses.ArrivalResponse
 import v2.models.responses.DeclarationResponse
-import v2.models.responses.DepartureResponse
+import v2.models.responses.MovementResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
 
@@ -72,12 +72,12 @@ trait PersistenceConnector {
   def getDeparture(eori: EORINumber, movementId: MovementId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[DepartureResponse]
+  ): Future[MovementResponse]
 
   def getDeparturesForEori(eori: EORINumber)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Seq[DepartureResponse]]
+  ): Future[Seq[MovementResponse]]
 
   def post(movementId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
@@ -88,6 +88,11 @@ trait PersistenceConnector {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[ArrivalResponse]
+
+  def getArrivalsForEori(eori: EORINumber)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Seq[MovementResponse]]
 }
 
 @Singleton
@@ -163,7 +168,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
   override def getDeparture(eori: EORINumber, movementId: MovementId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[DepartureResponse] = {
+  ): Future[MovementResponse] = {
     val url = appConfig.movementsUrl.withPath(movementsGetDeparture(eori, movementId))
 
     httpClientV2
@@ -173,7 +178,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       .flatMap {
         response =>
           response.status match {
-            case OK => response.as[DepartureResponse]
+            case OK => response.as[MovementResponse]
             case _  => response.error
           }
       }
@@ -182,7 +187,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
   override def getDeparturesForEori(eori: EORINumber)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Seq[DepartureResponse]] = {
+  ): Future[Seq[MovementResponse]] = {
     val url = appConfig.movementsUrl.withPath(movementsGetAllDepartures(eori))
 
     httpClientV2
@@ -192,7 +197,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       .flatMap {
         response =>
           response.status match {
-            case OK => response.as[Seq[DepartureResponse]]
+            case OK => response.as[Seq[MovementResponse]]
             case _  => response.error
           }
       }
@@ -240,6 +245,25 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
               }
           }
     }
+
+  override def getArrivalsForEori(eori: EORINumber)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Seq[MovementResponse]] = {
+    val url = appConfig.movementsUrl.withPath(movementsGetAllArrivals(eori))
+
+    httpClientV2
+      .get(url"$url")
+      .addHeaders(HeaderNames.ACCEPT -> MimeTypes.JSON)
+      .execute[HttpResponse]
+      .flatMap {
+        response =>
+          response.status match {
+            case OK => response.as[Seq[MovementResponse]]
+            case _  => response.error
+          }
+      }
+  }
 
   private def withReceivedSinceParameter(urlPath: Url, dateTime: Option[OffsetDateTime]) =
     dateTime

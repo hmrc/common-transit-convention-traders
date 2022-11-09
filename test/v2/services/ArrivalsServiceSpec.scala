@@ -23,6 +23,8 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.when
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -31,6 +33,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.http.Status.NOT_FOUND
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.base.CommonGenerators
@@ -38,10 +41,15 @@ import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementReferenceNumber
 import v2.models.errors.PersistenceError
 import v2.models.responses.ArrivalResponse
+import v2.models.responses.MessageSummary
+import v2.models.responses.MovementResponse
 
 import java.nio.charset.StandardCharsets
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -90,6 +98,43 @@ class ArrivalsServiceSpec
         _ mustBe expected
       }
     }
+  }
+
+  "Getting a list of Arrivals (Movement) by EORI" - {
+
+    "when a arrival (movement) is found, should return a Right" in forAll(Gen.listOfN(3, arbitrary[MovementResponse])) {
+
+      expected =>
+        when(mockConnector.getArrivalsForEori(EORINumber("1")))
+          .thenReturn(Future.successful(expected))
+
+        val result = sut.getArrivalsForEori(EORINumber("1"))
+        whenReady(result.value) {
+          _ mustBe Right(expected)
+        }
+    }
+
+    "when a arrival is not found, should return a Left with an ArrivalsNotFound" in {
+      when(mockConnector.getArrivalsForEori(EORINumber("1")))
+        .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
+
+      val result = sut.getArrivalsForEori(EORINumber("1"))
+      whenReady(result.value) {
+        _ mustBe Left(PersistenceError.ArrivalsNotFound(EORINumber("1")))
+      }
+    }
+
+    "on a failed submission, should return a Left with an UnexpectedError" in {
+      val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
+      when(mockConnector.getArrivalsForEori(EORINumber("1")))
+        .thenReturn(Future.failed(error))
+
+      val result = sut.getArrivalsForEori(EORINumber("1"))
+      whenReady(result.value) {
+        _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
+      }
+    }
+
   }
 
 }
