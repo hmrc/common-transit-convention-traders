@@ -24,6 +24,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.libs.json.JsNumber
+import play.api.libs.json.JsNumber
 import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
@@ -54,9 +55,9 @@ class StreamingUtilsSpec extends AnyFreeSpec with Matchers with MockitoSugar wit
 
       "when providing a stream should produce expected Json" in {
 
-        val fields = Seq[(String, JsValue)](
-          "a" -> JsString("b"),
-          "b" -> JsNumber(1),
+        val json = Json.obj(
+          "a" -> "b",
+          "b" -> 1,
           "c" -> Json.obj(
             "d" -> 1,
             "e" -> "f"
@@ -65,7 +66,7 @@ class StreamingUtilsSpec extends AnyFreeSpec with Matchers with MockitoSugar wit
 
         val stream: Source[ByteString, _] = Source.single(ByteString("abc"))
 
-        val resultStream = StreamingUtils.mergeStreamIntoJson(fields, "body", stream)
+        val resultStream = StreamingUtils.mergeStreamIntoJson(json.fields, "body", stream)
         val res = resultStream
           .reduce(_ ++ _)
           .map(
