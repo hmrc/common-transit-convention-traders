@@ -27,7 +27,7 @@ object HateoasMovementIdsResponse extends HateoasResponse {
       "_links" -> Json.obj(
         "self" -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}")
       ),
-      s"${movementType.urlFragment}" -> responses.map(
+      movementType.urlFragment -> responses.map(
         response =>
           Json.obj(
             "_links" -> Json.obj(

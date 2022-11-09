@@ -92,7 +92,7 @@ class ArrivalMessagesControllerSpec
 
   val sourceArrival = ArrivalWithMessages(
     ArrivalId(123),
-    routing.routes.ArrivalsRouter.getArrival(ArrivalId(123).toString).urlWithContext,
+    routing.routes.ArrivalsRouter.getArrival("123").urlWithContext,
     routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(123)).urlWithContext,
     "MRN",
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),

@@ -57,8 +57,8 @@ class HateoasMovementMessageResponseSpec extends AnyFreeSpec with Matchers with 
       val actual = HateoasMovementMessageResponse(departureId, messageId, response, movementType)
       val expected = Json.obj(
         "_links" -> Json.obj(
-          "self"                          -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${departureId.value}/messages/${messageId.value}"),
-          s"${movementType.movementType}" -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${departureId.value}")
+          "self"                    -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${departureId.value}/messages/${messageId.value}"),
+          movementType.movementType -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${departureId.value}")
         ),
         "id"                              -> messageId.value,
         s"${movementType.movementType}Id" -> departureId.value,
@@ -84,8 +84,8 @@ class HateoasMovementMessageResponseSpec extends AnyFreeSpec with Matchers with 
       val actual = HateoasMovementMessageResponse(movementId, messageId, response, movementType)
       val expected = Json.obj(
         "_links" -> Json.obj(
-          "self"                          -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"),
-          s"${movementType.movementType}" -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}")
+          "self"                    -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"),
+          movementType.movementType -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}")
         ),
         "id"                              -> messageId.value,
         s"${movementType.movementType}Id" -> movementId.value,
