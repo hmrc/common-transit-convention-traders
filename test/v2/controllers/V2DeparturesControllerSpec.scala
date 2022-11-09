@@ -289,7 +289,7 @@ class V2DeparturesControllerSpec
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe ACCEPTED
 
-        contentAsJson(result) mustBe Json.toJson(HateoasDepartureDeclarationResponse(MovementId("123")))
+        contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(MovementId("123"), MovementType.Departure))
 
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
         verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
@@ -772,7 +772,9 @@ class V2DeparturesControllerSpec
             val result  = sut.getMessageIds(MovementId("0123456789abcdef"), dateTime)(request)
 
             status(result) mustBe OK
-            contentAsJson(result) mustBe Json.toJson(HateoasDepartureMessageIdsResponse(MovementId("0123456789abcdef"), messageResponse, dateTime))
+            contentAsJson(result) mustBe Json.toJson(
+              HateoasMovementMessageIdsResponse(MovementId("0123456789abcdef"), messageResponse, dateTime, MovementType.Departure)
+            )
         }
     }
 
@@ -852,10 +854,11 @@ class V2DeparturesControllerSpec
 
             status(result) mustBe OK
             contentAsJson(result) mustBe Json.toJson(
-              HateoasDepartureMessageResponse(
+              HateoasMovementMessageResponse(
                 movementId,
                 messageId,
-                if (convertBodyToJson) messageSummaryJson else messageSummaryXml
+                if (convertBodyToJson) messageSummaryJson else messageSummaryXml,
+                MovementType.Departure
               )
             )
           }
@@ -933,8 +936,9 @@ class V2DeparturesControllerSpec
 
       status(result) mustBe OK
       contentAsJson(result) mustBe Json.toJson(
-        HateoasDepartureIdsResponse(
-          departureResponses
+        HateoasMovementIdsResponse(
+          departureResponses,
+          MovementType.Departure
         )
       )
     }
@@ -1105,7 +1109,7 @@ class V2DeparturesControllerSpec
         val result  = sut.attachMessage(departureId)(request)
         status(result) mustBe ACCEPTED
 
-        contentAsJson(result) mustBe Json.toJson(HateoasDepartureUpdateMovementResponse(departureId, MessageId("456")))
+        contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(departureId, MessageId("456"), MovementType.Departure))
 
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationAmendment), any(), eqTo(MimeTypes.XML))(any(), any())
         verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
@@ -1243,7 +1247,7 @@ class V2DeparturesControllerSpec
         val result  = sut.attachMessage(departureId)(request)
         status(result) mustBe ACCEPTED
 
-        contentAsJson(result) mustBe Json.toJson(HateoasDepartureUpdateMovementResponse(departureId, MessageId("456")))
+        contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(departureId, MessageId("456"), MovementType.Departure))
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationAmendment), any(), eqTo(MimeTypes.JSON))(any(), any())

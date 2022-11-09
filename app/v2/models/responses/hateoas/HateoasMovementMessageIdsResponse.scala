@@ -19,29 +19,30 @@ package v2.models.responses.hateoas
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.models.MovementId
+import v2.models.MovementType
 import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime
 
-object HateoasDepartureMessageIdsResponse extends HateoasResponse {
+object HateoasMovementMessageIdsResponse extends HateoasResponse {
 
-  def apply(departureId: MovementId, messageIds: Seq[MessageSummary], receivedSince: Option[OffsetDateTime]): JsObject =
+  def apply(movementId: MovementId, messageIds: Seq[MessageSummary], receivedSince: Option[OffsetDateTime], movementType: MovementType): JsObject =
     Json.obj(
       "_links" -> Json.obj(
-        "self"      -> Json.obj("href" -> messageIdsUri(departureId, receivedSince)),
-        "departure" -> Json.obj("href" -> departureUri(departureId))
+        "self"                          -> Json.obj("href" -> getMessagesUri(movementId, receivedSince, movementType)),
+        s"${movementType.movementType}" -> Json.obj("href" -> getMovementUri(movementId, movementType))
       ),
       "messages" -> messageIds.map(
         message =>
           Json.obj(
             "_links" -> Json.obj(
-              "self"      -> Json.obj("href" -> messageUri(departureId, message.id)),
-              "departure" -> Json.obj("href" -> departureUri(departureId))
+              "self"                          -> Json.obj("href" -> getMessageUri(movementId, message.id, movementType)),
+              s"${movementType.movementType}" -> Json.obj("href" -> getMovementUri(movementId, movementType))
             ),
-            "id"          -> message.id.value,
-            "departureId" -> departureId.value,
-            "received"    -> message.received,
-            "type"        -> message.messageType
+            "id"                              -> message.id.value,
+            s"${movementType.movementType}Id" -> movementId.value,
+            "received"                        -> message.received,
+            "type"                            -> message.messageType
           )
       )
     )

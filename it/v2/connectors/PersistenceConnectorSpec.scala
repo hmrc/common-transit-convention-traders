@@ -60,7 +60,6 @@ import v2.models.request.MessageType
 import v2.models.request.MessageType.DeclarationData
 import v2.models.responses.ArrivalResponse
 import v2.models.responses.DeclarationResponse
-import v2.models.responses.MovementResponse
 import v2.models.responses.MessageResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse

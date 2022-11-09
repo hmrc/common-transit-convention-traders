@@ -28,7 +28,7 @@ import v2.controllers.V2ArrivalsController
 import v2.controllers.stream.StreamingParsers
 import v2.models.{MovementId => V2ArrivalId}
 import models.domain.{ArrivalId => V1ArrivalId}
-
+import v2.models.Bindings._
 import java.time.OffsetDateTime
 
 class ArrivalsRouter @Inject() (

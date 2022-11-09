@@ -35,7 +35,6 @@ import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import org.mockito.invocation.InvocationOnMock
-import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
@@ -70,7 +69,6 @@ import v2.models._
 import v2.models.errors._
 import v2.models.request.MessageType
 import v2.models.responses.ArrivalResponse
-import v2.models.responses.MovementResponse
 import v2.models.responses.hateoas._
 import v2.services._
 
@@ -222,7 +220,7 @@ class V2ArrivalsControllerSpec
         val result  = sut.createArrivalNotification()(request)
         status(result) mustBe ACCEPTED
 
-        contentAsJson(result) mustBe Json.toJson(HateoasArrivalNotificationResponse(MovementId("123")))
+        contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(MovementId("123"), MovementType.Arrival))
 
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.XML))(any(), any())
         verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
@@ -263,7 +261,7 @@ class V2ArrivalsControllerSpec
             val result  = sut.createArrivalNotification()(request)
             status(result) mustBe ACCEPTED
 
-            contentAsJson(result) mustBe Json.toJson(HateoasArrivalNotificationResponse(MovementId("123")))
+            contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(MovementId("123"), MovementType.Arrival))
 
             verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.XML))(any(), any())
             verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
@@ -706,8 +704,9 @@ class V2ArrivalsControllerSpec
 
       status(result) mustBe OK
       contentAsJson(result) mustBe Json.toJson(
-        HateoasArrivalIdsResponse(
-          movementResponses
+        HateoasMovementIdsResponse(
+          movementResponses,
+          MovementType.Arrival
         )
       )
     }
@@ -774,7 +773,7 @@ class V2ArrivalsControllerSpec
         AnyContentAsEmpty
       )
       val result = sut.getArrival(movementResponse._id)(request)
-      9
+
       status(result) mustBe OK
       contentAsJson(result) mustBe Json.toJson(
         HateoasMovementResponse(

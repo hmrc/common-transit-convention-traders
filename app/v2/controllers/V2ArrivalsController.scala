@@ -25,9 +25,6 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
 import metrics.HasActionMetrics
-import metrics.MetricsKeys.Endpoints.GetArrivalsForEori
-import models.domain.Arrivals
-import models.response.HateoasResponseArrivals
 import play.api.Logging
 import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
@@ -98,7 +95,7 @@ class V2ArrivalsControllerImpl @Inject() (
           arrivalResult <- persistAndSend(request.body)
         } yield arrivalResult).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          result => Accepted(HateoasArrivalNotificationResponse(result.arrivalId))
+          result => Accepted(HateoasNewMovementResponse(result.arrivalId, MovementType.Arrival))
         )
     }
 
@@ -112,7 +109,7 @@ class V2ArrivalsControllerImpl @Inject() (
           arrivalResult <- handleXml(xmlSource)
         } yield arrivalResult).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          result => Accepted(HateoasArrivalNotificationResponse(result.arrivalId))
+          result => Accepted(HateoasNewMovementResponse(result.arrivalId, MovementType.Arrival))
         )
     }
 
@@ -149,7 +146,7 @@ class V2ArrivalsControllerImpl @Inject() (
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasArrivalIdsResponse(response)))
+            response => Ok(Json.toJson(HateoasMovementIdsResponse(response, MovementType.Arrival)))
           )
     }
 

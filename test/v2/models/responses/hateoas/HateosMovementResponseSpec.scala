@@ -24,6 +24,7 @@ import play.api.libs.json.Json
 import v2.base.CommonGenerators
 import v2.models.EORINumber
 import v2.models.MovementReferenceNumber
+import v2.models.MovementType
 import v2.models.responses.MovementResponse
 
 import java.time.OffsetDateTime
@@ -33,35 +34,34 @@ class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaChe
 
   private val dateTime = OffsetDateTime.of(2022, 8, 15, 11, 45, 0, 0, ZoneOffset.UTC)
 
-  "with a valid departure response, create a valid HateoasDepartureResponse" in {
-    val movementId = arbitraryMovementId.arbitrary.sample.value
+  for (movementType <- MovementType.values)
+    s"${movementType.movementType} with a valid response, create a valid HateoasMovementResponse" in {
+      val movementId = arbitraryMovementId.arbitrary.sample.value
 
-    val response = MovementResponse(
-      _id = movementId,
-      enrollmentEORINumber = EORINumber("GB123"),
-      movementEORINumber = EORINumber("GB456"),
-      movementReferenceNumber = Some(MovementReferenceNumber("MRN001")),
-      created = dateTime,
-      updated = dateTime
-    )
+      val response = MovementResponse(
+        _id = movementId,
+        enrollmentEORINumber = EORINumber("GB123"),
+        movementEORINumber = EORINumber("GB456"),
+        movementReferenceNumber = Some(MovementReferenceNumber("MRN001")),
+        created = dateTime,
+        updated = dateTime
+      )
 
-    val actual      = HateoasDepartureResponse(movementId, response)
-    val selfUri     = s"/customs/transits/movements/departures/${movementId.value}"
-    val messagesUri = s"/customs/transits/movements/departures/${movementId.value}/messages"
+      val actual = HateoasMovementResponse(movementId, response, movementType)
 
-    val expected = Json.obj(
-      "_links" -> Json.obj(
-        "self"     -> Json.obj("href" -> selfUri),
-        "messages" -> Json.obj("href" -> messagesUri)
-      ),
-      "id"                      -> movementId,
-      "movementReferenceNumber" -> "MRN001",
-      "created"                 -> "2022-08-15T11:45:00Z",
-      "updated"                 -> "2022-08-15T11:45:00Z",
-      "enrollmentEORINumber"    -> "GB123",
-      "movementEORINumber"      -> "GB456"
-    )
+      val expected = Json.obj(
+        "_links" -> Json.obj(
+          "self"     -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}"),
+          "messages" -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages")
+        ),
+        "id"                      -> movementId,
+        "movementReferenceNumber" -> "MRN001",
+        "created"                 -> "2022-08-15T11:45:00Z",
+        "updated"                 -> "2022-08-15T11:45:00Z",
+        "enrollmentEORINumber"    -> "GB123",
+        "movementEORINumber"      -> "GB456"
+      )
 
-    actual mustBe expected
-  }
+      actual mustBe expected
+    }
 }

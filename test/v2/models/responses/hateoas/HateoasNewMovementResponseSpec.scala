@@ -24,24 +24,28 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import v2.base.CommonGenerators
 import v2.models.MovementId
+import v2.models.MovementType
 
-class HateoasArrivalNotificationResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with OptionValues with CommonGenerators {
+class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with OptionValues with CommonGenerators {
 
-  "with a valid message response, create a valid HateoasArrivalNotificationResponse" in {
-    val movementId = arbitrary[MovementId].sample.value
-    val actual     = HateoasArrivalNotificationResponse(movementId)
-    val expected = Json.obj(
-      "_links" -> Json.obj(
-        "self" -> Json.obj(
-          "href" -> s"/customs/transits/movements/arrivals/${movementId.value}"
-        ),
-        "messages" -> Json.obj(
-          "href" -> s"/customs/transits/movements/arrivals/${movementId.value}/messages"
+  for (movementType <- MovementType.values)
+    s"${movementType.movementType} with a valid message response, create a valid HateoasNewMovementResponse" in {
+      val movementId = arbitrary[MovementId].sample.value
+
+      val actual = HateoasNewMovementResponse(movementId, movementType)
+
+      val expected = Json.obj(
+        "_links" -> Json.obj(
+          "self" -> Json.obj(
+            "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}"
+          ),
+          "messages" -> Json.obj(
+            "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages"
+          )
         )
       )
-    )
 
-    actual mustBe expected
-  }
+      actual mustBe expected
+    }
 
 }
