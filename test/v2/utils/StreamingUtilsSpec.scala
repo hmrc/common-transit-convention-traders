@@ -16,10 +16,16 @@
 
 package v2.utils
 
+import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.libs.json.JsNumber
+import play.api.libs.json.JsString
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
@@ -42,6 +48,78 @@ class StreamingUtilsSpec extends AnyFreeSpec with Matchers with MockitoSugar wit
         }
 
       }
+    }
+
+    "mergeStreamIntoJson" - {
+
+      "when providing a stream should produce expected Json" in {
+
+        val fields = Seq[(String, JsValue)](
+          "a" -> JsString("b"),
+          "b" -> JsNumber(1),
+          "c" -> Json.obj(
+            "d" -> 1,
+            "e" -> "f"
+          )
+        )
+
+        val stream: Source[ByteString, _] = Source.single(ByteString("abc"))
+
+        val resultStream = StreamingUtils.mergeStreamIntoJson(fields, "body", stream)
+        val res = resultStream
+          .reduce(_ ++ _)
+          .map(
+            str => Json.parse(str.utf8String)
+          )
+          .runWith(Sink.head)
+        whenReady(res) {
+          _ mustBe Json.obj(
+            "a" -> JsString("b"),
+            "b" -> JsNumber(1),
+            "c" -> Json.obj(
+              "d" -> 1,
+              "e" -> "f"
+            ),
+            "body" -> "abc"
+          )
+        }
+      }
+
+      "when providing a stream that contains XML should produce expected Json wrapping the XML with proper escaping" in {
+
+        val fields = Seq[(String, JsValue)](
+          "a" -> JsString("b"),
+          "b" -> JsNumber(1),
+          "c" -> Json.obj(
+            "d" -> 1,
+            "e" -> "f"
+          )
+        )
+
+        val sampleXML = """<ncts:CC004C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec"><messageRecipient>3YDhC2ur8ES</messageRecipient></ncts:CC004C>"""
+
+        val stream: Source[ByteString, _] = Source.single(ByteString(sampleXML))
+
+        val resultStream = StreamingUtils.mergeStreamIntoJson(fields, "body", stream)
+        val res = resultStream
+          .reduce(_ ++ _)
+          .map(
+            str => Json.parse(str.utf8String)
+          )
+          .runWith(Sink.head)
+        whenReady(res) {
+          _ mustBe Json.obj(
+            "a" -> JsString("b"),
+            "b" -> JsNumber(1),
+            "c" -> Json.obj(
+              "d" -> 1,
+              "e" -> "f"
+            ),
+            "body" -> sampleXML
+          )
+        }
+      }
+
     }
   }
 
