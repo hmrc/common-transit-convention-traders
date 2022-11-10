@@ -19,11 +19,7 @@ package v2.connectors
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.fasterxml.jackson.core.JsonParseException
-import com.github.tomakehurst.wiremock.client.WireMock.aResponse
-import com.github.tomakehurst.wiremock.client.WireMock.equalTo
-import com.github.tomakehurst.wiremock.client.WireMock.get
-import com.github.tomakehurst.wiremock.client.WireMock.post
-import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
+import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
@@ -58,15 +54,9 @@ import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
 import v2.models.request.MessageType.DeclarationData
-import v2.models.responses.ArrivalResponse
-import v2.models.responses.DeclarationResponse
-import v2.models.responses.MovementResponse
-import v2.models.responses.MessageResponse
-import v2.models.responses.MessageSummary
-import v2.models.responses.UpdateMovementResponse
+import v2.models.responses._
 import v2.utils.CommonGenerators
 
-import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -929,12 +919,6 @@ class PersistenceConnectorSpec
     def targetUrl(eoriNumber: EORINumber, arrivalId: MovementId) =
       s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals/${arrivalId.value}/messages/"
 
-    def targetUrlWithTime(eoriNumber: EORINumber, arrivalId: MovementId, receivedSince: OffsetDateTime) =
-      s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals/${arrivalId.value}/messages/?receivedSince=${URLEncoder.encode(
-        DateTimeFormatter.ISO_OFFSET_DATE_TIME
-          .format(receivedSince),
-        StandardCharsets.UTF_8.name()
-      )}"
     "on successful return of message IDs when no filtering is applied, return a success" in forAll(
       arbitrary[EORINumber],
       arbitrary[MovementId],
@@ -961,14 +945,14 @@ class PersistenceConnectorSpec
     "on successful return of arrival message IDs when filtering by received date is applied, return a success" in forAll(
       arbitrary[EORINumber],
       arbitrary[MovementId],
-      OffsetDateTime.now(ZoneOffset.UTC),
+      arbitrary[OffsetDateTime],
       Gen.nonEmptyListOf(arbitrary[MessageSummary])
     ) {
       (eori, arrivalId, time, messageResponse) =>
         server.stubFor(
           get(
-            urlEqualTo(targetUrlWithTime(eori, arrivalId, time))
-          )
+            urlPathEqualTo(targetUrl(eori, arrivalId))
+          ).withQueryParam("receivedSince", equalTo(DateTimeFormatter.ISO_DATE_TIME.format(time)))
             .willReturn(
               aResponse()
                 .withStatus(OK)
