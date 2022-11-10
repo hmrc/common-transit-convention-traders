@@ -56,9 +56,24 @@ trait StreamWithFile {
     result // as cleanup can be done async, we just return this result.
   }
 
-  private def createSource(path: Path, primary: Source[ByteString, _]): Source[ByteString, _] =
+  private def createSource(path: Path, primary: Source[ByteString, _])(implicit mat: Materializer): Source[ByteString, _] = {
+    val preMat = FileIO.toPath(path, Set(StandardOpenOption.WRITE)).preMaterialize()
     primary
-      .alsoTo(FileIO.toPath(path, Set(StandardOpenOption.WRITE)))
-      .via(OrElseOnCancel.orElseOrCancelGraph(FileIO.fromPath(path)))
+      .alsoTo(preMat._2)
+      .via(
+        OrElseOnCancel.orElseOrCancelGraph(
+          // This is trying to create a stream that backpressures until the future from the pre-materialisation
+          // (above) is cleared. preMat will complete when the file write is completed the first time.
+          // Then, we throw away the value of the object, and concatenate with the second object
+          // which will then read from the freshly written file. If the future is already completed,
+          // the file read will occur instantly.
+          Source
+            .future(preMat._1)
+            .mapConcat(
+              _ => Seq[ByteString]()
+            ) ++ FileIO.fromPath(path)
+        )
+      )
+  }
 
 }
