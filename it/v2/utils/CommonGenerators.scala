@@ -26,8 +26,10 @@ import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
+import v2.models.request.MessageType
 import v2.models.request.PushNotificationsAssociation
 import v2.models.responses.MovementResponse
+import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime
 import scala.math.abs
@@ -50,6 +52,9 @@ trait CommonGenerators {
   implicit lazy val arbitraryMovementId: Arbitrary[MovementId] = Arbitrary {
     genShortUUID.map(MovementId(_))
   }
+
+  implicit lazy val arbitraryMessageType: Arbitrary[MessageType] =
+    Arbitrary(Gen.oneOf(MessageType.values))
 
   implicit lazy val arbitraryPushNotificationsAssociation: Arbitrary[PushNotificationsAssociation] = Arbitrary {
     for {
@@ -82,4 +87,13 @@ trait CommonGenerators {
       updated                 <- arbitrary[OffsetDateTime]
     } yield MovementResponse(id, enrollmentEORINumber, movementEORINumber, movementReferenceNumber, created, updated)
   }
+
+  implicit lazy val arbitraryMessageSummary: Arbitrary[MessageSummary] =
+    Arbitrary {
+      for {
+        id             <- arbitrary[MessageId]
+        offsetDateTime <- arbitrary[OffsetDateTime]
+        messageType    <- arbitrary[MessageType]
+      } yield MessageSummary(id, offsetDateTime, messageType, None)
+    }
 }

@@ -43,8 +43,8 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import play.api.http.HeaderNames
 import play.api.http.HttpVerbs.GET
+import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status._
 import play.api.libs.Files.SingletonTemporaryFileCreator
@@ -677,6 +677,62 @@ class V2ArrivalsControllerSpec
         "message" -> "Internal server error"
       )
 
+    }
+  }
+
+  "for retrieving a list of message IDs with given arrivalId" - {
+
+    "when an arrival is found should return list of messages attached with the given arrival" in forAll(
+      Gen.nonEmptyListOf(arbitraryMessageSummaryXml.arbitrary),
+      Gen.option(arbitraryOffsetDateTime.arbitrary)
+    ) {
+      (messageResponse, receivedSince) =>
+        when(mockArrivalsPersistenceService.getArrivalMessageIds(EORINumber(any()), MovementId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.rightT(messageResponse)
+          )
+
+        val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+        val result  = sut.getArrivalMessageIds(MovementId("0123456789abcdef"), receivedSince)(request)
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(
+          HateoasMovementMessageIdsResponse(MovementId("0123456789abcdef"), messageResponse, receivedSince, MovementType.Arrival)
+        )
+    }
+
+    "when no arrival is found should return NOT_FOUND" in forAll(Gen.option(arbitraryOffsetDateTime.arbitrary)) {
+      receivedSince =>
+        when(mockArrivalsPersistenceService.getArrivalMessageIds(EORINumber(any()), MovementId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.leftT(PersistenceError.ArrivalNotFound(MovementId("0123456789abcdef")))
+          )
+
+        val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+        val result  = sut.getArrivalMessageIds(MovementId("0123456789abcdef"), receivedSince)(request)
+
+        status(result) mustBe NOT_FOUND
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "NOT_FOUND",
+          "message" -> "Arrival movement with ID 0123456789abcdef was not found"
+        )
+    }
+
+    "when an unknown error occurs should return INTERNAL_SERVER_ERROR" in forAll(Gen.option(arbitraryOffsetDateTime.arbitrary)) {
+      receivedSince =>
+        when(mockArrivalsPersistenceService.getArrivalMessageIds(EORINumber(any()), MovementId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
+          )
+
+        val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+        val result  = sut.getArrivalMessageIds(MovementId("0123456789abcdef"), receivedSince)(request)
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "INTERNAL_SERVER_ERROR",
+          "message" -> "Internal server error"
+        )
     }
   }
 

@@ -64,7 +64,7 @@ class ResponseFormatterServiceSpec
     val xmlString                 = "<test>example</test>"
     val jsonString                = Json.stringify(Json.obj("test" -> "example"))
     val sourceJson                = singleUseStringSource(jsonString)
-    val messageSummary            = genMessageSummaryXml.arbitrary.sample.get.copy(body = Some(XmlPayload(xmlString)))
+    val messageSummary            = arbitraryMessageSummaryXml.arbitrary.sample.get.copy(body = Some(XmlPayload(xmlString)))
     val messageSummaryWithoutBody = messageSummary.copy(body = None)
 
     "when accept header equals application/vnd.hmrc.2.0+json" - {

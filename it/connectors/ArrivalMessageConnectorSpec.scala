@@ -86,8 +86,8 @@ class ArrivalMessageConnectorSpec
       val connector = app.injector.instanceOf[ArrivalMessageConnector]
       val arrival = Arrival(
         ArrivalId(1),
-        routing.routes.ArrivalsRouter.getArrival(ArrivalId(1).toString).urlWithContext,
-        routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+        routing.routes.ArrivalsRouter.getArrival("1").urlWithContext,
+        routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
         "MRN",
         LocalDateTime.now,
         LocalDateTime.now
@@ -174,8 +174,8 @@ class ArrivalMessageConnectorSpec
       val connector = app.injector.instanceOf[ArrivalMessageConnector]
       val arrival = ArrivalWithMessages(
         ArrivalId(1),
-        routing.routes.ArrivalsRouter.getArrival(ArrivalId(1).toString).urlWithContext,
-        routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+        routing.routes.ArrivalsRouter.getArrival("1").urlWithContext,
+        routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
         "MRN",
         LocalDateTime.now,
         LocalDateTime.now,
@@ -224,8 +224,8 @@ class ArrivalMessageConnectorSpec
       val dateTime  = Some(OffsetDateTime.of(2021, 3, 14, 13, 15, 30, 0, ZoneOffset.ofHours(1)))
       val arrival = ArrivalWithMessages(
         ArrivalId(1),
-        routing.routes.ArrivalsRouter.getArrival(ArrivalId(1).toString).urlWithContext,
-        routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+        routing.routes.ArrivalsRouter.getArrival("1").urlWithContext,
+        routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
         "MRN",
         LocalDateTime.now,
         LocalDateTime.now,
@@ -273,8 +273,8 @@ class ArrivalMessageConnectorSpec
       val connector = app.injector.instanceOf[ArrivalMessageConnector]
       val arrival = Arrival(
         ArrivalId(1),
-        routing.routes.ArrivalsRouter.getArrival(ArrivalId(1).toString).urlWithContext,
-        routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+        routing.routes.ArrivalsRouter.getArrival("1").urlWithContext,
+        routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
         "MRN",
         LocalDateTime.now,
         LocalDateTime.now

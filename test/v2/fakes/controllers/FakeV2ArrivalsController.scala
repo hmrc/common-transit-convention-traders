@@ -29,6 +29,7 @@ import play.api.test.Helpers.stubControllerComponents
 import v2.controllers.V2ArrivalsController
 import v2.controllers.stream.StreamingParsers
 import v2.models.MovementId
+
 import java.time.OffsetDateTime
 
 class FakeV2ArrivalsController @Inject() ()(implicit val materializer: Materializer) extends BaseController with V2ArrivalsController with StreamingParsers {
@@ -38,6 +39,11 @@ class FakeV2ArrivalsController @Inject() ()(implicit val materializer: Materiali
   override def createArrivalNotification(): Action[Source[ByteString, _]] = Action(streamFromMemory) {
     request =>
       request.body.runWith(Sink.ignore)
+      Accepted(Json.obj("version" -> 2))
+  }
+
+  override def getArrivalMessageIds(arrivalId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
+    _ =>
       Accepted(Json.obj("version" -> 2))
   }
 

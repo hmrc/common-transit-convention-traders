@@ -152,6 +152,14 @@ class V2BaseConnectorSpec
     urlPath.toString() mustBe s"/transit-movements/traders/${eori.value}/movements/arrivals/"
   }
 
+  "the get Arrival movement IDs URL on localhost for a given EORI, arrival ID and no filter should be as expected" in {
+    val eori      = arbitrary[EORINumber].sample.value
+    val arrivalId = arbitrary[MovementId].sample.value
+    val urlPath   = Harness.movementsGetArrivalMessageIds(eori, arrivalId)
+
+    urlPath.toString() mustBe s"/transit-movements/traders/${eori.value}/movements/arrivals/${arrivalId.value}/messages/"
+  }
+
   "HttpResponseHelpers" - new V2BaseConnector() {
 
     case class TestObject(string: String, int: Int)

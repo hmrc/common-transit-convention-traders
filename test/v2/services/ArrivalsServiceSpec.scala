@@ -45,6 +45,8 @@ import v2.models.errors.PersistenceError
 import v2.models.responses.ArrivalResponse
 import v2.models.responses.MovementResponse
 import java.nio.charset.StandardCharsets
+import v2.models.responses.MessageSummary
+import java.time.OffsetDateTime
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -93,6 +95,57 @@ class ArrivalsServiceSpec
         _ mustBe expected
       }
     }
+  }
+
+  "Getting a list of Arrival message IDs" - {
+
+    "when an arrival is found, should return a Right of the sequence of message IDs" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId],
+      Gen.option(arbitrary[OffsetDateTime]),
+      Gen.listOfN(3, arbitrary[MessageSummary])
+    ) {
+      (eori, arrivalId, receivedSince, expected) =>
+        when(mockConnector.getArrivalMessageIds(EORINumber(any()), MovementId(any()), any())(any(), any()))
+          .thenReturn(Future.successful(expected))
+
+        val result = sut.getArrivalMessageIds(eori, arrivalId, receivedSince)
+        whenReady(result.value) {
+          _ mustBe Right(expected)
+        }
+    }
+
+    "when an arrival is not found, should return a Left with ArrivalNotFound" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId],
+      Gen.option(arbitrary[OffsetDateTime])
+    ) {
+      (eori, arrivalId, receivedSince) =>
+        when(mockConnector.getArrivalMessageIds(EORINumber(any()), MovementId(any()), any())(any(), any()))
+          .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
+
+        val result = sut.getArrivalMessageIds(eori, arrivalId, receivedSince)
+        whenReady(result.value) {
+          _ mustBe Left(PersistenceError.ArrivalNotFound(arrivalId))
+        }
+    }
+
+    "on a failed submission, should return a Left with an UnexpectedError" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId],
+      Gen.option(arbitrary[OffsetDateTime])
+    ) {
+      (eori, arrivalId, receivedSince) =>
+        val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
+        when(mockConnector.getArrivalMessageIds(EORINumber(any()), MovementId(any()), any())(any(), any()))
+          .thenReturn(Future.failed(error))
+
+        val result = sut.getArrivalMessageIds(eori, arrivalId, receivedSince)
+        whenReady(result.value) {
+          _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
+        }
+    }
+
   }
 
   "Getting a list of Arrivals (Movement) by EORI" - {

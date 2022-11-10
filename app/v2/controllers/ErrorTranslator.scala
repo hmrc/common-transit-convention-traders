@@ -17,13 +17,8 @@
 package v2.controllers
 
 import cats.data.EitherT
-import v2.models.errors.ConversionError
-import v2.models.errors.ExtractionError
-import v2.models.errors.FailedToValidateError
-import v2.models.errors.StreamingError
-import v2.models.errors.PersistenceError
-import v2.models.errors.PresentationError
-import v2.models.errors.RouterError
+import v2.models.errors._
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -52,7 +47,7 @@ trait ErrorTranslator {
     import v2.models.errors.FailedToValidateError._
 
     def convert(validationError: FailedToValidateError): PresentationError = validationError match {
-      case err: UnexpectedError                              => PresentationError.internalServiceError(cause = err.thr)
+      case UnexpectedError(thr)                              => PresentationError.internalServiceError(cause = thr)
       case InvalidMessageTypeError(messageType)              => PresentationError.badRequestError(s"$messageType is not a valid message type")
       case XmlSchemaFailedToValidateError(validationErrors)  => PresentationError.xmlSchemaValidationError(validationErrors = validationErrors)
       case JsonSchemaFailedToValidateError(validationErrors) => PresentationError.jsonSchemaValidationError(validationErrors = validationErrors)
@@ -61,19 +56,20 @@ trait ErrorTranslator {
   }
 
   implicit val persistenceErrorConverter = new Converter[PersistenceError] {
+    import v2.models.errors.PersistenceError._
 
     def convert(persistenceError: PersistenceError): PresentationError = persistenceError match {
-      case PersistenceError.DepartureNotFound(departureId) =>
+      case DepartureNotFound(departureId) =>
         PresentationError.notFoundError(s"Departure movement with ID ${departureId.value} was not found")
-      case PersistenceError.MessageNotFound(movement, message) =>
+      case ArrivalNotFound(arrivalId) =>
+        PresentationError.notFoundError(s"Arrival movement with ID ${arrivalId.value} was not found")
+      case MessageNotFound(movement, message) =>
         PresentationError.notFoundError(s"Message with ID ${message.value} for movement ${movement.value} was not found")
-      case PersistenceError.DeparturesNotFound(eori) =>
+      case DeparturesNotFound(eori) =>
         PresentationError.notFoundError(s"Departure movement IDs for ${eori.value} were not found")
-      case PersistenceError.ArrivalsNotFound(eori) =>
+      case ArrivalsNotFound(eori) =>
         PresentationError.notFoundError(s"Arrival movement IDs for ${eori.value} were not found")
-      case PersistenceError.ArrivalNotFound(movementId) =>
-        PresentationError.notFoundError(s"Arrival movement with ID ${movementId.value} was not found")
-      case err: PersistenceError.UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
+      case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
     }
   }
 
@@ -81,7 +77,7 @@ trait ErrorTranslator {
     import v2.models.errors.RouterError._
 
     override def convert(routerError: RouterError): PresentationError = routerError match {
-      case err: RouterError.UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
+      case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
       case UnrecognisedOffice =>
         PresentationError.badRequestError(
           "The customs office specified for CustomsOfficeOfDestinationActual or CustomsOfficeOfDeparture must be a customs office located in the United Kingdom"
@@ -90,17 +86,19 @@ trait ErrorTranslator {
   }
 
   implicit val conversionErrorConverter = new Converter[ConversionError] {
+    import v2.models.errors.ConversionError._
 
     override def convert(routerError: ConversionError): PresentationError = routerError match {
-      case err: ConversionError.UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
+      case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
     }
   }
 
   implicit val extractionError = new Converter[ExtractionError] {
+    import v2.models.errors.ExtractionError._
 
     override def convert(extractionError: ExtractionError): PresentationError = extractionError match {
-      case ExtractionError.MalformedInput                   => PresentationError.badRequestError("Input was malformed")
-      case ExtractionError.MessageTypeNotFound(messageType) => PresentationError.badRequestError(s"$messageType is not a valid message type")
+      case MalformedInput                   => PresentationError.badRequestError("Input was malformed")
+      case MessageTypeNotFound(messageType) => PresentationError.badRequestError(s"$messageType is not a valid message type")
     }
   }
 

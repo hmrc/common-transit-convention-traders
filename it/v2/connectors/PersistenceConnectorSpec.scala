@@ -19,11 +19,7 @@ package v2.connectors
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.fasterxml.jackson.core.JsonParseException
-import com.github.tomakehurst.wiremock.client.WireMock.aResponse
-import com.github.tomakehurst.wiremock.client.WireMock.equalTo
-import com.github.tomakehurst.wiremock.client.WireMock.get
-import com.github.tomakehurst.wiremock.client.WireMock.post
-import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
+import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
@@ -52,15 +48,12 @@ import utils.TestMetrics
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
-import v2.models.XmlPayload
 import v2.models.errors.ErrorCode
 import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
-import v2.models.request.MessageType.DeclarationData
 import v2.models.responses.ArrivalResponse
 import v2.models.responses.DeclarationResponse
-import v2.models.responses.MessageResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
 import v2.utils.CommonGenerators
@@ -219,23 +212,13 @@ class PersistenceConnectorSpec
 
   "GET /traders/:eori/movements/departure/:departureid/messages/:message" - {
 
-    val now = OffsetDateTime.now(ZoneOffset.UTC)
-
-    lazy val okResult =
-      for {
-        messageId   <- arbitrary[MessageId]
-        body        <- Gen.alphaNumStr
-        messageType <- Gen.oneOf(MessageType.values)
-      } yield MessageResponse(messageId, now, now, messageType, None, None, Some(s"<test>$body</test>"))
-
     def targetUrl(eoriNumber: EORINumber, departureId: MovementId, messageId: MessageId) =
       s"/transit-movements/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/${messageId.value}/"
 
     "on successful message, return a success" in {
       val eori            = arbitrary[EORINumber].sample.get
       val departureId     = arbitrary[MovementId].sample.get
-      val messageId       = arbitrary[MessageId].sample.get
-      val messageResponse = generateResponseWithoutBody(messageId)
+      val messageResponse = arbitraryMessageSummary.arbitrary.sample.get
 
       server.stubFor(
         get(
@@ -389,7 +372,7 @@ class PersistenceConnectorSpec
       val eori        = arbitrary[EORINumber].sample.get
       val departureId = arbitrary[MovementId].sample.get
       val messageResponse = messageIdList.sample.get.map(
-        id => generateResponseWithoutBody(id)
+        id => arbitraryMessageSummary.arbitrary.sample.get.copy(id = id)
       )
 
       server.stubFor(
@@ -417,7 +400,7 @@ class PersistenceConnectorSpec
       val departureId = arbitrary[MovementId].sample.get
       val time        = OffsetDateTime.now(ZoneOffset.UTC)
       val messageResponse = messageIdList.sample.get.map(
-        id => generateResponseWithoutBody(id)
+        id => arbitraryMessageSummary.arbitrary.sample.get.copy(id = id)
       )
 
       server.stubFor(
@@ -744,14 +727,6 @@ class PersistenceConnectorSpec
 
   }
 
-  private def generateResponseWithoutBody(messageId: MessageId) =
-    MessageSummary(
-      messageId,
-      arbitrary[OffsetDateTime].sample.get,
-      DeclarationData,
-      Some(XmlPayload("<CC015C><test>testxml</test></CC015C>"))
-    )
-
   "POST /traders/movements/:movementId/messages" - {
 
     lazy val okResultGen =
@@ -1011,6 +986,172 @@ class PersistenceConnectorSpec
     }
   }
 
+  "GET /traders/:eori/movements/arrivals/:arrivalId/messages" - {
+
+    implicit val hc = HeaderCarrier()
+
+    def targetUrl(eoriNumber: EORINumber, arrivalId: MovementId) =
+      s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals/${arrivalId.value}/messages/"
+
+    "on successful return of message IDs when no filtering is applied, return a success" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId],
+      Gen.nonEmptyListOf(arbitrary[MessageSummary])
+    ) {
+      (eori, arrivalId, messageResponse) =>
+        server.stubFor(
+          get(
+            urlEqualTo(targetUrl(eori, arrivalId))
+          ).willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(
+                Json.toJson(messageResponse).toString()
+              )
+          )
+        )
+        val result = persistenceConnector.getArrivalMessageIds(eori, arrivalId, None)
+        whenReady(result) {
+          _ mustBe messageResponse
+        }
+    }
+
+    "on successful return of arrival message IDs when filtering by received date is applied, return a success" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId],
+      arbitrary[OffsetDateTime],
+      Gen.nonEmptyListOf(arbitrary[MessageSummary])
+    ) {
+      (eori, arrivalId, time, messageResponse) =>
+        server.stubFor(
+          get(
+            urlPathEqualTo(targetUrl(eori, arrivalId))
+          ).withQueryParam("receivedSince", equalTo(DateTimeFormatter.ISO_DATE_TIME.format(time)))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  Json.toJson(messageResponse).toString()
+                )
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val result      = persistenceConnector.getArrivalMessageIds(eori, arrivalId, Some(time))
+        whenReady(result) {
+          _ mustBe messageResponse
+        }
+    }
+
+    "on incorrect Json, return an error" in forAll(arbitrary[EORINumber], arbitrary[MovementId]) {
+      (eori, arrivalId) =>
+        server.stubFor(
+          get(
+            urlEqualTo(targetUrl(eori, arrivalId))
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  "{ \"test\": \"fail\" }"
+                )
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val r = persistenceConnector
+          .getArrivalMessageIds(eori, arrivalId, None)
+          .map(
+            _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
+          )
+          .recover {
+            case JsResult.Exception(_)  => ()
+            case t: TestFailedException => t
+            case thr                    => fail(s"Expected a JsResult.Exception, got $thr")
+          }
+
+        whenReady(r) {
+          _ =>
+        }
+
+    }
+
+    "on not found, return an UpstreamServerError" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId]
+    ) {
+      (eori, arrivalId) =>
+        server.stubFor(
+          get(
+            urlEqualTo(targetUrl(eori, arrivalId))
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(NOT_FOUND)
+                .withBody(
+                  Json.stringify(
+                    Json.obj(
+                      "code"    -> "NOT_FOUND",
+                      "message" -> "not found"
+                    )
+                  )
+                )
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val r = persistenceConnector
+          .getArrivalMessageIds(eori, arrivalId, None)
+          .map(
+            _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
+          )
+          .recover {
+            case UpstreamErrorResponse(_, NOT_FOUND, _, _) => ()
+            case thr                                       => fail(s"Expected an UpstreamErrorResponse with a 404, got $thr")
+          }
+
+        whenReady(r) {
+          _ =>
+        }
+    }
+
+    "on an internal error, return an UpstreamServerError" in forAll(arbitrary[EORINumber], arbitrary[MovementId]) {
+      (eori, arrivalId) =>
+        server.stubFor(
+          get(
+            urlEqualTo(targetUrl(eori, arrivalId))
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(INTERNAL_SERVER_ERROR)
+                .withBody(
+                  Json.stringify(
+                    Json.obj(
+                      "code"    -> "INTERNAL_SERVER_ERROR",
+                      "message" -> "Internal server error"
+                    )
+                  )
+                )
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val r = persistenceConnector
+          .getArrivalMessageIds(eori, arrivalId, None)
+          .map(
+            _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
+          )
+          .recover {
+            case UpstreamErrorResponse(_, INTERNAL_SERVER_ERROR, _, _) => ()
+            case thr                                                   => fail(s"Expected an UpstreamErrorResponse with a 500, got $thr")
+          }
+
+        whenReady(r) {
+          _ =>
+        }
+    }
+  }
+
   "GET /traders/:EORI/movements/arrivals" - {
 
     implicit val hc = HeaderCarrier()
@@ -1025,7 +1166,7 @@ class PersistenceConnectorSpec
         get(
           urlEqualTo(targetUrl(eori))
         )
-          .willReturn(
+          willReturn (
             aResponse()
               .withStatus(OK)
               .withBody(

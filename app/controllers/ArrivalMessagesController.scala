@@ -16,14 +16,14 @@
 
 package controllers
 
-import java.time.OffsetDateTime
-
+import com.google.inject.ImplementedBy
+import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
 import connectors.ArrivalMessageConnector
+import controllers.actions.AnalyseMessageActionProvider
 import controllers.actions.AuthAction
 import controllers.actions.ValidateAcceptJsonHeaderAction
 import controllers.actions.ValidateArrivalMessageAction
-import javax.inject.Inject
 import metrics.HasActionMetrics
 import metrics.MetricsKeys
 import models.MessageType
@@ -42,10 +42,17 @@ import v2.utils.CallOps._
 import utils.ResponseHelper
 import utils.Utils
 
+import java.time.OffsetDateTime
+import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
-import controllers.actions.AnalyseMessageActionProvider
 
+@ImplementedBy(classOf[ArrivalMessagesController])
+trait V1ArrivalMessagesController {
+  def getArrivalMessages(arrivalId: ArrivalId, receivedSince: Option[OffsetDateTime]): Action[AnyContent]
+}
+
+@Singleton
 class ArrivalMessagesController @Inject() (
   cc: ControllerComponents,
   authAction: AuthAction,
@@ -58,7 +65,8 @@ class ArrivalMessagesController @Inject() (
     extends BackendController(cc)
     with HasActionMetrics
     with HttpErrorFunctions
-    with ResponseHelper {
+    with ResponseHelper
+    with V1ArrivalMessagesController {
 
   import MetricsKeys.Endpoints._
 

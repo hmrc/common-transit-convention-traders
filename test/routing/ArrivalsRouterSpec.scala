@@ -39,6 +39,7 @@ import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
 import v2.base.TestActorSystem
+import v2.fakes.controllers.FakeV1ArrivalMessagesController
 import v2.fakes.controllers.FakeV1ArrivalsController
 import v2.fakes.controllers.FakeV2ArrivalsController
 
@@ -52,7 +53,8 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
   val sut = new ArrivalsRouter(
     stubControllerComponents(),
     new FakeV1ArrivalsController(),
-    new FakeV2ArrivalsController()
+    new FakeV2ArrivalsController(),
+    new FakeV1ArrivalMessagesController()
   )
 
   val id = Gen.long
@@ -75,26 +77,18 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
           FakeRequest(method = callValue.method, uri = callValue.url, body = <test></test>, headers = arrivalsHeaders)
         val result = call(sutValue, request)
 
-        // status(result) mustBe expectedStatus
+        status(result) mustBe expectedStatus
         contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
       }
     }
 
-    "when creating an arrival notification" - executeTest(
-      routes.ArrivalsRouter.createArrivalNotification(),
-      sut.createArrivalNotification(),
-      ACCEPTED
-    )
-    "when getting an arrival" - executeTest(
-      routes.ArrivalsRouter.getArrival(id),
-      sut.getArrival(id),
-      OK
-    )
-    "when getting arrivals for a given enrolment EORI" - executeTest(
-      routes.ArrivalsRouter.getArrivalsForEori(),
-      sut.getArrivalsForEori(),
-      OK
-    )
+    "when creating an arrival notification" - executeTest(routes.ArrivalsRouter.createArrivalNotification(), sut.createArrivalNotification(), ACCEPTED)
+
+    "when getting an arrival" - executeTest(routes.ArrivalsRouter.getArrival(id), sut.getArrival(id), OK)
+
+    "when getting arrivals for a given enrolment EORI" - executeTest(routes.ArrivalsRouter.getArrivalsForEori(), sut.getArrivalsForEori(), OK)
+
+    "when getting a list of arrival messages with given arrivalId" - executeTest(routes.ArrivalsRouter.getArrival(id), sut.getArrivalsForEori(), OK)
   }
 
   "route to the version 1 controller" - {
@@ -121,8 +115,12 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
       }
 
     "when creating an arrival notification" - executeTest(routes.ArrivalsRouter.createArrivalNotification(), sut.createArrivalNotification(), ACCEPTED)
+
     "when getting an arrival" - executeTest(routes.ArrivalsRouter.getArrival("123"), sut.getArrival("123"), OK)
+
     "when getting arrivals for a given enrolment EORI" - executeTest(routes.ArrivalsRouter.getArrivalsForEori(), sut.getArrivalsForEori(), OK)
+
+    "when getting a list of arrival messages with given arrivalId" - executeTest(routes.ArrivalsRouter.getArrival("123"), sut.getArrivalsForEori(), OK)
   }
 
 }

@@ -37,10 +37,10 @@ import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
-import v2.models.errors.PresentationError
 import v2.models.AuditType
 import v2.models.MovementId
 import v2.models.MovementType
+import v2.models.errors.PresentationError
 import v2.models.request.MessageType
 import v2.models.responses.ArrivalResponse
 import v2.models.responses.hateoas._
@@ -53,7 +53,9 @@ import scala.concurrent.Future
 trait V2ArrivalsController {
   def createArrivalNotification(): Action[Source[ByteString, _]]
   def getArrival(arrivalId: MovementId): Action[AnyContent]
+  def getArrivalMessageIds(arrivalId: MovementId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
   def getArrivalsForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
+
 }
 
 @Singleton
@@ -173,4 +175,19 @@ class V2ArrivalsControllerImpl @Inject() (
           response => Ok(Json.toJson(HateoasMovementResponse(arrivalId, response, MovementType.Arrival)))
         )
   }
+
+  def getArrivalMessageIds(arrivalId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
+    authActionNewEnrolmentOnly.async {
+      implicit request =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+        arrivalsService
+          .getArrivalMessageIds(request.eoriNumber, arrivalId, receivedSince)
+          .asPresentation
+          .fold(
+            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+            response => Ok(Json.toJson(HateoasMovementMessageIdsResponse(arrivalId, response, receivedSince, MovementType.Arrival)))
+          )
+    }
+
 }

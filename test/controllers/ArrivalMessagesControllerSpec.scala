@@ -93,7 +93,7 @@ class ArrivalMessagesControllerSpec
   val sourceArrival = ArrivalWithMessages(
     ArrivalId(123),
     routing.routes.ArrivalsRouter.getArrival("123").urlWithContext,
-    routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(123)).urlWithContext,
+    routing.routes.ArrivalsRouter.getArrivalMessageIds("123").urlWithContext,
     "MRN",
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
@@ -444,7 +444,7 @@ class ArrivalMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(123)).url,
+        routing.routes.ArrivalsRouter.getArrivalMessageIds("123").url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -464,7 +464,7 @@ class ArrivalMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(123), dateTime).url,
+        routing.routes.ArrivalsRouter.getArrivalMessageIds("123", dateTime).url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -480,7 +480,7 @@ class ArrivalMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(123)).url,
+        routing.routes.ArrivalsRouter.getArrivalMessageIds("123").url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -495,7 +495,7 @@ class ArrivalMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(123)).url,
+        routing.routes.ArrivalsRouter.getArrivalMessageIds("123").url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -514,7 +514,7 @@ class ArrivalMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(123)).url,
+        routing.routes.ArrivalsRouter.getArrivalMessageIds("123").url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )

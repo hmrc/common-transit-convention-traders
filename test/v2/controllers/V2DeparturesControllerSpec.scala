@@ -761,7 +761,7 @@ class V2DeparturesControllerSpec
           .map(
             _ => "with"
           )
-          .getOrElse("without")} a date filter" in forAll(Gen.listOfN(3, genMessageSummaryXml.arbitrary.sample.head)) {
+          .getOrElse("without")} a date filter" in forAll(Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head)) {
           messageResponse =>
             when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), MovementId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
               .thenAnswer(
@@ -815,7 +815,7 @@ class V2DeparturesControllerSpec
   "for retrieving a single message" - {
     val movementId         = arbitraryMovementId.arbitrary.sample.value
     val messageId          = arbitraryMessageId.arbitrary.sample.value
-    val messageSummaryXml  = genMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = Some(XmlPayload("<test>ABC</test>")))
+    val messageSummaryXml  = arbitraryMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = Some(XmlPayload("<test>ABC</test>")))
     val messageSummaryJson = messageSummaryXml.copy(body = Some(JsonPayload("""{"test": "ABC"}""")))
 
     Seq(

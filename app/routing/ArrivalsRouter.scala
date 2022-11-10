@@ -20,21 +20,23 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.google.inject.Inject
+import controllers.V1ArrivalMessagesController
 import controllers.V1ArrivalMovementController
 import play.api.mvc.Action
+import v2.models.Bindings._
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
 import v2.controllers.V2ArrivalsController
 import v2.controllers.stream.StreamingParsers
 import v2.models.{MovementId => V2ArrivalId}
 import models.domain.{ArrivalId => V1ArrivalId}
-import v2.models.Bindings._
 import java.time.OffsetDateTime
 
 class ArrivalsRouter @Inject() (
   val controllerComponents: ControllerComponents,
   v1Arrivals: V1ArrivalMovementController,
-  v2Arrivals: V2ArrivalsController
+  v2Arrivals: V2ArrivalsController,
+  v1ArrivalMessages: V1ArrivalMessagesController
 )(implicit
   val materializer: Materializer
 ) extends BaseController
@@ -62,6 +64,21 @@ class ArrivalsRouter @Inject() (
           v1Arrivals.getArrival(_)
         )
     }
+
+  def getArrivalMessageIds(arrivalId: String, receivedSince: Option[OffsetDateTime] = None): Action[Source[ByteString, _]] = route {
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) =>
+      runIfBound[V2ArrivalId](
+        "arrivalId",
+        arrivalId,
+        v2Arrivals.getArrivalMessageIds(_, receivedSince)
+      )
+    case _ =>
+      runIfBound[V1ArrivalId](
+        "arrivalId",
+        arrivalId,
+        v1ArrivalMessages.getArrivalMessages(_, receivedSince)
+      )
+  }
 
   def getArrivalsForEori(updatedSince: Option[OffsetDateTime] = None): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Arrivals.getArrivalsForEori(updatedSince)

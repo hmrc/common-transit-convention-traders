@@ -61,7 +61,7 @@ trait CommonGenerators {
     Gen.oneOf(AuditType.values)
   }
 
-  implicit lazy val genMessageSummaryXml: Arbitrary[MessageSummary] = Arbitrary {
+  implicit lazy val arbitraryMessageSummaryXml: Arbitrary[MessageSummary] = Arbitrary {
     for {
       received    <- arbitrary[OffsetDateTime]
       messageType <- Gen.oneOf(MessageType.values)

@@ -18,7 +18,6 @@ package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.Constants
-import controllers.routes
 import models.Box
 import models.BoxId
 import models.domain.Arrival
@@ -53,6 +52,7 @@ class ArrivalConnectorSpec
     with ScalaFutures
     with IntegrationPatience
     with ScalaCheckPropertyChecks {
+
   val testBoxId   = BoxId("testBoxId")
   val testBoxName = "testBoxName"
   val testBox     = Box(testBoxId, testBoxName)
@@ -205,8 +205,8 @@ class ArrivalConnectorSpec
       val connector = app.injector.instanceOf[ArrivalConnector]
       val arrival = Arrival(
         ArrivalId(1),
-        routing.routes.ArrivalsRouter.getArrival(ArrivalId(1).toString).urlWithContext,
-        routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+        routing.routes.ArrivalsRouter.getArrival("1").urlWithContext,
+        routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
         "MRN",
         LocalDateTime.now,
         LocalDateTime.now
@@ -238,8 +238,8 @@ class ArrivalConnectorSpec
       val connector = app.injector.instanceOf[ArrivalConnector]
       val arrival = Arrival(
         ArrivalId(1),
-        routing.routes.ArrivalsRouter.getArrival(ArrivalId(1).toString).url,
-        routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+        routing.routes.ArrivalsRouter.getArrival("1").url,
+        routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
         "MRN",
         LocalDateTime.now,
         LocalDateTime.now
@@ -325,8 +325,8 @@ class ArrivalConnectorSpec
         Seq(
           Arrival(
             ArrivalId(1),
-            routing.routes.ArrivalsRouter.getArrival(ArrivalId(1).toString).urlWithContext,
-            routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+            routing.routes.ArrivalsRouter.getArrival("1").urlWithContext,
+            routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
             "MRN",
             LocalDateTime.now,
             LocalDateTime.now
@@ -364,8 +364,8 @@ class ArrivalConnectorSpec
         Seq(
           Arrival(
             ArrivalId(1),
-            routing.routes.ArrivalsRouter.getArrival(ArrivalId(1).toString).urlWithContext,
-            routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+            routing.routes.ArrivalsRouter.getArrival("1").urlWithContext,
+            routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
             "MRN",
             LocalDateTime.now,
             LocalDateTime.now
@@ -404,8 +404,8 @@ class ArrivalConnectorSpec
         Seq(
           Arrival(
             ArrivalId(1),
-            routing.routes.ArrivalsRouter.getArrival(ArrivalId(1).toString).urlWithContext,
-            routes.ArrivalMessagesController.getArrivalMessages(ArrivalId(1)).urlWithContext,
+            routing.routes.ArrivalsRouter.getArrival("1").urlWithContext,
+            routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
             "MRN",
             LocalDateTime.now,
             LocalDateTime.now
