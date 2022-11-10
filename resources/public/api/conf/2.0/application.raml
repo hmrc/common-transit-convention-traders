@@ -168,16 +168,16 @@ traits:
                   departures":[
                    "_links":{
                       "self":{
-                        "href":"/customs/transits/movements/departures/123"
+                        "href":"/customs/transits/movements/departures/6365135ba5e821ee"
                       },
                       "messages":{
-                        "href":"/customs/transits/movements/departures/123/messages"
+                        "href":"/customs/transits/movements/departures/6365135ba5e821ee/messages"
                       }
                     },
-                    "id":"123",
+                    "id":"6365135ba5e821ee",
                     "movementReferenceNumber":"ABC123",
-                    "created":"20220101 101010",
-                    "updated":"20220101 101010",
+                    "created":"2022-11-10T15:32:51.459Z",
+                    "updated":"2022-11-10T15:32:51.459Z",
                     "enrollmentEORINumber": "GB1234567890",
                     "movementEORINumber": "GB1234567890"
                   ]
@@ -207,16 +207,16 @@ traits:
                     {
                       "_links":{
                         "self":{
-                          "href":"/customs/transits/movements/departures/123"
+                          "href":"/customs/transits/movements/departures/6365135ba5e821ee"
                         },
                         "messages":{
-                          "href":"/customs/transits/movements/departures/123/messages"
+                          "href":"/customs/transits/movements/departures/6365135ba5e821ee/messages"
                         }
                       },
-                      "id":"123",
+                      "id":"6365135ba5e821ee",
                       "movementReferenceNumber":"ABC123",
-                      "created":"20220101 101010",
-                      "updated":"20220101 101010",
+                      "created":"2022-11-10T15:32:51.459Z",
+                      "updated":"2022-11-10T15:32:51.459Z",
                       "enrollmentEORINumber": "GB1234567890",
                       "movementEORINumber": "GB1234567890"
                     }
@@ -255,25 +255,25 @@ traits:
                     {
                       "_links":{
                         "self":{
-                          "href":"/customs/transits/movements/departures/123/messages"
+                          "href":"/customs/transits/movements/departures/6365135ba5e821ee/messages"
                         },
                         "departure":{
-                          "href":"/customs/transits/movements/departures/123"
+                          "href":"/customs/transits/movements/departures/6365135ba5e821ee"
                         }
                       },
                       "messages":[
                         {
                           "_links":{
                             "self":{
-                              "href":"/customs/transits/movements/departures/123/message/111"
+                              "href":"/customs/transits/movements/departures/6365135ba5e821ee/message/634982098f02f00a"
                             },
                             "departure":{
-                              "href":"/customs/transits/movements/departures/123"
+                              "href":"/customs/transits/movements/departures/6365135ba5e821ee"
                             }
                           },
-                          "id":"111",
-                          "departureId":"123",
-                          "received":"20220101 100903",
+                          "id":"634982098f02f00a",
+                          "departureId":"6365135ba5e821ee",
+                          "received":"2022-11-10T15:32:51.459Z",
                           "type":"IE015"
                         }
                       ]
@@ -312,10 +312,10 @@ traits:
                     {
                       "_links": {
                         "self": {
-                          "href": "/customs/transits/movements/departures/1/messages/2"
+                          "href": "/customs/transits/movements/departures/6365135ba5e821ee/messages/634982098f02f00a"
                         },
                         "departure": {
-                          "href": "/customs/transits/movements/departures/1"
+                          "href": "/customs/transits/movements/departures/6365135ba5e821ee"
                         }
                       }
                     }
@@ -373,12 +373,10 @@ traits:
                             "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
                           }
                         },
-                        "departure":{
-                          "id": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
-                        },
-                        "id": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2",
+                        "id": "62f4ebbb765ba8c2",
+                        "departureId": "62f4ebbbf581d4aa",
                         "received": "2022-08-11T11:44:59.83705",
-                        "messageType": "IE015",
+                        "type": "IE015",
                         "body": "<ncts:CC015C PhaseID=\"NCTS5.0\" xmlns:ncts=\"http://ncts.dgtaxud.ec\">...</ncts:CC015C>"
                       }
                   application/json:
@@ -449,70 +447,6 @@ traits:
                     }
                   }
                 }
-
-    /{arrivalId}/messages:
-         get:
-            displayName: Get all cached messages related to an arrival
-            description: |
-              Retrieve all messages related to a specific arrival that have been received within the past 31 days.
-
-              You can filter for arrivals received after a specific date and time.
-
-              Movements older than 31 days are archived, so any messages related to them cannot be returned by the API.
-
-              **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
-            is:
-              - acceptJsonHeader
-              - acceptHeaderInvalid
-            queryParameters:
-              receivedSince:
-                required: false
-                type: datetime
-                description: This is an optional query parameter that you can use to filter for arrivals received after a specific date and time.
-                example: 2021-06-21T09:00+00:00
-            (annotations.scope): "common-transit-convention-traders"
-            securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
-            responses:
-              200:
-                body:
-                   application/json:
-                     description: JSON payload
-                     example: |
-                       {
-                          "_links":{
-                             "self":{
-                                "href":"/customs/transits/movements/arrivals/63498209a2d89ad8/messages"
-                             },
-                             "arrival":{
-                                "href":"/customs/transits/movements/arrivals/63498209a2d89ad8"
-                             }
-                          },
-                          "messages":[
-                             {
-                                "_links":{
-                                    "self":{
-                                       "href":"/customs/transits/movements/arrivals/63498209a2d89ad8/messages/634982098f02f00a"
-                                    },
-                                    "arrival":{
-                                       "href":"/customs/transits/movements/arrivals/63498209a2d89ad8"
-                                    }
-                                },
-                                "id":"634982098f02f00a",
-                                "arrivalId":"63498209a2d89ad8",
-                                "received":"2021-06-21T09:00+00:00",
-                                "type":"IE007"
-                             }
-                          ]
-                       }
-              404:
-                body:
-                  application/json:
-                    type: types.errorResponse
-                    examples:
-                      notFound:
-                        description: The specified arrival does not exist, has been archived or is not available to the EORI number.
-                        value:
-                          code: NOT_FOUND
     get:
       displayName: Get all cached arrivals
       description: |
@@ -581,3 +515,105 @@ traits:
                     }
                   ]
                 }
+    /{arrivalId}:
+      get:
+        displayName: Get a cached arrival for an arrival ID
+        description: |
+          Retrieve a specific arrival notification sent to the Customs Office of Destination within the past 31 days.
+
+          Movements older than 31 days and their related messages are archived and cannot be returned by the API.
+
+          **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
+        is:
+          - acceptJsonHeader
+          - acceptHeaderInvalid
+        (annotations.scope): "common-transit-convention-traders"
+        securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+        responses:
+          200:
+            body:
+              application/json:
+                description: JSON payload
+                example: |
+                    {
+                      "_links":{
+                        "self":{
+                          "href":"/customs/transits/movements/arrivals/6365135ba5e821ee"
+                        },
+                        "messages":{
+                          "href":"/customs/transits/movements/arrivals/6365135ba5e821ee/messages"
+                        }
+                      },
+                      "id":"6365135ba5e821ee",
+                      "movementReferenceNumber":"ABC123",
+                      "created":"2022-11-10T15:32:51.459Z",
+                      "updated":"2022-11-10T15:32:51.459Z",
+                      "enrollmentEORINumber": "GB1234567890",
+                      "movementEORINumber": "GB1234567890"
+                    }
+          404:
+            description: The specified departure does not exist, has been archived or is not available to the EORI number.
+      /messages:
+         get:
+            displayName: Get all cached messages related to an arrival
+            description: |
+              Retrieve all messages related to a specific arrival that have been received within the past 31 days.
+
+              You can filter for arrivals received after a specific date and time.
+
+              Movements older than 31 days are archived, so any messages related to them cannot be returned by the API.
+
+              **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
+            is:
+              - acceptJsonHeader
+              - acceptHeaderInvalid
+            queryParameters:
+              receivedSince:
+                required: false
+                type: datetime
+                description: This is an optional query parameter that you can use to filter for arrivals received after a specific date and time.
+                example: 2021-06-21T09:00+00:00
+            (annotations.scope): "common-transit-convention-traders"
+            securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+            responses:
+              200:
+                body:
+                   application/json:
+                     description: JSON payload
+                     example: |
+                       {
+                          "_links":{
+                             "self":{
+                                "href":"/customs/transits/movements/arrivals/63498209a2d89ad8/messages"
+                             },
+                             "arrival":{
+                                "href":"/customs/transits/movements/arrivals/63498209a2d89ad8"
+                             }
+                          },
+                          "messages":[
+                             {
+                                "_links":{
+                                    "self":{
+                                       "href":"/customs/transits/movements/arrivals/63498209a2d89ad8/messages/634982098f02f00a"
+                                    },
+                                    "arrival":{
+                                       "href":"/customs/transits/movements/arrivals/63498209a2d89ad8"
+                                    }
+                                },
+                                "id":"634982098f02f00a",
+                                "arrivalId":"63498209a2d89ad8",
+                                "received":"2022-11-10T15:32:51.459Z",
+                                "type":"IE007"
+                             }
+                          ]
+                       }
+              404:
+                body:
+                  application/json:
+                    type: types.errorResponse
+                    examples:
+                      notFound:
+                        description: The specified arrival does not exist, has been archived or is not available to the EORI number.
+                        value:
+                          code: NOT_FOUND
+
