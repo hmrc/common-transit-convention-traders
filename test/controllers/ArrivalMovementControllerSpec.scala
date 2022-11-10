@@ -53,7 +53,7 @@ import play.api.test.Helpers.headers
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
-import utils.CallOps._
+import v2.utils.CallOps._
 import utils.TestMetrics
 
 import scala.concurrent.Future
@@ -84,7 +84,7 @@ class ArrivalMovementControllerSpec
 
   val sourceArrival = Arrival(
     ArrivalId(123),
-    routes.ArrivalMovementController.getArrival(ArrivalId(123)).urlWithContext,
+    routing.routes.ArrivalsRouter.getArrival("123").urlWithContext,
     routing.routes.ArrivalsRouter.getArrivalMessageIds("123").urlWithContext,
     "MRN",
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
@@ -141,7 +141,7 @@ class ArrivalMovementControllerSpec
 
       status(result) mustBe ACCEPTED
       contentAsJson(result) mustBe expectedJson
-      headers(result) must contain(LOCATION -> routes.ArrivalMovementController.getArrival(ArrivalId(123)).urlWithContext)
+      headers(result) must contain(LOCATION -> routing.routes.ArrivalsRouter.getArrival("123").urlWithContext)
     }
 
     "must return BadRequest when containing MesSenMES3" in {
@@ -191,7 +191,7 @@ class ArrivalMovementControllerSpec
 
       status(result) mustBe ACCEPTED
       contentAsJson(result) mustBe expectedJson
-      headers(result) must contain(LOCATION -> routes.ArrivalMovementController.getArrival(ArrivalId(123)).urlWithContext)
+      headers(result) must contain(LOCATION -> routing.routes.ArrivalsRouter.getArrival("123").urlWithContext)
     }
 
     "must return UnsupportedMediaType when Content-Type is JSON" in {
@@ -256,7 +256,7 @@ class ArrivalMovementControllerSpec
 
       status(result) mustBe ACCEPTED
       contentAsJson(result) mustBe expectedJson
-      headers(result) must contain(LOCATION -> routes.ArrivalMovementController.getArrival(ArrivalId(123)).urlWithContext)
+      headers(result) must contain(LOCATION -> routing.routes.ArrivalsRouter.getArrival("123").urlWithContext)
     }
 
     "must return InternalServerError when unsuccessful" in {
@@ -295,7 +295,7 @@ class ArrivalMovementControllerSpec
 
       status(result) mustBe ACCEPTED
       contentAsJson(result) mustBe expectedJson
-      headers(result) must contain(LOCATION -> routes.ArrivalMovementController.getArrival(ArrivalId(123)).urlWithContext)
+      headers(result) must contain(LOCATION -> routing.routes.ArrivalsRouter.getArrival("123").urlWithContext)
     }
 
     "must return UnsupportedMediaType when Content-Type is JSON" in {
@@ -354,7 +354,7 @@ class ArrivalMovementControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.ArrivalMovementController.getArrival(ArrivalId(123)).url,
+        routing.routes.ArrivalsRouter.getArrival("123").url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -370,7 +370,7 @@ class ArrivalMovementControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.ArrivalMovementController.getArrival(ArrivalId(123)).url,
+        routing.routes.ArrivalsRouter.getArrival("123").url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -385,7 +385,7 @@ class ArrivalMovementControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.ArrivalMovementController.getArrival(ArrivalId(123)).url,
+        routing.routes.ArrivalsRouter.getArrival("123").url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )

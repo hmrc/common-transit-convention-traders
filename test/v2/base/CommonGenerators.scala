@@ -30,7 +30,9 @@ import v2.models.request.MessageType
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 
+import java.time.Instant
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 trait CommonGenerators {
 
@@ -59,7 +61,7 @@ trait CommonGenerators {
     Gen.oneOf(AuditType.values)
   }
 
-  implicit lazy val genMessageSummaryXml: Arbitrary[MessageSummary] = Arbitrary {
+  implicit lazy val arbitraryMessageSummaryXml: Arbitrary[MessageSummary] = Arbitrary {
     for {
       received    <- arbitrary[OffsetDateTime]
       messageType <- Gen.oneOf(MessageType.values)
@@ -76,15 +78,23 @@ trait CommonGenerators {
     Gen.oneOf(MovementType.values)
   }
 
+  // Restricts the date times to the range of positive long numbers to avoid overflows.
+  implicit lazy val arbitraryOffsetDateTime: Arbitrary[OffsetDateTime] =
+    Arbitrary {
+      for {
+        millis <- Gen.chooseNum(0, Long.MaxValue / 1000L)
+      } yield OffsetDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneOffset.UTC)
+    }
+
   implicit lazy val arbitraryMovementResponse: Arbitrary[MovementResponse] = Arbitrary {
     for {
       id                      <- arbitrary[MovementId]
       enrollmentEORINumber    <- arbitrary[EORINumber]
       movementEORINumber      <- arbitrary[EORINumber]
-      movementReferenceNumber <- arbitrary[Option[MovementReferenceNumber]]
-      created                 <- arbitrary[OffsetDateTime]
-      updated                 <- arbitrary[OffsetDateTime]
-    } yield MovementResponse(id, enrollmentEORINumber, movementEORINumber, movementReferenceNumber, created, updated)
+      movementReferenceNumber <- arbitrary[MovementReferenceNumber]
+      created                 <- arbitraryOffsetDateTime.arbitrary
+      updated                 <- arbitraryOffsetDateTime.arbitrary
+    } yield MovementResponse(id, enrollmentEORINumber, movementEORINumber, Some(movementReferenceNumber), created, updated)
   }
 
 }

@@ -289,7 +289,7 @@ class V2DeparturesControllerSpec
         val result  = sut.submitDeclaration()(request)
         status(result) mustBe ACCEPTED
 
-        contentAsJson(result) mustBe Json.toJson(HateoasDepartureDeclarationResponse(MovementId("123")))
+        contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(MovementId("123"), MovementType.Departure))
 
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
         verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
@@ -761,7 +761,7 @@ class V2DeparturesControllerSpec
           .map(
             _ => "with"
           )
-          .getOrElse("without")} a date filter" in forAll(Gen.listOfN(3, genMessageSummaryXml.arbitrary.sample.head)) {
+          .getOrElse("without")} a date filter" in forAll(Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head)) {
           messageResponse =>
             when(mockDeparturesPersistenceService.getMessageIds(EORINumber(any()), MovementId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
               .thenAnswer(
@@ -772,7 +772,9 @@ class V2DeparturesControllerSpec
             val result  = sut.getMessageIds(MovementId("0123456789abcdef"), dateTime)(request)
 
             status(result) mustBe OK
-            contentAsJson(result) mustBe Json.toJson(HateoasDepartureMessageIdsResponse(MovementId("0123456789abcdef"), messageResponse, dateTime))
+            contentAsJson(result) mustBe Json.toJson(
+              HateoasMovementMessageIdsResponse(MovementId("0123456789abcdef"), messageResponse, dateTime, MovementType.Departure)
+            )
         }
     }
 
@@ -813,7 +815,7 @@ class V2DeparturesControllerSpec
   "for retrieving a single message" - {
     val movementId         = arbitraryMovementId.arbitrary.sample.value
     val messageId          = arbitraryMessageId.arbitrary.sample.value
-    val messageSummaryXml  = genMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = Some(XmlPayload("<test>ABC</test>")))
+    val messageSummaryXml  = arbitraryMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = Some(XmlPayload("<test>ABC</test>")))
     val messageSummaryJson = messageSummaryXml.copy(body = Some(JsonPayload("""{"test": "ABC"}""")))
 
     Seq(
@@ -852,10 +854,11 @@ class V2DeparturesControllerSpec
 
             status(result) mustBe OK
             contentAsJson(result) mustBe Json.toJson(
-              HateoasDepartureMessageResponse(
+              HateoasMovementMessageResponse(
                 movementId,
                 messageId,
-                if (convertBodyToJson) messageSummaryJson else messageSummaryXml
+                if (convertBodyToJson) messageSummaryJson else messageSummaryXml,
+                MovementType.Departure
               )
             )
           }
@@ -933,8 +936,9 @@ class V2DeparturesControllerSpec
 
       status(result) mustBe OK
       contentAsJson(result) mustBe Json.toJson(
-        HateoasDepartureIdsResponse(
-          departureResponses
+        HateoasMovementIdsResponse(
+          departureResponses,
+          MovementType.Departure
         )
       )
     }
@@ -1019,7 +1023,7 @@ class V2DeparturesControllerSpec
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(
-          HateoasDepartureResponse(
+          HateoasMovementResponse(
             departureId,
             MovementResponse(
               departureId,
@@ -1028,7 +1032,8 @@ class V2DeparturesControllerSpec
               Some(mrn),
               createdTime,
               createdTime
-            )
+            ),
+            MovementType.Departure
           )
         )
     }
@@ -1104,7 +1109,7 @@ class V2DeparturesControllerSpec
         val result  = sut.attachMessage(departureId)(request)
         status(result) mustBe ACCEPTED
 
-        contentAsJson(result) mustBe Json.toJson(HateoasDepartureUpdateMovementResponse(departureId, MessageId("456")))
+        contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(departureId, MessageId("456"), MovementType.Departure))
 
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationAmendment), any(), eqTo(MimeTypes.XML))(any(), any())
         verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
@@ -1242,7 +1247,7 @@ class V2DeparturesControllerSpec
         val result  = sut.attachMessage(departureId)(request)
         status(result) mustBe ACCEPTED
 
-        contentAsJson(result) mustBe Json.toJson(HateoasDepartureUpdateMovementResponse(departureId, MessageId("456")))
+        contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(departureId, MessageId("456"), MovementType.Departure))
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationAmendment), any(), eqTo(MimeTypes.JSON))(any(), any())

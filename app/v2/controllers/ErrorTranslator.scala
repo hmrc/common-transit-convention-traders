@@ -18,6 +18,7 @@ package v2.controllers
 
 import cats.data.EitherT
 import v2.models.errors._
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -46,7 +47,7 @@ trait ErrorTranslator {
     import v2.models.errors.FailedToValidateError._
 
     def convert(validationError: FailedToValidateError): PresentationError = validationError match {
-      case err: UnexpectedError                              => PresentationError.internalServiceError(cause = err.thr)
+      case UnexpectedError(thr)                              => PresentationError.internalServiceError(cause = thr)
       case InvalidMessageTypeError(messageType)              => PresentationError.badRequestError(s"$messageType is not a valid message type")
       case XmlSchemaFailedToValidateError(validationErrors)  => PresentationError.xmlSchemaValidationError(validationErrors = validationErrors)
       case JsonSchemaFailedToValidateError(validationErrors) => PresentationError.jsonSchemaValidationError(validationErrors = validationErrors)
@@ -68,7 +69,7 @@ trait ErrorTranslator {
         PresentationError.notFoundError(s"Departure movement IDs for ${eori.value} were not found")
       case ArrivalsNotFound(eori) =>
         PresentationError.notFoundError(s"Arrival movement IDs for ${eori.value} were not found")
-      case err: UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
+      case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
     }
   }
 
@@ -76,7 +77,7 @@ trait ErrorTranslator {
     import v2.models.errors.RouterError._
 
     override def convert(routerError: RouterError): PresentationError = routerError match {
-      case err: RouterError.UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
+      case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
       case UnrecognisedOffice =>
         PresentationError.badRequestError(
           "The customs office specified for CustomsOfficeOfDestinationActual or CustomsOfficeOfDeparture must be a customs office located in the United Kingdom"
@@ -85,17 +86,19 @@ trait ErrorTranslator {
   }
 
   implicit val conversionErrorConverter = new Converter[ConversionError] {
+    import v2.models.errors.ConversionError._
 
     override def convert(routerError: ConversionError): PresentationError = routerError match {
-      case err: ConversionError.UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
+      case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
     }
   }
 
   implicit val extractionError = new Converter[ExtractionError] {
+    import v2.models.errors.ExtractionError._
 
     override def convert(extractionError: ExtractionError): PresentationError = extractionError match {
-      case ExtractionError.MalformedInput                   => PresentationError.badRequestError("Input was malformed")
-      case ExtractionError.MessageTypeNotFound(messageType) => PresentationError.badRequestError(s"$messageType is not a valid message type")
+      case MalformedInput                   => PresentationError.badRequestError("Input was malformed")
+      case MessageTypeNotFound(messageType) => PresentationError.badRequestError(s"$messageType is not a valid message type")
     }
   }
 

@@ -54,7 +54,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[PersistenceConnectorImpl])
 trait PersistenceConnector {
 
-  def post(eori: EORINumber, source: Source[ByteString, _])(implicit
+  def postDeparture(eori: EORINumber, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[DeclarationResponse]
@@ -79,7 +79,7 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[Seq[MovementResponse]]
 
-  def post(movementId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
+  def postMessage(movementId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[UpdateMovementResponse]
@@ -98,6 +98,11 @@ trait PersistenceConnector {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MovementResponse]]
+
+  def getArrival(eori: EORINumber, movementId: MovementId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[MovementResponse]
 }
 
 @Singleton
@@ -107,7 +112,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     with V2BaseConnector
     with Logging {
 
-  override def post(eori: EORINumber, source: Source[ByteString, _])(implicit
+  override def postDeparture(eori: EORINumber, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[DeclarationResponse] =
@@ -208,7 +213,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       }
   }
 
-  override def post(movementId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
+  override def postMessage(movementId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[UpdateMovementResponse] =
@@ -298,4 +303,22 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       )
       .getOrElse(urlPath)
 
+  override def getArrival(eori: EORINumber, movementId: MovementId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[MovementResponse] = {
+    val url = appConfig.movementsUrl.withPath(movementsGetArrival(eori, movementId))
+
+    httpClientV2
+      .get(url"$url")
+      .addHeaders(HeaderNames.ACCEPT -> MimeTypes.JSON)
+      .execute[HttpResponse]
+      .flatMap {
+        response =>
+          response.status match {
+            case OK => response.as[MovementResponse]
+            case _  => response.error
+          }
+      }
+  }
 }

@@ -52,6 +52,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[V2ArrivalsControllerImpl])
 trait V2ArrivalsController {
   def createArrivalNotification(): Action[Source[ByteString, _]]
+  def getArrival(arrivalId: MovementId): Action[AnyContent]
   def getArrivalMessageIds(arrivalId: MovementId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
   def getArrivalsForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
 
@@ -96,7 +97,7 @@ class V2ArrivalsControllerImpl @Inject() (
           arrivalResult <- persistAndSend(request.body)
         } yield arrivalResult).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          result => Accepted(HateoasArrivalNotificationResponse(result.arrivalId))
+          result => Accepted(HateoasNewMovementResponse(result.arrivalId, MovementType.Arrival))
         )
     }
 
@@ -110,7 +111,7 @@ class V2ArrivalsControllerImpl @Inject() (
           arrivalResult <- handleXml(xmlSource)
         } yield arrivalResult).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          result => Accepted(HateoasArrivalNotificationResponse(result.arrivalId))
+          result => Accepted(HateoasNewMovementResponse(result.arrivalId, MovementType.Arrival))
         )
     }
 
@@ -147,7 +148,7 @@ class V2ArrivalsControllerImpl @Inject() (
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasArrivalIdsResponse(response)))
+            response => Ok(Json.toJson(HateoasMovementIdsResponse(response, MovementType.Arrival)))
           )
     }
 
@@ -162,6 +163,19 @@ class V2ArrivalsControllerImpl @Inject() (
         .asPresentation
     } yield arrivalResult
 
+  def getArrival(arrivalId: MovementId): Action[AnyContent] = authActionNewEnrolmentOnly.async {
+    implicit request =>
+      implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+      arrivalsService
+        .getArrival(request.eoriNumber, arrivalId)
+        .asPresentation
+        .fold(
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          response => Ok(Json.toJson(HateoasMovementResponse(arrivalId, response, MovementType.Arrival)))
+        )
+  }
+
   def getArrivalMessageIds(arrivalId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
     authActionNewEnrolmentOnly.async {
       implicit request =>
@@ -172,7 +186,7 @@ class V2ArrivalsControllerImpl @Inject() (
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasArrivalMessageIdsResponse(arrivalId, response, receivedSince)))
+            response => Ok(Json.toJson(HateoasMovementMessageIdsResponse(arrivalId, response, receivedSince, MovementType.Arrival)))
           )
     }
 

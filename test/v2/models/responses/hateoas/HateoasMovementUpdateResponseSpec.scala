@@ -24,25 +24,27 @@ import play.api.libs.json.Json
 import v2.base.CommonGenerators
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementType
 
-class HateoasDepartureUpdateMovementResponseSpec extends AnyFreeSpec with Matchers with OptionValues with CommonGenerators {
+class HateoasMovementUpdateResponseSpec extends AnyFreeSpec with Matchers with OptionValues with CommonGenerators {
 
-  "with a valid departure and message response create a valid HateoasDepartureUpdateMovementResponse" in {
-    val departureId = arbitrary[MovementId].sample.value
-    val messageId   = arbitrary[MessageId].sample.value
-    val actual      = HateoasDepartureUpdateMovementResponse(departureId, messageId)
-    val expected = Json.obj(
-      "_links" -> Json.obj(
-        "departure" -> Json.obj(
-          "href" -> s"/customs/transits/movements/departures/${departureId.value}"
-        ),
-        "self" -> Json.obj(
-          "href" -> s"/customs/transits/movements/departures/${departureId.value}/messages/${messageId.value}"
+  for (movementType <- MovementType.values)
+    s"with a valid ${movementType.movementType} and message response create a valid HateoasMovementUpdateResponse" in {
+      val movementId = arbitrary[MovementId].sample.value
+      val messageId  = arbitrary[MessageId].sample.value
+      val actual     = HateoasMovementUpdateResponse(movementId, messageId, movementType)
+      val expected = Json.obj(
+        "_links" -> Json.obj(
+          movementType.movementType -> Json.obj(
+            "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}"
+          ),
+          "self" -> Json.obj(
+            "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
+          )
         )
       )
-    )
 
-    actual mustBe expected
-  }
+      actual mustBe expected
+    }
 
 }

@@ -16,17 +16,22 @@
 
 package routing
 
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import akka.util.Timeout
+import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames
+import play.api.http.MimeTypes
 import play.api.http.Status.ACCEPTED
-import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.OK
 import play.api.libs.json.Json
+import play.api.mvc.Action
+import play.api.mvc.Call
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
 import play.api.test.Helpers.call
@@ -39,6 +44,7 @@ import v2.fakes.controllers.FakeV1ArrivalsController
 import v2.fakes.controllers.FakeV2ArrivalsController
 
 import scala.concurrent.duration.DurationInt
+import scala.math.abs
 
 class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar with TestActorSystem {
 
@@ -51,149 +57,70 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
     new FakeV1ArrivalMessagesController()
   )
 
-  "when creating a Arrival Notification" - {
-    "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
+  val id = Gen.long
+    .map {
+      l: Long =>
+        f"${BigInt(abs(l))}%016x"
+    }
+    .sample
+    .get
 
+  "route to the version 2 controller" - {
+    def executeTest(callValue: Call, sutValue: => Action[Source[ByteString, _]], expectedStatus: Int) = {
       val arrivalsHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml")
+        Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
       )
 
-      "must route to the v2 controller and return Accepted when successful" in {
+      s"when the accept header equals application/vnd.hmrc.2.0+json, it returns status code $expectedStatus" in {
 
         val request =
-          FakeRequest(method = "POST", uri = routes.ArrivalsRouter.createArrivalNotification().url, body = <test></test>, headers = arrivalsHeaders)
-        val result = call(sut.createArrivalNotification(), request)
+          FakeRequest(method = callValue.method, uri = callValue.url, body = <test></test>, headers = arrivalsHeaders)
+        val result = call(sutValue, request)
 
-        status(result) mustBe ACCEPTED
-        contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
-      }
-
-    }
-
-    Seq(None, Some("application/vnd.hmrc.1.0+json"), Some("text/html"), Some("application/vnd.hmrc.1.0+xml"), Some("text/javascript")).foreach {
-      acceptHeaderValue =>
-        val acceptHeader = acceptHeaderValue
-          .map(
-            header => Seq(HeaderNames.ACCEPT -> header)
-          )
-          .getOrElse(Seq.empty)
-        val arrivalHeaders = FakeHeaders(acceptHeader ++ Seq(HeaderNames.CONTENT_TYPE -> "application/xml"))
-        val withString = acceptHeaderValue
-          .getOrElse("nothing")
-        s"with accept header set to $withString" - {
-
-          "must route to the v1 controller and return Accepted when successful" in {
-
-            val request =
-              FakeRequest(method = "POST", uri = routes.ArrivalsRouter.createArrivalNotification().url, body = <test></test>, headers = arrivalHeaders)
-            val result = call(sut.createArrivalNotification(), request)
-
-            status(result) mustBe ACCEPTED
-            contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
-          }
-        }
-    }
-  }
-
-  "get list of arrival messages with given arrivalId" - {
-    "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
-
-      val acceptHeaderValue = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON))
-
-      "must route to the v2 controller and return Accepted when successful" in {
-
-        val request =
-          FakeRequest(method = "GET", body = "", uri = routes.ArrivalsRouter.getArrivalMessageIds("1234567890abcdef").url, headers = acceptHeaderValue)
-        val result = sut.getArrivalMessageIds("1234567890abcdef")(request)
-
-        status(result) mustBe ACCEPTED
-        contentAsJson(result) mustBe Json.obj("version" -> 2)
-      }
-
-      "if the arrival ID is not in correct format, return a bad request" in {
-        val request = FakeRequest(
-          method = "GET",
-          uri = routes.ArrivalsRouter.getArrivalMessageIds("01").url,
-          body = "",
-          headers = acceptHeaderValue
-        )
-        val result = sut.getArrivalMessageIds("01")(request)
-
-        status(result) mustBe BAD_REQUEST
-        contentAsJson(result) mustBe Json.obj(
-          "code"       -> "BAD_REQUEST",
-          "statusCode" -> 400,
-          "message"    -> "arrivalId: Value 01 is not a 16 character hexadecimal string"
-        )
-      }
-
-    }
-
-    Seq(None, Some("application/vnd.hmrc.1.0+json"), Some("text/html"), Some("application/vnd.hmrc.1.0+xml"), Some("text/javascript")).foreach {
-      acceptHeaderValue =>
-        val acceptHeader = acceptHeaderValue
-          .map(
-            header => Seq(HeaderNames.ACCEPT -> header)
-          )
-          .getOrElse(Seq.empty)
-        val arrivalHeaders = FakeHeaders(acceptHeader)
-        val withString = acceptHeaderValue
-          .getOrElse("nothing")
-        s"with accept header set to $withString" - {
-
-          "must route to the v1 controller and return Accepted when successful" in {
-
-            val request =
-              FakeRequest(method = "GET", uri = routes.ArrivalsRouter.getArrivalMessageIds("123").url, body = "", headers = arrivalHeaders)
-            val result = call(sut.getArrivalMessageIds("123"), request)
-
-            status(result) mustBe ACCEPTED
-            contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
-          }
-
-          "must route to the v1 controller and return 400 with invalid id" in {
-            val request = FakeRequest(method = "GET", body = "", uri = routes.ArrivalsRouter.getArrivalMessageIds("").url, headers = arrivalHeaders)
-            val result  = sut.getArrivalMessageIds("1234567890abc")(request)
-
-            status(result) mustBe BAD_REQUEST
-            contentAsJson(result) mustBe Json.obj(
-              "message"    -> "Cannot parse parameter arrivalId as Int: For input string: \"1234567890abc\"",
-              "statusCode" -> 400,
-              "code"       -> "BAD_REQUEST"
-            )
-          }
-        }
-    }
-  }
-
-  "when fetching arrivals by EORI " - {
-
-    "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
-      val arrivalsHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)
-      )
-
-      "must route to the v2 controller and return Ok when successful" in {
-        val request = FakeRequest(method = "GET", body = "", uri = routes.ArrivalsRouter.getArrivalsForEori().url, headers = arrivalsHeaders)
-        val result  = call(sut.getArrivalsForEori(), request)
-
-        status(result) mustBe OK
+        status(result) mustBe expectedStatus
         contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
       }
     }
 
-    "with accept header set to application/vnd.hmrc.1.0+json (version one)" - {
-      val arrivalsHeaders = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json"))
+    "when creating an arrival notification" - executeTest(routes.ArrivalsRouter.createArrivalNotification(), sut.createArrivalNotification(), ACCEPTED)
 
-      "must route to the v1 controller and return Ok when successful" in {
-        val request = FakeRequest(method = "GET", body = "", uri = routes.ArrivalsRouter.getArrivalsForEori().url, headers = arrivalsHeaders)
-        val result  = call(sut.getArrivalsForEori(), request)
+    "when getting an arrival" - executeTest(routes.ArrivalsRouter.getArrival(id), sut.getArrival(id), OK)
 
-        status(result) mustBe OK
-        contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
+    "when getting arrivals for a given enrolment EORI" - executeTest(routes.ArrivalsRouter.getArrivalsForEori(), sut.getArrivalsForEori(), OK)
+
+    "when getting a list of arrival messages with given arrivalId" - executeTest(routes.ArrivalsRouter.getArrival(id), sut.getArrivalsForEori(), OK)
+  }
+
+  "route to the version 1 controller" - {
+    def executeTest(callValue: Call, sutValue: => Action[Source[ByteString, _]], expectedStatus: Int) =
+      Seq(None, Some("application/vnd.hmrc.1.0+json"), Some("text/html"), Some("application/vnd.hmrc.1.0+xml"), Some("text/javascript")).foreach {
+        acceptHeaderValue =>
+          val arrivalsHeaders = FakeHeaders(
+            Seq(HeaderNames.ACCEPT -> acceptHeaderValue.getOrElse(""), HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+          )
+
+          s"when the accept header equals ${acceptHeaderValue.getOrElse("nothing")}, it returns status code $expectedStatus" in {
+            val request =
+              FakeRequest(
+                method = callValue.method,
+                uri = callValue.url,
+                body = <test></test>,
+                headers = arrivalsHeaders
+              )
+            val result = call(sutValue, request)
+
+            status(result) mustBe expectedStatus
+            contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
+          }
       }
-    }
 
+    "when creating an arrival notification" - executeTest(routes.ArrivalsRouter.createArrivalNotification(), sut.createArrivalNotification(), ACCEPTED)
+
+    "when getting an arrival" - executeTest(routes.ArrivalsRouter.getArrival("123"), sut.getArrival("123"), OK)
+
+    "when getting arrivals for a given enrolment EORI" - executeTest(routes.ArrivalsRouter.getArrivalsForEori(), sut.getArrivalsForEori(), OK)
+
+    "when getting a list of arrival messages with given arrivalId" - executeTest(routes.ArrivalsRouter.getArrival("123"), sut.getArrivalsForEori(), OK)
   }
 
 }

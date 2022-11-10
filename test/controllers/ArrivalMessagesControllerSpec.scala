@@ -53,7 +53,7 @@ import play.api.test.Helpers._
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HttpResponse
-import utils.CallOps._
+import v2.utils.CallOps._
 import utils.TestMetrics
 
 import scala.concurrent.Future
@@ -92,7 +92,7 @@ class ArrivalMessagesControllerSpec
 
   val sourceArrival = ArrivalWithMessages(
     ArrivalId(123),
-    routes.ArrivalMovementController.getArrival(ArrivalId(123)).urlWithContext,
+    routing.routes.ArrivalsRouter.getArrival("123").urlWithContext,
     routing.routes.ArrivalsRouter.getArrivalMessageIds("123").urlWithContext,
     "MRN",
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),

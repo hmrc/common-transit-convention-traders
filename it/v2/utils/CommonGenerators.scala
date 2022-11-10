@@ -24,9 +24,11 @@ import v2.models.ClientId
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.request.MessageType
 import v2.models.request.PushNotificationsAssociation
+import v2.models.responses.MovementResponse
 import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime
@@ -48,7 +50,7 @@ trait CommonGenerators {
   }
 
   implicit lazy val arbitraryMovementId: Arbitrary[MovementId] = Arbitrary {
-    Gen.alphaNumStr.map(MovementId(_))
+    genShortUUID.map(MovementId(_))
   }
 
   implicit lazy val arbitraryMessageType: Arbitrary[MessageType] =
@@ -60,6 +62,30 @@ trait CommonGenerators {
       movementType <- Gen.oneOf(MovementType.values)
       boxId        <- Gen.option(Gen.uuid.map(_.toString).map(BoxId.apply))
     } yield PushNotificationsAssociation(clientId, movementType, boxId)
+  }
+
+  implicit lazy val arbitraryMovementReferenceNumber: Arbitrary[MovementReferenceNumber] =
+    Arbitrary {
+      for {
+        year <- Gen
+          .choose(0, 99)
+          .map(
+            y => f"$y%02d"
+          )
+        country <- Gen.pick(2, 'A' to 'Z')
+        serial  <- Gen.pick(13, ('A' to 'Z') ++ ('0' to '9'))
+      } yield MovementReferenceNumber(year ++ country.mkString ++ serial.mkString)
+    }
+
+  implicit lazy val arbitraryMovementResponse: Arbitrary[MovementResponse] = Arbitrary {
+    for {
+      id                      <- arbitrary[MovementId]
+      enrollmentEORINumber    <- arbitrary[EORINumber]
+      movementEORINumber      <- arbitrary[EORINumber]
+      movementReferenceNumber <- arbitrary[Option[MovementReferenceNumber]]
+      created                 <- arbitrary[OffsetDateTime]
+      updated                 <- arbitrary[OffsetDateTime]
+    } yield MovementResponse(id, enrollmentEORINumber, movementEORINumber, movementReferenceNumber, created, updated)
   }
 
   implicit lazy val arbitraryMessageSummary: Arbitrary[MessageSummary] =

@@ -26,6 +26,7 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.base.CommonGenerators
 import v2.models.MovementId
+import v2.models.MovementType
 import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime
@@ -47,12 +48,12 @@ class HateoasDepartureMessageIdsResponseSpec
         )
         .getOrElse("not set")
 
-      s"with a valid message response and receivedSince $set, create a valid HateoasDepartureMessageResponse" in forAll(
+      s"with a valid message response and receivedSince $set, create a valid HateoasMovementMessageIdsResponse" in forAll(
         arbitrary[MovementId],
         Gen.listOfN(3, arbitrary[MessageSummary])
       ) {
         (departureId, responses) =>
-          val actual = HateoasDepartureMessageIdsResponse(departureId, responses, dateTime)
+          val actual = HateoasMovementMessageIdsResponse(departureId, responses, dateTime, MovementType.Departure)
 
           val expected = Json.obj(
             "_links" -> Json.obj(
@@ -63,7 +64,7 @@ class HateoasDepartureMessageIdsResponseSpec
               response =>
                 Json.obj(
                   "_links" -> Json.obj(
-                    "self"      -> Json.obj("href" -> messageUri(departureId, response.id)),
+                    "self"      -> Json.obj("href" -> getMessageUri(departureId, response.id, MovementType.Departure)),
                     "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
                   ),
                   "id"          -> response.id.value,

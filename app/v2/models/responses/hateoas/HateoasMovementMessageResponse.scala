@@ -20,20 +20,21 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementType
 import v2.models.responses.MessageSummary
 
-object HateoasDepartureMessageResponse extends HateoasResponse {
+object HateoasMovementMessageResponse extends HateoasResponse {
 
-  def apply(departureId: MovementId, messageId: MessageId, messageSummary: MessageSummary): JsObject =
+  def apply(movementId: MovementId, messageId: MessageId, messageSummary: MessageSummary, movementType: MovementType): JsObject =
     Json.obj(
       "_links" -> Json.obj(
-        "self"      -> Json.obj("href" -> messageUri(departureId, messageId)),
-        "departure" -> Json.obj("href" -> departureUri(departureId))
+        "self"                    -> Json.obj("href" -> getMessageUri(movementId, messageId, movementType)),
+        movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
       ),
-      "id"          -> messageId.value,
-      "departureId" -> departureId.value,
-      "received"    -> messageSummary.received,
-      "type"        -> messageSummary.messageType
+      "id"                              -> messageId.value,
+      s"${movementType.movementType}Id" -> movementId.value,
+      "received"                        -> messageSummary.received,
+      "type"                            -> messageSummary.messageType
     ) ++ messageSummary.body
       .map(
         payload => Json.obj("body" -> payload.asJson)

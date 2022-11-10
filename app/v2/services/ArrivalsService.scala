@@ -47,6 +47,11 @@ trait ArrivalsService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, ArrivalResponse]
 
+  def getArrival(eori: EORINumber, arrivalId: MovementId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, MovementResponse]
+
   def getArrivalMessageIds(eori: EORINumber, arrivalId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -74,6 +79,19 @@ class ArrivalsServiceImpl @Inject() (persistenceConnector: PersistenceConnector)
           case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
+
+  override def getArrival(eori: EORINumber, arrivalId: MovementId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, MovementResponse] = EitherT(
+    persistenceConnector
+      .getArrival(eori, arrivalId)
+      .map(Right(_))
+      .recover {
+        case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.ArrivalNotFound(arrivalId))
+        case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+      }
+  )
 
   override def getArrivalMessageIds(eori: EORINumber, arrivalId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,

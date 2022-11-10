@@ -120,7 +120,7 @@ class V2DeparturesControllerImpl @Inject() (
           },
           result => {
             sCounter.inc()
-            Accepted(HateoasDepartureDeclarationResponse(result.departureId))
+            Accepted(HateoasNewMovementResponse(result.departureId, MovementType.Departure))
           }
         )
     }
@@ -152,7 +152,7 @@ class V2DeparturesControllerImpl @Inject() (
           declarationResult <- persistAndSend(request.body)
         } yield declarationResult).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          result => Accepted(HateoasDepartureDeclarationResponse(result.departureId))
+          result => Accepted(HateoasNewMovementResponse(result.departureId, MovementType.Departure))
         )
     }
 
@@ -176,7 +176,7 @@ class V2DeparturesControllerImpl @Inject() (
           formattedMessageSummary <- responseFormatterService.formatMessageSummary(messageSummary, request.headers.get(HeaderNames.ACCEPT).get)
         } yield formattedMessageSummary).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          response => Ok(Json.toJson(HateoasDepartureMessageResponse(movementId, messageId, response)))
+          response => Ok(Json.toJson(HateoasMovementMessageResponse(movementId, messageId, response, MovementType.Departure)))
         )
     }
 
@@ -190,7 +190,7 @@ class V2DeparturesControllerImpl @Inject() (
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasDepartureMessageIdsResponse(departureId, response, receivedSince)))
+            response => Ok(Json.toJson(HateoasMovementMessageIdsResponse(departureId, response, receivedSince, MovementType.Departure)))
           )
     }
 
@@ -204,7 +204,7 @@ class V2DeparturesControllerImpl @Inject() (
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasDepartureResponse(departureId, response)))
+            response => Ok(Json.toJson(HateoasMovementResponse(departureId, response, MovementType.Departure)))
           )
     }
 
@@ -218,7 +218,7 @@ class V2DeparturesControllerImpl @Inject() (
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasDepartureIdsResponse(response)))
+            response => Ok(Json.toJson(HateoasMovementIdsResponse(response, MovementType.Departure)))
           )
     }
 
@@ -240,7 +240,7 @@ class V2DeparturesControllerImpl @Inject() (
 
         } yield declarationResult).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          id => Accepted(Json.toJson(HateoasDepartureUpdateMovementResponse(departureId, id.messageId)))
+          id => Accepted(Json.toJson(HateoasMovementUpdateResponse(departureId, id.messageId, MovementType.Departure)))
         )
     }
 
@@ -277,9 +277,8 @@ class V2DeparturesControllerImpl @Inject() (
           updateResponse <- handleXml(id, request.eoriNumber, messageType, converted)
         } yield updateResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          updateResponse => Accepted(Json.toJson(HateoasDepartureUpdateMovementResponse(id, updateResponse.messageId)))
+          updateResponse => Accepted(Json.toJson(HateoasMovementUpdateResponse(id, updateResponse.messageId, MovementType.Departure)))
         )
-
     }
   }
 

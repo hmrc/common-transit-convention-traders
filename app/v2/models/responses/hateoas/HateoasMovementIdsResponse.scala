@@ -17,21 +17,22 @@
 package v2.models.responses.hateoas
 
 import play.api.libs.json._
+import v2.models.MovementType
 import v2.models.responses.MovementResponse
 
-object HateoasDepartureIdsResponse extends HateoasResponse {
+object HateoasMovementIdsResponse extends HateoasResponse {
 
-  def apply(responses: Seq[MovementResponse]): JsObject =
+  def apply(responses: Seq[MovementResponse], movementType: MovementType): JsObject =
     Json.obj(
       "_links" -> Json.obj(
-        "self" -> Json.obj("href" -> "/customs/transits/movements/departures")
+        "self" -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}")
       ),
-      "departures" -> responses.map(
+      movementType.urlFragment -> responses.map(
         response =>
           Json.obj(
             "_links" -> Json.obj(
-              "self"     -> Json.obj("href" -> departureUri(response._id)),
-              "messages" -> Json.obj("href" -> s"${departureUri(response._id)}/messages")
+              "self"     -> Json.obj("href" -> getMovementUri(response._id, movementType)),
+              "messages" -> Json.obj("href" -> getMessagesUri(response._id, None, movementType))
             ),
             "id"                      -> response._id.value,
             "movementReferenceNumber" -> response.movementReferenceNumber,

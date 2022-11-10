@@ -27,6 +27,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import v2.base.CommonGenerators
+import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.errors.FailedToValidateError
@@ -154,6 +155,24 @@ class ErrorTranslatorSpec
 
       val input  = PersistenceError.MessageNotFound(departureId, messageId)
       val output = PresentationError.notFoundError(s"Message with ID ${messageId.value} for movement ${departureId.value} was not found")
+
+      persistenceErrorConverter.convert(input) mustBe output
+    }
+
+    "ArrivalNotFound error returns a NOT_FOUND" in {
+      val movementId = arbitrary[MovementId].sample.value
+
+      val input  = PersistenceError.ArrivalNotFound(movementId)
+      val output = PresentationError.notFoundError(s"Arrival movement with ID ${movementId.value} was not found")
+
+      persistenceErrorConverter.convert(input) mustBe output
+    }
+
+    "ArrivalsNotFound error returns a NOT_FOUND" in {
+      val eori = arbitrary[EORINumber].sample.value
+
+      val input  = PersistenceError.ArrivalsNotFound(eori)
+      val output = PresentationError.notFoundError(s"Arrival movement IDs for ${eori.value} were not found")
 
       persistenceErrorConverter.convert(input) mustBe output
     }

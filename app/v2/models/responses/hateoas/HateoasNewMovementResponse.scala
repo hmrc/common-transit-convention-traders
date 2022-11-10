@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-package utils
+package v2.models.responses.hateoas
 
-import config.Constants
-import play.api.mvc.Call
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
+import v2.models.MovementId
+import v2.models.MovementType
 
-object CallOps {
+object HateoasNewMovementResponse extends HateoasResponse {
 
-  implicit class CallOps(c: Call) {
-
-    def urlWithContext: String =
-      Constants.Context + c.url
-  }
+  def apply(movementId: MovementId, movementType: MovementType): JsObject =
+    Json.obj(
+      "_links" -> Json.obj(
+        "self"     -> Json.obj("href" -> getMovementUri(movementId, movementType)),
+        "messages" -> Json.obj("href" -> getMessagesUri(movementId, None, movementType))
+      )
+    )
 }

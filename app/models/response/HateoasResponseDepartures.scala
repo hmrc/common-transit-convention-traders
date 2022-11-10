@@ -19,7 +19,7 @@ package models.response
 import models.domain.Departures
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import utils.CallOps._
+import v2.utils.CallOps._
 
 object HateoasResponseDepartures {
 

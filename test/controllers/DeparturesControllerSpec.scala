@@ -53,7 +53,7 @@ import play.api.test.Helpers.headers
 import services.EnsureGuaranteeService
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
-import utils.CallOps._
+import v2.utils.CallOps._
 import utils.TestMetrics
 import v2.controllers.V2DeparturesController
 import v2.fakes.controllers.FakeV2DeparturesController

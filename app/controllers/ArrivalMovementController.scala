@@ -38,7 +38,7 @@ import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import utils.CallOps._
+import v2.utils.CallOps._
 import utils.ResponseHelper
 import utils.Utils
 
@@ -50,6 +50,7 @@ import scala.xml.NodeSeq
 @ImplementedBy(classOf[ArrivalMovementController])
 trait V1ArrivalMovementController {
   def createArrivalNotification(): Action[NodeSeq]
+  def getArrival(arrivalId: ArrivalId): Action[AnyContent]
   def getArrivalsForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
 }
 
@@ -93,7 +94,7 @@ class ArrivalMovementController @Inject() (
                             response.responseData
                           )
                         )
-                      ).withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext)
+                      ).withHeaders(LOCATION -> routing.routes.ArrivalsRouter.getArrival(arrivalId.toString).urlWithContext)
                     case None =>
                       InternalServerError
                   }
@@ -125,7 +126,7 @@ class ArrivalMovementController @Inject() (
                             response.responseData
                           )
                         )
-                      ).withHeaders(LOCATION -> routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext)
+                      ).withHeaders(LOCATION -> routing.routes.ArrivalsRouter.getArrival(arrivalId.toString).urlWithContext)
                     case None =>
                       InternalServerError
                   }

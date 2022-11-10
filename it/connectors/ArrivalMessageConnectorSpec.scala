@@ -33,7 +33,7 @@ import play.api.libs.json.Json
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.Authorization
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.CallOps._
+import v2.utils.CallOps._
 
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -86,7 +86,7 @@ class ArrivalMessageConnectorSpec
       val connector = app.injector.instanceOf[ArrivalMessageConnector]
       val arrival = Arrival(
         ArrivalId(1),
-        routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
+        routing.routes.ArrivalsRouter.getArrival("1").urlWithContext,
         routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
         "MRN",
         LocalDateTime.now,
@@ -174,7 +174,7 @@ class ArrivalMessageConnectorSpec
       val connector = app.injector.instanceOf[ArrivalMessageConnector]
       val arrival = ArrivalWithMessages(
         ArrivalId(1),
-        routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
+        routing.routes.ArrivalsRouter.getArrival("1").urlWithContext,
         routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
         "MRN",
         LocalDateTime.now,
@@ -224,7 +224,7 @@ class ArrivalMessageConnectorSpec
       val dateTime  = Some(OffsetDateTime.of(2021, 3, 14, 13, 15, 30, 0, ZoneOffset.ofHours(1)))
       val arrival = ArrivalWithMessages(
         ArrivalId(1),
-        routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
+        routing.routes.ArrivalsRouter.getArrival("1").urlWithContext,
         routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
         "MRN",
         LocalDateTime.now,
@@ -273,7 +273,7 @@ class ArrivalMessageConnectorSpec
       val connector = app.injector.instanceOf[ArrivalMessageConnector]
       val arrival = Arrival(
         ArrivalId(1),
-        routes.ArrivalMovementController.getArrival(ArrivalId(1)).urlWithContext,
+        routing.routes.ArrivalsRouter.getArrival("1").urlWithContext,
         routing.routes.ArrivalsRouter.getArrivalMessageIds("1").urlWithContext,
         "MRN",
         LocalDateTime.now,

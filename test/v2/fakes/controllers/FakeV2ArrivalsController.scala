@@ -51,4 +51,9 @@ class FakeV2ArrivalsController @Inject() ()(implicit val materializer: Materiali
     _ =>
       Ok(Json.obj("version" -> 2))
   }
+
+  override def getArrival(arrivalId: MovementId): Action[AnyContent] = Action {
+    _ =>
+      Ok(Json.obj("version" -> 2))
+  }
 }

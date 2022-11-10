@@ -16,17 +16,16 @@
 
 package models.response
 
-import controllers.routes
 import models.domain.Arrival
 import models.domain.ArrivalId
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import utils.CallOps._
+import v2.utils.CallOps._
 
 object HateoasResponseArrival {
 
   def apply(arrivalId: ArrivalId, created: String, updated: String, movementReferenceNumber: String): JsObject = {
-    val arrivalUrl  = routes.ArrivalMovementController.getArrival(arrivalId).urlWithContext
+    val arrivalUrl  = routing.routes.ArrivalsRouter.getArrival(arrivalId.toString).urlWithContext
     val messagesUrl = routing.routes.ArrivalsRouter.getArrivalMessageIds(arrivalId.toString).urlWithContext
 
     Json.obj(

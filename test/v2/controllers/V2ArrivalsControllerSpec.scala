@@ -35,7 +35,6 @@ import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import org.mockito.invocation.InvocationOnMock
-import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
@@ -70,7 +69,6 @@ import v2.models._
 import v2.models.errors._
 import v2.models.request.MessageType
 import v2.models.responses.ArrivalResponse
-import v2.models.responses.MessageSummary
 import v2.models.responses.hateoas._
 import v2.services._
 
@@ -222,7 +220,7 @@ class V2ArrivalsControllerSpec
         val result  = sut.createArrivalNotification()(request)
         status(result) mustBe ACCEPTED
 
-        contentAsJson(result) mustBe Json.toJson(HateoasArrivalNotificationResponse(MovementId("123")))
+        contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(MovementId("123"), MovementType.Arrival))
 
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.XML))(any(), any())
         verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
@@ -263,7 +261,7 @@ class V2ArrivalsControllerSpec
             val result  = sut.createArrivalNotification()(request)
             status(result) mustBe ACCEPTED
 
-            contentAsJson(result) mustBe Json.toJson(HateoasArrivalNotificationResponse(MovementId("123")))
+            contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(MovementId("123"), MovementType.Arrival))
 
             verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.XML))(any(), any())
             verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
@@ -685,8 +683,8 @@ class V2ArrivalsControllerSpec
   "for retrieving a list of message IDs with given arrivalId" - {
 
     "when an arrival is found should return list of messages attached with the given arrival" in forAll(
-      Gen.nonEmptyListOf(arbitrary[MessageSummary]),
-      Gen.option(arbitrary[OffsetDateTime])
+      Gen.nonEmptyListOf(arbitraryMessageSummaryXml.arbitrary),
+      Gen.option(arbitraryOffsetDateTime.arbitrary)
     ) {
       (messageResponse, receivedSince) =>
         when(mockArrivalsPersistenceService.getArrivalMessageIds(EORINumber(any()), MovementId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
@@ -698,10 +696,12 @@ class V2ArrivalsControllerSpec
         val result  = sut.getArrivalMessageIds(MovementId("0123456789abcdef"), receivedSince)(request)
 
         status(result) mustBe OK
-        contentAsJson(result) mustBe Json.toJson(HateoasArrivalMessageIdsResponse(MovementId("0123456789abcdef"), messageResponse, receivedSince))
+        contentAsJson(result) mustBe Json.toJson(
+          HateoasMovementMessageIdsResponse(MovementId("0123456789abcdef"), messageResponse, receivedSince, MovementType.Arrival)
+        )
     }
 
-    "when no arrival is found should return NOT_FOUND" in forAll(Gen.option(arbitrary[OffsetDateTime])) {
+    "when no arrival is found should return NOT_FOUND" in forAll(Gen.option(arbitraryOffsetDateTime.arbitrary)) {
       receivedSince =>
         when(mockArrivalsPersistenceService.getArrivalMessageIds(EORINumber(any()), MovementId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
@@ -718,7 +718,7 @@ class V2ArrivalsControllerSpec
         )
     }
 
-    "when an unknown error occurs should return INTERNAL_SERVER_ERROR" in forAll(Gen.option(arbitrary[OffsetDateTime])) {
+    "when an unknown error occurs should return INTERNAL_SERVER_ERROR" in forAll(Gen.option(arbitraryOffsetDateTime.arbitrary)) {
       receivedSince =>
         when(mockArrivalsPersistenceService.getArrivalMessageIds(EORINumber(any()), MovementId(any()), any())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
@@ -760,8 +760,9 @@ class V2ArrivalsControllerSpec
 
       status(result) mustBe OK
       contentAsJson(result) mustBe Json.toJson(
-        HateoasArrivalIdsResponse(
-          movementResponses
+        HateoasMovementIdsResponse(
+          movementResponses,
+          MovementType.Arrival
         )
       )
     }
@@ -812,4 +813,71 @@ class V2ArrivalsControllerSpec
 
   }
 
+  "GET /movements/arrivals/:arrivalId" - {
+    "should return ok with json body of arrival" in {
+      val movementResponse = arbitraryMovementResponse.arbitrary.sample.value
+
+      when(mockArrivalsPersistenceService.getArrival(EORINumber(any()), MovementId(any()))(any(), any()))
+        .thenAnswer(
+          _ => EitherT.rightT(movementResponse)
+        )
+
+      val request = FakeRequest(
+        GET,
+        routing.routes.ArrivalsRouter.getArrival(movementResponse._id.value).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
+        AnyContentAsEmpty
+      )
+      val result = sut.getArrival(movementResponse._id)(request)
+
+      status(result) mustBe OK
+      contentAsJson(result) mustBe Json.toJson(
+        HateoasMovementResponse(
+          movementResponse._id,
+          movementResponse,
+          MovementType.Arrival
+        )
+      )
+    }
+
+    "should return arrival not found if persistence service returns 404" in {
+      val movementId = arbitraryMovementId.arbitrary.sample.value
+
+      when(mockArrivalsPersistenceService.getArrival(EORINumber(any()), MovementId(any()))(any(), any()))
+        .thenAnswer {
+          _ =>
+            EitherT.leftT(PersistenceError.ArrivalNotFound(movementId))
+        }
+
+      val request = FakeRequest(
+        GET,
+        routing.routes.ArrivalsRouter.getArrival(movementId.value).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
+        AnyContentAsEmpty
+      )
+      val result = sut.getArrival(movementId)(request)
+
+      status(result) mustBe NOT_FOUND
+    }
+
+    "should return internal server error for all other failures" in {
+      when(mockArrivalsPersistenceService.getArrival(EORINumber(any()), MovementId(any()))(any(), any()))
+        .thenAnswer {
+          _ =>
+            EitherT.leftT(PersistenceError.UnexpectedError(None))
+        }
+
+      val movementId = arbitraryMovementId.arbitrary.sample.value
+
+      val request = FakeRequest(
+        GET,
+        routing.routes.ArrivalsRouter.getArrival(movementId.value).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
+        AnyContentAsEmpty
+      )
+      val result = sut.getArrival(movementId)(request)
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+    }
+  }
 }

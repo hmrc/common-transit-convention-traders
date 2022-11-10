@@ -35,7 +35,7 @@ import play.api.test.Helpers.NOT_FOUND
 import play.api.test.Helpers.OK
 import uk.gov.hmrc.http.Authorization
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.CallOps._
+import v2.utils.CallOps._
 
 import java.time.LocalDateTime
 import java.time.OffsetDateTime

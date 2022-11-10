@@ -18,17 +18,13 @@ package v2.fakes.controllers
 
 import controllers.V1ArrivalMessagesController
 import models.domain.ArrivalId
-import models.domain.DepartureId
-import models.domain.MessageId
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
-import play.api.mvc.Request
 import play.api.test.Helpers.stubControllerComponents
 
 import java.time.OffsetDateTime
-import scala.xml.NodeSeq
 
 class FakeV1ArrivalMessagesController extends BaseController with V1ArrivalMessagesController {
   val controllerComponents = stubControllerComponents()

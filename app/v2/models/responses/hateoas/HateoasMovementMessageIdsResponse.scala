@@ -19,29 +19,30 @@ package v2.models.responses.hateoas
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.models.MovementId
+import v2.models.MovementType
 import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime
 
-object HateoasArrivalMessageIdsResponse extends HateoasResponse {
+object HateoasMovementMessageIdsResponse extends HateoasResponse {
 
-  def apply(arrivalId: MovementId, messageIds: Seq[MessageSummary], receivedSince: Option[OffsetDateTime]): JsObject =
+  def apply(movementId: MovementId, messageIds: Seq[MessageSummary], receivedSince: Option[OffsetDateTime], movementType: MovementType): JsObject =
     Json.obj(
       "_links" -> Json.obj(
-        "self"    -> Json.obj("href" -> arrivalMessageIdsUri(arrivalId, receivedSince)),
-        "arrival" -> Json.obj("href" -> arrivalUri(arrivalId))
+        "self"                    -> Json.obj("href" -> getMessagesUri(movementId, receivedSince, movementType)),
+        movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
       ),
       "messages" -> messageIds.map(
         message =>
           Json.obj(
             "_links" -> Json.obj(
-              "self"    -> Json.obj("href" -> arrivalMessageUri(arrivalId, message.id)),
-              "arrival" -> Json.obj("href" -> arrivalUri(arrivalId))
+              "self"                    -> Json.obj("href" -> getMessageUri(movementId, message.id, movementType)),
+              movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
             ),
-            "id"        -> message.id.value,
-            "arrivalId" -> arrivalId.value,
-            "received"  -> message.received,
-            "type"      -> message.messageType
+            "id"                              -> message.id.value,
+            s"${movementType.movementType}Id" -> movementId.value,
+            "received"                        -> message.received,
+            "type"                            -> message.messageType
           )
       )
     )

@@ -16,47 +16,36 @@
 
 package v2.models.responses.hateoas
 
-import config.Constants
 import v2.models._
-import v2.models.responses.hateoas.HateoasResponse.prefix
+import v2.utils.CallOps._
+
 import java.time.OffsetDateTime
-
-object HateoasResponse {
-
-  lazy val prefix =
-    if (routing.routes.DeparturesRouter.submitDeclaration().url.startsWith(Constants.Context)) ""
-    else Constants.Context
-}
 
 trait HateoasResponse {
 
-  def messageUri(departureId: MovementId, messageId: MessageId) =
-    prefix + routing.routes.DeparturesRouter.getMessage(departureId.value, messageId.value).url
+  def getMessageUri(movementId: MovementId, messageId: MessageId, movementType: MovementType) =
+    movementType match {
+      case MovementType.Departure => routing.routes.DeparturesRouter.getMessage(movementId.value, messageId.value).urlWithContext
+      case MovementType.Arrival =>
+        s"/customs/transits/movements/arrivals/${movementId.value}/messages/${messageId.value}" // TODO: When we do the arrival endpoint, this needs updating
+    }
 
-  def messageIdsUri(departureId: MovementId, receivedSince: Option[OffsetDateTime]) =
-    prefix + routing.routes.DeparturesRouter
-      .getMessageIds(
-        departureId.value,
-        receivedSince
-      )
-      .url
+  def getMessagesUri(movementId: MovementId, receivedSince: Option[OffsetDateTime], movementType: MovementType) =
+    movementType match {
+      case MovementType.Arrival =>
+        s"/customs/transits/movements/arrivals/${movementId.value}/messages" // TODO: When we do the arrival endpoint, this needs updating
+      case MovementType.Departure =>
+        routing.routes.DeparturesRouter
+          .getMessageIds(
+            movementId.value,
+            receivedSince
+          )
+          .urlWithContext
+    }
 
-  def departureUri(departureId: MovementId) =
-    prefix + routing.routes.DeparturesRouter.getDeparture(departureId.value).url
-
-  // TODO: When we do the arrival endpoint, this needs updating
-  def arrivalUri(arrivalId: MovementId) =
-    s"/customs/transits/movements/arrivals/${arrivalId.value}"
-
-  def arrivalMessageIdsUri(arrivalId: MovementId, receivedSince: Option[OffsetDateTime]) =
-    prefix + routing.routes.ArrivalsRouter
-      .getArrivalMessageIds(
-        arrivalId.value,
-        receivedSince
-      )
-      .url
-
-  // TODO: When we do the arrival endpoint, this needs updating
-  def arrivalMessageUri(arrivalId: MovementId, messageId: MessageId) =
-    s"/customs/transits/movements/arrivals/${arrivalId.value}/messages/${messageId.value}"
+  def getMovementUri(movementId: MovementId, movementType: MovementType) =
+    movementType match {
+      case MovementType.Arrival   => routing.routes.ArrivalsRouter.getArrival(movementId.value).urlWithContext
+      case MovementType.Departure => routing.routes.DeparturesRouter.getDeparture(movementId.value).urlWithContext
+    }
 }
