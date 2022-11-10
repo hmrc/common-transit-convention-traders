@@ -17,13 +17,7 @@
 package v2.controllers
 
 import cats.data.EitherT
-import v2.models.errors.ConversionError
-import v2.models.errors.ExtractionError
-import v2.models.errors.FailedToValidateError
-import v2.models.errors.StreamingError
-import v2.models.errors.PersistenceError
-import v2.models.errors.PresentationError
-import v2.models.errors.RouterError
+import v2.models.errors._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -61,17 +55,20 @@ trait ErrorTranslator {
   }
 
   implicit val persistenceErrorConverter = new Converter[PersistenceError] {
+    import v2.models.errors.PersistenceError._
 
     def convert(persistenceError: PersistenceError): PresentationError = persistenceError match {
-      case PersistenceError.DepartureNotFound(departureId) =>
+      case DepartureNotFound(departureId) =>
         PresentationError.notFoundError(s"Departure movement with ID ${departureId.value} was not found")
-      case PersistenceError.MessageNotFound(movement, message) =>
+      case ArrivalNotFound(arrivalId) =>
+        PresentationError.notFoundError(s"Arrival movement with ID ${arrivalId.value} was not found")
+      case MessageNotFound(movement, message) =>
         PresentationError.notFoundError(s"Message with ID ${message.value} for movement ${movement.value} was not found")
-      case PersistenceError.DeparturesNotFound(eori) =>
+      case DeparturesNotFound(eori) =>
         PresentationError.notFoundError(s"Departure movement IDs for ${eori.value} were not found")
-      case PersistenceError.ArrivalsNotFound(eori) =>
+      case ArrivalsNotFound(eori) =>
         PresentationError.notFoundError(s"Arrival movement IDs for ${eori.value} were not found")
-      case err: PersistenceError.UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
+      case err: UnexpectedError => PresentationError.internalServiceError(cause = err.thr)
     }
   }
 

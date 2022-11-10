@@ -26,7 +26,7 @@ object HateoasArrivalNotificationResponse extends HateoasResponse {
     Json.obj(
       "_links" -> Json.obj(
         "self"     -> Json.obj("href" -> arrivalUri(movementId)),
-        "messages" -> Json.obj("href" -> arrivalMessageIdsUri(movementId))
+        "messages" -> Json.obj("href" -> arrivalMessageIdsUri(movementId, None))
       )
     )
 }

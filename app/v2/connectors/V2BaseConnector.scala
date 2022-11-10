@@ -24,8 +24,8 @@ import io.lemonlabs.uri.UrlPath
 import play.api.http.Status.OK
 import play.api.libs.json.JsResult
 import play.api.libs.json.Reads
-import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.client.RequestBuilder
@@ -53,6 +53,9 @@ trait V2BaseConnector extends HttpErrorFunctions {
 
   def movementsGetDepartureMessageIds(eoriNumber: EORINumber, movementId: MovementId): UrlPath =
     UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/${movementId.value}/messages/")
+
+  def movementsGetArrivalMessageIds(eoriNumber: EORINumber, movementId: MovementId): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/arrivals/${movementId.value}/messages/")
 
   def movementsGetDeparture(eoriNumber: EORINumber, movementId: MovementId): UrlPath =
     UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/${movementId.value}/")
@@ -140,7 +143,6 @@ trait V2BaseConnector extends HttpErrorFunctions {
               case _  => response.errorFromStream
             }
         }
-
   }
 
 }

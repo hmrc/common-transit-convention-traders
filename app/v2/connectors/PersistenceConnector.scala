@@ -89,6 +89,11 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[ArrivalResponse]
 
+  def getArrivalMessageIds(eori: EORINumber, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Seq[MessageSummary]]
+
   def getArrivalsForEori(eori: EORINumber)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -246,6 +251,28 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
           }
     }
 
+  override def getArrivalMessageIds(eori: EORINumber, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Seq[MessageSummary]] = {
+    val url =
+      withReceivedSinceParameter(
+        appConfig.movementsUrl.withPath(movementsGetArrivalMessageIds(eori, movementId)).toUrl,
+        receivedSince
+      )
+
+    httpClientV2
+      .get(url"$url")
+      .execute[HttpResponse]
+      .flatMap {
+        response =>
+          response.status match {
+            case OK => response.as[Seq[MessageSummary]]
+            case _  => response.error
+          }
+      }
+  }
+
   override def getArrivalsForEori(eori: EORINumber)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -254,7 +281,6 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .get(url"$url")
-      .addHeaders(HeaderNames.ACCEPT -> MimeTypes.JSON)
       .execute[HttpResponse]
       .flatMap {
         response =>

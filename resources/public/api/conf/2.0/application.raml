@@ -449,6 +449,70 @@ traits:
                     }
                   }
                 }
+
+    /{arrivalId}/messages:
+         get:
+            displayName: Get all cached messages related to an arrival
+            description: |
+              Retrieve all messages related to a specific arrival that have been received within the past 31 days.
+
+              You can filter for arrivals received after a specific date and time.
+
+              Movements older than 31 days are archived, so any messages related to them cannot be returned by the API.
+
+              **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
+            is:
+              - acceptJsonHeader
+              - acceptHeaderInvalid
+            queryParameters:
+              receivedSince:
+                required: false
+                type: datetime
+                description: This is an optional query parameter that you can use to filter for arrivals received after a specific date and time.
+                example: 2021-06-21T09:00+00:00
+            (annotations.scope): "common-transit-convention-traders"
+            securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+            responses:
+              200:
+                body:
+                   application/json:
+                     description: JSON payload
+                     example: |
+                       {
+                          "_links":{
+                             "self":{
+                                "href":"/customs/transits/movements/arrivals/63498209a2d89ad8/messages"
+                             },
+                             "arrival":{
+                                "href":"/customs/transits/movements/arrivals/63498209a2d89ad8"
+                             }
+                          },
+                          "messages":[
+                             {
+                                "_links":{
+                                    "self":{
+                                       "href":"/customs/transits/movements/arrivals/63498209a2d89ad8/messages/634982098f02f00a"
+                                    },
+                                    "arrival":{
+                                       "href":"/customs/transits/movements/arrivals/63498209a2d89ad8"
+                                    }
+                                },
+                                "id":"634982098f02f00a",
+                                "arrivalId":"63498209a2d89ad8",
+                                "received":"2021-06-21T09:00+00:00",
+                                "type":"IE007"
+                             }
+                          ]
+                       }
+              404:
+                body:
+                  application/json:
+                    type: types.errorResponse
+                    examples:
+                      notFound:
+                        description: The specified arrival does not exist, has been archived or is not available to the EORI number.
+                        value:
+                          code: NOT_FOUND
     get:
       displayName: Get all cached arrivals
       description: |

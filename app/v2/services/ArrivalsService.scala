@@ -27,10 +27,14 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
+import v2.models.MovementId
 import v2.models.errors.PersistenceError
 import v2.models.responses.ArrivalResponse
+
+import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 
+import java.time.OffsetDateTime
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
@@ -43,10 +47,16 @@ trait ArrivalsService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, ArrivalResponse]
 
+  def getArrivalMessageIds(eori: EORINumber, arrivalId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, Seq[MessageSummary]]
+
   def getArrivalsForEori(eori: EORINumber)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MovementResponse]]
+
 }
 
 @Singleton
@@ -62,6 +72,20 @@ class ArrivalsServiceImpl @Inject() (persistenceConnector: PersistenceConnector)
         .map(Right(_))
         .recover {
           case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))
+        }
+    )
+
+  override def getArrivalMessageIds(eori: EORINumber, arrivalId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, Seq[MessageSummary]] =
+    EitherT(
+      persistenceConnector
+        .getArrivalMessageIds(eori, arrivalId, receivedSince)
+        .map(Right(_))
+        .recover {
+          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.ArrivalNotFound(arrivalId))
+          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
 

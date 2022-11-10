@@ -19,7 +19,6 @@ package v2.models.responses.hateoas
 import config.Constants
 import v2.models._
 import v2.models.responses.hateoas.HateoasResponse.prefix
-
 import java.time.OffsetDateTime
 
 object HateoasResponse {
@@ -27,7 +26,6 @@ object HateoasResponse {
   lazy val prefix =
     if (routing.routes.DeparturesRouter.submitDeclaration().url.startsWith(Constants.Context)) ""
     else Constants.Context
-
 }
 
 trait HateoasResponse {
@@ -50,8 +48,15 @@ trait HateoasResponse {
   def arrivalUri(arrivalId: MovementId) =
     s"/customs/transits/movements/arrivals/${arrivalId.value}"
 
-  // TODO: When we do the arrival endpoint, this needs updating
-  def arrivalMessageIdsUri(arrivalId: MovementId) =
-    s"/customs/transits/movements/arrivals/${arrivalId.value}/messages"
+  def arrivalMessageIdsUri(arrivalId: MovementId, receivedSince: Option[OffsetDateTime]) =
+    prefix + routing.routes.ArrivalsRouter
+      .getArrivalMessageIds(
+        arrivalId.value,
+        receivedSince
+      )
+      .url
 
+  // TODO: When we do the arrival endpoint, this needs updating
+  def arrivalMessageUri(arrivalId: MovementId, messageId: MessageId) =
+    s"/customs/transits/movements/arrivals/${arrivalId.value}/messages/${messageId.value}"
 }
