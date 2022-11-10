@@ -18,7 +18,6 @@ package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.Constants
-import controllers.routes
 import models.domain._
 import models.response.HateoasResponseArrival
 import org.scalatest.concurrent.IntegrationPatience

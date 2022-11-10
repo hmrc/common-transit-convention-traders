@@ -28,6 +28,7 @@ import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.Files.TemporaryFileCreator
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
+import v2.fakes.utils.FakePreMaterialisedFutureProvider
 import v2.utils.FutureConversions._
 
 import java.nio.file.Path
@@ -55,59 +56,126 @@ class StreamWithFileSpec
     override def delete(file: Files.TemporaryFile): Try[Boolean] = Success(true)
   }
 
-  object Harness extends StreamWithFile
+  "withReusableSource" - {
+    object Harness extends StreamWithFile {
+      override def preMaterialisedFutureProvider: PreMaterialisedFutureProvider = FakePreMaterialisedFutureProvider
+    }
 
-  "using a reusable source on a single use source should create a file when streamed once" in {
+    "using a reusable source on a single use source should create a file when streamed once" in {
 
-    // create the file now so we can check it later.
-    implicit val temporaryFileCreator: DummyTemporaryFileCreator = DummyTemporaryFileCreator(SingletonTemporaryFileCreator.create())
-    temporaryFileCreator.temporaryFile.deleteOnExit()
+      // create the file now so we can check it later.
+      implicit val temporaryFileCreator: DummyTemporaryFileCreator = DummyTemporaryFileCreator(SingletonTemporaryFileCreator.create())
+      temporaryFileCreator.temporaryFile.deleteOnExit()
 
-    val string = Gen.stringOfN(10, Gen.alphaNumChar).sample.value
-    val source = singleUseStringSource(string)
+      val string = Gen.stringOfN(10, Gen.alphaNumChar).sample.value
+      val source = singleUseStringSource(string)
 
-    Harness.withReusableSource(source) {
-      source =>
-        source
-          .runWith(Sink.ignore)
-          .map {
+      Harness.withReusableSource(source) {
+        source =>
+          source
+            .runWith(Sink.ignore)
+            .map {
+              _ =>
+                // we now load the file and it should contain the string
+                val fileContents = Source.fromFile(temporaryFileCreator.temporaryFile.toFile)
+                try fileContents.mkString mustBe string
+                finally fileContents.close()
+            }
+      }
+    }
+
+    "using a reusable source on a single use source can be used multiple times in succession and get the same result" in {
+
+      // create the file now so we can check it later.
+      implicit val temporaryFileCreator: DummyTemporaryFileCreator = DummyTemporaryFileCreator(SingletonTemporaryFileCreator.create())
+      temporaryFileCreator.temporaryFile.deleteOnExit()
+
+      val string = Gen.stringOfN(10, Gen.alphaNumChar).sample.value
+      val source = singleUseStringSource(string)
+
+      Harness.withReusableSource(source) {
+        source =>
+          val future = for {
+            first  <- source.runWith(Sink.head).map(_.utf8String)
+            second <- source.runWith(Sink.head).map(_.utf8String)
+            third  <- source.runWith(Sink.head).map(_.utf8String)
+            fourth <- source.runWith(Sink.head).map(_.utf8String)
+          } yield (first, second, third, fourth)
+
+          whenReady(future) {
+            result =>
+              result._1 mustBe string
+              result._2 mustBe string
+              result._3 mustBe string
+              result._4 mustBe string
+          }
+
+          Future.successful(())
+      }
+    }
+  }
+
+  "withReusableSourceAndAwaiter" - {
+
+    object Harness extends StreamWithFile {
+      override def preMaterialisedFutureProvider: PreMaterialisedFutureProvider = new PreMaterialisedFutureProviderImpl
+    }
+
+    "using a reusable source on a single use source should create a file when streamed once" in {
+
+      // create the file now so we can check it later.
+      implicit val temporaryFileCreator: DummyTemporaryFileCreator = DummyTemporaryFileCreator(SingletonTemporaryFileCreator.create())
+      temporaryFileCreator.temporaryFile.deleteOnExit()
+
+      val string = Gen.stringOfN(10, Gen.alphaNumChar).sample.value
+      val source = singleUseStringSource(string)
+
+      Harness.withReusableSourceAndAwaiter(source) {
+        (source, await) =>
+          await.isCompleted mustBe false
+          source.runWith(Sink.ignore)
+          await.map {
             _ =>
               // we now load the file and it should contain the string
               val fileContents = Source.fromFile(temporaryFileCreator.temporaryFile.toFile)
               try fileContents.mkString mustBe string
               finally fileContents.close()
           }
+      }
     }
-  }
 
-  "using a reusable source on a single use source can be used multiple times in succession and get the same result" in {
+    "using a reusable source on a single use source can be used multiple times in succession and get the same result" in {
 
-    // create the file now so we can check it later.
-    implicit val temporaryFileCreator: DummyTemporaryFileCreator = DummyTemporaryFileCreator(SingletonTemporaryFileCreator.create())
-    temporaryFileCreator.temporaryFile.deleteOnExit()
+      // create the file now so we can check it later.
+      implicit val temporaryFileCreator: DummyTemporaryFileCreator = DummyTemporaryFileCreator(SingletonTemporaryFileCreator.create())
+      temporaryFileCreator.temporaryFile.deleteOnExit()
 
-    val string = Gen.stringOfN(10, Gen.alphaNumChar).sample.value
-    val source = singleUseStringSource(string)
+      val string = Gen.stringOfN(10, Gen.alphaNumChar).sample.value
+      val source = singleUseStringSource(string)
 
-    Harness.withReusableSource(source) {
-      source =>
-        val future = for {
-          first  <- source.runWith(Sink.head).map(_.utf8String)
-          second <- source.runWith(Sink.head).map(_.utf8String)
-          third  <- source.runWith(Sink.head).map(_.utf8String)
-          fourth <- source.runWith(Sink.head).map(_.utf8String)
-        } yield (first, second, third, fourth)
+      Harness.withReusableSourceAndAwaiter(source) {
+        (source, await) =>
+          await.isCompleted mustBe false
+          val future = for {
+            first  <- source.runWith(Sink.head).map(_.utf8String)
+            _      <- await
+            second <- source.runWith(Sink.head).map(_.utf8String)
+            third  <- source.runWith(Sink.head).map(_.utf8String)
+            fourth <- source.runWith(Sink.head).map(_.utf8String)
+          } yield (first, second, third, fourth)
 
-        whenReady(future) {
-          result =>
-            result._1 mustBe string
-            result._2 mustBe string
-            result._3 mustBe string
-            result._4 mustBe string
-        }
+          whenReady(future) {
+            result =>
+              result._1 mustBe string
+              result._2 mustBe string
+              result._3 mustBe string
+              result._4 mustBe string
+          }
 
-        Future.successful(())
+          Future.successful(())
+      }
     }
+
   }
 
 }

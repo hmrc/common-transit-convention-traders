@@ -32,6 +32,7 @@ import v2.controllers.stream.StreamingParsers
 import v2.models.Bindings._
 import v2.models.{MovementId => V2DepartureId}
 import v2.models.{MessageId => V2MessageId}
+import v2.utils.PreMaterialisedFutureProvider
 
 import java.time.OffsetDateTime
 
@@ -39,7 +40,8 @@ class DeparturesRouter @Inject() (
   val controllerComponents: ControllerComponents,
   v1Departures: V1DeparturesController,
   v1DepartureMessages: V1DepartureMessagesController,
-  v2Departures: V2DeparturesController
+  v2Departures: V2DeparturesController,
+  val preMaterialisedFutureProvider: PreMaterialisedFutureProvider
 )(implicit
   val materializer: Materializer
 ) extends BaseController

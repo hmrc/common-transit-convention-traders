@@ -28,6 +28,7 @@ import play.api.mvc.BaseController
 import play.api.test.Helpers.stubControllerComponents
 import v2.controllers.V2DeparturesController
 import v2.controllers.stream.StreamingParsers
+import v2.fakes.utils.FakePreMaterialisedFutureProvider
 import v2.models.MessageId
 import v2.models.MovementId
 
@@ -38,7 +39,8 @@ class FakeV2DeparturesController @Inject() ()(implicit val materializer: Materia
     with V2DeparturesController
     with StreamingParsers {
 
-  override val controllerComponents = stubControllerComponents()
+  override val controllerComponents          = stubControllerComponents()
+  override val preMaterialisedFutureProvider = FakePreMaterialisedFutureProvider
 
   override def submitDeclaration(): Action[Source[ByteString, _]] = Action(streamFromMemory) {
     request =>

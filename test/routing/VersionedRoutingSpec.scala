@@ -45,6 +45,7 @@ import play.api.test.Helpers.stubControllerComponents
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import v2.base.TestActorSystem
 import v2.controllers.stream.StreamingParsers
+import v2.fakes.utils.FakePreMaterialisedFutureProvider
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.Future
@@ -63,6 +64,8 @@ class VersionedRoutingSpec
       with VersionedRouting
       with StreamingParsers
       with Logging {
+
+    override val preMaterialisedFutureProvider = FakePreMaterialisedFutureProvider
 
     def testWithContent: Action[Source[ByteString, _]] = route {
       case Some("application/vnd.hmrc.2.0+json") => contentActionTwo
