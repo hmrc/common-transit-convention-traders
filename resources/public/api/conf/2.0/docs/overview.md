@@ -15,3 +15,7 @@ You should read:
 - [Roadmap](/roadmaps/common-transit-convention-traders-roadmap/) for information about CTC Traders API releases
 - [Service Guide](/guides/ctc-traders-phase5-service-guide) to learn how to use the CTC Traders API with your software
 - [Tutorials](/api-documentation/docs/tutorials) to learn how to develop your own client applications, including example clients, for the CTC Traders API
+
+## Changelog
+
+You can find the changelog in the [common-transit-convention-traders](https://github.com/hmrc/common-transit-convention-traders/wiki/CTC-Traders-API-v2.0-changelog) GitHub wiki.
