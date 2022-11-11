@@ -618,9 +618,9 @@ traits:
                           code: NOT_FOUND
         /{messageId}:
           get:
-            displayName: Get a cached message related to a departure and message ID
+            displayName: Get a cached message related to a arrival and message ID
             description: |
-              Retrieve all messages related to a specific departure and message ID that have been received within the past 31 days.
+              Retrieve all messages related to a specific arrival and message ID that have been received within the past 31 days.
 
               For example, this could include ‘Declaration rejected’ or Movement Reference Number (MRN) allocated messages.
 
@@ -646,17 +646,17 @@ traits:
                       {
                         "_links":{
                           "self":{
-                            "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2"
+                            "href": "/customs/transits/movements/arrivals/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2"
                           },
-                          "departure":{
-                            "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
+                          "arrival":{
+                            "href": "/customs/transits/movements/arrivals/62f4ebbbf581d4aa"
                           }
                         },
                         "id": "62f4ebbb765ba8c2",
-                        "departureId": "62f4ebbbf581d4aa",
+                        "arrivalId": "62f4ebbbf581d4aa",
                         "received": "2022-08-11T11:44:59.83705",
-                        "type": "IE015",
-                        "body": "<ncts:CC015C PhaseID=\"NCTS5.0\" xmlns:ncts=\"http://ncts.dgtaxud.ec\">...</ncts:CC015C>"
+                        "type": "IE007",
+                        "body": "<ncts:IE007 PhaseID=\"NCTS5.0\" xmlns:ncts=\"http://ncts.dgtaxud.ec\">...</ncts:IE007>"
                       }
                   application/json:
                     description: JSON payload
@@ -664,20 +664,18 @@ traits:
                       {
                         "_links":{
                           "self":{
-                            "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2"
+                            "href": "/customs/transits/movements/arrivals/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2"
                           },
-                          "departure":{
-                            "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
+                          "arrival":{
+                            "href": "/customs/transits/movements/arrivals/62f4ebbbf581d4aa"
                           }
                         },
-                        "departure":{
-                          "id": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
-                        },
-                        "id": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2",
+                        "id": "62f4ebbb765ba8c2",
+                        "arrivalId": "62f4ebbbf581d4aa",
                         "received": "2022-08-11T11:44:59.83705",
-                        "messageType": "IE015",
+                        "type": "IE007",
                         "body":{
-                          "n1.CC015C": {
+                          "n1.CC007C": {
                             "@PhaseID": "NCTS5.0",
                             ...
                           }
