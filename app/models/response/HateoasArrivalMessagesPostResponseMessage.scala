@@ -16,7 +16,6 @@
 
 package models.response
 
-import controllers.routes
 import models.domain.ArrivalId
 import models.domain.MessageId
 import play.api.libs.json.JsObject
@@ -28,7 +27,7 @@ import scala.xml.NodeSeq
 object HateoasArrivalMessagesPostResponseMessage {
 
   def apply(arrivalId: ArrivalId, messageId: MessageId, messageType: String, message: NodeSeq): JsObject = {
-    val messageUrl = routes.ArrivalMessagesController.getArrivalMessage(arrivalId, messageId).urlWithContext
+    val messageUrl = routing.routes.ArrivalsRouter.getArrivalMessage(arrivalId.toString, messageId.toString).urlWithContext
     val arrivalUrl = routing.routes.ArrivalsRouter.getArrival(arrivalId.toString).urlWithContext
 
     Json.obj(

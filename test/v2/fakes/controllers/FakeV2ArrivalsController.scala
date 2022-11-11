@@ -28,6 +28,7 @@ import play.api.mvc.BaseController
 import play.api.test.Helpers.stubControllerComponents
 import v2.controllers.V2ArrivalsController
 import v2.controllers.stream.StreamingParsers
+import v2.models.MessageId
 import v2.models.MovementId
 
 import java.time.OffsetDateTime
@@ -53,6 +54,11 @@ class FakeV2ArrivalsController @Inject() ()(implicit val materializer: Materiali
   }
 
   override def getArrival(arrivalId: MovementId): Action[AnyContent] = Action {
+    _ =>
+      Ok(Json.obj("version" -> 2))
+  }
+
+  override def getArrivalMessage(arrivalId: MovementId, messageId: MessageId): Action[AnyContent] = Action {
     _ =>
       Ok(Json.obj("version" -> 2))
   }

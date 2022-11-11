@@ -28,8 +28,11 @@ import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
 import v2.controllers.V2ArrivalsController
 import v2.controllers.stream.StreamingParsers
+import models.domain.{MessageId => V1MessageId}
 import v2.models.{MovementId => V2ArrivalId}
 import models.domain.{ArrivalId => V1ArrivalId}
+import v2.models.{MessageId => V2MessageId}
+
 import java.time.OffsetDateTime
 
 class ArrivalsRouter @Inject() (
@@ -77,6 +80,26 @@ class ArrivalsRouter @Inject() (
         "arrivalId",
         arrivalId,
         v1ArrivalMessages.getArrivalMessages(_, receivedSince)
+      )
+  }
+
+  def getArrivalMessage(arrivalId: String, messageId: String): Action[Source[ByteString, _]] = route {
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) =>
+      runIfBound[V2ArrivalId](
+        "arrivalId",
+        arrivalId,
+        boundArrivalId =>
+          runIfBound[V2MessageId](
+            "messageId",
+            messageId,
+            v2Arrivals.getArrivalMessage(boundArrivalId, _)
+          )
+      )
+    case _ =>
+      runIfBound[V1ArrivalId](
+        "arrivalId",
+        arrivalId,
+        boundArrivalId => runIfBound[V1MessageId]("messageId", messageId, v1ArrivalMessages.getArrivalMessage(boundArrivalId, _))
       )
   }
 

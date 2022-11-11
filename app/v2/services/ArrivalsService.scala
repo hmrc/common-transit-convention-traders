@@ -27,10 +27,10 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
+import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.errors.PersistenceError
 import v2.models.responses.ArrivalResponse
-
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 
@@ -61,6 +61,11 @@ trait ArrivalsService {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MovementResponse]]
+
+  def getArrivalMessage(eori: EORINumber, arrivalId: MovementId, messageId: MessageId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, MessageSummary]
 
 }
 
@@ -103,6 +108,20 @@ class ArrivalsServiceImpl @Inject() (persistenceConnector: PersistenceConnector)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.ArrivalNotFound(arrivalId))
+          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+        }
+    )
+
+  override def getArrivalMessage(eori: EORINumber, arrivalId: MovementId, messageId: MessageId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, MessageSummary] =
+    EitherT(
+      persistenceConnector
+        .getArrivalMessage(eori, arrivalId, messageId)
+        .map(Right(_))
+        .recover {
+          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(arrivalId, messageId))
           case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )

@@ -18,6 +18,7 @@ package v2.fakes.controllers
 
 import controllers.V1ArrivalMessagesController
 import models.domain.ArrivalId
+import models.domain.MessageId
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
@@ -31,5 +32,9 @@ class FakeV1ArrivalMessagesController extends BaseController with V1ArrivalMessa
 
   override def getArrivalMessages(arrivalId: ArrivalId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
     _ => Accepted(Json.obj("version" -> 1))
+  }
+
+  override def getArrivalMessage(arrivalId: ArrivalId, messageId: MessageId): Action[AnyContent] = Action {
+    _ => Ok(Json.obj("version" -> 1))
   }
 }
