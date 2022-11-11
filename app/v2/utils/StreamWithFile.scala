@@ -16,6 +16,7 @@
 
 package v2.utils
 
+import akka.stream.IOResult
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Sink
@@ -35,9 +36,15 @@ trait StreamWithFile {
   def withReusableSource[R: FutureConversion](
     src: Source[ByteString, _]
   )(block: Source[ByteString, _] => R)(implicit temporaryFileCreator: TemporaryFileCreator, mat: Materializer, ec: ExecutionContext): R = {
+    withReusableSourceAndAwaiter[R](src)((source, _) => block(source))
+  }
+
+  def withReusableSourceAndAwaiter[R: FutureConversion](
+    src: Source[ByteString, _]
+  )(block: (Source[ByteString, _], Future[_]) => R)(implicit temporaryFileCreator: TemporaryFileCreator, mat: Materializer, ec: ExecutionContext): R = {
     val file   = temporaryFileCreator.create()
-    val source = createSource(file.path, src)
-    val result = block(source)
+    val (source, fileWriteFuture) = createSource(file.path, src)
+    val result = block(source, fileWriteFuture)
 
     // convert to a future to do cleanup after -- this can be done async so we just get the
     // future out
@@ -56,9 +63,9 @@ trait StreamWithFile {
     result // as cleanup can be done async, we just return this result.
   }
 
-  private def createSource(path: Path, primary: Source[ByteString, _])(implicit mat: Materializer): Source[ByteString, _] = {
+  private def createSource(path: Path, primary: Source[ByteString, _])(implicit mat: Materializer): (Source[ByteString, _], Future[IOResult]) = {
     val preMat = FileIO.toPath(path, Set(StandardOpenOption.WRITE)).preMaterialize()
-    primary
+    val source = primary
       .alsoTo(preMat._2)
       .via(
         OrElseOnCancel.orElseOrCancelGraph(
@@ -74,6 +81,7 @@ trait StreamWithFile {
             ) ++ FileIO.fromPath(path)
         )
       )
+    (source, preMat._1)
   }
 
 }

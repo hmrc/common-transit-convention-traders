@@ -16,9 +16,11 @@
 
 package v2.controllers.stream
 
+import akka.stream.IOResult
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import cats.data.EitherT
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.streams.Accumulator
 import play.api.mvc.Action
@@ -27,12 +29,14 @@ import play.api.mvc.BaseControllerHelpers
 import play.api.mvc.BodyParser
 import play.api.mvc.Result
 import v2.controllers.request.BodyReplaceableRequest
+import v2.models.errors.PresentationError
 import v2.utils.FutureConversions
 import v2.utils.StreamWithFile
 
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.control.NonFatal
 
 trait StreamingParsers extends StreamWithFile with FutureConversions {
   self: BaseControllerHelpers =>
@@ -62,6 +66,27 @@ trait StreamingParsers extends StreamWithFile with FutureConversions {
               block(request.replaceBody(memoryOrFileSource))
           }
       }
+
+    def streamWithAwait(
+      block: EitherT[Future, PresentationError, Unit] => R[Source[ByteString, _]] => Future[Result]
+    )(implicit temporaryFileCreator: TemporaryFileCreator): Action[Source[ByteString, _]] =
+      actionBuilder.async(streamFromMemory) {
+        request =>
+          withReusableSourceAndAwaiter(request.body) {
+            (memoryOrFileSource, await) =>
+              block(awaitAsEitherT(await))(request.replaceBody(memoryOrFileSource))
+          }
+      }
+
+    private def awaitAsEitherT(future: Future[_]): EitherT[Future, PresentationError, Unit] = {
+      EitherT {
+        future
+          .map(_ => Right(()))
+          .recover {
+            case NonFatal(e) => Left(PresentationError.internalServiceError(cause = Some(e)))
+          }
+      }
+    }
 
   }
 
