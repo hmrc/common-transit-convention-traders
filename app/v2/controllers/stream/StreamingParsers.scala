@@ -16,7 +16,6 @@
 
 package v2.controllers.stream
 
-import akka.stream.IOResult
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
@@ -78,15 +77,16 @@ trait StreamingParsers extends StreamWithFile with FutureConversions {
           }
       }
 
-    private def awaitAsEitherT(future: Future[_]): EitherT[Future, PresentationError, Unit] = {
+    private def awaitAsEitherT(future: Future[_]): EitherT[Future, PresentationError, Unit] =
       EitherT {
         future
-          .map(_ => Right(()))
+          .map(
+            _ => Right(())
+          )
           .recover {
             case NonFatal(e) => Left(PresentationError.internalServiceError(cause = Some(e)))
           }
       }
-    }
 
   }
 

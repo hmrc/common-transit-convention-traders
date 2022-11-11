@@ -35,16 +35,17 @@ trait StreamWithFile {
 
   def withReusableSource[R: FutureConversion](
     src: Source[ByteString, _]
-  )(block: Source[ByteString, _] => R)(implicit temporaryFileCreator: TemporaryFileCreator, mat: Materializer, ec: ExecutionContext): R = {
-    withReusableSourceAndAwaiter[R](src)((source, _) => block(source))
-  }
+  )(block: Source[ByteString, _] => R)(implicit temporaryFileCreator: TemporaryFileCreator, mat: Materializer, ec: ExecutionContext): R =
+    withReusableSourceAndAwaiter[R](src)(
+      (source, _) => block(source)
+    )
 
   def withReusableSourceAndAwaiter[R: FutureConversion](
     src: Source[ByteString, _]
   )(block: (Source[ByteString, _], Future[_]) => R)(implicit temporaryFileCreator: TemporaryFileCreator, mat: Materializer, ec: ExecutionContext): R = {
-    val file   = temporaryFileCreator.create()
+    val file                      = temporaryFileCreator.create()
     val (source, fileWriteFuture) = createSource(file.path, src)
-    val result = block(source, fileWriteFuture)
+    val result                    = block(source, fileWriteFuture)
 
     // convert to a future to do cleanup after -- this can be done async so we just get the
     // future out
