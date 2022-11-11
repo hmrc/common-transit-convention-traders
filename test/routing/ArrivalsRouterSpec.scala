@@ -88,7 +88,7 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
 
     "when getting arrivals for a given enrolment EORI" - executeTest(routes.ArrivalsRouter.getArrivalsForEori(), sut.getArrivalsForEori(), OK)
 
-    "when getting a list of arrival messages with given arrivalId" - executeTest(routes.ArrivalsRouter.getArrival(id), sut.getArrivalsForEori(), OK)
+    "when getting a list of arrival messages with given arrivalId" - executeTest(routes.ArrivalsRouter.getArrival(id), sut.getArrival(id), OK)
 
     "when getting a single arrival message" - executeTest(routes.ArrivalsRouter.getArrivalMessage(id, id), sut.getArrivalMessage(id, id), OK)
   }
@@ -122,7 +122,7 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
 
     "when getting arrivals for a given enrolment EORI" - executeTest(routes.ArrivalsRouter.getArrivalsForEori(), sut.getArrivalsForEori(), OK)
 
-    "when getting a list of arrival messages with given arrivalId" - executeTest(routes.ArrivalsRouter.getArrival("123"), sut.getArrivalsForEori(), OK)
+    "when getting a list of arrival messages with given arrivalId" - executeTest(routes.ArrivalsRouter.getArrival("123"), sut.getArrival("123"), OK)
 
     "when getting a single arrival message" - executeTest(routes.ArrivalsRouter.getArrivalMessage("123", "456"), sut.getArrivalMessage("123", "456"), OK)
   }
