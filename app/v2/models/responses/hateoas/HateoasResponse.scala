@@ -26,14 +26,18 @@ trait HateoasResponse {
   def getMessageUri(movementId: MovementId, messageId: MessageId, movementType: MovementType) =
     movementType match {
       case MovementType.Departure => routing.routes.DeparturesRouter.getMessage(movementId.value, messageId.value).urlWithContext
-      case MovementType.Arrival =>
-        s"/customs/transits/movements/arrivals/${movementId.value}/messages/${messageId.value}" // TODO: When we do the arrival endpoint, this needs updating
+      case MovementType.Arrival   => routing.routes.ArrivalsRouter.getArrivalMessage(movementId.value, messageId.value).urlWithContext
     }
 
   def getMessagesUri(movementId: MovementId, receivedSince: Option[OffsetDateTime], movementType: MovementType) =
     movementType match {
       case MovementType.Arrival =>
-        s"/customs/transits/movements/arrivals/${movementId.value}/messages" // TODO: When we do the arrival endpoint, this needs updating
+        routing.routes.ArrivalsRouter
+          .getArrivalMessageIds(
+            movementId.value,
+            receivedSince
+          )
+          .urlWithContext
       case MovementType.Departure =>
         routing.routes.DeparturesRouter
           .getMessageIds(
