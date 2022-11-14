@@ -201,9 +201,8 @@ class V2ArrivalsControllerImpl @Inject() (
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
-          messageSummary          <- arrivalsService.getArrivalMessage(request.eoriNumber, arrivalId, messageId).asPresentation
-          formattedMessageSummary <- responseFormatterService.formatMessageSummary(messageSummary, request.headers.get(HeaderNames.ACCEPT).get)
-        } yield formattedMessageSummary).fold(
+          messageSummary <- arrivalsService.getArrivalMessage(request.eoriNumber, arrivalId, messageId).asPresentation
+        } yield messageSummary).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Ok(Json.toJson(HateoasMovementMessageResponse(arrivalId, messageId, response, MovementType.Arrival)))
         )

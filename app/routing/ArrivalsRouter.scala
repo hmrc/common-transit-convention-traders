@@ -46,6 +46,8 @@ class ArrivalsRouter @Inject() (
     with StreamingParsers
     with VersionedRouting {
 
+  val VERSION_2_ACCEPT_HEADER_PATTERN = """^application\/vnd\.hmrc\.2\.0\+.+$""".r
+
   def createArrivalNotification(): Action[Source[ByteString, _]] =
     route {
       case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Arrivals.createArrivalNotification()
@@ -84,7 +86,7 @@ class ArrivalsRouter @Inject() (
   }
 
   def getArrivalMessage(arrivalId: String, messageId: String): Action[Source[ByteString, _]] = route {
-    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) =>
+    case Some(VERSION_2_ACCEPT_HEADER_PATTERN()) =>
       runIfBound[V2ArrivalId](
         "arrivalId",
         arrivalId,

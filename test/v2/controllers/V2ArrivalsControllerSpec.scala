@@ -899,15 +899,12 @@ class V2ArrivalsControllerSpec
   }
 
   "GET /movements/arrivals/:arrivalId/messages/:messageId " - {
-    val movementId         = arbitraryMovementId.arbitrary.sample.value
-    val messageId          = arbitraryMessageId.arbitrary.sample.value
-    val messageSummaryXml  = arbitraryMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = Some(XmlPayload("<test>ABC</test>")))
-    val messageSummaryJson = messageSummaryXml.copy(body = Some(JsonPayload("""{"test": "ABC"}""")))
+    val movementId     = arbitraryMovementId.arbitrary.sample.value
+    val messageId      = arbitraryMessageId.arbitrary.sample.value
+    val messageSummary = arbitraryMessageSummaryXml.arbitrary.sample.value
 
     Seq(
-      VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
-      VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML,
-      VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
+      VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON
     ).foreach {
 
       acceptHeaderValue =>
@@ -915,7 +912,6 @@ class V2ArrivalsControllerSpec
           FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
         val request =
           FakeRequest("GET", routing.routes.ArrivalsRouter.getArrivalMessage(movementId.value, messageId.value).url, headers, Source.empty[ByteString])
-        val convertBodyToJson = acceptHeaderValue == VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON
 
         s"when the accept header equals $acceptHeaderValue" - {
 
@@ -927,18 +923,7 @@ class V2ArrivalsControllerSpec
               )
             )
               .thenAnswer(
-                _ => EitherT.rightT(messageSummaryXml)
-              )
-
-            when(
-              mockResponseFormatterService.formatMessageSummary(any[MessageSummary], eqTo(acceptHeaderValue))(
-                any[ExecutionContext],
-                any[HeaderCarrier],
-                any[Materializer]
-              )
-            )
-              .thenAnswer(
-                _ => if (convertBodyToJson) EitherT.rightT(messageSummaryJson) else EitherT.rightT(messageSummaryXml)
+                _ => EitherT.rightT(messageSummary)
               )
 
             val result = sut.getArrivalMessage(movementId, messageId)(request)
@@ -948,7 +933,7 @@ class V2ArrivalsControllerSpec
               HateoasMovementMessageResponse(
                 movementId,
                 messageId,
-                if (convertBodyToJson) messageSummaryJson else messageSummaryXml,
+                messageSummary,
                 MovementType.Arrival
               )
             )
