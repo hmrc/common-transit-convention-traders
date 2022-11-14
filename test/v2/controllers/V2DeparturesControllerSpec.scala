@@ -67,6 +67,7 @@ import v2.base.TestSourceProvider
 import v2.fakes.controllers.actions.FakeAcceptHeaderActionProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeMessageSizeActionProvider
+import v2.fakes.utils.FakePreMaterialisedFutureProvider
 import v2.models._
 import v2.models.errors.ExtractionError.MessageTypeNotFound
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
@@ -152,7 +153,8 @@ class V2DeparturesControllerSpec
     new TestMetrics(),
     mockXmlParsingService,
     mockJsonParsingService,
-    mockResponseFormatterService
+    mockResponseFormatterService,
+    FakePreMaterialisedFutureProvider
   )
 
   implicit val timeout: Timeout = 5.seconds
@@ -344,7 +346,8 @@ class V2DeparturesControllerSpec
           new TestMetrics(),
           mockXmlParsingService,
           mockJsonParsingService,
-          mockResponseFormatterService
+          mockResponseFormatterService,
+          FakePreMaterialisedFutureProvider
         )
 
         val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
@@ -389,7 +392,8 @@ class V2DeparturesControllerSpec
           new TestMetrics(),
           mockXmlParsingService,
           mockJsonParsingService,
-          mockResponseFormatterService
+          mockResponseFormatterService,
+          FakePreMaterialisedFutureProvider
         )
 
         val request  = fakeRequestDepartures("POST", body = Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
@@ -737,7 +741,8 @@ class V2DeparturesControllerSpec
         new TestMetrics(),
         mockXmlParsingService,
         mockJsonParsingService,
-        mockResponseFormatterService
+        mockResponseFormatterService,
+        FakePreMaterialisedFutureProvider
       )
 
       val request  = fakeRequestDepartures("POST", body = singleUseStringSource(CC015C.mkString), headers = standardHeaders)
@@ -1164,7 +1169,8 @@ class V2DeparturesControllerSpec
           new TestMetrics(),
           mockXmlParsingService,
           mockJsonParsingService,
-          mockResponseFormatterService
+          mockResponseFormatterService,
+          FakePreMaterialisedFutureProvider
         )
 
         val request  = fakeAttachDepartures("POST", body = Source.single(ByteString(CC013C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)

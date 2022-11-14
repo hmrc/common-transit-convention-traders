@@ -45,6 +45,7 @@ import play.api.test.Helpers.stubControllerComponents
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
 import v2.controllers.request.BodyReplaceableRequest
+import v2.fakes.utils.FakePreMaterialisedFutureProvider
 
 import java.nio.charset.StandardCharsets
 import scala.annotation.tailrec
@@ -72,9 +73,10 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with TestActorSyste
 
   object Harness extends BaseController with StreamingParsers {
 
-    override val controllerComponents = stubControllerComponents()
-    implicit val temporaryFileCreator = SingletonTemporaryFileCreator
-    implicit val materializer         = Materializer(TestActorSystem.system)
+    override val controllerComponents          = stubControllerComponents()
+    override val preMaterialisedFutureProvider = FakePreMaterialisedFutureProvider
+    implicit val temporaryFileCreator          = SingletonTemporaryFileCreator
+    implicit val materializer                  = Materializer(TestActorSystem.system)
 
     def testFromMemory: Action[Source[ByteString, _]] = Action.async(streamFromMemory) {
       request => result.apply(request).run(request.body)(materializer)
@@ -89,6 +91,18 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with TestActorSyste
       request =>
         (for {
           a <- request.body.runWith(Sink.head)
+          b <- request.body.runWith(Sink.head)
+        } yield (a ++ b).utf8String)
+          .map(
+            r => Ok(r)
+          )
+    }
+
+    def resultStreamAwait: Action[Source[ByteString, _]] = Action.andThen(TestActionBuilder).streamWithAwait {
+      await => request =>
+        (for {
+          a <- request.body.runWith(Sink.head)
+          _ <- await.value
           b <- request.body.runWith(Sink.head)
         } yield (a ++ b).utf8String)
           .map(
@@ -126,6 +140,14 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with TestActorSyste
       val string  = Gen.stringOfN(20, Gen.alphaNumChar).sample.value
       val request = FakeRequest("POST", "/", headers, singleUseStringSource(string))
       val result  = Harness.resultStream()(request)
+      status(result) mustBe OK
+      contentAsString(result) mustBe (string ++ string)
+    }
+
+    "via the streamWithAwait extension method" in {
+      val string  = Gen.stringOfN(2000, Gen.alphaNumChar).sample.value
+      val request = FakeRequest("POST", "/", headers, singleUseStringSource(string))
+      val result  = Harness.resultStreamAwait()(request)
       status(result) mustBe OK
       contentAsString(result) mustBe (string ++ string)
     }

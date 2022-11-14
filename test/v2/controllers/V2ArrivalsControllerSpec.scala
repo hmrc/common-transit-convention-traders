@@ -66,11 +66,11 @@ import v2.base.TestSourceProvider
 import v2.fakes.controllers.actions.FakeAcceptHeaderActionProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeMessageSizeActionProvider
+import v2.fakes.utils.FakePreMaterialisedFutureProvider
 import v2.models._
 import v2.models.errors._
 import v2.models.request.MessageType
 import v2.models.responses.ArrivalResponse
-import v2.models.responses.MessageSummary
 import v2.models.responses.hateoas._
 import v2.services._
 
@@ -122,8 +122,9 @@ class V2ArrivalsControllerSpec
     mockPushNotificationService,
     FakeMessageSizeActionProvider,
     FakeAcceptHeaderActionProvider,
+    mockResponseFormatterService,
     new TestMetrics(),
-    mockResponseFormatterService
+    FakePreMaterialisedFutureProvider
   )
 
   implicit val timeout: Timeout = 5.seconds
@@ -319,8 +320,9 @@ class V2ArrivalsControllerSpec
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
           FakeAcceptHeaderActionProvider,
+          mockResponseFormatterService,
           new TestMetrics(),
-          mockResponseFormatterService
+          FakePreMaterialisedFutureProvider
         )
 
         val request =
@@ -357,8 +359,9 @@ class V2ArrivalsControllerSpec
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
           FakeAcceptHeaderActionProvider,
+          mockResponseFormatterService,
           new TestMetrics(),
-          mockResponseFormatterService
+          FakePreMaterialisedFutureProvider
         )
 
         val request =
@@ -510,8 +513,9 @@ class V2ArrivalsControllerSpec
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
           FakeAcceptHeaderActionProvider,
+          mockResponseFormatterService,
           new TestMetrics(),
-          mockResponseFormatterService
+          FakePreMaterialisedFutureProvider
         )
 
         val request =
@@ -555,8 +559,9 @@ class V2ArrivalsControllerSpec
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
           FakeAcceptHeaderActionProvider,
+          mockResponseFormatterService,
           new TestMetrics(),
-          mockResponseFormatterService
+          FakePreMaterialisedFutureProvider
         )
 
         val request =
@@ -597,8 +602,9 @@ class V2ArrivalsControllerSpec
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
           FakeAcceptHeaderActionProvider,
+          mockResponseFormatterService,
           new TestMetrics(),
-          mockResponseFormatterService
+          FakePreMaterialisedFutureProvider
         )
 
         val request =
@@ -682,8 +688,9 @@ class V2ArrivalsControllerSpec
         mockPushNotificationService,
         FakeMessageSizeActionProvider,
         FakeAcceptHeaderActionProvider,
+        mockResponseFormatterService,
         new TestMetrics(),
-        mockResponseFormatterService
+        FakePreMaterialisedFutureProvider
       )
 
       val request  = fakeRequestArrivalNotification("POST", body = singleUseStringSource(CC007C.mkString), headers = standardHeaders)

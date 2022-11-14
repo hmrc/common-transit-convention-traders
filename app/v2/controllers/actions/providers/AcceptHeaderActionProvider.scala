@@ -18,7 +18,6 @@ package v2.controllers.actions.providers
 
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
-import config.AppConfig
 import play.api.mvc.Request
 import v2.controllers.actions.AcceptHeaderAction
 import v2.controllers.actions.AcceptHeaderActionImpl
@@ -32,7 +31,7 @@ trait AcceptHeaderActionProvider {
 
 }
 
-class AcceptHeaderActionProviderImpl @Inject() (appConfig: AppConfig)(implicit ec: ExecutionContext) extends AcceptHeaderActionProvider {
+class AcceptHeaderActionProviderImpl @Inject() ()(implicit ec: ExecutionContext) extends AcceptHeaderActionProvider {
 
   def apply[R[_] <: Request[_]](): AcceptHeaderAction[R] = new AcceptHeaderActionImpl[R]
 

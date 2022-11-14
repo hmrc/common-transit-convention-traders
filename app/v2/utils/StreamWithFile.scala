@@ -32,12 +32,21 @@ import scala.util.control.NonFatal
 
 trait StreamWithFile {
 
+  def preMaterialisedFutureProvider: PreMaterialisedFutureProvider
+
   def withReusableSource[R: FutureConversion](
     src: Source[ByteString, _]
-  )(block: Source[ByteString, _] => R)(implicit temporaryFileCreator: TemporaryFileCreator, mat: Materializer, ec: ExecutionContext): R = {
-    val file   = temporaryFileCreator.create()
-    val source = createSource(file.path, src)
-    val result = block(source)
+  )(block: Source[ByteString, _] => R)(implicit temporaryFileCreator: TemporaryFileCreator, mat: Materializer, ec: ExecutionContext): R =
+    withReusableSourceAndAwaiter[R](src)(
+      (source, _) => block(source)
+    )
+
+  def withReusableSourceAndAwaiter[R: FutureConversion](
+    src: Source[ByteString, _]
+  )(block: (Source[ByteString, _], Future[_]) => R)(implicit temporaryFileCreator: TemporaryFileCreator, mat: Materializer, ec: ExecutionContext): R = {
+    val file                      = temporaryFileCreator.create()
+    val (source, fileWriteFuture) = createSource(file.path, src)
+    val result                    = block(source, fileWriteFuture)
 
     // convert to a future to do cleanup after -- this can be done async so we just get the
     // future out
@@ -56,9 +65,25 @@ trait StreamWithFile {
     result // as cleanup can be done async, we just return this result.
   }
 
-  private def createSource(path: Path, primary: Source[ByteString, _]): Source[ByteString, _] =
-    primary
-      .alsoTo(FileIO.toPath(path, Set(StandardOpenOption.WRITE)))
-      .via(OrElseOnCancel.orElseOrCancelGraph(FileIO.fromPath(path)))
+  private def createSource(path: Path, primary: Source[ByteString, _])(implicit mat: Materializer): (Source[ByteString, _], Future[_]) = {
+    val preMat = preMaterialisedFutureProvider(FileIO.toPath(path, Set(StandardOpenOption.WRITE)))
+    val source = primary
+      .alsoTo(preMat._2)
+      .via(
+        OrElseOnCancel.orElseOrCancelGraph(
+          // This is trying to create a stream that backpressures until the future from the pre-materialisation
+          // (above) is cleared. preMat will complete when the file write is completed the first time.
+          // Then, we throw away the value of the object, and concatenate with the second object
+          // which will then read from the freshly written file. If the future is already completed,
+          // the file read will occur instantly.
+          Source
+            .future(preMat._1)
+            .mapConcat(
+              _ => Seq[ByteString]()
+            ) ++ FileIO.fromPath(path)
+        )
+      )
+    (source, preMat._1)
+  }
 
 }

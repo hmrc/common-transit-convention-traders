@@ -52,6 +52,7 @@ import v2.models.responses.DeclarationResponse
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
 import v2.services._
+import v2.utils.PreMaterialisedFutureProvider
 
 import java.time.OffsetDateTime
 import scala.concurrent.Future
@@ -81,7 +82,8 @@ class V2DeparturesControllerImpl @Inject() (
   val metrics: Metrics,
   xmlParsingService: XmlMessageParsingService,
   jsonParsingService: JsonMessageParsingService,
-  responseFormatterService: ResponseFormatterService
+  responseFormatterService: ResponseFormatterService,
+  val preMaterialisedFutureProvider: PreMaterialisedFutureProvider
 )(implicit val materializer: Materializer, val temporaryFileCreator: TemporaryFileCreator)
     extends BaseController
     with V2DeparturesController
@@ -229,11 +231,12 @@ class V2DeparturesControllerImpl @Inject() (
     }
 
   def attachMessageXML(departureId: MovementId): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen messageSizeAction()).stream {
-      implicit request =>
+    (authActionNewEnrolmentOnly andThen messageSizeAction()).streamWithAwait {
+      awaitFileWrite => implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
           messageType <- xmlParsingService.extractMessageType(request.body).asPresentation
+          _           <- awaitFileWrite
           _           <- validationService.validateXml(messageType, request.body).asPresentation
           _ = auditService.audit(messageType.auditType, request.body, MimeTypes.XML)
           declarationResult <- updateAndSendDeparture(departureId, messageType, request.body)
@@ -267,12 +270,13 @@ class V2DeparturesControllerImpl @Inject() (
           } yield updateResponse
       }
 
-    (authActionNewEnrolmentOnly andThen messageSizeAction()).stream {
-      implicit request =>
+    (authActionNewEnrolmentOnly andThen messageSizeAction()).streamWithAwait {
+      awaitFileWrite => implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         (for {
           messageType    <- jsonParsingService.extractMessageType(request.body).asPresentation
+          _              <- awaitFileWrite
           converted      <- handleJson(messageType, request.body)
           updateResponse <- handleXml(id, request.eoriNumber, messageType, converted)
         } yield updateResponse).fold[Result](
