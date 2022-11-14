@@ -59,7 +59,7 @@ class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures
   val appConfig: AppConfig = mock[AppConfig]
   when(appConfig.messageSizeLimit).thenReturn(500000)
 
-  val acceptHeaderAction       = new AcceptHeaderActionProviderImpl(appConfig)
+  val acceptHeaderAction       = new AcceptHeaderActionProviderImpl()
   val cc: ControllerComponents = Helpers.stubControllerComponents()
 
   "AcceptHeaderAction " - {

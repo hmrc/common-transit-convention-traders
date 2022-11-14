@@ -30,6 +30,7 @@ import v2.controllers.V2DeparturesController
 import v2.controllers.stream.StreamingParsers
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.utils.FakePreMaterialisedFutureProvider
 
 import java.time.OffsetDateTime
 
@@ -38,7 +39,8 @@ class FakeV2DeparturesController @Inject() ()(implicit val materializer: Materia
     with V2DeparturesController
     with StreamingParsers {
 
-  override val controllerComponents = stubControllerComponents()
+  override val controllerComponents          = stubControllerComponents()
+  override val preMaterialisedFutureProvider = FakePreMaterialisedFutureProvider
 
   override def submitDeclaration(): Action[Source[ByteString, _]] = Action(streamFromMemory) {
     request =>

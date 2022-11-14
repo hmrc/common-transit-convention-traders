@@ -71,6 +71,7 @@ import v2.models.request.MessageType
 import v2.models.responses.ArrivalResponse
 import v2.models.responses.hateoas._
 import v2.services._
+import v2.utils.FakePreMaterialisedFutureProvider
 
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
@@ -118,7 +119,8 @@ class V2ArrivalsControllerSpec
     mockConversionService,
     mockPushNotificationService,
     FakeMessageSizeActionProvider,
-    new TestMetrics()
+    new TestMetrics(),
+    FakePreMaterialisedFutureProvider
   )
 
   implicit val timeout: Timeout = 5.seconds
@@ -313,7 +315,8 @@ class V2ArrivalsControllerSpec
           mockConversionService,
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
-          new TestMetrics()
+          new TestMetrics(),
+          FakePreMaterialisedFutureProvider
         )
 
         val request =
@@ -349,7 +352,8 @@ class V2ArrivalsControllerSpec
           mockConversionService,
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
-          new TestMetrics()
+          new TestMetrics(),
+          FakePreMaterialisedFutureProvider
         )
 
         val request =
@@ -500,7 +504,8 @@ class V2ArrivalsControllerSpec
           mockConversionService,
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
-          new TestMetrics()
+          new TestMetrics(),
+          FakePreMaterialisedFutureProvider
         )
 
         val request =
@@ -543,7 +548,8 @@ class V2ArrivalsControllerSpec
           mockConversionService,
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
-          new TestMetrics()
+          new TestMetrics(),
+          FakePreMaterialisedFutureProvider
         )
 
         val request =
@@ -583,7 +589,8 @@ class V2ArrivalsControllerSpec
           mockConversionService,
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
-          new TestMetrics()
+          new TestMetrics(),
+          FakePreMaterialisedFutureProvider
         )
 
         val request =
@@ -666,7 +673,8 @@ class V2ArrivalsControllerSpec
         mockConversionService,
         mockPushNotificationService,
         FakeMessageSizeActionProvider,
-        new TestMetrics()
+        new TestMetrics(),
+        FakePreMaterialisedFutureProvider
       )
 
       val request  = fakeRequestArrivalNotification("POST", body = singleUseStringSource(CC007C.mkString), headers = standardHeaders)

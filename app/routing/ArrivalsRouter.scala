@@ -30,13 +30,16 @@ import v2.controllers.V2ArrivalsController
 import v2.controllers.stream.StreamingParsers
 import v2.models.{MovementId => V2ArrivalId}
 import models.domain.{ArrivalId => V1ArrivalId}
+import v2.utils.PreMaterialisedFutureProvider
+
 import java.time.OffsetDateTime
 
 class ArrivalsRouter @Inject() (
   val controllerComponents: ControllerComponents,
   v1Arrivals: V1ArrivalMovementController,
   v2Arrivals: V2ArrivalsController,
-  v1ArrivalMessages: V1ArrivalMessagesController
+  v1ArrivalMessages: V1ArrivalMessagesController,
+  val preMaterialisedFutureProvider: PreMaterialisedFutureProvider
 )(implicit
   val materializer: Materializer
 ) extends BaseController

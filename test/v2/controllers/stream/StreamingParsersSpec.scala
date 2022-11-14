@@ -45,6 +45,7 @@ import play.api.test.Helpers.stubControllerComponents
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
 import v2.controllers.request.BodyReplaceableRequest
+import v2.utils.FakePreMaterialisedFutureProvider
 
 import java.nio.charset.StandardCharsets
 import scala.annotation.tailrec
@@ -72,9 +73,10 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with TestActorSyste
 
   object Harness extends BaseController with StreamingParsers {
 
-    override val controllerComponents = stubControllerComponents()
-    implicit val temporaryFileCreator = SingletonTemporaryFileCreator
-    implicit val materializer         = Materializer(TestActorSystem.system)
+    override val controllerComponents          = stubControllerComponents()
+    override val preMaterialisedFutureProvider = FakePreMaterialisedFutureProvider
+    implicit val temporaryFileCreator          = SingletonTemporaryFileCreator
+    implicit val materializer                  = Materializer(TestActorSystem.system)
 
     def testFromMemory: Action[Source[ByteString, _]] = Action.async(streamFromMemory) {
       request => result.apply(request).run(request.body)(materializer)

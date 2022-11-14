@@ -16,7 +16,6 @@
 
 package v2.utils
 
-import akka.stream.IOResult
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Sink
@@ -32,6 +31,8 @@ import scala.concurrent.Future
 import scala.util.control.NonFatal
 
 trait StreamWithFile {
+
+  def preMaterialisedFutureProvider: PreMaterialisedFutureProvider
 
   def withReusableSource[R: FutureConversion](
     src: Source[ByteString, _]
@@ -64,8 +65,8 @@ trait StreamWithFile {
     result // as cleanup can be done async, we just return this result.
   }
 
-  private def createSource(path: Path, primary: Source[ByteString, _])(implicit mat: Materializer): (Source[ByteString, _], Future[IOResult]) = {
-    val preMat = FileIO.toPath(path, Set(StandardOpenOption.WRITE)).preMaterialize()
+  private def createSource(path: Path, primary: Source[ByteString, _])(implicit mat: Materializer): (Source[ByteString, _], Future[_]) = {
+    val preMat = preMaterialisedFutureProvider(FileIO.toPath(path, Set(StandardOpenOption.WRITE)))
     val source = primary
       .alsoTo(preMat._2)
       .via(

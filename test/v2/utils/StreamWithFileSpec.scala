@@ -55,7 +55,9 @@ class StreamWithFileSpec
     override def delete(file: Files.TemporaryFile): Try[Boolean] = Success(true)
   }
 
-  object Harness extends StreamWithFile
+  object Harness extends StreamWithFile {
+    override def preMaterialisedFutureProvider: PreMaterialisedFutureProvider = FakePreMaterialisedFutureProvider
+  }
 
   "using a reusable source on a single use source should create a file when streamed once" in {
 
