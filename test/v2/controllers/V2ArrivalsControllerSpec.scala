@@ -63,12 +63,14 @@ import utils.TestMetrics
 import v2.base.CommonGenerators
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
+import v2.fakes.controllers.actions.FakeAcceptHeaderActionProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeMessageSizeActionProvider
 import v2.models._
 import v2.models.errors._
 import v2.models.request.MessageType
 import v2.models.responses.ArrivalResponse
+import v2.models.responses.MessageSummary
 import v2.models.responses.hateoas._
 import v2.services._
 
@@ -106,6 +108,7 @@ class V2ArrivalsControllerSpec
   val mockAuditService               = mock[AuditingService]
   val mockConversionService          = mock[ConversionService]
   val mockPushNotificationService    = mock[PushNotificationsService]
+  val mockResponseFormatterService   = mock[ResponseFormatterService]
   implicit val temporaryFileCreator  = SingletonTemporaryFileCreator
 
   lazy val sut: V2ArrivalsController = new V2ArrivalsControllerImpl(
@@ -118,7 +121,9 @@ class V2ArrivalsControllerSpec
     mockConversionService,
     mockPushNotificationService,
     FakeMessageSizeActionProvider,
-    new TestMetrics()
+    FakeAcceptHeaderActionProvider,
+    new TestMetrics(),
+    mockResponseFormatterService
   )
 
   implicit val timeout: Timeout = 5.seconds
@@ -313,7 +318,9 @@ class V2ArrivalsControllerSpec
           mockConversionService,
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
-          new TestMetrics()
+          FakeAcceptHeaderActionProvider,
+          new TestMetrics(),
+          mockResponseFormatterService
         )
 
         val request =
@@ -349,7 +356,9 @@ class V2ArrivalsControllerSpec
           mockConversionService,
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
-          new TestMetrics()
+          FakeAcceptHeaderActionProvider,
+          new TestMetrics(),
+          mockResponseFormatterService
         )
 
         val request =
@@ -500,7 +509,9 @@ class V2ArrivalsControllerSpec
           mockConversionService,
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
-          new TestMetrics()
+          FakeAcceptHeaderActionProvider,
+          new TestMetrics(),
+          mockResponseFormatterService
         )
 
         val request =
@@ -543,7 +554,9 @@ class V2ArrivalsControllerSpec
           mockConversionService,
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
-          new TestMetrics()
+          FakeAcceptHeaderActionProvider,
+          new TestMetrics(),
+          mockResponseFormatterService
         )
 
         val request =
@@ -583,7 +596,9 @@ class V2ArrivalsControllerSpec
           mockConversionService,
           mockPushNotificationService,
           FakeMessageSizeActionProvider,
-          new TestMetrics()
+          FakeAcceptHeaderActionProvider,
+          new TestMetrics(),
+          mockResponseFormatterService
         )
 
         val request =
@@ -666,7 +681,9 @@ class V2ArrivalsControllerSpec
         mockConversionService,
         mockPushNotificationService,
         FakeMessageSizeActionProvider,
-        new TestMetrics()
+        FakeAcceptHeaderActionProvider,
+        new TestMetrics(),
+        mockResponseFormatterService
       )
 
       val request  = fakeRequestArrivalNotification("POST", body = singleUseStringSource(CC007C.mkString), headers = standardHeaders)
@@ -878,6 +895,91 @@ class V2ArrivalsControllerSpec
       val result = sut.getArrival(movementId)(request)
 
       status(result) mustBe INTERNAL_SERVER_ERROR
+    }
+  }
+
+  "GET /movements/arrivals/:arrivalId/messages/:messageId " - {
+    val movementId     = arbitraryMovementId.arbitrary.sample.value
+    val messageId      = arbitraryMessageId.arbitrary.sample.value
+    val messageSummary = arbitraryMessageSummaryXml.arbitrary.sample.value
+
+    Seq(
+      VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON
+    ).foreach {
+
+      acceptHeaderValue =>
+        val headers =
+          FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
+        val request =
+          FakeRequest("GET", routing.routes.ArrivalsRouter.getArrivalMessage(movementId.value, messageId.value).url, headers, Source.empty[ByteString])
+
+        s"when the accept header equals $acceptHeaderValue" - {
+
+          "when the message is found" in {
+            when(
+              mockArrivalsPersistenceService.getArrivalMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(
+                any[HeaderCarrier],
+                any[ExecutionContext]
+              )
+            )
+              .thenAnswer(
+                _ => EitherT.rightT(messageSummary)
+              )
+
+            val result = sut.getArrivalMessage(movementId, messageId)(request)
+
+            status(result) mustBe OK
+            contentAsJson(result) mustBe Json.toJson(
+              HateoasMovementMessageResponse(
+                movementId,
+                messageId,
+                messageSummary,
+                MovementType.Arrival
+              )
+            )
+          }
+
+          "when no message is found" in {
+            when(
+              mockArrivalsPersistenceService.getArrivalMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(
+                any[HeaderCarrier],
+                any[ExecutionContext]
+              )
+            )
+              .thenAnswer(
+                _ => EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))
+              )
+
+            val result = sut.getArrivalMessage(movementId, messageId)(request)
+
+            status(result) mustBe NOT_FOUND
+            contentAsJson(result) mustBe Json.obj(
+              "code"    -> "NOT_FOUND",
+              "message" -> s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
+            )
+          }
+
+          "when an unknown error occurs" in {
+            when(
+              mockArrivalsPersistenceService.getArrivalMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(
+                any[HeaderCarrier],
+                any[ExecutionContext]
+              )
+            )
+              .thenAnswer(
+                _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
+              )
+
+            val result = sut.getArrivalMessage(movementId, messageId)(request)
+
+            status(result) mustBe INTERNAL_SERVER_ERROR
+            contentAsJson(result) mustBe Json.obj(
+              "code"    -> "INTERNAL_SERVER_ERROR",
+              "message" -> "Internal server error"
+            )
+          }
+
+        }
     }
   }
 }

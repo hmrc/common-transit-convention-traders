@@ -16,7 +16,6 @@
 
 package models.response
 
-import controllers.routes
 import models.domain.ArrivalId
 import models.domain.MessageId
 import models.domain.MovementMessage
@@ -27,7 +26,7 @@ import v2.utils.CallOps._
 object HateoasArrivalResponseMessage {
 
   def apply(arrivalId: ArrivalId, messageId: MessageId, m: MovementMessage): JsObject = {
-    val arrivalUrl = routes.ArrivalMessagesController.getArrivalMessage(arrivalId, messageId).urlWithContext
+    val arrivalUrl = routing.routes.ArrivalsRouter.getArrivalMessage(arrivalId.toString, messageId.toString).urlWithContext
     val messageUrl = routing.routes.ArrivalsRouter.getArrival(arrivalId.toString).urlWithContext
 
     Json.obj(

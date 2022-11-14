@@ -84,7 +84,7 @@ class ArrivalMessagesControllerSpec
   }
 
   val sourceMovement = MovementMessage(
-    routes.ArrivalMessagesController.getArrivalMessage(ArrivalId(123), MessageId(4)).urlWithContext,
+    routing.routes.ArrivalsRouter.getArrivalMessage("123", "4").urlWithContext,
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
     "IE025",
     <test>default</test>
@@ -187,7 +187,7 @@ class ArrivalMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.ArrivalMessagesController.getArrivalMessage(ArrivalId(123), MessageId(4)).url,
+        routing.routes.ArrivalsRouter.getArrivalMessage("123", "4").url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -203,7 +203,7 @@ class ArrivalMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.ArrivalMessagesController.getArrivalMessage(ArrivalId(123), MessageId(4)).url,
+        routing.routes.ArrivalsRouter.getArrivalMessage("123", "4").url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -221,7 +221,7 @@ class ArrivalMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.ArrivalMessagesController.getArrivalMessage(ArrivalId(123), MessageId(4)).url,
+        routing.routes.ArrivalsRouter.getArrivalMessage("123", "4").url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -243,7 +243,7 @@ class ArrivalMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.ArrivalMessagesController.getArrivalMessage(ArrivalId(123), MessageId(4)).url,
+        routing.routes.ArrivalsRouter.getArrivalMessage("123", "4").url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -258,7 +258,7 @@ class ArrivalMessagesControllerSpec
 
       val request = FakeRequest(
         "GET",
-        routes.ArrivalMessagesController.getArrivalMessage(ArrivalId(123), MessageId(4)).url,
+        routing.routes.ArrivalsRouter.getArrivalMessage("123", "4").url,
         headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
         AnyContentAsEmpty
       )
@@ -303,7 +303,7 @@ class ArrivalMessagesControllerSpec
 
       status(result) mustBe ACCEPTED
       contentAsString(result) mustEqual expectedJson.toString()
-      headers(result) must contain(LOCATION -> routes.ArrivalMessagesController.getArrivalMessage(ArrivalId(123), MessageId(1)).urlWithContext)
+      headers(result) must contain(LOCATION -> routing.routes.ArrivalsRouter.getArrivalMessage("123", "1").urlWithContext)
     }
 
     "must return BadRequest when xml includes MesSenMES3" in {
@@ -386,7 +386,7 @@ class ArrivalMessagesControllerSpec
 
       status(result) mustBe ACCEPTED
       contentAsString(result) mustEqual expectedJson.toString()
-      headers(result) must contain(LOCATION -> routes.ArrivalMessagesController.getArrivalMessage(ArrivalId(123), MessageId(123)).urlWithContext)
+      headers(result) must contain(LOCATION -> routing.routes.ArrivalsRouter.getArrivalMessage("123", "123").urlWithContext)
     }
 
     "must return UnsupportedMediaType when Content-Type is JSON" in {

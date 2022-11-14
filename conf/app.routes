@@ -7,7 +7,7 @@ GET        /movements/arrivals/:arrivalId                           routing.Arri
 POST       /movements/arrivals/:arrivalId/messages                  controllers.ArrivalMessagesController.sendMessageDownstream(arrivalId: ArrivalId)
 GET        /movements/arrivals/:arrivalId/messages                  routing.ArrivalsRouter.getArrivalMessageIds(arrivalId: String, receivedSince: Option[OffsetDateTime] ?= None)
 
-GET        /movements/arrivals/:arrivalId/messages/:messageId       controllers.ArrivalMessagesController.getArrivalMessage(arrivalId: ArrivalId, messageId: MessageId)
+GET        /movements/arrivals/:arrivalId/messages/:messageId       routing.ArrivalsRouter.getArrivalMessage(arrivalId: String, messageId: String)
 
 
 

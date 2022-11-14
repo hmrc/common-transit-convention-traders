@@ -41,12 +41,17 @@ import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.XmlPayload
 import v2.models.errors.PersistenceError
+import v2.models.request.MessageType
 import v2.models.responses.ArrivalResponse
 import v2.models.responses.MovementResponse
+
 import java.nio.charset.StandardCharsets
 import v2.models.responses.MessageSummary
+
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -185,4 +190,47 @@ class ArrivalsServiceSpec
 
   }
 
+  "Getting a Single Arrival Message" - {
+
+    val now = OffsetDateTime.now(ZoneOffset.UTC)
+
+    "when a message is found, should return a Right" in {
+      val successResponse = MessageSummary(
+        MessageId("1234567890abcdef"),
+        now,
+        MessageType.ArrivalNotification,
+        Some(XmlPayload("<test></test>"))
+      )
+
+      when(mockConnector.getArrivalMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any(), any()))
+        .thenReturn(Future.successful(successResponse))
+
+      val result = sut.getArrivalMessage(EORINumber("1"), MovementId("1234567890abcdef"), MessageId("1234567890abcdef"))
+      whenReady(result.value) {
+        _ mustBe Right(successResponse)
+      }
+    }
+
+    "when a message is not found, should return a Left with an MessageNotFound" in {
+      when(mockConnector.getArrivalMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any(), any()))
+        .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
+
+      val result = sut.getArrivalMessage(EORINumber("1"), MovementId("1234567890abcdef"), MessageId("1234567890abcdef"))
+      whenReady(result.value) {
+        _ mustBe Left(PersistenceError.MessageNotFound(MovementId("1234567890abcdef"), MessageId("1234567890abcdef")))
+      }
+    }
+
+    "on a failed submission, should return a Left with an UnexpectedError" in {
+      val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
+      when(mockConnector.getArrivalMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any(), any()))
+        .thenReturn(Future.failed(error))
+
+      val result = sut.getArrivalMessage(EORINumber("1"), MovementId("1234567890abcdef"), MessageId("1234567890abcdef"))
+      whenReady(result.value) {
+        _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
+      }
+    }
+
+  }
 }

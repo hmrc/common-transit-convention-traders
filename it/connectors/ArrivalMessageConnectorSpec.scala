@@ -53,7 +53,7 @@ class ArrivalMessageConnectorSpec
     "must return MovementMessage when message is found" in {
       val connector = app.injector.instanceOf[ArrivalMessageConnector]
       val movement = MovementMessage(
-        routes.ArrivalMessagesController.getArrivalMessage(ArrivalId(1), MessageId(1)).urlWithContext,
+        routing.routes.ArrivalsRouter.getArrivalMessage("1", "1").urlWithContext,
         LocalDateTime.now,
         "abc",
         <test>default</test>
@@ -181,13 +181,13 @@ class ArrivalMessageConnectorSpec
         LocalDateTime.now,
         Seq(
           MovementMessage(
-            routes.ArrivalMessagesController.getArrivalMessage(ArrivalId(1), MessageId(1)).urlWithContext,
+            routing.routes.ArrivalsRouter.getArrivalMessage("1", "1").urlWithContext,
             LocalDateTime.now,
             "abc",
             <test>default</test>
           ),
           MovementMessage(
-            routes.ArrivalMessagesController.getArrivalMessage(ArrivalId(1), MessageId(2)).urlWithContext,
+            routing.routes.ArrivalsRouter.getArrivalMessage("1", "2").urlWithContext,
             LocalDateTime.now,
             "abc",
             <test>default</test>
@@ -231,13 +231,13 @@ class ArrivalMessageConnectorSpec
         LocalDateTime.now,
         Seq(
           MovementMessage(
-            routes.ArrivalMessagesController.getArrivalMessage(ArrivalId(1), MessageId(1)).urlWithContext,
+            routing.routes.ArrivalsRouter.getArrivalMessage("1", "1").urlWithContext,
             LocalDateTime.now,
             "abc",
             <test>default</test>
           ),
           MovementMessage(
-            routes.ArrivalMessagesController.getArrivalMessage(ArrivalId(1), MessageId(2)).urlWithContext,
+            routing.routes.ArrivalsRouter.getArrivalMessage("1", "2").urlWithContext,
             LocalDateTime.now,
             "abc",
             <test>default</test>

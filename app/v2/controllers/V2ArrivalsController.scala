@@ -26,6 +26,7 @@ import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
 import metrics.HasActionMetrics
 import play.api.Logging
+import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.Json
@@ -34,10 +35,12 @@ import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
+import v2.controllers.actions.providers.AcceptHeaderActionProvider
 import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models.AuditType
+import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.errors.PresentationError
@@ -54,6 +57,7 @@ trait V2ArrivalsController {
   def createArrivalNotification(): Action[Source[ByteString, _]]
   def getArrival(arrivalId: MovementId): Action[AnyContent]
   def getArrivalMessageIds(arrivalId: MovementId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
+  def getArrivalMessage(arrivalId: MovementId, messageId: MessageId): Action[AnyContent]
   def getArrivalsForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
 
 }
@@ -69,7 +73,9 @@ class V2ArrivalsControllerImpl @Inject() (
   conversionService: ConversionService,
   pushNotificationsService: PushNotificationsService,
   messageSizeAction: MessageSizeActionProvider,
-  val metrics: Metrics
+  acceptHeaderActionProvider: AcceptHeaderActionProvider,
+  val metrics: Metrics,
+  responseFormatterService: ResponseFormatterService
 )(implicit val materializer: Materializer, val temporaryFileCreator: TemporaryFileCreator)
     extends BaseController
     with V2ArrivalsController
@@ -188,6 +194,18 @@ class V2ArrivalsControllerImpl @Inject() (
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
             response => Ok(Json.toJson(HateoasMovementMessageIdsResponse(arrivalId, response, receivedSince, MovementType.Arrival)))
           )
+    }
+
+  def getArrivalMessage(arrivalId: MovementId, messageId: MessageId): Action[AnyContent] =
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider()).async {
+      implicit request =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+        (for {
+          messageSummary <- arrivalsService.getArrivalMessage(request.eoriNumber, arrivalId, messageId).asPresentation
+        } yield messageSummary).fold(
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          response => Ok(Json.toJson(HateoasMovementMessageResponse(arrivalId, messageId, response, MovementType.Arrival)))
+        )
     }
 
 }

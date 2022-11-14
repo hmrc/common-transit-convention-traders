@@ -50,6 +50,7 @@ import scala.xml.NodeSeq
 @ImplementedBy(classOf[ArrivalMessagesController])
 trait V1ArrivalMessagesController {
   def getArrivalMessages(arrivalId: ArrivalId, receivedSince: Option[OffsetDateTime]): Action[AnyContent]
+  def getArrivalMessage(arrivalId: ArrivalId, messageId: MessageId): Action[AnyContent]
 }
 
 @Singleton
@@ -94,7 +95,7 @@ class ArrivalMessagesController @Inject() (
                                 request.body
                               )
                             )
-                          ).withHeaders(LOCATION -> routes.ArrivalMessagesController.getArrivalMessage(arrivalId, messageId).urlWithContext)
+                          ).withHeaders(LOCATION -> routing.routes.ArrivalsRouter.getArrivalMessage(arrivalId.toString, messageId.toString).urlWithContext)
                         case None =>
                           InternalServerError
                       }
