@@ -26,15 +26,21 @@ object AuditType {
   case object DeclarationInvalidationRequest                     extends AuditType("DeclarationInvalidationRequest")
   case object DeclarationData                                    extends AuditType("DeclarationData")
   case object Discrepancies                                      extends AuditType("Discrepancies")
+  case object GoodsReleaseNotification                           extends AuditType("GoodsReleaseNotification")
   case object MRNAllocated                                       extends AuditType("MRNAllocated")
   case object ReleaseForTransit                                  extends AuditType("ReleaseForTransit")
   case object RecoveryNotification                               extends AuditType("RecoveryNotification")
+  case object UnloadingPermission                                extends AuditType("UnloadingPermission")
+  case object UnloadingRemarks                                   extends AuditType("UnloadingRemarks")
   case object WriteOffNotification                               extends AuditType("WriteOffNotification")
   case object NoReleaseForTransit                                extends AuditType("NoReleaseForTransit")
   case object RequestOfRelease                                   extends AuditType("RequestOfRelease")
   case object GuaranteeNotValid                                  extends AuditType("GuaranteeNotValid")
   case object RejectionFromOfficeOfDeparture                     extends AuditType("RejectionFromOfficeOfDeparture")
+  case object RejectionFromOfficeOfDestination                   extends AuditType("RejectionFromOfficeOfDestination")
   case object ControlDecisionNotification                        extends AuditType("ControlDecisionNotification")
+  case object RequestOnNonArrivedMovement                        extends AuditType("RequestOnNonArrivedMovement")
+  case object InformationAboutNonArrivedMovement                 extends AuditType("InformationAboutNonArrivedMovement")
   case object PresentationNotificationForThePreLodgedDeclaration extends AuditType("PresentationNotificationForThePreLodgedDeclaration")
   case object FunctionalNack                                     extends AuditType("FunctionalNack")
   case object PositiveAcknowledge                                extends AuditType("PositiveAcknowledge")
@@ -64,4 +70,5 @@ object AuditType {
 
   def find(code: String): Option[AuditType] =
     values.find(_.name == code)
+
 }
