@@ -34,7 +34,7 @@ object XmlParsers {
     .take(1)
     .map {
       case s: StartElement =>
-        MessageType.messageTypeSentByDepartureTrader
+        MessageType.messageTypesSentByDepartureTrader
           .find(_.rootNode == s.localName)
           .map(Right(_))
           .getOrElse(Left(ExtractionError.MessageTypeNotFound(s.localName)))
