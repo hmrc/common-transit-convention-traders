@@ -883,6 +883,37 @@ class V2DeparturesControllerSpec
             )
           }
 
+          "when formatter service fail" in {
+            when(
+              mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(
+                any[HeaderCarrier],
+                any[ExecutionContext]
+              )
+            )
+              .thenAnswer(
+                _ => EitherT.rightT(messageSummaryXml)
+              )
+
+            when(
+              mockResponseFormatterService.formatMessageSummary(any[MessageSummary], eqTo(acceptHeaderValue))(
+                any[ExecutionContext],
+                any[HeaderCarrier],
+                any[Materializer]
+              )
+            )
+              .thenAnswer(
+                _ => EitherT.leftT(PresentationError.internalServiceError())
+              )
+
+            val result = sut.getMessage(movementId, messageId)(request)
+
+            status(result) mustBe INTERNAL_SERVER_ERROR
+            contentAsJson(result) mustBe Json.obj(
+              "code"    -> "INTERNAL_SERVER_ERROR",
+              "message" -> "Internal server error"
+            )
+          }
+
           "when an unknown error occurs" in {
             when(mockDeparturesPersistenceService.getMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(any[HeaderCarrier], any[ExecutionContext]))
               .thenAnswer(
