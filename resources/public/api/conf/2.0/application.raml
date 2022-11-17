@@ -394,9 +394,10 @@ traits:
                         "departure":{
                           "id": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
                         },
-                        "id": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2",
+                        "id": "62f4ebbb765ba8c2",
+                        "departureId": "62f4ebbbf581d4aa",
                         "received": "2022-08-11T11:44:59.83705",
-                        "messageType": "IE015",
+                        "type": "IE015",
                         "body":{
                           "n1.CC015C": {
                             "@PhaseID": "NCTS5.0",
@@ -629,7 +630,7 @@ traits:
                 The response can be returned in one of the following formats based on the provided `Accept` header:
 
                 * `application/vnd.hmrc.2.0+json-xml`: JSON-wrapped XML, where the message is provided as an XML string sent as part of JSON payload containing other metadata.
-
+                * `application/vnd.hmrc.2.0+json`: JSON, where the message is provided as a sub-document sent as part of a JSON payload containing other metadata.
                 **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
              is:
                - acceptSingleMessageGetHeader
@@ -655,7 +656,30 @@ traits:
                          "arrivalId": "62f4ebbbf581d4aa",
                          "received": "2022-08-11T11:44:59.83705",
                          "type": "IE007",
-                         "body": "<ncts:IE007 PhaseID=\"NCTS5.0\" xmlns:ncts=\"http://ncts.dgtaxud.ec\">...</ncts:IE007>"
+                         "body": "<ncts:CC007C PhaseID=\"NCTS5.0\" xmlns:ncts=\"http://ncts.dgtaxud.ec\">...</ncts:CC007C>"
+                       }
+                   application/json:
+                     description: JSON payload
+                     example: |
+                       {
+                         "_links":{
+                           "self":{
+                             "href": "/customs/transits/movements/arrivals/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2"
+                           },
+                           "arrival":{
+                             "href": "/customs/transits/movements/arrivals/62f4ebbbf581d4aa"
+                           }
+                         },
+                         "id": "62f4ebbb765ba8c2",
+                         "arrivalId": "62f4ebbbf581d4aa",
+                         "received": "2022-08-11T11:44:59.83705",
+                         "type": "IE007",
+                         "body":{
+                           "n1.CC007C": {
+                             "@PhaseID": "NCTS5.0",
+                             ...
+                           }
+                         }
                        }
                404:
                  body:
