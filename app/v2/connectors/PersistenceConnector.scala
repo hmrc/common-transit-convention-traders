@@ -74,7 +74,7 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[MovementResponse]
 
-  def getDeparturesForEori(eori: EORINumber)(implicit
+  def getDeparturesForEori(eori: EORINumber, updatedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MovementResponse]]
@@ -94,7 +94,7 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[Seq[MessageSummary]]
 
-  def getArrivalsForEori(eori: EORINumber)(implicit
+  def getArrivalsForEori(eori: EORINumber, updatedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MovementResponse]]
@@ -162,8 +162,9 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     ec: ExecutionContext
   ): Future[Seq[MessageSummary]] = {
     val url =
-      withReceivedSinceParameter(
+      withDateTimeParameter(
         appConfig.movementsUrl.withPath(movementsGetDepartureMessageIds(eori, movementId)).toUrl,
+        "receivedSince",
         receivedSince
       )
 
@@ -199,11 +200,15 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       }
   }
 
-  override def getDeparturesForEori(eori: EORINumber)(implicit
+  override def getDeparturesForEori(eori: EORINumber, updatedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MovementResponse]] = {
-    val url = appConfig.movementsUrl.withPath(movementsGetAllDepartures(eori))
+    val url = withDateTimeParameter(
+      appConfig.movementsUrl.withPath(movementsGetAllDepartures(eori)),
+      "updatedSince",
+      updatedSince
+    )
 
     httpClientV2
       .get(url"$url")
@@ -266,8 +271,9 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     ec: ExecutionContext
   ): Future[Seq[MessageSummary]] = {
     val url =
-      withReceivedSinceParameter(
+      withDateTimeParameter(
         appConfig.movementsUrl.withPath(movementsGetArrivalMessageIds(eori, movementId)).toUrl,
+        "receivedSince",
         receivedSince
       )
 
@@ -283,11 +289,16 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       }
   }
 
-  override def getArrivalsForEori(eori: EORINumber)(implicit
+  override def getArrivalsForEori(eori: EORINumber, updatedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MovementResponse]] = {
-    val url = appConfig.movementsUrl.withPath(movementsGetAllArrivals(eori))
+    val url =
+      withDateTimeParameter(
+        appConfig.movementsUrl.withPath(movementsGetAllArrivals(eori)),
+        "updatedSince",
+        updatedSince
+      )
 
     httpClientV2
       .get(url"$url")
@@ -300,13 +311,6 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
           }
       }
   }
-
-  private def withReceivedSinceParameter(urlPath: Url, dateTime: Option[OffsetDateTime]) =
-    dateTime
-      .map(
-        time => urlPath.addParam("receivedSince", DateTimeFormatter.ISO_DATE_TIME.format(time))
-      )
-      .getOrElse(urlPath)
 
   override def getArrival(eori: EORINumber, movementId: MovementId)(implicit
     hc: HeaderCarrier,
@@ -343,4 +347,12 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
           }
       }
   }
+
+  private def withDateTimeParameter(urlPath: Url, queryName: String, dateTime: Option[OffsetDateTime]) =
+    dateTime
+      .map(
+        time => urlPath.addParam(queryName, DateTimeFormatter.ISO_DATE_TIME.format(time))
+      )
+      .getOrElse(urlPath)
+
 }

@@ -31,7 +31,9 @@ import v2.models.request.PushNotificationsAssociation
 import v2.models.responses.MovementResponse
 import v2.models.responses.MessageSummary
 
+import java.time.Instant
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import scala.math.abs
 
 trait CommonGenerators {
@@ -55,6 +57,14 @@ trait CommonGenerators {
 
   implicit lazy val arbitraryMessageType: Arbitrary[MessageType] =
     Arbitrary(Gen.oneOf(MessageType.values))
+
+  // Restricts the date times to the range of positive long numbers to avoid overflows.
+  implicit lazy val arbitraryOffsetDateTime: Arbitrary[OffsetDateTime] =
+    Arbitrary {
+      for {
+        millis <- Gen.chooseNum(0, Long.MaxValue / 1000L)
+      } yield OffsetDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneOffset.UTC)
+    }
 
   implicit lazy val arbitraryPushNotificationsAssociation: Arbitrary[PushNotificationsAssociation] = Arbitrary {
     for {

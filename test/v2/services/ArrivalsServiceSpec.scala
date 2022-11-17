@@ -155,37 +155,39 @@ class ArrivalsServiceSpec
 
   "Getting a list of Arrivals (Movement) by EORI" - {
 
-    "when a arrival (movement) is found, should return a Right" in forAll(Gen.listOfN(3, arbitrary[MovementResponse])) {
+    "when an arrival (movement) is found, should return a Right" in forAll(Gen.listOfN(3, arbitrary[MovementResponse]), Gen.option(arbitrary[OffsetDateTime])) {
 
-      expected =>
-        when(mockConnector.getArrivalsForEori(EORINumber("1")))
+      (expected, updatedSinceMaybe) =>
+        when(mockConnector.getArrivalsForEori(EORINumber("1"), updatedSinceMaybe))
           .thenReturn(Future.successful(expected))
 
-        val result = sut.getArrivalsForEori(EORINumber("1"))
+        val result = sut.getArrivalsForEori(EORINumber("1"), updatedSinceMaybe)
         whenReady(result.value) {
           _ mustBe Right(expected)
         }
     }
 
-    "when a arrival is not found, should return a Left with an ArrivalsNotFound" in {
-      when(mockConnector.getArrivalsForEori(EORINumber("1")))
-        .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
+    "when an arrival is not found, should return a Left with an ArrivalsNotFound" in forAll(Gen.option(arbitrary[OffsetDateTime])) {
+      updatedSinceMaybe =>
+        when(mockConnector.getArrivalsForEori(EORINumber("1"), updatedSinceMaybe))
+          .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-      val result = sut.getArrivalsForEori(EORINumber("1"))
-      whenReady(result.value) {
-        _ mustBe Left(PersistenceError.ArrivalsNotFound(EORINumber("1")))
-      }
+        val result = sut.getArrivalsForEori(EORINumber("1"), updatedSinceMaybe)
+        whenReady(result.value) {
+          _ mustBe Left(PersistenceError.ArrivalsNotFound(EORINumber("1")))
+        }
     }
 
-    "on a failed submission, should return a Left with an UnexpectedError" in {
-      val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
-      when(mockConnector.getArrivalsForEori(EORINumber("1")))
-        .thenReturn(Future.failed(error))
+    "on a failed submission, should return a Left with an UnexpectedError" in forAll(Gen.option(arbitrary[OffsetDateTime])) {
+      updatedSinceMaybe =>
+        val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
+        when(mockConnector.getArrivalsForEori(EORINumber("1"), updatedSinceMaybe))
+          .thenReturn(Future.failed(error))
 
-      val result = sut.getArrivalsForEori(EORINumber("1"))
-      whenReady(result.value) {
-        _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
-      }
+        val result = sut.getArrivalsForEori(EORINumber("1"), updatedSinceMaybe)
+        whenReady(result.value) {
+          _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
+        }
     }
 
   }

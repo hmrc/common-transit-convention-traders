@@ -21,7 +21,6 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.JsObject
-import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.base.StreamTestHelpers
@@ -31,7 +30,6 @@ import v2.models.errors.ExtractionError.MessageTypeNotFound
 import v2.models.request.MessageType
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.xml.NodeSeq
 
 class JsonMessageParsingServiceSpec
     extends AnyFreeSpec
