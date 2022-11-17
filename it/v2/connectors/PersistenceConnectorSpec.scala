@@ -638,7 +638,7 @@ class PersistenceConnectorSpec
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/"
 
-    "on success, return a list of departure IDs" in {
+    "on success with no date time filter, return a list of departure IDs" in {
       lazy val messageResponseList = Gen.listOfN(3, arbitraryMovementResponse.arbitrary).sample.get
 
       server.stubFor(
@@ -655,10 +655,36 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getDeparturesForEori(eori)
+      val result      = persistenceConnector.getDeparturesForEori(eori, None)
       whenReady(result) {
         _ mustBe messageResponseList
       }
+    }
+
+    "on success with a date time filter, return a list of departure IDs" in forAll(
+      Gen.listOfN(3, arbitraryMovementResponse.arbitrary),
+      arbitrary[OffsetDateTime]
+    ) {
+      (messageResponseList, updatedSince) =>
+        server.stubFor(
+          get(
+            urlPathEqualTo(targetUrl(eori))
+          )
+            .withQueryParam("updatedSince", equalTo(DateTimeFormatter.ISO_DATE_TIME.format(updatedSince)))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  Json.toJson(messageResponseList).toString()
+                )
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val result      = persistenceConnector.getDeparturesForEori(eori, Some(updatedSince))
+        whenReady(result) {
+          _ mustBe messageResponseList
+        }
     }
 
     "on incorrect Json, return an error" in {
@@ -676,7 +702,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getDeparturesForEori(eori)
+        .getDeparturesForEori(eori, None)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -711,7 +737,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getDeparturesForEori(eori)
+        .getDeparturesForEori(eori, None)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
@@ -1159,7 +1185,7 @@ class PersistenceConnectorSpec
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals"
 
-    "on success, return a list of arrival IDs" in {
+    "on success, return a list of arrivals" in {
       lazy val messageResponseList = Gen.listOfN(3, arbitraryMovementResponse.arbitrary).sample.get
 
       server.stubFor(
@@ -1176,10 +1202,33 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getArrivalsForEori(eori)
+      val result      = persistenceConnector.getArrivalsForEori(eori, None)
       whenReady(result) {
         _ mustBe messageResponseList
       }
+    }
+
+    "on success with a date time filter, return a list of arrivals" in forAll(Gen.listOfN(3, arbitraryMovementResponse.arbitrary), arbitrary[OffsetDateTime]) {
+      (messageResponseList, updatedSince) =>
+        server.stubFor(
+          get(
+            urlPathEqualTo(targetUrl(eori))
+          )
+            .withQueryParam("updatedSince", equalTo(DateTimeFormatter.ISO_DATE_TIME.format(updatedSince)))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  Json.toJson(messageResponseList).toString()
+                )
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val result      = persistenceConnector.getArrivalsForEori(eori, Some(updatedSince))
+        whenReady(result) {
+          _ mustBe messageResponseList
+        }
     }
 
     "on incorrect Json, return an error" in {
@@ -1197,7 +1246,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getArrivalsForEori(eori)
+        .getArrivalsForEori(eori, None)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -1232,7 +1281,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getArrivalsForEori(eori)
+        .getArrivalsForEori(eori, None)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )

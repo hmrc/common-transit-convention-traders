@@ -283,4 +283,53 @@ class DeparturesServiceSpec
     }
   }
 
+  "Getting a list of Departures (Movement) by EORI" - {
+
+    "when a departure (movement) is found, should return a Right" in forAll(
+      Gen.listOfN(3, arbitrary[MovementResponse]),
+      Gen.option(arbitrary[OffsetDateTime]),
+      arbitrary[EORINumber]
+    ) {
+
+      (expected, updatedSinceMaybe, eori) =>
+        when(mockConnector.getDeparturesForEori(eori, updatedSinceMaybe))
+          .thenReturn(Future.successful(expected))
+
+        val result = sut.getDeparturesForEori(eori, updatedSinceMaybe)
+        whenReady(result.value) {
+          _ mustBe Right(expected)
+        }
+    }
+
+    "when a departure is not found, should return a Left with an DeparturesNotFound" in forAll(
+      Gen.option(arbitrary[OffsetDateTime]),
+      arbitrary[EORINumber]
+    ) {
+      (updatedSinceMaybe, eori) =>
+        when(mockConnector.getDeparturesForEori(eori, updatedSinceMaybe))
+          .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
+
+        val result = sut.getDeparturesForEori(eori, updatedSinceMaybe)
+        whenReady(result.value) {
+          _ mustBe Left(PersistenceError.DeparturesNotFound(eori))
+        }
+    }
+
+    "on a failed submission, should return a Left with an UnexpectedError" in forAll(
+      Gen.option(arbitrary[OffsetDateTime]),
+      arbitrary[EORINumber]
+    ) {
+      (updatedSinceMaybe, eori) =>
+        val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
+        when(mockConnector.getDeparturesForEori(eori, updatedSinceMaybe))
+          .thenReturn(Future.failed(error))
+
+        val result = sut.getDeparturesForEori(eori, updatedSinceMaybe)
+        whenReady(result.value) {
+          _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
+        }
+    }
+
+  }
+
 }

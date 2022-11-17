@@ -57,7 +57,7 @@ trait ArrivalsService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MessageSummary]]
 
-  def getArrivalsForEori(eori: EORINumber)(implicit
+  def getArrivalsForEori(eori: EORINumber, updatedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MovementResponse]]
@@ -126,12 +126,12 @@ class ArrivalsServiceImpl @Inject() (persistenceConnector: PersistenceConnector)
         }
     )
 
-  override def getArrivalsForEori(eori: EORINumber)(implicit
+  override def getArrivalsForEori(eori: EORINumber, updatedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MovementResponse]] = EitherT(
     persistenceConnector
-      .getArrivalsForEori(eori)
+      .getArrivalsForEori(eori, updatedSince)
       .map(Right(_))
       .recover {
         case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.ArrivalsNotFound(eori))

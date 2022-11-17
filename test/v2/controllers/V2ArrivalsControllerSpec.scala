@@ -770,7 +770,7 @@ class V2ArrivalsControllerSpec
         arbitraryMovementResponse.arbitrary.sample.value.copy(created = dateTime.plusHours(2), updated = dateTime.plusHours(3))
       )
 
-      when(mockArrivalsPersistenceService.getArrivalsForEori(EORINumber(any()))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockArrivalsPersistenceService.getArrivalsForEori(EORINumber(any()), any[Option[OffsetDateTime]])(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
           _ => EitherT.rightT(movementResponses)
         )
@@ -794,7 +794,7 @@ class V2ArrivalsControllerSpec
     "should return arrivals not found if persistence service returns 404" in {
       val eori = EORINumber("ERROR")
 
-      when(mockArrivalsPersistenceService.getArrivalsForEori(EORINumber(any()))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockArrivalsPersistenceService.getArrivalsForEori(EORINumber(any()), any[Option[OffsetDateTime]])(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
           _ => EitherT.leftT(PersistenceError.ArrivalsNotFound(eori))
         )
@@ -815,7 +815,7 @@ class V2ArrivalsControllerSpec
     }
 
     "should return unexpected error for all other errors" in {
-      when(mockArrivalsPersistenceService.getArrivalsForEori(EORINumber(any()))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockArrivalsPersistenceService.getArrivalsForEori(EORINumber(any()), any[Option[OffsetDateTime]])(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
           _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
         )

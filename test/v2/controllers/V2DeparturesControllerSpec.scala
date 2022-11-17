@@ -927,7 +927,7 @@ class V2DeparturesControllerSpec
       )
       val departureResponses = Seq(departureResponse1, departureResponse2)
 
-      when(mockDeparturesPersistenceService.getDeparturesForEori(EORINumber(any()))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockDeparturesPersistenceService.getDeparturesForEori(EORINumber(any()), any[Option[OffsetDateTime]])(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
           _ => EitherT.rightT(departureResponses)
         )
@@ -951,7 +951,7 @@ class V2DeparturesControllerSpec
     "should return departure not found if persistence service returns 404" in {
       val eori = EORINumber("ERROR")
 
-      when(mockDeparturesPersistenceService.getDeparturesForEori(EORINumber(any()))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockDeparturesPersistenceService.getDeparturesForEori(EORINumber(any()), any[Option[OffsetDateTime]])(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
           _ => EitherT.leftT(PersistenceError.DeparturesNotFound(eori))
         )
@@ -972,7 +972,7 @@ class V2DeparturesControllerSpec
     }
 
     "should return unexpected error for all other errors" in {
-      when(mockDeparturesPersistenceService.getDeparturesForEori(EORINumber(any()))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockDeparturesPersistenceService.getDeparturesForEori(EORINumber(any()), any[Option[OffsetDateTime]])(any[HeaderCarrier], any[ExecutionContext]))
         .thenAnswer(
           _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
         )
