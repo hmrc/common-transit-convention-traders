@@ -116,7 +116,7 @@ class ErrorTranslatorSpec
     "jsonToXmlValidationErrorConverter special case validation error" in {
       val validationError = XmlValidationError(1, 1, "empty")
       val input           = XmlSchemaFailedToValidateError(NonEmptyList(validationError, Nil))
-      val output          = PresentationError.internalServiceError(message = "Validation of xml generated from json conversion failed.")
+      val output          = PresentationError.internalServiceError()
       jsonToXmlValidationErrorConverter.convert(input) mustBe output
     }
 
