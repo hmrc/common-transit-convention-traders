@@ -71,6 +71,7 @@ import v2.models._
 import v2.models.errors._
 import v2.models.request.MessageType
 import v2.models.responses.ArrivalResponse
+import v2.models.responses.MessageSummary
 import v2.models.responses.hateoas._
 import v2.services._
 
@@ -907,12 +908,15 @@ class V2ArrivalsControllerSpec
   }
 
   "GET /movements/arrivals/:arrivalId/messages/:messageId " - {
-    val movementId     = arbitraryMovementId.arbitrary.sample.value
-    val messageId      = arbitraryMessageId.arbitrary.sample.value
-    val messageSummary = arbitraryMessageSummaryXml.arbitrary.sample.value
+    val movementId         = arbitraryMovementId.arbitrary.sample.value
+    val messageId          = arbitraryMessageId.arbitrary.sample.value
+    val messageSummaryXml  = arbitraryMessageSummaryXml.arbitrary.sample.value
+    val messageSummaryJson = messageSummaryXml.copy(body = Some(JsonPayload("""{"test": "ABC"}""")))
 
     Seq(
-      VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON
+      VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
+      VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML,
+      VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
     ).foreach {
 
       acceptHeaderValue =>
@@ -920,6 +924,8 @@ class V2ArrivalsControllerSpec
           FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
         val request =
           FakeRequest("GET", routing.routes.ArrivalsRouter.getArrivalMessage(movementId.value, messageId.value).url, headers, Source.empty[ByteString])
+
+        val convertBodyToJson = acceptHeaderValue == VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON
 
         s"when the accept header equals $acceptHeaderValue" - {
 
@@ -931,7 +937,18 @@ class V2ArrivalsControllerSpec
               )
             )
               .thenAnswer(
-                _ => EitherT.rightT(messageSummary)
+                _ => EitherT.rightT(messageSummaryXml)
+              )
+
+            when(
+              mockResponseFormatterService.formatMessageSummary(any[MessageSummary], eqTo(acceptHeaderValue))(
+                any[ExecutionContext],
+                any[HeaderCarrier],
+                any[Materializer]
+              )
+            )
+              .thenAnswer(
+                _ => if (convertBodyToJson) EitherT.rightT(messageSummaryJson) else EitherT.rightT(messageSummaryXml)
               )
 
             val result = sut.getArrivalMessage(movementId, messageId)(request)
@@ -941,7 +958,7 @@ class V2ArrivalsControllerSpec
               HateoasMovementMessageResponse(
                 movementId,
                 messageId,
-                messageSummary,
+                if (convertBodyToJson) messageSummaryJson else messageSummaryXml,
                 MovementType.Arrival
               )
             )
@@ -964,6 +981,37 @@ class V2ArrivalsControllerSpec
             contentAsJson(result) mustBe Json.obj(
               "code"    -> "NOT_FOUND",
               "message" -> s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
+            )
+          }
+
+          "when formatter service fail" in {
+            when(
+              mockArrivalsPersistenceService.getArrivalMessage(EORINumber(any()), MovementId(any()), MessageId(any()))(
+                any[HeaderCarrier],
+                any[ExecutionContext]
+              )
+            )
+              .thenAnswer(
+                _ => EitherT.rightT(messageSummaryXml)
+              )
+
+            when(
+              mockResponseFormatterService.formatMessageSummary(any[MessageSummary], eqTo(acceptHeaderValue))(
+                any[ExecutionContext],
+                any[HeaderCarrier],
+                any[Materializer]
+              )
+            )
+              .thenAnswer(
+                _ => EitherT.leftT(PresentationError.internalServiceError())
+              )
+
+            val result = sut.getArrivalMessage(movementId, messageId)(request)
+
+            status(result) mustBe INTERNAL_SERVER_ERROR
+            contentAsJson(result) mustBe Json.obj(
+              "code"    -> "INTERNAL_SERVER_ERROR",
+              "message" -> "Internal server error"
             )
           }
 

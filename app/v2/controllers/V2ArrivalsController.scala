@@ -26,6 +26,7 @@ import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
 import metrics.HasActionMetrics
 import play.api.Logging
+import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.Json
@@ -202,8 +203,9 @@ class V2ArrivalsControllerImpl @Inject() (
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
-          messageSummary <- arrivalsService.getArrivalMessage(request.eoriNumber, arrivalId, messageId).asPresentation
-        } yield messageSummary).fold(
+          messageSummary          <- arrivalsService.getArrivalMessage(request.eoriNumber, arrivalId, messageId).asPresentation
+          formattedMessageSummary <- responseFormatterService.formatMessageSummary(messageSummary, request.headers.get(HeaderNames.ACCEPT).get)
+        } yield formattedMessageSummary).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Ok(Json.toJson(HateoasMovementMessageResponse(arrivalId, messageId, response, MovementType.Arrival)))
         )
