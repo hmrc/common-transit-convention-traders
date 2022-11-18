@@ -786,7 +786,8 @@ class V2ArrivalsControllerSpec
       contentAsJson(result) mustBe Json.toJson(
         HateoasMovementIdsResponse(
           movementResponses,
-          MovementType.Arrival
+          MovementType.Arrival,
+          None
         )
       )
     }
