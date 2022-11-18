@@ -155,7 +155,7 @@ class V2ArrivalsControllerImpl @Inject() (
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasMovementIdsResponse(response, MovementType.Arrival)))
+            response => Ok(Json.toJson(HateoasMovementIdsResponse(response, MovementType.Arrival, updatedSince)))
           )
     }
 

@@ -16,47 +16,58 @@
 
 package v2.models.responses.hateoas
 
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import v2.base.CommonGenerators
 import v2.models.MovementType
 
-class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with OptionValues with CommonGenerators {
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+
+class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with OptionValues with CommonGenerators with ScalaCheckDrivenPropertyChecks {
 
   for (movementType <- MovementType.values)
-    s"${movementType.movementType} should produce valid HateoasMovementIdsResponse responses" in {
+    s"${movementType.movementType} should produce valid HateoasMovementIdsResponse responses" in forAll(Gen.option(arbitrary[OffsetDateTime])) {
+      updatedSince =>
+        val departureResponse1 = arbitraryMovementResponse.arbitrary.sample.value
+        val departureResponse2 = arbitraryMovementResponse.arbitrary.sample.value
 
-      val departureResponse1 = arbitraryMovementResponse.arbitrary.sample.value
-      val departureResponse2 = arbitraryMovementResponse.arbitrary.sample.value
+        val responses = Seq(departureResponse1, departureResponse2)
+        val expectedQueryString = updatedSince
+          .map(
+            date => s"?updatedSince=${DateTimeFormatter.ISO_DATE_TIME.format(date)}"
+          )
+          .getOrElse("")
 
-      val responses = Seq(departureResponse1, departureResponse2)
-
-      val expected = Json.obj(
-        "_links" -> Json.obj(
-          "self" -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}")
-        ),
-        movementType.urlFragment -> responses.map(
-          movementResponse =>
-            Json.obj(
-              "_links" -> Json.obj(
-                "self"     -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse._id.value}"),
-                "messages" -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse._id.value}/messages")
-              ),
-              "id"                      -> movementResponse._id.value,
-              "movementReferenceNumber" -> movementResponse.movementReferenceNumber.value,
-              "created"                 -> movementResponse.created,
-              "updated"                 -> movementResponse.updated,
-              "enrollmentEORINumber"    -> movementResponse.enrollmentEORINumber,
-              "movementEORINumber"      -> movementResponse.movementEORINumber
-            )
+        val expected = Json.obj(
+          "_links" -> Json.obj(
+            "self" -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}$expectedQueryString")
+          ),
+          movementType.urlFragment -> responses.map(
+            movementResponse =>
+              Json.obj(
+                "_links" -> Json.obj(
+                  "self"     -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse._id.value}"),
+                  "messages" -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse._id.value}/messages")
+                ),
+                "id"                      -> movementResponse._id.value,
+                "movementReferenceNumber" -> movementResponse.movementReferenceNumber.value,
+                "created"                 -> movementResponse.created,
+                "updated"                 -> movementResponse.updated,
+                "enrollmentEORINumber"    -> movementResponse.enrollmentEORINumber,
+                "movementEORINumber"      -> movementResponse.movementEORINumber
+              )
+          )
         )
-      )
 
-      val actual = HateoasMovementIdsResponse(responses, movementType)
+        val actual = HateoasMovementIdsResponse(responses, movementType, updatedSince)
 
-      actual mustBe expected
+        actual mustBe expected
     }
 
 }

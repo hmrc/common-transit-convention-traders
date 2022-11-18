@@ -52,4 +52,10 @@ trait HateoasResponse {
       case MovementType.Arrival   => routing.routes.ArrivalsRouter.getArrival(movementId.value).urlWithContext
       case MovementType.Departure => routing.routes.DeparturesRouter.getDeparture(movementId.value).urlWithContext
     }
+
+  def getMovementsUri(movementType: MovementType, updatedSince: Option[OffsetDateTime]) =
+    movementType match {
+      case MovementType.Arrival   => routing.routes.ArrivalsRouter.getArrivalsForEori(updatedSince).urlWithContext
+      case MovementType.Departure => routing.routes.DeparturesRouter.getDeparturesForEori(updatedSince).urlWithContext
+    }
 }
