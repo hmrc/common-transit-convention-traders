@@ -16,7 +16,6 @@
 
 package v2.controllers
 
-import akka.util.Timeout
 import cats.data.NonEmptyList
 import cats.syntax.all._
 import org.scalacheck.Arbitrary.arbitrary
@@ -47,7 +46,6 @@ import v2.models.errors.FailedToValidateError.XmlSchemaFailedToValidateError
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.concurrent.duration.DurationInt
 
 class ErrorTranslatorSpec
     extends AnyFreeSpec
@@ -57,8 +55,6 @@ class ErrorTranslatorSpec
     with MockitoSugar
     with ScalaCheckDrivenPropertyChecks
     with CommonGenerators {
-
-  implicit val timeout: Timeout = 5.seconds
 
   object Harness extends ErrorTranslator
 
