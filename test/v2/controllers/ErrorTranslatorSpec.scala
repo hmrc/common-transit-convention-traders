@@ -16,6 +16,7 @@
 
 package v2.controllers
 
+import akka.util.Timeout
 import cats.data.NonEmptyList
 import cats.syntax.all._
 import org.scalacheck.Arbitrary.arbitrary
@@ -30,11 +31,14 @@ import v2.base.CommonGenerators
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.errors.ConversionError
+import v2.models.errors.ExtractionError
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.JsonValidationError
 import v2.models.errors.PersistenceError
 import v2.models.errors.PresentationError
 import v2.models.errors.RouterError
+import v2.models.errors.StreamingError
 import v2.models.errors.XmlValidationError
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
 import v2.models.errors.FailedToValidateError.JsonSchemaFailedToValidateError
@@ -43,6 +47,7 @@ import v2.models.errors.FailedToValidateError.XmlSchemaFailedToValidateError
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 
 class ErrorTranslatorSpec
     extends AnyFreeSpec
@@ -52,6 +57,8 @@ class ErrorTranslatorSpec
     with MockitoSugar
     with ScalaCheckDrivenPropertyChecks
     with CommonGenerators {
+
+  implicit val timeout: Timeout = 5.seconds
 
   object Harness extends ErrorTranslator
 
@@ -109,7 +116,7 @@ class ErrorTranslatorSpec
     "jsonToXmlValidationErrorConverter special case validation error" in {
       val validationError = XmlValidationError(1, 1, "empty")
       val input           = XmlSchemaFailedToValidateError(NonEmptyList(validationError, Nil))
-      val output          = PresentationError.internalServiceError(cause = None)
+      val output          = PresentationError.internalServiceError(message = "Validation of xml generated from json conversion failed.")
       jsonToXmlValidationErrorConverter.convert(input) mustBe output
     }
 
@@ -194,7 +201,7 @@ class ErrorTranslatorSpec
   }
 
   "Router Error" - {
-    "an UnrecognisedOffice Error becomes an InternalServerError" in {
+    "an UnrecognisedOffice error returns a bad request error" in {
       val input = RouterError.UnrecognisedOffice
       val output = PresentationError.badRequestError(
         "The customs office specified for CustomsOfficeOfDestinationActual or CustomsOfficeOfDeparture must be a customs office located in the United Kingdom"
@@ -217,16 +224,55 @@ class ErrorTranslatorSpec
 
       routerErrorConverter.convert(input) mustBe output
     }
+  }
 
-    "an UnrecognisedOffice error returns a BAD_REQUEST" in {
+  "Conversion Error" - {
+    "an Unexpected Error with no exception returns an internal service error with no exception" in {
+      val input  = ConversionError.UnexpectedError(None)
+      val output = PresentationError.internalServiceError()
 
-      val input = RouterError.UnrecognisedOffice
-      val output = PresentationError.badRequestError(
-        "The customs office specified for CustomsOfficeOfDestinationActual or CustomsOfficeOfDeparture must be a customs office located in the United Kingdom"
-      )
+      conversionErrorConverter.convert(input) mustBe output
+    }
 
-      routerErrorConverter.convert(input) mustBe output
+    "an Unexpected Error with an exception returns an internal service error with an exception" in {
+      val exception = new IllegalStateException()
+      val input     = ConversionError.UnexpectedError(Some(exception))
+      val output    = PresentationError.internalServiceError(cause = Some(exception))
+
+      conversionErrorConverter.convert(input) mustBe output
     }
   }
 
+  "Extraction Error" - {
+    "a MalformedInput error returns a bad request error" in {
+      val input  = ExtractionError.MalformedInput
+      val output = PresentationError.badRequestError("Input was malformed")
+
+      extractionError.convert(input) mustBe output
+    }
+
+    "a MessageTypeNotFound error returns a bad request error" in {
+      val input  = ExtractionError.MessageTypeNotFound("IE123456")
+      val output = PresentationError.badRequestError("IE123456 is not a valid message type")
+
+      extractionError.convert(input) mustBe output
+    }
+  }
+
+  "Message Format Error" - {
+    "an Unexpected Error with no exception returns an internal service error with no exception" in {
+      val input  = StreamingError.UnexpectedError(None)
+      val output = PresentationError.internalServiceError()
+
+      messageFormatError.convert(input) mustBe output
+    }
+
+    "an Unexpected Error with an exception returns an internal service error with an exception" in {
+      val exception = new IllegalStateException()
+      val input     = StreamingError.UnexpectedError(Some(exception))
+      val output    = PresentationError.internalServiceError(cause = Some(exception))
+
+      messageFormatError.convert(input) mustBe output
+    }
+  }
 }

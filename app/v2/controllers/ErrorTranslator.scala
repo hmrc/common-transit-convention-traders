@@ -38,7 +38,7 @@ trait ErrorTranslator {
     import v2.models.errors.FailedToValidateError._
 
     def convert(validationError: FailedToValidateError): PresentationError = validationError match {
-      case XmlSchemaFailedToValidateError(_) => PresentationError.internalServiceError(cause = None) // TODO: Determine error message
+      case XmlSchemaFailedToValidateError(_) => PresentationError.internalServiceError("Validation of xml generated from json conversion failed.")
       case x                                 => validationErrorConverter.convert(x)
     }
   }
