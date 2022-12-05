@@ -35,13 +35,11 @@ object XmlParsers {
     .take(1)
     .map {
       case s: StartElement if movementType == MovementType.Departure =>
-        println("departure message type");
         MessageType.messageTypesSentByDepartureTrader
           .find(_.rootNode == s.localName)
           .map(Right(_))
           .getOrElse(Left(ExtractionError.MessageTypeNotFound(s.localName)))
       case s: StartElement if movementType == MovementType.Arrival =>
-        println("arrival message type");
         MessageType.messageTypesSentByArrivalTrader
           .find(_.rootNode == s.localName)
           .map(Right(_))
