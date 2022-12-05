@@ -155,7 +155,7 @@ class V2ArrivalsControllerSpec
     headers: FakeHeaders,
     body: A
   ): Request[A] =
-    FakeRequest(method = method, uri = routing.routes.ArrivalsRouter.attachMessage("123").url, headers = headers, body = body)
+    FakeRequest(method = method, uri = routing.routes.ArrivalsRouter.attachMessage("0123456789abcdef").url, headers = headers, body = body)
 
   override def beforeEach(): Unit = {
     reset(mockValidationService)
