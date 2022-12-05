@@ -38,12 +38,19 @@ class XmlMessageParsingServiceSpec
     with ScalaFutures
     with ScalaCheckPropertyChecks {
 
-  val validXml: NodeSeq =
+  val validDepartureXml: NodeSeq =
     <ncts:CC013C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
       <HolderOfTheTransitProcedure>
         <identificationNumber>GB1234</identificationNumber>
       </HolderOfTheTransitProcedure>
     </ncts:CC013C>
+
+  val validArrivalXml: NodeSeq =
+    <ncts:CC044C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
+      <TransitOperation>
+        <MRN>27WF9X1FQ9RCKN0TM3</MRN>
+      </TransitOperation>
+    </ncts:CC044C>
 
   val invalidMessageType: NodeSeq =
     <ncts:CC015C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
@@ -59,14 +66,25 @@ class XmlMessageParsingServiceSpec
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   "extractMessageType and then" - {
-    "if it is valid, return an appropriate Message Type" in {
+    "if it is valid Departure Message Type, return an appropriate Departure Message Type" in {
       val xmlParsingService = new XmlMessageParsingServiceImpl()
-      val payload           = createStream(validXml)
+      val payload           = createStream(validDepartureXml)
       val response =
         xmlParsingService.extractMessageType(payload, MovementType.Departure)
 
       whenReady(response.value) {
         _ mustBe Right(MessageType.DeclarationAmendment)
+      }
+    }
+
+    "if it is valid Arrival Message Type, return an appropriate Arrival Message Type" in {
+      val xmlParsingService = new XmlMessageParsingServiceImpl()
+      val payload           = createStream(validArrivalXml)
+      val response =
+        xmlParsingService.extractMessageType(payload, MovementType.Arrival)
+
+      whenReady(response.value) {
+        _ mustBe Right(MessageType.UnloadingRemarks)
       }
     }
 

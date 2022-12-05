@@ -32,20 +32,32 @@ import scala.xml.NodeSeq
 class XmlParsersSpec extends AnyFreeSpec with TestActorSystem with Matchers with StreamTestHelpers with ScalaFutures with ScalaCheckPropertyChecks {
   "messageTypeExtractor parser" - {
 
-    val validMessageType: NodeSeq =
+    val validDepartureMessageType: NodeSeq =
       <ncts:CC014C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
         <HolderOfTheTransitProcedure>
           <identificationNumber>GB1234</identificationNumber>
         </HolderOfTheTransitProcedure>
       </ncts:CC014C>
 
-    val invalidMessageType: NodeSeq =
+    val validArrivalMessageType: NodeSeq =
+      <ncts:CC044C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">
+        <TransitOperation>
+          <MRN>27WF9X1FQ9RCKN0TM3</MRN>
+        </TransitOperation>
+      </ncts:CC044C>
+
+    val invalidDepartureMessageType: NodeSeq =
       <HolderOfTheTransitProcedure>
         <CC013C>IE013</CC013C>
       </HolderOfTheTransitProcedure>
 
-    "when provided with a valid message type" in {
-      val stream       = createParsingEventStream(validMessageType)
+    val invalidArrivalMessageType: NodeSeq =
+      <HolderOfTheTransitProcedure>
+        <CC013C>IE013</CC013C>
+      </HolderOfTheTransitProcedure>
+
+    "when provided with a valid departure message type" in {
+      val stream       = createParsingEventStream(validDepartureMessageType)
       val parsedResult = stream.via(XmlParsers.messageTypeExtractor(MovementType.Departure)).runWith(Sink.head)
 
       whenReady(parsedResult) {
@@ -53,9 +65,27 @@ class XmlParsersSpec extends AnyFreeSpec with TestActorSystem with Matchers with
       }
     }
 
-    "when provided with an invalid message type" in {
-      val stream       = createParsingEventStream(invalidMessageType)
+    "when provided with an invalid  departure message type" in {
+      val stream       = createParsingEventStream(invalidDepartureMessageType)
       val parsedResult = stream.via(XmlParsers.messageTypeExtractor(MovementType.Departure)).runWith(Sink.head)
+
+      whenReady(parsedResult) {
+        _ mustBe Left(ExtractionError.MessageTypeNotFound("HolderOfTheTransitProcedure"))
+      }
+    }
+
+    "when provided with a valid arrival message type" in {
+      val stream       = createParsingEventStream(validArrivalMessageType)
+      val parsedResult = stream.via(XmlParsers.messageTypeExtractor(MovementType.Arrival)).runWith(Sink.head)
+
+      whenReady(parsedResult) {
+        _ mustBe Right(MessageType.UnloadingRemarks)
+      }
+    }
+
+    "when provided with an invalid  arrival message type" in {
+      val stream       = createParsingEventStream(invalidArrivalMessageType)
+      val parsedResult = stream.via(XmlParsers.messageTypeExtractor(MovementType.Arrival)).runWith(Sink.head)
 
       whenReady(parsedResult) {
         _ mustBe Left(ExtractionError.MessageTypeNotFound("HolderOfTheTransitProcedure"))
