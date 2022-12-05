@@ -614,6 +614,56 @@ traits:
                         description: The specified arrival does not exist, has been archived or is not available to the EORI number.
                         value:
                           code: NOT_FOUND
+         post:
+           displayName: Send a message related to an arrival
+           description: |
+             Send a message to the Customs Office of Destination about an arrival.
+
+             For example, if you are a Trader at Destination, you will send an ‘Unloading Remarks’ E_ULD_REM (IE044) message to the Customs Office of Destination indicating that unloading of the goods has been completed.
+
+             A successful response will contain a URI and a message ID related to the arrival, which you can use to retrieve the message status.
+             
+             **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
+           is:
+             - contentXmlJsonHeader
+             - acceptJsonHeader
+             - requestTooLarge
+           (annotations.scope): "common-transit-convention-traders"
+           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
+           responses:
+             202:
+               body:
+                 application/json:
+                   description: JSON payload
+                   example: |
+                     {
+                       "_links": {
+                         "self": {
+                           "href": "/customs/transits/movements/arrivals/6365135ba5e821ee/messages/634982098f02f00a"
+                         },
+                         "arrival": {
+                           "href": "/customs/transits/movements/arrivals/6365135ba5e821ee"
+                         }
+                       }
+                     }
+             404:
+               body:
+                 application/json:
+                   type: types.errorResponse
+                   examples:
+                     notFound:
+                       description: The specified arrival does not exist, has been archived or is not available.
+                       value:
+                         code: NOT_FOUND
+             400:
+               body:
+                 application/json:
+                   type: types.errorResponse
+                   examples:
+                     badRequest:
+                       description: The arrival message type is not available within XML or the message failed schema validation.
+                       value:
+                         code: BAD_REQUEST
          /{messageId}:
            get:
              displayName: Get a cached message related to an arrival and message ID

@@ -20,12 +20,13 @@ import akka.NotUsed
 import akka.stream.alpakka.xml.ParseEvent
 import akka.stream.alpakka.xml.StartElement
 import akka.stream.scaladsl.Flow
+import v2.models.MovementType
 import v2.models.errors.ExtractionError
 import v2.models.request.MessageType
 
 object XmlParsers {
 
-  val messageTypeExtractor: Flow[ParseEvent, Either[ExtractionError, MessageType], NotUsed] = Flow[ParseEvent]
+  def messageTypeExtractor(movementType: MovementType): Flow[ParseEvent, Either[ExtractionError, MessageType], NotUsed] = Flow[ParseEvent]
     .filter {
       case _: StartElement =>
         true
@@ -33,8 +34,15 @@ object XmlParsers {
     }
     .take(1)
     .map {
-      case s: StartElement =>
+      case s: StartElement if movementType == MovementType.Departure =>
+        println("departure message type");
         MessageType.messageTypesSentByDepartureTrader
+          .find(_.rootNode == s.localName)
+          .map(Right(_))
+          .getOrElse(Left(ExtractionError.MessageTypeNotFound(s.localName)))
+      case s: StartElement if movementType == MovementType.Arrival =>
+        println("arrival message type");
+        MessageType.messageTypesSentByArrivalTrader
           .find(_.rootNode == s.localName)
           .map(Right(_))
           .getOrElse(Left(ExtractionError.MessageTypeNotFound(s.localName)))

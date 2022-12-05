@@ -1125,7 +1125,7 @@ class V2DeparturesControllerSpec
       )
 
       "must return Accepted when body length is within limits and is considered valid" in {
-        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]])(any(), any()))
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[MovementType])(any(), any()))
           .thenReturn(messageDataEither)
 
         when(mockValidationService.validateXml(eqTo(MessageType.DeclarationAmendment), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
@@ -1158,7 +1158,7 @@ class V2DeparturesControllerSpec
       }
 
       "must return Bad Request when body is not an XML document" in {
-        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]]())(any(), any()))
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]](), any[MovementType])(any(), any()))
           .thenAnswer(
             _ => EitherT.leftT(ExtractionError.MalformedInput)
           )
@@ -1173,7 +1173,7 @@ class V2DeparturesControllerSpec
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
-        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]])(any(), any()))
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[MovementType])(any(), any()))
           .thenReturn(messageDataEither)
         when(mockValidationService.validateXml(eqTo(MessageType.DeclarationAmendment), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
@@ -1229,7 +1229,7 @@ class V2DeparturesControllerSpec
         router: EitherT[Future, RouterError, Unit] = EitherT.rightT(())
       ): Unit = {
 
-        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]])(any(), any())).thenReturn(extractMessageTypeXml)
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[MovementType])(any(), any())).thenReturn(extractMessageTypeXml)
         when(mockJsonParsingService.extractMessageType(any[Source[ByteString, _]])(any(), any())).thenReturn(extractMessageTypeJson)
 
         when(mockValidationService.validateXml(eqTo(MessageType.DeclarationAmendment), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))

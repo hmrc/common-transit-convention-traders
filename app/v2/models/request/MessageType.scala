@@ -95,12 +95,12 @@ object MessageType {
   )
 
   val messageTypesSentByArrivalTrader: Seq[MessageType] = Seq(
-    ArrivalNotification,
     UnloadingRemarks,
     InformationAboutNonArrivedMovement
   )
 
   val messageTypesSentToArrivalTrader: Seq[MessageType] = Seq(
+    ArrivalNotification,
     GoodsReleaseNotification,
     UnloadingPermission,
     RejectionFromOfficeOfDestination,

@@ -72,6 +72,7 @@ import v2.models.errors._
 import v2.models.request.MessageType
 import v2.models.responses.ArrivalResponse
 import v2.models.responses.MessageSummary
+import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
 import v2.services._
 
@@ -103,14 +104,25 @@ class V2ArrivalsControllerSpec
       <test>testxml</test>
     </CC007C>
 
+  def CC141C: NodeSeq =
+    <CC141C>
+      <test>testxml</test>
+    </CC141C>
+
   val mockValidationService          = mock[ValidationService]
   val mockArrivalsPersistenceService = mock[ArrivalsService]
   val mockRouterService              = mock[RouterService]
   val mockAuditService               = mock[AuditingService]
   val mockConversionService          = mock[ConversionService]
+  val mockXmlParsingService          = mock[XmlMessageParsingService]
   val mockPushNotificationService    = mock[PushNotificationsService]
   val mockResponseFormatterService   = mock[ResponseFormatterService]
   implicit val temporaryFileCreator  = SingletonTemporaryFileCreator
+  lazy val arrivalId                 = MovementId("0123456789abcdef")
+  lazy val messageType: MessageType  = MessageType.InformationAboutNonArrivedMovement
+
+  lazy val messageDataEither: EitherT[Future, ExtractionError, MessageType] =
+    EitherT.rightT(messageType)
 
   lazy val sut: V2ArrivalsController = new V2ArrivalsControllerImpl(
     Helpers.stubControllerComponents(),
@@ -125,6 +137,7 @@ class V2ArrivalsControllerSpec
     FakeAcceptHeaderActionProvider,
     mockResponseFormatterService,
     new TestMetrics(),
+    mockXmlParsingService,
     FakePreMaterialisedFutureProvider
   )
 
@@ -136,6 +149,13 @@ class V2ArrivalsControllerSpec
     body: A
   ): Request[A] =
     FakeRequest(method = method, uri = routing.routes.ArrivalsRouter.createArrivalNotification().url, headers = headers, body = body)
+
+  def fakeAttachArrivals[A](
+    method: String,
+    headers: FakeHeaders,
+    body: A
+  ): Request[A] =
+    FakeRequest(method = method, uri = routing.routes.ArrivalsRouter.attachMessage("123").url, headers = headers, body = body)
 
   override def beforeEach(): Unit = {
     reset(mockValidationService)
@@ -323,6 +343,7 @@ class V2ArrivalsControllerSpec
           FakeAcceptHeaderActionProvider,
           mockResponseFormatterService,
           new TestMetrics(),
+          mockXmlParsingService,
           FakePreMaterialisedFutureProvider
         )
 
@@ -362,6 +383,7 @@ class V2ArrivalsControllerSpec
           FakeAcceptHeaderActionProvider,
           mockResponseFormatterService,
           new TestMetrics(),
+          mockXmlParsingService,
           FakePreMaterialisedFutureProvider
         )
 
@@ -516,6 +538,7 @@ class V2ArrivalsControllerSpec
           FakeAcceptHeaderActionProvider,
           mockResponseFormatterService,
           new TestMetrics(),
+          mockXmlParsingService,
           FakePreMaterialisedFutureProvider
         )
 
@@ -562,6 +585,7 @@ class V2ArrivalsControllerSpec
           FakeAcceptHeaderActionProvider,
           mockResponseFormatterService,
           new TestMetrics(),
+          mockXmlParsingService,
           FakePreMaterialisedFutureProvider
         )
 
@@ -605,6 +629,7 @@ class V2ArrivalsControllerSpec
           FakeAcceptHeaderActionProvider,
           mockResponseFormatterService,
           new TestMetrics(),
+          mockXmlParsingService,
           FakePreMaterialisedFutureProvider
         )
 
@@ -691,6 +716,7 @@ class V2ArrivalsControllerSpec
         FakeAcceptHeaderActionProvider,
         mockResponseFormatterService,
         new TestMetrics(),
+        mockXmlParsingService,
         FakePreMaterialisedFutureProvider
       )
 
@@ -1038,4 +1064,130 @@ class V2ArrivalsControllerSpec
         }
     }
   }
+
+  "POST /movements/arrivals/:arrivalId/messages" - {
+    "with content type set to application/xml" - {
+
+      val standardHeaders = FakeHeaders(
+        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
+      )
+
+      "must return Accepted when body length is within limits and is considered valid" in {
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[MovementType])(any(), any()))
+          .thenReturn(messageDataEither)
+
+        when(
+          mockValidationService
+            .validateXml(eqTo(MessageType.InformationAboutNonArrivedMovement), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+        )
+          .thenAnswer(
+            _ => EitherT.rightT(())
+          )
+        when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
+
+        when(
+          mockArrivalsPersistenceService
+            .updateArrival(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+        ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, UpdateMovementResponse](UpdateMovementResponse(MessageId("0123456789abcsde")))))
+
+        val request = fakeAttachArrivals(method = "POST", body = singleUseStringSource(CC141C.mkString), headers = standardHeaders)
+        val result  = sut.attachMessage(arrivalId)(request)
+        status(result) mustBe ACCEPTED
+
+        contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(arrivalId, MessageId("0123456789abcsde"), MovementType.Arrival))
+
+        verify(mockAuditService, times(1)).audit(eqTo(AuditType.InformationAboutNonArrivedMovement), any(), eqTo(MimeTypes.XML))(any(), any())
+        verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.InformationAboutNonArrivedMovement), any())(any(), any())
+        verify(mockArrivalsPersistenceService, times(1)).updateArrival(MovementId(any()), any(), any())(any(), any())
+        verify(mockRouterService, times(1)).send(
+          eqTo(MessageType.InformationAboutNonArrivedMovement),
+          EORINumber(any()),
+          MovementId(any()),
+          MessageId(any()),
+          any()
+        )(
+          any(),
+          any()
+        )
+      }
+
+      "must return Bad Request when body is not an XML document" in {
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]](), any[MovementType])(any(), any()))
+          .thenAnswer(
+            _ => EitherT.leftT(ExtractionError.MalformedInput)
+          )
+
+        val request = fakeAttachArrivals(method = "POST", body = singleUseStringSource("notxml"), headers = standardHeaders)
+        val result  = sut.attachMessage(arrivalId)(request)
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "BAD_REQUEST",
+          "message" -> "Input was malformed"
+        )
+      }
+
+      "must return Internal Service Error if the persistence service reports an error" in {
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[MovementType])(any(), any()))
+          .thenReturn(messageDataEither)
+        when(
+          mockValidationService
+            .validateXml(eqTo(MessageType.InformationAboutNonArrivedMovement), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+        )
+          .thenAnswer(
+            _ => EitherT.rightT(())
+          )
+        when(
+          mockArrivalsPersistenceService
+            .updateArrival(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+        ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, UpdateMovementResponse](UpdateMovementResponse(MessageId("0123456789abcsde")))))
+
+        val sut = new V2ArrivalsControllerImpl(
+          Helpers.stubControllerComponents(),
+          FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
+          mockValidationService,
+          mockArrivalsPersistenceService,
+          mockRouterService,
+          mockAuditService,
+          mockConversionService,
+          mockPushNotificationService,
+          FakeMessageSizeActionProvider,
+          FakeAcceptHeaderActionProvider,
+          mockResponseFormatterService,
+          new TestMetrics(),
+          mockXmlParsingService,
+          FakePreMaterialisedFutureProvider
+        )
+
+        val request  = fakeAttachArrivals("POST", body = Source.single(ByteString(CC141C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
+        val response = sut.attachMessage(arrivalId)(request)
+
+        status(response) mustBe INTERNAL_SERVER_ERROR
+        contentAsJson(response) mustBe Json.obj(
+          "code"    -> "INTERNAL_SERVER_ERROR",
+          "message" -> "Internal server error"
+        )
+      }
+
+    }
+    "must return UNSUPPORTED_MEDIA_TYPE when the content type is invalid" in {
+      val standardHeaders = FakeHeaders(
+        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "invalid", HeaderNames.CONTENT_LENGTH -> "1000")
+      )
+
+      val request  = fakeAttachArrivals("POST", body = Source.single(ByteString(CC141C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
+      val response = sut.attachMessage(arrivalId)(request)
+      status(response) mustBe UNSUPPORTED_MEDIA_TYPE
+      contentAsJson(response) mustBe Json.obj(
+        "code"    -> "UNSUPPORTED_MEDIA_TYPE",
+        "message" -> "Content-type header invalid is not supported!"
+      )
+    }
+  }
+
 }

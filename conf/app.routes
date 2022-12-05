@@ -4,7 +4,7 @@ POST       /movements/arrivals                                      routing.Arri
 PUT        /movements/arrivals/:arrivalId                           controllers.ArrivalMovementController.resubmitArrivalNotification(arrivalId: ArrivalId)
 GET        /movements/arrivals/:arrivalId                           routing.ArrivalsRouter.getArrival(arrivalId: String)
 
-POST       /movements/arrivals/:arrivalId/messages                  controllers.ArrivalMessagesController.sendMessageDownstream(arrivalId: ArrivalId)
+POST       /movements/arrivals/:arrivalId/messages                  routing.ArrivalsRouter.attachMessage(arrivalId: String)
 GET        /movements/arrivals/:arrivalId/messages                  routing.ArrivalsRouter.getArrivalMessageIds(arrivalId: String, receivedSince: Option[OffsetDateTime] ?= None)
 
 GET        /movements/arrivals/:arrivalId/messages/:messageId       routing.ArrivalsRouter.getArrivalMessage(arrivalId: String, messageId: String)

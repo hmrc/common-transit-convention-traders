@@ -23,6 +23,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import v2.base.StreamTestHelpers
 import v2.base.TestActorSystem
+import v2.models.MovementType
 import v2.models.errors.ExtractionError
 import v2.models.request.MessageType
 
@@ -45,7 +46,7 @@ class XmlParsersSpec extends AnyFreeSpec with TestActorSystem with Matchers with
 
     "when provided with a valid message type" in {
       val stream       = createParsingEventStream(validMessageType)
-      val parsedResult = stream.via(XmlParsers.messageTypeExtractor).runWith(Sink.head)
+      val parsedResult = stream.via(XmlParsers.messageTypeExtractor(MovementType.Departure)).runWith(Sink.head)
 
       whenReady(parsedResult) {
         _ mustBe Right(MessageType.DeclarationInvalidationRequest)
@@ -54,7 +55,7 @@ class XmlParsersSpec extends AnyFreeSpec with TestActorSystem with Matchers with
 
     "when provided with an invalid message type" in {
       val stream       = createParsingEventStream(invalidMessageType)
-      val parsedResult = stream.via(XmlParsers.messageTypeExtractor).runWith(Sink.head)
+      val parsedResult = stream.via(XmlParsers.messageTypeExtractor(MovementType.Departure)).runWith(Sink.head)
 
       whenReady(parsedResult) {
         _ mustBe Left(ExtractionError.MessageTypeNotFound("HolderOfTheTransitProcedure"))

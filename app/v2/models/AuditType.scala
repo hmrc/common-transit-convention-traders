@@ -58,14 +58,20 @@ object AuditType {
     RecoveryNotification,
     WriteOffNotification,
     NoReleaseForTransit,
+    UnloadingPermission,
     RequestOfRelease,
     GuaranteeNotValid,
     RejectionFromOfficeOfDeparture,
+    RejectionFromOfficeOfDestination,
     ControlDecisionNotification,
+    GoodsReleaseNotification,
     PresentationNotificationForThePreLodgedDeclaration,
     FunctionalNack,
+    RequestOnNonArrivedMovement,
     PositiveAcknowledge,
-    ArrivalNotification
+    ArrivalNotification,
+    UnloadingRemarks,
+    InformationAboutNonArrivedMovement
   )
 
   def find(code: String): Option[AuditType] =
