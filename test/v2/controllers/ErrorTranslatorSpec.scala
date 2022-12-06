@@ -237,6 +237,20 @@ class ErrorTranslatorSpec
 
       conversionErrorConverter.convert(input) mustBe output
     }
+
+    "a JsonParsingError returns parsing error message" in {
+      val input  = ConversionError.JsonParsingError("parsing error")
+      val output = PresentationError.badRequestError("Failed to parse json: parsing error")
+
+      conversionErrorConverter.convert(input) mustBe output
+    }
+
+    "a XMLParsingError returns parsing error message" in {
+      val input  = ConversionError.XMLParsingError("parsing error")
+      val output = PresentationError.badRequestError("Failed to parse xml: parsing error")
+
+      conversionErrorConverter.convert(input) mustBe output
+    }
   }
 
   "Extraction Error" - {

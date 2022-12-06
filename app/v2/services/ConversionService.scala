@@ -22,7 +22,9 @@ import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import play.api.Logging
+import play.api.http.Status.BAD_REQUEST
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.ConversionConnector
 import v2.models.HeaderType
 import v2.models.HeaderTypes
@@ -73,8 +75,13 @@ class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector)
           case response => Right(response)
         }
         .recover {
-          case NonFatal(e) =>
-            Left(ConversionError.UnexpectedError(thr = Some(e)))
+          // A bad request error can be returned in the converter when attempting to parse the xml/json which isn't caught by the library used in the validator
+          case UpstreamErrorResponse(message, BAD_REQUEST, _, _) =>
+            headerType match {
+              case _: HeaderTypes.jsonToXml.type => Left(ConversionError.JsonParsingError(message))
+              case _: HeaderTypes.xmlToJson.type => Left(ConversionError.XMLParsingError(message))
+            }
+          case NonFatal(e) => Left(ConversionError.UnexpectedError(thr = Some(e)))
         }
     )
 

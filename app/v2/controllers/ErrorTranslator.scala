@@ -89,7 +89,9 @@ trait ErrorTranslator {
     import v2.models.errors.ConversionError._
 
     override def convert(routerError: ConversionError): PresentationError = routerError match {
-      case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
+      case JsonParsingError(message: String) => PresentationError.badRequestError(s"Failed to parse json: $message")
+      case XMLParsingError(message: String)  => PresentationError.badRequestError(s"Failed to parse xml: $message")
+      case UnexpectedError(thr)              => PresentationError.internalServiceError(cause = thr)
     }
   }
 

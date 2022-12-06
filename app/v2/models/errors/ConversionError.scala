@@ -20,4 +20,6 @@ sealed trait ConversionError
 
 object ConversionError {
   case class UnexpectedError(thr: Option[Throwable] = None) extends ConversionError
+  case class JsonParsingError(cause: String)                extends ConversionError
+  case class XMLParsingError(cause: String)                 extends ConversionError
 }

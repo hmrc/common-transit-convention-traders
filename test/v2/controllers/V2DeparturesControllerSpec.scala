@@ -1369,6 +1369,19 @@ class V2DeparturesControllerSpec
         status(result) mustBe INTERNAL_SERVER_ERROR
       }
 
+      "must return BadRequestError when parsing error is thrown during json to xml conversion" in {
+        setup(conversion = EitherT.leftT(ConversionError.JsonParsingError("parsing error")))
+
+        val request = fakeJsonAttachRequest()
+        val result  = sut.attachMessage(departureId)(request)
+
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "BAD_REQUEST",
+          "message" -> "Failed to parse json: parsing error"
+        )
+      }
+
       "must return InternalServerError when xml failed validation" in {
         setup(validateXml = EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList.one(XmlValidationError(1, 1, "message")))))
 

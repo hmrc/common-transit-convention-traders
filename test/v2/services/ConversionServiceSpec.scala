@@ -27,6 +27,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
@@ -34,6 +35,7 @@ import v2.base.TestActorSystem
 import v2.connectors.ConversionConnector
 import v2.models.HeaderType
 import v2.models.HeaderTypes.jsonToXml
+import v2.models.HeaderTypes.xmlToJson
 import v2.models.errors.ConversionError
 import v2.models.request.MessageType
 
@@ -57,6 +59,26 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
       verify(mockConnector, times(1)).post(any(), any(), any())(any(), any(), any())
     }
 
+    "a parse error thrown during json conversion, should return a Left" in new Setup {
+      when(mockConnector.post(any[MessageType], any[Source[ByteString, _]](), any[HeaderType])(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
+        .thenReturn(Future.failed(badRequestErrorResponse))
+      val result = sut.convert(MessageType.DeclarationData, jsonPayload, jsonToXml)
+      whenReady(result.value) {
+        _.left.get mustBe ConversionError.JsonParsingError("Parsing error")
+      }
+      verify(mockConnector, times(1)).post(any(), any(), any())(any(), any(), any())
+    }
+
+    "a parse error thrown during xml conversion, should return a Left" in new Setup {
+      when(mockConnector.post(any[MessageType], any[Source[ByteString, _]](), any[HeaderType])(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
+        .thenReturn(Future.failed(badRequestErrorResponse))
+      val result = sut.convert(MessageType.DeclarationData, xmlPayload, xmlToJson)
+      whenReady(result.value) {
+        _.left.get mustBe ConversionError.XMLParsingError("Parsing error")
+      }
+      verify(mockConnector, times(1)).post(any(), any(), any())(any(), any(), any())
+    }
+
     "a failed conversion, should return a Left" in new Setup {
       when(mockConnector.post(any[MessageType], any[Source[ByteString, _]](), any[HeaderType])(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
         .thenReturn(Future.failed(upstreamErrorResponse))
@@ -73,8 +95,10 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
     implicit val hc: HeaderCarrier    = HeaderCarrier()
 
     lazy val upstreamErrorResponse: Throwable          = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
+    lazy val badRequestErrorResponse: Throwable        = UpstreamErrorResponse("Parsing error", BAD_REQUEST)
     lazy val mockResponse: Source[ByteString, NotUsed] = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
     lazy val jsonPayload: Source[ByteString, NotUsed]  = Source.single(ByteString("{}", StandardCharsets.UTF_8))
+    lazy val xmlPayload: Source[ByteString, NotUsed]   = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
 
     lazy val mockConnector = mock[ConversionConnector]
     when(mockConnector.post(any[MessageType], any[Source[ByteString, _]](), any())(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))

@@ -530,6 +530,53 @@ class V2ArrivalsControllerSpec
         )
       }
 
+      "must return Bad Request Error if the conversion service reports a json parsing error" in {
+
+        when(mockValidationService.validateJson(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(
+            _ => EitherT.rightT(())
+          )
+
+        when(
+          mockConversionService
+            .jsonToXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]])(
+              any[HeaderCarrier],
+              any[ExecutionContext],
+              any[Materializer]
+            )
+        )
+          .thenAnswer(
+            _ => EitherT.leftT(ConversionError.JsonParsingError("parsing error"))
+          )
+
+        val sut = new V2ArrivalsControllerImpl(
+          Helpers.stubControllerComponents(),
+          FakeAuthNewEnrolmentOnlyAction(EORINumber("nope")),
+          mockValidationService,
+          mockArrivalsPersistenceService,
+          mockRouterService,
+          mockAuditService,
+          mockConversionService,
+          mockPushNotificationService,
+          FakeMessageSizeActionProvider,
+          FakeAcceptHeaderActionProvider,
+          mockResponseFormatterService,
+          new TestMetrics(),
+          FakePreMaterialisedFutureProvider
+        )
+
+        val request =
+          fakeRequestArrivalNotification("POST", body = Source.single(ByteString(CC007C.mkString, StandardCharsets.UTF_8)), headers = standardHeadersJSON)
+        val response = sut.createArrivalNotification()(request)
+
+        status(response) mustBe BAD_REQUEST
+        contentAsJson(response) mustBe Json.obj(
+          "code"    -> "BAD_REQUEST",
+          "message" -> "Failed to parse json: parsing error"
+        )
+        verify(mockPushNotificationService, times(0)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
+      }
+
       "must return Internal Service Error if the conversion service reports an error" in {
 
         when(mockValidationService.validateJson(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
