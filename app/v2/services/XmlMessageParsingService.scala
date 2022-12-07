@@ -58,9 +58,9 @@ class XmlMessageParsingServiceImpl @Inject() (implicit materializer: Materialize
       implicit builder => messageShape =>
         import GraphDSL.Implicits._
 
-        val xmlParsing: FlowShape[ByteString, ParseEvent]                                     = builder.add(XmlParsing.parser)
-        val messageTypeDeparture: FlowShape[ParseEvent, Either[ExtractionError, MessageType]] = builder.add(XmlParsers.messageTypeExtractor(movementType))
-        xmlParsing ~> messageTypeDeparture ~> messageShape
+        val xmlParsing: FlowShape[ByteString, ParseEvent]                            = builder.add(XmlParsing.parser)
+        val messageType: FlowShape[ParseEvent, Either[ExtractionError, MessageType]] = builder.add(XmlParsers.messageTypeExtractor(movementType))
+        xmlParsing ~> messageType ~> messageShape
 
         SinkShape(xmlParsing.in)
     }
