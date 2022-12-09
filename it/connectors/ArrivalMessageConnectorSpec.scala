@@ -55,7 +55,8 @@ class ArrivalMessageConnectorSpec
         routing.routes.ArrivalsRouter.getArrivalMessage("1", "1").urlWithContext,
         LocalDateTime.now,
         "abc",
-        <test>default</test>
+        <test>default</test>,
+        Some(LocalDateTime.now)
       )
       server.stubFor(
         get(
@@ -183,13 +184,15 @@ class ArrivalMessageConnectorSpec
             routing.routes.ArrivalsRouter.getArrivalMessage("1", "1").urlWithContext,
             LocalDateTime.now,
             "abc",
-            <test>default</test>
+            <test>default</test>,
+            Some(LocalDateTime.now)
           ),
           MovementMessage(
             routing.routes.ArrivalsRouter.getArrivalMessage("1", "2").urlWithContext,
             LocalDateTime.now,
             "abc",
-            <test>default</test>
+            <test>default</test>,
+            Some(LocalDateTime.now)
           )
         )
       )
@@ -233,13 +236,15 @@ class ArrivalMessageConnectorSpec
             routing.routes.ArrivalsRouter.getArrivalMessage("1", "1").urlWithContext,
             LocalDateTime.now,
             "abc",
-            <test>default</test>
+            <test>default</test>,
+            Some(LocalDateTime.now)
           ),
           MovementMessage(
             routing.routes.ArrivalsRouter.getArrivalMessage("1", "2").urlWithContext,
             LocalDateTime.now,
             "abc",
-            <test>default</test>
+            <test>default</test>,
+            Some(LocalDateTime.now)
           )
         )
       )

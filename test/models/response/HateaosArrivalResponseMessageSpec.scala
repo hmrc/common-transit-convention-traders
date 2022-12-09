@@ -42,7 +42,13 @@ class HateoasArrivalResponseMessageSpec
   "HateoasArrivalResponseMessage" - {
     "must have valid message structure" in {
       val message =
-        MovementMessage("/customs/transits/movements/arrivals/1/messages/1", LocalDateTime.of(2020, 10, 10, 10, 10, 10), "type", <test>default</test>)
+        MovementMessage(
+          "/customs/transits/movements/arrivals/1/messages/1",
+          LocalDateTime.of(2020, 10, 10, 10, 10, 10),
+          "type",
+          <test>default</test>,
+          Some(LocalDateTime.of(2020, 10, 10, 10, 10, 10))
+        )
 
       val expectedJson = Json.parse("""
           |{

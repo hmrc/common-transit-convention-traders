@@ -23,11 +23,16 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.utils.CallOps._
 
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
+
 object HateoasDepartureResponseMessage {
 
   def apply(departureId: DepartureId, messageId: MessageId, m: MovementMessage): JsObject = {
     val departureUrl = routing.routes.DeparturesRouter.getMessage(departureId.toString, messageId.toString).urlWithContext
     val messageUrl   = routing.routes.DeparturesRouter.getDeparture(departureId.toString).urlWithContext
+
+    val received: LocalDateTime = m.received.getOrElse(m.dateTime).truncatedTo(ChronoUnit.SECONDS)
 
     Json.obj(
       "_links" -> Json.obj(
@@ -36,7 +41,7 @@ object HateoasDepartureResponseMessage {
       ),
       "departureId" -> departureId.toString,
       "messageId"   -> messageId.toString,
-      "received"    -> m.dateTime,
+      "received"    -> received,
       "messageType" -> m.messageType,
       "body"        -> m.message.toString
     )

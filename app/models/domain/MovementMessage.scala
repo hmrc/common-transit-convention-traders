@@ -27,4 +27,4 @@ object MovementMessage extends NodeSeqFormat {
   implicit val format = Json.format[MovementMessage]
 }
 
-case class MovementMessage(location: String, dateTime: LocalDateTime, messageType: String, message: NodeSeq)
+case class MovementMessage(location: String, dateTime: LocalDateTime, messageType: String, message: NodeSeq, received: Option[LocalDateTime])
