@@ -104,10 +104,10 @@ class V2ArrivalsControllerSpec
       <test>testxml</test>
     </CC007C>
 
-  def CC141C: NodeSeq =
-    <CC141C>
+  def CC044C: NodeSeq =
+    <CC044C>
       <test>testxml</test>
-    </CC141C>
+    </CC044C>
 
   val mockValidationService          = mock[ValidationService]
   val mockArrivalsPersistenceService = mock[ArrivalsService]
@@ -119,7 +119,7 @@ class V2ArrivalsControllerSpec
   val mockResponseFormatterService   = mock[ResponseFormatterService]
   implicit val temporaryFileCreator  = SingletonTemporaryFileCreator
   lazy val arrivalId                 = MovementId("0123456789abcdef")
-  lazy val messageType: MessageType  = MessageType.InformationAboutNonArrivedMovement
+  lazy val messageType: MessageType  = MessageType.UnloadingRemarks
 
   lazy val messageDataEither: EitherT[Future, ExtractionError, MessageType] =
     EitherT.rightT(messageType)
@@ -1078,7 +1078,7 @@ class V2ArrivalsControllerSpec
 
         when(
           mockValidationService
-            .validateXml(eqTo(MessageType.InformationAboutNonArrivedMovement), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .validateXml(eqTo(MessageType.UnloadingRemarks), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         )
           .thenAnswer(
             _ => EitherT.rightT(())
@@ -1093,17 +1093,17 @@ class V2ArrivalsControllerSpec
             )
         ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, UpdateMovementResponse](UpdateMovementResponse(MessageId("0123456789abcsde")))))
 
-        val request = fakeAttachArrivals(method = "POST", body = singleUseStringSource(CC141C.mkString), headers = standardHeaders)
+        val request = fakeAttachArrivals(method = "POST", body = singleUseStringSource(CC044C.mkString), headers = standardHeaders)
         val result  = sut.attachMessage(arrivalId)(request)
         status(result) mustBe ACCEPTED
 
         contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(arrivalId, MessageId("0123456789abcsde"), MovementType.Arrival))
 
-        verify(mockAuditService, times(1)).audit(eqTo(AuditType.InformationAboutNonArrivedMovement), any(), eqTo(MimeTypes.XML))(any(), any())
-        verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.InformationAboutNonArrivedMovement), any())(any(), any())
+        verify(mockAuditService, times(1)).audit(eqTo(AuditType.UnloadingRemarks), any(), eqTo(MimeTypes.XML))(any(), any())
+        verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.UnloadingRemarks), any())(any(), any())
         verify(mockArrivalsPersistenceService, times(1)).updateArrival(MovementId(any()), any(), any())(any(), any())
         verify(mockRouterService, times(1)).send(
-          eqTo(MessageType.InformationAboutNonArrivedMovement),
+          eqTo(MessageType.UnloadingRemarks),
           EORINumber(any()),
           MovementId(any()),
           MessageId(any()),
@@ -1134,7 +1134,7 @@ class V2ArrivalsControllerSpec
           .thenReturn(messageDataEither)
         when(
           mockValidationService
-            .validateXml(eqTo(MessageType.InformationAboutNonArrivedMovement), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .validateXml(eqTo(MessageType.UnloadingRemarks), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         )
           .thenAnswer(
             _ => EitherT.rightT(())
@@ -1164,7 +1164,7 @@ class V2ArrivalsControllerSpec
           FakePreMaterialisedFutureProvider
         )
 
-        val request  = fakeAttachArrivals("POST", body = Source.single(ByteString(CC141C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
+        val request  = fakeAttachArrivals("POST", body = Source.single(ByteString(CC044C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
         val response = sut.attachMessage(arrivalId)(request)
 
         status(response) mustBe INTERNAL_SERVER_ERROR
@@ -1180,7 +1180,7 @@ class V2ArrivalsControllerSpec
         Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "invalid", HeaderNames.CONTENT_LENGTH -> "1000")
       )
 
-      val request  = fakeAttachArrivals("POST", body = Source.single(ByteString(CC141C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
+      val request  = fakeAttachArrivals("POST", body = Source.single(ByteString(CC044C.mkString, StandardCharsets.UTF_8)), headers = standardHeaders)
       val response = sut.attachMessage(arrivalId)(request)
       status(response) mustBe UNSUPPORTED_MEDIA_TYPE
       contentAsJson(response) mustBe Json.obj(

@@ -261,7 +261,7 @@ class ArrivalsServiceSpec
         )
       )
         .thenReturn(Future.successful(UpdateMovementResponse(MessageId("1234567890abcdsd"))))
-      val result                                                     = sut.updateArrival(MovementId("1234567890abcdef"), MessageType.InformationAboutNonArrivedMovement, validRequest)
+      val result                                                     = sut.updateArrival(MovementId("1234567890abcdef"), MessageType.UnloadingRemarks, validRequest)
       val expected: Either[PersistenceError, UpdateMovementResponse] = Right(UpdateMovementResponse(MessageId("1234567890abcdsd")))
       whenReady(result.value) {
         _ mustBe expected
@@ -276,7 +276,7 @@ class ArrivalsServiceSpec
         )
       ).thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-      val result = sut.updateArrival(MovementId("1234567890abcdef"), MessageType.InformationAboutNonArrivedMovement, validRequest)
+      val result = sut.updateArrival(MovementId("1234567890abcdef"), MessageType.UnloadingRemarks, validRequest)
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.ArrivalNotFound(MovementId("1234567890abcdef")))
       }
@@ -290,7 +290,7 @@ class ArrivalsServiceSpec
         )
       )
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result                                                     = sut.updateArrival(MovementId("1234567890abcdef"), MessageType.InformationAboutNonArrivedMovement, invalidRequest)
+      val result                                                     = sut.updateArrival(MovementId("1234567890abcdef"), MessageType.UnloadingRemarks, invalidRequest)
       val expected: Either[PersistenceError, UpdateMovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected
