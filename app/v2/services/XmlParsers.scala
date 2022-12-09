@@ -34,16 +34,26 @@ object XmlParsers {
     }
     .take(1)
     .map {
-      case s: StartElement if movementType == MovementType.Departure =>
-        MessageType.messageTypesSentByDepartureTrader
-          .find(_.rootNode == s.localName)
-          .map(Right(_))
-          .getOrElse(Left(ExtractionError.MessageTypeNotFound(s.localName)))
-      case s: StartElement if movementType == MovementType.Arrival =>
-        MessageType.messageTypesSentByArrivalTrader
+      case s: StartElement =>
+        filterMovementTypeMessage(movementType)
           .find(_.rootNode == s.localName)
           .map(Right(_))
           .getOrElse(Left(ExtractionError.MessageTypeNotFound(s.localName)))
       case _ => Left(ExtractionError.MalformedInput)
     }
+
+  private def filterMovementTypeMessage(movementType: MovementType) =
+    movementType match {
+      case MovementType.Arrival =>
+        MessageType.messageTypesSentByArrivalTrader
+          .filterNot(
+            messageType => messageType == MessageType.ArrivalNotification
+          )
+      case MovementType.Departure =>
+        MessageType.messageTypesSentByDepartureTrader
+          .filterNot(
+            messageType => messageType == MessageType.DeclarationData
+          )
+    }
+
 }

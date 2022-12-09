@@ -70,6 +70,7 @@ object MessageType {
   case object PositiveAcknowledge extends DepartureMessageType("IE928", "CC928C", AuditType.PositiveAcknowledge) // TODO: This is also an arrival message
 
   val messageTypesSentByDepartureTrader = Seq(
+    DeclarationData,
     DeclarationAmendment,
     DeclarationInvalidationRequest,
     RequestOfRelease,
@@ -80,7 +81,6 @@ object MessageType {
   val messageTypesSentToDepartureTrader: Seq[MessageType] = Seq(
     AmendmentAcceptance,
     InvalidationDecision,
-    DeclarationData,
     Discrepancies,
     MRNAllocated,
     ReleaseForTransit,
@@ -95,11 +95,11 @@ object MessageType {
   )
 
   val messageTypesSentByArrivalTrader: Seq[MessageType] = Seq(
+    ArrivalNotification,
     UnloadingRemarks
   )
 
   val messageTypesSentToArrivalTrader: Seq[MessageType] = Seq(
-    ArrivalNotification,
     GoodsReleaseNotification,
     UnloadingPermission,
     RejectionFromOfficeOfDestination,

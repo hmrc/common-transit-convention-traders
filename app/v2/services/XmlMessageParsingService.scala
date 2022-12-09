@@ -53,7 +53,7 @@ class XmlMessageParsingServiceImpl @Inject() (implicit materializer: Materialize
 
   val messageSink = Sink.head[Either[ExtractionError, MessageType]]
 
-  private def messageFlow(movementType: MovementType): Sink[ByteString, Future[Either[ExtractionError, MessageType]]] = Sink.fromGraph(
+  private def messageTypeSink(movementType: MovementType): Sink[ByteString, Future[Either[ExtractionError, MessageType]]] = Sink.fromGraph(
     GraphDSL.createGraph(messageSink) {
       implicit builder => messageShape =>
         import GraphDSL.Implicits._
@@ -72,7 +72,7 @@ class XmlMessageParsingServiceImpl @Inject() (implicit materializer: Materialize
   ): EitherT[Future, ExtractionError, MessageType] =
     EitherT(
       source
-        .toMat(messageFlow(movementType))(Keep.right)
+        .toMat(messageTypeSink(movementType))(Keep.right)
         .run()
         .recover {
           case NonFatal(_) => Left(ExtractionError.MalformedInput)
