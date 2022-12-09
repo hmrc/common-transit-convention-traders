@@ -78,9 +78,9 @@ trait ErrorTranslator {
 
     override def convert(routerError: RouterError): PresentationError = routerError match {
       case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
-      case UnrecognisedOffice =>
+      case UnrecognisedOffice(office, field) =>
         PresentationError.badRequestError(
-          "The customs office specified for CustomsOfficeOfDestinationActual or CustomsOfficeOfDeparture must be a customs office located in the United Kingdom"
+          s"The customs office specified for $field must be a customs office located in the United Kingdom ($office was specified)"
         )
     }
   }

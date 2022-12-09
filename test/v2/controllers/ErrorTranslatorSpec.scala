@@ -197,13 +197,14 @@ class ErrorTranslatorSpec
   }
 
   "Router Error" - {
-    "an UnrecognisedOffice error returns a bad request error" in {
-      val input = RouterError.UnrecognisedOffice
-      val output = PresentationError.badRequestError(
-        "The customs office specified for CustomsOfficeOfDestinationActual or CustomsOfficeOfDeparture must be a customs office located in the United Kingdom"
-      )
+    "an UnrecognisedOffice error returns a bad request error" in forAll(Gen.alphaNumStr, Gen.alphaStr) {
+      (office, field) =>
+        val input = RouterError.UnrecognisedOffice(office, field)
+        val output = PresentationError.badRequestError(
+          s"The customs office specified for $field must be a customs office located in the United Kingdom ($office was specified)"
+        )
 
-      routerErrorConverter.convert(input) mustBe output
+        routerErrorConverter.convert(input) mustBe output
     }
 
     "an Unexpected Error with no exception returns an internal service error with no exception" in {
