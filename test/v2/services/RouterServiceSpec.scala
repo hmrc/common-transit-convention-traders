@@ -29,6 +29,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.RouterConnector
@@ -104,7 +105,21 @@ class RouterServiceSpec extends AnyFreeSpec with Matchers with OptionValues with
         any[HeaderCarrier]
       )
     )
-      .thenReturn(Future.failed(UpstreamErrorResponse("bad request", BAD_REQUEST)))
+      .thenReturn(
+        Future.failed(
+          UpstreamErrorResponse(
+            Json.stringify(
+              Json.obj(
+                "code"    -> "INVALID_OFFICE",
+                "message" -> "invalid office",
+                "field"   -> "CustomsOfficeOfDeparture",
+                "office"  -> "AB012345"
+              )
+            ),
+            BAD_REQUEST
+          )
+        )
+      )
 
     val sut = new RouterServiceImpl(mockConnector)
 
@@ -124,9 +139,9 @@ class RouterServiceSpec extends AnyFreeSpec with Matchers with OptionValues with
       }
     }
 
-    "on a failed submission with validation error, should return a Left with an UnrecognisedOffice" in {
+    "on a failed submission with an invalid office error, should return a Left with an UnrecognisedOffice" in {
       val result                              = sut.send(MessageType.DeclarationData, EORINumber("1"), MovementId("1"), MessageId("1"), unrecognisedOfficeRequest)
-      val expected: Either[RouterError, Unit] = Left(RouterError.UnrecognisedOffice)
+      val expected: Either[RouterError, Unit] = Left(RouterError.UnrecognisedOffice("AB012345", "CustomsOfficeOfDeparture"))
       whenReady(result.value) {
         _ mustBe expected
       }

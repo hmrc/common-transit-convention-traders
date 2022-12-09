@@ -1424,7 +1424,7 @@ class V2DeparturesControllerSpec
       }
 
       "must return BadRequest when router returns BadRequest" in {
-        setup(router = EitherT.leftT(RouterError.UnrecognisedOffice))
+        setup(router = EitherT.leftT(RouterError.UnrecognisedOffice("AB012345", "field")))
 
         val request = fakeJsonAttachRequest()
         val result  = sut.attachMessage(departureId)(request)

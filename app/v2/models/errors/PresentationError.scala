@@ -97,6 +97,8 @@ object PresentationError extends CommonFormats {
         (__ \ CodeFieldName).read[ErrorCode]
     )(StandardError.apply _)
 
+  implicit val invalidOfficeErrorReads: Reads[InvalidOfficeError] = Json.reads[InvalidOfficeError]
+
   implicit val xmlSchemaErrorFormat: OFormat[XmlSchemaValidationError] =
     (
       (__ \ MessageFieldName).format[String] and
@@ -126,6 +128,8 @@ sealed abstract class PresentationError extends Product with Serializable {
 }
 
 case class StandardError(message: String, code: ErrorCode) extends PresentationError
+
+case class InvalidOfficeError(message: String, office: String, field: String, code: ErrorCode) extends PresentationError
 
 case class BindingError(message: String, statusCode: Int, code: ErrorCode) extends PresentationError
 
