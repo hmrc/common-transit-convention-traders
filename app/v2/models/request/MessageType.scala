@@ -69,14 +69,15 @@ object MessageType {
   case object FunctionalNack      extends DepartureMessageType("IE906", "CC906C", AuditType.FunctionalNack)      // TODO: This is also an arrival message
   case object PositiveAcknowledge extends DepartureMessageType("IE928", "CC928C", AuditType.PositiveAcknowledge) // TODO: This is also an arrival message
 
-  val messageTypesSentByDepartureTrader = Seq(
-    DeclarationData,
+  val updateMessageTypesSentByDepartureTrader: Seq[MessageType] = Seq(
     DeclarationAmendment,
     DeclarationInvalidationRequest,
     RequestOfRelease,
     PresentationNotificationForThePreLodgedDeclaration,
     InformationAboutNonArrivedMovement
   )
+
+  val messageTypesSentByDepartureTrader: Seq[MessageType] = DeclarationData +: updateMessageTypesSentByDepartureTrader
 
   val messageTypesSentToDepartureTrader: Seq[MessageType] = Seq(
     AmendmentAcceptance,
@@ -94,10 +95,11 @@ object MessageType {
     PositiveAcknowledge
   )
 
-  val messageTypesSentByArrivalTrader: Seq[MessageType] = Seq(
-    ArrivalNotification,
+  val updateMessageTypesSentByArrivalTrader: Seq[MessageType] = Seq(
     UnloadingRemarks
   )
+
+  val messageTypesSentByArrivalTrader: Seq[MessageType] = ArrivalNotification +: updateMessageTypesSentByArrivalTrader
 
   val messageTypesSentToArrivalTrader: Seq[MessageType] = Seq(
     GoodsReleaseNotification,

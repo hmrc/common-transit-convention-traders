@@ -59,11 +59,7 @@ class JsonMessageParsingServiceImpl @Inject() (implicit materializer: Materializ
         .map {
           mt =>
             val root = mt.replace("\"", "")
-            MessageType.messageTypesSentByDepartureTrader
-              .filterNot(
-                messageType => messageType == MessageType.DeclarationData
-              )
-              .find(_.rootNode == root) match {
+            MessageType.updateMessageTypesSentByDepartureTrader.find(_.rootNode == root) match {
               case Some(messageType) => Right(messageType)
               case None              => Left(MessageTypeNotFound(root))
             }

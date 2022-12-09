@@ -45,15 +45,10 @@ object XmlParsers {
   private def filterMovementTypeMessage(movementType: MovementType) =
     movementType match {
       case MovementType.Arrival =>
-        MessageType.messageTypesSentByArrivalTrader
-          .filterNot(
-            messageType => messageType == MessageType.ArrivalNotification
-          )
+        MessageType.updateMessageTypesSentByArrivalTrader
       case MovementType.Departure =>
-        MessageType.messageTypesSentByDepartureTrader
-          .filterNot(
-            messageType => messageType == MessageType.DeclarationData
-          )
+        MessageType.updateMessageTypesSentByDepartureTrader
+
     }
 
 }
