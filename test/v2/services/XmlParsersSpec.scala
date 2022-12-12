@@ -23,7 +23,6 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import v2.base.StreamTestHelpers
 import v2.base.TestActorSystem
-import v2.models.MovementType
 import v2.models.errors.ExtractionError
 import v2.models.request.MessageType
 
@@ -67,7 +66,7 @@ class XmlParsersSpec extends AnyFreeSpec with TestActorSystem with Matchers with
 
     "when provided with a valid departure message type" in {
       val stream       = createParsingEventStream(validDepartureMessageType)
-      val parsedResult = stream.via(XmlParsers.messageTypeExtractor(MovementType.Departure)).runWith(Sink.head)
+      val parsedResult = stream.via(XmlParsers.messageTypeExtractor(MessageType.updateMessageTypesSentByDepartureTrader)).runWith(Sink.head)
 
       whenReady(parsedResult) {
         _ mustBe Right(MessageType.DeclarationInvalidationRequest)
@@ -76,7 +75,7 @@ class XmlParsersSpec extends AnyFreeSpec with TestActorSystem with Matchers with
 
     "when provided with an invalid  departure message type" in {
       val stream       = createParsingEventStream(invalidDepartureMessageType)
-      val parsedResult = stream.via(XmlParsers.messageTypeExtractor(MovementType.Departure)).runWith(Sink.head)
+      val parsedResult = stream.via(XmlParsers.messageTypeExtractor(MessageType.updateMessageTypesSentByDepartureTrader)).runWith(Sink.head)
 
       whenReady(parsedResult) {
         _ mustBe Left(ExtractionError.MessageTypeNotFound("CC015C"))
@@ -85,7 +84,7 @@ class XmlParsersSpec extends AnyFreeSpec with TestActorSystem with Matchers with
 
     "when provided with a valid arrival message type" in {
       val stream       = createParsingEventStream(validArrivalMessageType)
-      val parsedResult = stream.via(XmlParsers.messageTypeExtractor(MovementType.Arrival)).runWith(Sink.head)
+      val parsedResult = stream.via(XmlParsers.messageTypeExtractor(MessageType.updateMessageTypesSentByArrivalTrader)).runWith(Sink.head)
 
       whenReady(parsedResult) {
         _ mustBe Right(MessageType.UnloadingRemarks)
@@ -94,7 +93,7 @@ class XmlParsersSpec extends AnyFreeSpec with TestActorSystem with Matchers with
 
     "when provided with an invalid  arrival message type" in {
       val stream       = createParsingEventStream(invalidArrivalMessageType)
-      val parsedResult = stream.via(XmlParsers.messageTypeExtractor(MovementType.Arrival)).runWith(Sink.head)
+      val parsedResult = stream.via(XmlParsers.messageTypeExtractor(MessageType.updateMessageTypesSentByArrivalTrader)).runWith(Sink.head)
 
       whenReady(parsedResult) {
         _ mustBe Left(ExtractionError.MessageTypeNotFound("CC007C"))
@@ -103,7 +102,7 @@ class XmlParsersSpec extends AnyFreeSpec with TestActorSystem with Matchers with
 
     "when provided with an invalid message type" in {
       val stream       = createParsingEventStream(invalidMessageType)
-      val parsedResult = stream.via(XmlParsers.messageTypeExtractor(MovementType.Arrival)).runWith(Sink.head)
+      val parsedResult = stream.via(XmlParsers.messageTypeExtractor(MessageType.updateMessageTypesSentByArrivalTrader)).runWith(Sink.head)
 
       whenReady(parsedResult) {
         _ mustBe Left(ExtractionError.MessageTypeNotFound("TransitOperation"))

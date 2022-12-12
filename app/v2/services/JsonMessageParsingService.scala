@@ -38,7 +38,7 @@ import v2.models.errors.ExtractionError.MessageTypeNotFound
 @ImplementedBy(classOf[JsonMessageParsingServiceImpl])
 trait JsonMessageParsingService {
 
-  def extractMessageType(source: Source[ByteString, _])(implicit
+  def extractMessageType(source: Source[ByteString, _], messageTypeList: Seq[MessageType])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, ExtractionError, MessageType]
@@ -49,7 +49,8 @@ trait JsonMessageParsingService {
 class JsonMessageParsingServiceImpl @Inject() (implicit materializer: Materializer) extends JsonMessageParsingService {
 
   override def extractMessageType(
-    source: Source[ByteString, _]
+    source: Source[ByteString, _],
+    messageTypeList: Seq[MessageType]
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, ExtractionError, MessageType] =
     EitherT(
       source
@@ -59,7 +60,7 @@ class JsonMessageParsingServiceImpl @Inject() (implicit materializer: Materializ
         .map {
           mt =>
             val root = mt.replace("\"", "")
-            MessageType.updateMessageTypesSentByDepartureTrader.find(_.rootNode == root) match {
+            messageTypeList.find(_.rootNode == root) match {
               case Some(messageType) => Right(messageType)
               case None              => Left(MessageTypeNotFound(root))
             }

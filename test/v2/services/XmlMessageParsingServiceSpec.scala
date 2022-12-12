@@ -23,11 +23,10 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.base.StreamTestHelpers
 import v2.base.TestActorSystem
-import v2.models.MovementType
 import v2.models.errors.ExtractionError
 import v2.models.request.MessageType
 
-import concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.xml.NodeSeq
 
 class XmlMessageParsingServiceSpec
@@ -70,7 +69,7 @@ class XmlMessageParsingServiceSpec
       val xmlParsingService = new XmlMessageParsingServiceImpl()
       val payload           = createStream(validDepartureXml)
       val response =
-        xmlParsingService.extractMessageType(payload, MovementType.Departure)
+        xmlParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByDepartureTrader)
 
       whenReady(response.value) {
         _ mustBe Right(MessageType.DeclarationAmendment)
@@ -81,7 +80,7 @@ class XmlMessageParsingServiceSpec
       val xmlParsingService = new XmlMessageParsingServiceImpl()
       val payload           = createStream(validArrivalXml)
       val response =
-        xmlParsingService.extractMessageType(payload, MovementType.Arrival)
+        xmlParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByArrivalTrader)
 
       whenReady(response.value) {
         _ mustBe Right(MessageType.UnloadingRemarks)
@@ -92,7 +91,7 @@ class XmlMessageParsingServiceSpec
       val xmlParsingService = new XmlMessageParsingServiceImpl()
       val payload           = createStream(invalidMessageType)
       val response =
-        xmlParsingService.extractMessageType(payload, MovementType.Departure)
+        xmlParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByArrivalTrader)
 
       whenReady(response.value) {
         _ mustBe Left(ExtractionError.MessageTypeNotFound("CC015C"))
@@ -103,7 +102,7 @@ class XmlMessageParsingServiceSpec
       val xmlParsingService = new XmlMessageParsingServiceImpl()
       val payload           = createStream(withNoMessageTypeEntry)
       val response =
-        xmlParsingService.extractMessageType(payload, MovementType.Departure)
+        xmlParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByArrivalTrader)
 
       whenReady(response.value) {
         _ mustBe Left(ExtractionError.MessageTypeNotFound("HolderOfTheTransitProcedure"))
@@ -114,7 +113,7 @@ class XmlMessageParsingServiceSpec
       val xmlParsingService = new XmlMessageParsingServiceImpl()
       val payload           = createStream("malformed")
       val response =
-        xmlParsingService.extractMessageType(payload, MovementType.Departure)
+        xmlParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByArrivalTrader)
 
       whenReady(response.value) {
         r => r mustBe Left(ExtractionError.MalformedInput)

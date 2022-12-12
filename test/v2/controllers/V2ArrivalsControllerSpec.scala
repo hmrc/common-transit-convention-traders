@@ -1073,7 +1073,7 @@ class V2ArrivalsControllerSpec
       )
 
       "must return Accepted when body length is within limits and is considered valid" in {
-        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[MovementType])(any(), any()))
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any()))
           .thenReturn(messageDataEither)
 
         when(
@@ -1115,7 +1115,7 @@ class V2ArrivalsControllerSpec
       }
 
       "must return Bad Request when body is not an XML document" in {
-        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]](), any[MovementType])(any(), any()))
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]](), any[Seq[MessageType]])(any(), any()))
           .thenAnswer(
             _ => EitherT.leftT(ExtractionError.MalformedInput)
           )
@@ -1130,7 +1130,7 @@ class V2ArrivalsControllerSpec
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
-        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[MovementType])(any(), any()))
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any()))
           .thenReturn(messageDataEither)
         when(
           mockValidationService

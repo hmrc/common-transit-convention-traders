@@ -42,7 +42,7 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[XmlMessageParsingServiceImpl])
 trait XmlMessageParsingService {
 
-  def extractMessageType(source: Source[ByteString, _], movementType: MovementType)(implicit
+  def extractMessageType(source: Source[ByteString, _], messageTypeList: Seq[MessageType])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, ExtractionError, MessageType]
@@ -53,26 +53,26 @@ class XmlMessageParsingServiceImpl @Inject() (implicit materializer: Materialize
 
   val messageSink = Sink.head[Either[ExtractionError, MessageType]]
 
-  private def messageTypeSink(movementType: MovementType): Sink[ByteString, Future[Either[ExtractionError, MessageType]]] = Sink.fromGraph(
+  private def messageTypeSink(messageTypeList: Seq[MessageType]): Sink[ByteString, Future[Either[ExtractionError, MessageType]]] = Sink.fromGraph(
     GraphDSL.createGraph(messageSink) {
       implicit builder => messageShape =>
         import GraphDSL.Implicits._
 
         val xmlParsing: FlowShape[ByteString, ParseEvent]                            = builder.add(XmlParsing.parser)
-        val messageType: FlowShape[ParseEvent, Either[ExtractionError, MessageType]] = builder.add(XmlParsers.messageTypeExtractor(movementType))
+        val messageType: FlowShape[ParseEvent, Either[ExtractionError, MessageType]] = builder.add(XmlParsers.messageTypeExtractor(messageTypeList))
         xmlParsing ~> messageType ~> messageShape
 
         SinkShape(xmlParsing.in)
     }
   )
 
-  override def extractMessageType(source: Source[ByteString, _], movementType: MovementType)(implicit
+  override def extractMessageType(source: Source[ByteString, _], messageTypeList: Seq[MessageType])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, ExtractionError, MessageType] =
     EitherT(
       source
-        .toMat(messageTypeSink(movementType))(Keep.right)
+        .toMat(messageTypeSink(messageTypeList))(Keep.right)
         .run()
         .recover {
           case NonFatal(_) => Left(ExtractionError.MalformedInput)

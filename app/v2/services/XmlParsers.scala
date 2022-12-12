@@ -20,13 +20,12 @@ import akka.NotUsed
 import akka.stream.alpakka.xml.ParseEvent
 import akka.stream.alpakka.xml.StartElement
 import akka.stream.scaladsl.Flow
-import v2.models.MovementType
 import v2.models.errors.ExtractionError
 import v2.models.request.MessageType
 
 object XmlParsers {
 
-  def messageTypeExtractor(movementType: MovementType): Flow[ParseEvent, Either[ExtractionError, MessageType], NotUsed] = Flow[ParseEvent]
+  def messageTypeExtractor(messageTypeList: Seq[MessageType]): Flow[ParseEvent, Either[ExtractionError, MessageType], NotUsed] = Flow[ParseEvent]
     .filter {
       case _: StartElement =>
         true
@@ -35,20 +34,11 @@ object XmlParsers {
     .take(1)
     .map {
       case s: StartElement =>
-        filterMovementTypeMessage(movementType)
+        messageTypeList
           .find(_.rootNode == s.localName)
           .map(Right(_))
           .getOrElse(Left(ExtractionError.MessageTypeNotFound(s.localName)))
       case _ => Left(ExtractionError.MalformedInput)
-    }
-
-  private def filterMovementTypeMessage(movementType: MovementType) =
-    movementType match {
-      case MovementType.Arrival =>
-        MessageType.updateMessageTypesSentByArrivalTrader
-      case MovementType.Departure =>
-        MessageType.updateMessageTypesSentByDepartureTrader
-
     }
 
 }

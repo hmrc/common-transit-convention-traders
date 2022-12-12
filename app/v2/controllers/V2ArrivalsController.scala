@@ -223,7 +223,7 @@ class V2ArrivalsControllerImpl @Inject() (
       awaitFileWrite => implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
-          messageType <- xmlParsingService.extractMessageType(request.body, MovementType.Arrival).asPresentation
+          messageType <- xmlParsingService.extractMessageType(request.body, MessageType.updateMessageTypesSentByArrivalTrader).asPresentation
           _           <- awaitFileWrite
           _           <- validationService.validateXml(messageType, request.body).asPresentation
           _ = auditService.audit(messageType.auditType, request.body, MimeTypes.XML)
