@@ -60,9 +60,9 @@ class XmlParsersSpec extends AnyFreeSpec with TestActorSystem with Matchers with
       </ncts:CC007C>
 
     val invalidMessageType: NodeSeq =
-      <TransitOperation>
-          <MRN>27WF9X1FQ9RCKN0TM3</MRN>
-        </TransitOperation>
+      <HolderOfTheTransitProcedure>
+        <CC013C>IE013</CC013C>
+      </HolderOfTheTransitProcedure>
 
     "when provided with a valid departure message type" in {
       val stream       = createParsingEventStream(validDepartureMessageType)
@@ -105,7 +105,7 @@ class XmlParsersSpec extends AnyFreeSpec with TestActorSystem with Matchers with
       val parsedResult = stream.via(XmlParsers.messageTypeExtractor(MessageType.updateMessageTypesSentByArrivalTrader)).runWith(Sink.head)
 
       whenReady(parsedResult) {
-        _ mustBe Left(ExtractionError.MessageTypeNotFound("TransitOperation"))
+        _ mustBe Left(ExtractionError.MessageTypeNotFound("HolderOfTheTransitProcedure"))
       }
     }
 
