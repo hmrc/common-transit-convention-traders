@@ -30,9 +30,11 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.errors.PersistenceError
+import v2.models.request.MessageType
 import v2.models.responses.ArrivalResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
+import v2.models.responses.UpdateMovementResponse
 
 import java.time.OffsetDateTime
 import scala.concurrent.ExecutionContext
@@ -67,6 +69,10 @@ trait ArrivalsService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MessageSummary]
 
+  def updateArrival(arrivalId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, UpdateMovementResponse]
 }
 
 @Singleton
@@ -138,4 +144,18 @@ class ArrivalsServiceImpl @Inject() (persistenceConnector: PersistenceConnector)
         case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
       }
   )
+
+  override def updateArrival(arrivalId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, UpdateMovementResponse] =
+    EitherT(
+      persistenceConnector
+        .postMessage(arrivalId, messageType, source)
+        .map(Right(_))
+        .recover {
+          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.ArrivalNotFound(arrivalId))
+          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+        }
+    )
 }

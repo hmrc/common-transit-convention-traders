@@ -112,4 +112,19 @@ class ArrivalsRouter @Inject() (
     case _                                                         => v1Arrivals.getArrivalsForEori(updatedSince)
   }
 
+  def attachMessage(arrivalId: String): Action[Source[ByteString, _]] = route {
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) =>
+      runIfBound[V2ArrivalId](
+        "arrivalId",
+        arrivalId,
+        v2Arrivals.attachMessage
+      )
+    case _ =>
+      runIfBound[V1ArrivalId](
+        "arrivalId",
+        arrivalId,
+        v1ArrivalMessages.sendMessageDownstream
+      )
+  }
+
 }

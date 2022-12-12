@@ -24,11 +24,11 @@ import v2.models.MovementType
 
 object HateoasMovementUpdateResponse extends HateoasResponse {
 
-  def apply(departureId: MovementId, messageId: MessageId, movementType: MovementType): JsObject =
+  def apply(movementId: MovementId, messageId: MessageId, movementType: MovementType): JsObject =
     Json.obj(
       "_links" -> Json.obj(
-        "self"                    -> Json.obj("href" -> getMessageUri(departureId, messageId, movementType)),
-        movementType.movementType -> Json.obj("href" -> getMovementUri(departureId, movementType))
+        "self"                    -> Json.obj("href" -> getMessageUri(movementId, messageId, movementType)),
+        movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
       )
     )
 }

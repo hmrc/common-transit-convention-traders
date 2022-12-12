@@ -30,6 +30,7 @@ import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import uk.gov.hmrc.http.HeaderCarrier
+import v2.models.MovementType
 import v2.models.errors.ExtractionError
 import v2.models.request.MessageType
 
@@ -41,7 +42,7 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[XmlMessageParsingServiceImpl])
 trait XmlMessageParsingService {
 
-  def extractMessageType(source: Source[ByteString, _])(implicit
+  def extractMessageType(source: Source[ByteString, _], messageTypeList: Seq[MessageType])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, ExtractionError, MessageType]
@@ -52,26 +53,26 @@ class XmlMessageParsingServiceImpl @Inject() (implicit materializer: Materialize
 
   val messageSink = Sink.head[Either[ExtractionError, MessageType]]
 
-  private val messageTypeSink: Sink[ByteString, Future[Either[ExtractionError, MessageType]]] = Sink.fromGraph(
+  private def messageTypeSink(messageTypeList: Seq[MessageType]): Sink[ByteString, Future[Either[ExtractionError, MessageType]]] = Sink.fromGraph(
     GraphDSL.createGraph(messageSink) {
       implicit builder => messageShape =>
         import GraphDSL.Implicits._
 
-        val xmlParsing: FlowShape[ByteString, ParseEvent]                                     = builder.add(XmlParsing.parser)
-        val messageTypeDeparture: FlowShape[ParseEvent, Either[ExtractionError, MessageType]] = builder.add(XmlParsers.messageTypeExtractor)
-        xmlParsing ~> messageTypeDeparture ~> messageShape
+        val xmlParsing: FlowShape[ByteString, ParseEvent]                            = builder.add(XmlParsing.parser)
+        val messageType: FlowShape[ParseEvent, Either[ExtractionError, MessageType]] = builder.add(XmlParsers.messageTypeExtractor(messageTypeList))
+        xmlParsing ~> messageType ~> messageShape
 
         SinkShape(xmlParsing.in)
     }
   )
 
-  override def extractMessageType(source: Source[ByteString, _])(implicit
+  override def extractMessageType(source: Source[ByteString, _], messageTypeList: Seq[MessageType])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, ExtractionError, MessageType] =
     EitherT(
       source
-        .toMat(messageTypeSink)(Keep.right)
+        .toMat(messageTypeSink(messageTypeList))(Keep.right)
         .run()
         .recover {
           case NonFatal(_) => Left(ExtractionError.MalformedInput)

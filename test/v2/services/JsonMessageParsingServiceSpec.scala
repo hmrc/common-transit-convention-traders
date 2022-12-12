@@ -73,7 +73,7 @@ class JsonMessageParsingServiceSpec
       val jsonParsingService = new JsonMessageParsingServiceImpl()
       val payload            = createStream(validJson)
       val response =
-        jsonParsingService.extractMessageType(payload)
+        jsonParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByDepartureTrader)
 
       whenReady(response.value) {
         res =>
@@ -86,7 +86,7 @@ class JsonMessageParsingServiceSpec
       val jsonParsingService = new JsonMessageParsingServiceImpl()
       val payload            = createStream(invalidMessageType)
       val response =
-        jsonParsingService.extractMessageType(payload)
+        jsonParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByDepartureTrader)
 
       whenReady(response.value) {
         res =>
@@ -99,7 +99,7 @@ class JsonMessageParsingServiceSpec
       val jsonParsingService = new JsonMessageParsingServiceImpl()
       val payload            = createStream(withNoMessageTypeEntry)
       val response =
-        jsonParsingService.extractMessageType(payload)
+        jsonParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByDepartureTrader)
 
       whenReady(response.value) {
         res =>

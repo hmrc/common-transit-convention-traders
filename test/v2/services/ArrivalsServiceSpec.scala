@@ -45,11 +45,11 @@ import v2.models.XmlPayload
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
 import v2.models.responses.ArrivalResponse
+import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
+import v2.models.responses.UpdateMovementResponse
 
 import java.nio.charset.StandardCharsets
-import v2.models.responses.MessageSummary
-
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -244,5 +244,57 @@ class ArrivalsServiceSpec
       }
     }
 
+  }
+
+  "Updating arrival with arrivalId and messageType" - {
+
+    val validRequest: Source[ByteString, NotUsed]   = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
+    val invalidRequest: Source[ByteString, NotUsed] = Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8))
+
+    val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
+
+    "on a successful submission, should return a Right" in {
+      when(
+        mockConnector.postMessage(MovementId(any[String]), any[MessageType], eqTo(validRequest))(
+          any[HeaderCarrier],
+          any[ExecutionContext]
+        )
+      )
+        .thenReturn(Future.successful(UpdateMovementResponse(MessageId("1234567890abcdsd"))))
+      val result                                                     = sut.updateArrival(MovementId("1234567890abcdef"), MessageType.UnloadingRemarks, validRequest)
+      val expected: Either[PersistenceError, UpdateMovementResponse] = Right(UpdateMovementResponse(MessageId("1234567890abcdsd")))
+      whenReady(result.value) {
+        _ mustBe expected
+      }
+    }
+
+    "on an arrival is not found, should return ArrivalNotFound" in {
+      when(
+        mockConnector.postMessage(MovementId(any[String]), any[MessageType], eqTo(validRequest))(
+          any[HeaderCarrier],
+          any[ExecutionContext]
+        )
+      ).thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
+
+      val result = sut.updateArrival(MovementId("1234567890abcdef"), MessageType.UnloadingRemarks, validRequest)
+      whenReady(result.value) {
+        _ mustBe Left(PersistenceError.ArrivalNotFound(MovementId("1234567890abcdef")))
+      }
+    }
+
+    "on a failed submission, should return a Left with an UnexpectedError" in {
+      when(
+        mockConnector.postMessage(MovementId(any[String]), any[MessageType], eqTo(invalidRequest))(
+          any[HeaderCarrier],
+          any[ExecutionContext]
+        )
+      )
+        .thenReturn(Future.failed(upstreamErrorResponse))
+      val result                                                     = sut.updateArrival(MovementId("1234567890abcdef"), MessageType.UnloadingRemarks, invalidRequest)
+      val expected: Either[PersistenceError, UpdateMovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
+      whenReady(result.value) {
+        _ mustBe expected
+      }
+    }
   }
 }

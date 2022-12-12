@@ -277,7 +277,7 @@ class ArrivalMessagesControllerSpec
           )
         )
 
-      val request = fakeRequestMessages(method = "POST", uri = routes.ArrivalMessagesController.sendMessageDownstream(ArrivalId(123)).url, body = CC044A)
+      val request = fakeRequestMessages(method = "POST", uri = routing.routes.ArrivalsRouter.attachMessage("123").url, body = CC044A)
       val result  = route(app, request).value
 
       val expectedJson = Json.parse("""
@@ -308,7 +308,7 @@ class ArrivalMessagesControllerSpec
 
     "must return BadRequest when xml includes MesSenMES3" in {
       val request =
-        fakeRequestMessages(method = "POST", uri = routes.ArrivalMessagesController.sendMessageDownstream(ArrivalId(123)).url, body = CC044AwithMesSenMES3)
+        fakeRequestMessages(method = "POST", uri = routing.routes.ArrivalsRouter.attachMessage("123").url, body = CC044AwithMesSenMES3)
       val result = route(app, request).value
 
       status(result) mustBe BAD_REQUEST
@@ -318,7 +318,7 @@ class ArrivalMessagesControllerSpec
       when(mockMessageConnector.post(any(), ArrivalId(any()))(any(), any()))
         .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, "")))
 
-      val request = fakeRequestMessages(method = "POST", uri = routes.ArrivalMessagesController.sendMessageDownstream(ArrivalId(123)).url, body = CC044A)
+      val request = fakeRequestMessages(method = "POST", uri = routing.routes.ArrivalsRouter.attachMessage("123").url, body = CC044A)
       val result  = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
@@ -328,7 +328,7 @@ class ArrivalMessagesControllerSpec
       when(mockMessageConnector.post(any(), ArrivalId(any()))(any(), any()))
         .thenReturn(Future.successful(HttpResponse(NO_CONTENT, JsNull, Headers.create().toMap)))
 
-      val request = fakeRequestMessages(method = "POST", uri = routes.ArrivalMessagesController.sendMessageDownstream(ArrivalId(123)).url, body = CC044A)
+      val request = fakeRequestMessages(method = "POST", uri = routing.routes.ArrivalsRouter.attachMessage("123").url, body = CC044A)
       val result  = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
@@ -342,7 +342,7 @@ class ArrivalMessagesControllerSpec
           )
         )
 
-      val request = fakeRequestMessages(method = "POST", uri = routes.ArrivalMessagesController.sendMessageDownstream(ArrivalId(123)).url, body = CC044A)
+      val request = fakeRequestMessages(method = "POST", uri = routing.routes.ArrivalsRouter.attachMessage("123").url, body = CC044A)
       val result  = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
@@ -360,7 +360,7 @@ class ArrivalMessagesControllerSpec
           )
         )
 
-      val request = fakeRequestMessages(method = "POST", uri = routes.ArrivalMessagesController.sendMessageDownstream(ArrivalId(123)).url, body = CC044A)
+      val request = fakeRequestMessages(method = "POST", uri = routing.routes.ArrivalsRouter.attachMessage("123").url, body = CC044A)
       val result  = route(app, request).value
 
       val expectedJson = Json.parse("""
@@ -392,7 +392,7 @@ class ArrivalMessagesControllerSpec
     "must return UnsupportedMediaType when Content-Type is JSON" in {
       val request = FakeRequest(
         method = "POST",
-        uri = routes.ArrivalMessagesController.sendMessageDownstream(ArrivalId(123)).url,
+        uri = routing.routes.ArrivalsRouter.attachMessage("123").url,
         headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/json")),
         body = AnyContentAsEmpty
       )
@@ -406,7 +406,7 @@ class ArrivalMessagesControllerSpec
       val request = fakeRequestMessages(
         method = "POST",
         headers = FakeHeaders(),
-        uri = routes.ArrivalMessagesController.sendMessageDownstream(ArrivalId(123)).url,
+        uri = routing.routes.ArrivalsRouter.attachMessage("123").url,
         body = ByteString("body")
       )
 
@@ -419,7 +419,7 @@ class ArrivalMessagesControllerSpec
       val request = fakeRequestMessages(
         method = "POST",
         headers = FakeHeaders(),
-        uri = routes.ArrivalMessagesController.sendMessageDownstream(ArrivalId(123)).url,
+        uri = routing.routes.ArrivalsRouter.attachMessage("123").url,
         body = AnyContentAsEmpty
       )
 
@@ -429,7 +429,7 @@ class ArrivalMessagesControllerSpec
     }
 
     "must return BadRequest when invalid XML payload is sent" in {
-      val request = fakeRequestMessages(method = "POST", uri = routes.ArrivalMessagesController.sendMessageDownstream(ArrivalId(123)).url, body = InvalidCC044A)
+      val request = fakeRequestMessages(method = "POST", uri = routing.routes.ArrivalsRouter.attachMessage("123").url, body = InvalidCC044A)
 
       val result = route(app, request).value
 

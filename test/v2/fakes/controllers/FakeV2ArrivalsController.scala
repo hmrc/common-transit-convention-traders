@@ -64,4 +64,11 @@ class FakeV2ArrivalsController @Inject() ()(implicit val materializer: Materiali
     _ =>
       Ok(Json.obj("version" -> 2))
   }
+
+  override def attachMessage(arrivalId: MovementId): Action[Source[ByteString, _]] = Action(streamFromMemory) {
+    request =>
+      request.body.runWith(Sink.ignore)
+      Accepted(Json.obj("version" -> 2))
+  }
+
 }

@@ -60,6 +60,7 @@ trait V2ArrivalsController {
   def getArrivalMessageIds(arrivalId: MovementId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
   def getArrivalMessage(arrivalId: MovementId, messageId: MessageId): Action[AnyContent]
   def getArrivalsForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent]
+  def attachMessage(arrivalId: MovementId): Action[Source[ByteString, _]]
 
 }
 
@@ -77,6 +78,7 @@ class V2ArrivalsControllerImpl @Inject() (
   acceptHeaderActionProvider: AcceptHeaderActionProvider,
   responseFormatterService: ResponseFormatterService,
   val metrics: Metrics,
+  xmlParsingService: XmlMessageParsingService,
   val preMaterialisedFutureProvider: PreMaterialisedFutureProvider
 )(implicit val materializer: Materializer, val temporaryFileCreator: TemporaryFileCreator)
     extends BaseController
@@ -211,4 +213,36 @@ class V2ArrivalsControllerImpl @Inject() (
         )
     }
 
+  def attachMessage(arrivalId: MovementId): Action[Source[ByteString, _]] =
+    contentTypeRoute {
+      case Some(MimeTypes.XML) => attachMessageXML(arrivalId)
+    }
+
+  def attachMessageXML(arrivalId: MovementId): Action[Source[ByteString, _]] =
+    (authActionNewEnrolmentOnly andThen messageSizeAction()).streamWithAwait {
+      awaitFileWrite => implicit request =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+        (for {
+          messageType <- xmlParsingService.extractMessageType(request.body, MessageType.updateMessageTypesSentByArrivalTrader).asPresentation
+          _           <- awaitFileWrite
+          _           <- validationService.validateXml(messageType, request.body).asPresentation
+          _ = auditService.audit(messageType.auditType, request.body, MimeTypes.XML)
+          notificationResult <- updateAndSend(arrivalId, messageType, request.body)
+
+        } yield notificationResult).fold[Result](
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          id => Accepted(Json.toJson(HateoasMovementUpdateResponse(arrivalId, id.messageId, MovementType.Arrival)))
+        )
+    }
+
+  private def updateAndSend(arrivalId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
+    hc: HeaderCarrier,
+    request: AuthenticatedRequest[Source[ByteString, _]]
+  ) =
+    for {
+      notificationResult <- arrivalsService.updateArrival(arrivalId, messageType, source).asPresentation
+      _ <- routerService
+        .send(messageType, request.eoriNumber, arrivalId, notificationResult.messageId, source)
+        .asPresentation
+    } yield notificationResult
 }

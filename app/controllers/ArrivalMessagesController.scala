@@ -38,9 +38,9 @@ import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import v2.utils.CallOps._
 import utils.ResponseHelper
 import utils.Utils
+import v2.utils.CallOps._
 
 import java.time.OffsetDateTime
 import javax.inject.Inject
@@ -51,6 +51,7 @@ import scala.xml.NodeSeq
 trait V1ArrivalMessagesController {
   def getArrivalMessages(arrivalId: ArrivalId, receivedSince: Option[OffsetDateTime]): Action[AnyContent]
   def getArrivalMessage(arrivalId: ArrivalId, messageId: MessageId): Action[AnyContent]
+  def sendMessageDownstream(arrivalId: ArrivalId): Action[NodeSeq]
 }
 
 @Singleton

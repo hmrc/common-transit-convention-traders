@@ -23,9 +23,11 @@ import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
+import play.api.mvc.Request
 import play.api.test.Helpers.stubControllerComponents
 
 import java.time.OffsetDateTime
+import scala.xml.NodeSeq
 
 class FakeV1ArrivalMessagesController extends BaseController with V1ArrivalMessagesController {
   val controllerComponents = stubControllerComponents()
@@ -36,5 +38,10 @@ class FakeV1ArrivalMessagesController extends BaseController with V1ArrivalMessa
 
   override def getArrivalMessage(arrivalId: ArrivalId, messageId: MessageId): Action[AnyContent] = Action {
     _ => Ok(Json.obj("version" -> 1))
+  }
+
+  override def sendMessageDownstream(arrivalId: ArrivalId): Action[NodeSeq] = Action(parse.xml) {
+    _: Request[NodeSeq] =>
+      Accepted(Json.obj("version" -> 1))
   }
 }
