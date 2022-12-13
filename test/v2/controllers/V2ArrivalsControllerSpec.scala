@@ -112,7 +112,7 @@ class V2ArrivalsControllerSpec
       <test>testxml</test>
     </CC044C>
 
-  val CC141Cjson = Json.stringify(Json.obj("CC141C" -> Json.obj("field" -> "value")))
+  val CC044Cjson = Json.stringify(Json.obj("CC044C" -> Json.obj("field" -> "value")))
 
   val mockValidationService          = mock[ValidationService]
   val mockArrivalsPersistenceService = mock[ArrivalsService]
@@ -1196,17 +1196,17 @@ class V2ArrivalsControllerSpec
         extractMessageTypeJson: EitherT[Future, ExtractionError, MessageType] = messageDataEither,
         validateXml: EitherT[Future, FailedToValidateError, Unit] = EitherT.rightT(()),
         validateJson: EitherT[Future, FailedToValidateError, Unit] = EitherT.rightT(()),
-        conversion: EitherT[Future, ConversionError, Source[ByteString, _]] = EitherT.rightT(singleUseStringSource(CC141C.mkString)),
+        conversion: EitherT[Future, ConversionError, Source[ByteString, _]] = EitherT.rightT(singleUseStringSource(CC044C.mkString)),
         persistence: EitherT[Future, PersistenceError, UpdateMovementResponse] = EitherT.rightT(UpdateMovementResponse(MessageId("456"))),
         router: EitherT[Future, RouterError, Unit] = EitherT.rightT(())
       ): Unit = {
 
-        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[MovementType])(any(), any())).thenReturn(extractMessageTypeXml)
-        when(mockJsonParsingService.extractMessageType(any[Source[ByteString, _]])(any(), any())).thenReturn(extractMessageTypeJson)
+        when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any())).thenReturn(extractMessageTypeXml)
+        when(mockJsonParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any())).thenReturn(extractMessageTypeJson)
 
         when(
           mockValidationService
-            .validateXml(eqTo(MessageType.InformationAboutNonArrivedMovement), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .validateXml(eqTo(MessageType.UnloadingRemarks), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         )
           .thenAnswer(
             _ => validateXml
@@ -1214,7 +1214,7 @@ class V2ArrivalsControllerSpec
 
         when(
           mockValidationService
-            .validateJson(eqTo(MessageType.InformationAboutNonArrivedMovement), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .validateJson(eqTo(MessageType.UnloadingRemarks), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
         )
           .thenAnswer(
             _ => validateJson
@@ -1250,7 +1250,7 @@ class V2ArrivalsControllerSpec
         Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.JSON, HeaderNames.CONTENT_LENGTH -> "1000")
       )
 
-      def fakeJsonAttachRequest(content: String = CC141Cjson): Request[Source[ByteString, _]] =
+      def fakeJsonAttachRequest(content: String = CC044Cjson): Request[Source[ByteString, _]] =
         fakeAttachArrivals(method = "POST", body = singleUseStringSource(content), headers = standardHeaders)
 
       "must return Accepted when body length is within limits and is considered valid" in {
@@ -1263,13 +1263,13 @@ class V2ArrivalsControllerSpec
 
         contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(arrivalId, MessageId("456"), MovementType.Arrival))
 
-        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.InformationAboutNonArrivedMovement), any())(any(), any())
-        verify(mockAuditService, times(1)).audit(eqTo(AuditType.InformationAboutNonArrivedMovement), any(), eqTo(MimeTypes.JSON))(any(), any())
-        verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.InformationAboutNonArrivedMovement), any())(any(), any(), any())
-        verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.InformationAboutNonArrivedMovement), any())(any(), any())
+        verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.UnloadingRemarks), any())(any(), any())
+        verify(mockAuditService, times(1)).audit(eqTo(AuditType.UnloadingRemarks), any(), eqTo(MimeTypes.JSON))(any(), any())
+        verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.UnloadingRemarks), any())(any(), any(), any())
+        verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.UnloadingRemarks), any())(any(), any())
         verify(mockArrivalsPersistenceService, times(1)).updateArrival(MovementId(any()), any(), any())(any(), any())
         verify(mockRouterService, times(1)).send(
-          eqTo(MessageType.InformationAboutNonArrivedMovement),
+          eqTo(MessageType.UnloadingRemarks),
           EORINumber(any()),
           MovementId(any()),
           MessageId(any()),

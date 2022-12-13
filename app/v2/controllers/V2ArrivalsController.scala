@@ -267,7 +267,7 @@ class V2ArrivalsControllerImpl @Inject() (
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         (for {
-          messageType    <- jsonParsingService.extractMessageType(request.body).asPresentation
+          messageType    <- jsonParsingService.extractMessageType(request.body, MessageType.updateMessageTypesSentByArrivalTrader).asPresentation
           _              <- awaitFileWrite
           converted      <- handleJson(messageType, request.body)
           updateResponse <- handleXml(id, request.eoriNumber, messageType, converted)

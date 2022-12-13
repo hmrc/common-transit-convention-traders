@@ -81,8 +81,9 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
       validationConnector
         .postJson(messageType, source)
         .map {
-          case None => Right(())
+          case None => println("validateJson none- messageType:" + messageType); Right(())
           case Some(response) =>
+            println("validateJson- messageType:" + messageType)
             Left(FailedToValidateError.JsonSchemaFailedToValidateError(response.validationErrors))
         }
         .recover {
