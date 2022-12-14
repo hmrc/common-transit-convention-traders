@@ -1378,8 +1378,8 @@ class V2ArrivalsControllerSpec
         status(result) mustBe INTERNAL_SERVER_ERROR
       }
 
-      "must return NotFound when Departure not found by Persistence" in {
-        setup(persistence = EitherT.leftT(PersistenceError.DepartureNotFound(arrivalId)))
+      "must return NotFound when Arrival not found by Persistence" in {
+        setup(persistence = EitherT.leftT(PersistenceError.ArrivalNotFound(arrivalId)))
 
         val request = fakeJsonAttachRequest()
         val result  = sut.attachMessage(arrivalId)(request)
