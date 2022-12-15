@@ -26,12 +26,13 @@ import play.api.mvc.Action
 import v2.models.Bindings._
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
-import v2.controllers.V2ArrivalsController
+import v2.controllers.V2MovementsController
 import v2.controllers.stream.StreamingParsers
 import models.domain.{MessageId => V1MessageId}
+import v2.models.MovementType
+import v2.models.{MessageId => V2MessageId}
 import v2.models.{MovementId => V2ArrivalId}
 import models.domain.{ArrivalId => V1ArrivalId}
-import v2.models.{MessageId => V2MessageId}
 import v2.utils.PreMaterialisedFutureProvider
 
 import java.time.OffsetDateTime
@@ -39,7 +40,7 @@ import java.time.OffsetDateTime
 class ArrivalsRouter @Inject() (
   val controllerComponents: ControllerComponents,
   v1Arrivals: V1ArrivalMovementController,
-  v2Arrivals: V2ArrivalsController,
+  v2Arrivals: V2MovementsController,
   v1ArrivalMessages: V1ArrivalMessagesController,
   val preMaterialisedFutureProvider: PreMaterialisedFutureProvider
 )(implicit
@@ -52,7 +53,7 @@ class ArrivalsRouter @Inject() (
 
   def createArrivalNotification(): Action[Source[ByteString, _]] =
     route {
-      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Arrivals.createArrivalNotification()
+      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Arrivals.createMovement(MovementType.Arrival)
       case _                                                         => v1Arrivals.createArrivalNotification()
     }
 
@@ -62,7 +63,7 @@ class ArrivalsRouter @Inject() (
         runIfBound[V2ArrivalId](
           "arrivalId",
           arrivalId,
-          v2Arrivals.getArrival(_)
+          v2Arrivals.getMovement(MovementType.Arrival, _)
         )
       case _ =>
         runIfBound[V1ArrivalId](
@@ -77,7 +78,7 @@ class ArrivalsRouter @Inject() (
       runIfBound[V2ArrivalId](
         "arrivalId",
         arrivalId,
-        v2Arrivals.getArrivalMessageIds(_, receivedSince)
+        v2Arrivals.getMessageIds(MovementType.Arrival, _, receivedSince)
       )
     case _ =>
       runIfBound[V1ArrivalId](
@@ -96,7 +97,7 @@ class ArrivalsRouter @Inject() (
           runIfBound[V2MessageId](
             "messageId",
             messageId,
-            v2Arrivals.getArrivalMessage(boundArrivalId, _)
+            v2Arrivals.getMessage(MovementType.Arrival, boundArrivalId, _)
           )
       )
     case _ =>
@@ -108,7 +109,7 @@ class ArrivalsRouter @Inject() (
   }
 
   def getArrivalsForEori(updatedSince: Option[OffsetDateTime] = None): Action[Source[ByteString, _]] = route {
-    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Arrivals.getArrivalsForEori(updatedSince)
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Arrivals.getMovements(MovementType.Arrival, updatedSince)
     case _                                                         => v1Arrivals.getArrivalsForEori(updatedSince)
   }
 
@@ -117,7 +118,7 @@ class ArrivalsRouter @Inject() (
       runIfBound[V2ArrivalId](
         "arrivalId",
         arrivalId,
-        v2Arrivals.attachMessage
+        v2Arrivals.attachMessage(MovementType.Arrival, _)
       )
     case _ =>
       runIfBound[V1ArrivalId](

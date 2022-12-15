@@ -29,11 +29,12 @@ import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementType
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
-import v2.models.responses.DeclarationResponse
-import v2.models.responses.MovementResponse
 import v2.models.responses.MessageSummary
+import v2.models.responses.MovementResponse
+import v2.models.responses.MovementSummary
 import v2.models.responses.UpdateMovementResponse
 
 import java.time.OffsetDateTime
@@ -41,35 +42,35 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-@ImplementedBy(classOf[DeparturesServiceImpl])
-trait DeparturesService {
+@ImplementedBy(classOf[MovementsServiceImpl])
+trait MovementsService {
 
-  def saveDeclaration(eori: EORINumber, source: Source[ByteString, _])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, DeclarationResponse]
-
-  def getMessage(eori: EORINumber, departureId: MovementId, messageId: MessageId)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, MessageSummary]
-
-  def getMessageIds(eori: EORINumber, departureId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[MessageSummary]]
-
-  def getDeparture(eori: EORINumber, departureId: MovementId)(implicit
+  def createMovement(eori: EORINumber, movementType: MovementType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MovementResponse]
 
-  def getDeparturesForEori(eori: EORINumber, updatedSince: Option[OffsetDateTime])(implicit
+  def getMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[MovementResponse]]
+  ): EitherT[Future, PersistenceError, MessageSummary]
 
-  def updateDeparture(departureId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
+  def getMessages(eori: EORINumber, movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, Seq[MessageSummary]]
+
+  def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, MovementSummary]
+
+  def getMovements(eori: EORINumber, movementType: MovementType, updatedSince: Option[OffsetDateTime])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, Seq[MovementSummary]]
+
+  def updateMovement(movementId: MovementId, movementType: MovementType, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, UpdateMovementResponse]
@@ -77,86 +78,88 @@ trait DeparturesService {
 }
 
 @Singleton
-class DeparturesServiceImpl @Inject() (persistenceConnector: PersistenceConnector) extends DeparturesService {
+class MovementsServiceImpl @Inject() (persistenceConnector: PersistenceConnector) extends MovementsService {
 
-  override def saveDeclaration(eori: EORINumber, source: Source[ByteString, _])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, DeclarationResponse] =
-    EitherT(
-      persistenceConnector
-        .postDeparture(eori, source)
-        .map(Right(_))
-        .recover {
-          case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))
-        }
-    )
-
-  override def getMessage(eori: EORINumber, departureId: MovementId, messageId: MessageId)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, MessageSummary] =
-    EitherT(
-      persistenceConnector
-        .getDepartureMessage(eori, departureId, messageId)
-        .map(Right(_))
-        .recover {
-          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(departureId, messageId))
-          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
-        }
-    )
-
-  override def getMessageIds(eori: EORINumber, departureId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[MessageSummary]] =
-    EitherT(
-      persistenceConnector
-        .getDepartureMessageIds(eori, departureId, receivedSince)
-        .map(Right(_))
-        .recover {
-          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.DepartureNotFound(departureId))
-          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
-        }
-    )
-
-  override def getDeparture(eori: EORINumber, departureId: MovementId)(implicit
+  override def createMovement(eori: EORINumber, movementType: MovementType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MovementResponse] =
     EitherT(
       persistenceConnector
-        .getDeparture(eori, departureId)
+        .postMovement(eori, movementType, source)
         .map(Right(_))
         .recover {
-          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.DepartureNotFound(departureId))
+          case NonFatal(thr) =>
+            println(thr.getMessage)
+            Left(PersistenceError.UnexpectedError(Some(thr)))
+        }
+    )
+
+  override def getMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, MessageSummary] =
+    EitherT(
+      persistenceConnector
+        .getMessage(eori, movementType, movementId, messageId)
+        .map(Right(_))
+        .recover {
+          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
           case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
 
-  override def getDeparturesForEori(eori: EORINumber, updatedSince: Option[OffsetDateTime])(implicit
+  override def getMessages(eori: EORINumber, movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[MovementResponse]] = EitherT(
+  ): EitherT[Future, PersistenceError, Seq[MessageSummary]] =
+    EitherT(
+      persistenceConnector
+        .getMessages(eori, movementType, movementId, receivedSince)
+        .map(Right(_))
+        .recover {
+          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
+          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+        }
+    )
+
+  override def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, MovementSummary] =
+    EitherT(
+      persistenceConnector
+        .getMovement(eori, movementType, movementId)
+        .map(Right(_))
+        .recover {
+          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
+          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+        }
+    )
+
+  override def getMovements(eori: EORINumber, movementType: MovementType, updatedSince: Option[OffsetDateTime])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, Seq[MovementSummary]] = EitherT(
     persistenceConnector
-      .getDeparturesForEori(eori, updatedSince)
+      .getMovements(eori, movementType, updatedSince)
       .map(Right(_))
       .recover {
-        case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.DeparturesNotFound(eori))
+        case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementsNotFound(eori, movementType))
         case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
       }
   )
 
-  override def updateDeparture(departureId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
+  override def updateMovement(movementId: MovementId, movementType: MovementType, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, UpdateMovementResponse] =
     EitherT(
       persistenceConnector
-        .postMessage(departureId, messageType, source)
+        .postMessage(movementId, messageType, source)
         .map(Right(_))
         .recover {
-          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.DepartureNotFound(departureId))
+          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
           case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )

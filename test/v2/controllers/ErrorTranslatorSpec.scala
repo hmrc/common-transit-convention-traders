@@ -137,7 +137,7 @@ class ErrorTranslatorSpec
     "a DepartureNotFound error returns a NOT_FOUND" in {
       val departureId = arbitrary[MovementId].sample.value
 
-      val input  = PersistenceError.DepartureNotFound(departureId)
+      val input  = PersistenceError.MovementNotFound(departureId)
       val output = PresentationError.notFoundError(s"Departure movement with ID ${departureId.value} was not found")
 
       persistenceErrorConverter.convert(input) mustBe output

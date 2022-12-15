@@ -26,7 +26,7 @@ import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
 import play.api.test.Helpers.stubControllerComponents
-import v2.controllers.V2DeparturesController
+import v2.controllers.V2MovementsController
 import v2.controllers.stream.StreamingParsers
 import v2.fakes.utils.FakePreMaterialisedFutureProvider
 import v2.models.MessageId
@@ -34,15 +34,12 @@ import v2.models.MovementId
 
 import java.time.OffsetDateTime
 
-class FakeV2DeparturesController @Inject() ()(implicit val materializer: Materializer)
-    extends BaseController
-    with V2DeparturesController
-    with StreamingParsers {
+class FakeV2DeparturesController @Inject() ()(implicit val materializer: Materializer) extends BaseController with V2MovementsController with StreamingParsers {
 
   override val controllerComponents          = stubControllerComponents()
   override val preMaterialisedFutureProvider = FakePreMaterialisedFutureProvider
 
-  override def submitDeclaration(): Action[Source[ByteString, _]] = Action(streamFromMemory) {
+  override def createMovement(): Action[Source[ByteString, _]] = Action(streamFromMemory) {
     request =>
       request.body.runWith(Sink.ignore)
       Accepted(Json.obj("version" -> 2))
@@ -58,12 +55,12 @@ class FakeV2DeparturesController @Inject() ()(implicit val materializer: Materia
       Accepted(Json.obj("version" -> 2))
   }
 
-  override def getDeparture(departureId: MovementId): Action[AnyContent] = Action {
+  override def getMovement(departureId: MovementId): Action[AnyContent] = Action {
     _ =>
       Ok(Json.obj("version" -> 2))
   }
 
-  def getDeparturesForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
+  def getMovements(updatedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
     _ =>
       Ok(Json.obj("version" -> 2))
   }

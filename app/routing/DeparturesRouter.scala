@@ -27,11 +27,12 @@ import models.domain.{MessageId => V1MessageId}
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
-import v2.controllers.V2DeparturesController
+import v2.controllers.V2MovementsController
 import v2.controllers.stream.StreamingParsers
 import v2.models.Bindings._
-import v2.models.{MovementId => V2DepartureId}
+import v2.models.MovementType
 import v2.models.{MessageId => V2MessageId}
+import v2.models.{MovementId => V2DepartureId}
 import v2.utils.PreMaterialisedFutureProvider
 
 import java.time.OffsetDateTime
@@ -40,7 +41,7 @@ class DeparturesRouter @Inject() (
   val controllerComponents: ControllerComponents,
   v1Departures: V1DeparturesController,
   v1DepartureMessages: V1DepartureMessagesController,
-  v2Departures: V2DeparturesController,
+  v2Departures: V2MovementsController,
   val preMaterialisedFutureProvider: PreMaterialisedFutureProvider
 )(implicit
   val materializer: Materializer
@@ -49,7 +50,7 @@ class DeparturesRouter @Inject() (
     with VersionedRouting {
 
   def submitDeclaration(): Action[Source[ByteString, _]] = route {
-    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Departures.submitDeclaration()
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Departures.createMovement(MovementType.Departure)
     case _                                                         => v1Departures.submitDeclaration()
   }
 
@@ -65,7 +66,7 @@ class DeparturesRouter @Inject() (
             runIfBound[V2MessageId](
               "messageId",
               messageId,
-              v2Departures.getMessage(boundDepartureId, _)
+              v2Departures.getMessage(MovementType.Departure, boundDepartureId, _)
             )
         )
       case _ =>
@@ -81,7 +82,7 @@ class DeparturesRouter @Inject() (
       runIfBound[V2DepartureId](
         "departureId",
         departureId,
-        v2Departures.getMessageIds(_, receivedSince)
+        v2Departures.getMessageIds(MovementType.Departure, _, receivedSince)
       )
     case _ =>
       runIfBound[V1DepartureId](
@@ -96,7 +97,7 @@ class DeparturesRouter @Inject() (
       runIfBound[V2DepartureId](
         "departureId",
         departureId,
-        v2Departures.getDeparture
+        v2Departures.getMovement(MovementType.Departure, _)
       )
     case _ =>
       runIfBound[V1DepartureId](
@@ -107,7 +108,7 @@ class DeparturesRouter @Inject() (
   }
 
   def getDeparturesForEori(updatedSince: Option[OffsetDateTime] = None): Action[Source[ByteString, _]] = route {
-    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Departures.getDeparturesForEori(updatedSince)
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Departures.getMovements(MovementType.Departure, updatedSince)
     case _                                                         => v1Departures.getDeparturesForEori(updatedSince)
   }
 
@@ -116,7 +117,7 @@ class DeparturesRouter @Inject() (
       runIfBound[V2DepartureId](
         "departureId",
         departureId,
-        v2Departures.attachMessage
+        v2Departures.attachMessage(MovementType.Departure, _)
       )
     case _ =>
       runIfBound[V1DepartureId](

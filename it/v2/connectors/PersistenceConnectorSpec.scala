@@ -53,7 +53,7 @@ import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
 import v2.models.responses.ArrivalResponse
-import v2.models.responses.DeclarationResponse
+import v2.models.responses.MovementResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
 import v2.utils.CommonGenerators
@@ -87,7 +87,7 @@ class PersistenceConnectorSpec
       for {
         movementId <- arbitrary[MovementId]
         messageId  <- arbitrary[MessageId]
-      } yield DeclarationResponse(movementId, messageId)
+      } yield MovementResponse(movementId, messageId)
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures/"
 
@@ -107,7 +107,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        whenReady(persistenceConnector.postDeparture(eoriNumber, source)) {
+        whenReady(persistenceConnector.postMovement(eoriNumber, source)) {
           result =>
             result mustBe okResult
         }
@@ -133,7 +133,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postDeparture(eoriNumber, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -166,7 +166,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postDeparture(eoriNumber, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -199,7 +199,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postDeparture(eoriNumber, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -234,7 +234,7 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getDepartureMessage(eori, departureId, messageResponse.id)
+      val result      = persistenceConnector.getMessages(eori, departureId, messageResponse.id)
       whenReady(result) {
         _ mustBe messageResponse
       }
@@ -260,7 +260,7 @@ class PersistenceConnectorSpec
 
       implicit val hc = HeaderCarrier()
       val r = persistenceConnector
-        .getDepartureMessage(eori, departureId, messageId)
+        .getMessages(eori, departureId, messageId)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -302,7 +302,7 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val r = persistenceConnector
-          .getDepartureMessage(eori, departureId, messageId)
+          .getMessages(eori, departureId, messageId)
           .map(
             _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
           )
@@ -341,7 +341,7 @@ class PersistenceConnectorSpec
 
       implicit val hc = HeaderCarrier()
       val r = persistenceConnector
-        .getDepartureMessage(eori, departureId, messageId)
+        .getMessages(eori, departureId, messageId)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
@@ -389,7 +389,7 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getDepartureMessageIds(eori, departureId, None)
+      val result      = persistenceConnector.getMessages(eori, departureId, None)
       whenReady(result) {
         _ mustBe messageResponse
       }
@@ -417,7 +417,7 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getDepartureMessageIds(eori, departureId, Some(time))
+      val result      = persistenceConnector.getMessages(eori, departureId, Some(time))
       whenReady(result) {
         _ mustBe messageResponse
       }
@@ -442,7 +442,7 @@ class PersistenceConnectorSpec
 
       implicit val hc = HeaderCarrier()
       val r = persistenceConnector
-        .getDepartureMessageIds(eori, departureId, None)
+        .getMessages(eori, departureId, None)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -483,7 +483,7 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val r = persistenceConnector
-          .getDepartureMessageIds(eori, departureId, None)
+          .getMessages(eori, departureId, None)
           .map(
             _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
           )
@@ -521,7 +521,7 @@ class PersistenceConnectorSpec
 
       implicit val hc = HeaderCarrier()
       val r = persistenceConnector
-        .getDepartureMessageIds(eori, departureId, None)
+        .getMessages(eori, departureId, None)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
@@ -560,7 +560,7 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getDeparture(messageResponse.enrollmentEORINumber, messageResponse._id)
+      val result      = persistenceConnector.getMovement(messageResponse.enrollmentEORINumber, messageResponse._id)
       whenReady(result) {
         _ mustBe messageResponse
       }
@@ -581,7 +581,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getDeparture(messageResponse.enrollmentEORINumber, messageResponse._id)
+        .getMovement(messageResponse.enrollmentEORINumber, messageResponse._id)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -615,7 +615,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getDeparture(messageResponse.enrollmentEORINumber, messageResponse._id)
+        .getMovement(messageResponse.enrollmentEORINumber, messageResponse._id)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
@@ -655,7 +655,7 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getDeparturesForEori(eori, None)
+      val result      = persistenceConnector.getMovements(eori, None)
       whenReady(result) {
         _ mustBe messageResponseList
       }
@@ -681,7 +681,7 @@ class PersistenceConnectorSpec
         )
 
         implicit val hc = HeaderCarrier()
-        val result      = persistenceConnector.getDeparturesForEori(eori, Some(updatedSince))
+        val result      = persistenceConnector.getMovements(eori, Some(updatedSince))
         whenReady(result) {
           _ mustBe messageResponseList
         }
@@ -702,7 +702,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getDeparturesForEori(eori, None)
+        .getMovements(eori, None)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -737,7 +737,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getDeparturesForEori(eori, None)
+        .getMovements(eori, None)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )

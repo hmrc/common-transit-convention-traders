@@ -16,13 +16,22 @@
 
 package v2.models.responses
 
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
-import v2.models.MessageId
+import v2.models.EORINumber
 import v2.models.MovementId
+import v2.models.MovementReferenceNumber
+import play.api.libs.json.Json
 
-object ArrivalResponse {
-  implicit lazy val arrivalResponseFormat: OFormat[ArrivalResponse] = Json.format[ArrivalResponse]
+import java.time.OffsetDateTime
+
+object MovementSummary {
+  implicit lazy val movementSummaryFormat = Json.format[MovementSummary]
 }
 
-case class ArrivalResponse(arrivalId: MovementId, messageId: MessageId)
+case class MovementSummary(
+  _id: MovementId,
+  enrollmentEORINumber: EORINumber,
+  movementEORINumber: EORINumber,
+  movementReferenceNumber: Option[MovementReferenceNumber],
+  created: OffsetDateTime,
+  updated: OffsetDateTime
+)

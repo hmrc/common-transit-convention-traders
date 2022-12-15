@@ -19,12 +19,13 @@ package v2.models.responses.hateoas
 import play.api.libs.json._
 import v2.models.MovementType
 import v2.models.responses.MovementResponse
+import v2.models.responses.MovementSummary
 
 import java.time.OffsetDateTime
 
 object HateoasMovementIdsResponse extends HateoasResponse {
 
-  def apply(responses: Seq[MovementResponse], movementType: MovementType, updatedSince: Option[OffsetDateTime]): JsObject =
+  def apply(responses: Seq[MovementSummary], movementType: MovementType, updatedSince: Option[OffsetDateTime]): JsObject =
     Json.obj(
       "_links" -> Json.obj(
         "self" -> Json.obj("href" -> getMovementsUri(movementType, updatedSince))

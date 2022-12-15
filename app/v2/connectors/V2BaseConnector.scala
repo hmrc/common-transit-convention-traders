@@ -33,6 +33,7 @@ import v2.models.AuditType
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementType
 import v2.models.request.MessageType
 
 import scala.concurrent.ExecutionContext
@@ -45,44 +46,29 @@ trait V2BaseConnector extends HttpErrorFunctions {
 
   val movementsBaseRoute: String = "/transit-movements"
 
-  def movementsPostDepartureDeclaration(eoriNumber: EORINumber): UrlPath =
-    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/")
+  def postMovementUrl(eoriNumber: EORINumber, movementType: MovementType): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/${movementType.urlFragment}")
 
-  def movementsGetDepartureMessage(eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId): UrlPath =
-    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/${movementId.value}/messages/${messageId.value}/")
+  def postMessageUrl(movementId: MovementId): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/movements/${movementId.value}/messages")
 
-  def movementsGetDepartureMessageIds(eoriNumber: EORINumber, movementId: MovementId): UrlPath =
-    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/${movementId.value}/messages/")
+  def getMessageUrl(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}")
 
-  def movementsGetArrivalMessageIds(eoriNumber: EORINumber, movementId: MovementId): UrlPath =
-    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/arrivals/${movementId.value}/messages/")
+  def getMessagesUrl(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages")
 
-  def movementsGetDeparture(eoriNumber: EORINumber, movementId: MovementId): UrlPath =
-    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures/${movementId.value}/")
+  def getMovementUrl(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}")
 
-  def movementsGetAllDepartures(eoriNumber: EORINumber): UrlPath =
-    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/departures")
-
-  def movementsPostDeparture(movementId: MovementId): UrlPath =
-    UrlPath.parse(s"$movementsBaseRoute/traders/movements/${movementId.value}/messages/")
-
-  def movementsPostArrivalNotification(eoriNumber: EORINumber): UrlPath =
-    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/arrivals/")
-
-  def movementsGetAllArrivals(eoriNumber: EORINumber): UrlPath =
-    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/arrivals")
-
-  def movementsGetArrival(eoriNumber: EORINumber, movementId: MovementId): UrlPath =
-    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/arrivals/${movementId.value}/")
-
-  def movementsGetArrivalMessage(eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId): UrlPath =
-    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/arrivals/${movementId.value}/messages/${messageId.value}/")
+  def getAllMovementsUrl(eoriNumber: EORINumber, movementType: MovementType): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/${movementType.urlFragment}")
 
   val routerBaseRoute: String = "/transit-movements-router"
 
   def routerRoute(eoriNumber: EORINumber, messageType: MessageType, movementId: MovementId, messageId: MessageId): UrlPath =
     UrlPath.parse(
-      s"$routerBaseRoute/traders/${eoriNumber.value}/movements/${messageType.movementType.urlFragment}/${movementId.value}/messages/${messageId.value}/"
+      s"$routerBaseRoute/traders/${eoriNumber.value}/movements/${messageType.movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
     )
 
   val auditingBaseRoute: String = "/transit-movements-auditing"

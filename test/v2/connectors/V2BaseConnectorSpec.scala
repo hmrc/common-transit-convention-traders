@@ -77,7 +77,7 @@ class V2BaseConnectorSpec
 
   "the post departure movements URL on localhost for a given EORI should be as expected" in {
     val eori    = arbitrary[EORINumber].sample.value
-    val urlPath = Harness.movementsPostDepartureDeclaration(eori)
+    val urlPath = Harness.postMovementUrl(eori)
 
     urlPath.toString() mustBe s"/transit-movements/traders/${eori.value}/movements/departures/"
   }
@@ -85,7 +85,7 @@ class V2BaseConnectorSpec
   "the get movement IDs URL on localhost for a given EORI, departure ID and no filter should be as expected" in {
     val eori        = arbitrary[EORINumber].sample.value
     val departureId = arbitrary[MovementId].sample.value
-    val urlPath     = Harness.movementsGetDepartureMessageIds(eori, departureId)
+    val urlPath     = Harness.getMessagesUrl(eori, departureId)
 
     urlPath.toString() mustBe s"/transit-movements/traders/${eori.value}/movements/departures/${departureId.value}/messages/"
   }
@@ -94,7 +94,7 @@ class V2BaseConnectorSpec
     val eori        = arbitrary[EORINumber].sample.value
     val departureId = arbitrary[MovementId].sample.value
     val messageId   = arbitrary[MessageId].sample.value
-    val urlPath     = Harness.movementsGetDepartureMessage(eori, departureId, messageId)
+    val urlPath     = Harness.getMessageUrl(eori, departureId, messageId)
 
     urlPath.toString() mustBe s"/transit-movements/traders/${eori.value}/movements/departures/${departureId.value}/messages/${messageId.value}/"
   }
@@ -102,14 +102,14 @@ class V2BaseConnectorSpec
   "the get single departure URL on localhost for a given EORI or departure ID should be as expected" in {
     val eori        = arbitrary[EORINumber].sample.value
     val departureId = arbitrary[MovementId].sample.value
-    val urlPath     = Harness.movementsGetDeparture(eori, departureId)
+    val urlPath     = Harness.getMovementUrl(eori, departureId)
 
     urlPath.toString() mustBe s"/transit-movements/traders/${eori.value}/movements/departures/${departureId.value}/"
   }
 
   "the get all departures on localhost for a given EORI should be as expected" in {
     val eori    = arbitrary[EORINumber].sample.value
-    val urlPath = Harness.movementsGetAllDepartures(eori)
+    val urlPath = Harness.getAllMovementsUrl(eori)
 
     urlPath.toString() mustBe s"/transit-movements/traders/${eori.value}/movements/"
   }
@@ -140,7 +140,7 @@ class V2BaseConnectorSpec
 
   "the post departure movements URL on localhost for a given departureId should be as expected" in {
     val departureId = arbitrary[MovementId].sample.value
-    val urlPath     = Harness.movementsPostDeparture(departureId)
+    val urlPath     = Harness.postMessageUrl(departureId)
 
     urlPath.toString() mustBe s"/transit-movements/traders/movements/${departureId.value}/messages/"
   }

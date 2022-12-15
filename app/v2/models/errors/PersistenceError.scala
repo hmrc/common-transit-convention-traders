@@ -19,14 +19,13 @@ package v2.models.errors
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementType
 
 sealed trait PersistenceError
 
 object PersistenceError {
-  case class MessageNotFound(movementId: MovementId, messageId: MessageId) extends PersistenceError
-  case class DepartureNotFound(departureId: MovementId)                    extends PersistenceError
-  case class ArrivalNotFound(arrivalId: MovementId)                        extends PersistenceError
-  case class DeparturesNotFound(eori: EORINumber)                          extends PersistenceError
-  case class ArrivalsNotFound(eori: EORINumber)                            extends PersistenceError
-  case class UnexpectedError(thr: Option[Throwable] = None)                extends PersistenceError
+  case class MessageNotFound(movementId: MovementId, messageId: MessageId)        extends PersistenceError
+  case class MovementNotFound(movementId: MovementId, movementType: MovementType) extends PersistenceError
+  case class MovementsNotFound(eori: EORINumber, movementType: MovementType)      extends PersistenceError
+  case class UnexpectedError(thr: Option[Throwable] = None)                       extends PersistenceError
 }

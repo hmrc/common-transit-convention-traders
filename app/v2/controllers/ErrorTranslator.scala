@@ -59,16 +59,12 @@ trait ErrorTranslator {
     import v2.models.errors.PersistenceError._
 
     def convert(persistenceError: PersistenceError): PresentationError = persistenceError match {
-      case DepartureNotFound(departureId) =>
-        PresentationError.notFoundError(s"Departure movement with ID ${departureId.value} was not found")
-      case ArrivalNotFound(arrivalId) =>
-        PresentationError.notFoundError(s"Arrival movement with ID ${arrivalId.value} was not found")
+      case MovementNotFound(departureId, movementType) =>
+        PresentationError.notFoundError(s"${movementType.movementType.capitalize} movement with ID ${departureId.value} was not found")
       case MessageNotFound(movement, message) =>
         PresentationError.notFoundError(s"Message with ID ${message.value} for movement ${movement.value} was not found")
-      case DeparturesNotFound(eori) =>
-        PresentationError.notFoundError(s"Departure movement IDs for ${eori.value} were not found")
-      case ArrivalsNotFound(eori) =>
-        PresentationError.notFoundError(s"Arrival movement IDs for ${eori.value} were not found")
+      case MovementsNotFound(eori, movementType) =>
+        PresentationError.notFoundError(s"${movementType.movementType.capitalize} movement IDs for ${eori.value} were not found")
       case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
     }
   }
