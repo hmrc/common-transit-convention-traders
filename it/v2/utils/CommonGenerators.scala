@@ -28,8 +28,9 @@ import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.request.MessageType
 import v2.models.request.PushNotificationsAssociation
-import v2.models.responses.MovementResponse
 import v2.models.responses.MessageSummary
+import v2.models.responses.MovementResponse
+import v2.models.responses.MovementSummary
 
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -87,7 +88,7 @@ trait CommonGenerators {
       } yield MovementReferenceNumber(year ++ country.mkString ++ serial.mkString)
     }
 
-  implicit lazy val arbitraryMovementResponse: Arbitrary[MovementResponse] = Arbitrary {
+  implicit lazy val arbitraryMovementSummary: Arbitrary[MovementSummary] = Arbitrary {
     for {
       id                      <- arbitrary[MovementId]
       enrollmentEORINumber    <- arbitrary[EORINumber]
@@ -95,7 +96,7 @@ trait CommonGenerators {
       movementReferenceNumber <- arbitrary[Option[MovementReferenceNumber]]
       created                 <- arbitrary[OffsetDateTime]
       updated                 <- arbitrary[OffsetDateTime]
-    } yield MovementResponse(id, enrollmentEORINumber, movementEORINumber, movementReferenceNumber, created, updated)
+    } yield MovementSummary(id, enrollmentEORINumber, movementEORINumber, movementReferenceNumber, created, updated)
   }
 
   implicit lazy val arbitraryMessageSummary: Arbitrary[MessageSummary] =

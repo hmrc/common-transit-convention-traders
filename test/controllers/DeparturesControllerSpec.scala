@@ -56,7 +56,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.utils.CallOps._
 import utils.TestMetrics
 import v2.controllers.V2MovementsController
-import v2.fakes.controllers.FakeV2DeparturesController
+import v2.fakes.controllers.FakeV2MovementsController
 
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -82,7 +82,7 @@ class DeparturesControllerSpec
     .overrides(
       bind[Metrics].toInstance(new TestMetrics),
       bind[AuthAction].to[FakeAuthAction],
-      bind[V2MovementsController].to[FakeV2DeparturesController],
+      bind[V2MovementsController].to[FakeV2MovementsController],
       bind[DeparturesConnector].toInstance(mockDepartureConnector),
       bind[EnsureGuaranteeService].toInstance(mockGuaranteeService),
       bind[AuditService].toInstance(mockAuditService)

@@ -36,7 +36,7 @@ import play.api.test.Helpers.stubControllerComponents
 import v2.base.TestActorSystem
 import v2.fakes.controllers.FakeV1DepartureMessagesController
 import v2.fakes.controllers.FakeV1DeparturesController
-import v2.fakes.controllers.FakeV2DeparturesController
+import v2.fakes.controllers.FakeV2MovementsController
 import v2.fakes.utils.FakePreMaterialisedFutureProvider
 
 import scala.concurrent.duration.DurationInt
@@ -49,7 +49,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
     stubControllerComponents(),
     new FakeV1DeparturesController,
     new FakeV1DepartureMessagesController,
-    new FakeV2DeparturesController,
+    new FakeV2MovementsController,
     FakePreMaterialisedFutureProvider
   )
 
@@ -108,10 +108,15 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
           "must route to the v2 controller and return Accepted when successful" in {
 
-            val request = FakeRequest(method = "POST", uri = routes.DeparturesRouter.submitDeclaration().url, body = <test></test>, headers = departureHeaders)
-            val result  = sut.getMessage("1234567890abcdef", "1234567890abcdef")(request)
+            val request = FakeRequest(
+              method = "POST",
+              uri = routes.DeparturesRouter.getMessage("1234567890abcdef", "1234567890abcdef").url,
+              body = <test></test>,
+              headers = departureHeaders
+            )
+            val result = sut.getMessage("1234567890abcdef", "1234567890abcdef")(request)
 
-            status(result) mustBe ACCEPTED
+            status(result) mustBe OK
             contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
           }
 

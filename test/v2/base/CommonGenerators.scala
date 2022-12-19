@@ -28,7 +28,7 @@ import v2.models.XmlPayload
 import v2.models.MovementType
 import v2.models.request.MessageType
 import v2.models.responses.MessageSummary
-import v2.models.responses.MovementResponse
+import v2.models.responses.MovementSummary
 
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -86,7 +86,7 @@ trait CommonGenerators {
       } yield OffsetDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneOffset.UTC)
     }
 
-  implicit lazy val arbitraryMovementResponse: Arbitrary[MovementResponse] = Arbitrary {
+  implicit lazy val arbitraryMovementSummary: Arbitrary[MovementSummary] = Arbitrary {
     for {
       id                      <- arbitrary[MovementId]
       enrollmentEORINumber    <- arbitrary[EORINumber]
@@ -94,7 +94,7 @@ trait CommonGenerators {
       movementReferenceNumber <- arbitrary[MovementReferenceNumber]
       created                 <- arbitraryOffsetDateTime.arbitrary
       updated                 <- arbitraryOffsetDateTime.arbitrary
-    } yield MovementResponse(id, enrollmentEORINumber, movementEORINumber, Some(movementReferenceNumber), created, updated)
+    } yield MovementSummary(id, enrollmentEORINumber, movementEORINumber, Some(movementReferenceNumber), created, updated)
   }
 
 }

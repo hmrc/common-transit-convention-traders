@@ -25,7 +25,7 @@ import v2.base.CommonGenerators
 import v2.models.EORINumber
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
-import v2.models.responses.MovementResponse
+import v2.models.responses.MovementSummary
 
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -35,10 +35,10 @@ class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaChe
   private val dateTime = OffsetDateTime.of(2022, 8, 15, 11, 45, 0, 0, ZoneOffset.UTC)
 
   for (movementType <- MovementType.values)
-    s"${movementType.movementType} with a valid response, create a valid HateoasMovementResponse" in {
+    s"${movementType.movementType} with a valid response, create a valid HateoasMovementSummary" in {
       val movementId = arbitraryMovementId.arbitrary.sample.value
 
-      val response = MovementResponse(
+      val response = MovementSummary(
         _id = movementId,
         enrollmentEORINumber = EORINumber("GB123"),
         movementEORINumber = EORINumber("GB456"),

@@ -34,8 +34,8 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
   for (movementType <- MovementType.values)
     s"${movementType.movementType} should produce valid HateoasMovementIdsResponse responses" in forAll(Gen.option(arbitrary[OffsetDateTime])) {
       updatedSince =>
-        val departureResponse1 = arbitraryMovementResponse.arbitrary.sample.value
-        val departureResponse2 = arbitraryMovementResponse.arbitrary.sample.value
+        val departureResponse1 = arbitraryMovementSummary.arbitrary.sample.value
+        val departureResponse2 = arbitraryMovementSummary.arbitrary.sample.value
 
         val responses = Seq(departureResponse1, departureResponse2)
         val expectedQueryString = updatedSince

@@ -26,46 +26,47 @@ import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
 import play.api.test.Helpers.stubControllerComponents
-import v2.controllers.V2ArrivalsController
+import v2.controllers.V2MovementsController
 import v2.controllers.stream.StreamingParsers
-import v2.models.MessageId
 import v2.fakes.utils.FakePreMaterialisedFutureProvider
+import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementType
 
 import java.time.OffsetDateTime
 
-class FakeV2ArrivalsController @Inject() ()(implicit val materializer: Materializer) extends BaseController with V2ArrivalsController with StreamingParsers {
+class FakeV2MovementsController @Inject() ()(implicit val materializer: Materializer) extends BaseController with V2MovementsController with StreamingParsers {
 
   override val controllerComponents          = stubControllerComponents()
   override val preMaterialisedFutureProvider = FakePreMaterialisedFutureProvider
 
-  override def createArrivalNotification(): Action[Source[ByteString, _]] = Action(streamFromMemory) {
+  override def createMovement(movementType: MovementType): Action[Source[ByteString, _]] = Action(streamFromMemory) {
     request =>
       request.body.runWith(Sink.ignore)
       Accepted(Json.obj("version" -> 2))
   }
 
-  override def getArrivalMessageIds(arrivalId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
-    _ =>
-      Accepted(Json.obj("version" -> 2))
-  }
-
-  override def getArrivalsForEori(updatedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
+  override def getMessage(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] = Action {
     _ =>
       Ok(Json.obj("version" -> 2))
   }
 
-  override def getArrival(arrivalId: MovementId): Action[AnyContent] = Action {
+  override def getMessageIds(movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
     _ =>
       Ok(Json.obj("version" -> 2))
   }
 
-  override def getArrivalMessage(arrivalId: MovementId, messageId: MessageId): Action[AnyContent] = Action {
+  override def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent] = Action {
     _ =>
       Ok(Json.obj("version" -> 2))
   }
 
-  override def attachMessage(arrivalId: MovementId): Action[Source[ByteString, _]] = Action(streamFromMemory) {
+  def getMovements(movementType: MovementType, updatedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
+    _ =>
+      Ok(Json.obj("version" -> 2))
+  }
+
+  override def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]] = Action(streamFromMemory) {
     request =>
       request.body.runWith(Sink.ignore)
       Accepted(Json.obj("version" -> 2))

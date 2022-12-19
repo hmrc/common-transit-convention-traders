@@ -111,7 +111,7 @@ class V2MovementsControllerImpl @Inject() (
         }
     }
 
-  def submitDepartureDeclarationXML(): Action[Source[ByteString, _]] =
+  private def submitDepartureDeclarationXML(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen messageSizeAction()).stream {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -152,7 +152,7 @@ class V2MovementsControllerImpl @Inject() (
         )
     }
 
-  def submitArrivalNotificationXML(): Action[Source[ByteString, _]] =
+  private def submitArrivalNotificationXML(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen messageSizeAction()).stream {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -171,7 +171,7 @@ class V2MovementsControllerImpl @Inject() (
         )
     }
 
-  def submitArrivalNotificationJSON(): Action[Source[ByteString, _]] =
+  private def submitArrivalNotificationJSON(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen messageSizeAction()).stream {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -248,7 +248,7 @@ class V2MovementsControllerImpl @Inject() (
       case Some(MimeTypes.JSON) => attachMessageJSON(movementId, movementType)
     }
 
-  def attachMessageXML(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, _]] =
+  private def attachMessageXML(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen messageSizeAction()).streamWithAwait {
       awaitFileWrite => implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -271,7 +271,7 @@ class V2MovementsControllerImpl @Inject() (
         )
     }
 
-  def attachMessageJSON(id: MovementId, movementType: MovementType): Action[Source[ByteString, _]] = {
+  private def attachMessageJSON(id: MovementId, movementType: MovementType): Action[Source[ByteString, _]] = {
 
     def handleXml(movementId: MovementId, eoriNumber: EORINumber, messageType: MessageType, src: Source[ByteString, _])(implicit
       hc: HeaderCarrier
