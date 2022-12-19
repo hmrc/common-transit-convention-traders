@@ -1439,7 +1439,13 @@ class V2MovementsControllerSpec
           val headers =
             FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
           val request =
-            FakeRequest("GET", routing.routes.DeparturesRouter.getMessage(movementId.value, messageId.value).url, headers, Source.empty[ByteString])
+            FakeRequest(
+              "GET",
+              if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.getMessage(movementId.value, messageId.value).url
+              else routing.routes.ArrivalsRouter.getArrivalMessage(movementId.value, messageId.value).url,
+              headers,
+              Source.empty[ByteString]
+            )
           val convertBodyToJson = acceptHeaderValue == VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON
 
           s"when the accept header equals $acceptHeaderValue" - {
@@ -1555,6 +1561,10 @@ class V2MovementsControllerSpec
     }
 
     s"GET  /movements/${movementType.movementType}" - {
+      val url =
+        if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.getDeparturesForEori().url
+        else routing.routes.ArrivalsRouter.getArrivalsForEori().url
+
       "should return ok with json body for movements" in {
 
         val enrolmentEORINumber = arbitrary[EORINumber].sample.value
@@ -1590,7 +1600,7 @@ class V2MovementsControllerSpec
           )
         val request = FakeRequest(
           GET,
-          routing.routes.DeparturesRouter.getDeparturesForEori().url,
+          url,
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
@@ -1621,7 +1631,7 @@ class V2MovementsControllerSpec
 
         val request = FakeRequest(
           GET,
-          routing.routes.DeparturesRouter.getDeparturesForEori().url,
+          url,
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
@@ -1647,7 +1657,7 @@ class V2MovementsControllerSpec
 
         val request = FakeRequest(
           GET,
-          routing.routes.DeparturesRouter.getDeparturesForEori().url,
+          url,
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
@@ -1663,16 +1673,17 @@ class V2MovementsControllerSpec
     }
 
     s"GET  /movements/${movementType.urlFragment}/:movementId" - {
+
       "should return ok with json body of movement" in forAll(
         arbitrary[EORINumber],
         arbitrary[EORINumber],
         arbitrary[MovementId],
         arbitrary[MovementReferenceNumber]
       ) {
-        (enrollmentEori, movementEori, departureId, mrn) =>
+        (enrollmentEori, movementEori, movementId, mrn) =>
           val createdTime = OffsetDateTime.now()
           val departureResponse = MovementSummary(
-            departureId,
+            movementId,
             enrollmentEori,
             movementEori,
             Some(mrn),
@@ -1685,20 +1696,24 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(departureResponse)
             )
 
+          val url =
+            if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.getDeparture(movementId.value).url
+            else routing.routes.ArrivalsRouter.getArrival(movementId.value).url
+
           val request = FakeRequest(
             GET,
-            routing.routes.DeparturesRouter.getDeparture(departureId.value).url,
+            url,
             headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
             AnyContentAsEmpty
           )
-          val result = sut.getMovement(movementType, departureId)(request)
+          val result = sut.getMovement(movementType, movementId)(request)
 
           status(result) mustBe OK
           contentAsJson(result) mustBe Json.toJson(
             HateoasMovementResponse(
-              departureId,
+              movementId,
               MovementSummary(
-                departureId,
+                movementId,
                 enrollmentEori,
                 movementEori,
                 Some(mrn),
@@ -1722,9 +1737,13 @@ class V2MovementsControllerSpec
 
         val movementId = arbitraryMovementId.arbitrary.sample.get
 
+        val url =
+          if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.getDeparture(movementId.value).url
+          else routing.routes.ArrivalsRouter.getArrival(movementId.value).url
+
         val request = FakeRequest(
           GET,
-          routing.routes.DeparturesRouter.getDeparture(movementId.value).url,
+          url,
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
@@ -1734,20 +1753,24 @@ class V2MovementsControllerSpec
       }
 
       "should return unexpected error for all other errors" in forAll(arbitrary[MovementId]) {
-        departureId =>
+        movementId =>
           when(mockMovementsPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
             .thenAnswer {
               _ =>
                 EitherT.leftT(PersistenceError.UnexpectedError(None))
             }
 
+          val url =
+            if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.getDeparture(movementId.value).url
+            else routing.routes.ArrivalsRouter.getArrival(movementId.value).url
+
           val request = FakeRequest(
             GET,
-            routing.routes.DeparturesRouter.getDeparture(departureId.value).url,
+            url,
             headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
             AnyContentAsEmpty
           )
-          val result = sut.getMovement(movementType, departureId)(request)
+          val result = sut.getMovement(movementType, movementId)(request)
 
           status(result) mustBe INTERNAL_SERVER_ERROR
       }
