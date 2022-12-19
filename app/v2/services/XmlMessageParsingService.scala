@@ -30,7 +30,6 @@ import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import uk.gov.hmrc.http.HeaderCarrier
-import v2.models.MovementType
 import v2.models.errors.ExtractionError
 import v2.models.request.MessageType
 

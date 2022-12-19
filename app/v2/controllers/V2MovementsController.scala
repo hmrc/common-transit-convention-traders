@@ -262,6 +262,7 @@ class V2MovementsControllerImpl @Inject() (
           _           <- validationService.validateXml(messageType, request.body).asPresentation
           _ = auditService.audit(messageType.auditType, request.body, MimeTypes.XML)
           updateMovementResponse <- movementsService.updateMovement(movementId, movementType, messageType, request.body).asPresentation
+          _ = pushNotificationsService.update(movementId)
           _ <- routerService
             .send(messageType, request.eoriNumber, movementId, updateMovementResponse.messageId, request.body)
             .asPresentation
@@ -281,7 +282,8 @@ class V2MovementsControllerImpl @Inject() (
           for {
             _              <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
             updateResponse <- movementsService.updateMovement(movementId, movementType, messageType, source).asPresentation
-            _              <- routerService.send(messageType, eoriNumber, movementId, updateResponse.messageId, source).asPresentation
+            _ = pushNotificationsService.update(movementId)
+            _ <- routerService.send(messageType, eoriNumber, movementId, updateResponse.messageId, source).asPresentation
           } yield updateResponse
       }
 

@@ -84,6 +84,9 @@ trait V2BaseConnector extends HttpErrorFunctions {
   val pushNotificationsBaseRoute: String = "/transit-movements-push-notifications"
 
   def pushNotificationsRoute(movementId: MovementId): UrlPath =
+    UrlPath.parse(s"$pushNotificationsBaseRoute/traders/movements/${movementId.value}")
+
+  def pushNotificationsBoxRoute(movementId: MovementId): UrlPath =
     UrlPath.parse(s"$pushNotificationsBaseRoute/traders/movements/${movementId.value}/box")
 
   implicit class HttpResponseHelpers(response: HttpResponse) {

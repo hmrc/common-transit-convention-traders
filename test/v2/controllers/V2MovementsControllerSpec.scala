@@ -1815,6 +1815,7 @@ class V2MovementsControllerSpec
             any(),
             any()
           )
+          verify(mockPushNotificationService, times(1)).update(MovementId(eqTo(movementId.value)))(any(), any())
         }
 
         "must return Bad Request when body is not an XML document" in {
