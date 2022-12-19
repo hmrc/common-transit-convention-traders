@@ -50,7 +50,8 @@ object MetricsKeys {
   }
 
   object PushNotificationsBacked {
-    val Post = "push-notifications-backend-post"
+    val Post   = "push-notifications-backend-post"
+    val Update = "push-notifications-backend-update"
   }
 
   object Endpoints {
