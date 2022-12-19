@@ -21,8 +21,10 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import config.AppConfig
 import config.Constants
+import play.api.http.Status.NOT_FOUND
 import play.api.mvc.Headers
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.PushNotificationsConnector
 import v2.models.BoxId
 import v2.models.ClientId
@@ -42,6 +44,8 @@ trait PushNotificationsService {
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
   ): EitherT[Future, PushNotificationError, Unit]
+
+  def update(movementId: MovementId)(implicit headerCarrier: HeaderCarrier, executionContext: ExecutionContext): EitherT[Future, PushNotificationError, Unit]
 
 }
 
@@ -74,4 +78,18 @@ class PushNotificationsServiceImpl @Inject() (
           .getOrElse(Future.successful(Left(PushNotificationError.MissingClientId)))
       }
 
+  override def update(
+    movementId: MovementId
+  )(implicit headerCarrier: HeaderCarrier, executionContext: ExecutionContext): EitherT[Future, PushNotificationError, Unit] =
+    if (!appConfig.pushNotificationsEnabled) EitherT.rightT(())
+    else
+      EitherT {
+        pushNotificationsConnector
+          .patchAssociation(movementId)
+          .map(Right(_))
+          .recover {
+            case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.AssociationNotFound)
+            case NonFatal(thr)                             => Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
+          }
+      }
 }

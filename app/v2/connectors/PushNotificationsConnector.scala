@@ -25,6 +25,7 @@ import metrics.MetricsKeys
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status.CREATED
+import play.api.http.Status.NO_CONTENT
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
@@ -38,6 +39,11 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[PushNotificationsConnectorImpl])
 trait PushNotificationsConnector {
 
+  def patchAssociation(movementId: MovementId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit]
+
   def postAssociation(movementId: MovementId, pushNotificationsAssociation: PushNotificationsAssociation)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -50,13 +56,23 @@ class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClient
     with V2BaseConnector
     with HasMetrics {
 
+  override def patchAssociation(movementId: MovementId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+    withMetricsTimerAsync(MetricsKeys.PushNotificationsBacked.Update) {
+      _ =>
+        val url = appConfig.pushNotificationsUrl.withPath(pushNotificationsRoute(movementId))
+
+        httpClientV2
+          .patch(url"$url")
+          .executeAndExpect(NO_CONTENT)
+    }
+
   override def postAssociation(movementId: MovementId, pushNotificationsAssociation: PushNotificationsAssociation)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit] =
     withMetricsTimerAsync(MetricsKeys.PushNotificationsBacked.Post) {
       _ =>
-        val url = appConfig.pushNotificationsUrl.withPath(pushNotificationsRoute(movementId))
+        val url = appConfig.pushNotificationsUrl.withPath(pushNotificationsBoxRoute(movementId))
 
         httpClientV2
           .post(url"$url")

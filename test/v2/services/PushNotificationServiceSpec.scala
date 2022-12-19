@@ -32,8 +32,10 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import play.api.http.Status.NOT_FOUND
 import play.api.test.FakeHeaders
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.base.CommonGenerators
 import v2.connectors.PushNotificationsConnector
 import v2.models.BoxId
@@ -155,4 +157,51 @@ class PushNotificationServiceSpec
     }
   }
 
+  "update" - {
+
+    "when the service is disabled, return a unit" in forAll(arbitrary[MovementId]) {
+      movementId =>
+        when(mockAppConfig.pushNotificationsEnabled).thenReturn(false)
+        val result = sut.update(movementId)
+
+        whenReady(result.value) {
+          r => r mustBe Right(())
+        }
+    }
+
+    "when the service is enabled and the update was successful, return a unit" in forAll(arbitrary[MovementId]) {
+      movementId =>
+        when(mockAppConfig.pushNotificationsEnabled).thenReturn(true)
+        when(mockConnector.patchAssociation(MovementId(anyString()))(any(), any())).thenReturn(Future.successful(()))
+        val result = sut.update(movementId)
+
+        whenReady(result.value) {
+          r => r mustBe Right(())
+        }
+    }
+
+    "when a 404 is returned occurs, return a Left of AssociationNotFound" in forAll(arbitrary[MovementId]) {
+      movementId =>
+        when(mockAppConfig.pushNotificationsEnabled).thenReturn(true)
+        when(mockConnector.patchAssociation(MovementId(anyString()))(any(), any())).thenReturn(Future.failed(UpstreamErrorResponse("NOT_FOUND", NOT_FOUND)))
+
+        val result = sut.update(movementId)
+        whenReady(result.value) {
+          r => r mustBe Left(PushNotificationError.AssociationNotFound)
+        }
+    }
+
+    "when an error occurs, return a Left of Unexpected" in forAll(arbitrary[MovementId]) {
+      movementId =>
+        when(mockAppConfig.pushNotificationsEnabled).thenReturn(true)
+        val expectedException = new Exception()
+
+        when(mockConnector.patchAssociation(MovementId(anyString()))(any(), any())).thenReturn(Future.failed(expectedException))
+
+        val result = sut.update(movementId)
+        whenReady(result.value) {
+          r => r mustBe Left(PushNotificationError.UnexpectedError(thr = Some(expectedException)))
+        }
+    }
+  }
 }

@@ -162,7 +162,7 @@ class V2ArrivalsControllerSpec
     headers: FakeHeaders,
     body: A
   ): Request[A] =
-    FakeRequest(method = method, uri = routing.routes.ArrivalsRouter.attachMessage("0123456789abcdef").url, headers = headers, body = body)
+    FakeRequest(method = method, uri = routing.routes.ArrivalsRouter.attachMessage(arrivalId.value).url, headers = headers, body = body)
 
   override def beforeEach(): Unit = {
     reset(mockValidationService)
@@ -1125,6 +1125,7 @@ class V2ArrivalsControllerSpec
           any(),
           any()
         )
+        verify(mockPushNotificationService, times(1)).update(MovementId(eqTo(arrivalId.value)))(any(), any())
       }
 
       "must return Bad Request when body is not an XML document" in {
@@ -1243,6 +1244,9 @@ class V2ArrivalsControllerSpec
         )
           .thenReturn(router)
 
+        when(mockPushNotificationService.update(MovementId(any()))(any(), any())).thenAnswer(
+          _ => EitherT.rightT(())
+        )
       }
 
       // For the content length headers, we have to ensure that we send something
@@ -1278,6 +1282,7 @@ class V2ArrivalsControllerSpec
           any(),
           any()
         )
+        verify(mockPushNotificationService, times(1)).update(MovementId(eqTo(arrivalId.value)))(any(), any())
       }
 
       "must return Bad Request when body is not an JSON document" in {

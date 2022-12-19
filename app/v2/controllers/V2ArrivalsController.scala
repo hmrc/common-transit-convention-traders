@@ -40,7 +40,6 @@ import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models.AuditType
-import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
@@ -250,15 +249,15 @@ class V2ArrivalsControllerImpl @Inject() (
         converted <- conversionService.jsonToXml(messageType, source).asPresentation
       } yield converted
 
-    def handleXml(arrivalId: MovementId, eoriNumber: EORINumber, messageType: MessageType, src: Source[ByteString, _])(implicit
-      hc: HeaderCarrier
+    def handleXml(arrivalId: MovementId, messageType: MessageType, src: Source[ByteString, _])(implicit
+      hc: HeaderCarrier,
+      request: AuthenticatedRequest[_]
     ): EitherT[Future, PresentationError, UpdateMovementResponse] =
       withReusableSource(src) {
         source =>
           for {
             _              <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
-            updateResponse <- arrivalsService.updateArrival(arrivalId, messageType, source).asPresentation
-            _              <- routerService.send(messageType, eoriNumber, arrivalId, updateResponse.messageId, source).asPresentation
+            updateResponse <- updateAndSend(arrivalId, messageType, source)
           } yield updateResponse
       }
 
@@ -270,7 +269,7 @@ class V2ArrivalsControllerImpl @Inject() (
           messageType    <- jsonParsingService.extractMessageType(request.body, MessageType.updateMessageTypesSentByArrivalTrader).asPresentation
           _              <- awaitFileWrite
           converted      <- handleJson(messageType, request.body)
-          updateResponse <- handleXml(id, request.eoriNumber, messageType, converted)
+          updateResponse <- handleXml(id, messageType, converted)
         } yield updateResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           updateResponse => Accepted(Json.toJson(HateoasMovementUpdateResponse(id, updateResponse.messageId, MovementType.Arrival)))
@@ -280,10 +279,11 @@ class V2ArrivalsControllerImpl @Inject() (
 
   private def updateAndSend(arrivalId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
-    request: AuthenticatedRequest[Source[ByteString, _]]
+    request: AuthenticatedRequest[_]
   ) =
     for {
       notificationResult <- arrivalsService.updateArrival(arrivalId, messageType, source).asPresentation
+      _ = pushNotificationsService.update(arrivalId)
       _ <- routerService
         .send(messageType, request.eoriNumber, arrivalId, notificationResult.messageId, source)
         .asPresentation
