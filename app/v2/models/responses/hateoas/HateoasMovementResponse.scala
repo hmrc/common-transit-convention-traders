@@ -21,10 +21,11 @@ import play.api.libs.json.Json
 import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.responses.MovementResponse
+import v2.models.responses.MovementSummary
 
 object HateoasMovementResponse extends HateoasResponse {
 
-  def apply(movementId: MovementId, movementResponse: MovementResponse, movementType: MovementType): JsObject =
+  def apply(movementId: MovementId, movementSummary: MovementSummary, movementType: MovementType): JsObject =
     Json
       .obj(
         "_links" -> Json.obj(
@@ -32,11 +33,11 @@ object HateoasMovementResponse extends HateoasResponse {
           "messages" -> Json.obj("href" -> getMessagesUri(movementId, None, movementType))
         ),
         "id"                      -> movementId,
-        "movementReferenceNumber" -> movementResponse.movementReferenceNumber,
-        "created"                 -> movementResponse.created,
-        "updated"                 -> movementResponse.updated,
-        "enrollmentEORINumber"    -> movementResponse.enrollmentEORINumber,
-        "movementEORINumber"      -> movementResponse.movementEORINumber
+        "movementReferenceNumber" -> movementSummary.movementReferenceNumber,
+        "created"                 -> movementSummary.created,
+        "updated"                 -> movementSummary.updated,
+        "enrollmentEORINumber"    -> movementSummary.enrollmentEORINumber,
+        "movementEORINumber"      -> movementSummary.movementEORINumber
       )
 
 }

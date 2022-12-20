@@ -41,7 +41,7 @@ import play.api.test.Helpers.stubControllerComponents
 import v2.base.TestActorSystem
 import v2.fakes.controllers.FakeV1ArrivalMessagesController
 import v2.fakes.controllers.FakeV1ArrivalsController
-import v2.fakes.controllers.FakeV2ArrivalsController
+import v2.fakes.controllers.FakeV2MovementsController
 import v2.fakes.utils.FakePreMaterialisedFutureProvider
 
 import scala.concurrent.duration.DurationInt
@@ -54,7 +54,7 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
   val sut = new ArrivalsRouter(
     stubControllerComponents(),
     new FakeV1ArrivalsController(),
-    new FakeV2ArrivalsController(),
+    new FakeV2MovementsController(),
     new FakeV1ArrivalMessagesController(),
     FakePreMaterialisedFutureProvider
   )

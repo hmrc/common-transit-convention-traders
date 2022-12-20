@@ -33,7 +33,7 @@ class FakeV1ArrivalMessagesController extends BaseController with V1ArrivalMessa
   val controllerComponents = stubControllerComponents()
 
   override def getArrivalMessages(arrivalId: ArrivalId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
-    _ => Accepted(Json.obj("version" -> 1))
+    _ => Ok(Json.obj("version" -> 1))
   }
 
   override def getArrivalMessage(arrivalId: ArrivalId, messageId: MessageId): Action[AnyContent] = Action {

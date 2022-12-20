@@ -48,12 +48,12 @@ import utils.TestMetrics
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementType
 import v2.models.errors.ErrorCode
 import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
-import v2.models.responses.ArrivalResponse
-import v2.models.responses.DeclarationResponse
+import v2.models.responses.MovementResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
 import v2.utils.CommonGenerators
@@ -87,9 +87,9 @@ class PersistenceConnectorSpec
       for {
         movementId <- arbitrary[MovementId]
         messageId  <- arbitrary[MessageId]
-      } yield DeclarationResponse(movementId, messageId)
+      } yield MovementResponse(movementId, messageId)
 
-    def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures/"
+    def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures"
 
     "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen) {
       (eoriNumber, okResult) =>
@@ -107,7 +107,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        whenReady(persistenceConnector.postDeparture(eoriNumber, source)) {
+        whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Departure, source)) {
           result =>
             result mustBe okResult
         }
@@ -133,7 +133,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postDeparture(eoriNumber, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -166,7 +166,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postDeparture(eoriNumber, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -199,7 +199,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postDeparture(eoriNumber, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -213,30 +213,30 @@ class PersistenceConnectorSpec
   "GET /traders/:eori/movements/departure/:departureid/messages/:message" - {
 
     def targetUrl(eoriNumber: EORINumber, departureId: MovementId, messageId: MessageId) =
-      s"/transit-movements/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/${messageId.value}/"
+      s"/transit-movements/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/${messageId.value}"
 
     "on successful message, return a success" in {
-      val eori            = arbitrary[EORINumber].sample.get
-      val departureId     = arbitrary[MovementId].sample.get
-      val messageResponse = arbitraryMessageSummary.arbitrary.sample.get
+      val eori           = arbitrary[EORINumber].sample.get
+      val departureId    = arbitrary[MovementId].sample.get
+      val messageSummary = arbitraryMessageSummary.arbitrary.sample.get
 
       server.stubFor(
         get(
-          urlEqualTo(targetUrl(eori, departureId, messageResponse.id))
+          urlEqualTo(targetUrl(eori, departureId, messageSummary.id))
         )
           .willReturn(
             aResponse()
               .withStatus(OK)
               .withBody(
-                Json.stringify(Json.toJson(messageResponse))
+                Json.stringify(Json.toJson(messageSummary))
               )
           )
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getDepartureMessage(eori, departureId, messageResponse.id)
+      val result      = persistenceConnector.getMessage(eori, MovementType.Departure, departureId, messageSummary.id)
       whenReady(result) {
-        _ mustBe messageResponse
+        _ mustBe messageSummary
       }
     }
 
@@ -260,7 +260,7 @@ class PersistenceConnectorSpec
 
       implicit val hc = HeaderCarrier()
       val r = persistenceConnector
-        .getDepartureMessage(eori, departureId, messageId)
+        .getMessage(eori, MovementType.Departure, departureId, messageId)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -302,7 +302,7 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val r = persistenceConnector
-          .getDepartureMessage(eori, departureId, messageId)
+          .getMessage(eori, MovementType.Departure, departureId, messageId)
           .map(
             _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
           )
@@ -341,7 +341,7 @@ class PersistenceConnectorSpec
 
       implicit val hc = HeaderCarrier()
       val r = persistenceConnector
-        .getDepartureMessage(eori, departureId, messageId)
+        .getMessage(eori, MovementType.Departure, departureId, messageId)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
@@ -358,20 +358,19 @@ class PersistenceConnectorSpec
   }
 
   "GET /traders/:eori/movements/departure/:departureid/messages" - {
-
     lazy val messageIdList = Gen.listOfN(3, arbitrary[MessageId])
 
     def targetUrl(eoriNumber: EORINumber, departureId: MovementId) =
-      s"/transit-movements/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/"
+      s"/transit-movements/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages"
 
     def targetUrlWithTime(eoriNumber: EORINumber, departureId: MovementId, receivedSince: OffsetDateTime) =
-      s"/transit-movements/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages/?receivedSince=${DateTimeFormatter.ISO_OFFSET_DATE_TIME
+      s"/transit-movements/traders/${eoriNumber.value}/movements/departures/${departureId.value}/messages?receivedSince=${DateTimeFormatter.ISO_OFFSET_DATE_TIME
         .format(receivedSince)}"
 
     "on successful return of message IDs when no filtering is applied, return a success" in {
       val eori        = arbitrary[EORINumber].sample.get
       val departureId = arbitrary[MovementId].sample.get
-      val messageResponse = messageIdList.sample.get.map(
+      val messageSummaryList = messageIdList.sample.get.map(
         id => arbitraryMessageSummary.arbitrary.sample.get.copy(id = id)
       )
 
@@ -383,15 +382,15 @@ class PersistenceConnectorSpec
             aResponse()
               .withStatus(OK)
               .withBody(
-                Json.toJson(messageResponse).toString()
+                Json.toJson(messageSummaryList).toString()
               )
           )
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getDepartureMessageIds(eori, departureId, None)
+      val result      = persistenceConnector.getMessages(eori, MovementType.Departure, departureId, None)
       whenReady(result) {
-        _ mustBe messageResponse
+        _ mustBe messageSummaryList
       }
     }
 
@@ -399,7 +398,7 @@ class PersistenceConnectorSpec
       val eori        = arbitrary[EORINumber].sample.get
       val departureId = arbitrary[MovementId].sample.get
       val time        = OffsetDateTime.now(ZoneOffset.UTC)
-      val messageResponse = messageIdList.sample.get.map(
+      val messageSummaryList = messageIdList.sample.get.map(
         id => arbitraryMessageSummary.arbitrary.sample.get.copy(id = id)
       )
 
@@ -411,15 +410,15 @@ class PersistenceConnectorSpec
             aResponse()
               .withStatus(OK)
               .withBody(
-                Json.toJson(messageResponse).toString()
+                Json.toJson(messageSummaryList).toString()
               )
           )
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getDepartureMessageIds(eori, departureId, Some(time))
+      val result      = persistenceConnector.getMessages(eori, MovementType.Departure, departureId, Some(time))
       whenReady(result) {
-        _ mustBe messageResponse
+        _ mustBe messageSummaryList
       }
     }
 
@@ -442,7 +441,7 @@ class PersistenceConnectorSpec
 
       implicit val hc = HeaderCarrier()
       val r = persistenceConnector
-        .getDepartureMessageIds(eori, departureId, None)
+        .getMessages(eori, MovementType.Departure, departureId, None)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -483,7 +482,7 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val r = persistenceConnector
-          .getDepartureMessageIds(eori, departureId, None)
+          .getMessages(eori, MovementType.Departure, departureId, None)
           .map(
             _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
           )
@@ -521,7 +520,7 @@ class PersistenceConnectorSpec
 
       implicit val hc = HeaderCarrier()
       val r = persistenceConnector
-        .getDepartureMessageIds(eori, departureId, None)
+        .getMessages(eori, MovementType.Departure, departureId, None)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
@@ -540,9 +539,9 @@ class PersistenceConnectorSpec
   "GET /traders/movements/departures/:departureId" - {
 
     implicit val hc          = HeaderCarrier()
-    lazy val messageResponse = arbitraryMovementResponse.arbitrary.sample.get
+    lazy val movementSummary = arbitraryMovementSummary.arbitrary.sample.get
 
-    lazy val targetUrl = s"/transit-movements/traders/${messageResponse.enrollmentEORINumber.value}/movements/departures/${messageResponse._id.value}/"
+    lazy val targetUrl = s"/transit-movements/traders/${movementSummary.enrollmentEORINumber.value}/movements/departures/${movementSummary._id.value}"
 
     "on success, return a MovementResponse" in {
 
@@ -554,15 +553,15 @@ class PersistenceConnectorSpec
             aResponse()
               .withStatus(OK)
               .withBody(
-                Json.toJson(messageResponse).toString()
+                Json.toJson(movementSummary).toString()
               )
           )
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getDeparture(messageResponse.enrollmentEORINumber, messageResponse._id)
+      val result      = persistenceConnector.getMovement(movementSummary.enrollmentEORINumber, MovementType.Departure, movementSummary._id)
       whenReady(result) {
-        _ mustBe messageResponse
+        _ mustBe movementSummary
       }
     }
 
@@ -581,7 +580,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getDeparture(messageResponse.enrollmentEORINumber, messageResponse._id)
+        .getMovement(movementSummary.enrollmentEORINumber, MovementType.Departure, movementSummary._id)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -615,7 +614,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getDeparture(messageResponse.enrollmentEORINumber, messageResponse._id)
+        .getMovement(movementSummary.enrollmentEORINumber, MovementType.Departure, movementSummary._id)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
@@ -636,10 +635,10 @@ class PersistenceConnectorSpec
     implicit val hc = HeaderCarrier()
     val eori        = arbitrary[EORINumber].sample.get
 
-    def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/"
+    def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures"
 
     "on success with no date time filter, return a list of departure IDs" in {
-      lazy val messageResponseList = Gen.listOfN(3, arbitraryMovementResponse.arbitrary).sample.get
+      lazy val movementSummaryList = Gen.listOfN(3, arbitraryMovementSummary.arbitrary).sample.get
 
       server.stubFor(
         get(
@@ -649,23 +648,23 @@ class PersistenceConnectorSpec
             aResponse()
               .withStatus(OK)
               .withBody(
-                Json.toJson(messageResponseList).toString()
+                Json.toJson(movementSummaryList).toString()
               )
           )
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getDeparturesForEori(eori, None)
+      val result      = persistenceConnector.getMovements(eori, MovementType.Departure, None)
       whenReady(result) {
-        _ mustBe messageResponseList
+        _ mustBe movementSummaryList
       }
     }
 
     "on success with a date time filter, return a list of departure IDs" in forAll(
-      Gen.listOfN(3, arbitraryMovementResponse.arbitrary),
+      Gen.listOfN(3, arbitraryMovementSummary.arbitrary),
       arbitrary[OffsetDateTime]
     ) {
-      (messageResponseList, updatedSince) =>
+      (movementSummaryList, updatedSince) =>
         server.stubFor(
           get(
             urlPathEqualTo(targetUrl(eori))
@@ -675,15 +674,15 @@ class PersistenceConnectorSpec
               aResponse()
                 .withStatus(OK)
                 .withBody(
-                  Json.toJson(messageResponseList).toString()
+                  Json.toJson(movementSummaryList).toString()
                 )
             )
         )
 
         implicit val hc = HeaderCarrier()
-        val result      = persistenceConnector.getDeparturesForEori(eori, Some(updatedSince))
+        val result      = persistenceConnector.getMovements(eori, MovementType.Departure, Some(updatedSince))
         whenReady(result) {
-          _ mustBe messageResponseList
+          _ mustBe movementSummaryList
         }
     }
 
@@ -702,7 +701,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getDeparturesForEori(eori, None)
+        .getMovements(eori, MovementType.Departure, None)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -737,7 +736,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getDeparturesForEori(eori, None)
+        .getMovements(eori, MovementType.Departure, None)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
@@ -760,7 +759,7 @@ class PersistenceConnectorSpec
         messageId <- arbitrary[MessageId]
       } yield UpdateMovementResponse(messageId)
 
-    def targetUrl(departureId: MovementId) = s"/transit-movements/traders/movements/${departureId.value}/messages/"
+    def targetUrl(movementId: MovementId) = s"/transit-movements/traders/movements/${movementId.value}/messages"
 
     "On successful update of an element, must return ACCEPTED" in forAll(arbitrary[MovementId], messageType, okResultGen) {
       (departureId, messageType, resultRes) =>
@@ -889,9 +888,9 @@ class PersistenceConnectorSpec
       for {
         movementId <- arbitrary[MovementId]
         messageId  <- arbitrary[MessageId]
-      } yield ArrivalResponse(movementId, messageId)
+      } yield MovementResponse(movementId, messageId)
 
-    def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals/"
+    def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals"
 
     "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen) {
       (eoriNumber, okResult) =>
@@ -909,7 +908,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        whenReady(persistenceConnector.postArrival(eoriNumber, source)) {
+        whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, source)) {
           result =>
             result mustBe okResult
         }
@@ -935,7 +934,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postArrival(eoriNumber, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -968,7 +967,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postArrival(eoriNumber, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -1001,7 +1000,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postArrival(eoriNumber, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -1017,14 +1016,14 @@ class PersistenceConnectorSpec
     implicit val hc = HeaderCarrier()
 
     def targetUrl(eoriNumber: EORINumber, arrivalId: MovementId) =
-      s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals/${arrivalId.value}/messages/"
+      s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals/${arrivalId.value}/messages"
 
     "on successful return of message IDs when no filtering is applied, return a success" in forAll(
       arbitrary[EORINumber],
       arbitrary[MovementId],
       Gen.nonEmptyListOf(arbitrary[MessageSummary])
     ) {
-      (eori, arrivalId, messageResponse) =>
+      (eori, arrivalId, messageSummary) =>
         server.stubFor(
           get(
             urlEqualTo(targetUrl(eori, arrivalId))
@@ -1032,13 +1031,13 @@ class PersistenceConnectorSpec
             aResponse()
               .withStatus(OK)
               .withBody(
-                Json.toJson(messageResponse).toString()
+                Json.toJson(messageSummary).toString()
               )
           )
         )
-        val result = persistenceConnector.getArrivalMessageIds(eori, arrivalId, None)
+        val result = persistenceConnector.getMessages(eori, MovementType.Arrival, arrivalId, None)
         whenReady(result) {
-          _ mustBe messageResponse
+          _ mustBe messageSummary
         }
     }
 
@@ -1048,7 +1047,7 @@ class PersistenceConnectorSpec
       arbitrary[OffsetDateTime],
       Gen.nonEmptyListOf(arbitrary[MessageSummary])
     ) {
-      (eori, arrivalId, time, messageResponse) =>
+      (eori, arrivalId, time, messageSummary) =>
         server.stubFor(
           get(
             urlPathEqualTo(targetUrl(eori, arrivalId))
@@ -1057,15 +1056,15 @@ class PersistenceConnectorSpec
               aResponse()
                 .withStatus(OK)
                 .withBody(
-                  Json.toJson(messageResponse).toString()
+                  Json.toJson(messageSummary).toString()
                 )
             )
         )
 
         implicit val hc = HeaderCarrier()
-        val result      = persistenceConnector.getArrivalMessageIds(eori, arrivalId, Some(time))
+        val result      = persistenceConnector.getMessages(eori, MovementType.Arrival, arrivalId, Some(time))
         whenReady(result) {
-          _ mustBe messageResponse
+          _ mustBe messageSummary
         }
     }
 
@@ -1086,7 +1085,7 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val r = persistenceConnector
-          .getArrivalMessageIds(eori, arrivalId, None)
+          .getMessages(eori, MovementType.Arrival, arrivalId, None)
           .map(
             _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
           )
@@ -1127,7 +1126,7 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val r = persistenceConnector
-          .getArrivalMessageIds(eori, arrivalId, None)
+          .getMessages(eori, MovementType.Arrival, arrivalId, None)
           .map(
             _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
           )
@@ -1163,7 +1162,7 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val r = persistenceConnector
-          .getArrivalMessageIds(eori, arrivalId, None)
+          .getMessages(eori, MovementType.Arrival, arrivalId, None)
           .map(
             _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
           )
@@ -1186,7 +1185,7 @@ class PersistenceConnectorSpec
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals"
 
     "on success, return a list of arrivals" in {
-      lazy val messageResponseList = Gen.listOfN(3, arbitraryMovementResponse.arbitrary).sample.get
+      lazy val movementSummaryList = Gen.listOfN(3, arbitraryMovementSummary.arbitrary).sample.get
 
       server.stubFor(
         get(
@@ -1196,20 +1195,20 @@ class PersistenceConnectorSpec
             aResponse()
               .withStatus(OK)
               .withBody(
-                Json.toJson(messageResponseList).toString()
+                Json.toJson(movementSummaryList).toString()
               )
           )
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getArrivalsForEori(eori, None)
+      val result      = persistenceConnector.getMovements(eori, MovementType.Arrival, None)
       whenReady(result) {
-        _ mustBe messageResponseList
+        _ mustBe movementSummaryList
       }
     }
 
-    "on success with a date time filter, return a list of arrivals" in forAll(Gen.listOfN(3, arbitraryMovementResponse.arbitrary), arbitrary[OffsetDateTime]) {
-      (messageResponseList, updatedSince) =>
+    "on success with a date time filter, return a list of arrivals" in forAll(Gen.listOfN(3, arbitraryMovementSummary.arbitrary), arbitrary[OffsetDateTime]) {
+      (movementSummaryList, updatedSince) =>
         server.stubFor(
           get(
             urlPathEqualTo(targetUrl(eori))
@@ -1219,15 +1218,15 @@ class PersistenceConnectorSpec
               aResponse()
                 .withStatus(OK)
                 .withBody(
-                  Json.toJson(messageResponseList).toString()
+                  Json.toJson(movementSummaryList).toString()
                 )
             )
         )
 
         implicit val hc = HeaderCarrier()
-        val result      = persistenceConnector.getArrivalsForEori(eori, Some(updatedSince))
+        val result      = persistenceConnector.getMovements(eori, MovementType.Arrival, Some(updatedSince))
         whenReady(result) {
-          _ mustBe messageResponseList
+          _ mustBe movementSummaryList
         }
     }
 
@@ -1246,7 +1245,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getArrivalsForEori(eori, None)
+        .getMovements(eori, MovementType.Arrival, None)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -1281,7 +1280,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getArrivalsForEori(eori, None)
+        .getMovements(eori, MovementType.Arrival, None)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
@@ -1300,9 +1299,9 @@ class PersistenceConnectorSpec
   "GET /traders/movements/arrivals/:arrivalId" - {
 
     implicit val hc          = HeaderCarrier()
-    lazy val messageResponse = arbitraryMovementResponse.arbitrary.sample.get
+    lazy val movementSummary = arbitraryMovementSummary.arbitrary.sample.get
 
-    lazy val targetUrl = s"/transit-movements/traders/${messageResponse.enrollmentEORINumber.value}/movements/arrivals/${messageResponse._id.value}/"
+    lazy val targetUrl = s"/transit-movements/traders/${movementSummary.enrollmentEORINumber.value}/movements/arrivals/${movementSummary._id.value}"
 
     "on success, return a MovementResponse" in {
 
@@ -1314,15 +1313,15 @@ class PersistenceConnectorSpec
             aResponse()
               .withStatus(OK)
               .withBody(
-                Json.toJson(messageResponse).toString()
+                Json.toJson(movementSummary).toString()
               )
           )
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getArrival(messageResponse.enrollmentEORINumber, messageResponse._id)
+      val result      = persistenceConnector.getMovement(movementSummary.enrollmentEORINumber, MovementType.Arrival, movementSummary._id)
       whenReady(result) {
-        _ mustBe messageResponse
+        _ mustBe movementSummary
       }
     }
 
@@ -1341,7 +1340,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getArrival(messageResponse.enrollmentEORINumber, messageResponse._id)
+        .getMovement(movementSummary.enrollmentEORINumber, MovementType.Arrival, movementSummary._id)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -1375,7 +1374,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getArrival(messageResponse.enrollmentEORINumber, messageResponse._id)
+        .getMovement(movementSummary.enrollmentEORINumber, MovementType.Arrival, movementSummary._id)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
@@ -1394,7 +1393,7 @@ class PersistenceConnectorSpec
   "GET /traders/:eori/movements/arrivals/:arrivalId/messages/:message" - {
 
     def targetUrl(eoriNumber: EORINumber, arrivalId: MovementId, messageId: MessageId) =
-      s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals/${arrivalId.value}/messages/${messageId.value}/"
+      s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals/${arrivalId.value}/messages/${messageId.value}"
 
     "on successful message, return a success" in forAll(
       arbitrary[EORINumber],
@@ -1402,7 +1401,7 @@ class PersistenceConnectorSpec
       arbitrary[MessageId],
       arbitrary[MessageSummary]
     ) {
-      (eori, arrivalId, messageId, messageResponse) =>
+      (eori, arrivalId, messageId, movementSummary) =>
         server.stubFor(
           get(
             urlEqualTo(targetUrl(eori, arrivalId, messageId))
@@ -1411,15 +1410,15 @@ class PersistenceConnectorSpec
               aResponse()
                 .withStatus(OK)
                 .withBody(
-                  Json.stringify(Json.toJson(messageResponse))
+                  Json.stringify(Json.toJson(movementSummary))
                 )
             )
         )
 
         implicit val hc = HeaderCarrier()
-        val result      = persistenceConnector.getArrivalMessage(eori, arrivalId, messageId)
+        val result      = persistenceConnector.getMessage(eori, MovementType.Arrival, arrivalId, messageId)
         whenReady(result) {
-          _ mustBe messageResponse
+          _ mustBe movementSummary
         }
     }
 
@@ -1444,7 +1443,7 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val r = persistenceConnector
-          .getArrivalMessage(eori, arrivalId, messageId)
+          .getMessage(eori, MovementType.Arrival, arrivalId, messageId)
           .map(
             _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
           )
@@ -1486,7 +1485,7 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val r = persistenceConnector
-          .getArrivalMessage(eori, arrivalId, messageId)
+          .getMessage(eori, MovementType.Arrival, arrivalId, messageId)
           .map(
             _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
           )
@@ -1526,7 +1525,7 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val r = persistenceConnector
-          .getArrivalMessage(eori, arrivalId, messageId)
+          .getMessage(eori, MovementType.Arrival, arrivalId, messageId)
           .map(
             _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
           )

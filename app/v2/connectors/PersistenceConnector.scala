@@ -39,11 +39,11 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementType
 import v2.models.request.MessageType
-import v2.models.responses.ArrivalResponse
-import v2.models.responses.DeclarationResponse
-import v2.models.responses.MovementResponse
 import v2.models.responses.MessageSummary
+import v2.models.responses.MovementResponse
+import v2.models.responses.MovementSummary
 import v2.models.responses.UpdateMovementResponse
 
 import java.time.OffsetDateTime
@@ -54,60 +54,36 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[PersistenceConnectorImpl])
 trait PersistenceConnector {
 
-  def postDeparture(eori: EORINumber, source: Source[ByteString, _])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[DeclarationResponse]
-
-  def getDepartureMessage(eori: EORINumber, movementId: MovementId, messageId: MessageId)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[MessageSummary]
-
-  def getDepartureMessageIds(eori: EORINumber, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[Seq[MessageSummary]]
-
-  def getDeparture(eori: EORINumber, movementId: MovementId)(implicit
+  def postMovement(eori: EORINumber, movementType: MovementType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[MovementResponse]
 
-  def getDeparturesForEori(eori: EORINumber, updatedSince: Option[OffsetDateTime])(implicit
+  def getMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Seq[MovementResponse]]
+  ): Future[MessageSummary]
+
+  def getMessages(eori: EORINumber, movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Seq[MessageSummary]]
+
+  def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[MovementSummary]
+
+  def getMovements(eori: EORINumber, movementType: MovementType, updatedSince: Option[OffsetDateTime])(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Seq[MovementSummary]]
 
   def postMessage(movementId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[UpdateMovementResponse]
 
-  def postArrival(eori: EORINumber, source: Source[ByteString, _])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[ArrivalResponse]
-
-  def getArrivalMessageIds(eori: EORINumber, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[Seq[MessageSummary]]
-
-  def getArrivalsForEori(eori: EORINumber, updatedSince: Option[OffsetDateTime])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[Seq[MovementResponse]]
-
-  def getArrival(eori: EORINumber, movementId: MovementId)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[MovementResponse]
-
-  def getArrivalMessage(eori: EORINumber, movementId: MovementId, messageId: MessageId)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[MessageSummary]
 }
 
 @Singleton
@@ -117,13 +93,13 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     with V2BaseConnector
     with Logging {
 
-  override def postDeparture(eori: EORINumber, source: Source[ByteString, _])(implicit
+  override def postMovement(eori: EORINumber, movementType: MovementType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[DeclarationResponse] =
+  ): Future[MovementResponse] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
-        val url = appConfig.movementsUrl.withPath(movementsPostDepartureDeclaration(eori))
+        val url = appConfig.movementsUrl.withPath(postMovementUrl(eori, movementType))
 
         httpClientV2
           .post(url"$url")
@@ -133,17 +109,18 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
           .flatMap {
             response =>
               response.status match {
-                case OK => response.as[DeclarationResponse]
-                case _  => response.error
+                case OK => response.as[MovementResponse]
+                case _ =>
+                  response.error
               }
           }
     }
 
-  override def getDepartureMessage(eori: EORINumber, movementId: MovementId, messageId: MessageId)(implicit
+  override def getMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[MessageSummary] = {
-    val url = appConfig.movementsUrl.withPath(movementsGetDepartureMessage(eori, movementId, messageId))
+    val url = appConfig.movementsUrl.withPath(getMessageUrl(eori, movementType, movementId, messageId))
     httpClientV2
       .get(url"$url")
       .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
@@ -157,13 +134,13 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       }
   }
 
-  override def getDepartureMessageIds(eori: EORINumber, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
+  override def getMessages(eori: EORINumber, movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MessageSummary]] = {
     val url =
       withDateTimeParameter(
-        appConfig.movementsUrl.withPath(movementsGetDepartureMessageIds(eori, movementId)).toUrl,
+        appConfig.movementsUrl.withPath(getMessagesUrl(eori, movementType, movementId)).toUrl,
         "receivedSince",
         receivedSince
       )
@@ -181,11 +158,11 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       }
   }
 
-  override def getDeparture(eori: EORINumber, movementId: MovementId)(implicit
+  override def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[MovementResponse] = {
-    val url = appConfig.movementsUrl.withPath(movementsGetDeparture(eori, movementId))
+  ): Future[MovementSummary] = {
+    val url = appConfig.movementsUrl.withPath(getMovementUrl(eori, movementType, movementId))
 
     httpClientV2
       .get(url"$url")
@@ -194,18 +171,18 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       .flatMap {
         response =>
           response.status match {
-            case OK => response.as[MovementResponse]
+            case OK => response.as[MovementSummary]
             case _  => response.error
           }
       }
   }
 
-  override def getDeparturesForEori(eori: EORINumber, updatedSince: Option[OffsetDateTime])(implicit
+  override def getMovements(eori: EORINumber, movementType: MovementType, updatedSince: Option[OffsetDateTime])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Seq[MovementResponse]] = {
+  ): Future[Seq[MovementSummary]] = {
     val url = withDateTimeParameter(
-      appConfig.movementsUrl.withPath(movementsGetAllDepartures(eori)),
+      appConfig.movementsUrl.withPath(getAllMovementsUrl(eori, movementType)),
       "updatedSince",
       updatedSince
     )
@@ -217,7 +194,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       .flatMap {
         response =>
           response.status match {
-            case OK => response.as[Seq[MovementResponse]]
+            case OK => response.as[Seq[MovementSummary]]
             case _  => response.error
           }
       }
@@ -229,7 +206,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
   ): Future[UpdateMovementResponse] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
-        val url = appConfig.movementsUrl.withPath(movementsPostDeparture(movementId))
+        val url = appConfig.movementsUrl.withPath(postMessageUrl(movementId))
         httpClientV2
           .post(url"$url")
           .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code)
@@ -243,110 +220,6 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
               }
           }
     }
-
-  override def postArrival(eori: EORINumber, source: Source[ByteString, _])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[ArrivalResponse] =
-    withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
-      _ =>
-        val url = appConfig.movementsUrl.withPath(movementsPostArrivalNotification(eori))
-
-        httpClientV2
-          .post(url"$url")
-          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
-          .withBody(source)
-          .execute[HttpResponse]
-          .flatMap {
-            response =>
-              response.status match {
-                case OK => response.as[ArrivalResponse]
-                case _  => response.error
-              }
-          }
-    }
-
-  override def getArrivalMessageIds(eori: EORINumber, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[Seq[MessageSummary]] = {
-    val url =
-      withDateTimeParameter(
-        appConfig.movementsUrl.withPath(movementsGetArrivalMessageIds(eori, movementId)).toUrl,
-        "receivedSince",
-        receivedSince
-      )
-
-    httpClientV2
-      .get(url"$url")
-      .execute[HttpResponse]
-      .flatMap {
-        response =>
-          response.status match {
-            case OK => response.as[Seq[MessageSummary]]
-            case _  => response.error
-          }
-      }
-  }
-
-  override def getArrivalsForEori(eori: EORINumber, updatedSince: Option[OffsetDateTime])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[Seq[MovementResponse]] = {
-    val url =
-      withDateTimeParameter(
-        appConfig.movementsUrl.withPath(movementsGetAllArrivals(eori)),
-        "updatedSince",
-        updatedSince
-      )
-
-    httpClientV2
-      .get(url"$url")
-      .execute[HttpResponse]
-      .flatMap {
-        response =>
-          response.status match {
-            case OK => response.as[Seq[MovementResponse]]
-            case _  => response.error
-          }
-      }
-  }
-
-  override def getArrival(eori: EORINumber, movementId: MovementId)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[MovementResponse] = {
-    val url = appConfig.movementsUrl.withPath(movementsGetArrival(eori, movementId))
-
-    httpClientV2
-      .get(url"$url")
-      .addHeaders(HeaderNames.ACCEPT -> MimeTypes.JSON)
-      .execute[HttpResponse]
-      .flatMap {
-        response =>
-          response.status match {
-            case OK => response.as[MovementResponse]
-            case _  => response.error
-          }
-      }
-  }
-
-  override def getArrivalMessage(eori: EORINumber, movementId: MovementId, messageId: MessageId)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[MessageSummary] = {
-    val url = appConfig.movementsUrl.withPath(movementsGetArrivalMessage(eori, movementId, messageId))
-    httpClientV2
-      .get(url"$url")
-      .execute[HttpResponse]
-      .flatMap {
-        response =>
-          response.status match {
-            case OK => response.as[MessageSummary]
-            case _  => response.error
-          }
-      }
-  }
 
   private def withDateTimeParameter(urlPath: Url, queryName: String, dateTime: Option[OffsetDateTime]) =
     dateTime

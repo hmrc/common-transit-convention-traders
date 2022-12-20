@@ -30,6 +30,7 @@ import v2.base.CommonGenerators
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementType
 import v2.models.errors.ConversionError
 import v2.models.errors.ExtractionError
 import v2.models.errors.FailedToValidateError
@@ -137,7 +138,7 @@ class ErrorTranslatorSpec
     "a DepartureNotFound error returns a NOT_FOUND" in {
       val departureId = arbitrary[MovementId].sample.value
 
-      val input  = PersistenceError.DepartureNotFound(departureId)
+      val input  = PersistenceError.MovementNotFound(departureId, MovementType.Departure)
       val output = PresentationError.notFoundError(s"Departure movement with ID ${departureId.value} was not found")
 
       persistenceErrorConverter.convert(input) mustBe output
@@ -146,7 +147,7 @@ class ErrorTranslatorSpec
     "an ArrivalNotFound error returns a NOT_FOUND" in {
       val arrivalId = arbitrary[MovementId].sample.value
 
-      val input  = PersistenceError.ArrivalNotFound(arrivalId)
+      val input  = PersistenceError.MovementNotFound(arrivalId, MovementType.Arrival)
       val output = PresentationError.notFoundError(s"Arrival movement with ID ${arrivalId.value} was not found")
 
       persistenceErrorConverter.convert(input) mustBe output
@@ -165,7 +166,7 @@ class ErrorTranslatorSpec
     "ArrivalNotFound error returns a NOT_FOUND" in {
       val movementId = arbitrary[MovementId].sample.value
 
-      val input  = PersistenceError.ArrivalNotFound(movementId)
+      val input  = PersistenceError.MovementNotFound(movementId, MovementType.Arrival)
       val output = PresentationError.notFoundError(s"Arrival movement with ID ${movementId.value} was not found")
 
       persistenceErrorConverter.convert(input) mustBe output
@@ -174,7 +175,7 @@ class ErrorTranslatorSpec
     "ArrivalsNotFound error returns a NOT_FOUND" in {
       val eori = arbitrary[EORINumber].sample.value
 
-      val input  = PersistenceError.ArrivalsNotFound(eori)
+      val input  = PersistenceError.MovementsNotFound(eori, MovementType.Arrival)
       val output = PresentationError.notFoundError(s"Arrival movement IDs for ${eori.value} were not found")
 
       persistenceErrorConverter.convert(input) mustBe output

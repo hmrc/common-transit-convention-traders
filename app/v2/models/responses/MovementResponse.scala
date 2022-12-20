@@ -16,22 +16,13 @@
 
 package v2.models.responses
 
-import v2.models.EORINumber
-import v2.models.MovementId
-import v2.models.MovementReferenceNumber
 import play.api.libs.json.Json
-
-import java.time.OffsetDateTime
+import play.api.libs.json.OFormat
+import v2.models.MessageId
+import v2.models.MovementId
 
 object MovementResponse {
-  implicit lazy val movementResponseFormat = Json.format[MovementResponse]
+  implicit lazy val movementResponseFormat: OFormat[MovementResponse] = Json.format[MovementResponse]
 }
 
-case class MovementResponse(
-  _id: MovementId,
-  enrollmentEORINumber: EORINumber,
-  movementEORINumber: EORINumber,
-  movementReferenceNumber: Option[MovementReferenceNumber],
-  created: OffsetDateTime,
-  updated: OffsetDateTime
-)
+case class MovementResponse(movementId: MovementId, messageId: MessageId)

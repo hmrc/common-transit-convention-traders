@@ -80,7 +80,7 @@ class RouterConnectorSpec
     lazy val messageTypeGen = Gen.oneOf(Seq(MessageType.DeclarationData))
 
     def targetUrl(eoriNumber: EORINumber, messageType: MessageType, movementId: MovementId, messageId: MessageId) =
-      s"/transit-movements-router/traders/${eoriNumber.value}/movements/${messageType.movementType.urlFragment}/${movementId.value}/messages/${messageId.value}/"
+      s"/transit-movements-router/traders/${eoriNumber.value}/movements/${messageType.movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
 
     "When ACCEPTED is received, must returned a successful future" in forAll(
       arbitrary[EORINumber],
