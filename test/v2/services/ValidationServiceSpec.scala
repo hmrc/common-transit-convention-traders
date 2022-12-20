@@ -25,7 +25,9 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.http.Status.NOT_FOUND
 import play.api.libs.json.JsError
 import play.api.libs.json.JsResult
 import play.api.libs.json.Json
@@ -54,6 +56,14 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
   val SchemaInvalidXml: Source[ByteString, NotUsed]     = Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8))
   val UpstreamError: Source[ByteString, NotUsed]        = Source.single(ByteString("error", StandardCharsets.UTF_8))
   val InternalServiceError: Source[ByteString, NotUsed] = Source.single(ByteString("exception", StandardCharsets.UTF_8))
+  val Invalid: Source[ByteString, NotUsed]              = Source.single(ByteString("invalid", StandardCharsets.UTF_8))
+  val BadMessageType: Source[ByteString, NotUsed]       = Source.single(ByteString("badMessageType", StandardCharsets.UTF_8))
+
+  private val parseError =
+    UpstreamErrorResponse(Json.obj("code" -> "BAD_REQUEST", "message" -> "parse error").toString, BAD_REQUEST)
+
+  private def badMessageType(messageType: MessageType) =
+    UpstreamErrorResponse(Json.obj("code" -> "NOT_FOUND", "message" -> messageType.toString).toString, NOT_FOUND)
 
   private val upstreamErrorResponse =
     UpstreamErrorResponse(Json.obj("code" -> "INTERNAL_SERVER_ERROR", "message" -> "Internal Server Error").toString, INTERNAL_SERVER_ERROR)
@@ -68,6 +78,7 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
       stream match {
         case SchemaValidXml       => Future.successful(None)
         case SchemaInvalidXml     => Future.successful(Some(XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))))
+        case BadMessageType       => Future.failed(badMessageType(messageType))
         case UpstreamError        => Future.failed(upstreamErrorResponse)
         case InternalServiceError => Future.failed(internalException)
       }
@@ -80,6 +91,8 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
         case SchemaValidJson => Future.successful(None)
         case SchemaInvalidJson =>
           Future.successful(Some(JsonValidationResponse(NonEmptyList(JsonValidationError("IEO15C:messageSender", "MessageSender not expected"), Nil))))
+        case Invalid              => Future.failed(parseError)
+        case BadMessageType       => Future.failed(badMessageType(messageType))
         case UpstreamError        => Future.failed(upstreamErrorResponse)
         case InternalServiceError => Future.failed(internalException)
       }
@@ -102,6 +115,15 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
       whenReady(result.value) {
         result => result mustBe Left(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)))
+      }
+    }
+
+    "a bad message type should return a left with a InvalidMessageTypeError" in {
+      val sut    = new ValidationServiceImpl(fakeValidationConnector)
+      val result = sut.validateXml(MessageType.DeclarationData, BadMessageType)
+
+      whenReady(result.value) {
+        result => result mustBe Left(FailedToValidateError.InvalidMessageTypeError(MessageType.DeclarationData.toString))
       }
     }
 
@@ -145,6 +167,24 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
           result mustBe Left(
             FailedToValidateError.JsonSchemaFailedToValidateError(NonEmptyList(JsonValidationError("IEO15C:messageSender", "MessageSender not expected"), Nil))
           )
+      }
+    }
+
+    "invalid JSON should return a left with a ParsingError" in {
+      val sut    = new ValidationServiceImpl(fakeValidationConnector)
+      val result = sut.validateJson(MessageType.DeclarationData, Invalid)
+
+      whenReady(result.value) {
+        result => result mustBe Left(FailedToValidateError.ParsingError("parse error"))
+      }
+    }
+
+    "a bad message type should return a left with a InvalidMessageTypeError" in {
+      val sut    = new ValidationServiceImpl(fakeValidationConnector)
+      val result = sut.validateJson(MessageType.DeclarationData, BadMessageType)
+
+      whenReady(result.value) {
+        result => result mustBe Left(FailedToValidateError.InvalidMessageTypeError(MessageType.DeclarationData.toString))
       }
     }
 

@@ -42,6 +42,7 @@ import v2.models.errors.StreamingError
 import v2.models.errors.XmlValidationError
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
 import v2.models.errors.FailedToValidateError.JsonSchemaFailedToValidateError
+import v2.models.errors.FailedToValidateError.ParsingError
 import v2.models.errors.FailedToValidateError.UnexpectedError
 import v2.models.errors.FailedToValidateError.XmlSchemaFailedToValidateError
 
@@ -92,6 +93,14 @@ class ErrorTranslatorSpec
       val output    = PresentationError.internalServiceError(cause = Some(exception))
 
       validationErrorConverter.convert(input) mustBe output
+    }
+
+    "a ParseError returns a bad request error" in forAll(Gen.identifier) {
+      message =>
+        val input  = ParsingError(message)
+        val output = PresentationError.badRequestError(message)
+
+        validationErrorConverter.convert(input) mustBe output
     }
 
     "an InvalidMessageTypeError returns a bad request error" in forAll(Gen.identifier) {
