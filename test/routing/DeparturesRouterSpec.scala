@@ -106,7 +106,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
           val departureHeaders =
             FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
 
-          "must route to the v2 controller and return Accepted when successful" in {
+          "must route to the v2 controller and return Ok when successful" in {
 
             val request = FakeRequest(
               method = "POST",
