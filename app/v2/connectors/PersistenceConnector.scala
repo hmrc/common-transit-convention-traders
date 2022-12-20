@@ -111,7 +111,6 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
               response.status match {
                 case OK => response.as[MovementResponse]
                 case _ =>
-                  println(response.error)
                   response.error
               }
           }
