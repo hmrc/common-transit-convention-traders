@@ -5,7 +5,4 @@
         <encoder class="uk.gov.hmrc.play.logging.JsonEncoder"/>
     </appender>
 
-    <root level="${logger.application:-WARN}">
-        <appender-ref ref="STDOUT"/>
-    </root>
 </configuration>
