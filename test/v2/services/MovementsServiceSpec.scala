@@ -303,7 +303,7 @@ class MovementsServiceSpec
         }
     }
 
-    "when a departure is not found, should return a Left with an DeparturesNotFound" in forAll(
+    "when a departure is not found, should return a Left with an MovementsNotFound" in forAll(
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber]
@@ -433,7 +433,7 @@ class MovementsServiceSpec
         }
     }
 
-    "when an arrival is not found, should return a Left with an ArrivalsNotFound" in forAll(
+    "when an arrival is not found, should return a Left with an MovementsNotFound" in forAll(
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber]
