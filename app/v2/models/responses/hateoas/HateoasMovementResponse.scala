@@ -20,7 +20,6 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.models.MovementId
 import v2.models.MovementType
-import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
 
 object HateoasMovementResponse extends HateoasResponse {

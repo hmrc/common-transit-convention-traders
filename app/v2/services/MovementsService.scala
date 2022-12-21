@@ -65,7 +65,7 @@ trait MovementsService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MovementSummary]
 
-  def getMovements(eori: EORINumber, movementType: MovementType, updatedSince: Option[OffsetDateTime])(implicit
+  def getMovements(eori: EORINumber, movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MovementSummary]]
@@ -136,12 +136,12 @@ class MovementsServiceImpl @Inject() (persistenceConnector: PersistenceConnector
         }
     )
 
-  override def getMovements(eori: EORINumber, movementType: MovementType, updatedSince: Option[OffsetDateTime])(implicit
+  override def getMovements(eori: EORINumber, movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MovementSummary]] = EitherT(
     persistenceConnector
-      .getMovements(eori, movementType, updatedSince)
+      .getMovements(eori, movementType, updatedSince, movementEORI)
       .map(Right(_))
       .recover {
         case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementsNotFound(eori, movementType))

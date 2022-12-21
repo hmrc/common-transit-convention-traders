@@ -63,7 +63,7 @@ trait V2MovementsController {
   def getMessage(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent]
   def getMessageIds(movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
   def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent]
-  def getMovements(movementType: MovementType, updatedSince: Option[OffsetDateTime]): Action[AnyContent]
+  def getMovements(movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]): Action[AnyContent]
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]]
 }
 
@@ -220,17 +220,17 @@ class V2MovementsControllerImpl @Inject() (
           )
     }
 
-  def getMovements(movementType: MovementType, updatedSince: Option[OffsetDateTime] = None): Action[AnyContent] =
+  def getMovements(movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]): Action[AnyContent] =
     authActionNewEnrolmentOnly.async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         movementsService
-          .getMovements(request.eoriNumber, movementType, updatedSince)
+          .getMovements(request.eoriNumber, movementType, updatedSince, movementEORI)
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasMovementIdsResponse(response, movementType, updatedSince)))
+            response => Ok(Json.toJson(HateoasMovementIdsResponse(response, movementType, updatedSince, movementEORI)))
           )
     }
 

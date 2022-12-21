@@ -30,6 +30,7 @@ import play.api.mvc.ControllerComponents
 import v2.controllers.V2MovementsController
 import v2.controllers.stream.StreamingParsers
 import v2.models.Bindings._
+import v2.models.EORINumber
 import v2.models.MovementType
 import v2.models.{MessageId => V2MessageId}
 import v2.models.{MovementId => V2DepartureId}
@@ -107,8 +108,8 @@ class DeparturesRouter @Inject() (
       )
   }
 
-  def getDeparturesForEori(updatedSince: Option[OffsetDateTime] = None): Action[Source[ByteString, _]] = route {
-    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Departures.getMovements(MovementType.Departure, updatedSince)
+  def getDeparturesForEori(updatedSince: Option[OffsetDateTime] = None, movementEORI: Option[EORINumber] = None): Action[Source[ByteString, _]] = route {
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Departures.getMovements(MovementType.Departure, updatedSince, movementEORI)
     case _                                                         => v1Departures.getDeparturesForEori(updatedSince)
   }
 

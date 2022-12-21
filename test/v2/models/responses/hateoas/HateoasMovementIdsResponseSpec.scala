@@ -22,8 +22,10 @@ import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.base.CommonGenerators
+import v2.models.EORINumber
 import v2.models.MovementType
 
 import java.time.OffsetDateTime
@@ -32,21 +34,19 @@ import java.time.format.DateTimeFormatter
 class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with OptionValues with CommonGenerators with ScalaCheckDrivenPropertyChecks {
 
   for (movementType <- MovementType.values)
-    s"${movementType.movementType} should produce valid HateoasMovementIdsResponse responses" in forAll(Gen.option(arbitrary[OffsetDateTime])) {
-      updatedSince =>
-        val departureResponse1 = arbitraryMovementSummary.arbitrary.sample.value
-        val departureResponse2 = arbitraryMovementSummary.arbitrary.sample.value
+    s"${movementType.movementType} should produce valid HateoasMovementIdsResponse responses with optional updatedSince, movementEORI" in forAll(
+      Gen.option(arbitrary[OffsetDateTime]),
+      Gen.option(arbitrary[EORINumber])
+    ) {
+      (updatedSince, movementEORI) =>
+        val movementResponse1 = arbitraryMovementSummary.arbitrary.sample.value
+        val movementResponse2 = arbitraryMovementSummary.arbitrary.sample.value
 
-        val responses = Seq(departureResponse1, departureResponse2)
-        val expectedQueryString = updatedSince
-          .map(
-            date => s"?updatedSince=${DateTimeFormatter.ISO_DATE_TIME.format(date)}"
-          )
-          .getOrElse("")
+        val responses = Seq(movementResponse1, movementResponse2)
 
         val expected = Json.obj(
           "_links" -> Json.obj(
-            "self" -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}$expectedQueryString")
+            "self" -> selfUrl(movementType, updatedSince, movementEORI)
           ),
           movementType.urlFragment -> responses.map(
             movementResponse =>
@@ -65,9 +65,31 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
           )
         )
 
-        val actual = HateoasMovementIdsResponse(responses, movementType, updatedSince)
+        val actual = HateoasMovementIdsResponse(responses, movementType, updatedSince, movementEORI)
 
         actual mustBe expected
     }
 
+  private def selfUrl(movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]): JsObject =
+    (updatedSince, movementEORI) match {
+      case (Some(updatedSince), Some(movementEORI)) =>
+        val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(updatedSince)
+        Json.obj(
+          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time&movementEORI=${movementEORI.value}"
+        )
+      case (Some(updatedSince), _) =>
+        val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(updatedSince)
+        Json.obj(
+          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time"
+        )
+      case (_, Some(movementEORI)) =>
+        Json.obj(
+          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?movementEORI=${movementEORI.value}"
+        )
+
+      case (_, _) =>
+        Json.obj(
+          "href" -> s"/customs/transits/movements/${movementType.urlFragment}"
+        )
+    }
 }
