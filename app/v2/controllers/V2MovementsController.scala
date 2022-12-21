@@ -20,6 +20,7 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
+import cats.implicits.toFunctorOps
 import com.codahale.metrics.Counter
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
@@ -48,6 +49,7 @@ import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.errors.PresentationError
 import v2.models.request.MessageType
+import v2.models.responses.BoxResponse
 import v2.models.responses.MovementResponse
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
@@ -56,6 +58,9 @@ import v2.utils.PreMaterialisedFutureProvider
 
 import java.time.OffsetDateTime
 import scala.concurrent.Future
+import uk.gov.hmrc.http.HttpReads.Implicits._
+
+import scala.util.Success
 
 @ImplementedBy(classOf[V2MovementsControllerImpl])
 trait V2MovementsController {
@@ -122,7 +127,7 @@ class V2MovementsControllerImpl @Inject() (
           movementResponse <- persistAndSendToEIS(request.body, MovementType.Departure, MessageType.DeclarationData)
         } yield movementResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          response => Accepted(HateoasNewMovementResponse(response.movementId, MovementType.Departure))
+          response => Accepted(HateoasNewMovementResponse(response.movementId, response.boxResponse, MovementType.Departure))
         )
     }
 
@@ -143,7 +148,7 @@ class V2MovementsControllerImpl @Inject() (
           },
           result => {
             sCounter.inc()
-            Accepted(HateoasNewMovementResponse(result.movementId, MovementType.Departure))
+            Accepted(HateoasNewMovementResponse(result.movementId, result.boxResponse, MovementType.Departure))
           }
         )
     }
@@ -159,7 +164,7 @@ class V2MovementsControllerImpl @Inject() (
           movementResponse <- persistAndSendToEIS(request.body, MovementType.Arrival, MessageType.ArrivalNotification)
         } yield movementResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          response => Accepted(HateoasNewMovementResponse(response.movementId, MovementType.Arrival))
+          response => Accepted(HateoasNewMovementResponse(response.movementId, response.boxResponse, MovementType.Arrival))
         )
     }
 
@@ -175,7 +180,7 @@ class V2MovementsControllerImpl @Inject() (
           arrivalResult <- validatePersistAndSendToEIS(xmlSource, MovementType.Arrival, MessageType.ArrivalNotification)
         } yield arrivalResult).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          result => Accepted(HateoasNewMovementResponse(result.movementId, MovementType.Arrival))
+          result => Accepted(HateoasNewMovementResponse(result.movementId, result.boxResponse, MovementType.Arrival))
         )
     }
 
@@ -327,10 +332,19 @@ class V2MovementsControllerImpl @Inject() (
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
     for {
       movementResponse <- movementsService.createMovement(request.eoriNumber, movementType, source).asPresentation
-      _ = pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers)
+      boxResponse      = pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers).asPresentation
+      eventualMaybeResponse = boxResp(boxResponse)
       _ <- routerService
         .send(messageType, request.eoriNumber, movementResponse.movementId, movementResponse.messageId, source)
         .asPresentation
-    } yield movementResponse
+    } yield {
+      MovementResponse(movementResponse.movementId, movementResponse.messageId, eventualMaybeResponse)
+    }
 
+  private def boxResp(boxResponse: EitherT[Future, PresentationError, BoxResponse]) : EitherT[Future, PresentationError, Option[BoxResponse]] = {
+
+//   boxResponse.fold(l => None, r => Some(r))
+   boxResponse.fold(l => Right(None), r => Right(Some(r)))
+   // boxResponse.flatMap(a => Some(a))
+  }
 }

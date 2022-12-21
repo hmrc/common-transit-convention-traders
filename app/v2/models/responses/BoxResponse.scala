@@ -17,12 +17,10 @@
 package v2.models.responses
 
 import play.api.libs.json.Json
-import play.api.libs.json.OFormat
-import v2.models.MessageId
-import v2.models.MovementId
+import v2.models.BoxId
 
-object MovementResponse {
-  implicit lazy val movementResponseFormat: OFormat[MovementResponse] = Json.format[MovementResponse]
+case class BoxResponse(boxId: BoxId)
+
+object BoxResponse {
+  implicit val boxResponseFormat = Json.format[BoxResponse]
 }
-
-case class MovementResponse(movementId: MovementId, messageId: MessageId, boxResponse: Option[BoxResponse] = None)

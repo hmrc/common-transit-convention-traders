@@ -18,16 +18,29 @@ package v2.models.responses.hateoas
 
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
+import v2.models.BoxId
 import v2.models.MovementId
 import v2.models.MovementType
+import v2.models.responses.BoxResponse
 
 object HateoasNewMovementResponse extends HateoasResponse {
 
-  def apply(movementId: MovementId, movementType: MovementType): JsObject =
-    Json.obj(
-      "_links" -> Json.obj(
-        "self"     -> Json.obj("href" -> getMovementUri(movementId, movementType)),
-        "messages" -> Json.obj("href" -> getMessagesUri(movementId, None, movementType))
-      )
+  def apply(movementId: MovementId, boxResponse: Option[BoxResponse], movementType: MovementType): JsObject = {
+    val jsObject = Json.obj(
+      "self"     -> Json.obj("href" -> getMovementUri(movementId, movementType)),
+      "messages" -> Json.obj("href" -> getMessagesUri(movementId, None, movementType))
     )
+
+    if (boxResponse.isDefined) {
+      Json.obj(
+        "_links" -> jsObject,
+        "boxId"  -> boxResponse.get.boxId.value
+      )
+    } else {
+      Json.obj(
+        "_links" -> jsObject
+      )
+    }
+  }
+
 }

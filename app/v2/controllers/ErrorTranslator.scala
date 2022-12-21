@@ -17,6 +17,8 @@
 package v2.controllers
 
 import cats.data.EitherT
+import v2.models.errors.PushNotificationError.AssociationNotFound
+import v2.models.errors.PushNotificationError.MissingClientId
 import v2.models.errors._
 
 import scala.concurrent.ExecutionContext
@@ -103,6 +105,20 @@ trait ErrorTranslator {
 
     override def convert(messageFormatError: StreamingError): PresentationError = messageFormatError match {
       case UnexpectedError(ex) => PresentationError.internalServiceError(cause = ex)
+    }
+  }
+
+  implicit val PushNotificationErrorConverter = new Converter[PushNotificationError] {
+    import v2.models.errors.PushNotificationError._
+
+    override def convert(pushNotificationError: PushNotificationError): PresentationError = {
+      println("pushNotificationError..." + pushNotificationError)
+
+      pushNotificationError match {
+        case MissingClientId     => PresentationError.badRequestError("Missing client id")
+        case AssociationNotFound => PresentationError.badRequestError("Association Not Found")
+        case UnexpectedError(ex) => PresentationError.internalServiceError(cause = ex)
+      }
     }
   }
 }

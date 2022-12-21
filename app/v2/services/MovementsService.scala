@@ -90,6 +90,7 @@ class MovementsServiceImpl @Inject() (persistenceConnector: PersistenceConnector
         .map(Right(_))
         .recover {
           case NonFatal(thr) =>
+            println("error...recover" + thr.getMessage)
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )

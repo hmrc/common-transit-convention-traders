@@ -28,13 +28,16 @@ import play.api.http.Status.CREATED
 import play.api.http.Status.NO_CONTENT
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.MovementId
 import v2.models.request.PushNotificationsAssociation
+import v2.models.responses.BoxResponse
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
 @ImplementedBy(classOf[PushNotificationsConnectorImpl])
 trait PushNotificationsConnector {
@@ -47,7 +50,7 @@ trait PushNotificationsConnector {
   def postAssociation(movementId: MovementId, pushNotificationsAssociation: PushNotificationsAssociation)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Unit]
+  ): Future[BoxResponse]
 
 }
 
@@ -69,7 +72,7 @@ class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClient
   override def postAssociation(movementId: MovementId, pushNotificationsAssociation: PushNotificationsAssociation)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Unit] =
+  ): Future[BoxResponse] =
     withMetricsTimerAsync(MetricsKeys.PushNotificationsBacked.Post) {
       _ =>
         val url = appConfig.pushNotificationsUrl.withPath(pushNotificationsBoxRoute(movementId))
@@ -78,7 +81,33 @@ class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClient
           .post(url"$url")
           .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
           .withBody(Json.toJson(pushNotificationsAssociation))
-          .executeAndExpect(CREATED)
+          .execute[BoxResponse]
     }
+
+  /*
+           .execute[HttpResponse]
+          .flatMap {
+            response =>
+              response.status match {
+                case CREATED => response.as[BoxResponse]
+                case _       => response.error
+              }
+          }
+   */
+
+  /*
+            .execute[HttpResponse]
+          .flatMap {
+            response =>
+              response.status match {
+                case CREATED =>
+                  println("response success")
+                  response.as[BoxResponse].map(Option(_))
+                case result =>
+                  println("response " + result)
+                  Future.successful(None)
+              }
+          }
+   */
 
 }
