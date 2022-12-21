@@ -25,6 +25,8 @@ import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import config.Constants
 import io.lemonlabs.uri.Url
+import io.lemonlabs.uri.config.ExcludeNones
+import io.lemonlabs.uri.config.UriConfig
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
@@ -181,6 +183,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MovementSummary]] = {
+    implicit val config: UriConfig = UriConfig(renderQuery = ExcludeNones)
     val urlWithDateOption = withDateTimeParameter(
       appConfig.movementsUrl.withPath(getAllMovementsUrl(eori, movementType)),
       "updatedSince",
