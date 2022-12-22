@@ -111,13 +111,11 @@ trait ErrorTranslator {
   implicit val PushNotificationErrorConverter = new Converter[PushNotificationError] {
     import v2.models.errors.PushNotificationError._
 
-    override def convert(pushNotificationError: PushNotificationError): PresentationError = {
-
+    override def convert(pushNotificationError: PushNotificationError): PresentationError =
       pushNotificationError match {
         case MissingClientId     => PresentationError.badRequestError("Missing client id")
         case AssociationNotFound => PresentationError.badRequestError("Association Not Found")
         case UnexpectedError(ex) => PresentationError.internalServiceError(cause = ex)
       }
-    }
   }
 }

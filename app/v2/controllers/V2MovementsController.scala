@@ -48,6 +48,7 @@ import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.errors.PresentationError
+import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
 import v2.models.responses.BoxResponse
 import v2.models.responses.MovementResponse
@@ -58,6 +59,7 @@ import v2.utils.PreMaterialisedFutureProvider
 
 import java.time.OffsetDateTime
 import scala.concurrent.Await
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import uk.gov.hmrc.http.HttpReads.Implicits._
 
@@ -335,13 +337,20 @@ class V2MovementsControllerImpl @Inject() (
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
     for {
       movementResponse <- movementsService.createMovement(request.eoriNumber, movementType, source).asPresentation
-      boxResponse           = pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers).asPresentation
-      eventualMaybeResponse = mapToBoxResponse(boxResponse)
+      boxResponse      <- mapToBoxResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
       _ <- routerService
         .send(messageType, request.eoriNumber, movementResponse.movementId, movementResponse.messageId, source)
         .asPresentation
-    } yield MovementResponse(movementResponse.movementId, movementResponse.messageId, eventualMaybeResponse)
+    } yield MovementResponse(movementResponse.movementId, movementResponse.messageId, boxResponse)
 
-  private def mapToBoxResponse(boxResponse: EitherT[Future, PresentationError, BoxResponse]): Option[BoxResponse] =
-    Await.result(boxResponse.fold(l => None, r => Some(r)), 2 seconds)
+  /*  private def mapToBoxResponse(boxResponse: EitherT[Future, PresentationError, BoxResponse]): Option[BoxResponse] =
+    Await.result(boxResponse.fold(_ => None, r => Some(r)), 2 seconds)*/
+
+  def mapToBoxResponse(value: EitherT[Future, PushNotificationError, BoxResponse]): EitherT[Future, PresentationError, Option[BoxResponse]] =
+    EitherT[Future, PresentationError, Option[BoxResponse]] {
+      value.fold(
+        _ => Right(None),
+        r => Right(Some(r))
+      )
+    }
 }
