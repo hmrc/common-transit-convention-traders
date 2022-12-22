@@ -74,7 +74,6 @@ class PushNotificationsServiceImpl @Inject() (
                 .map(Right(_))
                 .recover {
                   case NonFatal(thr) =>
-                    println("Exception ..." + thr.getMessage)
                     Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
                 }
           }

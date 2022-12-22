@@ -57,9 +57,12 @@ import v2.services._
 import v2.utils.PreMaterialisedFutureProvider
 
 import java.time.OffsetDateTime
+import scala.concurrent.Await
 import scala.concurrent.Future
 import uk.gov.hmrc.http.HttpReads.Implicits._
 
+import scala.concurrent.duration.DurationInt
+import scala.util.Failure
 import scala.util.Success
 
 @ImplementedBy(classOf[V2MovementsControllerImpl])
@@ -332,19 +335,13 @@ class V2MovementsControllerImpl @Inject() (
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
     for {
       movementResponse <- movementsService.createMovement(request.eoriNumber, movementType, source).asPresentation
-      boxResponse      = pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers).asPresentation
-      eventualMaybeResponse = boxResp(boxResponse)
+      boxResponse           = pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers).asPresentation
+      eventualMaybeResponse = mapToBoxResponse(boxResponse)
       _ <- routerService
         .send(messageType, request.eoriNumber, movementResponse.movementId, movementResponse.messageId, source)
         .asPresentation
-    } yield {
-      MovementResponse(movementResponse.movementId, movementResponse.messageId, eventualMaybeResponse)
-    }
+    } yield MovementResponse(movementResponse.movementId, movementResponse.messageId, eventualMaybeResponse)
 
-  private def boxResp(boxResponse: EitherT[Future, PresentationError, BoxResponse]) : EitherT[Future, PresentationError, Option[BoxResponse]] = {
-
-//   boxResponse.fold(l => None, r => Some(r))
-   boxResponse.fold(l => Right(None), r => Right(Some(r)))
-   // boxResponse.flatMap(a => Some(a))
-  }
+  private def mapToBoxResponse(boxResponse: EitherT[Future, PresentationError, BoxResponse]): Option[BoxResponse] =
+    Await.result(boxResponse.fold(l => None, r => Some(r)), 2 seconds)
 }

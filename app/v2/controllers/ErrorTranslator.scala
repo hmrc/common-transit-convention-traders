@@ -112,7 +112,6 @@ trait ErrorTranslator {
     import v2.models.errors.PushNotificationError._
 
     override def convert(pushNotificationError: PushNotificationError): PresentationError = {
-      println("pushNotificationError..." + pushNotificationError)
 
       pushNotificationError match {
         case MissingClientId     => PresentationError.badRequestError("Missing client id")

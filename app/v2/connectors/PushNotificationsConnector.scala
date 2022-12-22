@@ -101,10 +101,8 @@ class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClient
             response =>
               response.status match {
                 case CREATED =>
-                  println("response success")
                   response.as[BoxResponse].map(Option(_))
                 case result =>
-                  println("response " + result)
                   Future.successful(None)
               }
           }
