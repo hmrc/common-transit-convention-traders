@@ -723,9 +723,8 @@ class PersistenceConnectorSpec
       (movementSummaryList, updatedSince, movementEORI) =>
         server.stubFor(
           get(
-            urlPathEqualTo(targetUrl(eori))
+            urlEqualTo(targetUrl(eori) + s"?movementEORI=${movementEORI.value}")
           )
-            .withQueryParam("movementEORI", equalTo(movementEORI.value))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -1326,9 +1325,8 @@ class PersistenceConnectorSpec
       (movementSummaryList, updatedSince, movementEORI) =>
         server.stubFor(
           get(
-            urlPathEqualTo(targetUrl(eori))
+            urlEqualTo(targetUrl(eori) + s"?movementEORI=${movementEORI.value}")
           )
-            .withQueryParam("movementEORI", equalTo(movementEORI.value))
             .willReturn(
               aResponse()
                 .withStatus(OK)

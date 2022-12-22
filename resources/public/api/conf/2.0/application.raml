@@ -135,7 +135,9 @@ traits:
       description: |
         Retrieve all departure declarations sent to the Customs Office of Departure within the past 31 days.
 
-        You can filter for departure declarations updated after a specific date and time, movementEORI or using both.
+        You can filter for departure declarations:
+        * Updated after a specific date and time
+        * That were submitted with a specified movement EORI
 
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
 
@@ -151,6 +153,11 @@ traits:
           type: datetime
           description: This is an optional query parameter that you can use to filter for departure declarations updated after a specific date and time.
           example: 2021-06-21T09:00+00:00
+        movementEORI:
+          required: false
+          type: string
+          description: This is an optional query parameter that you can use to filter for departure declarations that were submitted with a specified movement EORI.
+          example: ezv3Z
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
@@ -179,7 +186,7 @@ traits:
                     "created":"2022-11-10T15:32:51.459Z",
                     "updated":"2022-11-10T15:32:51.459Z",
                     "enrollmentEORINumber": "GB1234567890",
-                    "movementEORINumber": "GB1234567890"
+                    "movementEORINumber": "ezv3Z"
                   ]
                 }
     /{departureId}:
@@ -450,7 +457,9 @@ traits:
       description: |
         Retrieve all arrivals that have been updated within the past 31 days.
 
-        You can filter for arrivals updated after a specific date and time, movementEORI or using both.
+        You can filter for arrivals notifications: 
+        * Updated after a specific date and time
+        * That were submitted with a specified movement EORI
 
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
 
@@ -464,6 +473,11 @@ traits:
           type: datetime
           description: This is an optional query parameter that you can use to filter for arrivals updated after a specific date and time.
           example: 2021-06-21T09:00+00:00
+        movementEORI:
+          required: false
+          type: string
+          description: This is an optional query parameter that you can use to filter for arrivals that were submitted with a specified movement EORI.
+          example: ezv3Z
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:

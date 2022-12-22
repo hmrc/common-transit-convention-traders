@@ -25,6 +25,7 @@ import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
 import config.Constants
 import io.lemonlabs.uri.Url
+import io.lemonlabs.uri.config.ExcludeNones
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
@@ -181,7 +182,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MovementSummary]] = {
-    val urlWithOptions = withOptionalParameter(
+    val urlWithOptions = withParameters(
       appConfig.movementsUrl.withPath(getAllMovementsUrl(eori, movementType)),
       updatedSince,
       movementEORI
@@ -227,13 +228,15 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       )
       .getOrElse(urlPath)
 
-  private def withOptionalParameter(urlPath: Url, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]) =
-    (updatedSince, movementEORI) match {
-      case (Some(updatedSince), Some(movementEORI)) =>
-        urlPath.addParams("updatedSince" -> DateTimeFormatter.ISO_DATE_TIME.format(updatedSince), "movementEORI" -> movementEORI.value)
-      case (Some(updatedSince), None) => urlPath.addParam("updatedSince" -> DateTimeFormatter.ISO_DATE_TIME.format(updatedSince))
-      case (None, Some(movementEORI)) => urlPath.addParam("movementEORI" -> movementEORI.value)
-      case (None, None)               => urlPath
-    }
+  def withParameters(urlPath: Url, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]) =
+    urlPath
+      .withConfig(urlPath.config.copy(renderQuery = ExcludeNones))
+      .addParam(
+        "updatedSince",
+        updatedSince.map(
+          time => DateTimeFormatter.ISO_DATE_TIME.format(time)
+        )
+      )
+      .addParam("movementEORI", movementEORI.map(_.value))
 
 }
