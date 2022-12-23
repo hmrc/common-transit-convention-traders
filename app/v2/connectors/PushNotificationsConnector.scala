@@ -24,11 +24,9 @@ import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
-import play.api.http.Status.CREATED
 import play.api.http.Status.NO_CONTENT
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.MovementId
@@ -37,7 +35,6 @@ import v2.models.responses.BoxResponse
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import uk.gov.hmrc.http.HttpReads.Implicits._
 
 @ImplementedBy(classOf[PushNotificationsConnectorImpl])
 trait PushNotificationsConnector {
@@ -83,29 +80,5 @@ class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClient
           .withBody(Json.toJson(pushNotificationsAssociation))
           .execute[BoxResponse]
     }
-
-  /*
-           .execute[HttpResponse]
-          .flatMap {
-            response =>
-              response.status match {
-                case CREATED => response.as[BoxResponse]
-                case _       => response.error
-              }
-          }
-   */
-
-  /*
-            .execute[HttpResponse]
-          .flatMap {
-            response =>
-              response.status match {
-                case CREATED =>
-                  response.as[BoxResponse].map(Option(_))
-                case result =>
-                  Future.successful(None)
-              }
-          }
-   */
 
 }

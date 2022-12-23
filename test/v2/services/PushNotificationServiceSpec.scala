@@ -44,6 +44,7 @@ import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.errors.PushNotificationError
 import v2.models.request.PushNotificationsAssociation
+import v2.models.responses.BoxResponse
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -72,7 +73,7 @@ class PushNotificationServiceSpec
 
   "associate" - {
 
-    "when the service is disabled, return a unit" in forAll(arbitrary[MovementId], arbitrary[MovementType]) {
+    "when the service is disabled, return a left with PushNotificationDisabled" in forAll(arbitrary[MovementId], arbitrary[MovementType]) {
       (movementId, movementType) =>
         when(mockAppConfig.pushNotificationsEnabled).thenReturn(false)
         val headers = FakeHeaders()
@@ -80,7 +81,7 @@ class PushNotificationServiceSpec
         val result = sut.associate(movementId, movementType, headers)
 
         whenReady(result.value) {
-          r => r mustBe Right(())
+          r => r mustBe Left(PushNotificationError.PushNotificationDisabled)
         }
     }
 
@@ -110,11 +111,11 @@ class PushNotificationServiceSpec
         when(mockConnector.postAssociation(MovementId(anyString()), any())(any(), any()))
           .thenReturn(Future.failed(new Exception()))
         when(mockConnector.postAssociation(MovementId(anyString()), eqTo(expectedAssociation))(any(), any()))
-          .thenReturn(Future.successful(())) // last wins
+          .thenReturn(Future.successful(BoxResponse(BoxId("test")))) // last wins
 
         val result = sut.associate(movementId, movementType, headers)
         whenReady(result.value) {
-          r => r mustBe Right(())
+          r => r mustBe Right(BoxResponse(BoxId("test")))
         }
     }
 
@@ -133,11 +134,11 @@ class PushNotificationServiceSpec
         when(mockConnector.postAssociation(MovementId(anyString()), any())(any(), any()))
           .thenReturn(Future.failed(new Exception()))
         when(mockConnector.postAssociation(MovementId(anyString()), eqTo(expectedAssociation))(any(), any()))
-          .thenReturn(Future.successful(())) // last wins
+          .thenReturn(Future.successful(BoxResponse(BoxId("test")))) // last wins
 
         val result = sut.associate(movementId, movementType, headers)
         whenReady(result.value) {
-          r => r mustBe Right(())
+          r => r mustBe Right(BoxResponse(BoxId("test")))
         }
     }
 

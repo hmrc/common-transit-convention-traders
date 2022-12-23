@@ -20,7 +20,6 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
-import cats.implicits.toFunctorOps
 import com.codahale.metrics.Counter
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
@@ -43,7 +42,6 @@ import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models.AuditType
-import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
@@ -58,14 +56,7 @@ import v2.services._
 import v2.utils.PreMaterialisedFutureProvider
 
 import java.time.OffsetDateTime
-import scala.concurrent.Await
-import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import uk.gov.hmrc.http.HttpReads.Implicits._
-
-import scala.concurrent.duration.DurationInt
-import scala.util.Failure
-import scala.util.Success
 
 @ImplementedBy(classOf[V2MovementsControllerImpl])
 trait V2MovementsController {
@@ -343,12 +334,9 @@ class V2MovementsControllerImpl @Inject() (
         .asPresentation
     } yield MovementResponse(movementResponse.movementId, movementResponse.messageId, boxResponse)
 
-  /*  private def mapToBoxResponse(boxResponse: EitherT[Future, PresentationError, BoxResponse]): Option[BoxResponse] =
-    Await.result(boxResponse.fold(_ => None, r => Some(r)), 2 seconds)*/
-
-  def mapToBoxResponse(value: EitherT[Future, PushNotificationError, BoxResponse]): EitherT[Future, PresentationError, Option[BoxResponse]] =
+  def mapToBoxResponse(boxResponse: EitherT[Future, PushNotificationError, BoxResponse]): EitherT[Future, PresentationError, Option[BoxResponse]] =
     EitherT[Future, PresentationError, Option[BoxResponse]] {
-      value.fold(
+      boxResponse.fold(
         _ => Right(None),
         r => Right(Some(r))
       )

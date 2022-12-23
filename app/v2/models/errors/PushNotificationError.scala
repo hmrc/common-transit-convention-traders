@@ -21,6 +21,7 @@ sealed trait PushNotificationError
 object PushNotificationError {
 
   case object MissingClientId                               extends PushNotificationError
+  case object PushNotificationDisabled                      extends PushNotificationError
   case object AssociationNotFound                           extends PushNotificationError
   case class UnexpectedError(thr: Option[Throwable] = None) extends PushNotificationError
 

@@ -59,7 +59,7 @@ class PushNotificationsServiceImpl @Inject() (
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
   ): EitherT[Future, PushNotificationError, BoxResponse] =
-    if (!appConfig.pushNotificationsEnabled) EitherT.rightT(null)
+    if (!appConfig.pushNotificationsEnabled) EitherT.leftT(PushNotificationError.PushNotificationDisabled)
     else
       EitherT {
         headers
@@ -73,8 +73,7 @@ class PushNotificationsServiceImpl @Inject() (
                 )
                 .map(Right(_))
                 .recover {
-                  case NonFatal(thr) =>
-                    Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
+                  case NonFatal(thr) => Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
                 }
           }
           .getOrElse(Future.successful(Left(PushNotificationError.MissingClientId)))
