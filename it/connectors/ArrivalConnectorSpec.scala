@@ -89,7 +89,7 @@ class ArrivalConnectorSpec
 
       val result = connector.post("<document></document>").futureValue
 
-      result.right.get.responseData mustEqual Option(testBox)
+      result.toOption.get.responseData mustEqual Option(testBox)
     }
 
     "must return INTERNAL_SERVER_ERROR when post" - {
@@ -106,7 +106,7 @@ class ArrivalConnectorSpec
 
         val result = connector.post("<document></document>").futureValue
 
-        result.left.get.statusCode mustEqual INTERNAL_SERVER_ERROR
+        result.left.toOption.get.statusCode mustEqual INTERNAL_SERVER_ERROR
       }
 
     }
@@ -124,7 +124,7 @@ class ArrivalConnectorSpec
 
       val result = connector.post("<document></document>").futureValue
 
-      result.left.get.statusCode mustEqual BAD_REQUEST
+      result.left.toOption.get.statusCode mustEqual BAD_REQUEST
     }
   }
 
@@ -160,7 +160,7 @@ class ArrivalConnectorSpec
 
       val result = connector.put("<document></document>", ArrivalId(2)).futureValue
 
-      result.right.get.responseData mustEqual Option(testBox)
+      result.toOption.get.responseData mustEqual Option(testBox)
     }
 
     "must return INTERNAL_SERVER_ERROR when put" - {
@@ -177,7 +177,7 @@ class ArrivalConnectorSpec
 
         val result = connector.put("<document></document>", ArrivalId(2)).futureValue
 
-        result.left.get.statusCode mustEqual INTERNAL_SERVER_ERROR
+        result.left.toOption.get.statusCode mustEqual INTERNAL_SERVER_ERROR
       }
 
     }
@@ -195,7 +195,7 @@ class ArrivalConnectorSpec
 
       val result = connector.put("<document></document>", ArrivalId(2)).futureValue
 
-      result.left.get.statusCode mustEqual BAD_REQUEST
+      result.left.toOption.get.statusCode mustEqual BAD_REQUEST
     }
 
   }

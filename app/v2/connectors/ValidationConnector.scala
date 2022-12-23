@@ -92,7 +92,7 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
 
     httpClientV2
       .post(url"$url")
-      .addHeaders(HeaderNames.CONTENT_TYPE -> contentType)
+      .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> contentType))
       .withBody(stream)
       .execute[HttpResponse]
       .flatMap {

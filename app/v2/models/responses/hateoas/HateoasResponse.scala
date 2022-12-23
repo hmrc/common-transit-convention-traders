@@ -23,13 +23,13 @@ import java.time.OffsetDateTime
 
 trait HateoasResponse {
 
-  def getMessageUri(movementId: MovementId, messageId: MessageId, movementType: MovementType) =
+  def getMessageUri(movementId: MovementId, messageId: MessageId, movementType: MovementType): String =
     movementType match {
       case MovementType.Departure => routing.routes.DeparturesRouter.getMessage(movementId.value, messageId.value).urlWithContext
       case MovementType.Arrival   => routing.routes.ArrivalsRouter.getArrivalMessage(movementId.value, messageId.value).urlWithContext
     }
 
-  def getMessagesUri(movementId: MovementId, receivedSince: Option[OffsetDateTime], movementType: MovementType) =
+  def getMessagesUri(movementId: MovementId, receivedSince: Option[OffsetDateTime], movementType: MovementType): String =
     movementType match {
       case MovementType.Arrival =>
         routing.routes.ArrivalsRouter
@@ -47,13 +47,13 @@ trait HateoasResponse {
           .urlWithContext
     }
 
-  def getMovementUri(movementId: MovementId, movementType: MovementType) =
+  def getMovementUri(movementId: MovementId, movementType: MovementType): String =
     movementType match {
       case MovementType.Arrival   => routing.routes.ArrivalsRouter.getArrival(movementId.value).urlWithContext
       case MovementType.Departure => routing.routes.DeparturesRouter.getDeparture(movementId.value).urlWithContext
     }
 
-  def getMovementsUri(movementType: MovementType, updatedSince: Option[OffsetDateTime]) =
+  def getMovementsUri(movementType: MovementType, updatedSince: Option[OffsetDateTime]): String =
     movementType match {
       case MovementType.Arrival   => routing.routes.ArrivalsRouter.getArrivalsForEori(updatedSince).urlWithContext
       case MovementType.Departure => routing.routes.DeparturesRouter.getDeparturesForEori(updatedSince).urlWithContext

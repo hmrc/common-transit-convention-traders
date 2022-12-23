@@ -92,7 +92,7 @@ class XmlValidationService @Inject() (appConfig: AppConfig) {
     } catch {
       case e: Throwable =>
         logger.warn(e.getMessage)
-        Left(FailedToValidateXml(XmlError.FailedSchemaValidationMessage format (Utils.lastFragment(xsdFile.FilePath), e.getMessage)))
+        Left(FailedToValidateXml(XmlError.FailedSchemaValidationMessage.format(Utils.lastFragment(xsdFile.FilePath), e.getMessage)))
     }
 }
 

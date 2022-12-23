@@ -76,7 +76,7 @@ class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClient
 
         httpClientV2
           .post(url"$url")
-          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
+          .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON))
           .withBody(Json.toJson(pushNotificationsAssociation))
           .executeAndExpect(CREATED)
     }
