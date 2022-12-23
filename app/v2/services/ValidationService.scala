@@ -22,10 +22,14 @@ import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import play.api.Logging
 import play.api.http.Status.BAD_REQUEST
+import play.api.http.Status.NOT_FOUND
+import play.api.libs.json.JsSuccess
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.ValidationConnector
 import v2.models.errors.FailedToValidateError
+import v2.models.errors.StandardError
 import v2.models.request.MessageType
 
 import javax.inject.Inject
@@ -63,14 +67,7 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
           case None           => Right(())
           case Some(response) => Left(FailedToValidateError.XmlSchemaFailedToValidateError(response.validationErrors))
         }
-        .recover {
-          // A bad request might be returned if the stream doesn't contain XML, in which case, we need to return a bad request.
-          case UpstreamErrorResponse(_, BAD_REQUEST, _, _) =>
-            // This can only be a message type error
-            Left(FailedToValidateError.InvalidMessageTypeError(messageType.toString))
-          case upstreamError: UpstreamErrorResponse => Left(FailedToValidateError.UnexpectedError(Some(upstreamError)))
-          case NonFatal(e)                          => Left(FailedToValidateError.UnexpectedError(Some(e)))
-        }
+        .recover(recoverFromError(messageType))
     )
 
   override def validateJson(messageType: MessageType, source: Source[ByteString, _])(implicit
@@ -81,18 +78,25 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
       validationConnector
         .postJson(messageType, source)
         .map {
-          case None => Right(())
-          case Some(response) =>
-            Left(FailedToValidateError.JsonSchemaFailedToValidateError(response.validationErrors))
+          case None           => Right(())
+          case Some(response) => Left(FailedToValidateError.JsonSchemaFailedToValidateError(response.validationErrors))
         }
-        .recover {
-          // A bad request might be returned if the stream doesn't contain XML/JSON, in which case, we need to return a bad request.
-          case UpstreamErrorResponse(_, BAD_REQUEST, _, _) =>
-            // This can only be a message type error
-            Left(FailedToValidateError.InvalidMessageTypeError(messageType.toString))
-          case upstreamError: UpstreamErrorResponse => Left(FailedToValidateError.UnexpectedError(Some(upstreamError)))
-          case NonFatal(e)                          => Left(FailedToValidateError.UnexpectedError(Some(e)))
-        }
+        .recover(recoverFromError(messageType))
     )
+
+  private def recoverFromError(messageType: MessageType): PartialFunction[Throwable, Either[FailedToValidateError, Unit]] = {
+    // A bad request might be returned if the stream doesn't contain XML/JSON, in which case, we need to return a bad request.
+    case UpstreamErrorResponse(_, NOT_FOUND, _, _) =>
+      // This can only be a message type error
+      Left(FailedToValidateError.InvalidMessageTypeError(messageType.toString))
+    case UpstreamErrorResponse(message, BAD_REQUEST, _, _) =>
+      // This is a parse error, let's get the message out
+      Json.parse(message).validate[StandardError] match {
+        case JsSuccess(value, _) => Left(FailedToValidateError.ParsingError(value.message))
+        case _                   => Left(FailedToValidateError.UnexpectedError(None))
+      }
+    case upstreamError: UpstreamErrorResponse => Left(FailedToValidateError.UnexpectedError(Some(upstreamError)))
+    case NonFatal(e)                          => Left(FailedToValidateError.UnexpectedError(Some(e)))
+  }
 
 }
