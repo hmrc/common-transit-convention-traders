@@ -157,7 +157,7 @@ traits:
           required: false
           type: string
           description: This is an optional query parameter that you can use to filter for departure declarations that were submitted with a specified movement EORI.
-          example: ezv3Z
+          example: GB1234567890
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
@@ -186,7 +186,7 @@ traits:
                     "created":"2022-11-10T15:32:51.459Z",
                     "updated":"2022-11-10T15:32:51.459Z",
                     "enrollmentEORINumber": "GB1234567890",
-                    "movementEORINumber": "ezv3Z"
+                    "movementEORINumber": "GB1234567890"
                   ]
                 }
     /{departureId}:
@@ -477,7 +477,7 @@ traits:
           required: false
           type: string
           description: This is an optional query parameter that you can use to filter for arrivals that were submitted with a specified movement EORI.
-          example: ezv3Z
+          example: GB1234567890
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
@@ -507,7 +507,7 @@ traits:
                       "created": "2022-11-04T13:36:52.332Z",
                       "updated": "2022-11-04T13:36:52.332Z",
                       "enrollmentEORINumber": "9999912345",
-                      "movementEORINumber": "ezv3Z"
+                      "movementEORINumber": "GB1234567890"
                     },
                     {
                       "_links": {
@@ -523,7 +523,7 @@ traits:
                       "created": "2022-11-04T13:27:55.522Z",
                       "updated": "2022-11-04T13:27:55.522Z",
                       "enrollmentEORINumber": "9999912345",
-                      "movementEORINumber": "ezv3Z"
+                      "movementEORINumber": "GB1234567890"
                     }
                   ]
                 }
