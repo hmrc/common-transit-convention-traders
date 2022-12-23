@@ -16,26 +16,17 @@
 
 package v2.models
 
-import play.api.mvc.{PathBindable, QueryStringBindable}
+import play.api.mvc.PathBindable
 
 object Bindings {
 
-  val idPattern = "^[A-Z]{2}[a-zA-Z0-9]{15}$".r
+  val idPattern = "^[0-9a-f]{16}$".r
 
   def hexBinding[T](bindFn: String => T, unbindFn: T => String): PathBindable[T] = new PathBindable[T] {
 
     override def bind(key: String, value: String): Either[String, T] =
       if (idPattern.pattern.matcher(value).matches()) Right(bindFn(value))
       else Left(s"$key: Value $value is not a 16 character hexadecimal string")
-
-    override def unbind(key: String, value: T): String = unbindFn(value)
-  }
-
-  def movementEORIBinding[T](bindFn: String => T, unbindFn: T => String): QueryStringBindable[T] = new QueryStringBindable[T] {
-
-    override def bind(key: String, value: String): Either[String, T] =
-      if (idPattern.pattern.matcher(value).matches()) Right(bindFn(value))
-      else Left(s"$key: Value $value is not a valid string")
 
     override def unbind(key: String, value: T): String = unbindFn(value)
   }
