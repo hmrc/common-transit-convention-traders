@@ -32,6 +32,13 @@ object Binders {
     )
   }
 
+  implicit val eoriNumberQueryStringBindable: QueryStringBindable[EORINumber] =
+    new QueryStringBindable.Parsing[EORINumber](
+      EORINumber.apply,
+      _.value,
+      (param, _) => s"Cannot parse parameter $param as a valid string format"
+    )
+
   // needed for the reverse routing
   implicit val optionOffsetDateTimeQueryStringBindable: QueryStringBindable[Option[OffsetDateTime]] =
     QueryStringBindable.bindableOption[OffsetDateTime]
