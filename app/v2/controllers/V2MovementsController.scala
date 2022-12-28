@@ -42,7 +42,6 @@ import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models.AuditType
-import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType

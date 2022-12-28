@@ -125,8 +125,8 @@ class GuaranteeXmlReaders extends ParseHandling {
           case gType if !Guarantee.validTypes.contains(gType.head) => Left(GuaranteeTypeInvalid("GuaTypGUA1 was not a valid type"))
           case gType if Guarantee.validTypes.contains(gType.head) =>
             val gChar               = gType.head
-            val guaranteeReferences = (xml \ "GUAREFREF").theSeq
-            val gParse = if (Guarantee.isOther(gChar)) {
+            val guaranteeReferences = (xml \ "GUAREFREF").theSeq.toSeq
+            val gParse: Seq[ParseHandler[Guarantee]] = if (Guarantee.isOther(gChar)) {
               guaranteeReferences.map(internal("OthGuaRefREF4", gChar, NoOtherGuaranteeField("OthGuaRefREF4 was empty")))
             } else {
               guaranteeReferences.map(internal("GuaRefNumGRNREF1", gChar, NoGuaranteeReferenceNumber("GuaRefNumGRNREF1 was empty")))
