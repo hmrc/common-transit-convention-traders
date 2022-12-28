@@ -1,4 +1,4 @@
-GET        /movements/arrivals                                      routing.ArrivalsRouter.getArrivalsForEori(updatedSince: Option[OffsetDateTime] ?= None)
+GET        /movements/arrivals                                      routing.ArrivalsRouter.getArrivalsForEori(updatedSince: Option[OffsetDateTime] ?= None, movementEORI: Option[EORINumber] ?= None)
 POST       /movements/arrivals                                      routing.ArrivalsRouter.createArrivalNotification()
 
 PUT        /movements/arrivals/:arrivalId                           controllers.ArrivalMovementController.resubmitArrivalNotification(arrivalId: ArrivalId)
@@ -11,7 +11,7 @@ GET        /movements/arrivals/:arrivalId/messages/:messageId       routing.Arri
 
 
 
-GET        /movements/departures                                    routing.DeparturesRouter.getDeparturesForEori(updatedSince: Option[OffsetDateTime] ?= None)
+GET        /movements/departures                                    routing.DeparturesRouter.getDeparturesForEori(updatedSince: Option[OffsetDateTime] ?= None, movementEORI: Option[EORINumber] ?= None)
 POST       /movements/departures                                    routing.DeparturesRouter.submitDeclaration()
 
 GET        /movements/departures/:departureId                       routing.DeparturesRouter.getDeparture(departureId: String)

@@ -289,28 +289,30 @@ class MovementsServiceSpec
     "when a departure (movement) is found, should return a Right" in forAll(
       Gen.listOfN(3, arbitrary[MovementSummary]),
       Gen.option(arbitrary[OffsetDateTime]),
+      Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber]
     ) {
 
-      (expected, updatedSinceMaybe, eori) =>
-        when(mockConnector.getMovements(eori, MovementType.Departure, updatedSinceMaybe))
+      (expected, updatedSinceMaybe, movementEORI, eori) =>
+        when(mockConnector.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI))
           .thenReturn(Future.successful(expected))
 
-        val result = sut.getMovements(eori, MovementType.Departure, updatedSinceMaybe)
+        val result = sut.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI)
         whenReady(result.value) {
           _ mustBe Right(expected)
         }
     }
 
-    "when a departure is not found, should return a Left with an DeparturesNotFound" in forAll(
+    "when a departure is not found, should return a Left with an MovementsNotFound" in forAll(
       Gen.option(arbitrary[OffsetDateTime]),
+      Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber]
     ) {
-      (updatedSinceMaybe, eori) =>
-        when(mockConnector.getMovements(eori, MovementType.Departure, updatedSinceMaybe))
+      (updatedSinceMaybe, movementEORI, eori) =>
+        when(mockConnector.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI))
           .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-        val result = sut.getMovements(eori, MovementType.Departure, updatedSinceMaybe)
+        val result = sut.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.MovementsNotFound(eori, MovementType.Departure))
         }
@@ -318,14 +320,15 @@ class MovementsServiceSpec
 
     "on a failed submission, should return a Left with an UnexpectedError" in forAll(
       Gen.option(arbitrary[OffsetDateTime]),
+      Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber]
     ) {
-      (updatedSinceMaybe, eori) =>
+      (updatedSinceMaybe, movementEORI, eori) =>
         val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
-        when(mockConnector.getMovements(eori, MovementType.Departure, updatedSinceMaybe))
+        when(mockConnector.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI))
           .thenReturn(Future.failed(error))
 
-        val result = sut.getMovements(eori, MovementType.Departure, updatedSinceMaybe)
+        val result = sut.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
         }
@@ -416,28 +419,30 @@ class MovementsServiceSpec
     "when an arrival (movement) is found, should return a Right" in forAll(
       Gen.listOfN(3, arbitrary[MovementSummary]),
       Gen.option(arbitrary[OffsetDateTime]),
+      Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber]
     ) {
 
-      (expected, updatedSinceMaybe, eori) =>
-        when(mockConnector.getMovements(eori, MovementType.Arrival, updatedSinceMaybe))
+      (expected, updatedSinceMaybe, movementEORI, eori) =>
+        when(mockConnector.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI))
           .thenReturn(Future.successful(expected))
 
-        val result = sut.getMovements(eori, MovementType.Arrival, updatedSinceMaybe)
+        val result = sut.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI)
         whenReady(result.value) {
           _ mustBe Right(expected)
         }
     }
 
-    "when an arrival is not found, should return a Left with an ArrivalsNotFound" in forAll(
+    "when an arrival is not found, should return a Left with an MovementsNotFound" in forAll(
       Gen.option(arbitrary[OffsetDateTime]),
+      Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber]
     ) {
-      (updatedSinceMaybe, eori) =>
-        when(mockConnector.getMovements(eori, MovementType.Arrival, updatedSinceMaybe))
+      (updatedSinceMaybe, movementEORI, eori) =>
+        when(mockConnector.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI))
           .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-        val result = sut.getMovements(eori, MovementType.Arrival, updatedSinceMaybe)
+        val result = sut.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.MovementsNotFound(eori, MovementType.Arrival))
         }
@@ -445,14 +450,15 @@ class MovementsServiceSpec
 
     "on a failed submission, should return a Left with an UnexpectedError" in forAll(
       Gen.option(arbitrary[OffsetDateTime]),
+      Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber]
     ) {
-      (updatedSinceMaybe, eori) =>
+      (updatedSinceMaybe, movementEORI, eori) =>
         val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
-        when(mockConnector.getMovements(eori, MovementType.Arrival, updatedSinceMaybe))
+        when(mockConnector.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI))
           .thenReturn(Future.failed(error))
 
-        val result = sut.getMovements(eori, MovementType.Arrival, updatedSinceMaybe)
+        val result = sut.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
         }

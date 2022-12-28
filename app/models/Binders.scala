@@ -18,8 +18,8 @@ package models
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
-
 import play.api.mvc.QueryStringBindable
+import v2.models.EORINumber
 
 object Binders {
 
@@ -35,4 +35,7 @@ object Binders {
   // needed for the reverse routing
   implicit val optionOffsetDateTimeQueryStringBindable: QueryStringBindable[Option[OffsetDateTime]] =
     QueryStringBindable.bindableOption[OffsetDateTime]
+
+  implicit val optionEORINumberQueryStringBindable: QueryStringBindable[Option[EORINumber]] =
+    QueryStringBindable.bindableOption[EORINumber]
 }

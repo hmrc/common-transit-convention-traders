@@ -23,16 +23,17 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
+import config.Constants
 import io.lemonlabs.uri.Url
+import io.lemonlabs.uri.config.ExcludeNones
 import metrics.HasMetrics
 import metrics.MetricsKeys
-import config.Constants
 import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status.OK
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -74,7 +75,7 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[MovementSummary]
 
-  def getMovements(eori: EORINumber, movementType: MovementType, updatedSince: Option[OffsetDateTime])(implicit
+  def getMovements(eori: EORINumber, movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MovementSummary]]
@@ -177,18 +178,17 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       }
   }
 
-  override def getMovements(eori: EORINumber, movementType: MovementType, updatedSince: Option[OffsetDateTime])(implicit
+  override def getMovements(eori: EORINumber, movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MovementSummary]] = {
-    val url = withDateTimeParameter(
+    val urlWithOptions = withParameters(
       appConfig.movementsUrl.withPath(getAllMovementsUrl(eori, movementType)),
-      "updatedSince",
-      updatedSince
+      updatedSince,
+      movementEORI
     )
-
     httpClientV2
-      .get(url"$url")
+      .get(url"$urlWithOptions")
       .transform(_.addHttpHeaders(HeaderNames.ACCEPT -> MimeTypes.JSON))
       .execute[HttpResponse]
       .flatMap {
@@ -227,5 +227,16 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
         time => urlPath.addParam(queryName, DateTimeFormatter.ISO_DATE_TIME.format(time))
       )
       .getOrElse(urlPath)
+
+  def withParameters(urlPath: Url, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]) =
+    urlPath
+      .withConfig(urlPath.config.copy(renderQuery = ExcludeNones))
+      .addParam(
+        "updatedSince",
+        updatedSince.map(
+          time => DateTimeFormatter.ISO_DATE_TIME.format(time)
+        )
+      )
+      .addParam("movementEORI", movementEORI.map(_.value))
 
 }

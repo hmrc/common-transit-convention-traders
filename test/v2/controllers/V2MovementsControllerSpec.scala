@@ -35,7 +35,6 @@ import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import org.mockito.invocation.InvocationOnMock
-import org.mockito.stubbing.OngoingStubbing
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.BeforeAndAfterEach
@@ -60,7 +59,6 @@ import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.TestMetrics
 import v2.base.CommonGenerators
 import v2.base.TestActorSystem
@@ -80,7 +78,6 @@ import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
-import v2.services.ResponseFormatterService
 import v2.services._
 
 import java.nio.charset.StandardCharsets
@@ -92,7 +89,6 @@ import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.Try
 import scala.xml.NodeSeq
-import scala.xml.XML
 
 class V2MovementsControllerSpec
     extends AnyFreeSpec
@@ -1590,7 +1586,7 @@ class V2MovementsControllerSpec
         val departureResponses = Seq(departureResponse1, departureResponse2)
 
         when(
-          mockMovementsPersistenceService.getMovements(EORINumber(any()), any[MovementType], any[Option[OffsetDateTime]])(
+          mockMovementsPersistenceService.getMovements(EORINumber(any()), any[MovementType], any[Option[OffsetDateTime]], any[Option[EORINumber]])(
             any[HeaderCarrier],
             any[ExecutionContext]
           )
@@ -1604,13 +1600,14 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None)(request)
+        val result = sut.getMovements(movementType, None, None)(request)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(
           HateoasMovementIdsResponse(
             departureResponses,
             movementType,
+            None,
             None
           )
         )
@@ -1620,7 +1617,7 @@ class V2MovementsControllerSpec
         val eori = EORINumber("ERROR")
 
         when(
-          mockMovementsPersistenceService.getMovements(EORINumber(any()), any[MovementType], any[Option[OffsetDateTime]])(
+          mockMovementsPersistenceService.getMovements(EORINumber(any()), any[MovementType], any[Option[OffsetDateTime]], any[Option[EORINumber]])(
             any[HeaderCarrier],
             any[ExecutionContext]
           )
@@ -1635,7 +1632,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None)(request)
+        val result = sut.getMovements(movementType, None, None)(request)
 
         status(result) mustBe NOT_FOUND
         contentAsJson(result) mustBe Json.obj(
@@ -1646,7 +1643,7 @@ class V2MovementsControllerSpec
 
       "should return unexpected error for all other errors" in {
         when(
-          mockMovementsPersistenceService.getMovements(EORINumber(any()), any[MovementType], any[Option[OffsetDateTime]])(
+          mockMovementsPersistenceService.getMovements(EORINumber(any()), any[MovementType], any[Option[OffsetDateTime]], any[Option[EORINumber]])(
             any[HeaderCarrier],
             any[ExecutionContext]
           )
@@ -1661,7 +1658,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None)(request)
+        val result = sut.getMovements(movementType, None, None)(request)
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         contentAsJson(result) mustBe Json.obj(

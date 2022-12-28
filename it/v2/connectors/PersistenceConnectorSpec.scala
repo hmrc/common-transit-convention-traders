@@ -654,17 +654,46 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getMovements(eori, MovementType.Departure, None)
+      val result      = persistenceConnector.getMovements(eori, MovementType.Departure, None, None)
       whenReady(result) {
         _ mustBe movementSummaryList
       }
     }
 
+    "on success with a date time and movementEORI filter, return a list of departure IDs" in forAll(
+      Gen.listOfN(3, arbitraryMovementSummary.arbitrary),
+      arbitrary[OffsetDateTime],
+      arbitrary[EORINumber]
+    ) {
+      (movementSummaryList, updatedSince, movementEORI) =>
+        server.stubFor(
+          get(
+            urlPathEqualTo(targetUrl(eori))
+          )
+            .withQueryParam("updatedSince", equalTo(DateTimeFormatter.ISO_DATE_TIME.format(updatedSince)))
+            .withQueryParam("movementEORI", equalTo(movementEORI.value))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  Json.toJson(movementSummaryList).toString()
+                )
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val result      = persistenceConnector.getMovements(eori, MovementType.Departure, Some(updatedSince), Some(movementEORI))
+        whenReady(result) {
+          _ mustBe movementSummaryList
+        }
+    }
+
     "on success with a date time filter, return a list of departure IDs" in forAll(
       Gen.listOfN(3, arbitraryMovementSummary.arbitrary),
-      arbitrary[OffsetDateTime]
+      arbitrary[OffsetDateTime],
+      None
     ) {
-      (movementSummaryList, updatedSince) =>
+      (movementSummaryList, updatedSince, movementEORI) =>
         server.stubFor(
           get(
             urlPathEqualTo(targetUrl(eori))
@@ -680,7 +709,33 @@ class PersistenceConnectorSpec
         )
 
         implicit val hc = HeaderCarrier()
-        val result      = persistenceConnector.getMovements(eori, MovementType.Departure, Some(updatedSince))
+        val result      = persistenceConnector.getMovements(eori, MovementType.Departure, Some(updatedSince), movementEORI)
+        whenReady(result) {
+          _ mustBe movementSummaryList
+        }
+    }
+
+    "on success with movementEORI filter, return a list of departure IDs" in forAll(
+      Gen.listOfN(3, arbitraryMovementSummary.arbitrary),
+      None,
+      arbitrary[EORINumber]
+    ) {
+      (movementSummaryList, updatedSince, movementEORI) =>
+        server.stubFor(
+          get(
+            urlEqualTo(targetUrl(eori) + s"?movementEORI=${movementEORI.value}")
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  Json.toJson(movementSummaryList).toString()
+                )
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val result      = persistenceConnector.getMovements(eori, MovementType.Departure, updatedSince, Some(movementEORI))
         whenReady(result) {
           _ mustBe movementSummaryList
         }
@@ -701,7 +756,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getMovements(eori, MovementType.Departure, None)
+        .getMovements(eori, MovementType.Departure, None, None)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -736,7 +791,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getMovements(eori, MovementType.Departure, None)
+        .getMovements(eori, MovementType.Departure, None, None)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
@@ -1201,14 +1256,46 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getMovements(eori, MovementType.Arrival, None)
+      val result      = persistenceConnector.getMovements(eori, MovementType.Arrival, None, None)
       whenReady(result) {
         _ mustBe movementSummaryList
       }
     }
 
-    "on success with a date time filter, return a list of arrivals" in forAll(Gen.listOfN(3, arbitraryMovementSummary.arbitrary), arbitrary[OffsetDateTime]) {
-      (movementSummaryList, updatedSince) =>
+    "on success with a date time and movementEORI filter, return a list of arrivals" in forAll(
+      Gen.listOfN(3, arbitraryMovementSummary.arbitrary),
+      arbitrary[OffsetDateTime],
+      arbitrary[EORINumber]
+    ) {
+      (movementSummaryList, updatedSince, movementEORI) =>
+        server.stubFor(
+          get(
+            urlPathEqualTo(targetUrl(eori))
+          )
+            .withQueryParam("updatedSince", equalTo(DateTimeFormatter.ISO_DATE_TIME.format(updatedSince)))
+            .withQueryParam("movementEORI", equalTo(movementEORI.value))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  Json.toJson(movementSummaryList).toString()
+                )
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val result      = persistenceConnector.getMovements(eori, MovementType.Arrival, Some(updatedSince), Some(movementEORI))
+        whenReady(result) {
+          _ mustBe movementSummaryList
+        }
+    }
+
+    "on success with a date time filter, return a list of arrivals" in forAll(
+      Gen.listOfN(3, arbitraryMovementSummary.arbitrary),
+      arbitrary[OffsetDateTime],
+      None
+    ) {
+      (movementSummaryList, updatedSince, movementEORI) =>
         server.stubFor(
           get(
             urlPathEqualTo(targetUrl(eori))
@@ -1224,7 +1311,33 @@ class PersistenceConnectorSpec
         )
 
         implicit val hc = HeaderCarrier()
-        val result      = persistenceConnector.getMovements(eori, MovementType.Arrival, Some(updatedSince))
+        val result      = persistenceConnector.getMovements(eori, MovementType.Arrival, Some(updatedSince), movementEORI)
+        whenReady(result) {
+          _ mustBe movementSummaryList
+        }
+    }
+
+    "on success with movementEORI filter, return a list of arrivals" in forAll(
+      Gen.listOfN(3, arbitraryMovementSummary.arbitrary),
+      None,
+      arbitrary[EORINumber]
+    ) {
+      (movementSummaryList, updatedSince, movementEORI) =>
+        server.stubFor(
+          get(
+            urlEqualTo(targetUrl(eori) + s"?movementEORI=${movementEORI.value}")
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  Json.toJson(movementSummaryList).toString()
+                )
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val result      = persistenceConnector.getMovements(eori, MovementType.Arrival, updatedSince, Some(movementEORI))
         whenReady(result) {
           _ mustBe movementSummaryList
         }
@@ -1245,7 +1358,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getMovements(eori, MovementType.Arrival, None)
+        .getMovements(eori, MovementType.Arrival, None, None)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -1280,7 +1393,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getMovements(eori, MovementType.Arrival, None)
+        .getMovements(eori, MovementType.Arrival, None, None)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
