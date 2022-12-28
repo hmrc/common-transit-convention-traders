@@ -49,9 +49,9 @@ trait ErrorTranslator {
     def convert(validationError: FailedToValidateError): PresentationError = validationError match {
       case UnexpectedError(thr)                              => PresentationError.internalServiceError(cause = thr)
       case InvalidMessageTypeError(messageType)              => PresentationError.badRequestError(s"$messageType is not a valid message type")
+      case ParsingError(message)                             => PresentationError.badRequestError(message)
       case XmlSchemaFailedToValidateError(validationErrors)  => PresentationError.xmlSchemaValidationError(validationErrors = validationErrors)
       case JsonSchemaFailedToValidateError(validationErrors) => PresentationError.jsonSchemaValidationError(validationErrors = validationErrors)
-
     }
   }
 

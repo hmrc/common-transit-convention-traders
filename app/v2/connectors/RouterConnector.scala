@@ -66,7 +66,7 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
 
         httpClientV2
           .post(url"$url")
-          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code)
+          .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code))
           .withBody(body)
           .executeAndExpect(ACCEPTED)
     }

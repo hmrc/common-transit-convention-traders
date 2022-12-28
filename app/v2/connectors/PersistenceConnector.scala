@@ -104,7 +104,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
         httpClientV2
           .post(url"$url")
-          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+          .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML))
           .withBody(source)
           .execute[HttpResponse]
           .flatMap {
@@ -124,7 +124,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     val url = appConfig.movementsUrl.withPath(getMessageUrl(eori, movementType, movementId, messageId))
     httpClientV2
       .get(url"$url")
-      .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+      .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML))
       .execute[HttpResponse]
       .flatMap {
         response =>
@@ -148,7 +148,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .get(url"$url")
-      .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+      .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML))
       .execute[HttpResponse]
       .flatMap {
         response =>
@@ -167,7 +167,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .get(url"$url")
-      .addHeaders(HeaderNames.ACCEPT -> MimeTypes.JSON)
+      .transform(_.addHttpHeaders(HeaderNames.ACCEPT -> MimeTypes.JSON))
       .execute[HttpResponse]
       .flatMap {
         response =>
@@ -189,7 +189,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     )
     httpClientV2
       .get(url"$urlWithOptions")
-      .addHeaders(HeaderNames.ACCEPT -> MimeTypes.JSON)
+      .transform(_.addHttpHeaders(HeaderNames.ACCEPT -> MimeTypes.JSON))
       .execute[HttpResponse]
       .flatMap {
         response =>
@@ -209,7 +209,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
         val url = appConfig.movementsUrl.withPath(postMessageUrl(movementId))
         httpClientV2
           .post(url"$url")
-          .addHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code)
+          .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code))
           .withBody(source)
           .execute[HttpResponse]
           .flatMap {

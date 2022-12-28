@@ -65,7 +65,7 @@ class ConversionConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
 
         httpClientV2
           .post(url"$url")
-          .addHeaders(headerType.header: _*)
+          .transform(_.addHttpHeaders(headerType.header: _*))
           .withBody(jsonStream)
           .executeAsStream
     }
