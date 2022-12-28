@@ -31,16 +31,13 @@ object HateoasNewMovementResponse extends HateoasResponse {
       "messages" -> Json.obj("href" -> getMessagesUri(movementId, None, movementType))
     )
 
-    if (boxResponse.isDefined) {
-      Json.obj(
-        "_links" -> jsObject,
-        "boxId"  -> boxResponse.get.boxId.value
-      )
-    } else {
-      Json.obj(
-        "_links" -> jsObject
-      )
-    }
+    Json.obj("_links" -> jsObject) ++
+      boxResponse
+        .map(
+          r => Json.obj("boxId" -> r.boxId.value)
+        )
+        .getOrElse(Json.obj())
+
   }
 
 }

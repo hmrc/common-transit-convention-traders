@@ -334,7 +334,7 @@ class V2MovementsControllerImpl @Inject() (
         .asPresentation
     } yield MovementResponse(movementResponse.movementId, movementResponse.messageId, boxResponse)
 
-  def mapToBoxResponse(boxResponse: EitherT[Future, PushNotificationError, BoxResponse]): EitherT[Future, PresentationError, Option[BoxResponse]] =
+  private def mapToBoxResponse(boxResponse: EitherT[Future, PushNotificationError, BoxResponse]): EitherT[Future, PresentationError, Option[BoxResponse]] =
     EitherT[Future, PresentationError, Option[BoxResponse]] {
       boxResponse.fold(
         _ => Right(None),
