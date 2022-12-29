@@ -32,6 +32,7 @@ import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.errors.PushNotificationError
 import v2.models.request.PushNotificationsAssociation
+import v2.models.responses.BoxResponse
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -43,7 +44,7 @@ trait PushNotificationsService {
   def associate(movementId: MovementId, movementType: MovementType, headers: Headers)(implicit
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
-  ): EitherT[Future, PushNotificationError, Unit]
+  ): EitherT[Future, PushNotificationError, BoxResponse]
 
   def update(movementId: MovementId)(implicit headerCarrier: HeaderCarrier, executionContext: ExecutionContext): EitherT[Future, PushNotificationError, Unit]
 
@@ -57,8 +58,8 @@ class PushNotificationsServiceImpl @Inject() (
   override def associate(movementId: MovementId, movementType: MovementType, headers: Headers)(implicit
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
-  ): EitherT[Future, PushNotificationError, Unit] =
-    if (!appConfig.pushNotificationsEnabled) EitherT.rightT(())
+  ): EitherT[Future, PushNotificationError, BoxResponse] =
+    if (!appConfig.pushNotificationsEnabled) EitherT.leftT(PushNotificationError.PushNotificationDisabled)
     else
       EitherT {
         headers

@@ -39,6 +39,8 @@ import play.api.http.Status.CREATED
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.Status.NOT_FOUND
 import play.api.http.Status.NO_CONTENT
+import play.api.http.Status.OK
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
@@ -72,7 +74,7 @@ class PushNotificationsConnectorSpec
 
     def targetUrl(movementId: MovementId) = s"/transit-movements-push-notifications/traders/movements/${movementId.value}/box"
 
-    "when sending a result that returns Created, unit is returned" in forAll(arbitrary[MovementId], arbitrary[PushNotificationsAssociation]) {
+    "when sending a result that returns Created, boxResponse is returned" in forAll(arbitrary[MovementId], arbitrary[PushNotificationsAssociation]) {
       (movementId, assoc) =>
         val mapping =
           post(
@@ -83,6 +85,7 @@ class PushNotificationsConnectorSpec
             .withRequestBody(matchingJsonPath(s"$$[?(@.movementType == '${assoc.movementType.movementType}')]"))
             .willReturn(aResponse().withStatus(CREATED))
 
+        val boxResponse = arbitraryBoxResponse.arbitrary.sample.get
         // given this endpoint
         server.stubFor(
           // ifwe have a box, make sure that is in the Json too.
@@ -91,13 +94,20 @@ class PushNotificationsConnectorSpec
               box => mapping.withRequestBody(matchingJsonPath(s"$$[?(@.boxId == '${box.value}')]"))
             )
             .getOrElse(mapping)
+            .willReturn(
+              aResponse()
+                .withStatus(CREATED)
+                .withBody(
+                  Json.stringify(Json.toJson(boxResponse))
+                )
+            )
         )
 
         implicit val hc = HeaderCarrier()
 
         val result = sut.postAssociation(movementId, assoc)
         whenReady(result) {
-          _ => // if we get here, we have a success and a Unit, so all is okay!
+          _ mustBe boxResponse
         }
     }
 

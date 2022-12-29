@@ -22,12 +22,14 @@ import org.scalacheck.Gen
 import v2.models._
 import v2.models.request.MessageType
 import v2.models.request.PushNotificationsAssociation
+import v2.models.responses.BoxResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementSummary
 
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import java.util.UUID
 import scala.math.abs
 
 trait CommonGenerators {
@@ -99,5 +101,16 @@ trait CommonGenerators {
         offsetDateTime <- arbitrary[OffsetDateTime]
         messageType    <- arbitrary[MessageType]
       } yield MessageSummary(id, offsetDateTime, messageType, None)
+    }
+
+  implicit lazy val arbitraryBoxId: Arbitrary[BoxId] = Arbitrary {
+    Gen.delay(BoxId(UUID.randomUUID.toString))
+  }
+
+  implicit lazy val arbitraryBoxResponse: Arbitrary[BoxResponse] =
+    Arbitrary {
+      for {
+        boxId <- arbitrary[BoxId]
+      } yield BoxResponse(boxId)
     }
 }

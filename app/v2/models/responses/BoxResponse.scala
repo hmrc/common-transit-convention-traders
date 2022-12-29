@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package v2.models.errors
+package v2.models.responses
 
-sealed trait PushNotificationError
+import play.api.libs.json.Json
+import v2.models.BoxId
 
-object PushNotificationError {
+case class BoxResponse(boxId: BoxId)
 
-  case object MissingClientId                               extends PushNotificationError
-  case object PushNotificationDisabled                      extends PushNotificationError
-  case object AssociationNotFound                           extends PushNotificationError
-  case class UnexpectedError(thr: Option[Throwable] = None) extends PushNotificationError
-
+object BoxResponse {
+  implicit val boxResponseFormat = Json.format[BoxResponse]
 }

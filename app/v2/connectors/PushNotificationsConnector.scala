@@ -24,7 +24,6 @@ import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
-import play.api.http.Status.CREATED
 import play.api.http.Status.NO_CONTENT
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
@@ -32,6 +31,7 @@ import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.MovementId
 import v2.models.request.PushNotificationsAssociation
+import v2.models.responses.BoxResponse
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -47,7 +47,7 @@ trait PushNotificationsConnector {
   def postAssociation(movementId: MovementId, pushNotificationsAssociation: PushNotificationsAssociation)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Unit]
+  ): Future[BoxResponse]
 
 }
 
@@ -69,7 +69,7 @@ class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClient
   override def postAssociation(movementId: MovementId, pushNotificationsAssociation: PushNotificationsAssociation)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Unit] =
+  ): Future[BoxResponse] =
     withMetricsTimerAsync(MetricsKeys.PushNotificationsBacked.Post) {
       _ =>
         val url = appConfig.pushNotificationsUrl.withPath(pushNotificationsBoxRoute(movementId))
@@ -78,7 +78,7 @@ class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClient
           .post(url"$url")
           .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON))
           .withBody(Json.toJson(pushNotificationsAssociation))
-          .executeAndExpect(CREATED)
+          .execute[BoxResponse]
     }
 
 }
