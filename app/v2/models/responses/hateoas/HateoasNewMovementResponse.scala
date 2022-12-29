@@ -18,7 +18,6 @@ package v2.models.responses.hateoas
 
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import v2.models.BoxId
 import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.responses.BoxResponse
