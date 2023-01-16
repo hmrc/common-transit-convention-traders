@@ -62,6 +62,7 @@ object MessageType {
   case object RejectionFromOfficeOfDestination   extends ArrivalMessageType("IE057", "CC057C", AuditType.RejectionFromOfficeOfDestination)
   case object ControlDecisionNotification        extends DepartureMessageType("IE060", "CC060C", AuditType.ControlDecisionNotification)
   case object RequestOnNonArrivedMovement        extends DepartureMessageType("IE140", "CC140C", AuditType.RequestOnNonArrivedMovement)
+  case object ForwardedIncidentNotificationToED  extends DepartureMessageType("IE182", "CC182C", AuditType.ForwardedIncidentNotificationToED)
 
   case object PresentationNotificationForThePreLodgedDeclaration
       extends DepartureMessageType("IE170", "CC170C", AuditType.PresentationNotificationForThePreLodgedDeclaration)
@@ -92,7 +93,8 @@ object MessageType {
     ControlDecisionNotification,
     FunctionalNack,
     PositiveAcknowledge,
-    RequestOnNonArrivedMovement
+    RequestOnNonArrivedMovement,
+    ForwardedIncidentNotificationToED
   )
 
   val updateMessageTypesSentByArrivalTrader: Seq[MessageType] = Seq(
