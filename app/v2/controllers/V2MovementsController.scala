@@ -141,7 +141,7 @@ class V2MovementsControllerImpl @Inject() (
         (for {
           upscan <- mapToUpscanResponse(upscanService.upscanInitiate())
           _ = auditService.audit(AuditType.DeclarationData, request.body, MimeTypes.XML) // TODO - what data we need to send for auditing and mimetype
-          movementResponse <- persistAndSendToPPNS(request.body, MovementType.Departure)
+          movementResponse <- persistAndSendToPPNS(MovementType.Departure)
         } yield movementResponse.copy(upscanInitiateResponse = upscan)).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Accepted(HateoasNewMovementResponse(response.movementId, response.boxResponse, response.upscanInitiateResponse, MovementType.Departure))
@@ -351,16 +351,19 @@ class V2MovementsControllerImpl @Inject() (
       movementResponse <- movementsService.createMovement(request.eoriNumber, movementType, source).asPresentation
       boxResponse      <- mapToBoxResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
       _ <- routerService
-        .send(messageType, request.eoriNumber, movementResponse.movementId, movementResponse.messageId.get, source)  // TODO- shall we assume we always get messageId for small messages
+        .send(
+          messageType,
+          request.eoriNumber,
+          movementResponse.movementId,
+          movementResponse.messageId.get,
+          source
+        ) // TODO- shall we assume we always get messageId for small messages
         .asPresentation
     } yield MovementResponse(movementResponse.movementId, movementResponse.messageId, boxResponse)
 
-  private def persistAndSendToPPNS(
-    source: Source[ByteString, _],
-    movementType: MovementType
-   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
+  private def persistAndSendToPPNS(movementType: MovementType)(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
     for {
-      movementResponse <- movementsService.createMovement(request.eoriNumber, movementType, source).asPresentation
+      movementResponse <- movementsService.createMovementForLargeMessage(request.eoriNumber, movementType).asPresentation
       boxResponse      <- mapToBoxResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
     } yield MovementResponse(movementResponse.movementId, None, boxResponse, None)
 
