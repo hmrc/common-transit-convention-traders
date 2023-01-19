@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,10 @@ object MetricsKeys {
   object PushNotificationsBacked {
     val Post   = "push-notifications-backend-post"
     val Update = "push-notifications-backend-update"
+  }
+
+  object UpscanInitiateBacked {
+    val Post = "upscan-initiate-backend-post"
   }
 
   object Endpoints {

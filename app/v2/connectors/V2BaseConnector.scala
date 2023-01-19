@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,8 @@ trait V2BaseConnector extends HttpErrorFunctions {
 
   def pushNotificationsBoxRoute(movementId: MovementId): UrlPath =
     UrlPath.parse(s"$pushNotificationsBaseRoute/traders/movements/${movementId.value}/box")
+
+  def upscanInitiateRoute(): UrlPath = UrlPath.parse("/upscan/v2/initiate")
 
   implicit class HttpResponseHelpers(response: HttpResponse) {
 

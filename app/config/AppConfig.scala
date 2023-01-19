@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesCon
   val routerUrl                = Url.parse(servicesConfig.baseUrl("transit-movements-router"))
   val auditingUrl              = Url.parse(servicesConfig.baseUrl("transit-movements-auditing"))
   val pushNotificationsUrl     = Url.parse(servicesConfig.baseUrl("transit-movements-push-notifications"))
+  val upscanInitiateUrl        = Url.parse(servicesConfig.baseUrl("transit-movements-upscan-initiate"))
   val pushNotificationsEnabled = servicesConfig.config("transit-movements-push-notifications").get[Boolean]("enabled")
 
   lazy val enrolmentKey: String = config.get[String]("security.enrolmentKey")

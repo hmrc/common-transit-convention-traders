@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,11 @@ trait MovementsService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MovementResponse]
 
+  def createMovementForLargeMessage(eori: EORINumber, movementType: MovementType)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, MovementResponse]
+
   def getMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -87,6 +92,20 @@ class MovementsServiceImpl @Inject() (persistenceConnector: PersistenceConnector
     EitherT(
       persistenceConnector
         .postMovement(eori, movementType, source)
+        .map(Right(_))
+        .recover {
+          case NonFatal(thr) =>
+            Left(PersistenceError.UnexpectedError(Some(thr)))
+        }
+    )
+
+  override def createMovementForLargeMessage(eori: EORINumber, movementType: MovementType)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, MovementResponse] =
+    EitherT(
+      persistenceConnector
+        .postMovementForLargeMessage(eori, movementType)
         .map(Right(_))
         .recover {
           case NonFatal(thr) =>

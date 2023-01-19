@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,10 +48,13 @@ import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
+import v2.models.errors.UpscanInitiateError
 import v2.models.request.MessageType
+import v2.models.request.UpscanInitiate
 import v2.models.responses.BoxResponse
 import v2.models.responses.MovementResponse
 import v2.models.responses.UpdateMovementResponse
+import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.hateoas._
 import v2.services._
 import v2.utils.PreMaterialisedFutureProvider
@@ -85,6 +88,7 @@ class V2MovementsControllerImpl @Inject() (
   xmlParsingService: XmlMessageParsingService,
   jsonParsingService: JsonMessageParsingService,
   responseFormatterService: ResponseFormatterService,
+  upscanService: UpscanService,
   val preMaterialisedFutureProvider: PreMaterialisedFutureProvider
 )(implicit val materializer: Materializer, val temporaryFileCreator: TemporaryFileCreator)
     extends BaseController
@@ -110,6 +114,7 @@ class V2MovementsControllerImpl @Inject() (
         contentTypeRoute {
           case Some(MimeTypes.XML)  => submitDepartureDeclarationXML()
           case Some(MimeTypes.JSON) => submitDepartureDeclarationJSON()
+          case None                 => submitDepartureDeclarationLargeXML()
         }
     }
 
@@ -124,7 +129,22 @@ class V2MovementsControllerImpl @Inject() (
           movementResponse <- persistAndSendToEIS(request.body, MovementType.Departure, MessageType.DeclarationData)
         } yield movementResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          response => Accepted(HateoasNewMovementResponse(response.movementId, response.boxResponse, MovementType.Departure))
+          response => Accepted(HateoasNewMovementResponse(response.movementId, response.boxResponse, None, MovementType.Departure))
+        )
+    }
+
+  private def submitDepartureDeclarationLargeXML(): Action[Source[ByteString, _]] =
+    (authActionNewEnrolmentOnly andThen messageSizeAction()).stream {
+      implicit request =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+        (for {
+          upscan <- mapToUpscanResponse(upscanService.upscanInitiate())
+          _ = auditService.audit(AuditType.DeclarationData, request.body, MimeTypes.XML) // TODO - what data we need to send for auditing and mimetype
+          movementResponse <- persistAndSendToPPNS(request.body, MovementType.Departure)
+        } yield movementResponse.copy(upscanInitiateResponse = upscan)).fold[Result](
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          response => Accepted(HateoasNewMovementResponse(response.movementId, response.boxResponse, response.upscanInitiateResponse, MovementType.Departure))
         )
     }
 
@@ -145,7 +165,7 @@ class V2MovementsControllerImpl @Inject() (
           },
           result => {
             sCounter.inc()
-            Accepted(HateoasNewMovementResponse(result.movementId, result.boxResponse, MovementType.Departure))
+            Accepted(HateoasNewMovementResponse(result.movementId, result.boxResponse, None, MovementType.Departure))
           }
         )
     }
@@ -161,7 +181,7 @@ class V2MovementsControllerImpl @Inject() (
           movementResponse <- persistAndSendToEIS(request.body, MovementType.Arrival, MessageType.ArrivalNotification)
         } yield movementResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          response => Accepted(HateoasNewMovementResponse(response.movementId, response.boxResponse, MovementType.Arrival))
+          response => Accepted(HateoasNewMovementResponse(response.movementId, response.boxResponse, None, MovementType.Arrival))
         )
     }
 
@@ -177,7 +197,7 @@ class V2MovementsControllerImpl @Inject() (
           arrivalResult <- validatePersistAndSendToEIS(xmlSource, MovementType.Arrival, MessageType.ArrivalNotification)
         } yield arrivalResult).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          result => Accepted(HateoasNewMovementResponse(result.movementId, result.boxResponse, MovementType.Arrival))
+          result => Accepted(HateoasNewMovementResponse(result.movementId, result.boxResponse, None, MovementType.Arrival))
         )
     }
 
@@ -331,13 +351,32 @@ class V2MovementsControllerImpl @Inject() (
       movementResponse <- movementsService.createMovement(request.eoriNumber, movementType, source).asPresentation
       boxResponse      <- mapToBoxResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
       _ <- routerService
-        .send(messageType, request.eoriNumber, movementResponse.movementId, movementResponse.messageId, source)
+        .send(messageType, request.eoriNumber, movementResponse.movementId, movementResponse.messageId.get, source)  // TODO- shall we assume we always get messageId for small messages
         .asPresentation
     } yield MovementResponse(movementResponse.movementId, movementResponse.messageId, boxResponse)
+
+  private def persistAndSendToPPNS(
+    source: Source[ByteString, _],
+    movementType: MovementType
+   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
+    for {
+      movementResponse <- movementsService.createMovement(request.eoriNumber, movementType, source).asPresentation
+      boxResponse      <- mapToBoxResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
+    } yield MovementResponse(movementResponse.movementId, None, boxResponse, None)
 
   private def mapToBoxResponse(boxResponse: EitherT[Future, PushNotificationError, BoxResponse]): EitherT[Future, PresentationError, Option[BoxResponse]] =
     EitherT[Future, PresentationError, Option[BoxResponse]] {
       boxResponse.fold(
+        _ => Right(None),
+        r => Right(Some(r))
+      )
+    }
+
+  private def mapToUpscanResponse(
+    upscanInitiateResponse: EitherT[Future, UpscanInitiateError, UpscanInitiateResponse]
+  ): EitherT[Future, PresentationError, Option[UpscanInitiateResponse]] =
+    EitherT[Future, PresentationError, Option[UpscanInitiateResponse]] {
+      upscanInitiateResponse.fold(
         _ => Right(None),
         r => Right(Some(r))
       )

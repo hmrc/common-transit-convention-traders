@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,11 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[MovementResponse]
 
+  def postMovementForLargeMessage(eori: EORINumber, movementType: MovementType)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[MovementResponse]
+
   def getMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -106,6 +111,27 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
           .post(url"$url")
           .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML))
           .withBody(source)
+          .execute[HttpResponse]
+          .flatMap {
+            response =>
+              response.status match {
+                case OK => response.as[MovementResponse]
+                case _ =>
+                  response.error
+              }
+          }
+    }
+
+  override def postMovementForLargeMessage(eori: EORINumber, movementType: MovementType)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[MovementResponse] =
+    withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
+      _ =>
+        val url = appConfig.movementsUrl.withPath(postMovementUrl(eori, movementType))
+
+        httpClientV2
+          .post(url"$url")
           .execute[HttpResponse]
           .flatMap {
             response =>
