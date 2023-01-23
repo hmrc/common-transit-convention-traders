@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import v2.models.errors.PersistenceError
 import v2.models.errors.PresentationError
 import v2.models.errors.RouterError
 import v2.models.errors.StreamingError
+import v2.models.errors.UpscanInitiateError
 import v2.models.errors.XmlValidationError
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
 import v2.models.errors.FailedToValidateError.JsonSchemaFailedToValidateError
@@ -280,6 +281,23 @@ class ErrorTranslatorSpec
       val output    = PresentationError.internalServiceError(cause = Some(exception))
 
       messageFormatError.convert(input) mustBe output
+    }
+  }
+
+  "UpscanInitiate Error" - {
+    "an Unexpected Error with no exception returns an internal service error with no exception" in {
+      val input  = UpscanInitiateError.UnexpectedError(None)
+      val output = PresentationError.internalServiceError()
+
+      upscanErrorConverter.convert(input) mustBe output
+    }
+
+    "an Unexpected Error with an exception returns an internal service error with an exception" in {
+      val exception = new IllegalStateException()
+      val input     = UpscanInitiateError.UnexpectedError(Some(exception))
+      val output    = PresentationError.internalServiceError(cause = Some(exception))
+
+      upscanErrorConverter.convert(input) mustBe output
     }
   }
 }

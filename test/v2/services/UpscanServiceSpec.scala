@@ -14,93 +14,80 @@
  * limitations under the License.
  */
 
-package v2.connectors
+package v2.services
 
-import com.github.tomakehurst.wiremock.client.WireMock.aResponse
-import com.github.tomakehurst.wiremock.client.WireMock.post
-import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
-import io.lemonlabs.uri.Url
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.reset
 import org.mockito.Mockito.when
-import org.scalatest.concurrent.IntegrationPatience
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.http.Status.INTERNAL_SERVER_ERROR
-import play.api.http.Status.OK
-import play.api.libs.json.Json
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.UpstreamErrorResponse
-import uk.gov.hmrc.http.test.HttpClientV2Support
-import utils.TestMetrics
-import utils.WiremockSuite
+import v2.base.CommonGenerators
+import v2.connectors.UpscanConnector
+import v2.models.errors.UpscanInitiateError
 import v2.models.request.UpscanInitiate
 import v2.models.responses.UpscanFormTemplate
 import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.UpscanReference
-import v2.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-class UpscanConnectorSpec
+class UpscanServiceSpec
     extends AnyFreeSpec
-    with HttpClientV2Support
     with Matchers
+    with OptionValues
     with ScalaFutures
-    with IntegrationPatience
-    with WiremockSuite
     with MockitoSugar
-    with CommonGenerators {
+    with CommonGenerators
+    with ScalaCheckDrivenPropertyChecks
+    with BeforeAndAfterEach {
 
-  val mockAppConfig = mock[AppConfig]
+  implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  when(mockAppConfig.upscanInitiateUrl).thenAnswer {
-    _ => Url.parse(server.baseUrl())
+  val mockConnector: UpscanConnector = mock[UpscanConnector]
+  val mockAppConfig: AppConfig       = mock[AppConfig]
+
+  val sut = new UpscanServiceImpl(mockConnector, mockAppConfig)
+
+  override protected def beforeEach(): Unit = {
+    reset(mockConnector)
+    reset(mockAppConfig)
   }
 
-  lazy val sut = new UpscanConnectorImpl(mockAppConfig, httpClientV2, new TestMetrics)
+  "upscan initiate" - {
 
-  "POST /upscan/v2/initiate" - {
-    "when making a successful call to upscan initiate, must return upscan upload url" in {
-      server.stubFor(
-        post(
-          urlEqualTo("/upscan/v2/initiate")
-        ).willReturn(
-          aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(upscanResponse)))
-        )
-      )
-      implicit val hc = HeaderCarrier()
-      val result      = sut.upscanInitiate(UpscanInitiate("https://myservice.com/callback", None, None, None, None))
+    "when a call to upscanInitiate is success, assert that response contains uploadRequest details" in {
 
-      whenReady(result) {
-        _ mustBe upscanResponse
+      when(mockConnector.upscanInitiate(any[UpscanInitiate])(any(), any()))
+        .thenReturn(Future.successful(upscanResponse))
+
+      val result = sut.upscanInitiate()
+
+      whenReady(result.value) {
+        r => r mustBe Right(upscanResponse)
       }
 
     }
 
-    "when making a failure call to upscan initiate, an exception is returned in the future" in {
-      server.stubFor(
-        post(
-          urlEqualTo("/upscan/v2/initiate")
-        ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
-      )
-      implicit val hc = HeaderCarrier()
-      val result = sut
-        .upscanInitiate(UpscanInitiate("https://myservice.com/callback", None, None, None, None))
-        .map(
-          _ => fail("A success was recorded when it shouldn't have been")
-        )
-        .recover {
-          case UpstreamErrorResponse(_, INTERNAL_SERVER_ERROR, _, _) => ()
-        }
+    "when an error occurs, return a Left of Unexpected" in {
+      val expectedException = new Exception()
+      when(mockConnector.upscanInitiate(any())(any(), any()))
+        .thenReturn(Future.failed(expectedException))
 
-      whenReady(result) {
-        _ => // if we get here, we have a success and a Unit, so all is okay!
+      val result = sut.upscanInitiate()
+
+      whenReady(result.value) {
+        r => r mustBe Left(UpscanInitiateError.UnexpectedError(thr = Some(expectedException)))
       }
 
     }
-
   }
 
   private def upscanResponse =
@@ -128,4 +115,5 @@ class UpscanConnectorSpec
         )
       )
     )
+
 }

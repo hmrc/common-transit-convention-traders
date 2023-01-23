@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ class MovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDriv
 
   "when MessageID is serialized, return an appropriate JsObject" in forAll(gen, gen) {
     (movement, message) =>
-      val actual   = MovementResponse.movementResponseFormat.writes(MovementResponse(MovementId(movement), MessageId(message)))
+      val actual   = MovementResponse.movementResponseFormat.writes(MovementResponse(MovementId(movement), Some(MessageId(message))))
       val expected = Json.obj("movementId" -> movement, "messageId" -> message)
       actual mustBe expected
   }
@@ -39,7 +39,7 @@ class MovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDriv
   "when an appropriate JsObject is deserialized, return a MessageId" in forAll(gen, gen) {
     (movement, message) =>
       val actual   = MovementResponse.movementResponseFormat.reads(Json.obj("movementId" -> movement, "messageId" -> message))
-      val expected = MovementResponse(MovementId(movement), MessageId(message))
+      val expected = MovementResponse(MovementId(movement), Some(MessageId(message)))
       actual mustBe JsSuccess(expected)
   }
 

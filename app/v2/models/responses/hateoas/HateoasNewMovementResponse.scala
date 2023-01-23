@@ -44,12 +44,7 @@ object HateoasNewMovementResponse extends HateoasResponse {
         .getOrElse(Json.obj()) ++
       upscanInitiateResponse
         .map(
-          r =>
-            Json.obj(
-              "reference" -> r.reference,
-              "href"      -> r.uploadRequest.href,
-              "fields"    -> r.uploadRequest.fields
-            )
+          r => Json.obj("uploadRequest" -> Json.obj("href" -> r.uploadRequest.href, "fields" -> r.uploadRequest.fields))
         )
         .getOrElse(Json.obj())
 

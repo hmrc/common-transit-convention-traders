@@ -139,10 +139,10 @@ class V2MovementsControllerImpl @Inject() (
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         (for {
-          upscan <- mapToUpscanResponse(upscanService.upscanInitiate())
-          _ = auditService.audit(AuditType.DeclarationData, request.body, MimeTypes.XML) // TODO - what data we need to send for auditing and mimetype
+          upscan <- upscanService.upscanInitiate().asPresentation
+          _ = auditService.audit(AuditType.DeclarationData, request.body, MimeTypes.XML) // TODO - what data we need to send for auditing
           movementResponse <- persistAndSendToPPNS(MovementType.Departure)
-        } yield movementResponse.copy(upscanInitiateResponse = upscan)).fold[Result](
+        } yield movementResponse.copy(upscanInitiateResponse = Some(upscan))).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Accepted(HateoasNewMovementResponse(response.movementId, response.boxResponse, response.upscanInitiateResponse, MovementType.Departure))
         )

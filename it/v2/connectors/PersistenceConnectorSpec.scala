@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ class PersistenceConnectorSpec
       for {
         movementId <- arbitrary[MovementId]
         messageId  <- arbitrary[MessageId]
-      } yield MovementResponse(movementId, messageId)
+      } yield MovementResponse(movementId, Some(messageId))
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures"
 
@@ -200,6 +200,122 @@ class PersistenceConnectorSpec
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
         val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, source).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[JsonParseException]
+        }
+    }
+  }
+
+  "POST /traders/:eori/movements/departures for Large Messages" - {
+
+    lazy val okResultGen =
+      for {
+        movementId <- arbitrary[MovementId]
+      } yield MovementResponse(movementId, None)
+
+    def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures"
+
+    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen) {
+      (eoriNumber, okResult) =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .willReturn(
+              aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(okResult)))
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        whenReady(persistenceConnector.postMovementForLargeMessage(eoriNumber, MovementType.Departure)) {
+          result =>
+            result mustBe okResult
+        }
+    }
+
+    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(INTERNAL_SERVER_ERROR)
+                .withBody(
+                  Json.stringify(Json.toJson(PresentationError.internalServiceError()))
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val future = persistenceConnector.postMovementForLargeMessage(eoriNumber, MovementType.Departure).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            response.statusCode mustBe INTERNAL_SERVER_ERROR
+            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+        }
+    }
+
+    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(BAD_REQUEST)
+                .withBody(
+                  Json.stringify(Json.toJson(PresentationError.badRequestError("Bad request")))
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val future = persistenceConnector.postMovementForLargeMessage(eoriNumber, MovementType.Departure).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            response.statusCode mustBe BAD_REQUEST
+            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+        }
+    }
+
+    "On an incorrect Json fragment, must return a JsResult.Exception" in forAll(arbitrary[EORINumber]) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  "{ hello"
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val future = persistenceConnector.postMovementForLargeMessage(eoriNumber, MovementType.Departure).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -943,7 +1059,7 @@ class PersistenceConnectorSpec
       for {
         movementId <- arbitrary[MovementId]
         messageId  <- arbitrary[MessageId]
-      } yield MovementResponse(movementId, messageId)
+      } yield MovementResponse(movementId, Some(messageId))
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals"
 
@@ -1056,6 +1172,122 @@ class PersistenceConnectorSpec
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
         val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, source).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[JsonParseException]
+        }
+    }
+  }
+
+  "POST /traders/:eori/movements/arrivals for Large Messages" - {
+
+    lazy val okResultGen =
+      for {
+        movementId <- arbitrary[MovementId]
+      } yield MovementResponse(movementId, None)
+
+    def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals"
+
+    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen) {
+      (eoriNumber, okResult) =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .willReturn(
+              aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(okResult)))
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        whenReady(persistenceConnector.postMovementForLargeMessage(eoriNumber, MovementType.Arrival)) {
+          result =>
+            result mustBe okResult
+        }
+    }
+
+    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(INTERNAL_SERVER_ERROR)
+                .withBody(
+                  Json.stringify(Json.toJson(PresentationError.internalServiceError()))
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val future = persistenceConnector.postMovementForLargeMessage(eoriNumber, MovementType.Arrival).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            response.statusCode mustBe INTERNAL_SERVER_ERROR
+            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+        }
+    }
+
+    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(BAD_REQUEST)
+                .withBody(
+                  Json.stringify(Json.toJson(PresentationError.badRequestError("Bad request")))
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val future = persistenceConnector.postMovementForLargeMessage(eoriNumber, MovementType.Arrival).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            response.statusCode mustBe BAD_REQUEST
+            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+        }
+    }
+
+    "On an incorrect Json fragment from transit-movements, must return a JsonParseException" in forAll(arbitrary[EORINumber]) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  "{ hello"
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val future = persistenceConnector.postMovementForLargeMessage(eoriNumber, MovementType.Arrival).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
