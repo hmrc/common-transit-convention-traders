@@ -135,7 +135,7 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitDepartureDeclarationLargeXML(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen messageSizeAction()).async(streamFromMemory) {
+    authActionNewEnrolmentOnly.async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         request.body.runWith(Sink.ignore)
