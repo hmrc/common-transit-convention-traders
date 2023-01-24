@@ -45,12 +45,7 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[MovementsServiceImpl])
 trait MovementsService {
 
-  def createMovement(eori: EORINumber, movementType: MovementType, source: Source[ByteString, _])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, MovementResponse]
-
-  def createMovementForLargeMessage(eori: EORINumber, movementType: MovementType)(implicit
+  def createMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MovementResponse]
@@ -85,27 +80,13 @@ trait MovementsService {
 @Singleton
 class MovementsServiceImpl @Inject() (persistenceConnector: PersistenceConnector) extends MovementsService {
 
-  override def createMovement(eori: EORINumber, movementType: MovementType, source: Source[ByteString, _])(implicit
+  override def createMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MovementResponse] =
     EitherT(
       persistenceConnector
         .postMovement(eori, movementType, source)
-        .map(Right(_))
-        .recover {
-          case NonFatal(thr) =>
-            Left(PersistenceError.UnexpectedError(Some(thr)))
-        }
-    )
-
-  override def createMovementForLargeMessage(eori: EORINumber, movementType: MovementType)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, MovementResponse] =
-    EitherT(
-      persistenceConnector
-        .postMovementForLargeMessage(eori, movementType)
         .map(Right(_))
         .recover {
           case NonFatal(thr) =>

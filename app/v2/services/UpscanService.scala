@@ -50,7 +50,8 @@ class UpscanServiceImpl @Inject() (
     executionContext: ExecutionContext
   ): EitherT[Future, UpscanInitiateError, UpscanInitiateResponse] = {
 
-    val upscanInitiate = UpscanInitiate("https://myservice.com/callback", None, None, None, None) // TODO callback url will be configured later
+    val upscanInitiate =
+      UpscanInitiate(appConfig.upscanCallbackUrl, None, None, None, Some(appConfig.upscanMaximumFileSize)) // TODO callback url will be configured later
 
     EitherT {
       upscanConnector

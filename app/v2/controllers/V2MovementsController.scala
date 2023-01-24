@@ -17,6 +17,7 @@
 package v2.controllers
 
 import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
@@ -134,14 +135,15 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitDepartureDeclarationLargeXML(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen messageSizeAction()).stream {
+    (authActionNewEnrolmentOnly andThen messageSizeAction()).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+        request.body.runWith(Sink.ignore)
 
         (for {
           upscan <- upscanService.upscanInitiate().asPresentation
           _ = auditService.audit(AuditType.DeclarationData, request.body, MimeTypes.XML) // TODO - what data we need to send for auditing
-          movementResponse <- persistAndSendToPPNS(MovementType.Departure)
+          movementResponse <- persistAndLinkToBox(None, MovementType.Departure)
         } yield movementResponse.copy(upscanInitiateResponse = Some(upscan))).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Accepted(HateoasNewMovementResponse(response.movementId, response.boxResponse, response.upscanInitiateResponse, MovementType.Departure))
@@ -348,7 +350,7 @@ class V2MovementsControllerImpl @Inject() (
     messageType: MessageType
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
     for {
-      movementResponse <- movementsService.createMovement(request.eoriNumber, movementType, source).asPresentation
+      movementResponse <- movementsService.createMovement(request.eoriNumber, movementType, Some(source)).asPresentation
       boxResponse      <- mapToBoxResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
       _ <- routerService
         .send(
@@ -361,9 +363,12 @@ class V2MovementsControllerImpl @Inject() (
         .asPresentation
     } yield MovementResponse(movementResponse.movementId, movementResponse.messageId, boxResponse)
 
-  private def persistAndSendToPPNS(movementType: MovementType)(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
+  private def persistAndLinkToBox(source: Option[Source[ByteString, _]], movementType: MovementType)(implicit
+    hc: HeaderCarrier,
+    request: AuthenticatedRequest[Source[ByteString, _]]
+  ) =
     for {
-      movementResponse <- movementsService.createMovementForLargeMessage(request.eoriNumber, movementType).asPresentation
+      movementResponse <- movementsService.createMovement(request.eoriNumber, movementType, source).asPresentation
       boxResponse      <- mapToBoxResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
     } yield MovementResponse(movementResponse.movementId, None, boxResponse, None)
 
@@ -375,13 +380,4 @@ class V2MovementsControllerImpl @Inject() (
       )
     }
 
-  private def mapToUpscanResponse(
-    upscanInitiateResponse: EitherT[Future, UpscanInitiateError, UpscanInitiateResponse]
-  ): EitherT[Future, PresentationError, Option[UpscanInitiateResponse]] =
-    EitherT[Future, PresentationError, Option[UpscanInitiateResponse]] {
-      upscanInitiateResponse.fold(
-        _ => Right(None),
-        r => Right(Some(r))
-      )
-    }
 }

@@ -55,12 +55,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[PersistenceConnectorImpl])
 trait PersistenceConnector {
 
-  def postMovement(eori: EORINumber, movementType: MovementType, source: Source[ByteString, _])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[MovementResponse]
-
-  def postMovementForLargeMessage(eori: EORINumber, movementType: MovementType)(implicit
+  def postMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[MovementResponse]
@@ -99,7 +94,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     with V2BaseConnector
     with Logging {
 
-  override def postMovement(eori: EORINumber, movementType: MovementType, source: Source[ByteString, _])(implicit
+  override def postMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[MovementResponse] =
@@ -107,31 +102,13 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       _ =>
         val url = appConfig.movementsUrl.withPath(postMovementUrl(eori, movementType))
 
-        httpClientV2
+        val httpClient = httpClientV2
           .post(url"$url")
-          .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML))
-          .withBody(source)
-          .execute[HttpResponse]
-          .flatMap {
-            response =>
-              response.status match {
-                case OK => response.as[MovementResponse]
-                case _ =>
-                  response.error
-              }
-          }
-    }
 
-  override def postMovementForLargeMessage(eori: EORINumber, movementType: MovementType)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[MovementResponse] =
-    withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
-      _ =>
-        val url = appConfig.movementsUrl.withPath(postMovementUrl(eori, movementType))
-
-        httpClientV2
-          .post(url"$url")
+        (source match {
+          case Some(src) => httpClient.transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)).withBody(src)
+          case None      => httpClient
+        })
           .execute[HttpResponse]
           .flatMap {
             response =>

@@ -107,9 +107,14 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Departure, source)) {
+        whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Departure, Some(source))) {
           result =>
             result mustBe okResult
+            server.verify(
+              1,
+              postRequestedFor(urlEqualTo(targetUrl(eoriNumber)))
+                .withHeader("Content-Type", equalTo(MimeTypes.XML))
+            );
         }
     }
 
@@ -133,7 +138,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, Some(source)).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -166,7 +171,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, Some(source)).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -199,7 +204,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, Some(source)).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -232,9 +237,14 @@ class PersistenceConnectorSpec
 
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
-        whenReady(persistenceConnector.postMovementForLargeMessage(eoriNumber, MovementType.Departure)) {
+        whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Departure, None)) {
           result =>
             result mustBe okResult
+            server.verify(
+              0,
+              postRequestedFor(urlEqualTo(targetUrl(eoriNumber)))
+                .withHeader("Content-Type", equalTo(MimeTypes.XML))
+            );
         }
     }
 
@@ -255,7 +265,7 @@ class PersistenceConnectorSpec
 
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
-        val future = persistenceConnector.postMovementForLargeMessage(eoriNumber, MovementType.Departure).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, None).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -285,7 +295,7 @@ class PersistenceConnectorSpec
 
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
-        val future = persistenceConnector.postMovementForLargeMessage(eoriNumber, MovementType.Departure).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, None).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -315,7 +325,7 @@ class PersistenceConnectorSpec
 
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
-        val future = persistenceConnector.postMovementForLargeMessage(eoriNumber, MovementType.Departure).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, None).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -1079,7 +1089,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, source)) {
+        whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, Some(source))) {
           result =>
             result mustBe okResult
         }
@@ -1105,7 +1115,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, Some(source)).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -1138,7 +1148,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, Some(source)).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -1171,7 +1181,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, Some(source)).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -1204,7 +1214,7 @@ class PersistenceConnectorSpec
 
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
-        whenReady(persistenceConnector.postMovementForLargeMessage(eoriNumber, MovementType.Arrival)) {
+        whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, None)) {
           result =>
             result mustBe okResult
         }
@@ -1227,7 +1237,7 @@ class PersistenceConnectorSpec
 
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
-        val future = persistenceConnector.postMovementForLargeMessage(eoriNumber, MovementType.Arrival).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, None).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -1257,7 +1267,7 @@ class PersistenceConnectorSpec
 
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
-        val future = persistenceConnector.postMovementForLargeMessage(eoriNumber, MovementType.Arrival).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, None).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -1287,7 +1297,7 @@ class PersistenceConnectorSpec
 
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
-        val future = persistenceConnector.postMovementForLargeMessage(eoriNumber, MovementType.Arrival).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, None).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 

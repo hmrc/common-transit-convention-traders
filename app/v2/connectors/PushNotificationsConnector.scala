@@ -58,7 +58,7 @@ class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClient
     with HasMetrics {
 
   override def patchAssociation(movementId: MovementId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    withMetricsTimerAsync(MetricsKeys.PushNotificationsBacked.Update) {
+    withMetricsTimerAsync(MetricsKeys.PushNotificationsBackend.Update) {
       _ =>
         val url = appConfig.pushNotificationsUrl.withPath(pushNotificationsRoute(movementId))
 
@@ -71,7 +71,7 @@ class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClient
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[BoxResponse] =
-    withMetricsTimerAsync(MetricsKeys.PushNotificationsBacked.Post) {
+    withMetricsTimerAsync(MetricsKeys.PushNotificationsBackend.Post) {
       _ =>
         val url = appConfig.pushNotificationsUrl.withPath(pushNotificationsBoxRoute(movementId))
 

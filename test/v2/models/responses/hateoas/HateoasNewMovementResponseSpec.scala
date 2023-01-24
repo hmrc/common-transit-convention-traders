@@ -116,6 +116,46 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
       actual mustBe expected
     }
 
+  for (movementType <- MovementType.values)
+    s"${movementType.movementType} with a valid message response, create a valid HateoasNewMovementResponse with customised UploadRequest" in {
+      val movementId = arbitrary[MovementId].sample.value
+
+      val actual = HateoasNewMovementResponse(
+        movementId,
+        Some(BoxResponse(BoxId("test"))),
+        Some(
+          upscanResponse.copy(uploadRequest =
+            UpscanFormTemplate(
+              "http://localhost:9570/upscan/upload-proxy",
+              Map("x-amz-meta-callback-url" -> "https://myservice.com/callback", "policy" -> "upscan-policy")
+            )
+          )
+        ),
+        movementType
+      )
+
+      val expected = Json.obj(
+        "_links" -> Json.obj(
+          "self" -> Json.obj(
+            "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}"
+          ),
+          "messages" -> Json.obj(
+            "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages"
+          )
+        ),
+        "boxId" -> "test",
+        "uploadRequest" -> Json.obj(
+          "href" -> "http://localhost:9570/upscan/upload-proxy",
+          "fields" -> Json.obj(
+            "x-amz-meta-callback-url" -> "https://myservice.com/callback",
+            "policy"                  -> "upscan-policy"
+          )
+        )
+      )
+
+      actual mustBe expected
+    }
+
   private def upscanResponse =
     UpscanInitiateResponse(
       UpscanReference("b72d9aea-fdb9-40f1-800c-3612154baf07"),

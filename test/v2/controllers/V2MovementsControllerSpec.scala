@@ -270,7 +270,10 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         )
           .thenAnswer {
             _ => EitherT.rightT(MovementResponse(MovementId("123"), Some(MessageId("456"))))
@@ -313,7 +316,10 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         )
           .thenAnswer {
             _ => EitherT.rightT(MovementResponse(MovementId("123"), Some(MessageId("456"))))
@@ -383,7 +389,10 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         ).thenAnswer(
           _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
         )
@@ -451,7 +460,10 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, MovementResponse](MovementResponse(MovementId("123"), Some(MessageId("456"))))))
 
         val request =
@@ -515,7 +527,10 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         )
           .thenAnswer {
             _ => EitherT.rightT(MovementResponse(MovementId("123"), Some(MessageId("456"))))
@@ -577,7 +592,10 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         )
           .thenAnswer {
             _ => EitherT.rightT(MovementResponse(MovementId("123"), Some(MessageId("456"))))
@@ -761,7 +779,10 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Source[ByteString, _]])(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]])(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         )
           .thenAnswer(
             _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
@@ -809,7 +830,10 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Source[ByteString, _]])(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]])(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         )
           .thenAnswer(
             _ =>
@@ -868,7 +892,7 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovementForLargeMessage(any[String].asInstanceOf[EORINumber], any[MovementType])(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
         )
           .thenAnswer {
             _ => EitherT.rightT(MovementResponse(MovementId("123"), None))
@@ -884,7 +908,7 @@ class V2MovementsControllerSpec
 
         verify(mockUpscanService, times(1)).upscanInitiate()(any(), any())
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
-        verify(mockMovementsPersistenceService, times(1)).createMovementForLargeMessage(EORINumber(any()), any[MovementType])(any(), any())
+        verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
         verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
       }
 
@@ -899,7 +923,7 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovementForLargeMessage(any[String].asInstanceOf[EORINumber], any[MovementType]())(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
         )
           .thenAnswer {
             _ => EitherT.rightT(MovementResponse(MovementId("123"), None))
@@ -918,7 +942,7 @@ class V2MovementsControllerSpec
 
         verify(mockUpscanService, times(1)).upscanInitiate()(any(), any())
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
-        verify(mockMovementsPersistenceService, times(1)).createMovementForLargeMessage(EORINumber(any()), any[MovementType])(any(), any())
+        verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
         verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
 
       }
@@ -932,7 +956,7 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovementForLargeMessage(any[String].asInstanceOf[EORINumber], any[MovementType]())(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer(
           _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
         )
@@ -957,7 +981,7 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovementForLargeMessage(any[String].asInstanceOf[EORINumber], any[MovementType])(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
         )
           .thenAnswer {
             _ => EitherT.rightT(MovementResponse(MovementId("123"), None))
@@ -1010,7 +1034,10 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         )
           .thenAnswer {
             _ => EitherT.rightT(MovementResponse(MovementId("123"), Some(MessageId("456"))))
@@ -1053,7 +1080,10 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         )
           .thenAnswer {
             _ => EitherT.rightT(MovementResponse(MovementId("123"), Some(MessageId("456"))))
@@ -1122,7 +1152,10 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         ).thenAnswer(
           _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
         )
@@ -1189,7 +1222,10 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, MovementResponse](MovementResponse(MovementId("123"), Some(MessageId("456"))))))
 
         val request  = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC007C.mkString), MovementType.Arrival)
@@ -1252,7 +1288,10 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         )
           .thenAnswer {
             _ => EitherT.rightT(MovementResponse(MovementId("123"), Some(MessageId("456"))))
@@ -1309,7 +1348,10 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]]())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         )
           .thenAnswer {
             _ => EitherT.rightT(MovementResponse(MovementId("123"), Some(MessageId("456"))))
@@ -1490,7 +1532,10 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Source[ByteString, _]])(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]])(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         )
           .thenAnswer(
             _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
@@ -1539,7 +1584,10 @@ class V2MovementsControllerSpec
 
         when(
           mockMovementsPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Source[ByteString, _]])(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]])(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         )
           .thenAnswer(
             _ =>
@@ -1640,7 +1688,10 @@ class V2MovementsControllerSpec
 
       when(
         mockMovementsPersistenceService
-          .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+          .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]]())(
+            any[HeaderCarrier],
+            any[ExecutionContext]
+          )
       ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, MovementResponse](MovementResponse(MovementId("123"), Some(MessageId("456"))))))
 
       val request  = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC007C.mkString), MovementType.Arrival)

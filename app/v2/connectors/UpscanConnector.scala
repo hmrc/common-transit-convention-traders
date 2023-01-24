@@ -50,7 +50,7 @@ class UpscanConnectorImpl @Inject() (appConfig: AppConfig, httpClientV2: HttpCli
     with HasMetrics {
 
   override def upscanInitiate(upscanInitiate: UpscanInitiate)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[UpscanInitiateResponse] =
-    withMetricsTimerAsync(MetricsKeys.UpscanInitiateBacked.Post) {
+    withMetricsTimerAsync(MetricsKeys.UpscanInitiateBackend.Post) {
       _ =>
         val url = appConfig.upscanInitiateUrl.withPath(upscanInitiateRoute())
 
