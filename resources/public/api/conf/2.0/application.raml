@@ -102,7 +102,7 @@ traits:
 
         This request is also called an ‘Declaration Data’ E_DEC_DAT (IE015) message.
 
-        A successful response will contain a URI and a departure ID which you can use to retrieve messages related to the movement.
+        A successful response will contain a URI which you can use to retrieve the message status. A successful response can also include an optional box ID, which you can use to match this movement to any messages received from the Push Pull Notifications API.
 
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
       is: 
@@ -126,7 +126,8 @@ traits:
                     "messages":{
                       "href": "/customs/transits/movements/departures/62fb8f33d233578e/messages"
                     }
-                  }
+                  },
+                  "boxId": "b54c2424-955b-496c-bbce-dfb9f57cd797"
                 }
     get:
       displayName: Get all cached departures
@@ -297,7 +298,7 @@ traits:
     
             For example, if you want to cancel a ‘Declaration Data’ E_DEC_DAT (IE015) message, you must send a ‘Declaration Invalidation Request’ E_DEC_INV (IE014) message to the Office of Departure.
     
-            A successful response will contain a URI and a message ID related to the departure, which you can use to retrieve the message status.
+            A successful response will contain a URI and a message ID related to the departure that you can use to get the message status.
     
             **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
           is:
@@ -422,7 +423,9 @@ traits:
 
         This request is also called an ‘Arrival Notification’ E_ARR_NOT (IE007) message.
 
-        A successful response will contain a URI and an arrival ID which you can use to retrieve messages related to the movement.
+        A successful response will contain a URI that you can use to get the message status. 
+        
+        A successful response can also include an optional box ID, which you can use to match this movement to any messages received from the Push Pull Notifications API.  
 
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
       is:
@@ -446,7 +449,8 @@ traits:
                     "messages":{
                       "href": "/customs/transits/movements/arrivals/62fb8f33d233578e/messages"
                     }
-                  }
+                  },
+                  "boxId": "b54c2424-955b-496c-bbce-dfb9f57cd797"
                 }
     get:
       displayName: Get all cached arrivals
