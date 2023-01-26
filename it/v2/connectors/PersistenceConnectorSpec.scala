@@ -92,6 +92,7 @@ class PersistenceConnectorSpec
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures"
 
     "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen) {
+      server.resetAll()
       (eoriNumber, okResult) =>
         server.stubFor(
           post(
@@ -225,6 +226,7 @@ class PersistenceConnectorSpec
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures"
 
     "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen) {
+      server.resetAll()
       (eoriNumber, okResult) =>
         server.stubFor(
           post(
