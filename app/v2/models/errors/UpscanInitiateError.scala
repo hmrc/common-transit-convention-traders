@@ -14,20 +14,10 @@
  * limitations under the License.
  */
 
-package v2.models.responses
+package v2.models.errors
 
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
-import v2.models.MessageId
-import v2.models.MovementId
+sealed trait UpscanInitiateError
 
-object MovementResponse {
-  implicit lazy val movementResponseFormat: OFormat[MovementResponse] = Json.format[MovementResponse]
+object UpscanInitiateError {
+  case class UnexpectedError(thr: Option[Throwable] = None) extends UpscanInitiateError
 }
-
-case class MovementResponse(
-  movementId: MovementId,
-  messageId: Option[MessageId] = None,
-  boxResponse: Option[BoxResponse] = None,
-  upscanInitiateResponse: Option[UpscanInitiateResponse] = None
-)

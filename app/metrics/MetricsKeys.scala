@@ -49,9 +49,13 @@ object MetricsKeys {
     val Post = "auditing-backend-post"
   }
 
-  object PushNotificationsBacked {
+  object PushNotificationsBackend {
     val Post   = "push-notifications-backend-post"
     val Update = "push-notifications-backend-update"
+  }
+
+  object UpscanInitiateBackend {
+    val Post = "upscan-initiate-backend-post"
   }
 
   object Endpoints {

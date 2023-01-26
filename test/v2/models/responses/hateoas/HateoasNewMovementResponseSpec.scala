@@ -27,6 +27,9 @@ import v2.models.BoxId
 import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.responses.BoxResponse
+import v2.models.responses.UpscanFormTemplate
+import v2.models.responses.UpscanInitiateResponse
+import v2.models.responses.UpscanReference
 
 class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with OptionValues with CommonGenerators {
 
@@ -34,7 +37,7 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
     s"${movementType.movementType} with a valid message response, create a valid HateoasNewMovementResponse" in {
       val movementId = arbitrary[MovementId].sample.value
 
-      val actual = HateoasNewMovementResponse(movementId, None, movementType)
+      val actual = HateoasNewMovementResponse(movementId, None, None, movementType)
 
       val expected = Json.obj(
         "_links" -> Json.obj(
@@ -54,7 +57,7 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
     s"${movementType.movementType} with a valid message response, create a valid HateoasNewMovementResponse with BoxId" in {
       val movementId = arbitrary[MovementId].sample.value
 
-      val actual = HateoasNewMovementResponse(movementId, Some(BoxResponse(BoxId("test"))), movementType)
+      val actual = HateoasNewMovementResponse(movementId, Some(BoxResponse(BoxId("test"))), None, movementType)
 
       val expected = Json.obj(
         "_links" -> Json.obj(
@@ -70,5 +73,113 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
 
       actual mustBe expected
     }
+
+  for (movementType <- MovementType.values)
+    s"${movementType.movementType} with a valid message response, create a valid HateoasNewMovementResponse with UploadRequest" in {
+      val movementId = arbitrary[MovementId].sample.value
+
+      val actual = HateoasNewMovementResponse(movementId, Some(BoxResponse(BoxId("test"))), Some(upscanResponse), movementType)
+
+      val expected = Json.obj(
+        "_links" -> Json.obj(
+          "self" -> Json.obj(
+            "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}"
+          ),
+          "messages" -> Json.obj(
+            "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages"
+          )
+        ),
+        "boxId" -> "test",
+        "uploadRequest" -> Json.obj(
+          "href" -> "http://localhost:9570/upscan/upload-proxy",
+          "fields" -> Json.obj(
+            "x-amz-meta-callback-url"             -> "https://myservice.com/callback",
+            "x-amz-date"                          -> "20230118T135545Z",
+            "success_action_redirect"             -> "https://myservice.com/nextPage?key=b72d9aea-fdb9-40f1-800c-3612154baf07",
+            "x-amz-credential"                    -> "ASIAxxxxxxxxx/20180202/eu-west-2/s3/aws4_request",
+            "x-amz-meta-upscan-initiate-response" -> "2023-01-18T13:55:45.715Z",
+            "x-amz-meta-upscan-initiate-received" -> "2023-01-18T13:55:45.715Z",
+            "x-amz-meta-request-id"               -> "7075a21c-c8f0-402e-9c9c-1eea546c6fbf",
+            "x-amz-meta-original-filename"        -> "${filename}",
+            "x-amz-algorithm"                     -> "AWS4-HMAC-SHA256",
+            "key"                                 -> "b72d9aea-fdb9-40f1-800c-3612154baf07",
+            "acl"                                 -> "private",
+            "x-amz-signature"                     -> "xxxx",
+            "error_action_redirect"               -> "https://myservice.com/errorPage",
+            "x-amz-meta-session-id"               -> "3506d041-ba59-41ee-bb2c-bf0363163be3",
+            "x-amz-meta-consuming-service"        -> "PostmanRuntime/7.29.2",
+            "policy"                              -> "eyJjb25kaXRpb25zIjpbWyJjb250ZW50LWxlbmd0aC1yYW5nZSIsMCwxMDI0XV19"
+          )
+        )
+      )
+
+      actual mustBe expected
+    }
+
+  for (movementType <- MovementType.values)
+    s"${movementType.movementType} with a valid message response, create a valid HateoasNewMovementResponse with customised UploadRequest" in {
+      val movementId = arbitrary[MovementId].sample.value
+
+      val actual = HateoasNewMovementResponse(
+        movementId,
+        Some(BoxResponse(BoxId("test"))),
+        Some(
+          upscanResponse.copy(uploadRequest =
+            UpscanFormTemplate(
+              "http://localhost:9570/upscan/upload-proxy",
+              Map("x-amz-meta-callback-url" -> "https://myservice.com/callback", "policy" -> "upscan-policy")
+            )
+          )
+        ),
+        movementType
+      )
+
+      val expected = Json.obj(
+        "_links" -> Json.obj(
+          "self" -> Json.obj(
+            "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}"
+          ),
+          "messages" -> Json.obj(
+            "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages"
+          )
+        ),
+        "boxId" -> "test",
+        "uploadRequest" -> Json.obj(
+          "href" -> "http://localhost:9570/upscan/upload-proxy",
+          "fields" -> Json.obj(
+            "x-amz-meta-callback-url" -> "https://myservice.com/callback",
+            "policy"                  -> "upscan-policy"
+          )
+        )
+      )
+
+      actual mustBe expected
+    }
+
+  private def upscanResponse =
+    UpscanInitiateResponse(
+      UpscanReference("b72d9aea-fdb9-40f1-800c-3612154baf07"),
+      UpscanFormTemplate(
+        "http://localhost:9570/upscan/upload-proxy",
+        Map(
+          "x-amz-meta-callback-url"             -> "https://myservice.com/callback",
+          "x-amz-date"                          -> "20230118T135545Z",
+          "success_action_redirect"             -> "https://myservice.com/nextPage?key=b72d9aea-fdb9-40f1-800c-3612154baf07",
+          "x-amz-credential"                    -> "ASIAxxxxxxxxx/20180202/eu-west-2/s3/aws4_request",
+          "x-amz-meta-upscan-initiate-response" -> "2023-01-18T13:55:45.715Z",
+          "x-amz-meta-upscan-initiate-received" -> "2023-01-18T13:55:45.715Z",
+          "x-amz-meta-request-id"               -> "7075a21c-c8f0-402e-9c9c-1eea546c6fbf",
+          "x-amz-meta-original-filename"        -> "${filename}",
+          "x-amz-algorithm"                     -> "AWS4-HMAC-SHA256",
+          "key"                                 -> "b72d9aea-fdb9-40f1-800c-3612154baf07",
+          "acl"                                 -> "private",
+          "x-amz-signature"                     -> "xxxx",
+          "error_action_redirect"               -> "https://myservice.com/errorPage",
+          "x-amz-meta-session-id"               -> "3506d041-ba59-41ee-bb2c-bf0363163be3",
+          "x-amz-meta-consuming-service"        -> "PostmanRuntime/7.29.2",
+          "policy"                              -> "eyJjb25kaXRpb25zIjpbWyJjb250ZW50LWxlbmd0aC1yYW5nZSIsMCwxMDI0XV19"
+        )
+      )
+    )
 
 }

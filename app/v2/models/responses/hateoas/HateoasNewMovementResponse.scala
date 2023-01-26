@@ -21,10 +21,16 @@ import play.api.libs.json.Json
 import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.responses.BoxResponse
+import v2.models.responses.UpscanInitiateResponse
 
 object HateoasNewMovementResponse extends HateoasResponse {
 
-  def apply(movementId: MovementId, boxResponse: Option[BoxResponse], movementType: MovementType): JsObject = {
+  def apply(
+    movementId: MovementId,
+    boxResponse: Option[BoxResponse],
+    upscanInitiateResponse: Option[UpscanInitiateResponse],
+    movementType: MovementType
+  ): JsObject = {
     val jsObject = Json.obj(
       "self"     -> Json.obj("href" -> getMovementUri(movementId, movementType)),
       "messages" -> Json.obj("href" -> getMessagesUri(movementId, None, movementType))
@@ -34,6 +40,11 @@ object HateoasNewMovementResponse extends HateoasResponse {
       boxResponse
         .map(
           r => Json.obj("boxId" -> r.boxId.value)
+        )
+        .getOrElse(Json.obj()) ++
+      upscanInitiateResponse
+        .map(
+          r => Json.obj("uploadRequest" -> Json.obj("href" -> r.uploadRequest.href, "fields" -> r.uploadRequest.fields))
         )
         .getOrElse(Json.obj())
 

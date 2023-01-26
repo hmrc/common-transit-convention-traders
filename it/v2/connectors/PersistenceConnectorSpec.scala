@@ -87,11 +87,12 @@ class PersistenceConnectorSpec
       for {
         movementId <- arbitrary[MovementId]
         messageId  <- arbitrary[MessageId]
-      } yield MovementResponse(movementId, messageId)
+      } yield MovementResponse(movementId, Some(messageId))
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures"
 
     "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen) {
+      server.resetAll()
       (eoriNumber, okResult) =>
         server.stubFor(
           post(
@@ -107,9 +108,14 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Departure, source)) {
+        whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Departure, Some(source))) {
           result =>
             result mustBe okResult
+            server.verify(
+              1,
+              postRequestedFor(urlEqualTo(targetUrl(eoriNumber)))
+                .withHeader("Content-Type", equalTo(MimeTypes.XML))
+            );
         }
     }
 
@@ -133,7 +139,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, Some(source)).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -166,7 +172,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, Some(source)).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -199,7 +205,129 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, Some(source)).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[JsonParseException]
+        }
+    }
+  }
+
+  "POST /traders/:eori/movements/departures for Large Messages" - {
+
+    lazy val okResultGen =
+      for {
+        movementId <- arbitrary[MovementId]
+      } yield MovementResponse(movementId, None)
+
+    def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures"
+
+    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen) {
+      server.resetAll()
+      (eoriNumber, okResult) =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .willReturn(
+              aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(okResult)))
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Departure, None)) {
+          result =>
+            result mustBe okResult
+            server.verify(
+              0,
+              postRequestedFor(urlEqualTo(targetUrl(eoriNumber)))
+                .withHeader("Content-Type", equalTo(MimeTypes.XML))
+            );
+        }
+    }
+
+    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(INTERNAL_SERVER_ERROR)
+                .withBody(
+                  Json.stringify(Json.toJson(PresentationError.internalServiceError()))
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, None).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            response.statusCode mustBe INTERNAL_SERVER_ERROR
+            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+        }
+    }
+
+    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(BAD_REQUEST)
+                .withBody(
+                  Json.stringify(Json.toJson(PresentationError.badRequestError("Bad request")))
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, None).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            response.statusCode mustBe BAD_REQUEST
+            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+        }
+    }
+
+    "On an incorrect Json fragment, must return a JsResult.Exception" in forAll(arbitrary[EORINumber]) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  "{ hello"
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, None).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -943,7 +1071,7 @@ class PersistenceConnectorSpec
       for {
         movementId <- arbitrary[MovementId]
         messageId  <- arbitrary[MessageId]
-      } yield MovementResponse(movementId, messageId)
+      } yield MovementResponse(movementId, Some(messageId))
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals"
 
@@ -963,7 +1091,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, source)) {
+        whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, Some(source))) {
           result =>
             result mustBe okResult
         }
@@ -989,7 +1117,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, Some(source)).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -1022,7 +1150,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, Some(source)).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -1055,7 +1183,123 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, Some(source)).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[JsonParseException]
+        }
+    }
+  }
+
+  "POST /traders/:eori/movements/arrivals for Large Messages" - {
+
+    lazy val okResultGen =
+      for {
+        movementId <- arbitrary[MovementId]
+      } yield MovementResponse(movementId, None)
+
+    def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals"
+
+    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen) {
+      (eoriNumber, okResult) =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .willReturn(
+              aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(okResult)))
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, None)) {
+          result =>
+            result mustBe okResult
+        }
+    }
+
+    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(INTERNAL_SERVER_ERROR)
+                .withBody(
+                  Json.stringify(Json.toJson(PresentationError.internalServiceError()))
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, None).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            response.statusCode mustBe INTERNAL_SERVER_ERROR
+            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+        }
+    }
+
+    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(BAD_REQUEST)
+                .withBody(
+                  Json.stringify(Json.toJson(PresentationError.badRequestError("Bad request")))
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, None).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            response.statusCode mustBe BAD_REQUEST
+            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+        }
+    }
+
+    "On an incorrect Json fragment from transit-movements, must return a JsonParseException" in forAll(arbitrary[EORINumber]) {
+      eoriNumber =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber))
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  "{ hello"
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, None).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 

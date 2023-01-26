@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-package v2.models.responses
+package v2.models.request
 
 import play.api.libs.json.Json
-import play.api.libs.json.OFormat
-import v2.models.MessageId
-import v2.models.MovementId
 
-object MovementResponse {
-  implicit lazy val movementResponseFormat: OFormat[MovementResponse] = Json.format[MovementResponse]
+object UpscanInitiate {
+  implicit val upscanInitiateFormat = Json.format[UpscanInitiate]
 }
 
-case class MovementResponse(
-  movementId: MovementId,
-  messageId: Option[MessageId] = None,
-  boxResponse: Option[BoxResponse] = None,
-  upscanInitiateResponse: Option[UpscanInitiateResponse] = None
+case class UpscanInitiate(
+  callbackUrl: String,
+  successRedirect: Option[String],
+  errorRedirect: Option[String],
+  minimumFileSize: Option[Long],
+  maximumFileSize: Option[Long]
 )

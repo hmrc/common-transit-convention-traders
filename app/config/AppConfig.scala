@@ -38,6 +38,8 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesCon
   val routerUrl                = Url.parse(servicesConfig.baseUrl("transit-movements-router"))
   val auditingUrl              = Url.parse(servicesConfig.baseUrl("transit-movements-auditing"))
   val pushNotificationsUrl     = Url.parse(servicesConfig.baseUrl("transit-movements-push-notifications"))
+  val upscanInitiateUrl        = Url.parse(servicesConfig.baseUrl("upscan-initiate"))
+  val upscanMaximumFileSize    = servicesConfig.config("upscan-initiate").get[Long]("maximumFileSize")
   val pushNotificationsEnabled = servicesConfig.config("transit-movements-push-notifications").get[Boolean]("enabled")
 
   lazy val enrolmentKey: String = config.get[String]("security.enrolmentKey")

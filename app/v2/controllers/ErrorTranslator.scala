@@ -105,4 +105,12 @@ trait ErrorTranslator {
       case UnexpectedError(ex) => PresentationError.internalServiceError(cause = ex)
     }
   }
+
+  implicit val upscanErrorConverter = new Converter[UpscanInitiateError] {
+    import v2.models.errors.UpscanInitiateError._
+
+    override def convert(upscanInitiateError: UpscanInitiateError): PresentationError = upscanInitiateError match {
+      case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
+    }
+  }
 }
