@@ -888,8 +888,6 @@ class V2MovementsControllerSpec
             _ => EitherT.rightT(upscanResponse)
           }
 
-        when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
-
         when(
           mockMovementsPersistenceService
             .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
@@ -907,7 +905,6 @@ class V2MovementsControllerSpec
         )
 
         verify(mockUpscanService, times(1)).upscanInitiate()(any(), any())
-        verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
         verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
         verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
       }
@@ -918,8 +915,6 @@ class V2MovementsControllerSpec
           .thenAnswer {
             _ => EitherT.rightT(upscanResponse)
           }
-
-        when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
 
         when(
           mockMovementsPersistenceService
@@ -941,7 +936,6 @@ class V2MovementsControllerSpec
         contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(MovementId("123"), None, Some(upscanResponse), MovementType.Departure))
 
         verify(mockUpscanService, times(1)).upscanInitiate()(any(), any())
-        verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
         verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
         verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
 
