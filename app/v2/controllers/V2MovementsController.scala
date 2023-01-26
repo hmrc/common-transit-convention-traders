@@ -142,7 +142,7 @@ class V2MovementsControllerImpl @Inject() (
 
         (for {
           upscan <- upscanService.upscanInitiate().asPresentation
-          _ = auditService.audit(AuditType.DeclarationData, request.body, MimeTypes.XML) // TODO - what data we need to send for auditing
+          // _ = auditService.audit(AuditType.DeclarationData, request.body, MimeTypes.XML) // TODO - what data we need to send for auditing
           movementResponse <- persistAndLinkToBox(None, MovementType.Departure)
         } yield movementResponse.copy(upscanInitiateResponse = Some(upscan))).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
