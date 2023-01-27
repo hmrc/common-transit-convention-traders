@@ -20,16 +20,21 @@ import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import v2.models.AuditType
+import v2.models.BoxId
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
-import v2.models.XmlPayload
 import v2.models.MovementType
+import v2.models.XmlPayload
 import v2.models.request.MessageType
+import v2.models.responses.BoxResponse
 import v2.models.responses.MessageSummary
+import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
-
+import v2.models.responses.UpscanFormTemplate
+import v2.models.responses.UpscanInitiateResponse
+import v2.models.responses.UpscanReference
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -95,6 +100,41 @@ trait CommonGenerators {
       created                 <- arbitraryOffsetDateTime.arbitrary
       updated                 <- arbitraryOffsetDateTime.arbitrary
     } yield MovementSummary(id, enrollmentEORINumber, movementEORINumber, Some(movementReferenceNumber), created, updated)
+  }
+
+  implicit private lazy val arbitraryFields: Arbitrary[Map[String, String]] = Arbitrary {
+    for {
+      fieldKeys   <- Gen.listOfN(5, Gen.alphaNumStr)
+      fieldValues <- Gen.listOfN(5, Gen.alphaNumStr)
+    } yield fieldKeys.zip(fieldValues).toMap
+  }
+
+  implicit private lazy val arbitraryUpscanTemplateResponse: Arbitrary[UpscanFormTemplate] = Arbitrary {
+    for {
+      href   <- Gen.alphaNumStr
+      fields <- arbitraryFields.arbitrary
+    } yield UpscanFormTemplate(href, fields)
+  }
+
+  implicit lazy val arbitraryUpscanInitiateResponse: Arbitrary[UpscanInitiateResponse] = Arbitrary {
+    for {
+      upscanReference <- Gen.alphaNumStr.map(UpscanReference(_))
+      formTemplate    <- arbitrary[UpscanFormTemplate]
+    } yield UpscanInitiateResponse(upscanReference, formTemplate)
+  }
+
+  implicit lazy val arbitraryBoxResponse: Arbitrary[BoxResponse] = Arbitrary {
+    for {
+      boxId <- genShortUUID.map(BoxId(_))
+    } yield BoxResponse(boxId)
+  }
+
+  implicit def arbitraryMovementResponse(withMessage: Boolean, withBox: Boolean): Arbitrary[MovementResponse] = Arbitrary {
+    for {
+      movementId <- arbitrary[MovementId]
+      messageId   = if (withMessage) arbitrary[MessageId].sample else None
+      boxResponse = if (withBox) arbitrary[BoxResponse].sample else None
+    } yield MovementResponse(movementId, messageId, boxResponse)
   }
 
 }
