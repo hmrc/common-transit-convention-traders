@@ -27,6 +27,5 @@ object MovementResponse {
 
 case class MovementResponse(
   movementId: MovementId,
-  messageId: Option[MessageId] = None,
-  boxResponse: Option[BoxResponse] = None
+  messageId: Option[MessageId] = None
 )

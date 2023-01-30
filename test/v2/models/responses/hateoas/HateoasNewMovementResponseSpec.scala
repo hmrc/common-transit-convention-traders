@@ -38,10 +38,10 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
     s"${movementType.movementType} create a valid HateoasNewMovementResponse" - {
 
       "when the movement response does not contain message Id or box Id" in forAll(
-        arbitraryMovementResponse(false, false).arbitrary
+        arbitraryMovementResponse(false).arbitrary
       ) {
         movementResponse =>
-          val actual = HateoasNewMovementResponse(movementResponse, None, movementType)
+          val actual = HateoasNewMovementResponse(movementResponse, None, None, movementType)
 
           val expected = Json.obj(
             "_links" -> Json.obj(
@@ -58,10 +58,11 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
       }
 
       "when the movement response contains BoxId" in forAll(
-        arbitraryMovementResponse(false, true).arbitrary
+        arbitraryMovementResponse(false).arbitrary,
+        arbitraryBoxResponse.arbitrary
       ) {
-        movementResponse =>
-          val actual = HateoasNewMovementResponse(movementResponse, None, movementType)
+        (movementResponse, boxResponse) =>
+          val actual = HateoasNewMovementResponse(movementResponse, Some(boxResponse), None, movementType)
 
           val expected = Json.obj(
             "_links" -> Json.obj(
@@ -72,7 +73,7 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
                 "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse.movementId.value}/messages"
               )
             ),
-            "boxId" -> s"${movementResponse.boxResponse.get.boxId.value}"
+            "boxId" -> s"${boxResponse.boxId.value}"
           )
 
           actual mustBe expected
@@ -80,10 +81,11 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
 
       "with a movement response that contains box ID and an Upload response" in forAll(
         arbitraryUpscanInitiateResponse.arbitrary,
-        arbitraryMovementResponse(false, true).arbitrary
+        arbitraryMovementResponse(false).arbitrary,
+        arbitraryBoxResponse.arbitrary
       ) {
-        (upscanResponse, movementResponse) =>
-          val actual = HateoasNewMovementResponse(movementResponse, Some(upscanResponse), movementType)
+        (upscanResponse, movementResponse, boxResponse) =>
+          val actual = HateoasNewMovementResponse(movementResponse, Some(boxResponse), Some(upscanResponse), movementType)
 
           val expected = Json.obj(
             "_links" -> Json.obj(
@@ -94,7 +96,7 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
                 "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse.movementId.value}/messages"
               )
             ),
-            "boxId" -> s"${movementResponse.boxResponse.get.boxId.value}",
+            "boxId" -> s"${boxResponse.boxId.value}",
             "uploadRequest" -> Json.obj(
               "href"   -> upscanResponse.uploadRequest.href,
               "fields" -> upscanResponse.uploadRequest.fields
@@ -104,31 +106,5 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
           actual mustBe expected
       }
     }
-
-  private def upscanResponse =
-    UpscanInitiateResponse(
-      UpscanReference("b72d9aea-fdb9-40f1-800c-3612154baf07"),
-      UpscanFormTemplate(
-        "http://localhost:9570/upscan/upload-proxy",
-        Map(
-          "x-amz-meta-callback-url"             -> "https://myservice.com/callback",
-          "x-amz-date"                          -> "20230118T135545Z",
-          "success_action_redirect"             -> "https://myservice.com/nextPage?key=b72d9aea-fdb9-40f1-800c-3612154baf07",
-          "x-amz-credential"                    -> "ASIAxxxxxxxxx/20180202/eu-west-2/s3/aws4_request",
-          "x-amz-meta-upscan-initiate-response" -> "2023-01-18T13:55:45.715Z",
-          "x-amz-meta-upscan-initiate-received" -> "2023-01-18T13:55:45.715Z",
-          "x-amz-meta-request-id"               -> "7075a21c-c8f0-402e-9c9c-1eea546c6fbf",
-          "x-amz-meta-original-filename"        -> "${filename}",
-          "x-amz-algorithm"                     -> "AWS4-HMAC-SHA256",
-          "key"                                 -> "b72d9aea-fdb9-40f1-800c-3612154baf07",
-          "acl"                                 -> "private",
-          "x-amz-signature"                     -> "xxxx",
-          "error_action_redirect"               -> "https://myservice.com/errorPage",
-          "x-amz-meta-session-id"               -> "3506d041-ba59-41ee-bb2c-bf0363163be3",
-          "x-amz-meta-consuming-service"        -> "PostmanRuntime/7.29.2",
-          "policy"                              -> "eyJjb25kaXRpb25zIjpbWyJjb250ZW50LWxlbmd0aC1yYW5nZSIsMCwxMDI0XV19"
-        )
-      )
-    )
 
 }

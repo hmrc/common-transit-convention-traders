@@ -129,12 +129,11 @@ trait CommonGenerators {
     } yield BoxResponse(boxId)
   }
 
-  implicit def arbitraryMovementResponse(withMessage: Boolean, withBox: Boolean): Arbitrary[MovementResponse] = Arbitrary {
+  implicit def arbitraryMovementResponse(withMessage: Boolean): Arbitrary[MovementResponse] = Arbitrary {
     for {
       movementId <- arbitrary[MovementId]
-      messageId   = if (withMessage) arbitrary[MessageId].sample else None
-      boxResponse = if (withBox) arbitrary[BoxResponse].sample else None
-    } yield MovementResponse(movementId, messageId, boxResponse)
+      messageId = if (withMessage) arbitrary[MessageId].sample else None
+    } yield MovementResponse(movementId, messageId)
   }
 
 }

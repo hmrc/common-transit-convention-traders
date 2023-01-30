@@ -18,7 +18,6 @@ package v2.models.responses.hateoas
 
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.responses.BoxResponse
 import v2.models.responses.MovementResponse
@@ -28,6 +27,7 @@ object HateoasNewMovementResponse extends HateoasResponse {
 
   def apply(
     movementResponse: MovementResponse,
+    boxResponse: Option[BoxResponse],
     upscanInitiateResponse: Option[UpscanInitiateResponse],
     movementType: MovementType
   ): JsObject = {
@@ -37,7 +37,7 @@ object HateoasNewMovementResponse extends HateoasResponse {
     )
 
     Json.obj("_links" -> jsObject) ++
-      movementResponse.boxResponse
+      boxResponse
         .map(
           r => Json.obj("boxId" -> r.boxId.value)
         )

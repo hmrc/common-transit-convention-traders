@@ -251,9 +251,10 @@ class V2MovementsControllerSpec
       )
 
       "must return Accepted when body length is within limits and is considered valid" in forAll(
-        arbitraryMovementResponse(true, true).arbitrary
+        arbitraryMovementResponse(true).arbitrary,
+        arbitraryBoxResponse.arbitrary
       ) {
-        movementResponse =>
+        (movementResponse, boxResponse) =>
           beforeEach()
           when(mockValidationService.validateXml(any[MessageType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
             .thenAnswer(
@@ -273,6 +274,11 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
+          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
+            .thenAnswer(
+              _ => EitherT.rightT(boxResponse)
+            )
+
           when(
             mockRouterService.send(
               any[String].asInstanceOf[MessageType],
@@ -285,17 +291,12 @@ class V2MovementsControllerSpec
             _ => EitherT.rightT(())
           )
 
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
-            .thenAnswer(
-              _ => EitherT.rightT(movementResponse.boxResponse.get)
-            )
-
           val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC015C.mkString), MovementType.Departure)
           val result  = sut.createMovement(MovementType.Departure)(request)
           status(result) mustBe ACCEPTED
 
           contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse, None, MovementType.Departure)
+            HateoasNewMovementResponse(movementResponse, Some(boxResponse), None, MovementType.Departure)
           )
 
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
@@ -309,7 +310,7 @@ class V2MovementsControllerSpec
       }
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
-        arbitraryMovementResponse(true, false).arbitrary
+        arbitraryMovementResponse(true).arbitrary
       ) {
         movementResponse =>
           beforeEach()
@@ -352,7 +353,7 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Departure)(request)
           status(result) mustBe ACCEPTED
 
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, MovementType.Departure))
+          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, None, MovementType.Departure))
 
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
@@ -415,9 +416,10 @@ class V2MovementsControllerSpec
       }
 
       "must return Internal Service Error if the router service reports an error" in forAll(
-        arbitraryMovementResponse(true, true).arbitrary
+        arbitraryMovementResponse(true).arbitrary,
+        arbitraryBoxResponse.arbitrary
       ) {
-        movementResponse =>
+        (movementResponse, boxResponse) =>
           beforeEach()
 
           when(mockValidationService.validateXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
@@ -435,6 +437,11 @@ class V2MovementsControllerSpec
               )
           ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, MovementResponse](movementResponse)))
 
+          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
+            .thenAnswer(
+              _ => EitherT.rightT(boxResponse)
+            )
+
           when(
             mockRouterService.send(
               any[String].asInstanceOf[MessageType],
@@ -446,11 +453,6 @@ class V2MovementsControllerSpec
           ).thenAnswer(
             _ => EitherT.leftT(RouterError.UnexpectedError(None))
           )
-
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
-            .thenAnswer(
-              _ => EitherT.rightT(movementResponse.boxResponse.get)
-            )
 
           val request =
             fakeCreateMovementRequest("POST", standardHeaders, Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), MovementType.Departure)
@@ -470,9 +472,10 @@ class V2MovementsControllerSpec
       )
 
       "must return Accepted when body length is within limits and is considered valid" in forAll(
-        arbitraryMovementResponse(true, true).arbitrary
+        arbitraryMovementResponse(true).arbitrary,
+        arbitraryBoxResponse.arbitrary
       ) {
-        movementResponse =>
+        (movementResponse, boxResponse) =>
           beforeEach()
 
           when(
@@ -517,7 +520,7 @@ class V2MovementsControllerSpec
 
           when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
             .thenAnswer(
-              _ => EitherT.rightT(movementResponse.boxResponse.get)
+              _ => EitherT.rightT(boxResponse)
             )
 
           when(
@@ -536,7 +539,7 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Departure)(request)
           status(result) mustBe ACCEPTED
           contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse, None, MovementType.Departure)
+            HateoasNewMovementResponse(movementResponse, Some(boxResponse), None, MovementType.Departure)
           )
 
           verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
@@ -547,7 +550,7 @@ class V2MovementsControllerSpec
       }
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
-        arbitraryMovementResponse(true, false).arbitrary
+        arbitraryMovementResponse(true).arbitrary
       ) {
         movementResponse =>
           beforeEach()
@@ -613,7 +616,7 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Departure)(request)
           status(result) mustBe ACCEPTED
 
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, MovementType.Departure))
+          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, None, MovementType.Departure))
 
           verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
@@ -801,9 +804,10 @@ class V2MovementsControllerSpec
       }
 
       "must return Internal Service Error if the router service reports an error" in forAll(
-        arbitraryMovementResponse(true, true).arbitrary
+        arbitraryMovementResponse(true).arbitrary,
+        arbitraryBoxResponse.arbitrary
       ) {
-        movementResponse =>
+        (movementResponse, boxResponse) =>
           beforeEach()
 
           when(
@@ -852,7 +856,7 @@ class V2MovementsControllerSpec
 
           when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
             .thenAnswer(
-              _ => EitherT.rightT(movementResponse.boxResponse.get)
+              _ => EitherT.rightT(boxResponse)
             )
 
           when(
@@ -896,9 +900,10 @@ class V2MovementsControllerSpec
 
       "must return Accepted when call to upscan is success" in forAll(
         arbitraryUpscanInitiateResponse.arbitrary,
-        arbitraryMovementResponse(false, true).arbitrary
+        arbitraryBoxResponse.arbitrary,
+        arbitraryMovementResponse(false).arbitrary
       ) {
-        (upscanResponse, movementResponse) =>
+        (upscanResponse, boxResponse, movementResponse) =>
           beforeEach()
 
           when(mockUpscanService.upscanInitiate()(any(), any()))
@@ -916,7 +921,7 @@ class V2MovementsControllerSpec
 
           when(mockPushNotificationService.associate(MovementId(anyString()), any(), any())(any(), any()))
             .thenAnswer(
-              _ => EitherT.rightT(movementResponse.boxResponse.get)
+              _ => EitherT.rightT(boxResponse)
             )
 
           val request = fakeCreateMovementRequest("POST", standardHeaders, Source.empty[ByteString], MovementType.Departure)
@@ -925,7 +930,7 @@ class V2MovementsControllerSpec
           status(result) mustBe ACCEPTED
 
           contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse, Some(upscanResponse), MovementType.Departure)
+            HateoasNewMovementResponse(movementResponse, Some(boxResponse), Some(upscanResponse), MovementType.Departure)
           )
 
           verify(mockUpscanService, times(1)).upscanInitiate()(any(), any())
@@ -935,7 +940,7 @@ class V2MovementsControllerSpec
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
         arbitraryUpscanInitiateResponse.arbitrary,
-        arbitraryMovementResponse(false, false).arbitrary
+        arbitraryMovementResponse(false).arbitrary
       ) {
         (upscanResponse, movementResponse) =>
           beforeEach()
@@ -964,7 +969,7 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Departure)(request)
           status(result) mustBe ACCEPTED
 
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, Some(upscanResponse), MovementType.Departure))
+          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, Some(upscanResponse), MovementType.Departure))
 
           verify(mockUpscanService, times(1)).upscanInitiate()(any(), any())
           verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
@@ -1044,9 +1049,10 @@ class V2MovementsControllerSpec
       )
 
       "must return Accepted when body length is within limits and is considered valid" in forAll(
-        arbitraryMovementResponse(true, true).arbitrary
+        arbitraryMovementResponse(true).arbitrary,
+        arbitraryBoxResponse.arbitrary
       ) {
-        movementResponse =>
+        (movementResponse, boxResponse) =>
           beforeEach()
           when(
             mockValidationService.validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
@@ -1070,7 +1076,7 @@ class V2MovementsControllerSpec
 
           when(mockPushNotificationService.associate(MovementId(anyString()), any(), any())(any(), any()))
             .thenAnswer(
-              _ => EitherT.rightT(movementResponse.boxResponse.get)
+              _ => EitherT.rightT(boxResponse)
             )
 
           when(
@@ -1089,7 +1095,7 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Arrival)(request)
           status(result) mustBe ACCEPTED
 
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, MovementType.Arrival))
+          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, Some(boxResponse), None, MovementType.Arrival))
 
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.XML))(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
@@ -1102,7 +1108,7 @@ class V2MovementsControllerSpec
       }
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
-        arbitraryMovementResponse(true, false).arbitrary
+        arbitraryMovementResponse(true).arbitrary
       ) {
         movementResponse =>
           beforeEach()
@@ -1147,7 +1153,7 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Arrival)(request)
           status(result) mustBe ACCEPTED
 
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, MovementType.Arrival))
+          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, None, MovementType.Arrival))
 
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.XML))(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
@@ -1208,9 +1214,10 @@ class V2MovementsControllerSpec
       }
 
       "must return Internal Service Error if the router service reports an error" in forAll(
-        arbitraryMovementResponse(true, true).arbitrary
+        arbitraryMovementResponse(true).arbitrary,
+        arbitraryBoxResponse.arbitrary
       ) {
-        movementResponse =>
+        (movementResponse, boxResponse) =>
           beforeEach()
 
           when(
@@ -1244,7 +1251,7 @@ class V2MovementsControllerSpec
 
           when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
             .thenAnswer(
-              _ => EitherT.rightT(movementResponse.boxResponse.get)
+              _ => EitherT.rightT(boxResponse)
             )
 
           val request  = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC007C.mkString), MovementType.Arrival)
@@ -1264,9 +1271,10 @@ class V2MovementsControllerSpec
       )
 
       "must return Accepted when body length is within limits and is considered valid" in forAll(
-        arbitraryMovementResponse(true, true).arbitrary
+        arbitraryMovementResponse(true).arbitrary,
+        arbitraryBoxResponse.arbitrary
       ) {
-        movementResponse =>
+        (movementResponse, boxResponse) =>
           beforeEach()
           when(
             mockValidationService
@@ -1322,18 +1330,18 @@ class V2MovementsControllerSpec
 
           when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
             .thenAnswer(
-              _ => EitherT.rightT(movementResponse.boxResponse.get)
+              _ => EitherT.rightT(boxResponse)
             )
 
           val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC007Cjson), MovementType.Arrival)
           val result  = sut.createMovement(MovementType.Arrival)(request)
 
           status(result) mustBe ACCEPTED
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, MovementType.Arrival))
+          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, Some(boxResponse), None, MovementType.Arrival))
       }
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
-        arbitraryMovementResponse(true, false).arbitrary
+        arbitraryMovementResponse(true).arbitrary
       ) {
         movementResponse =>
           beforeEach()
@@ -1398,7 +1406,7 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Arrival)(request)
 
           status(result) mustBe ACCEPTED
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, MovementType.Arrival))
+          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, None, MovementType.Arrival))
       }
 
       "must return Bad Request when body is not an JSON document" in {
@@ -1584,9 +1592,10 @@ class V2MovementsControllerSpec
       }
 
       "must return Internal Service Error if the router service reports an error" in forAll(
-        arbitraryMovementResponse(true, true).arbitrary
+        arbitraryMovementResponse(true).arbitrary,
+        arbitraryBoxResponse.arbitrary
       ) {
-        movementResponse =>
+        (movementResponse, boxResponse) =>
           beforeEach()
           when(
             mockValidationService
@@ -1634,7 +1643,7 @@ class V2MovementsControllerSpec
 
           when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
             .thenAnswer(
-              _ => EitherT.rightT(movementResponse.boxResponse.get)
+              _ => EitherT.rightT(boxResponse)
             )
 
           when(
@@ -1678,9 +1687,10 @@ class V2MovementsControllerSpec
 
       "must return Accepted if the call to upscan and the persistence service succeeds" in forAll(
         arbitraryUpscanInitiateResponse.arbitrary,
-        arbitraryMovementResponse(false, true).arbitrary
+        arbitraryMovementResponse(false).arbitrary,
+        arbitraryBoxResponse.arbitrary
       ) {
-        (upscanResponse, movementResponse) =>
+        (upscanResponse, movementResponse, boxResponse) =>
           beforeEach()
 
           when(mockUpscanService.upscanInitiate()(any(), any()))
@@ -1700,7 +1710,7 @@ class V2MovementsControllerSpec
 
           when(mockPushNotificationService.associate(MovementId(anyString()), any(), any())(any(), any()))
             .thenAnswer(
-              _ => EitherT.rightT(movementResponse.boxResponse.get)
+              _ => EitherT.rightT(boxResponse)
             )
 
           val request = fakeCreateMovementRequest("POST", standardHeaders, Source.empty[ByteString], MovementType.Arrival)
@@ -1708,7 +1718,7 @@ class V2MovementsControllerSpec
           status(result) mustBe ACCEPTED
 
           contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse, Some(upscanResponse), MovementType.Arrival)
+            HateoasNewMovementResponse(movementResponse, Some(boxResponse), Some(upscanResponse), MovementType.Arrival)
           )
 
           verify(mockUpscanService, times(1)).upscanInitiate()(any(), any())
@@ -1718,7 +1728,7 @@ class V2MovementsControllerSpec
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
         arbitraryUpscanInitiateResponse.arbitrary,
-        arbitraryMovementResponse(false, false).arbitrary
+        arbitraryMovementResponse(false).arbitrary
       ) {
         (upscanResponse, movementResponse) =>
           beforeEach()
@@ -1748,7 +1758,7 @@ class V2MovementsControllerSpec
           status(result) mustBe ACCEPTED
 
           contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse, Some(upscanResponse), MovementType.Arrival)
+            HateoasNewMovementResponse(movementResponse, None, Some(upscanResponse), MovementType.Arrival)
           )
 
           verify(mockUpscanService, times(1)).upscanInitiate()(any(), any())
@@ -1819,9 +1829,10 @@ class V2MovementsControllerSpec
     }
 
     "must return Internal Service Error if the router service reports an error" in forAll(
-      arbitraryMovementResponse(true, true).arbitrary
+      arbitraryMovementResponse(true).arbitrary,
+      arbitraryBoxResponse.arbitrary
     ) {
-      movementResponse =>
+      (movementResponse, boxResponse) =>
         beforeEach()
 
         val standardHeaders = FakeHeaders(
@@ -1855,7 +1866,7 @@ class V2MovementsControllerSpec
 
         when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
           .thenAnswer(
-            _ => EitherT.rightT(movementResponse.boxResponse.get)
+            _ => EitherT.rightT(boxResponse)
           )
 
         val request  = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC007C.mkString), MovementType.Arrival)
