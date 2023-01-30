@@ -6,25 +6,13 @@ protocols: [ HTTPS ]
 baseUri: https://common-transit-convention-traders.hmrc.gov.uk/
 version: 1.0
 
-documentation:
- - title: Overview
-   content: !include docs/overview.md
- - title: Versioning
-   content: !include https://developer.service.hmrc.gov.uk/api-documentation/assets/common/docs/versioning.md
- - title: Percent-encoding of parameters in request URLs
-   content: !include docs/percent-encoding.md
- - title: Push Pull notifications
-   content: !include docs/pushPull.md
- - title: Errors
-   content: !include docs/errors.md
-
 mediaType: [ application/json, application/xml ]
 
 uses:
-  sec: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/securitySchemes.raml
-  headers: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/headers.raml
-  annotations: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/annotations.raml
-  types: https://developer.service.hmrc.gov.uk/api-documentation/assets/common/modules/types.raml
+  sec: docs/securitySchemes.raml
+  headers: docs/headers.raml
+  annotations: docs/annotations.raml
+  types: docs/types.raml
 
 traits:
   contentXmlHeader:
@@ -52,7 +40,7 @@ traits:
               badRequest:
                 description: The accept header is missing or invalid.
                 value:
-                  code : ACCEPT_HEADER_INVALID
+                  code: ACCEPT_HEADER_INVALID
 
 /customs/transits/movements:
   /arrivals:
@@ -68,7 +56,7 @@ traits:
         It will also contain an embedded request ID, box ID and box name, which you can use to match this movement to any messages received from the Push Pull Notifications API.
 
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
-      is: [contentXmlHeader]
+      is: [ contentXmlHeader ]
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
@@ -181,7 +169,7 @@ traits:
           A successful response will contain a URI and an arrival ID for the notification, which you can use to retrieve the message status.
 
           **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
-        is: [contentXmlHeader]
+        is: [ contentXmlHeader ]
         (annotations.scope): "common-transit-convention-traders"
         securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
         responses:
@@ -247,7 +235,7 @@ traits:
             A successful response will contain a URI and an arrival ID for the message, which you can use to retrieve the message status.
 
             **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
-          is: [contentXmlHeader]
+          is: [ contentXmlHeader ]
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
@@ -397,7 +385,7 @@ traits:
         It will also contain an embedded request ID, box ID and box name, which you can use to match this movement to any messages received from the Push Pull Notifications API.
 
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
-      is: [contentXmlHeader]
+      is: [ contentXmlHeader ]
       (annotations.scope): "common-transit-convention-traders"
       securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
       responses:
@@ -544,7 +532,7 @@ traits:
             A successful response will contain a URI and a message ID related to the departure, which you can use to retrieve the message status.
 
             **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
-          is: [contentXmlHeader]
+          is: [ contentXmlHeader ]
           (annotations.scope): "common-transit-convention-traders"
           securedBy: [ sec.oauth_2_0: { scopes: [ "common-transit-convention-traders" ] } ]
           responses:
