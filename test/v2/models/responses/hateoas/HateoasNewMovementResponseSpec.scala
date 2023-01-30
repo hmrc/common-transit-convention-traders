@@ -58,7 +58,7 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
       }
 
       "when the movement response contains BoxId" in forAll(
-        arbitraryMovementResponse(false, false).arbitrary
+        arbitraryMovementResponse(false, true).arbitrary
       ) {
         movementResponse =>
           val actual = HateoasNewMovementResponse(movementResponse, None, movementType)
@@ -72,7 +72,7 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
                 "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse.movementId.value}/messages"
               )
             ),
-            "boxId" -> "test"
+            "boxId" -> s"${movementResponse.boxResponse.get.boxId.value}"
           )
 
           actual mustBe expected
@@ -94,9 +94,9 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
                 "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse.movementId.value}/messages"
               )
             ),
-            "boxId" -> "test",
+            "boxId" -> s"${movementResponse.boxResponse.get.boxId.value}",
             "uploadRequest" -> Json.obj(
-              "href"   -> upscanResponse.reference,
+              "href"   -> upscanResponse.uploadRequest.href,
               "fields" -> upscanResponse.uploadRequest.fields
             )
           )

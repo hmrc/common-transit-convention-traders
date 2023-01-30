@@ -144,8 +144,7 @@ class V2MovementsControllerImpl @Inject() (
           movementResponse <- persistAndLinkToBox(None, movementType)
         } yield (movementResponse, upscanResponse)).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          movementAndUpscanResponse =>
-            Accepted(HateoasNewMovementResponse(movementAndUpscanResponse._1, Some(movementAndUpscanResponse._2), MovementType.Departure))
+          movementAndUpscanResponse => Accepted(HateoasNewMovementResponse(movementAndUpscanResponse._1, Some(movementAndUpscanResponse._2), movementType))
         )
     }
 

@@ -111,8 +111,8 @@ trait CommonGenerators {
 
   implicit private lazy val arbitraryUpscanTemplateResponse: Arbitrary[UpscanFormTemplate] = Arbitrary {
     for {
-      href   <- Gen.alphaNumStr
-      fields <- arbitraryFields.arbitrary
+      href <- Gen.alphaNumStr
+      fields = arbitraryFields.arbitrary.sample.get
     } yield UpscanFormTemplate(href, fields)
   }
 

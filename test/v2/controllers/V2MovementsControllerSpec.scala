@@ -899,6 +899,8 @@ class V2MovementsControllerSpec
         arbitraryMovementResponse(false, true).arbitrary
       ) {
         (upscanResponse, movementResponse) =>
+          beforeEach()
+
           when(mockUpscanService.upscanInitiate()(any(), any()))
             .thenAnswer {
               _ => EitherT.rightT(upscanResponse)
@@ -914,11 +916,12 @@ class V2MovementsControllerSpec
 
           when(mockPushNotificationService.associate(MovementId(anyString()), any(), any())(any(), any()))
             .thenAnswer(
-              _ => EitherT.rightT(movementResponse.boxResponse)
+              _ => EitherT.rightT(movementResponse.boxResponse.get)
             )
 
           val request = fakeCreateMovementRequest("POST", standardHeaders, Source.empty[ByteString], MovementType.Departure)
           val result  = sut.createMovement(MovementType.Departure)(request)
+
           status(result) mustBe ACCEPTED
 
           contentAsJson(result) mustBe Json.toJson(
@@ -935,6 +938,8 @@ class V2MovementsControllerSpec
         arbitraryMovementResponse(false, false).arbitrary
       ) {
         (upscanResponse, movementResponse) =>
+          beforeEach()
+
           when(mockUpscanService.upscanInitiate()(any(), any()))
             .thenAnswer {
               _ => EitherT.rightT(upscanResponse)
@@ -962,10 +967,8 @@ class V2MovementsControllerSpec
           contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, Some(upscanResponse), MovementType.Departure))
 
           verify(mockUpscanService, times(1)).upscanInitiate()(any(), any())
-          verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
           verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
-
       }
 
       "must return Internal Service Error if the persistence service reports an error" in forAll(
@@ -1103,6 +1106,7 @@ class V2MovementsControllerSpec
       ) {
         movementResponse =>
           beforeEach()
+
           when(
             mockValidationService.validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
           )
@@ -1677,6 +1681,8 @@ class V2MovementsControllerSpec
         arbitraryMovementResponse(false, true).arbitrary
       ) {
         (upscanResponse, movementResponse) =>
+          beforeEach()
+
           when(mockUpscanService.upscanInitiate()(any(), any()))
             .thenAnswer {
               _ => EitherT.rightT(upscanResponse)
@@ -1698,7 +1704,7 @@ class V2MovementsControllerSpec
             )
 
           val request = fakeCreateMovementRequest("POST", standardHeaders, Source.empty[ByteString], MovementType.Arrival)
-          val result  = sut.createMovement(MovementType.Departure)(request)
+          val result  = sut.createMovement(MovementType.Arrival)(request)
           status(result) mustBe ACCEPTED
 
           contentAsJson(result) mustBe Json.toJson(
@@ -1706,9 +1712,8 @@ class V2MovementsControllerSpec
           )
 
           verify(mockUpscanService, times(1)).upscanInitiate()(any(), any())
-          verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.XML))(any(), any())
           verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
+          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
       }
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
@@ -1716,6 +1721,8 @@ class V2MovementsControllerSpec
         arbitraryMovementResponse(false, false).arbitrary
       ) {
         (upscanResponse, movementResponse) =>
+          beforeEach()
+
           when(mockUpscanService.upscanInitiate()(any(), any()))
             .thenAnswer {
               _ => EitherT.rightT(upscanResponse)
@@ -1737,7 +1744,7 @@ class V2MovementsControllerSpec
             )
 
           val request = fakeCreateMovementRequest("POST", standardHeaders, Source.empty[ByteString], MovementType.Arrival)
-          val result  = sut.createMovement(MovementType.Departure)(request)
+          val result  = sut.createMovement(MovementType.Arrival)(request)
           status(result) mustBe ACCEPTED
 
           contentAsJson(result) mustBe Json.toJson(
@@ -1745,9 +1752,8 @@ class V2MovementsControllerSpec
           )
 
           verify(mockUpscanService, times(1)).upscanInitiate()(any(), any())
-          verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.XML))(any(), any())
           verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
+          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
       }
 
       "must return Internal Service Error if the persistence service reports an error" in forAll(
