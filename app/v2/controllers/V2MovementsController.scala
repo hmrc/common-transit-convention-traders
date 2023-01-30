@@ -49,13 +49,10 @@ import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
-import v2.models.errors.UpscanInitiateError
 import v2.models.request.MessageType
-import v2.models.request.UpscanInitiate
 import v2.models.responses.BoxResponse
 import v2.models.responses.MovementResponse
 import v2.models.responses.UpdateMovementResponse
-import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.hateoas._
 import v2.services._
 import v2.utils.PreMaterialisedFutureProvider
@@ -359,7 +356,7 @@ class V2MovementsControllerImpl @Inject() (
           movementResponse.movementId,
           movementResponse.messageId.get,
           source
-        ) // TODO- shall we assume we always get messageId for small messages
+        )
         .asPresentation
     } yield MovementResponse(movementResponse.movementId, movementResponse.messageId, boxResponse)
 
