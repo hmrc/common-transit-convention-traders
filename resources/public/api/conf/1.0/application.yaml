@@ -181,6 +181,22 @@ paths:
               example:
                 statusCode: 406
                 message: The accept header is missing or invalid
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotFound'
+                  - description: No record found.
+                    example:
+                      code: CLIENT_ERROR
+                      message: ''
+                      statusCode: 404
+              example:
+                code: CLIENT_ERROR
+                message: ''
+                statusCode: 404
       deprecated: false
       security:
         - userRestricted:
