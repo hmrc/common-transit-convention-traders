@@ -108,7 +108,7 @@ paths:
             example: 2021-06-21T09:00:00Z
       responses:
         '200':
-          description: OK
+          description: A successful get all arrivals response
           content:
             application/json:
               schema:
@@ -290,7 +290,7 @@ paths:
             example: '1'
       responses:
         '200':
-          description: OK
+          description: A successful get arrival for an arrival ID response
           content:
             application/json:
               schema:
@@ -458,7 +458,7 @@ paths:
             example: 2021-06-21T09:00:00Z
       responses:
         '200':
-          description: OK
+          description: A successful get all messages related to arrival response
           content:
             application/json:
               schema:
@@ -570,7 +570,7 @@ paths:
             example: '1'
       responses:
         '200':
-          description: OK
+          description: A successful message related to arrival and message ID response
           content:
             application/json:
               schema:
@@ -731,7 +731,7 @@ paths:
             example: 2021-06-21T09:00:00Z
       responses:
         '200':
-          description: OK
+          description: A successful get all departure response
           content:
             application/json:
               schema:
@@ -834,7 +834,7 @@ paths:
             type: string
       responses:
         '200':
-          description: OK
+          description: A successful departure for departure ID response
           content:
             application/json:
               schema:
@@ -1002,7 +1002,7 @@ paths:
             example: 2021-06-21T09:00:00Z
       responses:
         '200':
-          description: OK
+          description: A successful get all messages related to departure response
           content:
             application/json:
               schema:
@@ -1128,7 +1128,7 @@ paths:
             type: string
       responses:
         '200':
-          description: OK
+          description: A successful message related to departure and message ID response
           content:
             application/json:
               schema:
@@ -1204,7 +1204,7 @@ paths:
         - $ref: '#/components/parameters/acceptHeader'
       responses:
         '200':
-          description: OK
+          description: A successful box information response
           content:
             application/json:
               schema:
