@@ -44,13 +44,10 @@ class PushPullNotificationController @Inject() (cc: ControllerComponents, pushPu
       request.headers.get(Constants.XClientIdHeader) match {
         case Some(clientId) =>
           pushPullNotificationConnector.getBox(clientId).map {
-            response =>
-              response match {
-                case Left(error) if error.statusCode == NOT_FOUND =>
-                  NotFound(Json.toJson(JsonClientErrorResponse(NOT_FOUND, "No box found for your client id")))
-                case Left(_)    => InternalServerError(Json.toJson(JsonSystemErrorResponse(INTERNAL_SERVER_ERROR, "Unexpected Error")))
-                case Right(box) => Ok(Json.toJson(HateoasResponseBox(box)))
-              }
+            case Left(error) if error.statusCode == NOT_FOUND =>
+              NotFound(Json.toJson(JsonClientErrorResponse(NOT_FOUND, "No box found for your client id")))
+            case Left(_)    => InternalServerError(Json.toJson(JsonSystemErrorResponse(INTERNAL_SERVER_ERROR, "Unexpected Error")))
+            case Right(box) => Ok(Json.toJson(HateoasResponseBox(box)))
           }
         case None => Future.successful(BadRequest(Json.toJson(JsonClientErrorResponse(BAD_REQUEST, "Client Id Required"))))
       }

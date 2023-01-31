@@ -22,3 +22,5 @@ GET        /movements/departures/:departureId/messages              routing.Depa
 GET        /movements/departures/:departureId/messages/:messageId    routing.DeparturesRouter.getMessage(departureId: String, messageId: String)
 
 GET        /movements/push-pull-notifications/box                   controllers.PushPullNotificationController.getBoxInfo()
+
+POST       /movements/:movementId/messages                            v2.controllers.V2MovementsController.attachLargeMessage(movementId: v2.models.MovementId)

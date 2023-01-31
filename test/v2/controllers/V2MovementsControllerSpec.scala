@@ -906,7 +906,7 @@ class V2MovementsControllerSpec
         (upscanResponse, boxResponse, movementResponse) =>
           beforeEach()
 
-          when(mockUpscanService.upscanInitiate()(any(), any()))
+          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId])(any(), any()))
             .thenAnswer {
               _ => EitherT.rightT(upscanResponse)
             }
@@ -933,7 +933,7 @@ class V2MovementsControllerSpec
             HateoasNewMovementResponse(movementResponse, Some(boxResponse), Some(upscanResponse), MovementType.Departure)
           )
 
-          verify(mockUpscanService, times(1)).upscanInitiate()(any(), any())
+          verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()))(any(), any())
           verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
       }
@@ -945,7 +945,7 @@ class V2MovementsControllerSpec
         (upscanResponse, movementResponse) =>
           beforeEach()
 
-          when(mockUpscanService.upscanInitiate()(any(), any()))
+          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId])(any(), any()))
             .thenAnswer {
               _ => EitherT.rightT(upscanResponse)
             }
@@ -971,44 +971,18 @@ class V2MovementsControllerSpec
 
           contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, Some(upscanResponse), MovementType.Departure))
 
-          verify(mockUpscanService, times(1)).upscanInitiate()(any(), any())
+          verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()))(any(), any())
           verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
       }
 
-      "must return Internal Service Error if the persistence service reports an error" in forAll(
-        arbitraryUpscanInitiateResponse.arbitrary
-      ) {
-        upscanResponse =>
-          when(mockUpscanService.upscanInitiate()(any(), any()))
-            .thenAnswer {
-              _ => EitherT.rightT(upscanResponse)
-            }
-
-          when(
-            mockMovementsPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
-          ).thenAnswer(
-            _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
-          )
-
-          val request =
-            fakeCreateMovementRequest("POST", standardHeaders, Source.empty[ByteString], MovementType.Departure)
-          val response = sut.createMovement(MovementType.Departure)(request)
-
-          status(response) mustBe INTERNAL_SERVER_ERROR
-          contentAsJson(response) mustBe Json.obj(
-            "code"    -> "INTERNAL_SERVER_ERROR",
-            "message" -> "Internal server error"
-          )
-      }
-
-      "must return Internal Service Error if the upscan service reports an error" in {
-
-        when(mockUpscanService.upscanInitiate()(any(), any()))
-          .thenAnswer {
-            _ => EitherT.leftT(UpscanInitiateError.UnexpectedError(None))
-          }
+      "must return Internal Service Error if the persistence service reports an error" in {
+        when(
+          mockMovementsPersistenceService
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
+        ).thenAnswer(
+          _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
+        )
 
         val request =
           fakeCreateMovementRequest("POST", standardHeaders, Source.empty[ByteString], MovementType.Departure)
@@ -1019,6 +993,35 @@ class V2MovementsControllerSpec
           "code"    -> "INTERNAL_SERVER_ERROR",
           "message" -> "Internal server error"
         )
+      }
+
+      "must return Internal Service Error if the upscan service reports an error" in forAll(
+        arbitraryMovementResponse(false).arbitrary,
+        arbitraryUpscanInitiateResponse.arbitrary
+      ) {
+        (movementResponse, upscanResponse) =>
+          when(
+            mockMovementsPersistenceService
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
+          )
+            .thenAnswer {
+              _ => EitherT.rightT(movementResponse)
+            }
+
+          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId])(any(), any()))
+            .thenAnswer {
+              _ => EitherT.leftT(UpscanInitiateError.UnexpectedError(None))
+            }
+
+          val request =
+            fakeCreateMovementRequest("POST", standardHeaders, Source.empty[ByteString], MovementType.Departure)
+          val response = sut.createMovement(MovementType.Departure)(request)
+
+          status(response) mustBe INTERNAL_SERVER_ERROR
+          contentAsJson(response) mustBe Json.obj(
+            "code"    -> "INTERNAL_SERVER_ERROR",
+            "message" -> "Internal server error"
+          )
       }
 
     }
@@ -1693,7 +1696,7 @@ class V2MovementsControllerSpec
         (upscanResponse, movementResponse, boxResponse) =>
           beforeEach()
 
-          when(mockUpscanService.upscanInitiate()(any(), any()))
+          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId])(any(), any()))
             .thenAnswer {
               _ => EitherT.rightT(upscanResponse)
             }
@@ -1721,7 +1724,7 @@ class V2MovementsControllerSpec
             HateoasNewMovementResponse(movementResponse, Some(boxResponse), Some(upscanResponse), MovementType.Arrival)
           )
 
-          verify(mockUpscanService, times(1)).upscanInitiate()(any(), any())
+          verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()))(any(), any())
           verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
       }
@@ -1733,7 +1736,7 @@ class V2MovementsControllerSpec
         (upscanResponse, movementResponse) =>
           beforeEach()
 
-          when(mockUpscanService.upscanInitiate()(any(), any()))
+          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId])(any(), any()))
             .thenAnswer {
               _ => EitherT.rightT(upscanResponse)
             }
@@ -1761,54 +1764,58 @@ class V2MovementsControllerSpec
             HateoasNewMovementResponse(movementResponse, None, Some(upscanResponse), MovementType.Arrival)
           )
 
-          verify(mockUpscanService, times(1)).upscanInitiate()(any(), any())
+          verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()))(any(), any())
           verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
       }
 
-      "must return Internal Service Error if the persistence service reports an error" in forAll(
-        arbitraryUpscanInitiateResponse.arbitrary
-      ) {
-        upscanResponse =>
-          when(mockUpscanService.upscanInitiate()(any(), any()))
-            .thenAnswer {
-              _ => EitherT.rightT(upscanResponse)
-            }
+      "must return Internal Service Error if the persistence service reports an error" in {
 
-          when(
-            mockMovementsPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
-          ).thenAnswer(
-            _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
-          )
-
-          val request =
-            fakeCreateMovementRequest("POST", standardHeaders, Source.empty[ByteString], MovementType.Arrival)
-          val response = sut.createMovement(MovementType.Departure)(request)
-
-          status(response) mustBe INTERNAL_SERVER_ERROR
-          contentAsJson(response) mustBe Json.obj(
-            "code"    -> "INTERNAL_SERVER_ERROR",
-            "message" -> "Internal server error"
-          )
-      }
-
-      "must return Internal Service Error if the upscan service reports an error" in {
-
-        when(mockUpscanService.upscanInitiate()(any(), any()))
-          .thenAnswer {
-            _ => EitherT.leftT(UpscanInitiateError.UnexpectedError(None))
-          }
+        when(
+          mockMovementsPersistenceService
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
+        ).thenAnswer(
+          _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
+        )
 
         val request =
           fakeCreateMovementRequest("POST", standardHeaders, Source.empty[ByteString], MovementType.Arrival)
-        val response = sut.createMovement(MovementType.Arrival)(request)
+        val response = sut.createMovement(MovementType.Departure)(request)
 
         status(response) mustBe INTERNAL_SERVER_ERROR
         contentAsJson(response) mustBe Json.obj(
           "code"    -> "INTERNAL_SERVER_ERROR",
           "message" -> "Internal server error"
         )
+      }
+
+      "must return Internal Service Error if the upscan service reports an error" in forAll(
+        arbitraryMovementResponse(false).arbitrary,
+        arbitraryUpscanInitiateResponse.arbitrary
+      ) {
+        (movementResponse, upscanResponse) =>
+          when(
+            mockMovementsPersistenceService
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
+          )
+            .thenAnswer {
+              _ => EitherT.rightT(movementResponse)
+            }
+
+          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId])(any(), any()))
+            .thenAnswer {
+              _ => EitherT.leftT(UpscanInitiateError.UnexpectedError(None))
+            }
+
+          val request =
+            fakeCreateMovementRequest("POST", standardHeaders, Source.empty[ByteString], MovementType.Arrival)
+          val response = sut.createMovement(MovementType.Arrival)(request)
+
+          status(response) mustBe INTERNAL_SERVER_ERROR
+          contentAsJson(response) mustBe Json.obj(
+            "code"    -> "INTERNAL_SERVER_ERROR",
+            "message" -> "Internal server error"
+          )
       }
     }
 

@@ -73,4 +73,9 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
       Accepted(Json.obj("version" -> 2))
   }
 
+  override def attachLargeMessage(movementId: MovementId): Action[Source[ByteString, _]] = Action(streamFromMemory) {
+    request =>
+      request.body.runWith(Sink.ignore)
+      Ok(Json.obj("version" -> 2))
+  }
 }

@@ -22,6 +22,8 @@ import com.google.inject.Inject
 import config.AppConfig
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.connectors.UpscanConnector
+import v2.connectors.V2BaseConnector
+import v2.models.MovementId
 import v2.models.errors.UpscanInitiateError
 import v2.models.request.UpscanInitiate
 import v2.models.responses.UpscanInitiateResponse
@@ -33,7 +35,7 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[UpscanServiceImpl])
 trait UpscanService {
 
-  def upscanInitiate()(implicit
+  def upscanInitiate(movementId: MovementId)(implicit
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
   ): EitherT[Future, UpscanInitiateError, UpscanInitiateResponse]
@@ -43,24 +45,19 @@ trait UpscanService {
 class UpscanServiceImpl @Inject() (
   upscanConnector: UpscanConnector,
   appConfig: AppConfig
-) extends UpscanService {
+) extends UpscanService
+    with V2BaseConnector {
 
-  override def upscanInitiate()(implicit
+  override def upscanInitiate(movementId: MovementId)(implicit
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
-  ): EitherT[Future, UpscanInitiateError, UpscanInitiateResponse] = {
-
-    val upscanInitiate =
-      UpscanInitiate("https://myservice.com/callback", None, None, None, Some(appConfig.upscanMaximumFileSize)) // TODO callback url will be configured later
-
+  ): EitherT[Future, UpscanInitiateError, UpscanInitiateResponse] =
     EitherT {
       upscanConnector
-        .upscanInitiate(upscanInitiate)
+        .upscanInitiate(movementId)
         .map(Right(_))
         .recover {
           case NonFatal(thr) => Left(UpscanInitiateError.UnexpectedError(thr = Some(thr)))
         }
     }
-  }
-
 }
