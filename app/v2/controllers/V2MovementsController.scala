@@ -365,7 +365,7 @@ class V2MovementsControllerImpl @Inject() (
           movementResponse.movementId,
           movementResponse.messageId.get,
           source
-        ) // TODO- shall we assume we always get messageId for small messages
+        )
         .asPresentation
     } yield HateoasNewMovementResponse(movementResponse, boxResponseOption, None, movementType)
 

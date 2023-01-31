@@ -66,6 +66,7 @@ trait ErrorTranslator {
       case MovementsNotFound(eori, movementType) =>
         PresentationError.notFoundError(s"${movementType.movementType.capitalize} movement IDs for ${eori.value} were not found")
       case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
+      case MessageIdError()     => PresentationError.internalServiceError()
     }
   }
 

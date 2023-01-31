@@ -256,6 +256,7 @@ class V2MovementsControllerSpec
       ) {
         (movementResponse, boxResponse) =>
           beforeEach()
+
           when(mockValidationService.validateXml(any[MessageType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
             .thenAnswer(
               _ => EitherT.rightT(())
@@ -1902,8 +1903,8 @@ class V2MovementsControllerSpec
             .map(
               _ => "with"
             )
-            .getOrElse("without")} a date filter" in forAll(Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head)) {
-            messageResponse =>
+            .getOrElse("without")} a date filter" in forAll(arbitraryMovementId.arbitrary, Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head)) {
+            (movementId, messageResponse) =>
               when(
                 mockMovementsPersistenceService.getMessages(EORINumber(any()), any[MovementType], MovementId(any()), any())(
                   any[HeaderCarrier],
@@ -1915,49 +1916,57 @@ class V2MovementsControllerSpec
                 )
 
               val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-              val result  = sut.getMessageIds(movementType, MovementId("0123456789abcdef"), dateTime)(request)
+              val result  = sut.getMessageIds(movementType, movementId, dateTime)(request)
 
               status(result) mustBe OK
               contentAsJson(result) mustBe Json.toJson(
-                HateoasMovementMessageIdsResponse(MovementId("0123456789abcdef"), messageResponse, dateTime, movementType)
+                HateoasMovementMessageIdsResponse(movementId, messageResponse, dateTime, movementType)
               )
           }
       }
 
-      "when no movement is found" in {
-        when(
-          mockMovementsPersistenceService.getMessages(EORINumber(any()), any[MovementType], MovementId(any()), any())(any[HeaderCarrier], any[ExecutionContext])
-        )
-          .thenAnswer(
-            _ => EitherT.leftT(PersistenceError.MovementNotFound(MovementId("0123456789abcdef"), movementType))
+      "when no movement is found" in forAll(arbitraryMovementId.arbitrary) {
+        movementId =>
+          when(
+            mockMovementsPersistenceService.getMessages(EORINumber(any()), any[MovementType], MovementId(any()), any())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
           )
+            .thenAnswer(
+              _ => EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType))
+            )
 
-        val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-        val result  = sut.getMessageIds(movementType, MovementId("0123456789abcdef"), None)(request)
+          val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+          val result  = sut.getMessageIds(movementType, movementId, None)(request)
 
-        status(result) mustBe NOT_FOUND
-        contentAsJson(result) mustBe Json.obj(
-          "code"    -> "NOT_FOUND",
-          "message" -> s"${movementType.movementType.capitalize} movement with ID 0123456789abcdef was not found"
-        )
+          status(result) mustBe NOT_FOUND
+          contentAsJson(result) mustBe Json.obj(
+            "code"    -> "NOT_FOUND",
+            "message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found"
+          )
       }
 
-      "when an unknown error occurs" in {
-        when(
-          mockMovementsPersistenceService.getMessages(EORINumber(any()), any[MovementType], MovementId(any()), any())(any[HeaderCarrier], any[ExecutionContext])
-        )
-          .thenAnswer(
-            _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
+      "when an unknown error occurs" in forAll(arbitraryMovementId.arbitrary) {
+        movementId =>
+          when(
+            mockMovementsPersistenceService.getMessages(EORINumber(any()), any[MovementType], MovementId(any()), any())(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
           )
+            .thenAnswer(
+              _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
+            )
 
-        val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-        val result  = sut.getMessageIds(movementType, MovementId("0123456789abcdef"), None)(request)
+          val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+          val result  = sut.getMessageIds(movementType, movementId, None)(request)
 
-        status(result) mustBe INTERNAL_SERVER_ERROR
-        contentAsJson(result) mustBe Json.obj(
-          "code"    -> "INTERNAL_SERVER_ERROR",
-          "message" -> "Internal server error"
-        )
+          status(result) mustBe INTERNAL_SERVER_ERROR
+          contentAsJson(result) mustBe Json.obj(
+            "code"    -> "INTERNAL_SERVER_ERROR",
+            "message" -> "Internal server error"
+          )
       }
 
     }
@@ -2265,34 +2274,33 @@ class V2MovementsControllerSpec
           )
       }
 
-      "should return movement not found if persistence service returns 404" in {
-        when(
-          mockMovementsPersistenceService
-            .getMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[String].asInstanceOf[MovementId])(any(), any())
-        )
-          .thenAnswer {
-            _ =>
-              EitherT.leftT(PersistenceError.MovementNotFound(MovementId("ABC123"), movementType))
-          }
+      "should return movement not found if persistence service returns 404" in forAll(arbitraryMovementId.arbitrary) {
+        movementId =>
+          when(
+            mockMovementsPersistenceService
+              .getMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[String].asInstanceOf[MovementId])(any(), any())
+          )
+            .thenAnswer {
+              _ =>
+                EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType))
+            }
 
-        val movementId = arbitraryMovementId.arbitrary.sample.get
+          val url =
+            if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.getDeparture(movementId.value).url
+            else routing.routes.ArrivalsRouter.getArrival(movementId.value).url
 
-        val url =
-          if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.getDeparture(movementId.value).url
-          else routing.routes.ArrivalsRouter.getArrival(movementId.value).url
+          val request = FakeRequest(
+            GET,
+            url,
+            headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
+            AnyContentAsEmpty
+          )
+          val result = sut.getMovement(movementType, movementId)(request)
 
-        val request = FakeRequest(
-          GET,
-          url,
-          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
-          AnyContentAsEmpty
-        )
-        val result = sut.getMovement(movementType, movementId)(request)
-
-        status(result) mustBe NOT_FOUND
+          status(result) mustBe NOT_FOUND
       }
 
-      "should return unexpected error for all other errors" in forAll(arbitrary[MovementId]) {
+      "should return unexpected error for all other errors" in forAll(arbitraryMovementId.arbitrary) {
         movementId =>
           when(mockMovementsPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
             .thenAnswer {
@@ -2318,8 +2326,6 @@ class V2MovementsControllerSpec
 
     s"POST /movements/${movementType.urlFragment}/:movementId/messages" - {
 
-      lazy val movementId = arbitraryMovementId.arbitrary.sample.get
-
       val messageType =
         if (movementType == MovementType.Departure) MessageType.DeclarationAmendment
         else MessageType.UnloadingRemarks
@@ -2334,93 +2340,106 @@ class V2MovementsControllerSpec
           Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
         )
 
-        "must return Accepted when body length is within limits and is considered valid" in {
-          when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any()))
-            .thenReturn(messageDataEither)
+        "must return Accepted when body length is within limits and is considered valid" in forAll(
+          arbitraryMovementId.arbitrary,
+          arbitraryUpdateMovementResponse.arbitrary
+        ) {
+          (movementId, updateMovementResponse) =>
+            beforeEach()
 
-          when(
-            mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-          )
-            .thenAnswer(
+            when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any()))
+              .thenReturn(messageDataEither)
+
+            when(
+              mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            )
+              .thenAnswer(
+                _ => EitherT.rightT(())
+              )
+
+            when(
+              mockRouterService.send(
+                any[String].asInstanceOf[MessageType],
+                any[String].asInstanceOf[EORINumber],
+                any[String].asInstanceOf[MovementId],
+                any[String].asInstanceOf[MessageId],
+                any[Source[ByteString, _]]
+              )(any[ExecutionContext], any[HeaderCarrier])
+            ).thenAnswer(
               _ => EitherT.rightT(())
             )
 
-          when(
-            mockRouterService.send(
-              any[String].asInstanceOf[MessageType],
-              any[String].asInstanceOf[EORINumber],
-              any[String].asInstanceOf[MovementId],
-              any[String].asInstanceOf[MessageId],
-              any[Source[ByteString, _]]
-            )(any[ExecutionContext], any[HeaderCarrier])
-          ).thenAnswer(
-            _ => EitherT.rightT(())
-          )
+            when(
+              mockMovementsPersistenceService
+                .updateMovement(any[String].asInstanceOf[MovementId], any[MovementType], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, UpdateMovementResponse](updateMovementResponse)))
 
-          when(
-            mockMovementsPersistenceService
-              .updateMovement(any[String].asInstanceOf[MovementId], any[MovementType], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
-                any[HeaderCarrier],
-                any[ExecutionContext]
-              )
-          ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, UpdateMovementResponse](UpdateMovementResponse(MessageId("456")))))
+            val request = fakeAttachMessageRequest("POST", standardHeaders, singleUseStringSource(contentXml.mkString), movementType)
+            val result  = sut.attachMessage(movementType, movementId)(request)
 
-          val request = fakeAttachMessageRequest("POST", standardHeaders, singleUseStringSource(contentXml.mkString), movementType)
-          val result  = sut.attachMessage(movementType, movementId)(request)
+            status(result) mustBe ACCEPTED
+            contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, updateMovementResponse.messageId, movementType))
 
-          status(result) mustBe ACCEPTED
-          contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, MessageId("456"), movementType))
-
-          verify(mockAuditService, times(1)).audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())
-          verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any())(any(), any())
-          verify(mockMovementsPersistenceService, times(1)).updateMovement(MovementId(any()), any(), any(), any())(any(), any())
-          verify(mockRouterService, times(1)).send(eqTo(messageType), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
-            any(),
-            any()
-          )
-          verify(mockPushNotificationService, times(1)).update(MovementId(eqTo(movementId.value)))(any(), any())
+            verify(mockAuditService, times(1)).audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())
+            verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any())(any(), any())
+            verify(mockMovementsPersistenceService, times(1)).updateMovement(MovementId(any()), any(), any(), any())(any(), any())
+            verify(mockRouterService, times(1)).send(eqTo(messageType), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
+              any(),
+              any()
+            )
+            verify(mockPushNotificationService, times(1)).update(MovementId(eqTo(movementId.value)))(any(), any())
         }
 
-        "must return Bad Request when body is not an XML document" in {
-          when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]](), any[Seq[MessageType]])(any(), any()))
-            .thenAnswer(
-              _ => EitherT.leftT(ExtractionError.MalformedInput)
-            )
+        "must return Bad Request when body is not an XML document" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]](), any[Seq[MessageType]])(any(), any()))
+              .thenAnswer(
+                _ => EitherT.leftT(ExtractionError.MalformedInput)
+              )
 
-          val request = fakeAttachMessageRequest("POST", standardHeaders, singleUseStringSource("notxml"), movementType)
-          val result  = sut.attachMessage(movementType, movementId)(request)
-          status(result) mustBe BAD_REQUEST
-          contentAsJson(result) mustBe Json.obj(
-            "code"    -> "BAD_REQUEST",
-            "message" -> "Input was malformed"
-          )
+            val request = fakeAttachMessageRequest("POST", standardHeaders, singleUseStringSource("notxml"), movementType)
+            val result  = sut.attachMessage(movementType, movementId)(request)
+            status(result) mustBe BAD_REQUEST
+            contentAsJson(result) mustBe Json.obj(
+              "code"    -> "BAD_REQUEST",
+              "message" -> "Input was malformed"
+            )
         }
 
-        "must return Internal Service Error if the persistence service reports an error" in {
-          when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any()))
-            .thenReturn(messageDataEither)
-          when(
-            mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
-          )
-            .thenAnswer(
-              _ => EitherT.rightT(())
+        "must return Internal Service Error if the persistence service reports an error" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any()))
+              .thenReturn(messageDataEither)
+            when(
+              mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
             )
-          when(
-            mockMovementsPersistenceService
-              .updateMovement(any[String].asInstanceOf[MovementId], any[MovementType], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
-                any[HeaderCarrier],
-                any[ExecutionContext]
+              .thenAnswer(
+                _ => EitherT.rightT(())
               )
-          ).thenReturn(EitherT.fromEither[Future](Left[PersistenceError, UpdateMovementResponse](PersistenceError.UnexpectedError(None))))
+            when(
+              mockMovementsPersistenceService
+                .updateMovement(any[String].asInstanceOf[MovementId], any[MovementType], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            ).thenReturn(EitherT.fromEither[Future](Left[PersistenceError, UpdateMovementResponse](PersistenceError.UnexpectedError(None))))
 
-          val request  = fakeAttachMessageRequest("POST", standardHeaders, Source.single(ByteString(contentXml.mkString, StandardCharsets.UTF_8)), movementType)
-          val response = sut.attachMessage(movementType, movementId)(request)
+            val request =
+              fakeAttachMessageRequest("POST", standardHeaders, Source.single(ByteString(contentXml.mkString, StandardCharsets.UTF_8)), movementType)
+            val response = sut.attachMessage(movementType, movementId)(request)
 
-          status(response) mustBe INTERNAL_SERVER_ERROR
-          contentAsJson(response) mustBe Json.obj(
-            "code"    -> "INTERNAL_SERVER_ERROR",
-            "message" -> "Internal server error"
-          )
+            status(response) mustBe INTERNAL_SERVER_ERROR
+            contentAsJson(response) mustBe Json.obj(
+              "code"    -> "INTERNAL_SERVER_ERROR",
+              "message" -> "Internal server error"
+            )
         }
 
       }
@@ -2435,7 +2454,7 @@ class V2MovementsControllerSpec
           conversion: EitherT[Future, ConversionError, Source[ByteString, _]] =
             if (movementType == MovementType.Departure) EitherT.rightT(singleUseStringSource(contentXml.mkString))
             else EitherT.rightT(singleUseStringSource(CC044Cjson.mkString)),
-          persistence: EitherT[Future, PersistenceError, UpdateMovementResponse] = EitherT.rightT(UpdateMovementResponse(MessageId("456"))),
+          persistence: Option[EitherT[Future, PersistenceError, UpdateMovementResponse]] = None,
           router: EitherT[Future, RouterError, Unit] = EitherT.rightT(())
         ): Unit = {
 
@@ -2458,18 +2477,20 @@ class V2MovementsControllerSpec
 
           when(mockConversionService.jsonToXml(any(), any())(any(), any(), any())).thenReturn(conversion)
 
-          when(
-            mockMovementsPersistenceService
-              .updateMovement(
-                any[String].asInstanceOf[MovementId],
-                any[MovementType],
-                any[String].asInstanceOf[MessageType],
-                any[Source[ByteString, _]]()
-              )(
-                any[HeaderCarrier],
-                any[ExecutionContext]
-              )
-          ).thenReturn(persistence)
+          if (persistence.isDefined) {
+            when(
+              mockMovementsPersistenceService
+                .updateMovement(
+                  any[String].asInstanceOf[MovementId],
+                  any[MovementType],
+                  any[String].asInstanceOf[MessageType],
+                  any[Source[ByteString, _]]()
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            ).thenReturn(persistence.get)
+          }
 
           when(
             mockRouterService.send(
@@ -2491,174 +2512,220 @@ class V2MovementsControllerSpec
         def fakeJsonAttachRequest(content: String): Request[Source[ByteString, _]] =
           fakeAttachMessageRequest("POST", standardHeaders, singleUseStringSource(contentJson), movementType)
 
-        "must return Accepted when body length is within limits and is considered valid" in {
+        "must return Accepted when body length is within limits and is considered valid" in forAll(
+          arbitraryMovementId.arbitrary,
+          arbitraryUpdateMovementResponse.arbitrary
+        ) {
+          (movementId, updateMovementResponse) =>
+            beforeEach()
 
-          setup()
-          val request = fakeJsonAttachRequest(contentJson)
-          val result  = sut.attachMessage(movementType, movementId)(request)
+            setup(persistence = Some(EitherT.rightT(updateMovementResponse)))
 
-          status(result) mustBe ACCEPTED
-          contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, MessageId("456"), movementType))
+            val request = fakeJsonAttachRequest(contentJson)
+            val result  = sut.attachMessage(movementType, movementId)(request)
 
-          verify(mockValidationService, times(1)).validateJson(any(), any())(any(), any())
-          verify(mockAuditService, times(1)).audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())
-          verify(mockConversionService, times(1)).jsonToXml(any(), any())(any(), any(), any())
-          verify(mockValidationService, times(1)).validateXml(any(), any())(any(), any())
-          verify(mockMovementsPersistenceService, times(1)).updateMovement(MovementId(any()), any(), any(), any())(any(), any())
-          verify(mockRouterService, times(1)).send(any(), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
-            any(),
-            any()
-          )
+            status(result) mustBe ACCEPTED
+            contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, updateMovementResponse.messageId, movementType))
+
+            verify(mockValidationService, times(1)).validateJson(any(), any())(any(), any())
+            verify(mockAuditService, times(1)).audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())
+            verify(mockConversionService, times(1)).jsonToXml(any(), any())(any(), any(), any())
+            verify(mockValidationService, times(1)).validateXml(any(), any())(any(), any())
+            verify(mockMovementsPersistenceService, times(1)).updateMovement(MovementId(any()), any(), any(), any())(any(), any())
+            verify(mockRouterService, times(1)).send(any(), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
+              any(),
+              any()
+            )
         }
 
-        "must return Bad Request when body is not an JSON document" in {
+        "must return Bad Request when body is not an JSON document" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            beforeEach()
 
-          setup(extractMessageTypeJson = EitherT.leftT(ExtractionError.MalformedInput))
+            setup(extractMessageTypeJson = EitherT.leftT(ExtractionError.MalformedInput))
 
-          val request = fakeJsonAttachRequest("notJson")
-          val result  = sut.attachMessage(movementType, movementId)(request)
-          status(result) mustBe BAD_REQUEST
-          contentAsJson(result) mustBe Json.obj(
-            "code"    -> "BAD_REQUEST",
-            "message" -> "Input was malformed"
-          )
+            val request = fakeJsonAttachRequest("notJson")
+            val result  = sut.attachMessage(movementType, movementId)(request)
+            status(result) mustBe BAD_REQUEST
+            contentAsJson(result) mustBe Json.obj(
+              "code"    -> "BAD_REQUEST",
+              "message" -> "Input was malformed"
+            )
         }
 
-        "must return Bad Request when unable to find a message type " in {
-          setup(extractMessageTypeJson = EitherT.leftT(MessageTypeNotFound("contentXml")))
+        "must return Bad Request when unable to find a message type " in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            setup(extractMessageTypeJson = EitherT.leftT(MessageTypeNotFound("contentXml")))
 
-          val request = fakeJsonAttachRequest(contentJson)
-          val result  = sut.attachMessage(movementType, movementId)(request)
-          status(result) mustBe BAD_REQUEST
-          contentAsJson(result) mustBe Json.obj(
-            "code"    -> "BAD_REQUEST",
-            "message" -> "contentXml is not a valid message type"
-          )
+            val request = fakeJsonAttachRequest(contentJson)
+            val result  = sut.attachMessage(movementType, movementId)(request)
+            status(result) mustBe BAD_REQUEST
+            contentAsJson(result) mustBe Json.obj(
+              "code"    -> "BAD_REQUEST",
+              "message" -> "contentXml is not a valid message type"
+            )
         }
 
-        "must return BadRequest when JsonValidation service doesn't recognise message type" in {
+        "must return BadRequest when JsonValidation service doesn't recognise message type" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            setup(validateJson = EitherT.leftT(InvalidMessageTypeError("contentXml")))
 
-          setup(validateJson = EitherT.leftT(InvalidMessageTypeError("contentXml")))
-
-          val request = fakeJsonAttachRequest(contentJson)
-          val result  = sut.attachMessage(movementType, movementId)(request)
-          status(result) mustBe BAD_REQUEST
-          contentAsJson(result) mustBe Json.obj(
-            "code"    -> "BAD_REQUEST",
-            "message" -> "contentXml is not a valid message type"
-          )
+            val request = fakeJsonAttachRequest(contentJson)
+            val result  = sut.attachMessage(movementType, movementId)(request)
+            status(result) mustBe BAD_REQUEST
+            contentAsJson(result) mustBe Json.obj(
+              "code"    -> "BAD_REQUEST",
+              "message" -> "contentXml is not a valid message type"
+            )
         }
 
-        "must return BadRequest when json fails to validate" in {
+        "must return BadRequest when json fails to validate" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            setup(validateJson = EitherT.leftT(JsonSchemaFailedToValidateError(NonEmptyList.one(JsonValidationError("sample", "message")))))
 
-          setup(validateJson = EitherT.leftT(JsonSchemaFailedToValidateError(NonEmptyList.one(JsonValidationError("sample", "message")))))
-
-          val request = fakeJsonAttachRequest(contentJson)
-          val result  = sut.attachMessage(movementType, movementId)(request)
-          status(result) mustBe BAD_REQUEST
-          contentAsJson(result) mustBe Json.obj(
-            "message"          -> "Request failed schema validation",
-            "code"             -> ErrorCode.SchemaValidation.code,
-            "validationErrors" -> Json.arr(Json.obj("schemaPath" -> "sample", "message" -> "message"))
-          )
+            val request = fakeJsonAttachRequest(contentJson)
+            val result  = sut.attachMessage(movementType, movementId)(request)
+            status(result) mustBe BAD_REQUEST
+            contentAsJson(result) mustBe Json.obj(
+              "message"          -> "Request failed schema validation",
+              "code"             -> ErrorCode.SchemaValidation.code,
+              "validationErrors" -> Json.arr(Json.obj("schemaPath" -> "sample", "message" -> "message"))
+            )
         }
 
-        "must return InternalServerError when Unexpected error validating the json" in {
+        "must return InternalServerError when Unexpected error validating the json" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            setup(validateJson = EitherT.leftT(FailedToValidateError.UnexpectedError(None)))
 
-          setup(validateJson = EitherT.leftT(FailedToValidateError.UnexpectedError(None)))
+            val request = fakeJsonAttachRequest(contentJson)
+            val result  = sut.attachMessage(movementType, movementId)(request)
 
-          val request = fakeJsonAttachRequest(contentJson)
-          val result  = sut.attachMessage(movementType, movementId)(request)
-
-          status(result) mustBe INTERNAL_SERVER_ERROR
+            status(result) mustBe INTERNAL_SERVER_ERROR
         }
 
-        "must return InternalServerError when Unexpected error converting the json to xml" in {
-          setup(conversion = EitherT.leftT(ConversionError.UnexpectedError(None)))
+        "must return InternalServerError when Unexpected error converting the json to xml" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            setup(conversion = EitherT.leftT(ConversionError.UnexpectedError(None)))
 
-          val request = fakeJsonAttachRequest(contentJson)
-          val result  = sut.attachMessage(movementType, movementId)(request)
+            val request = fakeJsonAttachRequest(contentJson)
+            val result  = sut.attachMessage(movementType, movementId)(request)
 
-          status(result) mustBe INTERNAL_SERVER_ERROR
+            status(result) mustBe INTERNAL_SERVER_ERROR
         }
 
-        "must return InternalServerError when xml failed validation" in {
-          setup(validateXml = EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList.one(XmlValidationError(1, 1, "message")))))
+        "must return InternalServerError when xml failed validation" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            setup(validateXml = EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList.one(XmlValidationError(1, 1, "message")))))
 
-          val request = fakeJsonAttachRequest(contentJson)
-          val result  = sut.attachMessage(movementType, movementId)(request)
+            val request = fakeJsonAttachRequest(contentJson)
+            val result  = sut.attachMessage(movementType, movementId)(request)
 
-          status(result) mustBe INTERNAL_SERVER_ERROR
+            status(result) mustBe INTERNAL_SERVER_ERROR
         }
 
-        "must return BadRequest when message type not recognised by xml validator" in {
-          setup(validateXml = EitherT.leftT(FailedToValidateError.InvalidMessageTypeError("test")))
+        "must return BadRequest when message type not recognised by xml validator" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            setup(validateXml = EitherT.leftT(FailedToValidateError.InvalidMessageTypeError("test")))
 
-          val request = fakeJsonAttachRequest(contentJson)
-          val result  = sut.attachMessage(movementType, movementId)(request)
+            val request = fakeJsonAttachRequest(contentJson)
+            val result  = sut.attachMessage(movementType, movementId)(request)
 
-          status(result) mustBe BAD_REQUEST
+            status(result) mustBe BAD_REQUEST
         }
 
-        "must return InternalServerError when unexpected error from xml validator" in {
-          setup(validateXml = EitherT.leftT(FailedToValidateError.UnexpectedError(None)))
+        "must return InternalServerError when unexpected error from xml validator" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            setup(validateXml = EitherT.leftT(FailedToValidateError.UnexpectedError(None)))
 
-          val request = fakeJsonAttachRequest(contentJson)
-          val result  = sut.attachMessage(movementType, movementId)(request)
+            val request = fakeJsonAttachRequest(contentJson)
+            val result  = sut.attachMessage(movementType, movementId)(request)
 
-          status(result) mustBe INTERNAL_SERVER_ERROR
+            status(result) mustBe INTERNAL_SERVER_ERROR
         }
 
-        "must return NotFound when movement not found by Persistence" in {
-          setup(persistence = EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType)))
+        "must return NotFound when movement not found by Persistence" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            setup(persistence = Some(EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType))))
 
-          val request = fakeJsonAttachRequest(contentJson)
-          val result  = sut.attachMessage(movementType, movementId)(request)
+            val request = fakeJsonAttachRequest(contentJson)
+            val result  = sut.attachMessage(movementType, movementId)(request)
 
-          status(result) mustBe NOT_FOUND
+            status(result) mustBe NOT_FOUND
         }
 
-        "must return InternalServerError when Persistence return Unexpected Error" in {
-          setup(persistence = EitherT.leftT(PersistenceError.UnexpectedError(None)))
+        "must return InternalServerError when Persistence return Unexpected Error" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            setup(persistence = Some(EitherT.leftT(PersistenceError.UnexpectedError(None))))
 
-          val request = fakeJsonAttachRequest(contentJson)
-          val result  = sut.attachMessage(movementType, movementId)(request)
+            val request = fakeJsonAttachRequest(contentJson)
+            val result  = sut.attachMessage(movementType, movementId)(request)
 
-          status(result) mustBe INTERNAL_SERVER_ERROR
+            status(result) mustBe INTERNAL_SERVER_ERROR
         }
 
-        "must return InternalServerError when router throws unexpected error" in {
-          setup(router = EitherT.leftT(RouterError.UnexpectedError(None)))
+        "must return InternalServerError when router throws unexpected error" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            setup(router = EitherT.leftT(RouterError.UnexpectedError(None)))
 
-          val request = fakeJsonAttachRequest(contentJson)
-          val result  = sut.attachMessage(movementType, movementId)(request)
+            val request = fakeJsonAttachRequest(contentJson)
+            val result  = sut.attachMessage(movementType, movementId)(request)
 
-          status(result) mustBe INTERNAL_SERVER_ERROR
+            status(result) mustBe INTERNAL_SERVER_ERROR
         }
 
-        "must return BadRequest when router returns BadRequest" in {
-          setup(router = EitherT.leftT(RouterError.UnrecognisedOffice("AB012345", "field")))
+        "must return BadRequest when router returns BadRequest" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            setup(router = EitherT.leftT(RouterError.UnrecognisedOffice("AB012345", "field")))
 
-          val request = fakeJsonAttachRequest(contentJson)
-          val result  = sut.attachMessage(movementType, movementId)(request)
+            val request = fakeJsonAttachRequest(contentJson)
+            val result  = sut.attachMessage(movementType, movementId)(request)
 
-          status(result) mustBe BAD_REQUEST
+            status(result) mustBe BAD_REQUEST
         }
 
       }
 
-      "must return UNSUPPORTED_MEDIA_TYPE when the content type is invalid" in {
-        val standardHeaders = FakeHeaders(
-          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "invalid", HeaderNames.CONTENT_LENGTH -> "1000")
-        )
+      "must return UNSUPPORTED_MEDIA_TYPE when the content type is invalid" in forAll(
+        arbitraryMovementId.arbitrary
+      ) {
+        movementId =>
+          val standardHeaders = FakeHeaders(
+            Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "invalid", HeaderNames.CONTENT_LENGTH -> "1000")
+          )
 
-        val request  = fakeAttachMessageRequest("POST", standardHeaders, Source.single(ByteString(contentXml.mkString, StandardCharsets.UTF_8)), movementType)
-        val response = sut.attachMessage(movementType, movementId)(request)
-        status(response) mustBe UNSUPPORTED_MEDIA_TYPE
-        contentAsJson(response) mustBe Json.obj(
-          "code"    -> "UNSUPPORTED_MEDIA_TYPE",
-          "message" -> "Content-type header invalid is not supported!"
-        )
+          val request  = fakeAttachMessageRequest("POST", standardHeaders, Source.single(ByteString(contentXml.mkString, StandardCharsets.UTF_8)), movementType)
+          val response = sut.attachMessage(movementType, movementId)(request)
+          status(response) mustBe UNSUPPORTED_MEDIA_TYPE
+          contentAsJson(response) mustBe Json.obj(
+            "code"    -> "UNSUPPORTED_MEDIA_TYPE",
+            "message" -> "Content-type header invalid is not supported!"
+          )
       }
     }
   }

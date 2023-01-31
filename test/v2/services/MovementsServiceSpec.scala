@@ -102,6 +102,16 @@ class MovementsServiceSpec
         _ mustBe expected
       }
     }
+
+    "on a failed submission given MessageId is empty, should return a Left with an MessageIdError" in {
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), any())(any[HeaderCarrier], any[ExecutionContext]))
+        .thenReturn(Future.successful(MovementResponse(MovementId("ABC"), None)))
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, Some(validRequest))
+      val expected: Either[PersistenceError, MovementResponse] = Left(PersistenceError.MessageIdError())
+      whenReady(result.value) {
+        _ mustBe expected
+      }
+    }
   }
 
   "Submitting a Departure Declaration for Large Messages" - {
