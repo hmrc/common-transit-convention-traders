@@ -5,8 +5,8 @@ info:
   version: '1.0'
   description: |
     # Overview
-    Use the CTC Traders API to send departure and arrival movement to the New Computerised Transit System (NCTS). 
-    Retrieve messages sent from customs offices of departure and destination.
+    Use the CTC Traders API to send departure and arrival movement to the New Computerised Transit System (NCTS)
+    and to get messages sent from customs offices of departure and destination.
 servers:
   - url: https://test-api.service.hmrc.gov.uk
     description: Sandbox
@@ -17,24 +17,24 @@ paths:
   /customs/transits/movements/arrivals:
     post:
       tags:
-      - common-transit-convention-traders
+      - Arrivals
       summary: Send an arrival notification message
       description: >
         Notify the Customs Office of Destination that a transit movement has arrived at its final destination.
 
         This request is also called an ‘Arrival Notification’ E_ARR_NOT (IE007) message.
 
-        A successful response will contain a URI and an arrival ID for the notification, which you can use to retrieve the message status.
+        A successful response will contain a URI and an arrival ID for the notification, which you can use to get the message status.
 
         It will also contain an embedded request ID, box ID and box name, which you can use to match this movement to any messages received from the Push Pull Notifications API.
-
+        <br /><br />
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
-      operationId: SendAnArrivalNotificationMessage
+      operationId: postArrivalNotificationMessage
       parameters:
           - $ref: '#/components/parameters/contentTypeHeader'
       responses:
         '202':
-          description: 'Accepted'
+          description: Accepted
           content:
             application/json:
               schema:
@@ -65,23 +65,37 @@ paths:
                     boxId: 1234-5678-abcd-def
                     requestId: /customs/transits/movements/arrivals/1
                     boxName: customs/transits##1.0##notificationUrl
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BadRequest'
+                  - description: The supplied payload was invalid.
+                    example:
+                      statusCode: 400
+                      message: 'Invalid XML: Premature end of file.'
+              example:
+                statusCode: 400
+                message: 'Invalid XML: Premature end of file.'
       deprecated: false
       security:
         - userRestricted:
             - common-transit-convention-traders
     get:
       tags:
-      - common-transit-convention-traders
+      - Arrivals
       summary: Get all cached arrivals
       description: >
-        Retrieve all arrivals that have been updated within the past 31 days.
+        Get all arrivals that have been updated within the past 31 days.
         
         You can filter for arrivals updated after a specific date and time.
         
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
-        
+        <br/><br/>
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
-      operationId: GetAllCachedArrivals
+      operationId: getAllCachedArrivals
       parameters:
         - $ref: '#/components/parameters/acceptHeader'
         - in: query
@@ -94,7 +108,7 @@ paths:
             example: 2021-06-21T09:00:00Z
       responses:
         '200':
-          description: 'OK'
+          description: OK
           content:
             application/json:
               schema:
@@ -154,19 +168,19 @@ paths:
                   retrievedArrivals: 2
                   totalArrivals: 2
         '406':
-          description: 'Not Acceptable'
+          description: Not Acceptable
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/errorResponse'
-                - example:
-                    code: ACCEPT_HEADER_INVALID
-              examples:
-                badRequest:
-                  description: The accept header is missing or invalid.
-                  value:
-                    code: ACCEPT_HEADER_INVALID
+                  - $ref: '#/components/schemas/NotAcceptable'
+                  - description: The Accept header is missing or invalid
+                    example:
+                      statusCode: 406
+                      message: The accept header is missing or invalid
+              example:
+                statusCode: 406
+                message: The accept header is missing or invalid
       deprecated: false
       security:
         - userRestricted:
@@ -175,7 +189,7 @@ paths:
   /customs/transits/movements/arrivals/{arrivalId}:
     put:
       tags:
-      - common-transit-convention-traders
+      - Arrivals
       summary: Resubmit an arrival notification message
       description: >
         Resend a notification to the Customs Office of Destination that a transit movement has arrived at its final destination.
@@ -183,9 +197,9 @@ paths:
         This request is also called an ‘Arrival Notification’ E_ARR_NOT (IE007) message.
         
         A successful response will contain a URI and an arrival ID for the notification, which you can use to retrieve the message status.
-        
+        <br/><br/>
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
-      operationId: ResubmitAnArrivalNotificationMessage
+      operationId: putArrivalNotificationMessage
       parameters:
         - $ref: '#/components/parameters/contentTypeHeader'
         - in: path
@@ -198,7 +212,7 @@ paths:
             example: '1'
       responses:
         '202':
-          description: 'Accepted'
+          description: Accepted
           content:
             application/json:
               schema:
@@ -219,21 +233,35 @@ paths:
                 arrivalId: '1'
                 messageType: IE007
                 body: <CC007A>...</CC007A>
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BadRequest'
+                  - description: The supplied payload was invalid.
+                    example:
+                      statusCode: 400
+                      message: 'Invalid XML: Premature end of file.'
+              example:
+                statusCode: 400
+                message: 'Invalid XML: Premature end of file.'
       deprecated: false
       security:
         - userRestricted:
             - common-transit-convention-traders
     get:
       tags:
-      - common-transit-convention-traders
+      - Arrivals
       summary: Get a cached arrival for an arrival ID
       description: >
-        Retrieve a specific arrival that has been updated within the past 31 days.
+        Get a specific arrival that has been updated within the past 31 days.
         
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
-
+        <br/><br/>
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
-      operationId: GetACachedArrivalForAnArrivalID
+      operationId: getCachedArrivalForArrivalId
       parameters:
         - $ref: '#/components/parameters/acceptHeader'
         - in: path
@@ -246,7 +274,7 @@ paths:
             example: '1'
       responses:
         '200':
-          description: 'OK'
+          description: OK
           content:
             application/json:
               schema:
@@ -274,19 +302,35 @@ paths:
                   messages:
                     href: /customs/transits/movements/arrivals/1/messages
         '406':
-          description: 'Not Acceptable'
+          description: Not Acceptable
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/errorResponse'
-                - example:
-                    code: ACCEPT_HEADER_INVALID
-              examples:
-                badRequest:
-                  description: The accept header is missing or invalid.
-                  value:
-                    code: ACCEPT_HEADER_INVALID
+                  - $ref: '#/components/schemas/NotAcceptable'
+                  - description: The Accept header is missing or invalid
+                    example:
+                      statusCode: 406
+                      message: The accept header is missing or invalid
+              example:
+                statusCode: 406
+                message: The accept header is missing or invalid
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotFound'
+                  - description: Supplied arrival not found or does not exist.
+                    example:
+                      code: CLIENT_ERROR
+                      message: ''
+                      statusCode: 404
+              example:
+                code: CLIENT_ERROR
+                message: ''
+                statusCode: 404
       deprecated: false
       security:
         - userRestricted:
@@ -295,7 +339,7 @@ paths:
   /customs/transits/movements/arrivals/{arrivalId}/messages:
     post:
       tags:
-      - common-transit-convention-traders
+      - Arrivals
       summary: Send a message related to an arrival
       description: >
         Send a message to the Customs Office of Destination about an arrival.
@@ -303,9 +347,9 @@ paths:
         For example, if you are a Trader at Destination, you will send an ‘Unloading Remarks’ E_ULD_REM (IE044) message to the Customs Office of Destination indicating that unloading of the goods has been completed.
         
         A successful response will contain a URI and an arrival ID for the message, which you can use to retrieve the message status.
-
+        <br/><br/>
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
-      operationId: SendAMessageRelatedToAnArrival
+      operationId: postMessageRelatedToArrival
       parameters:
         - $ref: '#/components/parameters/contentTypeHeader'
         - in: path
@@ -318,7 +362,7 @@ paths:
             example: '1'
       responses:
         '202':
-          description: 'Accepted'
+          description: Accepted
           content:
             application/json:
               schema:
@@ -345,6 +389,20 @@ paths:
                 messageId: '2'
                 messageType: IE044
                 body: <CC044A>...</CC044A>
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BadRequest'
+                  - description: The supplied payload was invalid.
+                    example:
+                      statusCode: 400
+                      message: 'Invalid XML: Premature end of file.'
+              example:
+                statusCode: 400
+                message: 'Invalid XML: Premature end of file.'
       deprecated: false
       security:
         - userRestricted:
@@ -352,17 +410,17 @@ paths:
 
     get:
       tags:
-      - common-transit-convention-traders
+      - Arrivals
       summary: Get all cached messages related to an arrival
       description: >
-        Retrieve all messages related to a specific arrival that have been received within the past 31 days.
+        Get all messages related to a specific arrival that have been received within the past 31 days.
         
         You can filter for arrivals received after a specific date and time.
         
         Movements older than 31 days are archived, so any messages to related to them cannot be returned by the API.
-
+        <br/><br/>
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
-      operationId: GetAllCachedMessagesRelatedToAnArrival
+      operationId: getAllCachedMessagesRelatedToArrival
       parameters:
         - $ref: '#/components/parameters/acceptHeader'
         - in: path
@@ -384,7 +442,7 @@ paths:
             example: 2021-06-21T09:00:00Z
       responses:
         '200':
-          description: 'OK'
+          description: OK
           content:
             application/json:
               schema:
@@ -444,19 +502,19 @@ paths:
                       messages:
                         href: /customs/transits/movements/arrivals/1/messages
         '406':
-          description: 'Not Acceptable'
+          description: Not Acceptable
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/errorResponse'
-                - example:
-                    code: ACCEPT_HEADER_INVALID
-              examples:
-                badRequest:
-                  description: The accept header is missing or invalid.
-                  value:
-                    code: ACCEPT_HEADER_INVALID
+                  - $ref: '#/components/schemas/NotAcceptable'
+                  - description: The Accept header is missing or invalid
+                    example:
+                      statusCode: 406
+                      message: The accept header is missing or invalid
+              example:
+                statusCode: 406
+                message: The accept header is missing or invalid
       deprecated: false
       security:
         - userRestricted:
@@ -465,17 +523,17 @@ paths:
   /customs/transits/movements/arrivals/{arrivalId}/messages/{messageId}:
     get:
       tags:
-      - common-transit-convention-traders
+      - Arrivals
       summary: Get a cached message related to an arrival and message ID
       description: >
-        Retrieve all messages related to a specific arrival and message ID that have been received within the past 31 days.
+        Get all messages related to a specific arrival and message ID that have been received within the past 31 days.
         
         For example, this could include messages about route diversions or unloading permissions.
         
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
-
+        <br/><br/>
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
-      operationId: GetACachedMessageRelatedToAnArrivalAndMessageID
+      operationId: getCachedMessageRelatedToArrivalAndMessageID
       parameters:
         - $ref: '#/components/parameters/acceptHeader'
         - in: path
@@ -496,7 +554,7 @@ paths:
             example: '1'
       responses:
         '200':
-          description: 'OK'
+          description: OK
           content:
             application/json:
               schema:
@@ -526,19 +584,35 @@ paths:
                 messageType: IE007
                 body: <CC007A>...</CC007A>
         '406':
-          description: 'Not Acceptable'
+          description: Not Acceptable
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/errorResponse'
-                - example:
-                    code: ACCEPT_HEADER_INVALID
-              examples:
-                badRequest:
-                  description: The accept header is missing or invalid.
-                  value:
-                    code: ACCEPT_HEADER_INVALID
+                  - $ref: '#/components/schemas/NotAcceptable'
+                  - description: The Accept header is missing or invalid
+                    example:
+                      statusCode: 406
+                      message: The accept header is missing or invalid
+              example:
+                statusCode: 406
+                message: The accept header is missing or invalid
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotFound'
+                  - description: Supplied arrival not found or does not exist.
+                    example:
+                      code: CLIENT_ERROR
+                      message: ''
+                      statusCode: 404
+              example:
+                code: CLIENT_ERROR
+                message: ''
+                statusCode: 404
       deprecated: false
       security:
         - userRestricted:
@@ -547,7 +621,7 @@ paths:
   /customs/transits/movements/departures:
     post:
       tags:
-      - common-transit-convention-traders
+      - Departures
       summary: Send a declaration data message
       description: >
         Send a transit declaration to the Customs Office of Departure to notify it that you wish to carry out a transit operation.
@@ -557,14 +631,14 @@ paths:
         A successful response will contain a URI and a departure ID for the notification, which you can use to retrieve the message status.
 
         It will also contain an embedded request ID, box ID and box name, which you can use to match this movement to any messages received from the Push Pull Notifications API.
-
+        <br/><br/>
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
-      operationId: SendADeclarationDataMessage
+      operationId: postDeclarationDataMessage
       parameters:
         - $ref: '#/components/parameters/contentTypeHeader'
       responses:
         '202':
-          description: 'Accepted'
+          description: Accepted
           content:
             application/json:
               schema:
@@ -595,25 +669,39 @@ paths:
                     boxId: 1234-5678-abcd-def
                     requestId: /customs/transits/movements/departures/1
                     boxName: customs/transits##1.0##notificationUrl
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BadRequest'
+                  - description: The supplied payload was invalid.
+                    example:
+                      statusCode: 400
+                      message: 'Invalid XML: Premature end of file.'
+              example:
+                statusCode: 400
+                message: 'Invalid XML: Premature end of file.'
       deprecated: false
       security:
         - userRestricted:
             - common-transit-convention-traders
     get:
       tags:
-      - common-transit-convention-traders
+      - Departures
       summary: Get all cached departures
       description: >
-        Retrieve all departure declarations sent to the Customs Office of Departure within the past 31 days.
+        Get all departure declarations sent to the Customs Office of Departure within the past 31 days.
 
         You can filter for departure declarations updated after a specific date and time.
 
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
 
         A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
-
+        <br/><br/>
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
-      operationId: GetAllCachedDepartures
+      operationId: getAllCachedDepartures
       parameters:
         - $ref: '#/components/parameters/acceptHeader'
         - in: query
@@ -627,7 +715,7 @@ paths:
             example: 2021-06-21T09:00:00Z
       responses:
         '200':
-          description: 'OK'
+          description: OK
           content:
             application/json:
               schema:
@@ -687,19 +775,19 @@ paths:
                   retrievedDepartures: 2
                   totalDepartures: 2
         '406':
-          description: 'Not Acceptable'
+          description: Not Acceptable
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/errorResponse'
-                - example:
-                    code: ACCEPT_HEADER_INVALID
-              examples:
-                badRequest:
-                  description: The accept header is missing or invalid.
-                  value:
-                    code: ACCEPT_HEADER_INVALID
+                  - $ref: '#/components/schemas/NotAcceptable'
+                  - description: The Accept header is missing or invalid
+                    example:
+                      statusCode: 406
+                      message: The accept header is missing or invalid
+              example:
+                statusCode: 406
+                message: The accept header is missing or invalid
       deprecated: false
       security:
         - userRestricted:
@@ -708,17 +796,17 @@ paths:
   /customs/transits/movements/departures/{departureId}:
     get:
       tags:
-      - common-transit-convention-traders
+      - Departures
       summary: Get a cached departure for a departure ID
       description: >
-        Retrieve a specific departure declaration sent to the Customs Office of Departure within the past 31 days.
+        Get a specific departure declaration sent to the Customs Office of Departure within the past 31 days.
 
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
 
         A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
-
+        <br/><br/>
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
-      operationId: GetACachedDepartureForaDepartureID
+      operationId: getCachedDepartureForaDepartureID
       parameters:
         - $ref: '#/components/parameters/acceptHeader'
         - in: path
@@ -730,7 +818,7 @@ paths:
             type: string
       responses:
         '200':
-          description: 'OK'
+          description: OK
           content:
             application/json:
               schema:
@@ -758,19 +846,35 @@ paths:
                   messages:
                     href: /customs/transits/movements/departures/1/messages
         '406':
-          description: 'Not Acceptable'
+          description: Not Acceptable
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/errorResponse'
-                - example:
-                    code: ACCEPT_HEADER_INVALID
-              examples:
-                badRequest:
-                  description: The accept header is missing or invalid.
-                  value:
-                    code: ACCEPT_HEADER_INVALID
+                  - $ref: '#/components/schemas/NotAcceptable'
+                  - description: The Accept header is missing or invalid
+                    example:
+                      statusCode: 406
+                      message: The accept header is missing or invalid
+              example:
+                statusCode: 406
+                message: The accept header is missing or invalid
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotFound'
+                  - description: Supplied departure not found or does not exist.
+                    example:
+                      code: CLIENT_ERROR
+                      message: ''
+                      statusCode: 404
+              example:
+                code: CLIENT_ERROR
+                message: ''
+                statusCode: 404
       deprecated: false
       security:
         - userRestricted:
@@ -779,7 +883,7 @@ paths:
   /customs/transits/movements/departures/{departureId}/messages:
     post:
       tags:
-      - common-transit-convention-traders
+      - Departures
       summary: Send a message related to a departure
       description: >
         Send a message to the Customs Office of Departure about a departure.
@@ -787,9 +891,9 @@ paths:
         For example, if you want to cancel a ‘Declaration Data’ E_DEC_DAT (IE015) message, you must send a ‘Declaration Invalidation Request’ E_DEC_INV (IE014) message to the Office of Departure.
 
         A successful response will contain a URI and a message ID related to the departure, which you can use to retrieve the message status.
-
+        <br/><br/>
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
-      operationId: SendAMessageRelatedToADeparture
+      operationId: postMessageRelatedToADeparture
       parameters:
         - $ref: '#/components/parameters/contentTypeHeader'
         - in: path
@@ -801,7 +905,7 @@ paths:
             type: string
       responses:
         '202':
-          description: 'Accepted'
+          description: Accepted
           content:
             application/json:
               schema:
@@ -828,6 +932,20 @@ paths:
                 messageId: '2'
                 messageType: IE014
                 body: <CC014A>...</CC014A>
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BadRequest'
+                  - description: The supplied payload was invalid.
+                    example:
+                      statusCode: 400
+                      message: 'Invalid XML: Premature end of file.'
+              example:
+                statusCode: 400
+                message: 'Invalid XML: Premature end of file.'
       deprecated: false
       security:
         - userRestricted:
@@ -835,19 +953,19 @@ paths:
 
     get:
       tags:
-      - common-transit-convention-traders
+      - Departures
       summary: Get all cached messages related to a departure
       description: >
-        Retrieve all messages related to a specific departure declaration sent to the Customs Office of Departure within the past 31 days.
+        Get all messages related to a specific departure declaration sent to the Customs Office of Departure within the past 31 days.
 
         You can filter for departure declarations received after a specific date and time.
 
         Movements older than 31 days are archived, so any messages to related to them cannot be returned by the API.
 
         A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
-
+        <br/><br/>
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
-      operationId: GetAllCachedMessagesRelatedToADeparture
+      operationId: getAllCachedMessagesRelatedToADeparture
       parameters:
         - $ref: '#/components/parameters/acceptHeader'
         - in: path
@@ -868,7 +986,7 @@ paths:
             example: 2021-06-21T09:00:00Z
       responses:
         '200':
-          description: 'OK'
+          description: OK
           content:
             application/json:
               schema:
@@ -928,19 +1046,35 @@ paths:
                       messages:
                         href: /customs/transits/movements/departures/1/messages
         '406':
-          description: 'Not Acceptable'
+          description: Not Acceptable
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/errorResponse'
-                - example:
-                    code: ACCEPT_HEADER_INVALID
-              examples:
-                badRequest:
-                  description: The accept header is missing or invalid.
-                  value:
-                    code: ACCEPT_HEADER_INVALID
+                  - $ref: '#/components/schemas/NotAcceptable'
+                  - description: The Accept header is missing or invalid
+                    example:
+                      statusCode: 406
+                      message: The accept header is missing or invalid
+              example:
+                statusCode: 406
+                message: The accept header is missing or invalid
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotFound'
+                  - description: Supplied departure not found or does not exist.
+                    example:
+                      code: CLIENT_ERROR
+                      message: ''
+                      statusCode: 404
+              example:
+                code: CLIENT_ERROR
+                message: ''
+                statusCode: 404
       deprecated: false
       security:
         - userRestricted:
@@ -949,17 +1083,17 @@ paths:
   /customs/transits/movements/departures/{departureId}/messages/{messageId}:
     get:
       tags:
-      - common-transit-convention-traders
+      - Departures
       summary: Get a cached message related to a departure and message ID
       description: >
-        Retrieve all messages related to a specific departure and message ID that have been received within the past 31 days.
+        Get all messages related to a specific departure and message ID that have been received within the past 31 days.
 
         For example, this could include ‘Declaration rejected’ or Movement Reference Number (MRN) allocated messages.
 
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
-
+        <br/><br/>
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
-      operationId: GetACachedMessageRelatedToADepartureAndMessageID
+      operationId: getCachedMessageRelatedToADepartureAndMessageID
       parameters:
         - $ref: '#/components/parameters/acceptHeader'
         - in: path
@@ -978,7 +1112,7 @@ paths:
             type: string
       responses:
         '200':
-          description: 'OK'
+          description: OK
           content:
             application/json:
               schema:
@@ -1008,19 +1142,35 @@ paths:
                 messageType: IE015
                 body: <CC015B>...</CC015B>
         '406':
-          description: 'Not Acceptable'
+          description: Not Acceptable
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/errorResponse'
-                - example:
-                    code: ACCEPT_HEADER_INVALID
-              examples:
-                badRequest:
-                  description: The accept header is missing or invalid.
-                  value:
-                    code: ACCEPT_HEADER_INVALID
+                - $ref: '#/components/schemas/NotAcceptable'
+                - description: The Accept header is missing or invalid
+                  example:
+                    statusCode: 406
+                    message: The accept header is missing or invalid
+              example:
+                statusCode: 406
+                message: The accept header is missing or invalid
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotFound'
+                  - description: Supplied departure not found or does not exist.
+                    example:
+                      code: CLIENT_ERROR
+                      message: ''
+                      statusCode: 404
+              example:
+                code: CLIENT_ERROR
+                message: ''
+                statusCode: 404
       deprecated: false
       security:
         - userRestricted:
@@ -1029,16 +1179,16 @@ paths:
   /customs/transits/movements/push-pull-notifications/box:
     get:
       tags:
-      - common-transit-convention-traders
+      - Notifications
       summary: Get box information for application
       description: >
         Get box information for the application if there is a Push-Pull-Notification Service (PPNS) box.
-      operationId: GetBoxInformationForApplication
+      operationId: getBoxInformationForApplication
       parameters:
         - $ref: '#/components/parameters/acceptHeader'
       responses:
         '200':
-          description: 'OK'
+          description: OK
           content:
             application/json:
               schema:
@@ -1058,19 +1208,19 @@ paths:
                   self:
                     href: /customs/transits/movements/push-pull-notifications/box
         '406':
-          description: 'Not Acceptable'
+          description: Not Acceptable
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: '#/components/schemas/errorResponse'
-                - example:
-                    code: ACCEPT_HEADER_INVALID
-              examples:
-                badRequest:
-                  description: The accept header is missing or invalid.
-                  value:
-                    code: ACCEPT_HEADER_INVALID
+                  - $ref: '#/components/schemas/NotAcceptable'
+                  - description: The Accept header is missing or invalid
+                    example:
+                      statusCode: 406
+                      message: The accept header is missing or invalid
+              example:
+                statusCode: 406
+                message: The accept header is missing or invalid
       deprecated: false
       security:
         - userRestricted:
@@ -1078,14 +1228,49 @@ paths:
 
 components:
   schemas:
-    errorResponse:
-      title: errorResponse
+    NotAcceptable:
+      title: The Accept header is missing or invalid
       required:
-      - code
+        - statusCode
+        - message
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        message:
+          type: string
+          description: The description of the error.
+    BadRequest:
+      title: BadRequest
+      description: An error in the supplied payload.
+      required:
+        - statusCode
+        - message
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        message:
+          type: string
+          description: The description of the error.
+    NotFound:
+      title: NotFound
+      description: Supplied Arrival/Departure not found in the database or does not exist.
+      required:
+        - code
+        - message
+        - statusCode
       type: object
       properties:
         code:
+          enum:
+            - CLIENT_ERROR
           type: string
+        message:
+          type: string
+          description: The description of the error.
+        statusCode:
+          type: integer
     Arrival:
       title: Arrival
       required:
