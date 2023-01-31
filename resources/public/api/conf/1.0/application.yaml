@@ -196,7 +196,7 @@ paths:
         
         This request is also called an ‘Arrival Notification’ E_ARR_NOT (IE007) message.
         
-        A successful response will contain a URI and an arrival ID for the notification, which you can use to retrieve the message status.
+        A successful response will contain a URI and an arrival ID for the notification, which you can use to get the message status.
         <br/><br/>
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
       operationId: putArrivalNotificationMessage
@@ -346,7 +346,7 @@ paths:
         
         For example, if you are a Trader at Destination, you will send an ‘Unloading Remarks’ E_ULD_REM (IE044) message to the Customs Office of Destination indicating that unloading of the goods has been completed.
         
-        A successful response will contain a URI and an arrival ID for the message, which you can use to retrieve the message status.
+        A successful response will contain a URI and an arrival ID for the message, which you can use to get the message status.
         <br/><br/>
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
       operationId: postMessageRelatedToArrival
@@ -628,7 +628,7 @@ paths:
 
         This request is also called an ‘Declaration Data’ E_DEC_DAT (IE015) message.
 
-        A successful response will contain a URI and a departure ID for the notification, which you can use to retrieve the message status.
+        A successful response will contain a URI and a departure ID for the notification, which you can use to get the message status.
 
         It will also contain an embedded request ID, box ID and box name, which you can use to match this movement to any messages received from the Push Pull Notifications API.
         <br/><br/>
@@ -890,7 +890,7 @@ paths:
 
         For example, if you want to cancel a ‘Declaration Data’ E_DEC_DAT (IE015) message, you must send a ‘Declaration Invalidation Request’ E_DEC_INV (IE014) message to the Office of Departure.
 
-        A successful response will contain a URI and a message ID related to the departure, which you can use to retrieve the message status.
+        A successful response will contain a URI and a message ID related to the departure, which you can use to get the message status.
         <br/><br/>
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
       operationId: postMessageRelatedToADeparture
