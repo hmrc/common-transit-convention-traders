@@ -2454,7 +2454,7 @@ class V2MovementsControllerSpec
           conversion: EitherT[Future, ConversionError, Source[ByteString, _]] =
             if (movementType == MovementType.Departure) EitherT.rightT(singleUseStringSource(contentXml.mkString))
             else EitherT.rightT(singleUseStringSource(CC044Cjson.mkString)),
-          persistence: Option[EitherT[Future, PersistenceError, UpdateMovementResponse]] = None,
+          persistence: EitherT[Future, PersistenceError, UpdateMovementResponse] = EitherT.rightT(UpdateMovementResponse(MessageId("456"))),
           router: EitherT[Future, RouterError, Unit] = EitherT.rightT(())
         ): Unit = {
 
@@ -2477,20 +2477,18 @@ class V2MovementsControllerSpec
 
           when(mockConversionService.jsonToXml(any(), any())(any(), any(), any())).thenReturn(conversion)
 
-          if (persistence.isDefined) {
-            when(
-              mockMovementsPersistenceService
-                .updateMovement(
-                  any[String].asInstanceOf[MovementId],
-                  any[MovementType],
-                  any[String].asInstanceOf[MessageType],
-                  any[Source[ByteString, _]]()
-                )(
-                  any[HeaderCarrier],
-                  any[ExecutionContext]
-                )
-            ).thenReturn(persistence.get)
-          }
+          when(
+            mockMovementsPersistenceService
+              .updateMovement(
+                any[String].asInstanceOf[MovementId],
+                any[MovementType],
+                any[String].asInstanceOf[MessageType],
+                any[Source[ByteString, _]]()
+              )(
+                any[HeaderCarrier],
+                any[ExecutionContext]
+              )
+          ).thenReturn(persistence)
 
           when(
             mockRouterService.send(
@@ -2513,19 +2511,18 @@ class V2MovementsControllerSpec
           fakeAttachMessageRequest("POST", standardHeaders, singleUseStringSource(contentJson), movementType)
 
         "must return Accepted when body length is within limits and is considered valid" in forAll(
-          arbitraryMovementId.arbitrary,
-          arbitraryUpdateMovementResponse.arbitrary
+          arbitraryMovementId.arbitrary
         ) {
-          (movementId, updateMovementResponse) =>
+          movementId =>
             beforeEach()
 
-            setup(persistence = Some(EitherT.rightT(updateMovementResponse)))
+            setup()
 
             val request = fakeJsonAttachRequest(contentJson)
             val result  = sut.attachMessage(movementType, movementId)(request)
 
             status(result) mustBe ACCEPTED
-            contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, updateMovementResponse.messageId, movementType))
+            contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, MessageId("456"), movementType))
 
             verify(mockValidationService, times(1)).validateJson(any(), any())(any(), any())
             verify(mockAuditService, times(1)).audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())
@@ -2665,7 +2662,7 @@ class V2MovementsControllerSpec
           arbitraryMovementId.arbitrary
         ) {
           movementId =>
-            setup(persistence = Some(EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType))))
+            setup(persistence = EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType)))
 
             val request = fakeJsonAttachRequest(contentJson)
             val result  = sut.attachMessage(movementType, movementId)(request)
@@ -2677,7 +2674,7 @@ class V2MovementsControllerSpec
           arbitraryMovementId.arbitrary
         ) {
           movementId =>
-            setup(persistence = Some(EitherT.leftT(PersistenceError.UnexpectedError(None))))
+            setup(router = EitherT.leftT(RouterError.UnexpectedError(None)))
 
             val request = fakeJsonAttachRequest(contentJson)
             val result  = sut.attachMessage(movementType, movementId)(request)

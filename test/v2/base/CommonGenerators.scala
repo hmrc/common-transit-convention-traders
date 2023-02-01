@@ -32,9 +32,11 @@ import v2.models.responses.BoxResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
+import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.UpscanFormTemplate
 import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.UpscanReference
+
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -134,6 +136,12 @@ trait CommonGenerators {
       movementId <- arbitrary[MovementId]
       messageId = if (withMessage) arbitrary[MessageId].sample else None
     } yield MovementResponse(movementId, messageId)
+  }
+
+  implicit lazy val arbitraryUpdateMovementResponse: Arbitrary[UpdateMovementResponse] = Arbitrary {
+    for {
+      messageId <- arbitrary[MessageId]
+    } yield UpdateMovementResponse(messageId)
   }
 
 }

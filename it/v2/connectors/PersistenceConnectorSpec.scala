@@ -83,16 +83,10 @@ class PersistenceConnectorSpec
 
   "POST /traders/:eori/movements/departures" - {
 
-    lazy val okResultGen =
-      for {
-        movementId <- arbitrary[MovementId]
-        messageId  <- arbitrary[MessageId]
-      } yield MovementResponse(movementId, Some(messageId))
-
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures"
 
-    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen) {
-      (eoriNumber, okResult) =>
+    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], arbitraryMovementResponse(true).arbitrary) {
+      (eoriNumber, movementResponse) =>
         server.resetAll()
 
         server.stubFor(
@@ -101,7 +95,7 @@ class PersistenceConnectorSpec
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .willReturn(
-              aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(okResult)))
+              aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(movementResponse)))
             )
         )
 
@@ -111,7 +105,7 @@ class PersistenceConnectorSpec
 
         whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Departure, Some(source))) {
           result =>
-            result mustBe okResult
+            result mustBe movementResponse
             server.verify(
               1,
               postRequestedFor(urlEqualTo(targetUrl(eoriNumber)))
@@ -146,8 +140,8 @@ class PersistenceConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
             response.statusCode mustBe INTERNAL_SERVER_ERROR
             Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
         }
@@ -179,8 +173,8 @@ class PersistenceConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
             response.statusCode mustBe BAD_REQUEST
             Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
         }
@@ -212,7 +206,7 @@ class PersistenceConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[JsonParseException]
+            result.left.toOption.get mustBe a[JsonParseException]
         }
     }
   }
@@ -275,8 +269,8 @@ class PersistenceConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
             response.statusCode mustBe INTERNAL_SERVER_ERROR
             Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
         }
@@ -305,8 +299,8 @@ class PersistenceConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
             response.statusCode mustBe BAD_REQUEST
             Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
         }
@@ -335,7 +329,7 @@ class PersistenceConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[JsonParseException]
+            result.left.toOption.get mustBe a[JsonParseException]
         }
     }
   }
@@ -995,8 +989,8 @@ class PersistenceConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
             response.statusCode mustBe INTERNAL_SERVER_ERROR
             Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
         }
@@ -1029,8 +1023,8 @@ class PersistenceConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
             response.statusCode mustBe BAD_REQUEST
             Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
         }
@@ -1062,7 +1056,7 @@ class PersistenceConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[JsonParseException]
+            result.left.toOption.get mustBe a[JsonParseException]
         }
     }
   }
@@ -1125,8 +1119,8 @@ class PersistenceConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
             response.statusCode mustBe INTERNAL_SERVER_ERROR
             Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
         }
@@ -1158,8 +1152,8 @@ class PersistenceConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
             response.statusCode mustBe BAD_REQUEST
             Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
         }
@@ -1191,7 +1185,7 @@ class PersistenceConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[JsonParseException]
+            result.left.toOption.get mustBe a[JsonParseException]
         }
     }
   }
@@ -1247,8 +1241,8 @@ class PersistenceConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
             response.statusCode mustBe INTERNAL_SERVER_ERROR
             Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
         }
@@ -1277,8 +1271,8 @@ class PersistenceConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
             response.statusCode mustBe BAD_REQUEST
             Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
         }
@@ -1307,7 +1301,7 @@ class PersistenceConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[JsonParseException]
+            result.left.toOption.get mustBe a[JsonParseException]
         }
     }
   }

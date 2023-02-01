@@ -121,6 +121,18 @@ trait V2BaseConnector extends HttpErrorFunctions {
 
   implicit class RequestBuilderHelpers(requestBuilder: RequestBuilder) {
 
+    def executeAndDeserialise[T](implicit ec: ExecutionContext, reads: Reads[T]): Future[T] =
+      requestBuilder
+        .execute[HttpResponse]
+        .flatMap {
+          response =>
+            response.status match {
+              case OK => response.as[T]
+              case _ =>
+                response.error
+            }
+        }
+
     def executeAndExpect(expected: Int)(implicit ec: ExecutionContext): Future[Unit] =
       requestBuilder
         .execute[HttpResponse]
