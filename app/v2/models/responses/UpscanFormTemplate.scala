@@ -17,17 +17,12 @@
 package v2.models.responses
 
 import play.api.libs.json.Json
-import play.api.libs.json.OFormat
-import v2.models.MessageId
-import v2.models.MovementId
 
-object MovementResponse {
-  implicit lazy val movementResponseFormat: OFormat[MovementResponse] = Json.format[MovementResponse]
+object UpscanFormTemplate {
+  implicit val uploadRequestFormat = Json.format[UpscanFormTemplate]
 }
 
-case class MovementResponse(
-  movementId: MovementId,
-  messageId: Option[MessageId] = None,
-  boxResponse: Option[BoxResponse] = None,
-  upscanInitiateResponse: Option[UpscanInitiateResponse] = None
+case class UpscanFormTemplate(
+  href: String,
+  fields: Map[String, String]
 )

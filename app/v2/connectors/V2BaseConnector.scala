@@ -89,6 +89,8 @@ trait V2BaseConnector extends HttpErrorFunctions {
   def pushNotificationsBoxRoute(movementId: MovementId): UrlPath =
     UrlPath.parse(s"$pushNotificationsBaseRoute/traders/movements/${movementId.value}/box")
 
+  def upscanInitiateRoute(): UrlPath = UrlPath.parse("/upscan/v2/initiate")
+
   implicit class HttpResponseHelpers(response: HttpResponse) {
 
     def as[A](implicit reads: Reads[A]): Future[A] =

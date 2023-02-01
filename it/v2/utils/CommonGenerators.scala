@@ -25,6 +25,7 @@ import v2.models.request.PushNotificationsAssociation
 import v2.models.responses.BoxResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementSummary
+import v2.models.responses.UpscanInitiateResponse
 
 import java.time.Instant
 import java.time.OffsetDateTime

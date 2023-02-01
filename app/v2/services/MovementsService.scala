@@ -45,7 +45,7 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[MovementsServiceImpl])
 trait MovementsService {
 
-  def createMovement(eori: EORINumber, movementType: MovementType, source: Source[ByteString, _])(implicit
+  def createMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MovementResponse]
@@ -80,14 +80,21 @@ trait MovementsService {
 @Singleton
 class MovementsServiceImpl @Inject() (persistenceConnector: PersistenceConnector) extends MovementsService {
 
-  override def createMovement(eori: EORINumber, movementType: MovementType, source: Source[ByteString, _])(implicit
+  override def createMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MovementResponse] =
     EitherT(
       persistenceConnector
         .postMovement(eori, movementType, source)
-        .map(Right(_))
+        .map {
+          movementResponse =>
+            if (movementResponse.messageId.isEmpty && source.isDefined) { // For Small message, messageId shouldn't be empty
+              Left(PersistenceError.MessageIdError())
+            } else {
+              Right(movementResponse)
+            }
+        }
         .recover {
           case NonFatal(thr) =>
             Left(PersistenceError.UnexpectedError(Some(thr)))

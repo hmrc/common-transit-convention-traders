@@ -84,19 +84,56 @@ class MovementsServiceSpec
     val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
 
     "on a successful submission, should return a Right" in {
-      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(validRequest))(any[HeaderCarrier], any[ExecutionContext]))
-        .thenReturn(Future.successful(MovementResponse(MovementId("ABC"), MessageId("123"))))
-      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, validRequest)
-      val expected: Either[PersistenceError, MovementResponse] = Right(MovementResponse(MovementId("ABC"), MessageId("123")))
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(validRequest)))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenReturn(Future.successful(MovementResponse(MovementId("ABC"), Some(MessageId("123")))))
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, Some(validRequest))
+      val expected: Either[PersistenceError, MovementResponse] = Right(MovementResponse(MovementId("ABC"), Some(MessageId("123"))))
       whenReady(result.value) {
         _ mustBe expected
       }
     }
 
     "on a failed submission, should return a Left with an UnexpectedError" in {
-      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(invalidRequest))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(invalidRequest)))(any[HeaderCarrier], any[ExecutionContext]))
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, invalidRequest)
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, Some(invalidRequest))
+      val expected: Either[PersistenceError, MovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
+      whenReady(result.value) {
+        _ mustBe expected
+      }
+    }
+
+    "on a failed submission given MessageId is empty, should return a Left with an MessageIdError" in {
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), any())(any[HeaderCarrier], any[ExecutionContext]))
+        .thenReturn(Future.successful(MovementResponse(MovementId("ABC"), None)))
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, Some(validRequest))
+      val expected: Either[PersistenceError, MovementResponse] = Left(PersistenceError.MessageIdError())
+      whenReady(result.value) {
+        _ mustBe expected
+      }
+    }
+  }
+
+  "Submitting a Departure Declaration for Large Messages" - {
+
+    val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
+
+    "on a successful submission, should return a Right" in {
+      implicit val hc: HeaderCarrier = HeaderCarrier()
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), any())(eqTo(hc), any[ExecutionContext]))
+        .thenReturn(Future.successful(MovementResponse(MovementId("ABC"), None)))
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, None)
+      val expected: Either[PersistenceError, MovementResponse] = Right(MovementResponse(MovementId("ABC"), None))
+      whenReady(result.value) {
+        _ mustBe expected
+      }
+    }
+
+    "on a failed submission, should return a Left with an UnexpectedError" in {
+      implicit val hc: HeaderCarrier = HeaderCarrier()
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), any())(eqTo(hc), any[ExecutionContext]))
+        .thenReturn(Future.failed(upstreamErrorResponse))
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, None)
       val expected: Either[PersistenceError, MovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected
@@ -343,19 +380,46 @@ class MovementsServiceSpec
     val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
 
     "on a successful creation, should return a Right" in {
-      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(validRequest))(any[HeaderCarrier], any[ExecutionContext]))
-        .thenReturn(Future.successful(MovementResponse(MovementId("ABC"), MessageId("123"))))
-      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Arrival, validRequest)
-      val expected: Either[PersistenceError, MovementResponse] = Right(MovementResponse(MovementId("ABC"), MessageId("123")))
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(validRequest)))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenReturn(Future.successful(MovementResponse(MovementId("ABC"), Some(MessageId("123")))))
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Arrival, Some(validRequest))
+      val expected: Either[PersistenceError, MovementResponse] = Right(MovementResponse(MovementId("ABC"), Some(MessageId("123"))))
       whenReady(result.value) {
         _ mustBe expected
       }
     }
 
     "on a failed creation, should return a Left with an UnexpectedError" in {
-      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(invalidRequest))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(invalidRequest)))(any[HeaderCarrier], any[ExecutionContext]))
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Arrival, invalidRequest)
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Arrival, Some(invalidRequest))
+      val expected: Either[PersistenceError, MovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
+      whenReady(result.value) {
+        _ mustBe expected
+      }
+    }
+  }
+
+  "Create Arrival notification for Large Messages" - {
+
+    val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
+
+    "on a successful creation, should return a Right" in {
+      implicit val hc: HeaderCarrier = HeaderCarrier()
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), any())(eqTo(hc), any[ExecutionContext]))
+        .thenReturn(Future.successful(MovementResponse(MovementId("ABC"), None)))
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Arrival, None)
+      val expected: Either[PersistenceError, MovementResponse] = Right(MovementResponse(MovementId("ABC"), None))
+      whenReady(result.value) {
+        _ mustBe expected
+      }
+    }
+
+    "on a failed creation, should return a Left with an UnexpectedError" in {
+      implicit val hc: HeaderCarrier = HeaderCarrier()
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), any())(eqTo(hc), any[ExecutionContext]))
+        .thenReturn(Future.failed(upstreamErrorResponse))
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Arrival, None)
       val expected: Either[PersistenceError, MovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected
