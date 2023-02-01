@@ -1,0 +1,1688 @@
+openapi: 3.0.3
+info:
+  title: CTC Traders
+  contact: {}
+  version: '2.0'
+  description: |
+    # Overview
+    Use the CTC Traders API to send departure and arrival movement to the New Computerised Transit System (NCTS)
+    and to get messages sent from customs offices of departure and destination.
+servers:
+  - url: https://test-api.service.hmrc.gov.uk
+    description: Sandbox
+  - url: https://api.service.hmrc.gov.uk
+    description: Production
+    variables: {}
+paths:
+  /customs/transits/movements/departures:
+    post:
+      tags:
+      - Departures
+      summary: Send a declaration data message
+      description: >
+        Send a transit declaration to the Customs Office of Departure to notify it that you wish to carry out a transit operation.
+
+
+        This request is also called an ‘Declaration Data’ E_DEC_DAT (IE015) message.
+
+
+        A successful response will contain a URI which you can use to retrieve the message status. A successful response can also include an optional box ID, which you can use to match this movement to any messages received from the Push Pull Notifications API.
+        <br/><br/>
+
+
+        **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
+      operationId: postDeclarationDataMessage
+      parameters:
+      - name: Content-Type
+        in: header
+        description: Specifies the format of the request body, which must be XML or JSON, using UTF-8 character encoding.
+        required: true
+        style: simple
+        schema:
+          type: string
+          example: application/xml
+      responses:
+        '202':
+          description: A successful declaration data response
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CustomsTransitsMovementsDeparturesresponse'
+                - description: JSON payload
+                  example:
+                    _links:
+                      self:
+                        href: /customs/transits/movements/departures/62fb8f33d233578e
+                      messages:
+                        href: /customs/transits/movements/departures/62fb8f33d233578e/messages
+                    boxId: b54c2424-955b-496c-bbce-dfb9f57cd797
+              example:
+                _links:
+                  self:
+                    href: /customs/transits/movements/departures/62fb8f33d233578e
+                  messages:
+                    href: /customs/transits/movements/departures/62fb8f33d233578e/messages
+                boxId: b54c2424-955b-496c-bbce-dfb9f57cd797
+        '413':
+          description: Request body is too large
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: REQUEST_ENTITY_TOO_LARGE
+              examples:
+                requestEntityTooLarge:
+                  description: The request body is too large.
+                  value:
+                    code: REQUEST_ENTITY_TOO_LARGE
+        '400':
+          description: Bad Request
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: SCHEMA_VALIDATION
+              examples:
+                schemaValidation:
+                  description: The request body failed schema validation.
+                  value:
+                    code: SCHEMA_VALIDATION
+    get:
+      tags:
+      - Departures
+      summary: Get all cached departures
+      description: >
+        Retrieve all departure declarations sent to the Customs Office of Departure within the past 31 days.
+
+
+        You can filter for departure declarations updated after a specific date and time and/or submitted with a specified EORI.
+
+
+        Movements older than 31 days and their related messages are archived and cannot be returned by the API.
+
+
+        A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
+
+        <br/><br/>
+
+
+        **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
+      operationId: Getallcacheddepartures
+      parameters:
+      - name: updatedSince
+        in: query
+        description: This is an optional query parameter that you can use to filter for departure declarations updated after a specific date and time.
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date-time
+          example: 2021-06-21T09:00:00Z
+      - name: movementEORI
+        in: query
+        description: This is an optional query parameter that you can use to filter for departure declarations that were submitted with a specified movement EORI.
+        style: form
+        explode: true
+        schema:
+          type: string
+          example: GB1234567890
+      responses:
+        '200':
+          description: A successful response to retrieve all departure declarations
+          content:
+            application/json:
+              schema:
+                type: string
+                description: JSON payload
+                example: >
+                  {
+                    "_links":{
+                      "self":{
+                        href":"/customs/transits/movements/departures"
+                      }
+                    },
+                    departures":[
+                     "_links":{
+                        "self":{
+                          "href":"/customs/transits/movements/departures/6365135ba5e821ee"
+                        },
+                        "messages":{
+                          "href":"/customs/transits/movements/departures/6365135ba5e821ee/messages"
+                        }
+                      },
+                      "id":"6365135ba5e821ee",
+                      "movementReferenceNumber":"ABC123",
+                      "created":"2022-11-10T15:32:51.459Z",
+                      "updated":"2022-11-10T15:32:51.459Z",
+                      "enrollmentEORINumber": "GB1234567890",
+                      "movementEORINumber": "GB1234567890"
+                    ]
+                  }
+              example: >
+                {
+                  "_links":{
+                    "self":{
+                      href":"/customs/transits/movements/departures"
+                    }
+                  },
+                  departures":[
+                   "_links":{
+                      "self":{
+                        "href":"/customs/transits/movements/departures/6365135ba5e821ee"
+                      },
+                      "messages":{
+                        "href":"/customs/transits/movements/departures/6365135ba5e821ee/messages"
+                      }
+                    },
+                    "id":"6365135ba5e821ee",
+                    "movementReferenceNumber":"ABC123",
+                    "created":"2022-11-10T15:32:51.459Z",
+                    "updated":"2022-11-10T15:32:51.459Z",
+                    "enrollmentEORINumber": "GB1234567890",
+                    "movementEORINumber": "GB1234567890"
+                  ]
+                }
+        '406':
+          description: The accept header is missing or invalid
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: ACCEPT_HEADER_INVALID
+              examples:
+                badRequest:
+                  description: The accept header is missing or invalid.
+                  value:
+                    code: ACCEPT_HEADER_INVALID
+  /customs/transits/movements/departures/{departureId}:
+    get:
+      tags:
+      - Departure
+      summary: Get a cached departure for a departure ID
+      description: >
+        Retrieve a specific departure declaration sent to the Customs Office of Departure within the past 31 days.
+
+
+        Movements older than 31 days and their related messages are archived and cannot be returned by the API.
+
+
+        A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
+
+        <br/><br/>
+
+
+        **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
+      operationId: GetacacheddepartureforadepartureID
+      parameters:
+      - name: departureId
+        in: path
+        description: Retrieve a specific departure by departureId
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '200':
+          description: A successful response to retrieve a specific departure by departureId
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CustomsTransitsMovementsDeparturesresponse1'
+                - description: JSON payload
+                  example:
+                    _links:
+                      self:
+                        href: /customs/transits/movements/departures/6365135ba5e821ee
+                      messages:
+                        href: /customs/transits/movements/departures/6365135ba5e821ee/messages
+                    id: 6365135ba5e821ee
+                    movementReferenceNumber: ABC123
+                    created: 2022-11-10T15:32:51.459Z
+                    updated: 2022-11-10T15:32:51.459Z
+                    enrollmentEORINumber: GB1234567890
+                    movementEORINumber: GB1234567890
+              example:
+                _links:
+                  self:
+                    href: /customs/transits/movements/departures/6365135ba5e821ee
+                  messages:
+                    href: /customs/transits/movements/departures/6365135ba5e821ee/messages
+                id: 6365135ba5e821ee
+                movementReferenceNumber: ABC123
+                created: 2022-11-10T15:32:51.459Z
+                updated: 2022-11-10T15:32:51.459Z
+                enrollmentEORINumber: GB1234567890
+                movementEORINumber: GB1234567890
+        '404':
+          description: The specified departure does not exist, has been archived or is not available to the EORI number.
+        '406':
+          description: Accept header is invalid
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: ACCEPT_HEADER_INVALID
+              examples:
+                badRequest:
+                  description: The accept header is missing or invalid.
+                  value:
+                    code: ACCEPT_HEADER_INVALID
+  /customs/transits/movements/departures/{departureId}/messages:
+    get:
+      tags:
+      - Departure Messages
+      summary: Get all cached messages related to a departure
+      description: >
+        Retrieve all messages related to a specific departure declaration sent to the Customs Office of Departure within the past 31 days.
+
+
+        You can filter for departure declarations received after a specific date and time.
+
+
+        Movements older than 31 days are archived, so any messages to related to them cannot be returned by the API.
+
+
+        A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
+
+        <br/><br/>
+
+
+        **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
+      operationId: Getallcachedmessagesrelatedtoadeparture
+      parameters:
+      - name: departureId
+        in: path
+        description: retrieve all the messages for a specific departureId
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: receivedSince
+        in: query
+        description: This is an optional query parameter that you can use to filter for departure declarations received after a specific date and time.
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date-time
+          example: 2021-06-21T09:00:00Z
+      responses:
+        '200':
+          description: A successful response to retrieve all the messages for specific departure declaration
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CustomsTransitsMovementsDeparturesMessagesresponse'
+                - description: JSON payload
+                  example:
+                    _links:
+                      self:
+                        href: /customs/transits/movements/departures/6365135ba5e821ee/messages
+                      departure:
+                        href: /customs/transits/movements/departures/6365135ba5e821ee
+                    messages:
+                    - _links:
+                        self:
+                          href: /customs/transits/movements/departures/6365135ba5e821ee/message/634982098f02f00a
+                        departure:
+                          href: /customs/transits/movements/departures/6365135ba5e821ee
+                      id: 634982098f02f00a
+                      departureId: 6365135ba5e821ee
+                      received: 2022-11-10T15:32:51.459Z
+                      type: IE015
+              example:
+                _links:
+                  self:
+                    href: /customs/transits/movements/departures/6365135ba5e821ee/messages
+                  departure:
+                    href: /customs/transits/movements/departures/6365135ba5e821ee
+                messages:
+                - _links:
+                    self:
+                      href: /customs/transits/movements/departures/6365135ba5e821ee/message/634982098f02f00a
+                    departure:
+                      href: /customs/transits/movements/departures/6365135ba5e821ee
+                  id: 634982098f02f00a
+                  departureId: 6365135ba5e821ee
+                  received: 2022-11-10T15:32:51.459Z
+                  type: IE015
+        '404':
+          description: Departure message not found
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: NOT_FOUND
+              examples:
+                notFound:
+                  description: The specified departure does not exist, has been archived or is not available to the EORI number.
+                  value:
+                    code: NOT_FOUND
+        '406':
+          description: Accept header is invalid
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: ACCEPT_HEADER_INVALID
+              examples:
+                badRequest:
+                  description: The accept header is missing or invalid.
+                  value:
+                    code: ACCEPT_HEADER_INVALID
+    post:
+      tags:
+      - Departure Messages
+      summary: Send a message related to a departure
+      description: >
+        Send a message to the Customs Office of Departure about a departure.
+
+
+        For example, if you want to cancel a ‘Declaration Data’ E_DEC_DAT (IE015) message, you must send a ‘Declaration Invalidation Request’ E_DEC_INV (IE014) message to the Office of Departure.
+
+
+        A successful response will contain a URI and a message ID related to the departure that you can use to get the message status.
+
+
+        <br/><br/>
+
+        **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
+      operationId: Sendamessagerelatedtoadeparture
+      parameters:
+      - name: departureId
+        in: path
+        description: Send a messagge of departure for departureId
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        description: Specifies the format of the request body, which must be XML or JSON, using UTF-8 character encoding.
+        required: true
+        style: simple
+        schema:
+          type: string
+          example: application/xml
+      responses:
+        '202':
+          description: A successful response to send a message about the departure
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CustomsTransitsMovementsDeparturesMessagesresponse1'
+                - description: JSON payload
+                  example:
+                    _links:
+                      self:
+                        href: /customs/transits/movements/departures/6365135ba5e821ee/messages/634982098f02f00a
+                      departure:
+                        href: /customs/transits/movements/departures/6365135ba5e821ee
+              example:
+                _links:
+                  self:
+                    href: /customs/transits/movements/departures/6365135ba5e821ee/messages/634982098f02f00a
+                  departure:
+                    href: /customs/transits/movements/departures/6365135ba5e821ee
+        '404':
+          description: The specified departure is not found
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: NOT_FOUND
+              examples:
+                notFound:
+                  description: The specified departure does not exist, has been archived or is not available.
+                  value:
+                    code: NOT_FOUND
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: BAD_REQUEST
+              examples:
+                badRequest:
+                  description: The departure message type is not available within XML or the message failed schema validation.
+                  value:
+                    code: BAD_REQUEST
+        '413':
+          description: The request enitity is too large
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: REQUEST_ENTITY_TOO_LARGE
+              examples:
+                requestEntityTooLarge:
+                  description: The request body is too large.
+                  value:
+                    code: REQUEST_ENTITY_TOO_LARGE
+      deprecated: false
+  /customs/transits/movements/departures/{departureId}/messages/{messageId}:
+    get:
+      tags:
+      - Retrieve Departure Message
+      summary: Get a cached message related to a departure and message ID
+      description: "Retrieve all messages related to a specific departure and message ID that have been received within the past 31 days.\n\nFor example, this could include ‘Declaration rejected’ or Movement Reference Number (MRN) allocated messages.\n\nMovements older than 31 days and their related messages are archived and cannot be returned by the API.\n\nThe response can be returned in one of the following formats based on the provided `Accept` header:\n\n* `application/vnd.hmrc.2.0+json-xml`: JSON-wrapped XML, where the message is provided as an XML string sent as part of JSON payload containing other metadata.\n* `application/vnd.hmrc.2.0+json`: JSON, where the message is provided as a sub-document sent as part of a JSON payload containing other metadata.\n \n**Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.\n"
+      operationId: GetacachedmessagerelatedtoadepartureandmessageID
+      parameters:
+      - name: departureId
+        in: path
+        description: Retrieve specific departure message for departureId
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: messageId
+        in: path
+        description: Retrieve specific departure message for messageId
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '200':
+          description: A successful response to retrieve specific departure message
+          content:
+            application/json+xml:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CustomsTransitsMovementsDeparturesMessagesresponse2'
+                - description: JSON+XML payload
+                  xml:
+                    name: CustomsTransitsMovementsDeparturesMessagesresponse2
+                    attribute: false
+                    wrapped: false
+            application/json:
+              schema:
+                type: string
+                description: JSON payload
+                example: >
+                  {
+                    "_links":{
+                      "self":{
+                        "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2"
+                      },
+                      "departure":{
+                        "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
+                      }
+                    },
+                    "id": "62f4ebbb765ba8c2",
+                    "departureId": "62f4ebbbf581d4aa",
+                    "received": "2022-08-11T11:44:59.83705",
+                    "type": "IE015",
+                    "body":{
+                      "n1.CC015C": {
+                        "@PhaseID": "NCTS5.0",
+                        ...
+                      }
+                    }
+                  }
+              example: >
+                {
+                  "_links":{
+                    "self":{
+                      "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2"
+                    },
+                    "departure":{
+                      "href": "/customs/transits/movements/departures/62f4ebbbf581d4aa"
+                    }
+                  },
+                  "id": "62f4ebbb765ba8c2",
+                  "departureId": "62f4ebbbf581d4aa",
+                  "received": "2022-08-11T11:44:59.83705",
+                  "type": "IE015",
+                  "body":{
+                    "n1.CC015C": {
+                      "@PhaseID": "NCTS5.0",
+                      ...
+                    }
+                  }
+                }
+        '404':
+          description: The specified message is not found
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: NOT_FOUND
+              examples:
+                notFound:
+                  description: The specified message does not exist, has been archived or is not available to the EORI number.
+                  value:
+                    code: NOT_FOUND
+        '406':
+          description: The accept header is invalid
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: ACCEPT_HEADER_INVALID
+              examples:
+                badRequest:
+                  description: The accept header is missing or invalid.
+                  value:
+                    code: ACCEPT_HEADER_INVALID
+  /customs/transits/movements/arrivals:
+    post:
+      tags:
+      - Arrivals
+      summary: Send an arrival notification message
+      description: "Notify the Customs Office of Destination that a transit movement has arrived at its final destination.\n\nThis request is also called an ‘Arrival Notification’ E_ARR_NOT (IE007) message.\n\nA successful response will contain a URI that you can use to get the message status. \n\nA successful response can also include an optional box ID, which you can use to match this movement to any messages received from the Push Pull Notifications API. <br/><br/> \n**Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.\n"
+      operationId: Sendanarrivalnotificationmessage
+      parameters:
+      - name: Content-Type
+        in: header
+        description: Specifies the format of the request body, which must be XML, using UTF-8 character encoding.
+        required: true
+        style: simple
+        schema:
+          type: string
+          example: application/xml
+      responses:
+        '202':
+          description: A successful arrival notificaation response
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsresponse'
+                - description: JSON payload
+                  example:
+                    _links:
+                      self:
+                        href: /customs/transits/movements/arrivals/62fb8f33d233578e
+                      messages:
+                        href: /customs/transits/movements/arrivals/62fb8f33d233578e/messages
+                    boxId: b54c2424-955b-496c-bbce-dfb9f57cd797
+              example:
+                _links:
+                  self:
+                    href: /customs/transits/movements/arrivals/62fb8f33d233578e
+                  messages:
+                    href: /customs/transits/movements/arrivals/62fb8f33d233578e/messages
+                boxId: b54c2424-955b-496c-bbce-dfb9f57cd797
+        '413':
+          description: Request body is too large
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: REQUEST_ENTITY_TOO_LARGE
+              examples:
+                requestEntityTooLarge:
+                  description: The request body is too large.
+                  value:
+                    code: REQUEST_ENTITY_TOO_LARGE
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: SCHEMA_VALIDATION
+              examples:
+                schemaValidation:
+                  description: The request body failed schema validation.
+                  value:
+                    code: SCHEMA_VALIDATION
+      deprecated: false
+    get:
+      tags:
+      - Arrivals
+      summary: Get all cached arrivals
+      description: >
+        Retrieve all arrivals that have been updated within the past 31 days.
+
+
+        You can filter for departure declarations updated after a specific date and time and/or submitted with a specified EORI.
+
+
+        Movements older than 31 days and their related messages are archived and cannot be returned by the API.
+
+        <br/><br/>
+
+
+        **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
+      operationId: Getallcachedarrivals
+      parameters:
+      - name: updatedSince
+        in: query
+        description: This is an optional query parameter that you can use to filter for arrivals updated after a specific date and time.
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date-time
+          example: 2021-06-21T09:00:00Z
+      - name: movementEORI
+        in: query
+        description: This is an optional query parameter that you can use to filter for arrivals that were submitted with a specified movement EORI.
+        style: form
+        explode: true
+        schema:
+          type: string
+          example: GB1234567890
+      responses:
+        '200':
+          description: A successful response to retrieve all arrival notifications
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsresponse1'
+                - description: JSON payload
+                  example:
+                    _links:
+                      self:
+                        href: /customs/transits/movements/arrivals
+                    arrivals:
+                    - _links:
+                        self:
+                          href: /customs/transits/movements/arrivals/63651574c3447b12
+                        messages:
+                          href: /customs/transits/movements/arrivals/63651574c3447b12/messages
+                      id: 63651574c3447b12
+                      movementReferenceNumber: 27WF9X1FQ9RCKN0TM3
+                      created: 2022-11-04T13:36:52.332Z
+                      updated: 2022-11-04T13:36:52.332Z
+                      enrollmentEORINumber: '9999912345'
+                      movementEORINumber: GB1234567890
+                    - _links:
+                        self:
+                          href: /customs/transits/movements/arrivals/6365135ba5e821ee
+                        messages:
+                          href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages
+                      id: 6365135ba5e821ee
+                      movementReferenceNumber: 27WF9X1FQ9RCKN0TM3
+                      created: 2022-11-04T13:27:55.522Z
+                      updated: 2022-11-04T13:27:55.522Z
+                      enrollmentEORINumber: '9999912345'
+                      movementEORINumber: GB1234567890
+              example:
+                _links:
+                  self:
+                    href: /customs/transits/movements/arrivals
+                arrivals:
+                - _links:
+                    self:
+                      href: /customs/transits/movements/arrivals/63651574c3447b12
+                    messages:
+                      href: /customs/transits/movements/arrivals/63651574c3447b12/messages
+                  id: 63651574c3447b12
+                  movementReferenceNumber: 27WF9X1FQ9RCKN0TM3
+                  created: 2022-11-04T13:36:52.332Z
+                  updated: 2022-11-04T13:36:52.332Z
+                  enrollmentEORINumber: '9999912345'
+                  movementEORINumber: GB1234567890
+                - _links:
+                    self:
+                      href: /customs/transits/movements/arrivals/6365135ba5e821ee
+                    messages:
+                      href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages
+                  id: 6365135ba5e821ee
+                  movementReferenceNumber: 27WF9X1FQ9RCKN0TM3
+                  created: 2022-11-04T13:27:55.522Z
+                  updated: 2022-11-04T13:27:55.522Z
+                  enrollmentEORINumber: '9999912345'
+                  movementEORINumber: GB1234567890
+        '406':
+          description: The accept header is missing or invalid
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: ACCEPT_HEADER_INVALID
+              examples:
+                badRequest:
+                  description: The accept header is missing or invalid.
+                  value:
+                    code: ACCEPT_HEADER_INVALID
+  /customs/transits/movements/arrivals/{arrivalId}:
+    get:
+      tags:
+      - Arrival
+      summary: Get a cached arrival for an arrival ID
+      description: >
+        Retrieve a specific arrival notification sent to the Customs Office of Destination within the past 31 days.
+
+
+        Movements older than 31 days and their related messages are archived and cannot be returned by the API.
+        <br/><br/>
+
+
+        **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
+      operationId: GetacachedarrivalforanarrivalID
+      parameters:
+      - name: arrivalId
+        in: path
+        description: ''
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Retrieve a specific arrival by arrivalId
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsresponse2'
+                - description: JSON payload
+                  example:
+                    _links:
+                      self:
+                        href: /customs/transits/movements/arrivals/6365135ba5e821ee
+                      messages:
+                        href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages
+                    id: 6365135ba5e821ee
+                    movementReferenceNumber: ABC123
+                    created: 2022-11-10T15:32:51.459Z
+                    updated: 2022-11-10T15:32:51.459Z
+                    enrollmentEORINumber: GB1234567890
+                    movementEORINumber: GB1234567890
+              example:
+                _links:
+                  self:
+                    href: /customs/transits/movements/arrivals/6365135ba5e821ee
+                  messages:
+                    href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages
+                id: 6365135ba5e821ee
+                movementReferenceNumber: ABC123
+                created: 2022-11-10T15:32:51.459Z
+                updated: 2022-11-10T15:32:51.459Z
+                enrollmentEORINumber: GB1234567890
+                movementEORINumber: GB1234567890
+        '404':
+          description: The specified arrival does not exist, has been archived or is not available to the EORI number.
+        '406':
+          description: Accept header is invalid
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: ACCEPT_HEADER_INVALID
+              examples:
+                badRequest:
+                  description: The accept header is missing or invalid.
+                  value:
+                    code: ACCEPT_HEADER_INVALID
+  /customs/transits/movements/arrivals/{arrivalId}/messages:
+    get:
+      tags:
+      - Arrival Messages
+      summary: Get all cached messages related to an arrival
+      description: >
+        Retrieve all messages related to a specific arrival that have been received within the past 31 days.
+
+
+        You can filter for arrivals received after a specific date and time.
+
+
+        Movements older than 31 days are archived, so any messages related to them cannot be returned by the API.
+        <br/><br/>
+
+
+        **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
+      operationId: Getallcachedmessagesrelatedtoanarrival
+      parameters:
+      - name: arrivalId
+        in: path
+        description: retrieve all the messages for a specific arrivalId
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: receivedSince
+        in: query
+        description: This is an optional query parameter that you can use to filter for arrivals received after a specific date and time.
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date-time
+          example: 2021-06-21T09:00:00Z
+      responses:
+        '200':
+          description: A successful response to retrieve all the messages for specific arrival notification
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsMessagesresponse'
+                - description: JSON payload
+                  example:
+                    _links:
+                      self:
+                        href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages
+                      arrival:
+                        href: /customs/transits/movements/arrivals/63498209a2d89ad8
+                    messages:
+                    - _links:
+                        self:
+                          href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages/634982098f02f00a
+                        arrival:
+                          href: /customs/transits/movements/arrivals/63498209a2d89ad8
+                      id: 634982098f02f00a
+                      arrivalId: 63498209a2d89ad8
+                      received: 2022-11-10T15:32:51.459Z
+                      type: IE007
+              example:
+                _links:
+                  self:
+                    href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages
+                  arrival:
+                    href: /customs/transits/movements/arrivals/63498209a2d89ad8
+                messages:
+                - _links:
+                    self:
+                      href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages/634982098f02f00a
+                    arrival:
+                      href: /customs/transits/movements/arrivals/63498209a2d89ad8
+                  id: 634982098f02f00a
+                  arrivalId: 63498209a2d89ad8
+                  received: 2022-11-10T15:32:51.459Z
+                  type: IE007
+        '404':
+          description: Arrival message not found
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: NOT_FOUND
+              examples:
+                notFound:
+                  description: The specified arrival does not exist, has been archived or is not available to the EORI number.
+                  value:
+                    code: NOT_FOUND
+        '406':
+          description: Accept header is invalid
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: ACCEPT_HEADER_INVALID
+              examples:
+                badRequest:
+                  description: The accept header is missing or invalid.
+                  value:
+                    code: ACCEPT_HEADER_INVALID
+    post:
+      tags:
+      - Arrival Messages
+      summary: Send a message related to an arrival
+      description: >
+        Send a message to the Customs Office of Destination about an arrival.
+
+
+        For example, if you are a Trader at Destination, you will send an ‘Unloading Remarks’ E_ULD_REM (IE044) message to the Customs Office of Destination indicating that unloading of the goods has been completed.
+
+
+        A successful response will contain a URI and a message ID related to the arrival, which you can use to retrieve the message status.
+        <br/><br/>
+
+
+        **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
+      operationId: Sendamessagerelatedtoanarrival
+      parameters:
+      - name: arrivalId
+        in: path
+        description: ''
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        description: Specifies the format of the request body, which must be XML or JSON, using UTF-8 character encoding.
+        required: true
+        style: simple
+        schema:
+          type: string
+          example: application/xml
+      responses:
+        '202':
+          description: Send a messagge of arrival for arrivalId
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsMessagesresponse1'
+                - description: JSON payload
+                  example:
+                    _links:
+                      self:
+                        href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages/634982098f02f00a
+                      arrival:
+                        href: /customs/transits/movements/arrivals/6365135ba5e821ee
+              example:
+                _links:
+                  self:
+                    href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages/634982098f02f00a
+                  arrival:
+                    href: /customs/transits/movements/arrivals/6365135ba5e821ee
+        '404':
+          description: The specified departure is not found
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: NOT_FOUND
+              examples:
+                notFound:
+                  description: The specified arrival does not exist, has been archived or is not available.
+                  value:
+                    code: NOT_FOUND
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: BAD_REQUEST
+              examples:
+                badRequest:
+                  description: The arrival message type is not available within XML or the message failed schema validation.
+                  value:
+                    code: BAD_REQUEST
+        '413':
+          description: The request enitity is too large
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: REQUEST_ENTITY_TOO_LARGE
+              examples:
+                requestEntityTooLarge:
+                  description: The request body is too large.
+                  value:
+                    code: REQUEST_ENTITY_TOO_LARGE
+  /customs/transits/movements/arrivals/{arrivalId}/messages/{messageId}:
+    get:
+      tags:
+      - Retrieve Arrival Message
+      summary: Get a cached message related to an arrival and message ID
+      description: >
+        Retrieve all messages related to a specific arrival and message ID that have been received within the past 31 days.
+
+
+        For example, this could include messages about route diversions or unloading permissions.
+
+
+        Movements older than 31 days and their related messages are archived and cannot be returned by the API.
+
+         The response can be returned in one of the following formats based on the provided `Accept` header:
+
+         * `application/vnd.hmrc.2.0+json-xml`: JSON-wrapped XML, where the message is provided as an XML string sent as part of JSON payload containing other metadata.
+         * `application/vnd.hmrc.2.0+json`: JSON, where the message is provided as a sub-document sent as part of a JSON payload containing other metadata.
+         <br/><br/>
+         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
+      operationId: GetacachedmessagerelatedtoanarrivalandmessageID
+      parameters:
+      - name: arrivalId
+        in: path
+        description: Retrieve specific arrival message for arrivalId
+        required: true
+        style: simple
+        schema:
+          type: string
+      - name: messageId
+        in: path
+        description: Retrieve specific arrival message for messageId
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '200':
+          description: A successful response to retrieve specific arrival message
+          content:
+            application/json+xml:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsMessagesresponse2'
+                - description: JSON+XML payload
+                  xml:
+                    name: CustomsTransitsMovementsArrivalsMessagesresponse2
+                    attribute: false
+                    wrapped: false
+            application/json:
+              schema:
+                type: string
+                description: JSON payload
+                example: >
+                  {
+                    "_links":{
+                      "self":{
+                        "href": "/customs/transits/movements/arrivals/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2"
+                      },
+                      "arrival":{
+                        "href": "/customs/transits/movements/arrivals/62f4ebbbf581d4aa"
+                      }
+                    },
+                    "id": "62f4ebbb765ba8c2",
+                    "arrivalId": "62f4ebbbf581d4aa",
+                    "received": "2022-08-11T11:44:59.83705",
+                    "type": "IE007",
+                    "body":{
+                      "n1.CC007C": {
+                        "@PhaseID": "NCTS5.0",
+                        ...
+                      }
+                    }
+                  }
+              example: >
+                {
+                  "_links":{
+                    "self":{
+                      "href": "/customs/transits/movements/arrivals/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2"
+                    },
+                    "arrival":{
+                      "href": "/customs/transits/movements/arrivals/62f4ebbbf581d4aa"
+                    }
+                  },
+                  "id": "62f4ebbb765ba8c2",
+                  "arrivalId": "62f4ebbbf581d4aa",
+                  "received": "2022-08-11T11:44:59.83705",
+                  "type": "IE007",
+                  "body":{
+                    "n1.CC007C": {
+                      "@PhaseID": "NCTS5.0",
+                      ...
+                    }
+                  }
+                }
+        '404':
+          description: The specified message is not found
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: NOT_FOUND
+              examples:
+                notFound:
+                  description: The specified message does not exist, has been archived or is not available to the EORI number.
+                  value:
+                    code: NOT_FOUND
+        '406':
+          description: The accept header is invalid
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/errorResponse'
+                - example:
+                    code: ACCEPT_HEADER_INVALID
+              examples:
+                badRequest:
+                  description: The accept header is missing or invalid.
+                  value:
+                    code: ACCEPT_HEADER_INVALID
+components:
+  schemas:
+    errorResponse:
+      title: errorResponse
+      required:
+      - code
+      type: object
+      properties:
+        code:
+          type: string
+    Arrival:
+      title: Arrival
+      required:
+      - _links
+      - id
+      - movementReferenceNumber
+      - created
+      - updated
+      - enrollmentEORINumber
+      - movementEORINumber
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/Links'
+        id:
+          type: string
+        movementReferenceNumber:
+          type: string
+        created:
+          type: string
+        updated:
+          type: string
+        enrollmentEORINumber:
+          type: string
+        movementEORINumber:
+          type: string
+      example:
+        _links:
+          self:
+            href: /customs/transits/movements/arrivals/63651574c3447b12
+          messages:
+            href: /customs/transits/movements/arrivals/63651574c3447b12/messages
+        id: 63651574c3447b12
+        movementReferenceNumber: 27WF9X1FQ9RCKN0TM3
+        created: 2022-11-04T13:36:52.332Z
+        updated: 2022-11-04T13:36:52.332Z
+        enrollmentEORINumber: '9999912345'
+        movementEORINumber: GB1234567890
+    Arrival1:
+      title: Arrival1
+      required:
+      - href
+      type: object
+      properties:
+        href:
+          type: string
+      example:
+        href: /customs/transits/movements/arrivals/63498209a2d89ad8
+    CustomsTransitsMovementsArrivalsMessagesresponse:
+      title: CustomsTransitsMovementsArrivalsMessagesresponse
+      required:
+      - _links
+      - messages
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/Links10'
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Messages6'
+          description: ''
+      example:
+        _links:
+          self:
+            href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages
+          arrival:
+            href: /customs/transits/movements/arrivals/63498209a2d89ad8
+        messages:
+        - _links:
+            self:
+              href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages/634982098f02f00a
+            arrival:
+              href: /customs/transits/movements/arrivals/63498209a2d89ad8
+          id: 634982098f02f00a
+          arrivalId: 63498209a2d89ad8
+          received: 2022-11-10T15:32:51.459Z
+          type: IE007
+    CustomsTransitsMovementsArrivalsMessagesresponse1:
+      title: CustomsTransitsMovementsArrivalsMessagesresponse1
+      required:
+      - _links
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/Links10'
+      example:
+        _links:
+          self:
+            href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages/634982098f02f00a
+          arrival:
+            href: /customs/transits/movements/arrivals/6365135ba5e821ee
+    CustomsTransitsMovementsArrivalsMessagesresponse2:
+      title: CustomsTransitsMovementsArrivalsMessagesresponse2
+      required:
+      - _links
+      - id
+      - arrivalId
+      - received
+      - type
+      - body
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/Links10'
+        id:
+          type: string
+        arrivalId:
+          type: string
+        received:
+          type: string
+        type:
+          type: string
+        body:
+          type: string
+      example:
+        _links:
+          self:
+            href: /customs/transits/movements/arrivals/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2
+          arrival:
+            href: /customs/transits/movements/arrivals/62f4ebbbf581d4aa
+        id: 62f4ebbb765ba8c2
+        arrivalId: 62f4ebbbf581d4aa
+        received: 2022-08-11T11:44:59.83705
+        type: IE007
+        body: <ncts:CC007C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">...</ncts:CC007C>
+    CustomsTransitsMovementsArrivalsresponse:
+      title: CustomsTransitsMovementsArrivalsresponse
+      required:
+      - _links
+      - boxId
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/Links'
+        boxId:
+          type: string
+      example:
+        _links:
+          self:
+            href: /customs/transits/movements/arrivals/62fb8f33d233578e
+          messages:
+            href: /customs/transits/movements/arrivals/62fb8f33d233578e/messages
+        boxId: b54c2424-955b-496c-bbce-dfb9f57cd797
+    CustomsTransitsMovementsArrivalsresponse1:
+      title: CustomsTransitsMovementsArrivalsresponse1
+      required:
+      - _links
+      - arrivals
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/Links7'
+        arrivals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Arrival'
+          description: ''
+      example:
+        _links:
+          self:
+            href: /customs/transits/movements/arrivals
+        arrivals:
+        - _links:
+            self:
+              href: /customs/transits/movements/arrivals/63651574c3447b12
+            messages:
+              href: /customs/transits/movements/arrivals/63651574c3447b12/messages
+          id: 63651574c3447b12
+          movementReferenceNumber: 27WF9X1FQ9RCKN0TM3
+          created: 2022-11-04T13:36:52.332Z
+          updated: 2022-11-04T13:36:52.332Z
+          enrollmentEORINumber: '9999912345'
+          movementEORINumber: GB1234567890
+        - _links:
+            self:
+              href: /customs/transits/movements/arrivals/6365135ba5e821ee
+            messages:
+              href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages
+          id: 6365135ba5e821ee
+          movementReferenceNumber: 27WF9X1FQ9RCKN0TM3
+          created: 2022-11-04T13:27:55.522Z
+          updated: 2022-11-04T13:27:55.522Z
+          enrollmentEORINumber: '9999912345'
+          movementEORINumber: GB1234567890
+    CustomsTransitsMovementsArrivalsresponse2:
+      title: CustomsTransitsMovementsArrivalsresponse2
+      required:
+      - _links
+      - id
+      - movementReferenceNumber
+      - created
+      - updated
+      - enrollmentEORINumber
+      - movementEORINumber
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/Links'
+        id:
+          type: string
+        movementReferenceNumber:
+          type: string
+        created:
+          type: string
+        updated:
+          type: string
+        enrollmentEORINumber:
+          type: string
+        movementEORINumber:
+          type: string
+      example:
+        _links:
+          self:
+            href: /customs/transits/movements/arrivals/6365135ba5e821ee
+          messages:
+            href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages
+        id: 6365135ba5e821ee
+        movementReferenceNumber: ABC123
+        created: 2022-11-10T15:32:51.459Z
+        updated: 2022-11-10T15:32:51.459Z
+        enrollmentEORINumber: GB1234567890
+        movementEORINumber: GB1234567890
+    CustomsTransitsMovementsDeparturesMessagesresponse:
+      title: CustomsTransitsMovementsDeparturesMessagesresponse
+      required:
+      - _links
+      - messages
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/Links2'
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Messages2'
+          description: ''
+      example:
+        _links:
+          self:
+            href: /customs/transits/movements/departures/6365135ba5e821ee/messages
+          departure:
+            href: /customs/transits/movements/departures/6365135ba5e821ee
+        messages:
+        - _links:
+            self:
+              href: /customs/transits/movements/departures/6365135ba5e821ee/message/634982098f02f00a
+            departure:
+              href: /customs/transits/movements/departures/6365135ba5e821ee
+          id: 634982098f02f00a
+          departureId: 6365135ba5e821ee
+          received: 2022-11-10T15:32:51.459Z
+          type: IE015
+    CustomsTransitsMovementsDeparturesMessagesresponse1:
+      title: CustomsTransitsMovementsDeparturesMessagesresponse1
+      required:
+      - _links
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/Links2'
+      example:
+        _links:
+          self:
+            href: /customs/transits/movements/departures/6365135ba5e821ee/messages/634982098f02f00a
+          departure:
+            href: /customs/transits/movements/departures/6365135ba5e821ee
+    CustomsTransitsMovementsDeparturesMessagesresponse2:
+      title: CustomsTransitsMovementsDeparturesMessagesresponse2
+      required:
+      - _links
+      - id
+      - departureId
+      - received
+      - type
+      - body
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/Links2'
+        id:
+          type: string
+        departureId:
+          type: string
+        received:
+          type: string
+        type:
+          type: string
+        body:
+          type: string
+      example:
+        _links:
+          self:
+            href: /customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2
+          departure:
+            href: /customs/transits/movements/departures/62f4ebbbf581d4aa
+        id: 62f4ebbb765ba8c2
+        departureId: 62f4ebbbf581d4aa
+        received: 2022-08-11T11:44:59.83705
+        type: IE015
+        body: <ncts:CC015C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">...</ncts:CC015C>
+    CustomsTransitsMovementsDeparturesresponse:
+      title: CustomsTransitsMovementsDeparturesresponse
+      required:
+      - _links
+      - boxId
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/Links'
+        boxId:
+          type: string
+      example:
+        _links:
+          self:
+            href: /customs/transits/movements/departures/62fb8f33d233578e
+          messages:
+            href: /customs/transits/movements/departures/62fb8f33d233578e/messages
+        boxId: b54c2424-955b-496c-bbce-dfb9f57cd797
+    CustomsTransitsMovementsDeparturesresponse1:
+      title: CustomsTransitsMovementsDeparturesresponse1
+      required:
+      - _links
+      - id
+      - movementReferenceNumber
+      - created
+      - updated
+      - enrollmentEORINumber
+      - movementEORINumber
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/Links'
+        id:
+          type: string
+        movementReferenceNumber:
+          type: string
+        created:
+          type: string
+        updated:
+          type: string
+        enrollmentEORINumber:
+          type: string
+        movementEORINumber:
+          type: string
+      example:
+        _links:
+          self:
+            href: /customs/transits/movements/departures/6365135ba5e821ee
+          messages:
+            href: /customs/transits/movements/departures/6365135ba5e821ee/messages
+        id: 6365135ba5e821ee
+        movementReferenceNumber: ABC123
+        created: 2022-11-10T15:32:51.459Z
+        updated: 2022-11-10T15:32:51.459Z
+        enrollmentEORINumber: GB1234567890
+        movementEORINumber: GB1234567890
+    Departure:
+      title: Departure
+      required:
+      - href
+      type: object
+      properties:
+        href:
+          type: string
+      example:
+        href: /customs/transits/movements/departures/6365135ba5e821ee
+    Links:
+      title: Links
+      required:
+      - self
+      - messages
+      type: object
+      properties:
+        self:
+          $ref: '#/components/schemas/Self'
+        messages:
+          $ref: '#/components/schemas/Messages'
+      example:
+        self:
+          href: /customs/transits/movements/departures/62fb8f33d233578e
+        messages:
+          href: /customs/transits/movements/departures/62fb8f33d233578e/messages
+    Links2:
+      title: Links2
+      required:
+      - self
+      - departure
+      type: object
+      properties:
+        self:
+          $ref: '#/components/schemas/Self'
+        departure:
+          $ref: '#/components/schemas/Departure'
+      example:
+        self:
+          href: /customs/transits/movements/departures/6365135ba5e821ee/messages
+        departure:
+          href: /customs/transits/movements/departures/6365135ba5e821ee
+    Links7:
+      title: Links7
+      required:
+      - self
+      type: object
+      properties:
+        self:
+          $ref: '#/components/schemas/Self'
+      example:
+        self:
+          href: /customs/transits/movements/arrivals
+    Links10:
+      title: Links10
+      required:
+      - self
+      - arrival
+      type: object
+      properties:
+        self:
+          $ref: '#/components/schemas/Self'
+        arrival:
+          $ref: '#/components/schemas/Arrival1'
+      example:
+        self:
+          href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages
+        arrival:
+          href: /customs/transits/movements/arrivals/63498209a2d89ad8
+    Messages:
+      title: Messages
+      required:
+      - href
+      type: object
+      properties:
+        href:
+          type: string
+      example:
+        href: /customs/transits/movements/departures/62fb8f33d233578e/messages
+    Messages2:
+      title: Messages2
+      required:
+      - _links
+      - id
+      - departureId
+      - received
+      - type
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/Links2'
+        id:
+          type: string
+        departureId:
+          type: string
+        received:
+          type: string
+        type:
+          type: string
+      example:
+        _links:
+          self:
+            href: /customs/transits/movements/departures/6365135ba5e821ee/message/634982098f02f00a
+          departure:
+            href: /customs/transits/movements/departures/6365135ba5e821ee
+        id: 634982098f02f00a
+        departureId: 6365135ba5e821ee
+        received: 2022-11-10T15:32:51.459Z
+        type: IE015
+    Messages6:
+      title: Messages6
+      required:
+      - _links
+      - id
+      - arrivalId
+      - received
+      - type
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/Links10'
+        id:
+          type: string
+        arrivalId:
+          type: string
+        received:
+          type: string
+        type:
+          type: string
+      example:
+        _links:
+          self:
+            href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages/634982098f02f00a
+          arrival:
+            href: /customs/transits/movements/arrivals/63498209a2d89ad8
+        id: 634982098f02f00a
+        arrivalId: 63498209a2d89ad8
+        received: 2022-11-10T15:32:51.459Z
+        type: IE007
+    Self:
+      title: Self
+      required:
+      - href
+      type: object
+      properties:
+        href:
+          type: string
+      example:
+        href: /customs/transits/movements/departures/62fb8f33d233578e
+tags:
+- name: customs
+  description: ''
