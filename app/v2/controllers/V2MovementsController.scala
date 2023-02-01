@@ -56,6 +56,7 @@ import v2.models.responses.hateoas._
 import v2.services._
 import v2.utils.PreMaterialisedFutureProvider
 
+import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
 import scala.concurrent.Future
 
@@ -107,13 +108,13 @@ class V2MovementsControllerImpl @Inject() (
         contentTypeRoute {
           case Some(MimeTypes.XML)  => submitArrivalNotificationXML()
           case Some(MimeTypes.JSON) => submitArrivalNotificationJSON()
-          case None                 => submitLargeMessageXML(MovementType.Arrival)
+          case None                 => submitLargeMessageXML(MovementType.Arrival, AuditType.ArrivalNotification)
         }
       case MovementType.Departure =>
         contentTypeRoute {
           case Some(MimeTypes.XML)  => submitDepartureDeclarationXML()
           case Some(MimeTypes.JSON) => submitDepartureDeclarationJSON()
-          case None                 => submitLargeMessageXML(MovementType.Departure)
+          case None                 => submitLargeMessageXML(MovementType.Departure, AuditType.DeclarationData)
         }
     }
 
@@ -185,7 +186,7 @@ class V2MovementsControllerImpl @Inject() (
         )
     }
 
-  private def submitLargeMessageXML(movementType: MovementType): Action[Source[ByteString, _]] =
+  private def submitLargeMessageXML(movementType: MovementType, auditType: AuditType): Action[Source[ByteString, _]] =
     authActionNewEnrolmentOnly.async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -196,7 +197,9 @@ class V2MovementsControllerImpl @Inject() (
           movementResponse  <- movementsService.createMovement(request.eoriNumber, movementType, None).asPresentation
           upscanResponse    <- upscanService.upscanInitiate(movementResponse.movementId).asPresentation
           boxResponseOption <- mapToBoxResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
-        } yield HateoasNewMovementResponse(movementResponse, boxResponseOption, Some(upscanResponse), movementType)).fold[Result](
+          res = HateoasNewMovementResponse(movementResponse, boxResponseOption, Some(upscanResponse), movementType)
+          _   = auditService.audit(auditType, Source.single(ByteString(Json.toJson(res).toString(), StandardCharsets.UTF_8)), MimeTypes.JSON)
+        } yield res).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Accepted(response)
         )
