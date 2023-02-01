@@ -56,7 +56,7 @@ class UpscanConnectorImpl @Inject() (appConfig: AppConfig, httpClientV2: HttpCli
         val callbackUrl = appConfig.commmonTransitConventionTradersUrl.withPath(attachLargeMessageRoute(movementId)).toString()
 
         val upscanInitiate =
-          UpscanInitiate(callbackUrl, None, None, None, Some(appConfig.upscanMaximumFileSize))
+          UpscanInitiate(callbackUrl, Some(appConfig.upscanMaximumFileSize))
 
         val url = appConfig.upscanInitiateUrl.withPath(upscanInitiateRoute)
 
