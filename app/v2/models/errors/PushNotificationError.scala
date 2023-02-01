@@ -20,6 +20,7 @@ sealed trait PushNotificationError
 
 object PushNotificationError {
 
+  case object BoxNotFound                                   extends PushNotificationError
   case object MissingClientId                               extends PushNotificationError
   case object PushNotificationDisabled                      extends PushNotificationError
   case object AssociationNotFound                           extends PushNotificationError

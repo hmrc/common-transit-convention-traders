@@ -97,7 +97,7 @@ class PushNotificationServiceSpec
         }
     }
 
-    "when there is no box ID, assert that the association has no box ID and return a right" in forAll(
+    "when there is no box ID, assert that the association has the default box ID and return a right" in forAll(
       arbitrary[MovementId],
       arbitrary[MovementType],
       Gen.alphaNumStr
@@ -139,6 +139,30 @@ class PushNotificationServiceSpec
         val result = sut.associate(movementId, movementType, headers)
         whenReady(result.value) {
           r => r mustBe Right(BoxResponse(BoxId("test")))
+        }
+    }
+
+    "when there is no box ID supplied and no default box ID is returned, return a Left of BoxNotFound" in forAll(
+      arbitrary[MovementId],
+      arbitrary[MovementType],
+      Gen.alphaNumStr
+    ) {
+      (movementId, movementType, clientId) =>
+        when(mockAppConfig.pushNotificationsEnabled).thenReturn(true)
+        val headers = FakeHeaders(Seq(Constants.XClientIdHeader -> clientId))
+
+        val expectedAssociation = PushNotificationsAssociation(ClientId(clientId), movementType, None)
+
+        when(mockConnector.postAssociation(MovementId(anyString()), any())(any(), any()))
+          .thenReturn(Future.failed(new Exception()))
+        when(mockConnector.postAssociation(MovementId(anyString()), eqTo(expectedAssociation))(any(), any()))
+          .thenAnswer(
+            _ => Future.failed(UpstreamErrorResponse("error", NOT_FOUND))
+          ) // last wins
+
+        val result = sut.associate(movementId, movementType, headers)
+        whenReady(result.value) {
+          r => r mustBe Left(PushNotificationError.BoxNotFound)
         }
     }
 

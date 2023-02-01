@@ -73,7 +73,8 @@ class PushNotificationsServiceImpl @Inject() (
                 )
                 .map(Right(_))
                 .recover {
-                  case NonFatal(thr) => Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
+                  case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.BoxNotFound)
+                  case NonFatal(thr)                             => Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
                 }
           }
           .getOrElse(Future.successful(Left(PushNotificationError.MissingClientId)))
