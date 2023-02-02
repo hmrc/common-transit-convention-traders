@@ -26,6 +26,8 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
+import config.Constants
+import config.Constants.XClientIdHeader
 import metrics.HasActionMetrics
 import play.api.Logging
 import play.api.http.HeaderNames
@@ -51,6 +53,7 @@ import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
 import v2.models.responses.BoxResponse
+import v2.models.responses.LargeMessageAuditResponse
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
 import v2.services._
@@ -108,13 +111,13 @@ class V2MovementsControllerImpl @Inject() (
         contentTypeRoute {
           case Some(MimeTypes.XML)  => submitArrivalNotificationXML()
           case Some(MimeTypes.JSON) => submitArrivalNotificationJSON()
-          case None                 => submitLargeMessageXML(MovementType.Arrival, AuditType.ArrivalNotification)
+          case None                 => submitLargeMessageXML(MovementType.Arrival)
         }
       case MovementType.Departure =>
         contentTypeRoute {
           case Some(MimeTypes.XML)  => submitDepartureDeclarationXML()
           case Some(MimeTypes.JSON) => submitDepartureDeclarationJSON()
-          case None                 => submitLargeMessageXML(MovementType.Departure, AuditType.DeclarationData)
+          case None                 => submitLargeMessageXML(MovementType.Departure)
         }
     }
 
@@ -186,7 +189,7 @@ class V2MovementsControllerImpl @Inject() (
         )
     }
 
-  private def submitLargeMessageXML(movementType: MovementType, auditType: AuditType): Action[Source[ByteString, _]] =
+  private def submitLargeMessageXML(movementType: MovementType): Action[Source[ByteString, _]] =
     authActionNewEnrolmentOnly.async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -197,9 +200,9 @@ class V2MovementsControllerImpl @Inject() (
           movementResponse  <- movementsService.createMovement(request.eoriNumber, movementType, None).asPresentation
           upscanResponse    <- upscanService.upscanInitiate(movementResponse.movementId).asPresentation
           boxResponseOption <- mapToBoxResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
-          res = HateoasNewMovementResponse(movementResponse, boxResponseOption, Some(upscanResponse), movementType)
-          _   = auditService.audit(auditType, Source.single(ByteString(Json.toJson(res).toString(), StandardCharsets.UTF_8)), MimeTypes.JSON)
-        } yield res).fold[Result](
+          auditResponse = Json.toJson(LargeMessageAuditResponse(movementResponse.movementId, movementType, request.headers.get(XClientIdHeader).getOrElse(""), upscanResponse))
+          _ = auditService.audit(AuditType.LargeMessageSubmissionRequested, Source.single(ByteString(auditResponse.toString(), StandardCharsets.UTF_8)), MimeTypes.JSON)
+        } yield HateoasNewMovementResponse(movementResponse, boxResponseOption, Some(upscanResponse), movementType)).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Accepted(response)
         )
