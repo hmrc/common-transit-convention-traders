@@ -54,19 +54,6 @@ paths:
                   messages:
                     href: /customs/transits/movements/departures/62fb8f33d233578e/messages
                 boxId: b54c2424-955b-496c-bbce-dfb9f57cd797
-        '413':
-          description: Request Entity Too Large
-          content:
-            application/json:
-              schema:
-                allOf:
-                 - $ref: '#/components/schemas/RequestEntityTooLarge'
-                 - example:
-                    code: REQUEST_ENTITY_TOO_LARGE
-                    message: Your message size must be less than 500000 bytes
-              example:
-                code: REQUEST_ENTITY_TOO_LARGE
-                message: Your message size must be less than 500000 bytes
         '400':
           description: Bad Request
           content:
@@ -80,6 +67,19 @@ paths:
               example:
                 code: SCHEMA_VALIDATION
                 message: Request failed schema validation
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/RequestEntityTooLarge'
+                  - example:
+                      code: REQUEST_ENTITY_TOO_LARGE
+                      message: Your message size must be less than 5000000 bytes
+              example:
+                code: REQUEST_ENTITY_TOO_LARGE
+                message: Your message size must be less than 5000000 bytes
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -408,19 +408,6 @@ paths:
                     href: /customs/transits/movements/departures/6365135ba5e821ee/messages/634982098f02f00a
                   departure:
                     href: /customs/transits/movements/departures/6365135ba5e821ee
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/NotFound'
-                  - example:
-                      code: NOT_FOUND
-                      message: The specified departure does not exist, has been archived or is not available.
-              example:
-                code: NOT_FOUND
-                message: The specified departure does not exist, has been archived or is not available.
         '400':
           description: Bad Request
           content:
@@ -434,8 +421,21 @@ paths:
               example:
                     code: BAD_REQUEST
                     message: The departure message type is not available within XML or the message failed schema validation.
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotFound'
+                  - example:
+                      code: NOT_FOUND
+                      message: The specified departure does not exist, has been archived or is not available.
+              example:
+                code: NOT_FOUND
+                message: The specified departure does not exist, has been archived or is not available.
         '413':
-          description: Request Entity Too Large
+          description: Payload Too Large
           content:
             application/json:
               schema:
@@ -443,10 +443,10 @@ paths:
                   - $ref: '#/components/schemas/RequestEntityTooLarge'
                   - example:
                       code: REQUEST_ENTITY_TOO_LARGE
-                      message: Your message size must be less than 500000 bytes
+                      message: Your message size must be less than 5000000 bytes
               example:
                 code: REQUEST_ENTITY_TOO_LARGE
-                message: Your message size must be less than 500000 bytes
+                message: Your message size must be less than 5000000 bytes
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -607,19 +607,6 @@ paths:
                   messages:
                     href: /customs/transits/movements/arrivals/62fb8f33d233578e/messages
                 boxId: b54c2424-955b-496c-bbce-dfb9f57cd797
-        '413':
-          description: Request Entity Too Large
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/RequestEntityTooLarge'
-                  - example:
-                      code: REQUEST_ENTITY_TOO_LARGE
-                      message: Your message size must be less than 500000 bytes
-              example:
-                code: REQUEST_ENTITY_TOO_LARGE
-                message: Your message size must be less than 500000 bytes
         '400':
           description: Schema Validation
           content:
@@ -633,6 +620,19 @@ paths:
               example:
                 code: SCHEMA_VALIDATION
                 message: Request failed schema validation
+        '413':
+          description: Payload Too Large
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/RequestEntityTooLarge'
+                  - example:
+                      code: REQUEST_ENTITY_TOO_LARGE
+                      message: Your message size must be less than 5000000 bytes
+              example:
+                code: REQUEST_ENTITY_TOO_LARGE
+                message: Your message size must be less than 5000000 bytes
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -976,19 +976,6 @@ paths:
                     href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages/634982098f02f00a
                   arrival:
                     href: /customs/transits/movements/arrivals/6365135ba5e821ee
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/NotFound'
-                  - example:
-                      code: NOT_FOUND
-                      message: The specified arrival does not exist, has been archived or is not available to the EORI number.
-              example:
-                code: NOT_FOUND
-                message: The specified arrival does not exist, has been archived or is not available to the EORI number.
         '400':
           description: Bad Request
           content:
@@ -1002,8 +989,21 @@ paths:
               example:
                 code: BAD_REQUEST
                 message: The arrival message type is not available within XML or the message failed schema validation.
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotFound'
+                  - example:
+                      code: NOT_FOUND
+                      message: The specified arrival does not exist, has been archived or is not available to the EORI number.
+              example:
+                code: NOT_FOUND
+                message: The specified arrival does not exist, has been archived or is not available to the EORI number.
         '413':
-          description: Request Entity Too Large
+          description: Payload Too Large
           content:
             application/json:
               schema:
@@ -1011,10 +1011,10 @@ paths:
                   - $ref: '#/components/schemas/RequestEntityTooLarge'
                   - example:
                       code: REQUEST_ENTITY_TOO_LARGE
-                      message: Your message size must be less than 500000 bytes
+                      message: Your message size must be less than 5000000 bytes
               example:
                 code: REQUEST_ENTITY_TOO_LARGE
-                message: Your message size must be less than 500000 bytes
+                message: Your message size must be less than 5000000 bytes
       security:
         - userRestricted:
             - common-transit-convention-traders
