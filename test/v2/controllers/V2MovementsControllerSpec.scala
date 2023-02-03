@@ -55,6 +55,7 @@ import play.api.mvc.Request
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
 import play.api.test.Helpers
+import play.api.test.Helpers.POST
 import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
 import routing.VersionedRouting
@@ -951,8 +952,6 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(upscanResponse)
             }
 
-          when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
-
           when(
             mockMovementsPersistenceService
               .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
@@ -1702,8 +1701,6 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(upscanResponse)
             }
 
-          when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
-
           when(
             mockMovementsPersistenceService
               .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
@@ -1741,8 +1738,6 @@ class V2MovementsControllerSpec
             .thenAnswer {
               _ => EitherT.rightT(upscanResponse)
             }
-
-          when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
 
           when(
             mockMovementsPersistenceService
@@ -1791,10 +1786,9 @@ class V2MovementsControllerSpec
       }
 
       "must return Internal Service Error if the upscan service reports an error" in forAll(
-        arbitraryMovementResponse(false).arbitrary,
-        arbitraryUpscanInitiateResponse.arbitrary
+        arbitraryMovementResponse(false).arbitrary
       ) {
-        (movementResponse, upscanResponse) =>
+        movementResponse =>
           when(
             mockMovementsPersistenceService
               .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
@@ -2725,6 +2719,24 @@ class V2MovementsControllerSpec
           )
       }
     }
+  }
+
+  "POST /movements/:movementId/messages" - {
+
+    "should return ok" in forAll(arbitraryMovementId.arbitrary) {
+      movementId =>
+        val request = FakeRequest(
+          POST,
+          routes.V2MovementsController.attachLargeMessage(movementId).url,
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
+          AnyContentAsEmpty
+        )
+
+        val result = sut.attachLargeMessage(movementId)(request)
+
+        status(result) mustBe OK
+    }
+
   }
 
 }
