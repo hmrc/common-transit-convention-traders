@@ -1131,14 +1131,6 @@ paths:
             - common-transit-convention-traders
 components:
   schemas:
-    errorResponse:
-      title: errorResponse
-      required:
-      - code
-      type: object
-      properties:
-        code:
-          type: string
     BadRequest:
       title: BadRequest
       description: An error in the supplied payload.
