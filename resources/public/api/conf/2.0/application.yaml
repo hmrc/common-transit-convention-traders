@@ -33,7 +33,7 @@ paths:
         - $ref: '#/components/parameters/contentXmlJsonHeader'
       responses:
         '202':
-          description: A successful departure declaration response
+          description: Accepted
           content:
             application/json:
               schema:
@@ -389,7 +389,7 @@ paths:
             type: string
       responses:
         '202':
-          description: Acceptable
+          description: Accepted
           content:
             application/json:
               schema:
