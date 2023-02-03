@@ -24,7 +24,7 @@ import v2.models.MovementType
 case class LargeMessageAuditResponse(
   movementId: MovementId,
   movementType: MovementType,
-  xClientId: String,
+  xClientId: Option[String] = None,
   upscanResponse: UpscanInitiateResponse
 )
 

@@ -200,8 +200,14 @@ class V2MovementsControllerImpl @Inject() (
           movementResponse  <- movementsService.createMovement(request.eoriNumber, movementType, None).asPresentation
           upscanResponse    <- upscanService.upscanInitiate(movementResponse.movementId).asPresentation
           boxResponseOption <- mapToBoxResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
-          auditResponse = Json.toJson(LargeMessageAuditResponse(movementResponse.movementId, movementType, request.headers.get(XClientIdHeader).getOrElse(""), upscanResponse))
-          _ = auditService.audit(AuditType.LargeMessageSubmissionRequested, Source.single(ByteString(auditResponse.toString(), StandardCharsets.UTF_8)), MimeTypes.JSON)
+          auditResponse = Json.toJson(
+            LargeMessageAuditResponse(movementResponse.movementId, movementType, request.headers.get(XClientIdHeader), upscanResponse)
+          )
+          _ = auditService.audit(
+            AuditType.LargeMessageSubmissionRequested,
+            Source.single(ByteString(auditResponse.toString(), StandardCharsets.UTF_8)),
+            MimeTypes.JSON
+          )
         } yield HateoasNewMovementResponse(movementResponse, boxResponseOption, Some(upscanResponse), movementType)).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Accepted(response)

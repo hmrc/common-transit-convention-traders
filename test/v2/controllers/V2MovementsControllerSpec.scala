@@ -925,6 +925,8 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(boxResponse)
             )
 
+          when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())).thenReturn(Future.successful(()))
+
           val request = fakeCreateMovementRequest("POST", standardHeaders, Source.empty[ByteString], MovementType.Departure)
           val result  = sut.createMovement(MovementType.Departure)(request)
 
@@ -937,6 +939,7 @@ class V2MovementsControllerSpec
           verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()))(any(), any())
           verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
+          verify(mockAuditService, times(1)).audit(eqTo(AuditType.LargeMessageSubmissionRequested), any(), eqTo(MimeTypes.JSON))(any(), any())
       }
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
@@ -1702,7 +1705,7 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(upscanResponse)
             }
 
-          when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
+          when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())).thenReturn(Future.successful(()))
 
           when(
             mockMovementsPersistenceService
@@ -1728,6 +1731,7 @@ class V2MovementsControllerSpec
           verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()))(any(), any())
           verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
+          verify(mockAuditService, times(1)).audit(eqTo(AuditType.LargeMessageSubmissionRequested), any(), eqTo(MimeTypes.JSON))(any(), any())
       }
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
