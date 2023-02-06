@@ -26,6 +26,8 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
+import config.Constants
+import config.Constants.XClientIdHeader
 import metrics.HasActionMetrics
 import play.api.Logging
 import play.api.http.HeaderNames
@@ -51,11 +53,13 @@ import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
 import v2.models.responses.BoxResponse
+import v2.models.responses.LargeMessageAuditResponse
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
 import v2.services._
 import v2.utils.PreMaterialisedFutureProvider
 
+import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
 import scala.concurrent.Future
 
@@ -196,6 +200,14 @@ class V2MovementsControllerImpl @Inject() (
           movementResponse  <- movementsService.createMovement(request.eoriNumber, movementType, None).asPresentation
           upscanResponse    <- upscanService.upscanInitiate(movementResponse.movementId).asPresentation
           boxResponseOption <- mapToBoxResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
+          auditResponse = Json.toJson(
+            LargeMessageAuditResponse(movementResponse.movementId, movementType, request.headers.get(XClientIdHeader), upscanResponse)
+          )
+          _ = auditService.audit(
+            AuditType.LargeMessageSubmissionRequested,
+            Source.single(ByteString(auditResponse.toString(), StandardCharsets.UTF_8)),
+            MimeTypes.JSON
+          )
         } yield HateoasNewMovementResponse(movementResponse, boxResponseOption, Some(upscanResponse), movementType)).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Accepted(response)
