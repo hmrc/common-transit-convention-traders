@@ -18,22 +18,22 @@ package v2.models.responses.hateoas
 
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.responses.BoxResponse
+import v2.models.responses.MovementResponse
 import v2.models.responses.UpscanInitiateResponse
 
 object HateoasNewMovementResponse extends HateoasResponse {
 
   def apply(
-    movementId: MovementId,
+    movementResponse: MovementResponse,
     boxResponse: Option[BoxResponse],
     upscanInitiateResponse: Option[UpscanInitiateResponse],
     movementType: MovementType
   ): JsObject = {
     val jsObject = Json.obj(
-      "self"     -> Json.obj("href" -> getMovementUri(movementId, movementType)),
-      "messages" -> Json.obj("href" -> getMessagesUri(movementId, None, movementType))
+      "self"     -> Json.obj("href" -> getMovementUri(movementResponse.movementId, movementType)),
+      "messages" -> Json.obj("href" -> getMessagesUri(movementResponse.movementId, None, movementType))
     )
 
     Json.obj("_links" -> jsObject) ++

@@ -89,7 +89,9 @@ trait V2BaseConnector extends HttpErrorFunctions {
   def pushNotificationsBoxRoute(movementId: MovementId): UrlPath =
     UrlPath.parse(s"$pushNotificationsBaseRoute/traders/movements/${movementId.value}/box")
 
-  def upscanInitiateRoute(): UrlPath = UrlPath.parse("/upscan/v2/initiate")
+  lazy val upscanInitiateRoute: UrlPath = UrlPath.parse("/upscan/v2/initiate")
+
+  def attachLargeMessageRoute(movementId: MovementId): UrlPath = UrlPath.parse(s"/movements/${movementId.value}/messages")
 
   implicit class HttpResponseHelpers(response: HttpResponse) {
 
@@ -118,6 +120,18 @@ trait V2BaseConnector extends HttpErrorFunctions {
   }
 
   implicit class RequestBuilderHelpers(requestBuilder: RequestBuilder) {
+
+    def executeAndDeserialise[T](implicit ec: ExecutionContext, reads: Reads[T]): Future[T] =
+      requestBuilder
+        .execute[HttpResponse]
+        .flatMap {
+          response =>
+            response.status match {
+              case OK => response.as[T]
+              case _ =>
+                response.error
+            }
+        }
 
     def executeAndExpect(expected: Int)(implicit ec: ExecutionContext): Future[Unit] =
       requestBuilder

@@ -55,7 +55,13 @@ class UpscanConnectorSpec
 
   val mockAppConfig = mock[AppConfig]
 
+  val movementId = arbitraryMovementId.arbitrary.sample.get
+
   when(mockAppConfig.upscanInitiateUrl).thenAnswer {
+    _ => Url.parse(server.baseUrl())
+  }
+
+  when(mockAppConfig.commmonTransitConventionTradersUrl).thenAnswer {
     _ => Url.parse(server.baseUrl())
   }
 
@@ -71,7 +77,7 @@ class UpscanConnectorSpec
         )
       )
       implicit val hc = HeaderCarrier()
-      val result      = sut.upscanInitiate(UpscanInitiate("https://myservice.com/callback", None, None, None, None))
+      val result      = sut.upscanInitiate(movementId)
 
       whenReady(result) {
         _ mustBe upscanResponse
@@ -87,7 +93,7 @@ class UpscanConnectorSpec
       )
       implicit val hc = HeaderCarrier()
       val result = sut
-        .upscanInitiate(UpscanInitiate("https://myservice.com/callback", None, None, None, None))
+        .upscanInitiate(movementId)
         .map(
           _ => fail("A success was recorded when it shouldn't have been")
         )

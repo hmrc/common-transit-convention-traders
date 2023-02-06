@@ -106,18 +106,9 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
           .post(url"$url")
 
         (source match {
-          case Some(src) => httpClient.transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)).withBody(src)
+          case Some(src) => httpClient.setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML).withBody(src)
           case None      => httpClient
-        })
-          .execute[HttpResponse]
-          .flatMap {
-            response =>
-              response.status match {
-                case OK => response.as[MovementResponse]
-                case _ =>
-                  response.error
-              }
-          }
+        }).executeAndDeserialise[MovementResponse]
     }
 
   override def getMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
@@ -127,15 +118,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     val url = appConfig.movementsUrl.withPath(getMessageUrl(eori, movementType, movementId, messageId))
     httpClientV2
       .get(url"$url")
-      .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML))
-      .execute[HttpResponse]
-      .flatMap {
-        response =>
-          response.status match {
-            case OK => response.as[MessageSummary]
-            case _  => response.error
-          }
-      }
+      .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+      .executeAndDeserialise[MessageSummary]
   }
 
   override def getMessages(eori: EORINumber, movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
@@ -151,15 +135,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .get(url"$url")
-      .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML))
-      .execute[HttpResponse]
-      .flatMap {
-        response =>
-          response.status match {
-            case OK => response.as[Seq[MessageSummary]]
-            case _  => response.error
-          }
-      }
+      .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+      .executeAndDeserialise[Seq[MessageSummary]]
   }
 
   override def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId)(implicit
@@ -170,15 +147,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .get(url"$url")
-      .transform(_.addHttpHeaders(HeaderNames.ACCEPT -> MimeTypes.JSON))
-      .execute[HttpResponse]
-      .flatMap {
-        response =>
-          response.status match {
-            case OK => response.as[MovementSummary]
-            case _  => response.error
-          }
-      }
+      .setHeader(HeaderNames.ACCEPT -> MimeTypes.JSON)
+      .executeAndDeserialise[MovementSummary]
   }
 
   override def getMovements(eori: EORINumber, movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber])(implicit
@@ -192,15 +162,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     )
     httpClientV2
       .get(url"$urlWithOptions")
-      .transform(_.addHttpHeaders(HeaderNames.ACCEPT -> MimeTypes.JSON))
-      .execute[HttpResponse]
-      .flatMap {
-        response =>
-          response.status match {
-            case OK => response.as[Seq[MovementSummary]]
-            case _  => response.error
-          }
-      }
+      .setHeader(HeaderNames.ACCEPT -> MimeTypes.JSON)
+      .executeAndDeserialise[Seq[MovementSummary]]
   }
 
   override def postMessage(movementId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
@@ -212,16 +175,9 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
         val url = appConfig.movementsUrl.withPath(postMessageUrl(movementId))
         httpClientV2
           .post(url"$url")
-          .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code))
+          .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code)
           .withBody(source)
-          .execute[HttpResponse]
-          .flatMap {
-            response =>
-              response.status match {
-                case OK => response.as[UpdateMovementResponse]
-                case _  => response.error
-              }
-          }
+          .executeAndDeserialise[UpdateMovementResponse]
     }
 
   private def withDateTimeParameter(urlPath: Url, queryName: String, dateTime: Option[OffsetDateTime]) =
@@ -231,7 +187,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       )
       .getOrElse(urlPath)
 
-  def withParameters(urlPath: Url, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]) =
+  private def withParameters(urlPath: Url, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]) =
     urlPath
       .withConfig(urlPath.config.copy(renderQuery = ExcludeNones))
       .addParam(

@@ -24,6 +24,7 @@ import v2.models.request.MessageType
 import v2.models.request.PushNotificationsAssociation
 import v2.models.responses.BoxResponse
 import v2.models.responses.MessageSummary
+import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
 import v2.models.responses.UpscanInitiateResponse
 
@@ -114,4 +115,11 @@ trait CommonGenerators {
         boxId <- arbitrary[BoxId]
       } yield BoxResponse(boxId)
     }
+
+  implicit def arbitraryMovementResponse(withMessage: Boolean): Arbitrary[MovementResponse] = Arbitrary {
+    for {
+      movementId <- arbitrary[MovementId]
+      messageId = if (withMessage) arbitrary[MessageId].sample else None
+    } yield MovementResponse(movementId, messageId)
+  }
 }
