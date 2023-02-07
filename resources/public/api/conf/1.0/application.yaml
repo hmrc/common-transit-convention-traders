@@ -6,7 +6,8 @@ info:
   description: |
     # Overview
     Use the CTC Traders API to send departure and arrival movement to the New Computerised Transit System (NCTS)
-    and to get messages sent from customs offices of departure and destination.
+    and to get messages sent from customs offices of departure and destination. For a detailed overview of v1.0 of the API, 
+    see [CTC Traders API phase 4 service guide](/guides/ctc-traders-phase4-service-guide/). 
 servers:
   - url: https://test-api.service.hmrc.gov.uk
     description: Sandbox
