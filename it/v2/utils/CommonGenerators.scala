@@ -102,7 +102,8 @@ trait CommonGenerators {
         id             <- arbitrary[MessageId]
         offsetDateTime <- arbitrary[OffsetDateTime]
         messageType    <- arbitrary[MessageType]
-      } yield MessageSummary(id, offsetDateTime, messageType, None)
+        status         <- Gen.oneOf(MessageStatus.statusValues)
+      } yield MessageSummary(id, offsetDateTime, messageType, None, status)
     }
 
   implicit lazy val arbitraryBoxId: Arbitrary[BoxId] = Arbitrary {

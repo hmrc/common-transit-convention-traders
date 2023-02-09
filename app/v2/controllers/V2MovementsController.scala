@@ -26,7 +26,6 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
-import config.Constants
 import config.Constants.XClientIdHeader
 import metrics.HasActionMetrics
 import play.api.Logging

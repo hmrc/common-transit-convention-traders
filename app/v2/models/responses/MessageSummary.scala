@@ -20,6 +20,7 @@ import play.api.libs.json.JsPath
 import play.api.libs.json.OWrites
 import play.api.libs.json.Reads
 import v2.models.MessageId
+import v2.models.MessageStatus
 import v2.models.Payload
 import v2.models.XmlPayload
 import v2.models.request.MessageType
@@ -33,13 +34,15 @@ object MessageSummary {
     ((JsPath \ "id").read[MessageId] and
       (JsPath \ "received").read[OffsetDateTime] and
       (JsPath \ "messageType").read[MessageType] and
-      (JsPath \ "body").readNullable[XmlPayload])(MessageSummary.apply _)
+      (JsPath \ "body").readNullable[XmlPayload] and
+      (JsPath \ "status").read[MessageStatus])(MessageSummary.apply _)
 
   implicit val messageSummaryWrites: OWrites[MessageSummary] =
     ((JsPath \ "id").write[MessageId] and
       (JsPath \ "received").write[OffsetDateTime] and
       (JsPath \ "messageType").write[MessageType] and
-      (JsPath \ "body").writeNullable[Payload])(unlift(MessageSummary.unapply))
+      (JsPath \ "body").writeNullable[Payload] and
+      (JsPath \ "status").write[MessageStatus])(unlift(MessageSummary.unapply))
 
 }
 
@@ -47,5 +50,6 @@ case class MessageSummary(
   id: MessageId,
   received: OffsetDateTime,
   messageType: MessageType,
-  body: Option[Payload]
+  body: Option[Payload],
+  status: MessageStatus
 )

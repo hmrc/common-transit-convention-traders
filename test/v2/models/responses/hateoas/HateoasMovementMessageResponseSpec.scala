@@ -27,6 +27,7 @@ import play.api.libs.json.Json
 import v2.base.CommonGenerators
 import v2.models.JsonPayload
 import v2.models.MessageId
+import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.XmlPayload
@@ -51,7 +52,8 @@ class HateoasMovementMessageResponseSpec extends AnyFreeSpec with Matchers with 
         messageId,
         dateTime,
         MessageType.DeclarationData,
-        Some(JsonPayload(jsonString))
+        Some(JsonPayload(jsonString)),
+        MessageStatus.Success
       )
 
       val actual = HateoasMovementMessageResponse(departureId, messageId, response, movementType)
@@ -78,7 +80,8 @@ class HateoasMovementMessageResponseSpec extends AnyFreeSpec with Matchers with 
         messageId,
         dateTime,
         MessageType.DeclarationData,
-        Some(XmlPayload(body))
+        Some(XmlPayload(body)),
+        MessageStatus.Success
       )
 
       val actual = HateoasMovementMessageResponse(movementId, messageId, response, movementType)

@@ -40,6 +40,7 @@ import v2.base.CommonGenerators
 import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
 import v2.models.MessageId
+import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
@@ -188,7 +189,8 @@ class MovementsServiceSpec
         MessageId("1234567890abcdef"),
         now,
         MessageType.DeclarationData,
-        Some(XmlPayload("<test></test>"))
+        Some(XmlPayload("<test></test>")),
+        MessageStatus.Success
       )
 
       when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()))(any(), any()))
@@ -539,7 +541,8 @@ class MovementsServiceSpec
         MessageId("1234567890abcdef"),
         now,
         MessageType.ArrivalNotification,
-        Some(XmlPayload("<test></test>"))
+        Some(XmlPayload("<test></test>")),
+        MessageStatus.Success
       )
 
       when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()))(any(), any()))
