@@ -59,7 +59,8 @@ class DepartureMessageConnectorSpec
         routing.routes.DeparturesRouter.getMessage(DepartureId(1).toString, MessageId(1).toString).urlWithContext,
         LocalDateTime.now,
         "abc",
-        <test>default</test>
+        <test>default</test>,
+        Some(LocalDateTime.now)
       )
 
       server.stubFor(
@@ -188,13 +189,15 @@ class DepartureMessageConnectorSpec
             routing.routes.DeparturesRouter.getMessage(DepartureId(1).toString, MessageId(1).toString).urlWithContext,
             LocalDateTime.now,
             "abc",
-            <test>default</test>
+            <test>default</test>,
+            Some(LocalDateTime.now)
           ),
           MovementMessage(
             routing.routes.DeparturesRouter.getMessage(DepartureId(1).toString, MessageId(2).toString).urlWithContext,
             LocalDateTime.now,
             "abc",
-            <test>default</test>
+            <test>default</test>,
+            Some(LocalDateTime.now)
           )
         )
       )
@@ -238,13 +241,15 @@ class DepartureMessageConnectorSpec
             routing.routes.DeparturesRouter.getMessage(DepartureId(1).toString, MessageId(1).toString).urlWithContext,
             LocalDateTime.now,
             "abc",
-            <test>default</test>
+            <test>default</test>,
+            Some(LocalDateTime.now)
           ),
           MovementMessage(
             routing.routes.DeparturesRouter.getMessage(DepartureId(1).toString, MessageId(2).toString).urlWithContext,
             LocalDateTime.now,
             "abc",
-            <test>default</test>
+            <test>default</test>,
+            Some(LocalDateTime.now)
           )
         )
       )

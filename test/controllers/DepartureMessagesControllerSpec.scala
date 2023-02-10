@@ -87,7 +87,8 @@ class DepartureMessagesControllerSpec
     routing.routes.DeparturesRouter.getMessage(DepartureId(123).toString, MessageId(4).toString).urlWithContext,
     LocalDateTime.of(2020, 2, 2, 2, 2, 2),
     "IE025",
-    <test>default</test>
+    <test>default</test>,
+    Some(LocalDateTime.of(2020, 2, 2, 2, 2, 2))
   )
 
   val sourceDeparture = DepartureWithMessages(

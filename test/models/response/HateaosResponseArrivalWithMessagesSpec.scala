@@ -55,7 +55,8 @@ class HateoasResponseArrivalWithMessagesSpec
             "//customs/transits/movements/departures/1/messages/1",
             LocalDateTime.of(2020, 12, 12, 12, 12, 15),
             "IE007",
-            CC007A
+            CC007A,
+            Some(LocalDateTime.of(2020, 12, 12, 12, 12, 15))
           )
         )
       )
