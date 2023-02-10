@@ -5,7 +5,7 @@ info:
   version: '1.0'
   description: |
     # Overview
-    Use the CTC Traders API to send departure and arrival movement to the New Computerised Transit System (NCTS)
+    Use the CTC Traders API to send departure and arrival movements to the New Computerised Transit System (NCTS)
     and to get messages sent from customs offices of departure and destination. For a detailed overview of v1.0 of the API, 
     see [CTC Traders API phase 4 service guide](/guides/ctc-traders-phase4-service-guide/). 
 servers:
@@ -21,7 +21,7 @@ paths:
       - Arrivals
       summary: Send an arrival notification message
       description: >
-        Notify the Customs Office of Destination that a transit movement has arrived at its final destination.
+        Notify the customs office of destination that a transit movement has arrived at its final destination.
 
         This request is also called an ‘Arrival Notification’ E_ARR_NOT (IE007) message.
 
@@ -175,7 +175,7 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/NotAcceptable'
-                  - description: The Accept header is missing or invalid
+                  - description: The Accept header is missing or invalid.
                     example:
                       statusCode: 406
                       message: The accept header is missing or invalid
@@ -209,7 +209,7 @@ paths:
       - Arrivals
       summary: Resubmit an arrival notification message
       description: >
-        Resend a notification to the Customs Office of Destination that a transit movement has arrived at its final destination.
+        Resend a notification to the customs office of destination that a transit movement has arrived at its final destination.
         
         This request is also called an ‘Arrival Notification’ E_ARR_NOT (IE007) message.
         
@@ -325,7 +325,7 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/NotAcceptable'
-                  - description: The Accept header is missing or invalid
+                  - description: The Accept header is missing or invalid.
                     example:
                       statusCode: 406
                       message: The accept header is missing or invalid
@@ -359,9 +359,9 @@ paths:
       - Arrivals
       summary: Send a message related to an arrival
       description: >
-        Send a message to the Customs Office of Destination about an arrival.
+        Send a message to the customs office of destination about an arrival.
         
-        For example, if you are a Trader at Destination, you will send an ‘Unloading Remarks’ E_ULD_REM (IE044) message to the Customs Office of Destination indicating that unloading of the goods has been completed.
+        For example, if you are a trader at destination, you will send an ‘Unloading Remarks’ E_ULD_REM (IE044) message to the office of destination indicating that unloading of the goods has been completed.
         
         A successful response will contain a URI and an arrival ID for the message, which you can use to get the message status.
         <br/><br/>
@@ -525,7 +525,7 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/NotAcceptable'
-                  - description: The Accept header is missing or invalid
+                  - description: The Accept header is missing or invalid.
                     example:
                       statusCode: 406
                       message: The accept header is missing or invalid
@@ -571,7 +571,7 @@ paths:
             example: '1'
       responses:
         '200':
-          description: A successful message related to arrival and message ID response
+          description: A successful get message related to arrival and message ID response
           content:
             application/json:
               schema:
@@ -607,7 +607,7 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/NotAcceptable'
-                  - description: The Accept header is missing or invalid
+                  - description: The Accept header is missing or invalid.
                     example:
                       statusCode: 406
                       message: The accept header is missing or invalid
@@ -641,7 +641,7 @@ paths:
       - Departures
       summary: Send a declaration data message
       description: >
-        Send a transit declaration to the Customs Office of Departure to notify it that you wish to carry out a transit operation.
+        Send a transit declaration to the customs office of departure to notify it that you wish to carry out a transit operation.
 
         This request is also called an ‘Declaration Data’ E_DEC_DAT (IE015) message.
 
@@ -709,7 +709,7 @@ paths:
       - Departures
       summary: Get all cached departures
       description: >
-        Get all departure declarations sent to the Customs Office of Departure within the past 31 days.
+        Get all departure declarations sent to the customs office of departure within the past 31 days.
 
         You can filter for departure declarations updated after a specific date and time.
 
@@ -732,7 +732,7 @@ paths:
             example: 2021-06-21T09:00:00Z
       responses:
         '200':
-          description: A successful get all departure response
+          description: A successful get all departures response
           content:
             application/json:
               schema:
@@ -798,7 +798,7 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/NotAcceptable'
-                  - description: The Accept header is missing or invalid
+                  - description: The Accept header is missing or invalid.
                     example:
                       statusCode: 406
                       message: The accept header is missing or invalid
@@ -816,7 +816,7 @@ paths:
       - Departures
       summary: Get a cached departure for a departure ID
       description: >
-        Get a specific departure declaration sent to the Customs Office of Departure within the past 31 days.
+        Get a specific departure declaration sent to the customs office of departure within the past 31 days.
 
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
 
@@ -828,14 +828,14 @@ paths:
         - $ref: '#/components/parameters/acceptHeader'
         - in: path
           name: departureId
-          description: The Departure ID specifying the departure to return
+          description: The departure ID specifying the departure to return.
           required: true
           style: simple
           schema:
             type: string
       responses:
         '200':
-          description: A successful departure for departure ID response
+          description: A successful get departure for departure ID response
           content:
             application/json:
               schema:
@@ -869,7 +869,7 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/NotAcceptable'
-                  - description: The Accept header is missing or invalid
+                  - description: The Accept header is missing or invalid.
                     example:
                       statusCode: 406
                       message: The accept header is missing or invalid
@@ -903,9 +903,9 @@ paths:
       - Departures
       summary: Send a message related to a departure
       description: >
-        Send a message to the Customs Office of Departure about a departure.
+        Send a message to the customs office of departure about a departure.
 
-        For example, if you want to cancel a ‘Declaration Data’ E_DEC_DAT (IE015) message, you must send a ‘Declaration Invalidation Request’ E_DEC_INV (IE014) message to the Office of Departure.
+        For example, if you want to cancel a ‘Declaration Data’ E_DEC_DAT (IE015) message, you must send a ‘Declaration Invalidation Request’ E_DEC_INV (IE014) message to the office of departure.
 
         A successful response will contain a URI and a message ID related to the departure, which you can use to get the message status.
         <br/><br/>
@@ -915,7 +915,7 @@ paths:
         - $ref: '#/components/parameters/contentTypeHeader'
         - in: path
           name: departureId
-          description: The Departure ID specifying the departure to return
+          description: The departure ID specifying the departure to return.
           required: true
           style: simple
           schema:
@@ -973,7 +973,7 @@ paths:
       - Departures
       summary: Get all cached messages related to a departure
       description: >
-        Get all messages related to a specific departure declaration sent to the Customs Office of Departure within the past 31 days.
+        Get all messages related to a specific departure declaration sent to the customs office of departure within the past 31 days.
 
         You can filter for departure declarations received after a specific date and time.
 
@@ -987,7 +987,7 @@ paths:
         - $ref: '#/components/parameters/acceptHeader'
         - in: path
           name: departureId
-          description: The Departure ID specifying the departure to return
+          description: The departure ID specifying the departure to return.
           required: true
           style: simple
           schema:
@@ -1069,7 +1069,7 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/NotAcceptable'
-                  - description: The Accept header is missing or invalid
+                  - description: The Accept header is missing or invalid.
                     example:
                       statusCode: 406
                       message: The accept header is missing or invalid
@@ -1115,21 +1115,21 @@ paths:
         - $ref: '#/components/parameters/acceptHeader'
         - in: path
           name: departureId
-          description: The Departure ID specifying the departure to return
+          description: The departure ID specifying the departure to return.
           required: true
           style: simple
           schema:
             type: string
         - in: path
           name: messageId
-          description: The message ID specifying the message to return
+          description: The message ID specifying the message to return.
           required: true
           style: simple
           schema:
             type: string
       responses:
         '200':
-          description: A successful message related to departure and message ID response
+          description: A successful get message related to departure and message ID response
           content:
             application/json:
               schema:
@@ -1165,7 +1165,7 @@ paths:
               schema:
                 allOf:
                 - $ref: '#/components/schemas/NotAcceptable'
-                - description: The Accept header is missing or invalid
+                - description: The Accept header is missing or invalid.
                   example:
                     statusCode: 406
                     message: The accept header is missing or invalid
@@ -1205,7 +1205,7 @@ paths:
         - $ref: '#/components/parameters/acceptHeader'
       responses:
         '200':
-          description: A successful box information response
+          description: A successful get box information response
           content:
             application/json:
               schema:
@@ -1231,7 +1231,7 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/NotAcceptable'
-                  - description: The Accept header is missing or invalid
+                  - description: The Accept header is missing or invalid.
                     example:
                       statusCode: 406
                       message: The accept header is missing or invalid
@@ -1272,7 +1272,7 @@ components:
           description: The description of the error.
     NotFound:
       title: NotFound
-      description: Supplied Arrival/Departure not found in the database or does not exist.
+      description: Supplied arrival/departure not found in the database or does not exist.
       required:
         - code
         - message
