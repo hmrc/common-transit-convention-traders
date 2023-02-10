@@ -66,6 +66,7 @@ class HateoasMovementMessageResponseSpec extends AnyFreeSpec with Matchers with 
         s"${movementType.movementType}Id" -> departureId.value,
         "received"                        -> "2022-08-04T11:52:59Z",
         "type"                            -> MessageType.DeclarationData.code,
+        "status"                          -> "Success",
         "body"                            -> json
       )
 
@@ -94,6 +95,7 @@ class HateoasMovementMessageResponseSpec extends AnyFreeSpec with Matchers with 
         s"${movementType.movementType}Id" -> movementId.value,
         "received"                        -> "2022-08-04T11:52:59Z",
         "type"                            -> MessageType.DeclarationData.code,
+        "status"                          -> "Success",
         "body"                            -> JsString(body)
       )
 

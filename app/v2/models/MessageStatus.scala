@@ -40,13 +40,7 @@ object MessageStatus {
 
   implicit val messageStatusWrites = new Writes[MessageStatus] {
 
-    def writes(status: MessageStatus) = status match {
-      case Received   => Json.toJson("Received")
-      case Pending    => Json.toJson("Pending")
-      case Processing => Json.toJson("Processing")
-      case Success    => Json.toJson("Success")
-      case Failed     => Json.toJson("Failed")
-    }
+    def writes(status: MessageStatus) = Json.toJson(status.toString())
   }
 
   implicit val statusReads: Reads[MessageStatus] = Reads {

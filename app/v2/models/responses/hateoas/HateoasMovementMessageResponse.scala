@@ -34,7 +34,8 @@ object HateoasMovementMessageResponse extends HateoasResponse {
       "id"                              -> messageId.value,
       s"${movementType.movementType}Id" -> movementId.value,
       "received"                        -> messageSummary.received,
-      "type"                            -> messageSummary.messageType
+      "type"                            -> messageSummary.messageType,
+      "status"                          -> messageSummary.status
     ) ++ messageSummary.body
       .map(
         payload => Json.obj("body" -> payload.asJson)
