@@ -32,6 +32,7 @@ import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc._
@@ -70,7 +71,7 @@ trait V2MovementsController {
   def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent]
   def getMovements(movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]): Action[AnyContent]
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]]
-  def attachLargeMessage(movementId: MovementId): Action[Source[ByteString, _]]
+  def attachLargeMessage(movementId: MovementId): Action[JsValue]
 }
 
 @Singleton
@@ -329,10 +330,8 @@ class V2MovementsControllerImpl @Inject() (
     }
   }
 
-  def attachLargeMessage(movementId: MovementId): Action[Source[ByteString, _]] = authActionNewEnrolmentOnly.async(streamFromMemory) {
+  def attachLargeMessage(movementId: MovementId): Action[JsValue] = authActionNewEnrolmentOnly.async(parse.json) {
     implicit request =>
-      request.body.runWith(Sink.ignore)
-
       Future.successful(Ok)
   }
 

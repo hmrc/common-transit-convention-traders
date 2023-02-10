@@ -49,6 +49,7 @@ import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status._
 import play.api.libs.Files.SingletonTemporaryFileCreator
+import play.api.libs.json.JsString
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.Request
@@ -2735,7 +2736,7 @@ class V2MovementsControllerSpec
           POST,
           routes.V2MovementsController.attachLargeMessage(movementId).url,
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
-          AnyContentAsEmpty
+          JsString("upscan resonse")
         )
 
         val result = sut.attachLargeMessage(movementId)(request)
