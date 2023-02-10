@@ -1240,7 +1240,7 @@ paths:
                 message: The accept header is missing or invalid
       deprecated: false
       security:
-        - userRestricted:
+        - applicationRestricted:
             - common-transit-convention-traders
 
 components:
@@ -2181,3 +2181,14 @@ components:
           refreshUrl: 'https://api.service.hmrc.gov.uk/oauth/refresh'
           scopes:
             common-transit-convention-traders: Access all aspects of CTC Traders API
+    applicationRestricted:
+      type: oauth2
+      description: >-
+        HMRC supports OAuth 2.0 for authenticating application restricted API 
+        requests using an OAuth 2.0 Bearer Token in the AUTHORIZATION header.
+        See https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation/application-restricted-endpoints for details.
+      flows:
+        clientCredentials:
+          tokenUrl: https://api.service.hmrc.gov.uk/oauth/token
+          scopes:
+            common-transit-convention-traders: Access push-pull-notification box information via the CTC Traders API
