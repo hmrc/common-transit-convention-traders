@@ -2122,7 +2122,7 @@ class V2MovementsControllerSpec
         val departureResponse1 = MovementSummary(
           _id = arbitrary[MovementId].sample.value,
           enrollmentEORINumber = enrolmentEORINumber,
-          movementEORINumber = arbitrary[EORINumber].sample.value,
+          movementEORINumber = Some(arbitrary[EORINumber].sample.get),
           movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
           created = dateTime,
           updated = dateTime.plusHours(1)
@@ -2131,7 +2131,7 @@ class V2MovementsControllerSpec
         val departureResponse2 = MovementSummary(
           _id = arbitrary[MovementId].sample.value,
           enrollmentEORINumber = enrolmentEORINumber,
-          movementEORINumber = arbitrary[EORINumber].sample.value,
+          movementEORINumber = Some(arbitrary[EORINumber].sample.get),
           movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
           created = dateTime.plusHours(2),
           updated = dateTime.plusHours(3)
@@ -2235,7 +2235,7 @@ class V2MovementsControllerSpec
           val departureResponse = MovementSummary(
             movementId,
             enrollmentEori,
-            movementEori,
+            Some(movementEori),
             Some(mrn),
             createdTime,
             createdTime
@@ -2265,7 +2265,7 @@ class V2MovementsControllerSpec
               MovementSummary(
                 movementId,
                 enrollmentEori,
-                movementEori,
+                Some(movementEori),
                 Some(mrn),
                 createdTime,
                 createdTime

@@ -103,7 +103,7 @@ trait CommonGenerators {
       movementReferenceNumber <- arbitrary[MovementReferenceNumber]
       created                 <- arbitraryOffsetDateTime.arbitrary
       updated                 <- arbitraryOffsetDateTime.arbitrary
-    } yield MovementSummary(id, enrollmentEORINumber, movementEORINumber, Some(movementReferenceNumber), created, updated)
+    } yield MovementSummary(id, enrollmentEORINumber, Some(movementEORINumber), Some(movementReferenceNumber), created, updated)
   }
 
   implicit private lazy val arbitraryFields: Arbitrary[Map[String, String]] = Arbitrary {

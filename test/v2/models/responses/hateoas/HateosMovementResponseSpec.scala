@@ -41,7 +41,7 @@ class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaChe
       val response = MovementSummary(
         _id = movementId,
         enrollmentEORINumber = EORINumber("GB123"),
-        movementEORINumber = EORINumber("GB456"),
+        movementEORINumber = Some(EORINumber("GB456")),
         movementReferenceNumber = Some(MovementReferenceNumber("MRN001")),
         created = dateTime,
         updated = dateTime

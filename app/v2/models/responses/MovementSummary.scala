@@ -30,7 +30,7 @@ object MovementSummary {
 case class MovementSummary(
   _id: MovementId,
   enrollmentEORINumber: EORINumber,
-  movementEORINumber: EORINumber,
+  movementEORINumber: Option[EORINumber],
   movementReferenceNumber: Option[MovementReferenceNumber],
   created: OffsetDateTime,
   updated: OffsetDateTime

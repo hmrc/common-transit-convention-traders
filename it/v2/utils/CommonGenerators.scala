@@ -93,7 +93,7 @@ trait CommonGenerators {
       movementReferenceNumber <- arbitrary[Option[MovementReferenceNumber]]
       created                 <- arbitrary[OffsetDateTime]
       updated                 <- arbitrary[OffsetDateTime]
-    } yield MovementSummary(id, enrollmentEORINumber, movementEORINumber, movementReferenceNumber, created, updated)
+    } yield MovementSummary(id, enrollmentEORINumber, Some(movementEORINumber), movementReferenceNumber, created, updated)
   }
 
   implicit lazy val arbitraryMessageSummary: Arbitrary[MessageSummary] =

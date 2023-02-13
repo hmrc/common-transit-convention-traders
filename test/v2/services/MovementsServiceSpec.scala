@@ -233,7 +233,7 @@ class MovementsServiceSpec
       val successResponse = MovementSummary(
         _id = MovementId("1234567890abcdef"),
         enrollmentEORINumber = EORINumber("GB123"),
-        movementEORINumber = EORINumber("GB456"),
+        movementEORINumber = Some(EORINumber("GB456")),
         movementReferenceNumber = Some(MovementReferenceNumber("MRN001")),
         created = now,
         updated = now
