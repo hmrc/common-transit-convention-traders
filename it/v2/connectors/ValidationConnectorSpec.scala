@@ -46,8 +46,8 @@ import v2.models.errors.JsonValidationError
 import v2.models.errors.PresentationError
 import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
-import v2.models.responses.XmlValidationResponse
-import v2.models.responses.JsonValidationResponse
+import v2.models.responses.Xml
+import v2.models.responses.Json
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext
@@ -106,7 +106,7 @@ class ValidationConnectorSpec
                 .withBody(
                   Json.stringify(
                     Json.toJson(
-                      XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))
+                      Xml(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))
                     )
                   )
                 )
@@ -119,7 +119,7 @@ class ValidationConnectorSpec
 
         whenReady(validationConnector.postXml(MessageType.DeclarationData, source)) {
           result =>
-            result mustBe Some(XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)))
+            result mustBe Some(Xml(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)))
         }
       }
 
@@ -229,7 +229,7 @@ class ValidationConnectorSpec
                 .withBody(
                   Json.stringify(
                     Json.toJson(
-                      JsonValidationResponse(NonEmptyList(JsonValidationError("path", "error"), Nil))
+                      Json(NonEmptyList(JsonValidationError("path", "error"), Nil))
                     )
                   )
                 )
@@ -242,7 +242,7 @@ class ValidationConnectorSpec
 
         whenReady(validationConnector.postJson(MessageType.DeclarationData, source)) {
           result =>
-            result mustBe Some(JsonValidationResponse(NonEmptyList(JsonValidationError("path", "error"), Nil)))
+            result mustBe Some(Json(NonEmptyList(JsonValidationError("path", "error"), Nil)))
         }
       }
 

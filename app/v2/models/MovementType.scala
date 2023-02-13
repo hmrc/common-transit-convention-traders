@@ -25,8 +25,8 @@ import play.api.libs.json.Writes
 sealed abstract class MovementType(val movementType: String, val urlFragment: String)
 
 object MovementType {
-  case object Departure extends MovementType("departure", "departures")
-  case object Arrival   extends MovementType("arrival", "arrivals")
+  final case object Departure extends MovementType("departure", "departures")
+  final case object Arrival   extends MovementType("arrival", "arrivals")
 
   implicit val movementTypeReads: Reads[MovementType] = Reads {
     case x: JsString => MovementType.findByName(x.value).map(JsSuccess(_)).getOrElse(JsError())
@@ -42,5 +42,5 @@ object MovementType {
     Arrival
   )
 
-  def findByName(name: String): Option[MovementType] = values.find(_.movementType == name)
+  private def findByName(name: String): Option[MovementType] = values.find(_.movementType == name)
 }

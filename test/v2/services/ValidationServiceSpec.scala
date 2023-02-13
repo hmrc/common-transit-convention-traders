@@ -38,8 +38,8 @@ import v2.models.errors.FailedToValidateError
 import v2.models.errors.JsonValidationError
 import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
-import v2.models.responses.JsonValidationResponse
-import v2.models.responses.XmlValidationResponse
+import v2.models.responses.Json
+import v2.models.responses.Xml
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext
@@ -74,10 +74,10 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
     override def postXml(messageType: MessageType, stream: Source[ByteString, _])(implicit
       hc: HeaderCarrier,
       ec: ExecutionContext
-    ): Future[Option[XmlValidationResponse]] =
+    ): Future[Option[Xml]] =
       stream match {
         case SchemaValidXml       => Future.successful(None)
-        case SchemaInvalidXml     => Future.successful(Some(XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))))
+        case SchemaInvalidXml     => Future.successful(Some(Xml(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))))
         case BadMessageType       => Future.failed(badMessageType(messageType))
         case UpstreamError        => Future.failed(upstreamErrorResponse)
         case InternalServiceError => Future.failed(internalException)
@@ -86,11 +86,11 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
     override def postJson(messageType: MessageType, stream: Source[ByteString, _])(implicit
       hc: HeaderCarrier,
       ec: ExecutionContext
-    ): Future[Option[JsonValidationResponse]] =
+    ): Future[Option[Json]] =
       stream match {
         case SchemaValidJson => Future.successful(None)
         case SchemaInvalidJson =>
-          Future.successful(Some(JsonValidationResponse(NonEmptyList(JsonValidationError("IEO15C:messageSender", "MessageSender not expected"), Nil))))
+          Future.successful(Some(Json(NonEmptyList(JsonValidationError("IEO15C:messageSender", "MessageSender not expected"), Nil))))
         case Invalid              => Future.failed(parseError)
         case BadMessageType       => Future.failed(badMessageType(messageType))
         case UpstreamError        => Future.failed(upstreamErrorResponse)
