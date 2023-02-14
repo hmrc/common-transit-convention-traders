@@ -37,8 +37,8 @@ import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.request.MessageType
-import v2.models.responses.Json
-import v2.models.responses.Xml
+import v2.models.responses.JsonValidationResponse
+import v2.models.responses.XmlValidationResponse
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -49,12 +49,12 @@ trait ValidationConnector {
   def postXml(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Option[Xml]]
+  ): Future[Option[XmlValidationResponse]]
 
   def postJson(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Option[Json]]
+  ): Future[Option[JsonValidationResponse]]
 
 }
 
@@ -68,19 +68,19 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
   override def postXml(messageType: MessageType, stream: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Option[Xml]] =
+  ): Future[Option[XmlValidationResponse]] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
-        post[Xml](messageType, stream, MimeTypes.XML)
+        post[XmlValidationResponse](messageType, stream, MimeTypes.XML)
     }
 
   override def postJson(messageType: MessageType, stream: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Option[Json]] =
+  ): Future[Option[JsonValidationResponse]] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
-        post[Json](messageType, stream, MimeTypes.JSON)
+        post[JsonValidationResponse](messageType, stream, MimeTypes.JSON)
     }
 
   private def post[A](messageType: MessageType, stream: Source[ByteString, _], contentType: String)(implicit

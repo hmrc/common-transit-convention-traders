@@ -46,8 +46,8 @@ import v2.models.errors.JsonValidationError
 import v2.models.errors.PresentationError
 import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
-import v2.models.responses.Xml
-import v2.models.responses.Json
+import v2.models.responses.XmlValidationResponse
+import v2.models.responses.JsonValidationResponse
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext
@@ -106,7 +106,7 @@ class ValidationConnectorSpec
                 .withBody(
                   Json.stringify(
                     Json.toJson(
-                      Xml(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))
+                      XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))
                     )
                   )
                 )
@@ -119,7 +119,7 @@ class ValidationConnectorSpec
 
         whenReady(validationConnector.postXml(MessageType.DeclarationData, source)) {
           result =>
-            result mustBe Some(Xml(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)))
+            result mustBe Some(XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)))
         }
       }
 
@@ -156,7 +156,10 @@ class ValidationConnectorSpec
             val thr = result.left.get
             thr mustBe a[http.UpstreamErrorResponse]
             thr.asInstanceOf[UpstreamErrorResponse].statusCode mustBe BAD_REQUEST
-            Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj("code" -> "BAD_REQUEST", "message" -> "Invalid message type")
+            Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj(
+              "code"    -> "BAD_REQUEST",
+              "message" -> "Invalid message type"
+            )
         }
 
       }
@@ -229,7 +232,7 @@ class ValidationConnectorSpec
                 .withBody(
                   Json.stringify(
                     Json.toJson(
-                      Json(NonEmptyList(JsonValidationError("path", "error"), Nil))
+                      JsonValidationResponse(NonEmptyList(JsonValidationError("path", "error"), Nil))
                     )
                   )
                 )
@@ -242,7 +245,7 @@ class ValidationConnectorSpec
 
         whenReady(validationConnector.postJson(MessageType.DeclarationData, source)) {
           result =>
-            result mustBe Some(Json(NonEmptyList(JsonValidationError("path", "error"), Nil)))
+            result mustBe Some(JsonValidationResponse(NonEmptyList(JsonValidationError("path", "error"), Nil)))
         }
       }
 
@@ -279,7 +282,10 @@ class ValidationConnectorSpec
             val thr = result.left.get
             thr mustBe a[http.UpstreamErrorResponse]
             thr.asInstanceOf[UpstreamErrorResponse].statusCode mustBe BAD_REQUEST
-            Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj("code" -> "BAD_REQUEST", "message" -> "Invalid message type")
+            Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj(
+              "code"    -> "BAD_REQUEST",
+              "message" -> "Invalid message type"
+            )
         }
 
       }
