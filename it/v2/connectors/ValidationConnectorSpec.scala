@@ -156,7 +156,10 @@ class ValidationConnectorSpec
             val thr = result.left.get
             thr mustBe a[http.UpstreamErrorResponse]
             thr.asInstanceOf[UpstreamErrorResponse].statusCode mustBe BAD_REQUEST
-            Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj("code" -> "BAD_REQUEST", "message" -> "Invalid message type")
+            Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj(
+              "code"    -> "BAD_REQUEST",
+              "message" -> "Invalid message type"
+            )
         }
 
       }
@@ -279,7 +282,10 @@ class ValidationConnectorSpec
             val thr = result.left.get
             thr mustBe a[http.UpstreamErrorResponse]
             thr.asInstanceOf[UpstreamErrorResponse].statusCode mustBe BAD_REQUEST
-            Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj("code" -> "BAD_REQUEST", "message" -> "Invalid message type")
+            Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj(
+              "code"    -> "BAD_REQUEST",
+              "message" -> "Invalid message type"
+            )
         }
 
       }

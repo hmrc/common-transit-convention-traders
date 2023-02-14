@@ -23,6 +23,7 @@ import v2.models.AuditType
 import v2.models.BoxId
 import v2.models.EORINumber
 import v2.models.MessageId
+import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
@@ -74,7 +75,8 @@ trait CommonGenerators {
       messageType <- Gen.oneOf(MessageType.values)
       body        <- Gen.option(Gen.alphaNumStr.map(XmlPayload(_)))
       messageId   <- genShortUUID.map(MessageId(_))
-    } yield MessageSummary(messageId, received, messageType, body)
+      status      <- Gen.oneOf(MessageStatus.statusValues)
+    } yield MessageSummary(messageId, received, messageType, body, status)
   }
 
   implicit lazy val arbitraryMovementId: Arbitrary[MovementId] = Arbitrary {
@@ -101,7 +103,7 @@ trait CommonGenerators {
       movementReferenceNumber <- arbitrary[MovementReferenceNumber]
       created                 <- arbitraryOffsetDateTime.arbitrary
       updated                 <- arbitraryOffsetDateTime.arbitrary
-    } yield MovementSummary(id, enrollmentEORINumber, movementEORINumber, Some(movementReferenceNumber), created, updated)
+    } yield MovementSummary(id, enrollmentEORINumber, Some(movementEORINumber), Some(movementReferenceNumber), created, updated)
   }
 
   implicit private lazy val arbitraryFields: Arbitrary[Map[String, String]] = Arbitrary {
