@@ -71,7 +71,7 @@ trait V2MovementsController {
   def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent]
   def getMovements(movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]): Action[AnyContent]
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]]
-  def attachLargeMessage(movementId: MovementId): Action[Source[ByteString, _]]
+  def attachLargeMessage(movementId: MovementId, messageId: MessageId): Action[Source[ByteString, _]]
 }
 
 @Singleton
@@ -198,10 +198,16 @@ class V2MovementsControllerImpl @Inject() (
 
         (for {
           movementResponse  <- movementsService.createMovement(request.eoriNumber, movementType, None).asPresentation
-          upscanResponse    <- upscanService.upscanInitiate(movementResponse.movementId).asPresentation
+          upscanResponse    <- upscanService.upscanInitiate(movementResponse.movementId, movementResponse.messageId).asPresentation
           boxResponseOption <- mapToBoxResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
           auditResponse = Json.toJson(
-            LargeMessageAuditResponse(movementResponse.movementId, movementType, request.headers.get(XClientIdHeader), upscanResponse)
+            LargeMessageAuditResponse(
+              movementResponse.movementId,
+              movementResponse.messageId,
+              movementType,
+              request.headers.get(XClientIdHeader),
+              upscanResponse
+            )
           )
           _ = auditService.audit(
             AuditType.LargeMessageSubmissionRequested,
@@ -330,7 +336,7 @@ class V2MovementsControllerImpl @Inject() (
     }
   }
 
-  def attachLargeMessage(movementId: MovementId): Action[Source[ByteString, _]] = authActionNewEnrolmentOnly.async(streamFromMemory) {
+  def attachLargeMessage(movementId: MovementId, messageId: MessageId): Action[Source[ByteString, _]] = authActionNewEnrolmentOnly.async(streamFromMemory) {
     implicit request =>
       request.body.runWith(Sink.ignore)
 
@@ -375,7 +381,7 @@ class V2MovementsControllerImpl @Inject() (
           messageType,
           request.eoriNumber,
           movementResponse.movementId,
-          movementResponse.messageId.get,
+          movementResponse.messageId,
           source
         )
         .asPresentation

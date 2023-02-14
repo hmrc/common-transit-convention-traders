@@ -18,11 +18,13 @@ package v2.models.responses
 
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
+import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
 
 case class LargeMessageAuditResponse(
   movementId: MovementId,
+  messageId: MessageId,
   movementType: MovementType,
   xClientId: Option[String] = None,
   upscanResponse: UpscanInitiateResponse
