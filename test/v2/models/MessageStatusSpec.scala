@@ -14,25 +14,20 @@
  * limitations under the License.
  */
 
-package v2.models.responses
+package v2.models
 
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+import play.api.libs.json.JsString
 import play.api.libs.json.Json
-import v2.models.MessageId
-import v2.models.request.MessageType
 
-import java.net.URI
-import java.time.OffsetDateTime
+class MessageStatusSpec extends AnyFlatSpec with Matchers {
 
-object MessageResponse {
-  implicit lazy val messageResponseFormat = Json.format[MessageResponse]
+  "MessageStatus" should "serialise correctly" in {
+    Json.toJson[MessageStatus](MessageStatus.Processing) should be(JsString("Processing"))
+  }
+
+  "MessageStatus" should "deserialize correctly" in {
+    JsString("Processing").validate[MessageStatus].get should be(MessageStatus.Processing)
+  }
 }
-
-case class MessageResponse(
-  id: MessageId,
-  received: OffsetDateTime,
-  generated: OffsetDateTime,
-  messageType: MessageType,
-  triggerId: Option[MessageId],
-  url: Option[URI],
-  body: Option[String]
-)

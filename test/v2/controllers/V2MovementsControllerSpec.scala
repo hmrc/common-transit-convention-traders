@@ -49,6 +49,7 @@ import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status._
 import play.api.libs.Files.SingletonTemporaryFileCreator
+import play.api.libs.json.JsString
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.Request
@@ -2121,7 +2122,7 @@ class V2MovementsControllerSpec
         val departureResponse1 = MovementSummary(
           _id = arbitrary[MovementId].sample.value,
           enrollmentEORINumber = enrolmentEORINumber,
-          movementEORINumber = arbitrary[EORINumber].sample.value,
+          movementEORINumber = Some(arbitrary[EORINumber].sample.get),
           movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
           created = dateTime,
           updated = dateTime.plusHours(1)
@@ -2130,7 +2131,7 @@ class V2MovementsControllerSpec
         val departureResponse2 = MovementSummary(
           _id = arbitrary[MovementId].sample.value,
           enrollmentEORINumber = enrolmentEORINumber,
-          movementEORINumber = arbitrary[EORINumber].sample.value,
+          movementEORINumber = Some(arbitrary[EORINumber].sample.get),
           movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
           created = dateTime.plusHours(2),
           updated = dateTime.plusHours(3)
@@ -2234,7 +2235,7 @@ class V2MovementsControllerSpec
           val departureResponse = MovementSummary(
             movementId,
             enrollmentEori,
-            movementEori,
+            Some(movementEori),
             Some(mrn),
             createdTime,
             createdTime
@@ -2264,7 +2265,7 @@ class V2MovementsControllerSpec
               MovementSummary(
                 movementId,
                 enrollmentEori,
-                movementEori,
+                Some(movementEori),
                 Some(mrn),
                 createdTime,
                 createdTime
@@ -2735,7 +2736,7 @@ class V2MovementsControllerSpec
           POST,
           routes.V2MovementsController.attachLargeMessage(movementId, messageId).url,
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
-          AnyContentAsEmpty
+          JsString("upscan resonse")
         )
 
         val result = sut.attachLargeMessage(movementId, messageId)(request)

@@ -32,7 +32,7 @@ import v2.models.responses.MessageSummary
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
-class HateoasDepartureMessageIdsResponseSpec
+class HateoasMovementMessageIdsResponseSpec
     extends AnyFreeSpec
     with HateoasResponse
     with Matchers
@@ -70,7 +70,8 @@ class HateoasDepartureMessageIdsResponseSpec
                   "id"          -> response.id.value,
                   "departureId" -> departureId.value,
                   "received"    -> response.received,
-                  "type"        -> response.messageType.code
+                  "type"        -> response.messageType.code,
+                  "status"      -> response.status
                 )
             )
           )

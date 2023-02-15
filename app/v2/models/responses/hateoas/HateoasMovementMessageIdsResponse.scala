@@ -42,7 +42,8 @@ object HateoasMovementMessageIdsResponse extends HateoasResponse {
             "id"                              -> message.id.value,
             s"${movementType.movementType}Id" -> movementId.value,
             "received"                        -> message.received,
-            "type"                            -> message.messageType
+            "type"                            -> message.messageType,
+            "status"                          -> message.status
           )
       )
     )

@@ -41,7 +41,7 @@ class MovementSummarySpec extends AnyFreeSpec with Matchers with ScalaCheckDrive
       MovementSummary(
         _id = departureId,
         enrollmentEORINumber = EORINumber("GB123"),
-        movementEORINumber = EORINumber("GB456"),
+        movementEORINumber = Some(EORINumber("GB456")),
         movementReferenceNumber = Some(MovementReferenceNumber("MRN001")),
         created = dateTime,
         updated = dateTime
@@ -66,7 +66,7 @@ class MovementSummarySpec extends AnyFreeSpec with Matchers with ScalaCheckDrive
       MovementSummary(
         _id = departureId,
         enrollmentEORINumber = EORINumber("GB123"),
-        movementEORINumber = EORINumber("GB456"),
+        movementEORINumber = Some(EORINumber("GB456")),
         movementReferenceNumber = Some(MovementReferenceNumber("MRN001")),
         created = dateTime,
         updated = dateTime
