@@ -53,7 +53,7 @@ import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
 import v2.models.responses.BoxResponse
-import v2.models.responses.LargeMessageAuditResponse
+import v2.models.responses.LargeMessageAuditRequest
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
 import v2.services._
@@ -201,7 +201,7 @@ class V2MovementsControllerImpl @Inject() (
           upscanResponse    <- upscanService.upscanInitiate(movementResponse.movementId, movementResponse.messageId).asPresentation
           boxResponseOption <- mapToBoxResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
           auditResponse = Json.toJson(
-            LargeMessageAuditResponse(
+            LargeMessageAuditRequest(
               movementResponse.movementId,
               movementResponse.messageId,
               movementType,

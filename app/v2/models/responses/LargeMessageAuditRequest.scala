@@ -22,7 +22,7 @@ import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
 
-case class LargeMessageAuditResponse(
+case class LargeMessageAuditRequest(
   movementId: MovementId,
   messageId: MessageId,
   movementType: MovementType,
@@ -30,6 +30,6 @@ case class LargeMessageAuditResponse(
   upscanResponse: UpscanInitiateResponse
 )
 
-object LargeMessageAuditResponse {
-  implicit lazy val largeMessageAuditResponseFormat: OFormat[LargeMessageAuditResponse] = Json.format[LargeMessageAuditResponse]
+object LargeMessageAuditRequest {
+  implicit lazy val largeMessageAuditResponseFormat: OFormat[LargeMessageAuditRequest] = Json.format[LargeMessageAuditRequest]
 }
