@@ -113,9 +113,9 @@ class MovementsServiceSpec
     "on a successful submission, should return a Right" in {
       implicit val hc: HeaderCarrier = HeaderCarrier()
       when(mockConnector.postMovement(EORINumber(any[String]), any(), any())(eqTo(hc), any[ExecutionContext]))
-        .thenReturn(Future.successful(MovementResponse(MovementId("ABC"), MessageId("123"))))
+        .thenReturn(Future.successful(MovementResponse(MovementId("ABC"), MessageId("1234567890abcdsd"))))
       val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, None)
-      val expected: Either[PersistenceError, MovementResponse] = Right(MovementResponse(MovementId("ABC"), MessageId("123")))
+      val expected: Either[PersistenceError, MovementResponse] = Right(MovementResponse(MovementId("ABC"), MessageId("1234567890abcdsd")))
       whenReady(result.value) {
         _ mustBe expected
       }
@@ -400,9 +400,9 @@ class MovementsServiceSpec
     "on a successful creation, should return a Right" in {
       implicit val hc: HeaderCarrier = HeaderCarrier()
       when(mockConnector.postMovement(EORINumber(any[String]), any(), any())(eqTo(hc), any[ExecutionContext]))
-        .thenReturn(Future.successful(MovementResponse(MovementId("ABC"), MessageId("123"))))
+        .thenReturn(Future.successful(MovementResponse(MovementId("ABC"), MessageId("1234567890abcdsd"))))
       val result                                               = sut.createMovement(EORINumber("1"), MovementType.Arrival, None)
-      val expected: Either[PersistenceError, MovementResponse] = Right(MovementResponse(MovementId("ABC"), MessageId("123")))
+      val expected: Either[PersistenceError, MovementResponse] = Right(MovementResponse(MovementId("ABC"), MessageId("1234567890abcdsd")))
       whenReady(result.value) {
         _ mustBe expected
       }
