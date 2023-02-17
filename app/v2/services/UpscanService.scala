@@ -25,7 +25,6 @@ import v2.connectors.UpscanConnector
 import v2.connectors.V2BaseConnector
 import v2.models.MovementId
 import v2.models.errors.UpscanInitiateError
-import v2.models.request.UpscanInitiate
 import v2.models.responses.UpscanInitiateResponse
 
 import scala.concurrent.ExecutionContext
