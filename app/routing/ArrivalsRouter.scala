@@ -50,17 +50,15 @@ class ArrivalsRouter @Inject() (
     with StreamingParsers
     with VersionedRouting {
 
-  val VERSION_2_ACCEPT_HEADER_PATTERN = """^application\/vnd\.hmrc\.2\.0\+.+$""".r
-
   def createArrivalNotification(): Action[Source[ByteString, _]] =
     route {
-      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Arrivals.createMovement(MovementType.Arrival)
-      case _                                                         => v1Arrivals.createArrivalNotification()
+      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => v2Arrivals.createMovement(MovementType.Arrival)
+      case _                                                        => v1Arrivals.createArrivalNotification()
     }
 
   def getArrival(arrivalId: String): Action[Source[ByteString, _]] =
     route {
-      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) =>
+      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
         runIfBound[V2ArrivalId](
           "arrivalId",
           arrivalId,
@@ -75,7 +73,7 @@ class ArrivalsRouter @Inject() (
     }
 
   def getArrivalMessageIds(arrivalId: String, receivedSince: Option[OffsetDateTime] = None): Action[Source[ByteString, _]] = route {
-    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) =>
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
       runIfBound[V2ArrivalId](
         "arrivalId",
         arrivalId,
@@ -90,7 +88,7 @@ class ArrivalsRouter @Inject() (
   }
 
   def getArrivalMessage(arrivalId: String, messageId: String): Action[Source[ByteString, _]] = route {
-    case Some(VERSION_2_ACCEPT_HEADER_PATTERN()) =>
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
       runIfBound[V2ArrivalId](
         "arrivalId",
         arrivalId,
@@ -110,12 +108,12 @@ class ArrivalsRouter @Inject() (
   }
 
   def getArrivalsForEori(updatedSince: Option[OffsetDateTime] = None, movementEORI: Option[EORINumber] = None): Action[Source[ByteString, _]] = route {
-    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) => v2Arrivals.getMovements(MovementType.Arrival, updatedSince, movementEORI)
-    case _                                                         => v1Arrivals.getArrivalsForEori(updatedSince)
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => v2Arrivals.getMovements(MovementType.Arrival, updatedSince, movementEORI)
+    case _                                                        => v1Arrivals.getArrivalsForEori(updatedSince)
   }
 
   def attachMessage(arrivalId: String): Action[Source[ByteString, _]] = route {
-    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) =>
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
       runIfBound[V2ArrivalId](
         "arrivalId",
         arrivalId,

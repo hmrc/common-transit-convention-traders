@@ -37,6 +37,7 @@ object VersionedRouting {
   val VERSION_2_ACCEPT_HEADER_VALUE_JSON            = "application/vnd.hmrc.2.0+json"
   val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML        = "application/vnd.hmrc.2.0+json+xml"
   val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN = "application/vnd.hmrc.2.0+json-xml"
+  val VERSION_2_ACCEPT_HEADER_PATTERN               = """^application\/vnd\.hmrc\.2\.0\+.+$""".r
 
 }
 
@@ -68,9 +69,9 @@ trait VersionedRouting {
             // To avoid a memory leak, we need to ensure we run the request stream and ignore it.
             request.body.to(Sink.ignore).run()
             Future.successful(
-              UnsupportedMediaType(
+              NotAcceptable(
                 Json.toJson(
-                  PresentationError.unsupportedMediaTypeError(
+                  PresentationError.notAcceptableError(
                     request.headers
                       .get("accept")
                       .map(

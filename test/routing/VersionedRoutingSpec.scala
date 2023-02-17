@@ -30,6 +30,7 @@ import play.api.http.HttpVerbs
 import play.api.http.MimeTypes
 import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.UNSUPPORTED_MEDIA_TYPE
+import play.api.http.Status.NOT_ACCEPTABLE
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
@@ -68,8 +69,8 @@ class VersionedRoutingSpec
     override val preMaterialisedFutureProvider = FakePreMaterialisedFutureProvider
 
     def testWithContent: Action[Source[ByteString, _]] = route {
-      case Some("application/vnd.hmrc.2.0+json") => contentActionTwo
-      case Some(x) if x != MimeTypes.TEXT        => contentActionOne
+      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => contentActionTwo
+      case Some(x) if x != MimeTypes.TEXT                           => contentActionOne
     }
 
     def contentActionOne: Action[NodeSeq] = Action.async(parse.xml) {
@@ -81,8 +82,8 @@ class VersionedRoutingSpec
     }
 
     def testWithoutContent: Action[Source[ByteString, _]] = route {
-      case Some("application/vnd.hmrc.2.0+json") => actionTwo
-      case Some(x) if x != MimeTypes.TEXT        => actionOne
+      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => actionTwo
+      case Some(x) if x != MimeTypes.TEXT                           => actionOne
     }
 
     def actionOne: Action[AnyContent] = Action {
@@ -228,9 +229,9 @@ class VersionedRoutingSpec
         val request = FakeRequest("GET", "/", departureHeaders, generateSource("<test>test</test>"))
 
         val result = sut.testWithContent()(request)
-        status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+        status(result) mustBe NOT_ACCEPTABLE
         Json.parse(contentAsString(result)) mustBe Json.obj(
-          "code"    -> "UNSUPPORTED_MEDIA_TYPE",
+          "code"    -> "NOT_ACCEPTABLE",
           "message" -> "An accept header is required!"
         )
 
@@ -245,15 +246,64 @@ class VersionedRoutingSpec
         val request = FakeRequest(HttpVerbs.POST, "/", departureHeaders, generateSource("<test>test</test>"))
 
         val result = sut.testWithContent()(request)
-        status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+        status(result) mustBe NOT_ACCEPTABLE
         Json.parse(contentAsString(result)) mustBe Json.obj(
-          "code"    -> "UNSUPPORTED_MEDIA_TYPE",
+          "code"    -> "NOT_ACCEPTABLE",
           "message" -> "Accept header text/plain is not supported!"
         )
 
       }
     }
 
+  }
+
+  "with accept header set to version two" - {
+    val headers =
+      Seq(
+        Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON),
+        Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML),
+        Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)
+      )
+
+    headers.foreach {
+      acceptHeaderValue =>
+        val acceptHeader = acceptHeaderValue
+          .map(
+            header => Seq(HeaderNames.ACCEPT -> header)
+          )
+          .getOrElse(Seq.empty)
+
+        val departureHeaders = FakeHeaders(acceptHeader ++ Seq(HeaderNames.CONTENT_TYPE -> "application/xml"))
+        val withString = acceptHeaderValue
+          .getOrElse("nothing")
+
+        s"with accept header set to $withString" - {
+
+          "must call correct action without body" in {
+
+            val cc  = stubControllerComponents()
+            val sut = new Harness(cc)
+
+            val request = FakeRequest(HttpVerbs.GET, "/", departureHeaders, AnyContentAsEmpty)
+
+            val result = sut.testWithoutContent()(request)
+            contentAsString(result) mustBe "Two"
+
+          }
+
+          "must call correct action with body" in {
+
+            val cc  = stubControllerComponents()
+            val sut = new Harness(cc)
+
+            val request = FakeRequest(HttpVerbs.POST, "/", departureHeaders, generateSource("<test>test</test>"))
+
+            val result = sut.testWithContent()(request)
+            contentAsString(result) mustBe "Two"
+
+          }
+        }
+    }
   }
 
   "Binding Failure Error Action" - {
