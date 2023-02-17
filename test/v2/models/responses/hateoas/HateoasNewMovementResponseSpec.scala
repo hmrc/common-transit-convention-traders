@@ -38,7 +38,7 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
     s"${movementType.movementType} create a valid HateoasNewMovementResponse" - {
 
       "when the movement response does not contain message Id or box Id" in forAll(
-        arbitraryMovementResponse(false).arbitrary
+        arbitraryMovementResponse().arbitrary
       ) {
         movementResponse =>
           val actual = HateoasNewMovementResponse(movementResponse, None, None, movementType)
@@ -58,7 +58,7 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
       }
 
       "when the movement response contains BoxId" in forAll(
-        arbitraryMovementResponse(false).arbitrary,
+        arbitraryMovementResponse().arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
         (movementResponse, boxResponse) =>
@@ -81,7 +81,7 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
 
       "with a movement response that contains box ID and an Upload response" in forAll(
         arbitraryUpscanInitiateResponse.arbitrary,
-        arbitraryMovementResponse(false).arbitrary,
+        arbitraryMovementResponse().arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
         (upscanResponse, movementResponse, boxResponse) =>

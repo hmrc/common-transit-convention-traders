@@ -25,6 +25,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.base.CommonGenerators
+import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.responses.MessageSummary
@@ -48,12 +49,13 @@ class HateoasMovementMessageIdsResponseSpec
         )
         .getOrElse("not set")
 
-      s"with a valid message response and receivedSince $set, create a valid HateoasMovementMessageIdsResponse" in forAll(
+      s"with a valid message response and receivedSince $set and MessageStatus is not Pending, create a valid HateoasMovementMessageIdsResponse with type" in forAll(
         arbitrary[MovementId],
-        Gen.listOfN(3, arbitrary[MessageSummary])
+        arbitrary[MessageSummary]
       ) {
-        (departureId, responses) =>
-          val actual = HateoasMovementMessageIdsResponse(departureId, responses, dateTime, MovementType.Departure)
+        (departureId, response) =>
+          val responses = Seq(response.copy(status = MessageStatus.Processing))
+          val actual    = HateoasMovementMessageIdsResponse(departureId, responses, dateTime, MovementType.Departure)
 
           val expected = Json.obj(
             "_links" -> Json.obj(
@@ -71,6 +73,37 @@ class HateoasMovementMessageIdsResponseSpec
                   "departureId" -> departureId.value,
                   "received"    -> response.received,
                   "type"        -> response.messageType.code,
+                  "status"      -> response.status
+                )
+            )
+          )
+
+          actual mustBe expected
+      }
+
+      s"with a valid message response and receivedSince $set and MessageStatus is Pending, create a valid HateoasMovementMessageIdsResponse without type" in forAll(
+        arbitrary[MovementId],
+        arbitrary[MessageSummary]
+      ) {
+        (departureId, response) =>
+          val responses = Seq(response.copy(status = MessageStatus.Pending))
+          val actual    = HateoasMovementMessageIdsResponse(departureId, responses, dateTime, MovementType.Departure)
+
+          val expected = Json.obj(
+            "_links" -> Json.obj(
+              "self"      -> selfUrl(departureId, dateTime),
+              "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
+            ),
+            "messages" -> responses.map(
+              response =>
+                Json.obj(
+                  "_links" -> Json.obj(
+                    "self"      -> Json.obj("href" -> getMessageUri(departureId, response.id, MovementType.Departure)),
+                    "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
+                  ),
+                  "id"          -> response.id.value,
+                  "departureId" -> departureId.value,
+                  "received"    -> response.received,
                   "status"      -> response.status
                 )
             )

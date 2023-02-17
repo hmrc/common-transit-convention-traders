@@ -53,7 +53,7 @@ import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
 import v2.models.responses.BoxResponse
-import v2.models.responses.LargeMessageAuditResponse
+import v2.models.responses.LargeMessageAuditRequest
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
 import v2.services._
@@ -71,7 +71,7 @@ trait V2MovementsController {
   def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent]
   def getMovements(movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]): Action[AnyContent]
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]]
-  def attachLargeMessage(movementId: MovementId): Action[JsValue]
+  def attachLargeMessage(movementId: MovementId, messageId: MessageId): Action[JsValue]
 }
 
 @Singleton
@@ -198,10 +198,16 @@ class V2MovementsControllerImpl @Inject() (
 
         (for {
           movementResponse  <- movementsService.createMovement(request.eoriNumber, movementType, None).asPresentation
-          upscanResponse    <- upscanService.upscanInitiate(movementResponse.movementId).asPresentation
+          upscanResponse    <- upscanService.upscanInitiate(movementResponse.movementId, movementResponse.messageId).asPresentation
           boxResponseOption <- mapToBoxResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
           auditResponse = Json.toJson(
-            LargeMessageAuditResponse(movementResponse.movementId, movementType, request.headers.get(XClientIdHeader), upscanResponse)
+            LargeMessageAuditRequest(
+              movementResponse.movementId,
+              movementResponse.messageId,
+              movementType,
+              request.headers.get(XClientIdHeader),
+              upscanResponse
+            )
           )
           _ = auditService.audit(
             AuditType.LargeMessageSubmissionRequested,
@@ -330,7 +336,7 @@ class V2MovementsControllerImpl @Inject() (
     }
   }
 
-  def attachLargeMessage(movementId: MovementId): Action[JsValue] = authActionNewEnrolmentOnly.async(parse.json) {
+  def attachLargeMessage(movementId: MovementId, messageId: MessageId): Action[JsValue] = authActionNewEnrolmentOnly.async(parse.json) {
     implicit request =>
       Future.successful(Ok)
   }
@@ -373,7 +379,7 @@ class V2MovementsControllerImpl @Inject() (
           messageType,
           request.eoriNumber,
           movementResponse.movementId,
-          movementResponse.messageId.get,
+          movementResponse.messageId,
           source
         )
         .asPresentation

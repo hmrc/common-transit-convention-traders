@@ -18,6 +18,7 @@ package v2.models.responses.hateoas
 
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
+import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.responses.MessageSummary
@@ -32,20 +33,31 @@ object HateoasMovementMessageIdsResponse extends HateoasResponse {
         "self"                    -> Json.obj("href" -> getMessagesUri(movementId, receivedSince, movementType)),
         movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
       ),
-      "messages" -> messageIds.map(
+      "messages" -> messageIds.map {
         message =>
-          Json.obj(
-            "_links" -> Json.obj(
-              "self"                    -> Json.obj("href" -> getMessageUri(movementId, message.id, movementType)),
-              movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
-            ),
-            "id"                              -> message.id.value,
-            s"${movementType.movementType}Id" -> movementId.value,
-            "received"                        -> message.received,
-            "type"                            -> message.messageType,
-            "status"                          -> message.status
+          val jsMessageLinksObject = Json.obj(
+            "self"                    -> Json.obj("href" -> getMessageUri(movementId, message.id, movementType)),
+            movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
           )
-      )
+          if (message.status == MessageStatus.Pending) {
+            Json.obj(
+              "_links"                          -> jsMessageLinksObject,
+              "id"                              -> message.id.value,
+              s"${movementType.movementType}Id" -> movementId.value,
+              "received"                        -> message.received,
+              "status"                          -> message.status
+            )
+          } else {
+            Json.obj(
+              "_links"                          -> jsMessageLinksObject,
+              "id"                              -> message.id.value,
+              s"${movementType.movementType}Id" -> movementId.value,
+              "received"                        -> message.received,
+              "type"                            -> message.messageType,
+              "status"                          -> message.status
+            )
+          }
+      }
     )
 
 }

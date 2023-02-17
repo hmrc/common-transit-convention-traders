@@ -18,16 +18,18 @@ package v2.models.responses
 
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
+import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
 
-case class LargeMessageAuditResponse(
+case class LargeMessageAuditRequest(
   movementId: MovementId,
+  messageId: MessageId,
   movementType: MovementType,
   xClientId: Option[String] = None,
   upscanResponse: UpscanInitiateResponse
 )
 
-object LargeMessageAuditResponse {
-  implicit lazy val largeMessageAuditResponseFormat: OFormat[LargeMessageAuditResponse] = Json.format[LargeMessageAuditResponse]
+object LargeMessageAuditRequest {
+  implicit lazy val largeMessageAuditResponseFormat: OFormat[LargeMessageAuditRequest] = Json.format[LargeMessageAuditRequest]
 }

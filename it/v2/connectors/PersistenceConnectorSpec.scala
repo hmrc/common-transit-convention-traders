@@ -85,7 +85,7 @@ class PersistenceConnectorSpec
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures"
 
-    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], arbitraryMovementResponse(true).arbitrary) {
+    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], arbitraryMovementResponse().arbitrary) {
       (eoriNumber, movementResponse) =>
         server.resetAll()
 
@@ -216,7 +216,8 @@ class PersistenceConnectorSpec
     lazy val okResultGen =
       for {
         movementId <- arbitrary[MovementId]
-      } yield MovementResponse(movementId, None)
+        messageId  <- arbitrary[MessageId]
+      } yield MovementResponse(movementId, messageId)
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures"
 
@@ -1067,7 +1068,7 @@ class PersistenceConnectorSpec
       for {
         movementId <- arbitrary[MovementId]
         messageId  <- arbitrary[MessageId]
-      } yield MovementResponse(movementId, Some(messageId))
+      } yield MovementResponse(movementId, messageId)
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals"
 
@@ -1195,7 +1196,8 @@ class PersistenceConnectorSpec
     lazy val okResultGen =
       for {
         movementId <- arbitrary[MovementId]
-      } yield MovementResponse(movementId, None)
+        messageId  <- arbitrary[MessageId]
+      } yield MovementResponse(movementId, messageId)
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals"
 

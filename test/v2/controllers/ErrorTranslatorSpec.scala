@@ -206,12 +206,6 @@ class ErrorTranslatorSpec
       persistenceErrorConverter.convert(input) mustBe output
     }
 
-    "MessageIdError error returns a internal service error" in {
-      val input  = PersistenceError.MessageIdError()
-      val output = PresentationError.internalServiceError()
-
-      persistenceErrorConverter.convert(input) mustBe output
-    }
   }
 
   "Router Error" - {

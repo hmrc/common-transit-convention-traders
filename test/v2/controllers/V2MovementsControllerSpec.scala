@@ -253,7 +253,7 @@ class V2MovementsControllerSpec
       )
 
       "must return Accepted when body length is within limits and is considered valid" in forAll(
-        arbitraryMovementResponse(true).arbitrary,
+        arbitraryMovementResponse().arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
         (movementResponse, boxResponse) =>
@@ -313,7 +313,7 @@ class V2MovementsControllerSpec
       }
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
-        arbitraryMovementResponse(true).arbitrary
+        arbitraryMovementResponse().arbitrary
       ) {
         movementResponse =>
           beforeEach()
@@ -419,7 +419,7 @@ class V2MovementsControllerSpec
       }
 
       "must return Internal Service Error if the router service reports an error" in forAll(
-        arbitraryMovementResponse(true).arbitrary,
+        arbitraryMovementResponse().arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
         (movementResponse, boxResponse) =>
@@ -475,7 +475,7 @@ class V2MovementsControllerSpec
       )
 
       "must return Accepted when body length is within limits and is considered valid" in forAll(
-        arbitraryMovementResponse(true).arbitrary,
+        arbitraryMovementResponse().arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
         (movementResponse, boxResponse) =>
@@ -553,7 +553,7 @@ class V2MovementsControllerSpec
       }
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
-        arbitraryMovementResponse(true).arbitrary
+        arbitraryMovementResponse().arbitrary
       ) {
         movementResponse =>
           beforeEach()
@@ -807,7 +807,7 @@ class V2MovementsControllerSpec
       }
 
       "must return Internal Service Error if the router service reports an error" in forAll(
-        arbitraryMovementResponse(true).arbitrary,
+        arbitraryMovementResponse().arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
         (movementResponse, boxResponse) =>
@@ -904,12 +904,12 @@ class V2MovementsControllerSpec
       "must return Accepted when call to upscan is success" in forAll(
         arbitraryUpscanInitiateResponse.arbitrary,
         arbitraryBoxResponse.arbitrary,
-        arbitraryMovementResponse(false).arbitrary
+        arbitraryMovementResponse().arbitrary
       ) {
         (upscanResponse, boxResponse, movementResponse) =>
           beforeEach()
 
-          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId])(any(), any()))
+          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any()))
             .thenAnswer {
               _ => EitherT.rightT(upscanResponse)
             }
@@ -938,7 +938,7 @@ class V2MovementsControllerSpec
             HateoasNewMovementResponse(movementResponse, Some(boxResponse), Some(upscanResponse), MovementType.Departure)
           )
 
-          verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()))(any(), any())
+          verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()), MessageId(any()))(any(), any())
           verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.LargeMessageSubmissionRequested), any(), eqTo(MimeTypes.JSON))(any(), any())
@@ -946,12 +946,12 @@ class V2MovementsControllerSpec
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
         arbitraryUpscanInitiateResponse.arbitrary,
-        arbitraryMovementResponse(false).arbitrary
+        arbitraryMovementResponse().arbitrary
       ) {
         (upscanResponse, movementResponse) =>
           beforeEach()
 
-          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId])(any(), any()))
+          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any()))
             .thenAnswer {
               _ => EitherT.rightT(upscanResponse)
             }
@@ -975,7 +975,7 @@ class V2MovementsControllerSpec
 
           contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, Some(upscanResponse), MovementType.Departure))
 
-          verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()))(any(), any())
+          verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()), MessageId(any()))(any(), any())
           verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
       }
@@ -1000,7 +1000,7 @@ class V2MovementsControllerSpec
       }
 
       "must return Internal Service Error if the upscan service reports an error" in forAll(
-        arbitraryMovementResponse(false).arbitrary,
+        arbitraryMovementResponse().arbitrary,
         arbitraryUpscanInitiateResponse.arbitrary
       ) {
         (movementResponse, upscanResponse) =>
@@ -1012,7 +1012,7 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
-          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId])(any(), any()))
+          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any()))
             .thenAnswer {
               _ => EitherT.leftT(UpscanInitiateError.UnexpectedError(None))
             }
@@ -1056,7 +1056,7 @@ class V2MovementsControllerSpec
       )
 
       "must return Accepted when body length is within limits and is considered valid" in forAll(
-        arbitraryMovementResponse(true).arbitrary,
+        arbitraryMovementResponse().arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
         (movementResponse, boxResponse) =>
@@ -1115,7 +1115,7 @@ class V2MovementsControllerSpec
       }
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
-        arbitraryMovementResponse(true).arbitrary
+        arbitraryMovementResponse().arbitrary
       ) {
         movementResponse =>
           beforeEach()
@@ -1221,7 +1221,7 @@ class V2MovementsControllerSpec
       }
 
       "must return Internal Service Error if the router service reports an error" in forAll(
-        arbitraryMovementResponse(true).arbitrary,
+        arbitraryMovementResponse().arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
         (movementResponse, boxResponse) =>
@@ -1278,7 +1278,7 @@ class V2MovementsControllerSpec
       )
 
       "must return Accepted when body length is within limits and is considered valid" in forAll(
-        arbitraryMovementResponse(true).arbitrary,
+        arbitraryMovementResponse().arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
         (movementResponse, boxResponse) =>
@@ -1348,7 +1348,7 @@ class V2MovementsControllerSpec
       }
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
-        arbitraryMovementResponse(true).arbitrary
+        arbitraryMovementResponse().arbitrary
       ) {
         movementResponse =>
           beforeEach()
@@ -1599,7 +1599,7 @@ class V2MovementsControllerSpec
       }
 
       "must return Internal Service Error if the router service reports an error" in forAll(
-        arbitraryMovementResponse(true).arbitrary,
+        arbitraryMovementResponse().arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
         (movementResponse, boxResponse) =>
@@ -1694,13 +1694,13 @@ class V2MovementsControllerSpec
 
       "must return Accepted if the call to upscan and the persistence service succeeds" in forAll(
         arbitraryUpscanInitiateResponse.arbitrary,
-        arbitraryMovementResponse(false).arbitrary,
+        arbitraryMovementResponse().arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
         (upscanResponse, movementResponse, boxResponse) =>
           beforeEach()
 
-          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId])(any(), any()))
+          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any()))
             .thenAnswer {
               _ => EitherT.rightT(upscanResponse)
             }
@@ -1728,7 +1728,7 @@ class V2MovementsControllerSpec
             HateoasNewMovementResponse(movementResponse, Some(boxResponse), Some(upscanResponse), MovementType.Arrival)
           )
 
-          verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()))(any(), any())
+          verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()), MessageId(any()))(any(), any())
           verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.LargeMessageSubmissionRequested), any(), eqTo(MimeTypes.JSON))(any(), any())
@@ -1736,12 +1736,12 @@ class V2MovementsControllerSpec
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
         arbitraryUpscanInitiateResponse.arbitrary,
-        arbitraryMovementResponse(false).arbitrary
+        arbitraryMovementResponse().arbitrary
       ) {
         (upscanResponse, movementResponse) =>
           beforeEach()
 
-          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId])(any(), any()))
+          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any()))
             .thenAnswer {
               _ => EitherT.rightT(upscanResponse)
             }
@@ -1767,7 +1767,7 @@ class V2MovementsControllerSpec
             HateoasNewMovementResponse(movementResponse, None, Some(upscanResponse), MovementType.Arrival)
           )
 
-          verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()))(any(), any())
+          verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()), MessageId(any()))(any(), any())
           verify(mockMovementsPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
       }
@@ -1793,7 +1793,7 @@ class V2MovementsControllerSpec
       }
 
       "must return Internal Service Error if the upscan service reports an error" in forAll(
-        arbitraryMovementResponse(false).arbitrary
+        arbitraryMovementResponse().arbitrary
       ) {
         movementResponse =>
           when(
@@ -1804,7 +1804,7 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
-          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId])(any(), any()))
+          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any()))
             .thenAnswer {
               _ => EitherT.leftT(UpscanInitiateError.UnexpectedError(None))
             }
@@ -1838,7 +1838,7 @@ class V2MovementsControllerSpec
     }
 
     "must return Internal Service Error if the router service reports an error" in forAll(
-      arbitraryMovementResponse(true).arbitrary,
+      arbitraryMovementResponse().arbitrary,
       arbitraryBoxResponse.arbitrary
     ) {
       (movementResponse, boxResponse) =>
@@ -2730,16 +2730,16 @@ class V2MovementsControllerSpec
 
   "POST /movements/:movementId/messages" - {
 
-    "should return ok" in forAll(arbitraryMovementId.arbitrary) {
-      movementId =>
+    "should return ok" in forAll(arbitraryMovementId.arbitrary, arbitraryMessageId.arbitrary) {
+      (movementId, messageId) =>
         val request = FakeRequest(
           POST,
-          routes.V2MovementsController.attachLargeMessage(movementId).url,
+          routes.V2MovementsController.attachLargeMessage(movementId, messageId).url,
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           JsString("upscan resonse")
         )
 
-        val result = sut.attachLargeMessage(movementId)(request)
+        val result = sut.attachLargeMessage(movementId, messageId)(request)
 
         status(result) mustBe OK
     }
