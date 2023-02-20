@@ -1066,6 +1066,28 @@ class V2MovementsControllerSpec
 
     }
 
+    s"must return NOT_ACCEPTABLE when the accept type is ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN}" in forAll(
+      arbitraryMovementId.arbitrary
+    ) {
+      movementId =>
+        val standardHeaders = FakeHeaders(
+          Seq(
+            HeaderNames.ACCEPT         -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN,
+            HeaderNames.CONTENT_TYPE   -> MimeTypes.JSON,
+            HeaderNames.CONTENT_LENGTH -> "1000"
+          )
+        )
+
+        val json     = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
+        val request  = fakeCreateMovementRequest("POST", standardHeaders, Source.single(json), MovementType.Departure)
+        val response = sutWithAcceptHeader.createMovement(MovementType.Departure)(request)
+        status(response) mustBe NOT_ACCEPTABLE
+        contentAsJson(response) mustBe Json.obj(
+          "code"    -> "NOT_ACCEPTABLE",
+          "message" -> s"Accept header ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN} is not supported!"
+        )
+    }
+
     "must return NOT_ACCEPTABLE when the accept type is invalid" in forAll(
       arbitraryMovementId.arbitrary
     ) {
@@ -1875,6 +1897,26 @@ class V2MovementsControllerSpec
       )
     }
 
+    s"must return NOT_ACCEPTABLE when the content type is ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN}" in {
+      val standardHeaders = FakeHeaders(
+        Seq(
+          HeaderNames.ACCEPT         -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN,
+          HeaderNames.CONTENT_TYPE   -> MimeTypes.JSON,
+          HeaderNames.CONTENT_LENGTH -> "1000"
+        )
+      )
+
+      val json    = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
+      val request = fakeCreateMovementRequest("POST", standardHeaders, Source.single(json), MovementType.Arrival)
+
+      val result = sutWithAcceptHeader.createMovement(MovementType.Arrival)(request)
+      status(result) mustBe NOT_ACCEPTABLE
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "NOT_ACCEPTABLE",
+        "message" -> s"Accept header ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN} is not supported!"
+      )
+    }
+
     "must return NOT_ACCEPTABLE when the content type is invalid" in {
       val standardHeaders = FakeHeaders(
         Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json123", HeaderNames.CONTENT_TYPE -> MimeTypes.JSON, HeaderNames.CONTENT_LENGTH -> "1000")
@@ -2042,6 +2084,23 @@ class V2MovementsControllerSpec
           )
       }
 
+      "must return NOT_ACCEPTABLE when the accept type is application/vnd.hmrc.2.0+json-xml" in forAll(
+        arbitraryMovementId.arbitrary
+      ) {
+        movementId =>
+          val standardHeaders = FakeHeaders(
+            Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json-xml", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
+          )
+
+          val request  = FakeRequest("GET", "/", standardHeaders, Source.empty[ByteString])
+          val response = sutWithAcceptHeader.getMessageIds(movementType, movementId, None)(request)
+
+          status(response) mustBe NOT_ACCEPTABLE
+          contentAsJson(response) mustBe Json.obj(
+            "code"    -> "NOT_ACCEPTABLE",
+            "message" -> "Accept header application/vnd.hmrc.2.0+json-xml is not supported!"
+          )
+      }
     }
 
     s"/movements/${movementType.urlFragment}/:movementId/messages/:messageId " - {
@@ -2093,7 +2152,7 @@ class V2MovementsControllerSpec
                   _ => if (convertBodyToJson) EitherT.rightT(messageSummaryJson) else EitherT.rightT(messageSummaryXml)
                 )
 
-              val result = sut.getMessage(movementType, movementId, messageId)(request)
+              val result = sutWithAcceptHeader.getMessage(movementType, movementId, messageId)(request)
 
               status(result) mustBe OK
               contentAsJson(result) mustBe Json.toJson(
@@ -2309,6 +2368,32 @@ class V2MovementsControllerSpec
         )
       }
 
+      s"must return NOT_ACCEPTABLE when the accept type is ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN}" in {
+        when(
+          mockMovementsPersistenceService.getMovements(EORINumber(any()), any[MovementType], any[Option[OffsetDateTime]], any[Option[EORINumber]])(
+            any[HeaderCarrier],
+            any[ExecutionContext]
+          )
+        )
+          .thenAnswer(
+            _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
+          )
+
+        val request = FakeRequest(
+          GET,
+          url,
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)),
+          AnyContentAsEmpty
+        )
+        val result = sutWithAcceptHeader.getMovements(movementType, None, None)(request)
+
+        status(result) mustBe NOT_ACCEPTABLE
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "NOT_ACCEPTABLE",
+          "message" -> s"Accept header ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN} is not supported!"
+        )
+      }
+
       "must return NOT_ACCEPTABLE when the accept type is invalid" in {
         when(
           mockMovementsPersistenceService.getMovements(EORINumber(any()), any[MovementType], any[Option[OffsetDateTime]], any[Option[EORINumber]])(
@@ -2455,6 +2540,31 @@ class V2MovementsControllerSpec
             GET,
             url,
             headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json123")),
+            AnyContentAsEmpty
+          )
+          val result = sutWithAcceptHeader.getMovement(movementType, movementId)(request)
+
+          status(result) mustBe NOT_ACCEPTABLE
+      }
+
+      s"must return NOT_ACCEPTABLE when the accept type is ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN}" in forAll(
+        arbitraryMovementId.arbitrary
+      ) {
+        movementId =>
+          when(mockMovementsPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
+            .thenAnswer {
+              _ =>
+                EitherT.leftT(PersistenceError.UnexpectedError(None))
+            }
+
+          val url =
+            if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.getDeparture(movementId.value).url
+            else routing.routes.ArrivalsRouter.getArrival(movementId.value).url
+
+          val request = FakeRequest(
+            GET,
+            url,
+            headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)),
             AnyContentAsEmpty
           )
           val result = sutWithAcceptHeader.getMovement(movementType, movementId)(request)
@@ -2880,6 +2990,27 @@ class V2MovementsControllerSpec
             "message" -> "Accept header application/vnd.hmrc.2.0+json123 is not supported!"
           )
       }
+
+      s"must return NOT_ACCEPTABLE when the accept type is ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN}" in forAll(
+        arbitraryMovementId.arbitrary
+      ) {
+        movementId =>
+          val standardHeaders = FakeHeaders(
+            Seq(
+              HeaderNames.ACCEPT         -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN,
+              HeaderNames.CONTENT_TYPE   -> MimeTypes.XML,
+              HeaderNames.CONTENT_LENGTH -> "1000"
+            )
+          )
+
+          val request  = fakeAttachMessageRequest("POST", standardHeaders, Source.single(ByteString(contentXml.mkString, StandardCharsets.UTF_8)), movementType)
+          val response = sutWithAcceptHeader.createMovement(movementType)(request)
+          status(response) mustBe NOT_ACCEPTABLE
+          contentAsJson(response) mustBe Json.obj(
+            "code"    -> "NOT_ACCEPTABLE",
+            "message" -> s"Accept header ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN} is not supported!"
+          )
+      }
     }
   }
 
@@ -2891,7 +3022,7 @@ class V2MovementsControllerSpec
           POST,
           routes.V2MovementsController.attachLargeMessage(movementId, messageId).url,
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
-          JsString("upscan resonse")
+          JsString("upscan response")
         )
 
         val result = sut.attachLargeMessage(movementId, messageId)(request)
@@ -2909,7 +3040,25 @@ class V2MovementsControllerSpec
           POST,
           routes.V2MovementsController.attachLargeMessage(movementId, messageId).url,
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json123")),
-          JsString("upscan resonse")
+          JsString("upscan response")
+        )
+
+        val result = sutWithAcceptHeader.attachLargeMessage(movementId, messageId)(request)
+
+        status(result) mustBe NOT_ACCEPTABLE
+    }
+
+    s"must return NOT_ACCEPTABLE when the accept type is ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN}" in forAll(
+      arbitraryMovementId.arbitrary,
+      arbitraryMessageId.arbitrary
+    ) {
+
+      (movementId, messageId) =>
+        val request = FakeRequest(
+          POST,
+          routes.V2MovementsController.attachLargeMessage(movementId, messageId).url,
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)),
+          JsString("upscan response")
         )
 
         val result = sutWithAcceptHeader.attachLargeMessage(movementId, messageId)(request)

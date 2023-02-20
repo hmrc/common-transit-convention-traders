@@ -104,6 +104,7 @@ class V2MovementsControllerImpl @Inject() (
 
   lazy val sCounter: Counter = counter(s"success-counter")
   lazy val fCounter: Counter = counter(s"failure-counter")
+  val isOnlyJson: Boolean    = true
 
   def createMovement(movementType: MovementType): Action[Source[ByteString, _]] =
     movementType match {
@@ -122,7 +123,7 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitDepartureDeclarationXML(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider() andThen messageSizeAction()).stream {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(isOnlyJson) andThen messageSizeAction()).stream {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -137,7 +138,7 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitDepartureDeclarationJSON(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider() andThen messageSizeAction()).stream {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(isOnlyJson) andThen messageSizeAction()).stream {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -159,7 +160,7 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitArrivalNotificationXML(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider() andThen messageSizeAction()).stream {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(isOnlyJson) andThen messageSizeAction()).stream {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -174,7 +175,7 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitArrivalNotificationJSON(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider() andThen messageSizeAction()).stream {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(isOnlyJson) andThen messageSizeAction()).stream {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -190,7 +191,7 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitLargeMessageXML(movementType: MovementType): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider()).async(streamFromMemory) {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(isOnlyJson)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -221,7 +222,7 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   def getMessage(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider()).async {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(!isOnlyJson)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
@@ -234,7 +235,7 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   def getMessageIds(movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider()).async {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(isOnlyJson)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -248,7 +249,7 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider()).async {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(isOnlyJson)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -262,7 +263,7 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   def getMovements(movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]): Action[AnyContent] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider()).async {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(isOnlyJson)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -282,7 +283,7 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def attachMessageXML(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider() andThen messageSizeAction()).streamWithAwait {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(isOnlyJson) andThen messageSizeAction()).streamWithAwait {
       awaitFileWrite => implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -315,7 +316,7 @@ class V2MovementsControllerImpl @Inject() (
           } yield updateResponse
       }
 
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider() andThen messageSizeAction()).streamWithAwait {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(isOnlyJson) andThen messageSizeAction()).streamWithAwait {
       awaitFileWrite => implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -337,7 +338,7 @@ class V2MovementsControllerImpl @Inject() (
   }
 
   def attachLargeMessage(movementId: MovementId, messageId: MessageId): Action[JsValue] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider()).async(parse.json) {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(isOnlyJson)).async(parse.json) {
       implicit request =>
         Future.successful(Ok)
     }

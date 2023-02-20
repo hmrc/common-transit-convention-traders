@@ -26,7 +26,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 object FakeAcceptHeaderActionProvider extends AcceptHeaderActionProvider {
-  override def apply[R[_] <: Request[_]](): FakeAcceptHeaderAction[R] = FakeAcceptHeaderAction()
+  override def apply[R[_] <: Request[_]](isOnlyJson: Boolean): FakeAcceptHeaderAction[R] = FakeAcceptHeaderAction()
 }
 
 case class FakeAcceptHeaderAction[R[_] <: Request[_]]() extends AcceptHeaderAction[R] {

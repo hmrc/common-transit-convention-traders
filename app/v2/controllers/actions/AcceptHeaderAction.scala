@@ -31,7 +31,8 @@ import scala.concurrent.Future
 
 trait AcceptHeaderAction[R[_] <: Request[_]] extends ActionRefiner[R, R]
 
-class AcceptHeaderActionImpl[R[_] <: Request[_]] @Inject() (implicit val executionContext: ExecutionContext) extends AcceptHeaderAction[R] {
+class AcceptHeaderActionImpl[R[_] <: Request[_]] @Inject() (isOnlyJson: Boolean)(implicit val executionContext: ExecutionContext)
+    extends AcceptHeaderAction[R] {
 
   private lazy val acceptedHeaders = Seq(
     VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
@@ -55,7 +56,13 @@ class AcceptHeaderActionImpl[R[_] <: Request[_]] @Inject() (implicit val executi
     }
 
   private def checkAcceptHeader[A](acceptHeaderValue: String, request: R[A]): Either[Result, R[A]] =
-    if (acceptedHeaders.contains(acceptHeaderValue)) Right(request)
-    else Left(NotAcceptable(Json.toJson(PresentationError.notAcceptableError(s"Accept header $acceptHeaderValue is not supported!"))))
+    if (
+      (!isOnlyJson && acceptedHeaders
+        .contains(acceptHeaderValue)) || (isOnlyJson && VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON.contains(acceptHeaderValue))
+    ) {
+      Right(request)
+    } else {
+      Left(NotAcceptable(Json.toJson(PresentationError.notAcceptableError(s"Accept header $acceptHeaderValue is not supported!"))))
+    }
 
 }

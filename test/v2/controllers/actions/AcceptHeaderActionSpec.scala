@@ -72,8 +72,8 @@ class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures
       )
     )
       s"must allow valid accept header $acceptHeader" in {
-
-        val controller = new Harness(acceptHeaderAction(), cc)
+        val isOnlyJson = false
+        val controller = new Harness(acceptHeaderAction(isOnlyJson), cc)
         val req: FakeRequest[AnyContent] = FakeRequest(
           method = HttpVerbs.GET,
           uri = "",
@@ -85,13 +85,27 @@ class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures
         status(result) mustEqual OK
       }
 
-    "must reject an invalid accept header" in {
-
-      val controller = new Harness(acceptHeaderAction(), cc)
+    s"must allow only json as valid accept header $VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON " in {
+      val isOnlyJson = true
+      val controller = new Harness(acceptHeaderAction(isOnlyJson), cc)
       val req: FakeRequest[AnyContent] = FakeRequest(
         method = HttpVerbs.GET,
         uri = "",
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+text")),
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
+        AnyContent.apply()
+      )
+      val result = controller.post()(req)
+
+      status(result) mustEqual OK
+    }
+
+    "must not allow other accept headers when isOnlyJson set to true " in {
+      val isOnlyJson = true
+      val controller = new Harness(acceptHeaderAction(isOnlyJson), cc)
+      val req: FakeRequest[AnyContent] = FakeRequest(
+        method = HttpVerbs.GET,
+        uri = "",
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)),
         AnyContent.apply()
       )
       val result = controller.post()(req)
@@ -99,9 +113,28 @@ class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures
       status(result) mustEqual NOT_ACCEPTABLE
     }
 
-    "must reject request without an accept header" in {
+    for (
+      isOnlyJson <- Seq(
+        true,
+        false
+      )
+    )
+      s"must return invalid accept header when flag is set to $isOnlyJson" in {
+        val controller = new Harness(acceptHeaderAction(isOnlyJson), cc)
+        val req: FakeRequest[AnyContent] = FakeRequest(
+          method = HttpVerbs.GET,
+          uri = "",
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+text")),
+          AnyContent.apply()
+        )
+        val result = controller.post()(req)
 
-      val controller = new Harness(acceptHeaderAction(), cc)
+        status(result) mustEqual NOT_ACCEPTABLE
+      }
+
+    "must reject request without an accept header" in {
+      val isOnlyJson = true
+      val controller = new Harness(acceptHeaderAction(isOnlyJson), cc)
       val req: FakeRequest[AnyContent] = FakeRequest(
         method = HttpVerbs.GET,
         uri = "",
