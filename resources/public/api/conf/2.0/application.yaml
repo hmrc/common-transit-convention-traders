@@ -321,6 +321,7 @@ paths:
                       departureId: 6365135ba5e821ee
                       received: 2022-11-10T15:32:51.459Z
                       type: IE015
+                      status: Success
               example:
                 _links:
                   self:
@@ -337,6 +338,7 @@ paths:
                   departureId: 6365135ba5e821ee
                   received: 2022-11-10T15:32:51.459Z
                   type: IE015
+                  status: Success
         '404':
           description: Not Found
           content:
@@ -518,6 +520,7 @@ paths:
                       departureId: 62f4ebbbf581d4aa
                       received: 2022-08-11T11:44:59.83705
                       type: IE015
+                      status: Success
                       body: >
                         n1.CC015C:
                           @PhaseID: NCTS5.0
@@ -532,6 +535,7 @@ paths:
                 departureId: 62f4ebbbf581d4aa
                 received: 2022-08-11T11:44:59.83705
                 type: IE015
+                status: Success
                 body: >
                   n1.CC015C:
                     @PhaseID: "NCTS5.0"
@@ -888,6 +892,7 @@ paths:
                       arrivalId: 63498209a2d89ad8
                       received: 2022-11-10T15:32:51.459Z
                       type: IE007
+                      status: Success
               example:
                 _links:
                   self:
@@ -904,6 +909,7 @@ paths:
                   arrivalId: 63498209a2d89ad8
                   received: 2022-11-10T15:32:51.459Z
                   type: IE007
+                  status: Success
         '404':
           description: Not Found
           content:
@@ -1083,6 +1089,7 @@ paths:
                       arrivalId: 62f4ebbbf581d4aa
                       received: 2022-08-11T11:44:59.83705
                       type: IE007
+                      status: Success
                       body: >
                         n1.CC007C:
                           @PhaseID: NCTS5.0
@@ -1097,6 +1104,7 @@ paths:
                 arrivalId: 62f4ebbbf581d4aa
                 received: 2022-08-11T11:44:59.83705
                 type: IE007
+                status: Success
                 body: >
                   n1.CC007C:
                     @PhaseID: NCTS5.0
@@ -1270,6 +1278,7 @@ components:
           arrivalId: 63498209a2d89ad8
           received: 2022-11-10T15:32:51.459Z
           type: IE007
+          status: Success
     CustomsTransitsMovementsArrivalsMessagesResponse1:
       title: CustomsTransitsMovementsArrivalsMessagesResponse1
       required:
@@ -1292,6 +1301,7 @@ components:
       - arrivalId
       - received
       - type
+      - status
       - body
       type: object
       properties:
@@ -1305,6 +1315,8 @@ components:
           type: string
         type:
           type: string
+        status:
+            type: string
         body:
           type: string
       example:
@@ -1317,6 +1329,7 @@ components:
         arrivalId: 62f4ebbbf581d4aa
         received: 2022-08-11T11:44:59.83705
         type: IE007
+        status: Success
         body: <ncts:CC007C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">...</ncts:CC007C>
     CustomsTransitsMovementsArrivalsResponse:
       title: CustomsTransitsMovementsArrivalsResponse
@@ -1445,6 +1458,7 @@ components:
           departureId: 6365135ba5e821ee
           received: 2022-11-10T15:32:51.459Z
           type: IE015
+          status: Success
     CustomsTransitsMovementsDeparturesMessagesResponse1:
       title: CustomsTransitsMovementsDeparturesMessagesResponse1
       required:
@@ -1467,6 +1481,7 @@ components:
       - departureId
       - received
       - type
+      - status
       - body
       type: object
       properties:
@@ -1480,6 +1495,8 @@ components:
           type: string
         type:
           type: string
+        status:
+          type: string
         body:
           type: string
       example:
@@ -1492,6 +1509,7 @@ components:
         departureId: 62f4ebbbf581d4aa
         received: 2022-08-11T11:44:59.83705
         type: IE015
+        status: Success
         body: <ncts:CC015C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">...</ncts:CC015C>
     CustomsTransitsMovementsDeparturesResponse:
       title: CustomsTransitsMovementsDeparturesResponse
@@ -1677,6 +1695,7 @@ components:
       - departureId
       - received
       - type
+      - status
       type: object
       properties:
         _links:
@@ -1689,6 +1708,8 @@ components:
           type: string
         type:
           type: string
+        status:
+          type: string
       example:
         _links:
           self:
@@ -1699,6 +1720,7 @@ components:
         departureId: 6365135ba5e821ee
         received: 2022-11-10T15:32:51.459Z
         type: IE015
+        status: Success
     Messages6:
       title: Messages6
       required:
@@ -1707,6 +1729,7 @@ components:
       - arrivalId
       - received
       - type
+      - status
       type: object
       properties:
         _links:
@@ -1719,6 +1742,8 @@ components:
           type: string
         type:
           type: string
+        status:
+          type: string
       example:
         _links:
           self:
@@ -1729,6 +1754,7 @@ components:
         arrivalId: 63498209a2d89ad8
         received: 2022-11-10T15:32:51.459Z
         type: IE007
+        status: Success
     Self:
       title: Self
       required:
