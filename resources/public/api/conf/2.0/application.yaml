@@ -70,6 +70,20 @@ paths:
               example:
                 code: SCHEMA_VALIDATION
                 message: Request failed schema validation
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/AcceptHeaderInvalid'
+                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
+                    example:
+                      code: NOT_ACCEPTABLE
+                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+              example:
+                code: NOT_ACCEPTABLE
+                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
         '413':
           description: Payload Too Large
           content:
@@ -166,13 +180,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: The Accept header is missing or invalid.
+                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
                     example:
-                      statusCode: 406
-                      message: The accept header is missing or invalid
+                      code: NOT_ACCEPTABLE
+                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
               example:
-                statusCode: 406
-                message: The accept header is missing or invalid
+                code: NOT_ACCEPTABLE
+                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -252,13 +266,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: The Accept header is missing or invalid.
+                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
                     example:
-                      statusCode: 406
-                      message: The accept header is missing or invalid
+                      code: NOT_ACCEPTABLE
+                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
               example:
-                statusCode: 406
-                message: The accept header is missing or invalid
+                code: NOT_ACCEPTABLE
+                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -365,13 +379,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: The Accept header is missing or invalid.
+                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
                     example:
-                      statusCode: 406
-                      message: The accept header is missing or invalid
+                      code: NOT_ACCEPTABLE
+                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
               example:
-                statusCode: 406
-                message: The accept header is missing or invalid
+                code: NOT_ACCEPTABLE
+                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -445,6 +459,20 @@ paths:
               example:
                 code: NOT_FOUND
                 message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/AcceptHeaderInvalid'
+                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
+                    example:
+                      code: NOT_ACCEPTABLE
+                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+              example:
+                code: NOT_ACCEPTABLE
+                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
         '413':
           description: Payload Too Large
           content:
@@ -572,13 +600,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: The Accept header is missing or invalid.
+                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
                     example:
-                      statusCode: 406
-                      message: The accept header is missing or invalid
+                      code: NOT_ACCEPTABLE
+                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
               example:
-                statusCode: 406
-                message: The accept header is missing or invalid
+                code: NOT_ACCEPTABLE
+                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -638,6 +666,20 @@ paths:
               example:
                 code: SCHEMA_VALIDATION
                 message: Request failed schema validation
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/AcceptHeaderInvalid'
+                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
+                    example:
+                      code: NOT_ACCEPTABLE
+                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+              example:
+                code: NOT_ACCEPTABLE
+                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
         '413':
           description: Payload Too Large
           content:
@@ -754,13 +796,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: The Accept header is missing or invalid.
+                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
                     example:
-                      statusCode: 406
-                      message: The accept header is missing or invalid
+                      code: NOT_ACCEPTABLE
+                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
               example:
-                statusCode: 406
-                message: The accept header is missing or invalid
+                code: NOT_ACCEPTABLE
+                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -838,13 +880,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: The Accept header is missing or invalid.
+                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
                     example:
-                      statusCode: 406
-                      message: The accept header is missing or invalid
+                      code: NOT_ACCEPTABLE
+                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
               example:
-                statusCode: 406
-                message: The accept header is missing or invalid
+                code: NOT_ACCEPTABLE
+                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -942,13 +984,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: The Accept header is missing or invalid.
+                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
                     example:
-                      statusCode: 406
-                      message: The accept header is missing or invalid
+                      code: NOT_ACCEPTABLE
+                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
               example:
-                statusCode: 406
-                message: The accept header is missing or invalid
+                code: NOT_ACCEPTABLE
+                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -1022,6 +1064,20 @@ paths:
               example:
                 code: NOT_FOUND
                 message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/AcceptHeaderInvalid'
+                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
+                    example:
+                      code: NOT_ACCEPTABLE
+                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+              example:
+                code: NOT_ACCEPTABLE
+                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
         '413':
           description: Payload Too Large
           content:
@@ -1141,13 +1197,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: The Accept header is missing or invalid.
+                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
                     example:
-                      statusCode: 406
-                      message: The accept header is missing or invalid
+                      code: NOT_ACCEPTABLE
+                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
               example:
-                statusCode: 406
-                message: The accept header is missing or invalid
+                code: NOT_ACCEPTABLE
+                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -1201,14 +1257,16 @@ components:
           description: The description of the error.
     AcceptHeaderInvalid:
       title: AcceptHeaderInvalid
-      description: The `Accept` header was not set to `application/vnd.hmrc.2.0+json`.
+      description: The `Accept` header was not set to `application/vnd.hmrc.2.0+json`, `application/vnd.hmrc.2.0+json+xml` or `application/vnd.hmrc.2.0+json-xml`.
       required:
-        - statusCode
+        - code
         - message
       type: object
       properties:
-        statusCode:
-          type: integer
+        code:
+          enum:
+            - NOT_ACCEPTABLE
+          type: string
         message:
           type: string
           description: The description of the error.
