@@ -30,6 +30,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.base.CommonGenerators
 import v2.connectors.UpscanConnector
+import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.errors.UpscanInitiateError
 import v2.models.request.UpscanInitiate
@@ -64,14 +65,17 @@ class UpscanServiceSpec
 
   "upscan initiate" - {
 
-    "when a call to upscanInitiate is success, assert that response contains uploadRequest details" in forAll(arbitraryMovementId.arbitrary) {
-      movementId =>
+    "when a call to upscanInitiate is success, assert that response contains uploadRequest details" in forAll(
+      arbitraryMovementId.arbitrary,
+      arbitraryMessageId.arbitrary
+    ) {
+      (movementId, messageId) =>
         beforeEach()
 
-        when(mockConnector.upscanInitiate(any[String].asInstanceOf[MovementId])(any(), any()))
+        when(mockConnector.upscanInitiate(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any()))
           .thenReturn(Future.successful(upscanResponse))
 
-        val result = sut.upscanInitiate(movementId)
+        val result = sut.upscanInitiate(movementId, messageId)
 
         whenReady(result.value) {
           r => r mustBe Right(upscanResponse)
@@ -79,15 +83,15 @@ class UpscanServiceSpec
 
     }
 
-    "when an error occurs, return a Left of Unexpected" in forAll(arbitraryMovementId.arbitrary) {
-      movementId =>
+    "when an error occurs, return a Left of Unexpected" in forAll(arbitraryMovementId.arbitrary, arbitraryMessageId.arbitrary) {
+      (movementId, messageId) =>
         beforeEach()
 
         val expectedException = new Exception()
-        when(mockConnector.upscanInitiate(any[String].asInstanceOf[MovementId])(any(), any()))
+        when(mockConnector.upscanInitiate(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any()))
           .thenReturn(Future.failed(expectedException))
 
-        val result = sut.upscanInitiate(movementId)
+        val result = sut.upscanInitiate(movementId, messageId)
 
         whenReady(result.value) {
           r => r mustBe Left(UpscanInitiateError.UnexpectedError(thr = Some(expectedException)))

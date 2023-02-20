@@ -88,12 +88,7 @@ class MovementsServiceImpl @Inject() (persistenceConnector: PersistenceConnector
       persistenceConnector
         .postMovement(eori, movementType, source)
         .map {
-          movementResponse =>
-            if (movementResponse.messageId.isEmpty && source.isDefined) { // For Small message, messageId shouldn't be empty
-              Left(PersistenceError.MessageIdError())
-            } else {
-              Right(movementResponse)
-            }
+          movementResponse => Right(movementResponse)
         }
         .recover {
           case NonFatal(thr) =>

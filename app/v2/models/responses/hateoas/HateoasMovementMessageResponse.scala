@@ -19,26 +19,42 @@ package v2.models.responses.hateoas
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.models.MessageId
+import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.responses.MessageSummary
 
 object HateoasMovementMessageResponse extends HateoasResponse {
 
-  def apply(movementId: MovementId, messageId: MessageId, messageSummary: MessageSummary, movementType: MovementType): JsObject =
-    Json.obj(
-      "_links" -> Json.obj(
-        "self"                    -> Json.obj("href" -> getMessageUri(movementId, messageId, movementType)),
-        movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
-      ),
-      "id"                              -> messageId.value,
-      s"${movementType.movementType}Id" -> movementId.value,
-      "received"                        -> messageSummary.received,
-      "type"                            -> messageSummary.messageType,
-      "status"                          -> messageSummary.status
-    ) ++ messageSummary.body
+  def apply(movementId: MovementId, messageId: MessageId, messageSummary: MessageSummary, movementType: MovementType): JsObject = {
+    val jsLinksObject = Json.obj(
+      "self"                    -> Json.obj("href" -> getMessageUri(movementId, messageId, movementType)),
+      movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
+    )
+
+    val jsObject1 = if (messageSummary.status == MessageStatus.Pending) {
+      Json.obj(
+        "_links"                          -> jsLinksObject,
+        "id"                              -> messageId.value,
+        s"${movementType.movementType}Id" -> movementId.value,
+        "received"                        -> messageSummary.received,
+        "status"                          -> messageSummary.status
+      )
+    } else {
+      Json.obj(
+        "_links"                          -> jsLinksObject,
+        "id"                              -> messageId.value,
+        s"${movementType.movementType}Id" -> movementId.value,
+        "received"                        -> messageSummary.received,
+        "type"                            -> messageSummary.messageType,
+        "status"                          -> messageSummary.status
+      )
+    }
+
+    jsObject1 ++ messageSummary.body
       .map(
         payload => Json.obj("body" -> payload.asJson)
       )
       .getOrElse(Json.obj())
+  }
 }

@@ -101,5 +101,33 @@ class HateoasMovementMessageResponseSpec extends AnyFreeSpec with Matchers with 
 
       actual mustBe expected
     }
+
+    s"when the MessageSummary contains a ${movementType.movementType} xml payload and the Message status is Pending, create a valid HateoasMovementMessageResponse with the body as a JsValue without type" in {
+      val messageId  = arbitrary[MessageId].sample.value
+      val movementId = arbitrary[MovementId].sample.value
+      val body       = Gen.alphaNumStr.sample.value
+      val response = MessageSummary(
+        messageId,
+        dateTime,
+        MessageType.DeclarationData,
+        Some(XmlPayload(body)),
+        MessageStatus.Pending
+      )
+
+      val actual = HateoasMovementMessageResponse(movementId, messageId, response, movementType)
+      val expected = Json.obj(
+        "_links" -> Json.obj(
+          "self"                    -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"),
+          movementType.movementType -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}")
+        ),
+        "id"                              -> messageId.value,
+        s"${movementType.movementType}Id" -> movementId.value,
+        "received"                        -> "2022-08-04T11:52:59Z",
+        "status"                          -> "Pending",
+        "body"                            -> JsString(body)
+      )
+
+      actual mustBe expected
+    }
   }
 }
