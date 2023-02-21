@@ -276,13 +276,11 @@ paths:
 
         A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
         
-        Below is the set of all possible values returned in the message status field and their meaning:
-        <ul>
-          <li>Pending: the file has not yet been uploaded or we’re waiting for checks to complete</li>
-          <li>Processing: the file has been received by us and we’re processing the message</li>
-          <li>Success: the file has been processed successfully</li>
-          <li>Failed: there was an issue with the file and the message was not processed</li>
-        </ul>
+        The `status` parameter can have the following values:
+          - Pending: the file has not yet been uploaded or checks are not yet completed
+          - Processing: the file has been received by us and the message is being processed
+          - Success: the file has been processed successfully
+          - Failed: there was a problem with the file and the message was not processed
         
         <br/><br/>
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
@@ -481,13 +479,11 @@ paths:
         
         * `application/vnd.hmrc.2.0+json`: JSON, where the message is provided as a sub-document sent as part of a JSON payload containing other metadata.
         
-        Below is the set of all possible values returned in the message status field and their meaning:
-          <ul>
-            <li>Pending: the file has not yet been uploaded or we’re waiting for checks to complete</li>
-            <li>Processing: the file has been received by us and we’re processing the message</li>
-            <li>Success: the file has been processed successfully</li>
-            <li>Failed: there was an issue with the file and the message was not processed</li>
-          </ul>
+        The `status` parameter can have the following values:
+          - Pending: the file has not yet been uploaded or checks are not yet completed
+          - Processing: the file has been received by us and the message is being processed
+          - Success: the file has been processed successfully
+          - Failed: there was a problem with the file and the message was not processed
         
         <br/><br/>
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.\n
