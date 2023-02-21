@@ -232,7 +232,7 @@ class VersionedRoutingSpec
         status(result) mustBe NOT_ACCEPTABLE
         Json.parse(contentAsString(result)) mustBe Json.obj(
           "code"    -> "NOT_ACCEPTABLE",
-          "message" -> "An accept header is required!"
+          "message" -> "The Accept header is missing or invalid."
         )
 
       }
@@ -249,7 +249,7 @@ class VersionedRoutingSpec
         status(result) mustBe NOT_ACCEPTABLE
         Json.parse(contentAsString(result)) mustBe Json.obj(
           "code"    -> "NOT_ACCEPTABLE",
-          "message" -> "Accept header text/plain is not supported!"
+          "message" -> "The Accept header is missing or invalid."
         )
 
       }

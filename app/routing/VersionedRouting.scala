@@ -71,14 +71,7 @@ trait VersionedRouting {
             Future.successful(
               NotAcceptable(
                 Json.toJson(
-                  PresentationError.notAcceptableError(
-                    request.headers
-                      .get("accept")
-                      .map(
-                        header => s"Accept header $header is not supported!"
-                      )
-                      .getOrElse("An accept header is required!")
-                  )
+                  PresentationError.notAcceptableError("The Accept header is missing or invalid.")
                 )
               )
             )

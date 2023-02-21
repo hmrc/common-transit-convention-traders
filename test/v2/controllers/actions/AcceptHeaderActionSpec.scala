@@ -72,8 +72,7 @@ class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures
       )
     )
       s"must allow valid accept header $acceptHeader" in {
-        val isOnlyJson = false
-        val controller = new Harness(acceptHeaderAction(isOnlyJson), cc)
+        val controller = new Harness(acceptHeaderAction(acceptOnlyJson = false), cc)
         val req: FakeRequest[AnyContent] = FakeRequest(
           method = HttpVerbs.GET,
           uri = "",
@@ -86,8 +85,7 @@ class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures
       }
 
     s"must allow only json as valid accept header $VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON " in {
-      val isOnlyJson = true
-      val controller = new Harness(acceptHeaderAction(isOnlyJson), cc)
+      val controller = new Harness(acceptHeaderAction(acceptOnlyJson = true), cc)
       val req: FakeRequest[AnyContent] = FakeRequest(
         method = HttpVerbs.GET,
         uri = "",
@@ -99,9 +97,8 @@ class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures
       status(result) mustEqual OK
     }
 
-    "must not allow other accept headers when isOnlyJson set to true " in {
-      val isOnlyJson = true
-      val controller = new Harness(acceptHeaderAction(isOnlyJson), cc)
+    "must not allow other accept headers when acceptOnlyJson set to true " in {
+      val controller = new Harness(acceptHeaderAction(acceptOnlyJson = true), cc)
       val req: FakeRequest[AnyContent] = FakeRequest(
         method = HttpVerbs.GET,
         uri = "",
@@ -114,13 +111,13 @@ class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures
     }
 
     for (
-      isOnlyJson <- Seq(
+      acceptOnlyJson <- Seq(
         true,
         false
       )
     )
-      s"must return invalid accept header when flag is set to $isOnlyJson" in {
-        val controller = new Harness(acceptHeaderAction(isOnlyJson), cc)
+      s"must return invalid accept header when flag is set to $acceptOnlyJson" in {
+        val controller = new Harness(acceptHeaderAction(acceptOnlyJson), cc)
         val req: FakeRequest[AnyContent] = FakeRequest(
           method = HttpVerbs.GET,
           uri = "",
@@ -133,8 +130,7 @@ class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures
       }
 
     "must reject request without an accept header" in {
-      val isOnlyJson = true
-      val controller = new Harness(acceptHeaderAction(isOnlyJson), cc)
+      val controller = new Harness(acceptHeaderAction(acceptOnlyJson = true), cc)
       val req: FakeRequest[AnyContent] = FakeRequest(
         method = HttpVerbs.GET,
         uri = "",

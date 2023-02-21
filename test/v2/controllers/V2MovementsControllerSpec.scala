@@ -1084,7 +1084,7 @@ class V2MovementsControllerSpec
         status(response) mustBe NOT_ACCEPTABLE
         contentAsJson(response) mustBe Json.obj(
           "code"    -> "NOT_ACCEPTABLE",
-          "message" -> s"Accept header ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN} is not supported!"
+          "message" -> "The Accept header is missing or invalid."
         )
     }
 
@@ -1102,7 +1102,7 @@ class V2MovementsControllerSpec
         status(response) mustBe NOT_ACCEPTABLE
         contentAsJson(response) mustBe Json.obj(
           "code"    -> "NOT_ACCEPTABLE",
-          "message" -> "Accept header application/vnd.hmrc.2.0+json123 is not supported!"
+          "message" -> "The Accept header is missing or invalid."
         )
     }
   }
@@ -1913,7 +1913,7 @@ class V2MovementsControllerSpec
       status(result) mustBe NOT_ACCEPTABLE
       contentAsJson(result) mustBe Json.obj(
         "code"    -> "NOT_ACCEPTABLE",
-        "message" -> s"Accept header ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN} is not supported!"
+        "message" -> "The Accept header is missing or invalid."
       )
     }
 
@@ -1929,7 +1929,7 @@ class V2MovementsControllerSpec
       status(result) mustBe NOT_ACCEPTABLE
       contentAsJson(result) mustBe Json.obj(
         "code"    -> "NOT_ACCEPTABLE",
-        "message" -> "Accept header application/vnd.hmrc.2.0+json123 is not supported!"
+        "message" -> "The Accept header is missing or invalid."
       )
     }
 
@@ -2080,7 +2080,7 @@ class V2MovementsControllerSpec
           status(response) mustBe NOT_ACCEPTABLE
           contentAsJson(response) mustBe Json.obj(
             "code"    -> "NOT_ACCEPTABLE",
-            "message" -> "Accept header application/vnd.hmrc.2.0+json123 is not supported!"
+            "message" -> "The Accept header is missing or invalid."
           )
       }
 
@@ -2098,7 +2098,7 @@ class V2MovementsControllerSpec
           status(response) mustBe NOT_ACCEPTABLE
           contentAsJson(response) mustBe Json.obj(
             "code"    -> "NOT_ACCEPTABLE",
-            "message" -> "Accept header application/vnd.hmrc.2.0+json-xml is not supported!"
+            "message" -> "The Accept header is missing or invalid."
           )
       }
     }
@@ -2390,7 +2390,7 @@ class V2MovementsControllerSpec
         status(result) mustBe NOT_ACCEPTABLE
         contentAsJson(result) mustBe Json.obj(
           "code"    -> "NOT_ACCEPTABLE",
-          "message" -> s"Accept header ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN} is not supported!"
+          "message" -> "The Accept header is missing or invalid."
         )
       }
 
@@ -2416,7 +2416,7 @@ class V2MovementsControllerSpec
         status(result) mustBe NOT_ACCEPTABLE
         contentAsJson(result) mustBe Json.obj(
           "code"    -> "NOT_ACCEPTABLE",
-          "message" -> "Accept header application/vnd.hmrc.2.0+json123 is not supported!"
+          "message" -> "The Accept header is missing or invalid."
         )
       }
 
@@ -2987,7 +2987,7 @@ class V2MovementsControllerSpec
           status(response) mustBe NOT_ACCEPTABLE
           contentAsJson(response) mustBe Json.obj(
             "code"    -> "NOT_ACCEPTABLE",
-            "message" -> "Accept header application/vnd.hmrc.2.0+json123 is not supported!"
+            "message" -> "The Accept header is missing or invalid."
           )
       }
 
@@ -3008,7 +3008,7 @@ class V2MovementsControllerSpec
           status(response) mustBe NOT_ACCEPTABLE
           contentAsJson(response) mustBe Json.obj(
             "code"    -> "NOT_ACCEPTABLE",
-            "message" -> s"Accept header ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN} is not supported!"
+            "message" -> "The Accept header is missing or invalid."
           )
       }
     }
