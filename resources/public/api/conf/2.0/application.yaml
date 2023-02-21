@@ -77,13 +77,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
+                  - description: The Accept header is missing or invalid.
                     example:
                       code: NOT_ACCEPTABLE
-                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                      message: The Accept header is missing or invalid.
               example:
                 code: NOT_ACCEPTABLE
-                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                message: The Accept header is missing or invalid.
         '413':
           description: Payload Too Large
           content:
@@ -180,13 +180,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
+                  - description: The Accept header is missing or invalid.
                     example:
                       code: NOT_ACCEPTABLE
-                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                      message: The Accept header is missing or invalid.
               example:
                 code: NOT_ACCEPTABLE
-                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                message: The Accept header is missing or invalid.
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -266,13 +266,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
+                  - description: The Accept header is missing or invalid.
                     example:
                       code: NOT_ACCEPTABLE
-                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                      message: The Accept header is missing or invalid.
               example:
                 code: NOT_ACCEPTABLE
-                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                message: The Accept header is missing or invalid.
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -379,13 +379,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
+                  - description: The Accept header is missing or invalid.
                     example:
                       code: NOT_ACCEPTABLE
-                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                      message: The Accept header is missing or invalid.
               example:
                 code: NOT_ACCEPTABLE
-                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                message: The Accept header is missing or invalid.
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -466,13 +466,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
+                  - description: The Accept header is missing or invalid.
                     example:
                       code: NOT_ACCEPTABLE
-                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                      message: The Accept header is missing or invalid.
               example:
                 code: NOT_ACCEPTABLE
-                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                message: The Accept header is missing or invalid.
         '413':
           description: Payload Too Large
           content:
@@ -600,13 +600,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
+                  - description: The Accept header is missing or invalid.
                     example:
                       code: NOT_ACCEPTABLE
-                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                      message: The Accept header is missing or invalid.
               example:
                 code: NOT_ACCEPTABLE
-                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                message: The Accept header is missing or invalid.
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -673,13 +673,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
+                  - description: The Accept header is missing or invalid.
                     example:
                       code: NOT_ACCEPTABLE
-                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                      message: The Accept header is missing or invalid.
               example:
                 code: NOT_ACCEPTABLE
-                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                message: The Accept header is missing or invalid.
         '413':
           description: Payload Too Large
           content:
@@ -796,13 +796,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
+                  - description: The Accept header is missing or invalid.
                     example:
                       code: NOT_ACCEPTABLE
-                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                      message: The Accept header is missing or invalid.
               example:
                 code: NOT_ACCEPTABLE
-                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                message: The Accept header is missing or invalid.
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -880,13 +880,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
+                  - description: The Accept header is missing or invalid.
                     example:
                       code: NOT_ACCEPTABLE
-                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                      message: The Accept header is missing or invalid.
               example:
                 code: NOT_ACCEPTABLE
-                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                message: The Accept header is missing or invalid.
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -984,13 +984,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
+                  - description: The Accept header is missing or invalid.
                     example:
                       code: NOT_ACCEPTABLE
-                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                      message: The Accept header is missing or invalid.
               example:
                 code: NOT_ACCEPTABLE
-                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                message: The Accept header is missing or invalid.
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -1071,13 +1071,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
+                  - description: The Accept header is missing or invalid.
                     example:
                       code: NOT_ACCEPTABLE
-                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                      message: The Accept header is missing or invalid.
               example:
                 code: NOT_ACCEPTABLE
-                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                message: The Accept header is missing or invalid.
         '413':
           description: Payload Too Large
           content:
@@ -1197,13 +1197,13 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: Accept header application/vnd.hmrc.2.0+json123 is not supported!.
+                  - description: The Accept header is missing or invalid.
                     example:
                       code: NOT_ACCEPTABLE
-                      message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                      message: The Accept header is missing or invalid.
               example:
                 code: NOT_ACCEPTABLE
-                message: Accept header application/vnd.hmrc.2.0+json123 is not supported!
+                message: The Accept header is missing or invalid.
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -1257,7 +1257,7 @@ components:
           description: The description of the error.
     AcceptHeaderInvalid:
       title: AcceptHeaderInvalid
-      description: The `Accept` header was not set to `application/vnd.hmrc.2.0+json`, `application/vnd.hmrc.2.0+json+xml` or `application/vnd.hmrc.2.0+json-xml`.
+      description: The `Accept` header was not set to `application/vnd.hmrc.2.0+json` or `application/vnd.hmrc.2.0+json-xml`.
       required:
         - code
         - message
