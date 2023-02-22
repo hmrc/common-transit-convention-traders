@@ -70,20 +70,6 @@ paths:
               example:
                 code: SCHEMA_VALIDATION
                 message: Request failed schema validation
-        '406':
-          description: Not Acceptable
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: The Accept header is missing or invalid.
-                    example:
-                      code: NOT_ACCEPTABLE
-                      message: The Accept header is missing or invalid.
-              example:
-                code: NOT_ACCEPTABLE
-                message: The Accept header is missing or invalid.
         '413':
           description: Payload Too Large
           content:
@@ -182,11 +168,11 @@ paths:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
                   - description: The Accept header is missing or invalid.
                     example:
-                      code: NOT_ACCEPTABLE
-                      message: The Accept header is missing or invalid.
+                      statusCode: 406
+                      message: The accept header is missing or invalid
               example:
-                code: NOT_ACCEPTABLE
-                message: The Accept header is missing or invalid.
+                statusCode: 406
+                message: The accept header is missing or invalid
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -268,11 +254,11 @@ paths:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
                   - description: The Accept header is missing or invalid.
                     example:
-                      code: NOT_ACCEPTABLE
-                      message: The Accept header is missing or invalid.
+                      statusCode: 406
+                      message: The accept header is missing or invalid
               example:
-                code: NOT_ACCEPTABLE
-                message: The Accept header is missing or invalid.
+                statusCode: 406
+                message: The accept header is missing or invalid
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -381,11 +367,11 @@ paths:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
                   - description: The Accept header is missing or invalid.
                     example:
-                      code: NOT_ACCEPTABLE
-                      message: The Accept header is missing or invalid.
+                      statusCode: 406
+                      message: The accept header is missing or invalid
               example:
-                code: NOT_ACCEPTABLE
-                message: The Accept header is missing or invalid.
+                statusCode: 406
+                message: The accept header is missing or invalid
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -459,20 +445,6 @@ paths:
               example:
                 code: NOT_FOUND
                 message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
-        '406':
-          description: Not Acceptable
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: The Accept header is missing or invalid.
-                    example:
-                      code: NOT_ACCEPTABLE
-                      message: The Accept header is missing or invalid.
-              example:
-                code: NOT_ACCEPTABLE
-                message: The Accept header is missing or invalid.
         '413':
           description: Payload Too Large
           content:
@@ -602,11 +574,11 @@ paths:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
                   - description: The Accept header is missing or invalid.
                     example:
-                      code: NOT_ACCEPTABLE
-                      message: The Accept header is missing or invalid.
+                      statusCode: 406
+                      message: The accept header is missing or invalid
               example:
-                code: NOT_ACCEPTABLE
-                message: The Accept header is missing or invalid.
+                statusCode: 406
+                message: The accept header is missing or invalid
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -666,20 +638,6 @@ paths:
               example:
                 code: SCHEMA_VALIDATION
                 message: Request failed schema validation
-        '406':
-          description: Not Acceptable
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: The Accept header is missing or invalid.
-                    example:
-                      code: NOT_ACCEPTABLE
-                      message: The Accept header is missing or invalid.
-              example:
-                code: NOT_ACCEPTABLE
-                message: The Accept header is missing or invalid.
         '413':
           description: Payload Too Large
           content:
@@ -798,11 +756,11 @@ paths:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
                   - description: The Accept header is missing or invalid.
                     example:
-                      code: NOT_ACCEPTABLE
-                      message: The Accept header is missing or invalid.
+                      statusCode: 406
+                      message: The accept header is missing or invalid
               example:
-                code: NOT_ACCEPTABLE
-                message: The Accept header is missing or invalid.
+                statusCode: 406
+                message: The accept header is missing or invalid
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -882,11 +840,11 @@ paths:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
                   - description: The Accept header is missing or invalid.
                     example:
-                      code: NOT_ACCEPTABLE
-                      message: The Accept header is missing or invalid.
+                      statusCode: 406
+                      message: The accept header is missing or invalid
               example:
-                code: NOT_ACCEPTABLE
-                message: The Accept header is missing or invalid.
+                statusCode: 406
+                message: The accept header is missing or invalid
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -986,11 +944,11 @@ paths:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
                   - description: The Accept header is missing or invalid.
                     example:
-                      code: NOT_ACCEPTABLE
-                      message: The Accept header is missing or invalid.
+                      statusCode: 406
+                      message: The accept header is missing or invalid
               example:
-                code: NOT_ACCEPTABLE
-                message: The Accept header is missing or invalid.
+                statusCode: 406
+                message: The accept header is missing or invalid
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -1064,20 +1022,6 @@ paths:
               example:
                 code: NOT_FOUND
                 message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
-        '406':
-          description: Not Acceptable
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: The Accept header is missing or invalid.
-                    example:
-                      code: NOT_ACCEPTABLE
-                      message: The Accept header is missing or invalid.
-              example:
-                code: NOT_ACCEPTABLE
-                message: The Accept header is missing or invalid.
         '413':
           description: Payload Too Large
           content:
@@ -1199,11 +1143,11 @@ paths:
                   - $ref: '#/components/schemas/AcceptHeaderInvalid'
                   - description: The Accept header is missing or invalid.
                     example:
-                      code: NOT_ACCEPTABLE
-                      message: The Accept header is missing or invalid.
+                      statusCode: 406
+                      message: The accept header is missing or invalid
               example:
-                code: NOT_ACCEPTABLE
-                message: The Accept header is missing or invalid.
+                statusCode: 406
+                message: The accept header is missing or invalid
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -1257,16 +1201,14 @@ components:
           description: The description of the error.
     AcceptHeaderInvalid:
       title: AcceptHeaderInvalid
-      description: The `Accept` header was not set to `application/vnd.hmrc.2.0+json` or `application/vnd.hmrc.2.0+json-xml`.
+      description: The `Accept` header was not set to `application/vnd.hmrc.2.0+json`.
       required:
-        - code
+        - statusCode
         - message
       type: object
       properties:
-        code:
-          enum:
-            - NOT_ACCEPTABLE
-          type: string
+        statusCode:
+          type: integer
         message:
           type: string
           description: The description of the error.
