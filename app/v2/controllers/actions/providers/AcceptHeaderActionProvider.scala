@@ -27,12 +27,12 @@ import scala.concurrent.ExecutionContext
 @ImplementedBy(classOf[AcceptHeaderActionProviderImpl])
 trait AcceptHeaderActionProvider {
 
-  def apply[R[_] <: Request[_]](): AcceptHeaderAction[R]
+  def apply[R[_] <: Request[_]](acceptOnlyJson: Boolean): AcceptHeaderAction[R]
 
 }
 
 class AcceptHeaderActionProviderImpl @Inject() ()(implicit ec: ExecutionContext) extends AcceptHeaderActionProvider {
 
-  def apply[R[_] <: Request[_]](): AcceptHeaderAction[R] = new AcceptHeaderActionImpl[R]
+  def apply[R[_] <: Request[_]](acceptOnlyJson: Boolean): AcceptHeaderAction[R] = new AcceptHeaderActionImpl[R](acceptOnlyJson: Boolean)
 
 }

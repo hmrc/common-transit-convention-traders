@@ -31,13 +31,17 @@ import scala.concurrent.Future
 
 trait AcceptHeaderAction[R[_] <: Request[_]] extends ActionRefiner[R, R]
 
-class AcceptHeaderActionImpl[R[_] <: Request[_]] @Inject() (implicit val executionContext: ExecutionContext) extends AcceptHeaderAction[R] {
+class AcceptHeaderActionImpl[R[_] <: Request[_]] @Inject() (acceptOnlyJson: Boolean)(implicit val executionContext: ExecutionContext)
+    extends AcceptHeaderAction[R] {
 
-  private lazy val acceptedHeaders = Seq(
-    VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
-    VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML,
-    VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
-  )
+  private lazy val acceptedHeaders =
+    if (acceptOnlyJson) Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)
+    else
+      Seq(
+        VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
+        VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML,
+        VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
+      )
 
   override protected def refine[A](request: R[A]): Future[Either[Result, R[A]]] =
     request.headers.get(HeaderNames.ACCEPT) match {
@@ -47,7 +51,7 @@ class AcceptHeaderActionImpl[R[_] <: Request[_]] @Inject() (implicit val executi
           Left(
             NotAcceptable(
               Json.toJson(
-                PresentationError.notAcceptableError("Accept header is required!")
+                PresentationError.notAcceptableError("The Accept header is missing or invalid.")
               )
             )
           )
@@ -56,6 +60,6 @@ class AcceptHeaderActionImpl[R[_] <: Request[_]] @Inject() (implicit val executi
 
   private def checkAcceptHeader[A](acceptHeaderValue: String, request: R[A]): Either[Result, R[A]] =
     if (acceptedHeaders.contains(acceptHeaderValue)) Right(request)
-    else Left(NotAcceptable(Json.toJson(PresentationError.notAcceptableError(s"Accept header $acceptHeaderValue is not supported!"))))
+    else Left(NotAcceptable(Json.toJson(PresentationError.notAcceptableError("The Accept header is missing or invalid."))))
 
 }
