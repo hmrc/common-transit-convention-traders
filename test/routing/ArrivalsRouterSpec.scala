@@ -68,21 +68,27 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
     .get
 
   "route to the version 2 controller" - {
-    def executeTest(callValue: Call, sutValue: => Action[Source[ByteString, _]], expectedStatus: Int) = {
-      val arrivalsHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
-      )
+    def executeTest(callValue: Call, sutValue: => Action[Source[ByteString, _]], expectedStatus: Int) =
+      Seq(
+        Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON),
+        Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML),
+        Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)
+      ).foreach {
+        acceptHeaderValue =>
+          val arrivalsHeaders = FakeHeaders(
+            Seq(HeaderNames.ACCEPT -> acceptHeaderValue.get, HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+          )
 
-      s"when the accept header equals application/vnd.hmrc.2.0+json, it returns status code $expectedStatus" in {
+          s"when the accept header equals ${acceptHeaderValue.getOrElse("nothing")}, it returns status code $expectedStatus" in {
 
-        val request =
-          FakeRequest(method = callValue.method, uri = callValue.url, body = <test></test>, headers = arrivalsHeaders)
-        val result = call(sutValue, request)
+            val request =
+              FakeRequest(method = callValue.method, uri = callValue.url, body = <test></test>, headers = arrivalsHeaders)
+            val result = call(sutValue, request)
 
-        status(result) mustBe expectedStatus
-        contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
+            status(result) mustBe expectedStatus
+            contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
+          }
       }
-    }
 
     "when creating an arrival notification" - executeTest(routes.ArrivalsRouter.createArrivalNotification(), sut.createArrivalNotification(), ACCEPTED)
 
