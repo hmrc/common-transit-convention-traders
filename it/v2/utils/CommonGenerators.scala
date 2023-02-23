@@ -26,7 +26,6 @@ import v2.models.responses.BoxResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
-import v2.models.responses.UpscanInitiateResponse
 
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -103,7 +102,7 @@ trait CommonGenerators {
         offsetDateTime <- arbitrary[OffsetDateTime]
         messageType    <- arbitrary[MessageType]
         status         <- Gen.oneOf(MessageStatus.statusValues)
-      } yield MessageSummary(id, offsetDateTime, messageType, None, status)
+      } yield MessageSummary(id, offsetDateTime, messageType, None, Some(status))
     }
 
   implicit lazy val arbitraryBoxId: Arbitrary[BoxId] = Arbitrary {

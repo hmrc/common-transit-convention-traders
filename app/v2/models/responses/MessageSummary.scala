@@ -35,14 +35,14 @@ object MessageSummary {
       (JsPath \ "received").read[OffsetDateTime] and
       (JsPath \ "messageType").read[MessageType] and
       (JsPath \ "body").readNullable[XmlPayload] and
-      (JsPath \ "status").read[MessageStatus])(MessageSummary.apply _)
+      (JsPath \ "status").readNullable[MessageStatus])(MessageSummary.apply _)
 
   implicit val messageSummaryWrites: OWrites[MessageSummary] =
     ((JsPath \ "id").write[MessageId] and
       (JsPath \ "received").write[OffsetDateTime] and
       (JsPath \ "messageType").write[MessageType] and
       (JsPath \ "body").writeNullable[Payload] and
-      (JsPath \ "status").write[MessageStatus])(unlift(MessageSummary.unapply))
+      (JsPath \ "status").writeNullable[MessageStatus])(unlift(MessageSummary.unapply))
 
 }
 
@@ -51,5 +51,5 @@ case class MessageSummary(
   received: OffsetDateTime,
   messageType: MessageType,
   body: Option[Payload],
-  status: MessageStatus
+  status: Option[MessageStatus]
 )

@@ -32,13 +32,12 @@ object HateoasMovementMessageResponse extends HateoasResponse {
       movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
     )
 
-    val jsObject1 = if (messageSummary.status == MessageStatus.Pending) {
+    val jsObject1 = if (messageSummary.status.contains(MessageStatus.Pending)) {
       Json.obj(
         "_links"                          -> jsLinksObject,
         "id"                              -> messageId.value,
         s"${movementType.movementType}Id" -> movementId.value,
-        "received"                        -> messageSummary.received,
-        "status"                          -> messageSummary.status
+        "received"                        -> messageSummary.received
       )
     } else {
       Json.obj(
@@ -46,12 +45,15 @@ object HateoasMovementMessageResponse extends HateoasResponse {
         "id"                              -> messageId.value,
         s"${movementType.movementType}Id" -> movementId.value,
         "received"                        -> messageSummary.received,
-        "type"                            -> messageSummary.messageType,
-        "status"                          -> messageSummary.status
+        "type"                            -> messageSummary.messageType
       )
     }
 
-    jsObject1 ++ messageSummary.body
+    jsObject1 ++ messageSummary.status
+      .map(
+        status => Json.obj("status" -> Json.toJson(status))
+      )
+      .getOrElse(Json.obj()) ++ messageSummary.body
       .map(
         payload => Json.obj("body" -> payload.asJson)
       )

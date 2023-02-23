@@ -39,24 +39,26 @@ object HateoasMovementMessageIdsResponse extends HateoasResponse {
             "self"                    -> Json.obj("href" -> getMessageUri(movementId, message.id, movementType)),
             movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
           )
-          if (message.status == MessageStatus.Pending) {
-            Json.obj(
-              "_links"                          -> jsMessageLinksObject,
-              "id"                              -> message.id.value,
-              s"${movementType.movementType}Id" -> movementId.value,
-              "received"                        -> message.received,
-              "status"                          -> message.status
+          (if (message.status.contains(MessageStatus.Pending)) {
+             Json.obj(
+               "_links"                          -> jsMessageLinksObject,
+               "id"                              -> message.id.value,
+               s"${movementType.movementType}Id" -> movementId.value,
+               "received"                        -> message.received
+             )
+           } else {
+             Json.obj(
+               "_links"                          -> jsMessageLinksObject,
+               "id"                              -> message.id.value,
+               s"${movementType.movementType}Id" -> movementId.value,
+               "received"                        -> message.received,
+               "type"                            -> message.messageType
+             )
+           }) ++ message.status
+            .map(
+              status => Json.obj("status" -> Json.toJson(status))
             )
-          } else {
-            Json.obj(
-              "_links"                          -> jsMessageLinksObject,
-              "id"                              -> message.id.value,
-              s"${movementType.movementType}Id" -> movementId.value,
-              "received"                        -> message.received,
-              "type"                            -> message.messageType,
-              "status"                          -> message.status
-            )
-          }
+            .getOrElse(Json.obj())
       }
     )
 
