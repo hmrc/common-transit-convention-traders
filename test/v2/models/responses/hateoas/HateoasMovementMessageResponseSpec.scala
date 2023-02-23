@@ -53,7 +53,7 @@ class HateoasMovementMessageResponseSpec extends AnyFreeSpec with Matchers with 
         dateTime,
         MessageType.DeclarationData,
         Some(JsonPayload(jsonString)),
-        MessageStatus.Success
+        Some(MessageStatus.Success)
       )
 
       val actual = HateoasMovementMessageResponse(departureId, messageId, response, movementType)
@@ -82,7 +82,7 @@ class HateoasMovementMessageResponseSpec extends AnyFreeSpec with Matchers with 
         dateTime,
         MessageType.DeclarationData,
         Some(XmlPayload(body)),
-        MessageStatus.Success
+        Some(MessageStatus.Success)
       )
 
       val actual = HateoasMovementMessageResponse(movementId, messageId, response, movementType)
@@ -111,7 +111,7 @@ class HateoasMovementMessageResponseSpec extends AnyFreeSpec with Matchers with 
         dateTime,
         MessageType.DeclarationData,
         Some(XmlPayload(body)),
-        MessageStatus.Pending
+        Some(MessageStatus.Pending)
       )
 
       val actual = HateoasMovementMessageResponse(movementId, messageId, response, movementType)
