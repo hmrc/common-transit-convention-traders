@@ -181,7 +181,7 @@ class MovementsServiceSpec
         now,
         MessageType.DeclarationData,
         Some(XmlPayload("<test></test>")),
-        MessageStatus.Success
+        Some(MessageStatus.Success)
       )
 
       when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()))(any(), any()))
@@ -533,7 +533,7 @@ class MovementsServiceSpec
         now,
         MessageType.ArrivalNotification,
         Some(XmlPayload("<test></test>")),
-        MessageStatus.Success
+        Some(MessageStatus.Success)
       )
 
       when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()))(any(), any()))

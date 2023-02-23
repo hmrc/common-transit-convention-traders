@@ -17,7 +17,6 @@
 package v2.models.responses.hateoas
 
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -54,8 +53,9 @@ class HateoasMovementMessageIdsResponseSpec
         arbitrary[MessageSummary]
       ) {
         (departureId, response) =>
-          val responses = Seq(response.copy(status = MessageStatus.Processing))
-          val actual    = HateoasMovementMessageIdsResponse(departureId, responses, dateTime, MovementType.Departure)
+          val responses = Seq(response.copy(status = Some(MessageStatus.Processing)))
+
+          val actual = HateoasMovementMessageIdsResponse(departureId, responses, dateTime, MovementType.Departure)
 
           val expected = Json.obj(
             "_links" -> Json.obj(
@@ -86,7 +86,7 @@ class HateoasMovementMessageIdsResponseSpec
         arbitrary[MessageSummary]
       ) {
         (departureId, response) =>
-          val responses = Seq(response.copy(status = MessageStatus.Pending))
+          val responses = Seq(response.copy(status = Some(MessageStatus.Pending)))
           val actual    = HateoasMovementMessageIdsResponse(departureId, responses, dateTime, MovementType.Departure)
 
           val expected = Json.obj(

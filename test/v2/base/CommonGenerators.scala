@@ -76,7 +76,7 @@ trait CommonGenerators {
       body        <- Gen.option(Gen.alphaNumStr.map(XmlPayload(_)))
       messageId   <- genShortUUID.map(MessageId(_))
       status      <- Gen.oneOf(MessageStatus.statusValues)
-    } yield MessageSummary(messageId, received, messageType, body, status)
+    } yield MessageSummary(messageId, received, messageType, body, Some(status))
   }
 
   implicit lazy val arbitraryMovementId: Arbitrary[MovementId] = Arbitrary {
