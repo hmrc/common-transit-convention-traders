@@ -29,14 +29,20 @@ import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.XmlPayload
 import v2.models.request.MessageType
+import v2.models.responses.UpscanResponse.DownloadUrl
+import v2.models.responses.UpscanResponse.FileStatus
+import v2.models.responses.UpscanResponse.Reference
 import v2.models.responses.BoxResponse
+import v2.models.responses.FailureDetails
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
 import v2.models.responses.UpdateMovementResponse
+import v2.models.responses.UploadDetails
 import v2.models.responses.UpscanFormTemplate
 import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.UpscanReference
+import v2.models.responses.UpscanResponse
 
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -144,6 +150,32 @@ trait CommonGenerators {
     for {
       messageId <- arbitrary[MessageId]
     } yield UpdateMovementResponse(messageId)
+  }
+
+  implicit lazy val arbitraryUploadDetails: Arbitrary[UploadDetails] = Arbitrary {
+    for {
+      fileName     <- Gen.alphaNumStr
+      fileMimeType <- Gen.alphaNumStr
+      checksum     <- Gen.alphaNumStr
+      size         <- Gen.long
+    } yield UploadDetails(fileName, fileMimeType, Instant.now(), checksum, size)
+  }
+
+  implicit lazy val arbitraryFailureDetails: Arbitrary[FailureDetails] = Arbitrary {
+    for {
+      failureReason <- Gen.alphaNumStr
+      message       <- Gen.alphaNumStr
+    } yield FailureDetails(failureReason, message)
+  }
+
+  implicit def arbitraryUpscanResponse(isSuccess: Boolean): Arbitrary[UpscanResponse] = Arbitrary {
+    for {
+      reference  <- Gen.alphaNumStr
+      fileStatus <- Gen.oneOf(FileStatus.values)
+      downloadUrl    = if (isSuccess) Gen.alphaNumStr.sample.map(DownloadUrl(_)) else None
+      uploadDetails  = if (isSuccess) arbitraryUploadDetails.arbitrary.sample else None
+      failureDetails = if (!isSuccess) arbitraryFailureDetails.arbitrary.sample else None
+    } yield UpscanResponse(Reference(reference), fileStatus, downloadUrl, uploadDetails, failureDetails)
   }
 
 }
