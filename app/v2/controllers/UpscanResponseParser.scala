@@ -28,30 +28,29 @@ import scala.concurrent.Future
 trait UpscanResponseParser {
   self: BaseController with Logging =>
 
-  def parseAndLogUpscanResponse(responseBody: JsValue): EitherT[Future, PresentationError, UpscanResponse] = {
+  def parseAndLogUpscanResponse(responseBody: JsValue): EitherT[Future, PresentationError, UpscanResponse] =
     EitherT {
       responseBody
         .validate[UpscanResponse]
-        .map {
-          upscanResponse =>
-            logResponse(upscanResponse)
-            Future.successful(Right(upscanResponse))
-        }
+        .map(upscanResponse => evaluate(upscanResponse))
         .getOrElse {
           logger.error("Unable to parse unexpected response from Upscan")
           Future.successful(Left(PresentationError.badRequestError("Unexpected Upscan callback response")))
         }
     }
-  }
 
-  private def logResponse(upscanResponse: UpscanResponse) =
+  private def evaluate(upscanResponse: UpscanResponse) =
     upscanResponse match {
-      case UpscanResponse(_, reference, _, _, None) =>
+      case UpscanResponse(reference, _, Some(_), Some(_), None) =>
         logger.info(s"Received a successful response from Upscan callback for the following reference: $reference")
-      case UpscanResponse(_, reference, _, None, failureDetails) =>
+        Future.successful(Right(upscanResponse))
+      case UpscanResponse(reference, _, None, None, Some(failureDetails)) =>
         logger.warn(
-          s"Received a failure response from Upscan callback for the following reference: $reference. Failure reason: ${failureDetails.get.failureReason}. Failure message: ${failureDetails.get.message}"
+          s"Received a failure response from Upscan callback for the following reference: $reference. Failure reason: ${failureDetails.failureReason}. Failure message: ${failureDetails.message}"
         )
+        Future.successful(Right(upscanResponse))
+      case _ =>
+        logger.error("Unable to parse unexpected response from Upscan")
+        Future.successful(Left(PresentationError.badRequestError("Unexpected Upscan callback response")))
     }
-
 }

@@ -63,6 +63,17 @@ class UpscanResponseParserSpec extends AnyFreeSpec with ScalaFutures with Matche
         }
     }
 
+    "given a successful response in the callback without DownloadUrl, returns a PresentationError" in forAll(
+      arbitraryUpscanResponseWithOutDownloadUrl().arbitrary
+    ) {
+      successUpscanResponse =>
+        val json = Json.toJson(successUpscanResponse)
+        whenReady(testController.parseAndLogUpscanResponse(json).value) {
+          either =>
+            either mustBe Left(PresentationError.badRequestError("Unexpected Upscan callback response"))
+        }
+    }
+
     "given a response in the callback that we cannot deserialize, returns a PresentationError" in {
       whenReady(testController.parseAndLogUpscanResponse(Json.obj("reference" -> "abc")).value) {
         either =>

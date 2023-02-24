@@ -178,4 +178,14 @@ trait CommonGenerators {
     } yield UpscanResponse(Reference(reference), fileStatus, downloadUrl, uploadDetails, failureDetails)
   }
 
+  implicit def arbitraryUpscanResponseWithOutDownloadUrl(): Arbitrary[UpscanResponse] = Arbitrary {
+    for {
+      reference  <- Gen.alphaNumStr
+      fileStatus <- Gen.oneOf(FileStatus.values)
+      downloadUrl    = None
+      uploadDetails  = arbitraryUploadDetails.arbitrary.sample
+      failureDetails = None
+    } yield UpscanResponse(Reference(reference), fileStatus, downloadUrl, uploadDetails, failureDetails)
+  }
+
 }
