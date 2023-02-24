@@ -29,7 +29,6 @@ trait UpscanResponseParser {
   self: BaseController with Logging =>
 
   def parseAndLogUpscanResponse(responseBody: JsValue): EitherT[Future, PresentationError, UpscanResponse] = {
-    println("parseAndLogUpscanResponse...")
     EitherT {
       responseBody
         .validate[UpscanResponse]
