@@ -100,6 +100,7 @@ class V2MovementsControllerImpl @Inject() (
     with VersionedRouting
     with ErrorTranslator
     with ContentTypeRouting
+    with UpscanResponseParser
     with HasActionMetrics {
 
   lazy val sCounter: Counter = counter(s"success-counter")
@@ -337,9 +338,12 @@ class V2MovementsControllerImpl @Inject() (
   }
 
   def attachLargeMessage(movementId: MovementId, messageId: MessageId): Action[JsValue] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = true)).async(parse.json) {
+    Action.async(parse.json) {
       implicit request =>
-        Future.successful(Ok)
+        parseAndLogUpscanResponse(request.body).fold[Result](
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          _ => Ok
+        )
     }
 
   private def updateAndSendToEIS(movementId: MovementId, movementType: MovementType, messageType: MessageType, source: Source[ByteString, _])(implicit

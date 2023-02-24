@@ -131,6 +131,31 @@ class V2MovementsControllerSpec
   val CC013Cjson = Json.stringify(Json.obj("CC013" -> Json.obj("field" -> "value")))
   val CC044Cjson = Json.stringify(Json.obj("CC044" -> Json.obj("field" -> "value")))
 
+  val jsonSuccessUpscanResponse = Json.obj(
+    "reference"   -> "11370e18-6e24-453e-b45a-76d3e32ea33d",
+    "downloadUrl" -> "https://bucketName.s3.eu-west-2.amazonaws.com?1235676",
+    "fileStatus"  -> "READY",
+    "uploadDetails" -> Json.obj(
+      "fileName"        -> "test.pdf",
+      "fileMimeType"    -> "application/pdf",
+      "uploadTimestamp" -> "2018-04-24T09:30:00Z",
+      "checksum"        -> "396f101dd52e8b2ace0dcf5ed09b1d1f030e608938510ce46e7a5c7a4e775100",
+      "size"            -> 987
+    )
+  )
+
+  val jsonInvalidUpscanResponse = Json.obj(
+    "reference"   -> "11370e18-6e24-453e-b45a-76d3e32ea33d",
+    "downloadUrl" -> "https://bucketName.s3.eu-west-2.amazonaws.com?1235676",
+    "uploadDetails" -> Json.obj(
+      "fileName"        -> "test.pdf",
+      "fileMimeType"    -> "application/pdf",
+      "uploadTimestamp" -> "2018-04-24T09:30:00Z",
+      "checksum"        -> "396f101dd52e8b2ace0dcf5ed09b1d1f030e608938510ce46e7a5c7a4e775100",
+      "size"            -> 987
+    )
+  )
+
   val mockValidationService           = mock[ValidationService]
   val mockMovementsPersistenceService = mock[MovementsService]
   val mockRouterService               = mock[RouterService]
@@ -3014,15 +3039,15 @@ class V2MovementsControllerSpec
     }
   }
 
-  "POST /movements/:movementId/messages" - {
+  "POST /movements/:movementId/messages/:messageId" - {
 
     "should return ok" in forAll(arbitraryMovementId.arbitrary, arbitraryMessageId.arbitrary) {
       (movementId, messageId) =>
         val request = FakeRequest(
           POST,
           routes.V2MovementsController.attachLargeMessage(movementId, messageId).url,
-          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
-          JsString("upscan resonse")
+          headers = FakeHeaders(),
+          jsonSuccessUpscanResponse
         )
 
         val result = sut.attachLargeMessage(movementId, messageId)(request)
@@ -3030,40 +3055,18 @@ class V2MovementsControllerSpec
         status(result) mustBe OK
     }
 
-    "must return NOT_ACCEPTABLE when the accept type is invalid" in forAll(
-      arbitraryMovementId.arbitrary,
-      arbitraryMessageId.arbitrary
-    ) {
-
+    "should return Bad Request" in forAll(arbitraryMovementId.arbitrary, arbitraryMessageId.arbitrary) {
       (movementId, messageId) =>
         val request = FakeRequest(
           POST,
           routes.V2MovementsController.attachLargeMessage(movementId, messageId).url,
-          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json123")),
-          JsString("upscan response")
+          headers = FakeHeaders(),
+          jsonInvalidUpscanResponse
         )
 
-        val result = sutWithAcceptHeader.attachLargeMessage(movementId, messageId)(request)
+        val result = sut.attachLargeMessage(movementId, messageId)(request)
 
-        status(result) mustBe NOT_ACCEPTABLE
-    }
-
-    s"must return NOT_ACCEPTABLE when the accept type is ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN}" in forAll(
-      arbitraryMovementId.arbitrary,
-      arbitraryMessageId.arbitrary
-    ) {
-
-      (movementId, messageId) =>
-        val request = FakeRequest(
-          POST,
-          routes.V2MovementsController.attachLargeMessage(movementId, messageId).url,
-          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)),
-          JsString("upscan response")
-        )
-
-        val result = sutWithAcceptHeader.attachLargeMessage(movementId, messageId)(request)
-
-        status(result) mustBe NOT_ACCEPTABLE
+        status(result) mustBe BAD_REQUEST
     }
 
   }
