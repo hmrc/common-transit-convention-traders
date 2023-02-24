@@ -34,22 +34,21 @@ trait UpscanResponseParser {
         .validate[UpscanResponse]
         .map {
           upscanResponse =>
-            logResponse(Some(upscanResponse))
+            logResponse(upscanResponse)
             Future.successful(Right(upscanResponse))
         }
         .getOrElse {
-          logResponse(None)
+          logger.error("Unable to parse unexpected response from Upscan")
           Future.successful(Left(PresentationError.badRequestError("Unexpected Upscan callback response")))
         }
     }
   }
 
-  private def logResponse(upscanResponse: Option[UpscanResponse]) =
+  private def logResponse(upscanResponse: UpscanResponse) =
     upscanResponse match {
-      case None => logger.error("Unable to parse unexpected response from Upscan")
-      case Some(UpscanResponse(_, reference, _, _, None)) =>
+      case UpscanResponse(_, reference, _, _, None) =>
         logger.info(s"Received a successful response from Upscan callback for the following reference: $reference")
-      case Some(UpscanResponse(_, reference, _, None, failureDetails)) =>
+      case UpscanResponse(_, reference, _, None, failureDetails) =>
         logger.warn(
           s"Received a failure response from Upscan callback for the following reference: $reference. Failure reason: ${failureDetails.get.failureReason}. Failure message: ${failureDetails.get.message}"
         )
