@@ -22,7 +22,7 @@ import org.scalatest.matchers.must.Matchers
 
 import scala.concurrent.Future
 
-class FutureConversionSpec extends AnyFreeSpec with Matchers {
+class FileStreamTargetSpec extends AnyFreeSpec with Matchers {
 
   "Conversion to Future returns" - {
     "the same future for the Future -> Future conversion" in {

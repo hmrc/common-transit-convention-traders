@@ -32,7 +32,9 @@ trait UpscanResponseParser {
     EitherT {
       responseBody
         .validate[UpscanResponse]
-        .map(upscanResponse => evaluate(upscanResponse))
+        .map(
+          upscanResponse => evaluate(upscanResponse)
+        )
         .getOrElse {
           logger.error("Unable to parse unexpected response from Upscan")
           Future.successful(Left(PresentationError.badRequestError("Unexpected Upscan callback response")))

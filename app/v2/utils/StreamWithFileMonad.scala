@@ -16,23 +16,13 @@
 
 package v2.utils
 
-import cats.data.EitherT
+import akka.stream.IOResult
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-sealed trait FutureConversion[A] {
-  def toFuture(a: A): Future[_]
-}
+abstract class StreamWithFileMonad[A[_]] {
 
-object FutureConversions extends FutureConversions
+  def wrapSource(sourceFuture: Future[IOResult])(implicit ec: ExecutionContext): A[IOResult]
 
-trait FutureConversions {
-
-  implicit def eitherTInstance[L, R]: FutureConversion[EitherT[Future, L, R]] = new FutureConversion[EitherT[Future, L, R]] {
-    override def toFuture(a: EitherT[Future, L, R]): Future[_] = a.value
-  }
-
-  implicit def futureResultInstance[A]: FutureConversion[Future[A]] = new FutureConversion[Future[A]] {
-    override def toFuture(a: Future[A]): Future[_] = a
-  }
 }

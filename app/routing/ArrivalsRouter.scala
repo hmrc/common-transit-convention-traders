@@ -34,16 +34,17 @@ import v2.models.MovementType
 import v2.models.{MessageId => V2MessageId}
 import v2.models.{MovementId => V2ArrivalId}
 import models.domain.{ArrivalId => V1ArrivalId}
-import v2.utils.PreMaterialisedFutureProvider
 
 import java.time.OffsetDateTime
+import scala.annotation.nowarn
 
+// This deprecation seems to be a red herring as it triggers on runIfBound
+@nowarn("cat=deprecation&msg=method right in class Either is deprecated \\(since 2.13.0\\):")
 class ArrivalsRouter @Inject() (
   val controllerComponents: ControllerComponents,
   v1Arrivals: V1ArrivalMovementController,
   v2Arrivals: V2MovementsController,
-  v1ArrivalMessages: V1ArrivalMessagesController,
-  val preMaterialisedFutureProvider: PreMaterialisedFutureProvider
+  v1ArrivalMessages: V1ArrivalMessagesController
 )(implicit
   val materializer: Materializer
 ) extends BaseController
