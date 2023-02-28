@@ -16,9 +16,14 @@
 
 package v2.utils
 
+import akka.http.scaladsl.model.Uri.Path
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
+import uk.gov.hmrc.objectstore.client.Md5Hash
+import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
+import uk.gov.hmrc.objectstore.client.Path.Directory
+import uk.gov.hmrc.objectstore.client.Path.File
 import v2.models._
 import v2.models.request.MessageType
 import v2.models.request.PushNotificationsAssociation
@@ -122,4 +127,13 @@ trait CommonGenerators {
       messageId  <- arbitrary[MessageId]
     } yield MovementResponse(movementId, messageId)
   }
+
+  implicit lazy val arbitraryObjectSummaryWithMd5: Arbitrary[ObjectSummaryWithMd5] = Arbitrary {
+    for {
+      contentLen <- Gen.long
+      md5Hash    <- Gen.alphaNumStr.map(Md5Hash.apply)
+      instant = Instant.now()
+    } yield ObjectSummaryWithMd5(File(Directory("/common-transit-convention-traders"), "conversationid-date"), contentLen, md5Hash, instant)
+  }
+
 }

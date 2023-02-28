@@ -16,22 +16,16 @@
 
 package v2.services
 
-import akka.stream.Materializer
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
-import v2.connectors.ConversionConnector
+import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
 import v2.connectors.ObjectStoreConnector
-import v2.models.HeaderType
-import v2.models.HeaderTypes
 import v2.models.MessageId
 import v2.models.MovementId
-import v2.models.errors.ConversionError
 import v2.models.errors.ObjectStoreError
-import v2.models.request.MessageType
+import v2.models.responses.UpscanResponse.DownloadUrl
 
 import java.net.URL
 import javax.inject.Inject
@@ -43,20 +37,20 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[ObjectStoreServiceImpl])
 trait ObjectStoreService {
 
-  def addMessage(upscanUrl: URL, movementId: MovementId, messageId: MessageId)(implicit
+  def addMessage(upscanUrl: DownloadUrl, movementId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, ConversionError, Source[ByteString, _]]
+  ): EitherT[Future, ObjectStoreError, ObjectSummaryWithMd5]
 
 }
 
 @Singleton
 class ObjectStoreServiceImpl @Inject() (objectStoreConnector: ObjectStoreConnector) extends ObjectStoreService with Logging {
 
-  override def addMessage(upscanUrl: URL, movementId: MovementId, messageId: MessageId)(implicit
+  override def addMessage(upscanUrl: DownloadUrl, movementId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, ConversionError, Source[ByteString, _]] =
+  ): EitherT[Future, ObjectStoreError, ObjectSummaryWithMd5] =
     EitherT(
       objectStoreConnector
         .postFromUrl(upscanUrl, movementId, messageId)
@@ -66,7 +60,7 @@ class ObjectStoreServiceImpl @Inject() (objectStoreConnector: ObjectStoreConnect
         }
         .recover {
           case NonFatal(e) =>
-            Left(ConversionError.UnexpectedError(thr = Some(e)))
+            Left(ObjectStoreError.UnexpectedError(thr = Some(e)))
         }
     )
 

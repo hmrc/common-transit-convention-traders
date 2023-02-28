@@ -16,48 +16,42 @@
 
 package v2.connectors
 
-import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import config.AppConfig
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.objectstore.client.play.Implicits._
-import uk.gov.hmrc.objectstore.client.Md5Hash
 import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
 import uk.gov.hmrc.objectstore.client.Path
-import uk.gov.hmrc.objectstore.client.RetentionPeriod
 import uk.gov.hmrc.objectstore.client.play.FutureEither
 import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClientEither
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.responses.UpscanResponse.DownloadUrl
 
 import java.net.URL
 import java.time.Clock
-import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
 
 @ImplementedBy(classOf[ObjectStoreConnectorImpl])
 trait ObjectStoreConnector {
 
-  def postFromUrl(upscanUrl: URL, movementId: MovementId, messageId: MessageId)(implicit
+  def postFromUrl(upscanUrl: DownloadUrl, movementId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): FutureEither[ObjectSummaryWithMd5]
 
 }
 
-class ObjectStoreConnectorImpl @Inject() (client: PlayObjectStoreClientEither, httpClientV2: HttpClientV2, appConfig: AppConfig, clock: Clock)
-    extends ObjectStoreConnector
-    with V2BaseConnector {
+class ObjectStoreConnectorImpl @Inject() (client: PlayObjectStoreClientEither, clock: Clock) extends ObjectStoreConnector with V2BaseConnector {
 
-  val dateTimeFormatter = DateTimeFormatter.ofPattern("YYYYMMdd-HHmmss")
+  private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
 
-  override def postFromUrl(upscanUrl: URL, movementId: MovementId, messageId: MessageId)(implicit
+  override def postFromUrl(upscanUrl: DownloadUrl, movementId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): FutureEither[ObjectSummaryWithMd5] = {
@@ -65,7 +59,7 @@ class ObjectStoreConnectorImpl @Inject() (client: PlayObjectStoreClientEither, h
     val formattedDateTime = OffsetDateTime.ofInstant(clock.instant, ZoneOffset.UTC).format(dateTimeFormatter)
 
     client.uploadFromUrl(
-      from = upscanUrl,
+      from = new URL(upscanUrl.value),
       to = Path.Directory("common-transit-convention-traders").file(s"$movementId-$messageId-$formattedDateTime.xml")
     )
 

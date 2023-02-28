@@ -35,6 +35,15 @@ trait UpscanResponseParser {
         .validate[UpscanResponse]
         .map {
           upscanResponse =>
+            upscanResponse match {
+              case UpscanResponse(reference, fileStatus, Some(downloadUrl), uploadDetails, _) => //log
+                Future.successful(Right(upscanResponse))
+              case UpscanResponse(reference, fileStatus, Some(downloadUrl), _, errorDetails) => //log
+                Future.successful(Right(upscanResponse))
+
+              case _ => Future.successful(Left(PresentationError.badRequestError("Unexpected Upscan callback response")))
+
+            }
             logResponse(Some(upscanResponse))
             Future.successful(Right(upscanResponse))
         }

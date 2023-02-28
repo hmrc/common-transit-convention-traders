@@ -38,6 +38,7 @@ import play.api.mvc.Action
 import play.api.mvc._
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.AcceptHeaderActionProvider
@@ -49,12 +50,14 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
+import v2.models.errors.ObjectStoreError
 import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
 import v2.models.responses.BoxResponse
 import v2.models.responses.LargeMessageAuditRequest
 import v2.models.responses.UpdateMovementResponse
+import v2.models.responses.UpscanResponse
 import v2.models.responses.hateoas._
 import v2.services._
 import v2.utils.PreMaterialisedFutureProvider
@@ -91,6 +94,7 @@ class V2MovementsControllerImpl @Inject() (
   jsonParsingService: JsonMessageParsingService,
   responseFormatterService: ResponseFormatterService,
   upscanService: UpscanService,
+  objectStoreService: ObjectStoreService,
   val preMaterialisedFutureProvider: PreMaterialisedFutureProvider
 )(implicit val materializer: Materializer, val temporaryFileCreator: TemporaryFileCreator)
     extends BaseController
@@ -200,7 +204,7 @@ class V2MovementsControllerImpl @Inject() (
         (for {
           movementResponse  <- movementsService.createMovement(request.eoriNumber, movementType, None).asPresentation
           upscanResponse    <- upscanService.upscanInitiate(movementResponse.movementId, movementResponse.messageId).asPresentation
-          boxResponseOption <- mapToBoxResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
+          boxResponseOption <- mapToOptionalResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
           auditResponse = Json.toJson(
             LargeMessageAuditRequest(
               movementResponse.movementId,
@@ -340,7 +344,17 @@ class V2MovementsControllerImpl @Inject() (
   def attachLargeMessage(movementId: MovementId, messageId: MessageId): Action[JsValue] =
     Action.async(parse.json) {
       implicit request =>
-        parseAndLogUpscanResponse(request.body).fold[Result](
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+        (for {
+          upscanResponse <- parseAndLogUpscanResponse(request.body)
+          objectStoreResponse <- mapToOptionalResponse[
+            ObjectStoreError,
+            ObjectSummaryWithMd5
+          ](
+            objectStoreService.addMessage(upscanResponse.downloadUrl.get, movementId, messageId)
+          )
+        } yield objectStoreResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           _ => Ok
         )
@@ -377,8 +391,10 @@ class V2MovementsControllerImpl @Inject() (
     messageType: MessageType
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
     for {
-      movementResponse  <- movementsService.createMovement(request.eoriNumber, movementType, Some(source)).asPresentation
-      boxResponseOption <- mapToBoxResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
+      movementResponse <- movementsService.createMovement(request.eoriNumber, movementType, Some(source)).asPresentation
+      boxResponseOption <- mapToOptionalResponse[PushNotificationError, BoxResponse](
+        pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers)
+      )
       _ <- routerService
         .send(
           messageType,
@@ -390,11 +406,11 @@ class V2MovementsControllerImpl @Inject() (
         .asPresentation
     } yield HateoasNewMovementResponse(movementResponse, boxResponseOption, None, movementType)
 
-  private def mapToBoxResponse(
-    boxResponseEither: EitherT[Future, PushNotificationError, BoxResponse]
-  ): EitherT[Future, PresentationError, Option[BoxResponse]] =
-    EitherT[Future, PresentationError, Option[BoxResponse]] {
-      boxResponseEither.fold(
+  private def mapToOptionalResponse[E, R](
+    eitherT: EitherT[Future, E, R]
+  ): EitherT[Future, PresentationError, Option[R]] =
+    EitherT[Future, PresentationError, Option[R]] {
+      eitherT.fold(
         _ => Right(None),
         r => Right(Some(r))
       )

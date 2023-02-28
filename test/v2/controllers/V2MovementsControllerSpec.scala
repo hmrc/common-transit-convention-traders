@@ -81,6 +81,7 @@ import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
 import v2.models.responses.UpdateMovementResponse
+import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.hateoas._
 import v2.services._
 
@@ -164,6 +165,7 @@ class V2MovementsControllerSpec
   val mockXmlParsingService           = mock[XmlMessageParsingService]
   val mockJsonParsingService          = mock[JsonMessageParsingService]
   val mockResponseFormatterService    = mock[ResponseFormatterService]
+  val mockObjectStoreService          = mock[ObjectStoreService]
   val mockPushNotificationService     = mock[PushNotificationsService]
   val mockUpscanService               = mock[UpscanService]
   implicit val temporaryFileCreator   = SingletonTemporaryFileCreator
@@ -184,6 +186,7 @@ class V2MovementsControllerSpec
     mockJsonParsingService,
     mockResponseFormatterService,
     mockUpscanService,
+    mockObjectStoreService,
     FakePreMaterialisedFutureProvider
   )
 
@@ -203,6 +206,7 @@ class V2MovementsControllerSpec
     mockJsonParsingService,
     mockResponseFormatterService,
     mockUpscanService,
+    mockObjectStoreService,
     FakePreMaterialisedFutureProvider
   )
 
@@ -3041,21 +3045,51 @@ class V2MovementsControllerSpec
 
   "POST /movements/:movementId/messages/:messageId" - {
 
-    "should return ok" in forAll(arbitraryMovementId.arbitrary, arbitraryMessageId.arbitrary) {
-      (movementId, messageId) =>
-        val request = FakeRequest(
-          POST,
-          routes.V2MovementsController.attachLargeMessage(movementId, messageId).url,
-          headers = FakeHeaders(),
-          jsonSuccessUpscanResponse
-        )
+    "should return Ok when response from upscan is valid" - {
+      "and uploading to object-store succeeds" in forAll(arbitraryMovementId.arbitrary, arbitraryMessageId.arbitrary, arbitraryObjectSummaryWithMd5.arbitrary) {
+        (movementId, messageId, objectSummary) =>
+          when(
+            mockObjectStoreService.addMessage(any[String].asInstanceOf[DownloadUrl], any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(
+              any(),
+              any()
+            )
+          ).thenReturn(EitherT.rightT(objectSummary))
 
-        val result = sut.attachLargeMessage(movementId, messageId)(request)
+          val request = FakeRequest(
+            POST,
+            routes.V2MovementsController.attachLargeMessage(movementId, messageId).url,
+            headers = FakeHeaders(),
+            jsonSuccessUpscanResponse
+          )
 
-        status(result) mustBe OK
+          val result = sut.attachLargeMessage(movementId, messageId)(request)
+
+          status(result) mustBe OK
+      }
+
+      "and uploading to object-store fails" in forAll(arbitraryMovementId.arbitrary, arbitraryMessageId.arbitrary) {
+        (movementId, messageId) =>
+          when(
+            mockObjectStoreService.addMessage(any[String].asInstanceOf[DownloadUrl], any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(
+              any(),
+              any()
+            )
+          ).thenReturn(EitherT.leftT(ObjectStoreError.UnexpectedError(None)))
+
+          val request = FakeRequest(
+            POST,
+            routes.V2MovementsController.attachLargeMessage(movementId, messageId).url,
+            headers = FakeHeaders(),
+            jsonSuccessUpscanResponse
+          )
+
+          val result = sut.attachLargeMessage(movementId, messageId)(request)
+
+          status(result) mustBe OK
+      }
     }
 
-    "should return Bad Request" in forAll(arbitraryMovementId.arbitrary, arbitraryMessageId.arbitrary) {
+    "should return Bad Request if it cannot parse the upscan response" in forAll(arbitraryMovementId.arbitrary, arbitraryMessageId.arbitrary) {
       (movementId, messageId) =>
         val request = FakeRequest(
           POST,
