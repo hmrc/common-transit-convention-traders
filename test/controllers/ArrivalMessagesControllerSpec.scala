@@ -16,10 +16,10 @@
 
 package controllers
 
+import java.time.Clock
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
-
 import akka.util.ByteString
 import com.kenshoo.play.metrics.Metrics
 import connectors.ArrivalMessageConnector
@@ -70,11 +70,14 @@ class ArrivalMessagesControllerSpec
     with TestXml {
   private val mockMessageConnector: ArrivalMessageConnector = mock[ArrivalMessageConnector]
 
+  val mockClock = mock[Clock]
+
   override lazy val app = GuiceApplicationBuilder()
     .overrides(
       bind[Metrics].toInstance(new TestMetrics),
       bind[AuthAction].to[FakeAuthAction],
-      bind[ArrivalMessageConnector].toInstance(mockMessageConnector)
+      bind[ArrivalMessageConnector].toInstance(mockMessageConnector),
+      bind[Clock].toInstance(mockClock)
     )
     .build()
 

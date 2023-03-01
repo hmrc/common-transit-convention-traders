@@ -20,6 +20,8 @@ import com.google.inject.AbstractModule
 import utils.JsonHelper
 import utils.MessageTranslation
 
+import java.time.Clock
+
 class Module extends AbstractModule {
 
   override def configure(): Unit = {
@@ -27,6 +29,7 @@ class Module extends AbstractModule {
     bind(classOf[JsonHelper]).asEagerSingleton()
     bind(classOf[MessageTranslation]).asEagerSingleton()
     bind(classOf[CTCServicesConfig]).asEagerSingleton()
+    bind(classOf[Clock]).toInstance(Clock.systemUTC())
   }
 
 }

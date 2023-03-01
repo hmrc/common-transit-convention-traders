@@ -18,7 +18,6 @@ package v2.connectors
 
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
-import config.AppConfig
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.objectstore.client.play.Implicits._
@@ -32,6 +31,7 @@ import v2.models.responses.UpscanResponse.DownloadUrl
 
 import java.net.URL
 import java.time.Clock
+import javax.inject.Singleton
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -47,20 +47,22 @@ trait ObjectStoreConnector {
 
 }
 
-class ObjectStoreConnectorImpl @Inject() (client: PlayObjectStoreClientEither, clock: Clock) extends ObjectStoreConnector with V2BaseConnector {
+@Singleton
+class ObjectStoreConnectorImpl @Inject() (clock: Clock, client: PlayObjectStoreClientEither) extends ObjectStoreConnector with V2BaseConnector {
 
-  private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
+  private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC)
 
   override def postFromUrl(upscanUrl: DownloadUrl, movementId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): FutureEither[ObjectSummaryWithMd5] = {
 
-    val formattedDateTime = OffsetDateTime.ofInstant(clock.instant, ZoneOffset.UTC).format(dateTimeFormatter)
+    val now               = OffsetDateTime.ofInstant(clock.instant, ZoneOffset.UTC)
+    val formattedDateTime = dateTimeFormatter.format(now)
 
     client.uploadFromUrl(
       from = new URL(upscanUrl.value),
-      to = Path.Directory("common-transit-convention-traders").file(s"$movementId-$messageId-$formattedDateTime.xml")
+      to = Path.Directory("common-transit-convention-traders").file(s"${movementId.value}-${messageId.value}-$formattedDateTime.xml")
     )
 
   }

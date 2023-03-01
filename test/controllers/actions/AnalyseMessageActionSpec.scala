@@ -30,10 +30,13 @@ import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.test.Helpers._
 import play.api.test.FakeRequest
+
 import scala.xml.NodeSeq
 import play.api.mvc.AbstractController
 import play.api.test.Helpers
 import play.api.inject.bind
+
+import java.time.Clock
 
 class AnalyseMessageActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
@@ -54,11 +57,12 @@ class AnalyseMessageActionSpec extends AnyFreeSpec with Matchers with MockitoSug
   "AnalyseMessageAction must" - {
     "track message stats when given XML" in {
       val messageAnalyser = mock[MessageAnalyser]
+      val mockClock       = mock[Clock]
 
       doNothing().when(messageAnalyser).trackMessageStats(any())
 
       val application = GuiceApplicationBuilder()
-        .overrides(bind[MessageAnalyser].toInstance(messageAnalyser))
+        .overrides(bind[MessageAnalyser].toInstance(messageAnalyser), bind[Clock].toInstance(mockClock))
         .configure(
           "metrics.jvm" -> false
         )
@@ -76,11 +80,12 @@ class AnalyseMessageActionSpec extends AnyFreeSpec with Matchers with MockitoSug
 
     "ignore other request types" in {
       val messageAnalyser = mock[MessageAnalyser]
+      val mockClock       = mock[Clock]
 
       doNothing().when(messageAnalyser).trackMessageStats(any())
 
       val application = GuiceApplicationBuilder()
-        .overrides(bind[MessageAnalyser].toInstance(messageAnalyser))
+        .overrides(bind[MessageAnalyser].toInstance(messageAnalyser), bind[Clock].toInstance(mockClock))
         .configure(
           "metrics.jvm" -> false
         )

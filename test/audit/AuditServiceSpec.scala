@@ -33,6 +33,8 @@ import play.api.test.Helpers.running
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
+import java.time.Clock
+
 class AuditServiceSpec extends AnyFreeSpec with ScalaCheckPropertyChecks with BeforeAndAfterEach with MockitoSugar {
 
   protected def baseApplicationBuilder: GuiceApplicationBuilder =
@@ -44,6 +46,7 @@ class AuditServiceSpec extends AnyFreeSpec with ScalaCheckPropertyChecks with Be
   implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
   val mockAuditConnector: AuditConnector = mock[AuditConnector]
+  val mockClock                          = mock[Clock]
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -59,7 +62,7 @@ class AuditServiceSpec extends AnyFreeSpec with ScalaCheckPropertyChecks with Be
       forAll(Gen.oneOf(AuditType.values)) {
         auditType =>
           val application = baseApplicationBuilder
-            .overrides(bind[AuditConnector].toInstance(mockAuditConnector))
+            .overrides(bind[AuditConnector].toInstance(mockAuditConnector), bind[Clock].toInstance(mockClock))
             .build()
           running(application) {
             val auditService = application.injector.instanceOf[AuditService]

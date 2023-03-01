@@ -31,7 +31,6 @@ import play.api.libs.json.Json
 class HateoasArrivalMovementPostResponseMessageSpec
     extends AnyFreeSpec
     with Matchers
-    with GuiceOneAppPerSuite
     with OptionValues
     with ScalaFutures
     with MockitoSugar

@@ -189,13 +189,23 @@ trait CommonGenerators {
       lastModified      = Instant.now()
       formattedDateTime = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").format(lastModified)
       contentLen <- Gen.long
-      hash       <- Gen.alphaNumStr
+      hash       <- Gen.alphaNumStr.map(Md5Hash)
     } yield ObjectSummaryWithMd5(
       Path.Directory("common-transit-convention-traders").file(s"$movementId-$messageId-$formattedDateTime.xml"),
       contentLen,
-      Md5Hash(hash),
+      hash,
       lastModified
     )
+  }
+
+  implicit def arbitraryUpscanResponseWithOutDownloadUrl(): Arbitrary[UpscanResponse] = Arbitrary {
+    for {
+      reference  <- Gen.alphaNumStr
+      fileStatus <- Gen.oneOf(FileStatus.values)
+      downloadUrl    = None
+      uploadDetails  = arbitraryUploadDetails.arbitrary.sample
+      failureDetails = None
+    } yield UpscanResponse(Reference(reference), fileStatus, downloadUrl, uploadDetails, failureDetails)
   }
 
 }

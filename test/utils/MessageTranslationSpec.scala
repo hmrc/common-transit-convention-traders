@@ -18,14 +18,21 @@ package utils
 
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar.mock
+import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers.running
 
+import java.time.Clock
+
 class MessageTranslationSpec extends AnyFreeSpec with Matchers {
+
+  val mockClock = mock[Clock]
 
   val appBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
+      .overrides(bind[Clock].toInstance(mockClock))
       .configure(
         "message-translation-file" -> "TestMessageTranslation.json",
         "metrics.jvm"              -> false

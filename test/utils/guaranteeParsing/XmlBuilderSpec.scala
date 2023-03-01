@@ -22,7 +22,10 @@ import models.NoChangeInstruction
 import models.SpecialMentionGuarantee
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar.mock
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.inject.bind
+import java.time.Clock
 
 class XmlBuilderSpec extends AnyFreeSpec with Matchers {
 
@@ -32,8 +35,11 @@ class XmlBuilderSpec extends AnyFreeSpec with Matchers {
         "metrics.jvm" -> false
       )
 
+  val mockClock = mock[Clock]
+
   def sut: XmlBuilder = {
     val application = baseApplicationBuilder
+      .overrides(bind[Clock].toInstance(mockClock))
       .build()
 
     application.injector.instanceOf[XmlBuilder]
