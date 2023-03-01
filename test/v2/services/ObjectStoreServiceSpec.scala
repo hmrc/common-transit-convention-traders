@@ -17,26 +17,36 @@
 package v2.services
 
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.reset
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.time.Seconds
+import org.scalatest.time.Span
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.forAll
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.objectstore.client.Md5Hash
+import uk.gov.hmrc.objectstore.client.Path
+import uk.gov.hmrc.objectstore.client.RetentionPeriod
+import uk.gov.hmrc.objectstore.client.RetentionPeriod.SevenYears
+import uk.gov.hmrc.objectstore.client.config.ObjectStoreClientConfig
+import uk.gov.hmrc.objectstore.client.play.FutureEither
+import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClientEither
+import uk.gov.hmrc.objectstore.client.play.test.stub
 import v2.base.TestCommonGenerators
 import v2.base.TestActorSystem
-import v2.connectors.ObjectStoreConnector
-import v2.models.MessageId
-import v2.models.MovementId
+import v2.fakes.objectstore.ObjectStoreStub
 import v2.models.responses.UpscanResponse.DownloadUrl
 
-import scala.concurrent.ExecutionContext
+import java.net.URL
+import java.time.Clock
+import java.util.UUID.randomUUID
 import scala.concurrent.Future
+import scala.util.Try
 
 class ObjectStoreServiceSpec
     extends AnyFreeSpec
@@ -47,64 +57,42 @@ class ObjectStoreServiceSpec
     with TestActorSystem
     with BeforeAndAfterEach {
 
-  val mockConnector = mock[ObjectStoreConnector]
-  val sut           = new ObjectStoreServiceImpl(mockConnector)
-  implicit val hc   = HeaderCarrier()
-  implicit val ec   = materializer.executionContext
+  val baseUrl = s"http://baseUrl-${randomUUID().toString}"
+  val owner   = s"owner-${randomUUID().toString}"
+  val token   = s"token-${randomUUID().toString}"
+  val config  = ObjectStoreClientConfig(baseUrl, owner, token, SevenYears)
 
-  override def beforeEach = {
-    super.beforeEach()
-    reset(mockConnector)
-  }
+  implicit val hc = HeaderCarrier()
+  implicit val ec = materializer.executionContext
+
+  lazy val objectStoreStub = new ObjectStoreStub(config)
+
+  val objectStoreService = new ObjectStoreServiceImpl(Clock.systemUTC(), objectStoreStub)
 
   "On adding a message to object store" - {
     "given a successful response from the connector, should return a Right with Object Store Summary" in forAll(
       arbitraryMovementId.arbitrary,
-      arbitraryMessageId.arbitrary,
-      arbitraryObjectSummaryWithMd5.arbitrary
+      arbitraryMessageId.arbitrary
     ) {
-      (movemementId, messageId, objectSummaryWithMd5) =>
-        beforeEach()
+      (movemementId, messageId) =>
+        val result = objectStoreService.addMessage(DownloadUrl("https://bucketName.s3.eu-west-2.amazonaws.com"), movemementId, messageId)
 
-        when(mockConnector.postFromUrl(DownloadUrl(any[String]), MovementId(any[String]), MessageId(any[String]))(any[HeaderCarrier], any[ExecutionContext]))
-          .thenReturn(Future.successful(Right(objectSummaryWithMd5)))
-
-        val result = sut.addMessage(DownloadUrl("https://bucketName.s3.eu-west-2.amazonaws.com"), movemementId, messageId)
-        whenReady(result.value) {
-          either =>
-            either match {
-              case Left(_)  => fail("should have returned object store with Md5")
-              case Right(x) => x
-            }
-            verify(mockConnector, times(1)).postFromUrl(DownloadUrl(any[String]), MovementId(any[String]), MessageId(any[String]))(
-              any[HeaderCarrier],
-              any[ExecutionContext]
-            )
+        whenReady(result.value, timeout(Span(6, Seconds))) {
+          case Left(e)  => fail(e.toString)
+          case Right(x) => x
         }
     }
 
-    "given a failure from the connector, should return a Left with an Exception" in forAll(
+    "given an exception is thrown in the service, should return a Left with the exception in an ObjectStoreError" in forAll(
       arbitraryMovementId.arbitrary,
       arbitraryMessageId.arbitrary
     ) {
       (movemementId, messageId) =>
-        beforeEach()
+        val result = objectStoreService.addMessage(DownloadUrl("invalidURL"), movemementId, messageId)
 
-        when(mockConnector.postFromUrl(DownloadUrl(any[String]), MovementId(any[String]), MessageId(any[String]))(any[HeaderCarrier], any[ExecutionContext]))
-          .thenReturn(Future.successful(Left(new Exception("Error"))))
-
-        val result = sut.addMessage(DownloadUrl("https://bucketName.s3.eu-west-2.amazonaws.com"), movemementId, messageId)
         whenReady(result.value) {
-          either =>
-            either match {
-              case Right(_) => fail("should have returned a Left")
-              case Left(x)  => x
-            }
-            verify(mockConnector, times(1)).postFromUrl(DownloadUrl(any[String]), MovementId(any[String]), MessageId(any[String]))(
-              any[HeaderCarrier],
-              any[ExecutionContext]
-            )
-
+          case Right(_) => fail("should have returned a Left")
+          case Left(x)  => x
         }
     }
   }

@@ -21,17 +21,24 @@ import com.google.inject.ImplementedBy
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
-import v2.connectors.ObjectStoreConnector
+import uk.gov.hmrc.objectstore.client.play.FutureEither
+import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClientEither
+import uk.gov.hmrc.objectstore.client.Path
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.errors.ObjectStoreError
 import v2.models.responses.UpscanResponse.DownloadUrl
 
 import java.net.URL
+import java.time.Clock
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.Try
 import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[ObjectStoreServiceImpl])
@@ -45,23 +52,38 @@ trait ObjectStoreService {
 }
 
 @Singleton
-class ObjectStoreServiceImpl @Inject() (objectStoreConnector: ObjectStoreConnector) extends ObjectStoreService with Logging {
+class ObjectStoreServiceImpl @Inject() (clock: Clock, client: PlayObjectStoreClientEither) extends ObjectStoreService with Logging {
 
-  override def addMessage(upscanUrl: DownloadUrl, movementId: MovementId, messageId: MessageId)(implicit
+  private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC)
+
+  override def addMessage(downloadUrl: DownloadUrl, movementId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, ObjectStoreError, ObjectSummaryWithMd5] =
-    EitherT(
-      objectStoreConnector
-        .postFromUrl(upscanUrl, movementId, messageId)
-        .map {
-          case Right(response) => Right(response)
-          case Left(thr)       => Left(ObjectStoreError.UnexpectedError(thr = Some(thr)))
+    EitherT {
+      val formattedDateTime = dateTimeFormatter.format(OffsetDateTime.ofInstant(clock.instant, ZoneOffset.UTC))
+
+      val urlEither =
+        try Right(new URL(downloadUrl.value))
+        catch {
+          case NonFatal(e) => Left(ObjectStoreError.UnexpectedError(thr = Some(e)))
         }
-        .recover {
-          case NonFatal(e) =>
-            Left(ObjectStoreError.UnexpectedError(thr = Some(e)))
-        }
-    )
+
+      urlEither match {
+        case Right(upscanURL) =>
+          client
+            .uploadFromUrl(
+              from = upscanURL,
+              to = Path.Directory("common-transit-convention-traders").file(s"${movementId.value}-${messageId.value}-$formattedDateTime.xml")
+            )
+            .map {
+              case Right(response) =>
+                Right(response)
+              case Left(thr) =>
+                Left(ObjectStoreError.UnexpectedError(thr = Some(thr)))
+            }
+        case Left(ex) => Future.successful(Left(ex))
+      }
+    }
 
 }
