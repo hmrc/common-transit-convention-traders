@@ -69,7 +69,6 @@ import v2.controllers.actions.providers.AcceptHeaderActionProviderImpl
 import v2.fakes.controllers.actions.FakeAcceptHeaderActionProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeMessageSizeActionProvider
-import v2.fakes.utils.FakePreMaterialisedFutureProvider
 import v2.models.MovementId
 import v2.models._
 import v2.models.errors.ExtractionError.MessageTypeNotFound
@@ -183,8 +182,7 @@ class V2MovementsControllerSpec
     mockXmlParsingService,
     mockJsonParsingService,
     mockResponseFormatterService,
-    mockUpscanService,
-    FakePreMaterialisedFutureProvider
+    mockUpscanService
   )
 
   lazy val sutWithAcceptHeader: V2MovementsController = new V2MovementsControllerImpl(
@@ -202,8 +200,7 @@ class V2MovementsControllerSpec
     mockXmlParsingService,
     mockJsonParsingService,
     mockResponseFormatterService,
-    mockUpscanService,
-    FakePreMaterialisedFutureProvider
+    mockUpscanService
   )
 
   implicit val timeout: Timeout = 5.seconds

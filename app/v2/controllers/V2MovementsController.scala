@@ -57,7 +57,7 @@ import v2.models.responses.LargeMessageAuditRequest
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
 import v2.services._
-import v2.utils.PreMaterialisedFutureProvider
+import v2.utils.StreamWithFile
 
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
@@ -90,13 +90,13 @@ class V2MovementsControllerImpl @Inject() (
   xmlParsingService: XmlMessageParsingService,
   jsonParsingService: JsonMessageParsingService,
   responseFormatterService: ResponseFormatterService,
-  upscanService: UpscanService,
-  val preMaterialisedFutureProvider: PreMaterialisedFutureProvider
+  upscanService: UpscanService
 )(implicit val materializer: Materializer, val temporaryFileCreator: TemporaryFileCreator)
     extends BaseController
     with V2MovementsController
     with Logging
     with StreamingParsers
+    with StreamWithFile
     with VersionedRouting
     with ErrorTranslator
     with ContentTypeRouting
@@ -283,8 +283,8 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def attachMessageXML(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = true) andThen messageSizeAction()).streamWithAwait {
-      awaitFileWrite => implicit request =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = true) andThen messageSizeAction()).stream {
+      implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         val messageTypeList =
@@ -292,7 +292,6 @@ class V2MovementsControllerImpl @Inject() (
 
         (for {
           messageType <- xmlParsingService.extractMessageType(request.body, messageTypeList).asPresentation
-          _           <- awaitFileWrite
           _           <- validationService.validateXml(messageType, request.body).asPresentation
           _ = auditService.audit(messageType.auditType, request.body, MimeTypes.XML)
           updateMovementResponse <- updateAndSendToEIS(movementId, movementType, messageType, request.body)
@@ -316,8 +315,8 @@ class V2MovementsControllerImpl @Inject() (
           } yield updateResponse
       }
 
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = true) andThen messageSizeAction()).streamWithAwait {
-      awaitFileWrite => implicit request =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = true) andThen messageSizeAction()).stream {
+      implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         val messageTypeList =
@@ -325,7 +324,6 @@ class V2MovementsControllerImpl @Inject() (
 
         (for {
           messageType <- jsonParsingService.extractMessageType(request.body, messageTypeList).asPresentation
-          _           <- awaitFileWrite
           _           <- validationService.validateJson(messageType, request.body).asPresentation
           _ = auditService.audit(messageType.auditType, request.body, MimeTypes.JSON)
           converted      <- conversionService.jsonToXml(messageType, request.body).asPresentation
