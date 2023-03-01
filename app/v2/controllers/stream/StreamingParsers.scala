@@ -20,6 +20,8 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import cats.implicits.catsSyntaxMonadError
+import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.streams.Accumulator
 import play.api.mvc.Action
 import play.api.mvc.ActionBuilder
@@ -27,13 +29,12 @@ import play.api.mvc.BaseControllerHelpers
 import play.api.mvc.BodyParser
 import play.api.mvc.Result
 import v2.controllers.request.BodyReplaceableRequest
-import v2.utils.StreamWithFile
 
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-trait StreamingParsers extends StreamWithFile {
+trait StreamingParsers {
   self: BaseControllerHelpers =>
 
   implicit val materializer: Materializer
@@ -58,13 +59,25 @@ trait StreamingParsers extends StreamWithFile {
       *   @param block The code to use the with the reusable source
       *   @return An [[Action]]
       */
+    // Implementation note: Tried to use the temporary file parser but it didn't pass the "single use" tests.
+    // Doing it like this ensures that we can make sure that the source we pass is the file based one,
+    // and only when it's ready.
     def stream(
       block: R[Source[ByteString, _]] => Future[Result]
-    ): Action[Source[ByteString, _]] =
-      actionBuilder.async(parse.temporaryFile.map {
-        // Coerce the compiler to allowing this wildcard definition
-        x => FileIO.fromPath(x).asInstanceOf[Source[ByteString, _]]
-      })(block)
+    )(implicit temporaryFileCreator: TemporaryFileCreator): Action[Source[ByteString, _]] =
+      actionBuilder.async(streamFromMemory) {
+        request =>
+          val file = temporaryFileCreator.create()
+          (for {
+            _      <- request.body.runWith(FileIO.toPath(file))
+            result <- block(request.replaceBody(FileIO.fromPath(file)))
+          } yield result)
+            .attemptTap {
+              _ =>
+                file.delete()
+                Future.successful(())
+            }
+      }
   }
 
 }

@@ -28,7 +28,6 @@ import play.api.mvc.BaseController
 import play.api.test.Helpers.stubControllerComponents
 import v2.controllers.V2MovementsController
 import v2.controllers.stream.StreamingParsers
-import v2.fakes.utils.FakePreMaterialisedFutureProvider
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
@@ -38,8 +37,7 @@ import java.time.OffsetDateTime
 
 class FakeV2MovementsController @Inject() ()(implicit val materializer: Materializer) extends BaseController with V2MovementsController with StreamingParsers {
 
-  override val controllerComponents          = stubControllerComponents()
-  override val preMaterialisedFutureProvider = FakePreMaterialisedFutureProvider
+  override val controllerComponents = stubControllerComponents()
 
   override def createMovement(movementType: MovementType): Action[Source[ByteString, _]] = Action(streamFromMemory) {
     request =>

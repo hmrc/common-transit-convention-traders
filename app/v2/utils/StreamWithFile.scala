@@ -21,54 +21,51 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import cats.Monad
 import cats.data.EitherT
 import cats.syntax.flatMap._
-import cats.syntax.functor._
+import play.api.Logging
 import play.api.libs.Files.TemporaryFileCreator
 import v2.models.errors.PresentationError
 
+import java.nio.file.Path
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
 trait StreamWithFile {
+  self: Logging =>
 
-  type PresentationErrorEitherT[A] = EitherT[Future, PresentationError, A]
-
-  implicit val futureStream = new StreamWithFileMonad[Future] {
-
-    override def wrapSource(sourceFuture: Future[IOResult])(implicit ec: ExecutionContext): Future[IOResult] = sourceFuture
-  }
-
-  implicit val eitherTStream = new StreamWithFileMonad[PresentationErrorEitherT] {
-
-    override def wrapSource(sourceFuture: Future[IOResult])(implicit ec: ExecutionContext): PresentationErrorEitherT[IOResult] =
-      EitherT(
-        sourceFuture
-          .map(Right.apply)
-          .recover {
-            case NonFatal(thr) => Left(PresentationError.internalServiceError(cause = Some(thr)))
-          }
-      )
-  }
-
-  def withReusableSource[M[_], A](
+  def withReusableSource[R](
     src: Source[ByteString, _]
   )(
-    block: Source[ByteString, _] => M[A]
-  )(implicit temporaryFileCreator: TemporaryFileCreator, mat: Materializer, ec: ExecutionContext, ev: StreamWithFileMonad[M], monad: Monad[M]): M[A] = {
+    block: Source[ByteString, _] => EitherT[Future, PresentationError, R]
+  )(implicit temporaryFileCreator: TemporaryFileCreator, mat: Materializer, ec: ExecutionContext): EitherT[Future, PresentationError, R] = {
     val file = temporaryFileCreator.create()
     (for {
-      _      <- ev.wrapSource(src.runWith(FileIO.toPath(file)))
+      _      <- writeToFile(file, src)
       result <- block(FileIO.fromPath(file))
     } yield result)
       .flatTap {
         _ =>
           file.delete()
-          monad.pure(())
+          EitherT.rightT(())
       }
 
   }
+
+  private def writeToFile(file: Path, src: Source[ByteString, _])(implicit
+    mat: Materializer,
+    ec: ExecutionContext
+  ): EitherT[Future, PresentationError, IOResult] =
+    EitherT(
+      src
+        .runWith(FileIO.toPath(file))
+        .map(Right.apply)
+        .recover {
+          case NonFatal(thr) =>
+            logger.error(s"Failed to create file stream: $thr", thr)
+            Left(PresentationError.internalServiceError(cause = Some(thr)))
+        }
+    )
 
 }

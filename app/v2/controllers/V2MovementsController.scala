@@ -57,6 +57,7 @@ import v2.models.responses.LargeMessageAuditRequest
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.hateoas._
 import v2.services._
+import v2.utils.StreamWithFile
 
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
@@ -95,6 +96,7 @@ class V2MovementsControllerImpl @Inject() (
     with V2MovementsController
     with Logging
     with StreamingParsers
+    with StreamWithFile
     with VersionedRouting
     with ErrorTranslator
     with ContentTypeRouting

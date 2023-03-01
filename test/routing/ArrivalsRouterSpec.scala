@@ -42,7 +42,6 @@ import v2.base.TestActorSystem
 import v2.fakes.controllers.FakeV1ArrivalMessagesController
 import v2.fakes.controllers.FakeV1ArrivalsController
 import v2.fakes.controllers.FakeV2MovementsController
-import v2.fakes.utils.FakePreMaterialisedFutureProvider
 
 import scala.concurrent.duration.DurationInt
 import scala.math.abs
@@ -55,8 +54,7 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
     stubControllerComponents(),
     new FakeV1ArrivalsController(),
     new FakeV2MovementsController(),
-    new FakeV1ArrivalMessagesController(),
-    FakePreMaterialisedFutureProvider
+    new FakeV1ArrivalMessagesController()
   )
 
   val id = Gen.long
