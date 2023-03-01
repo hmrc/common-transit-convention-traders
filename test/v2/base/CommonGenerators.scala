@@ -187,11 +187,11 @@ trait CommonGenerators {
       movementId <- arbitraryMovementId.arbitrary
       messageId  <- arbitraryMessageId.arbitrary
       lastModified      = Instant.now()
-      formattedDateTime = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").format(lastModified)
+      formattedDateTime = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC).format(lastModified)
       contentLen <- Gen.long
       hash       <- Gen.alphaNumStr.map(Md5Hash)
     } yield ObjectSummaryWithMd5(
-      Path.Directory("common-transit-convention-traders").file(s"$movementId-$messageId-$formattedDateTime.xml"),
+      Path.Directory("common-transit-convention-traders").file(s"${movementId.value}-${messageId.value}-$formattedDateTime.xml"),
       contentLen,
       hash,
       lastModified

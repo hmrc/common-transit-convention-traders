@@ -19,7 +19,6 @@ package v2.connectors
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.objectstore.client.play.Implicits._
 import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
 import uk.gov.hmrc.objectstore.client.Path
@@ -31,9 +30,8 @@ import v2.models.responses.UpscanResponse.DownloadUrl
 
 import java.net.URL
 import java.time.Clock
-import javax.inject.Singleton
-import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import javax.inject.Singleton
 import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContext
 
@@ -57,8 +55,7 @@ class ObjectStoreConnectorImpl @Inject() (clock: Clock, client: PlayObjectStoreC
     ec: ExecutionContext
   ): FutureEither[ObjectSummaryWithMd5] = {
 
-    val now               = OffsetDateTime.ofInstant(clock.instant, ZoneOffset.UTC)
-    val formattedDateTime = dateTimeFormatter.format(now)
+    val formattedDateTime = dateTimeFormatter.format(clock.instant())
 
     client.uploadFromUrl(
       from = new URL(upscanUrl.value),

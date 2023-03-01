@@ -17,9 +17,11 @@
 package v2.services
 
 import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.reset
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -36,12 +38,24 @@ import v2.models.responses.UpscanResponse.DownloadUrl
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFutures with CommonGenerators with TestActorSystem {
+class ObjectStoreServiceSpec
+    extends AnyFreeSpec
+    with Matchers
+    with MockitoSugar
+    with ScalaFutures
+    with CommonGenerators
+    with TestActorSystem
+    with BeforeAndAfterEach {
 
   val mockConnector = mock[ObjectStoreConnector]
   val sut           = new ObjectStoreServiceImpl(mockConnector)
   implicit val hc   = HeaderCarrier()
   implicit val ec   = materializer.executionContext
+
+  override def beforeEach = {
+    super.beforeEach()
+    reset(mockConnector)
+  }
 
   "On adding a message to object store" - {
     "given a successful response from the connector, should return a Right with Object Store Summary" in forAll(
@@ -50,6 +64,8 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
       arbitraryObjectSummaryWithMd5.arbitrary
     ) {
       (movemementId, messageId, objectSummaryWithMd5) =>
+        beforeEach()
+
         when(mockConnector.postFromUrl(DownloadUrl(any[String]), MovementId(any[String]), MessageId(any[String]))(any[HeaderCarrier], any[ExecutionContext]))
           .thenReturn(Future.successful(Right(objectSummaryWithMd5)))
 
@@ -57,9 +73,13 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
         whenReady(result.value) {
           either =>
             either match {
-              case Left(_) => fail("should have returned object store with Md5")
+              case Left(_)  => fail("should have returned object store with Md5")
+              case Right(x) => x
             }
-            verify(mockConnector, times(1)).postFromUrl(any(), any(), any())(any(), any())
+            verify(mockConnector, times(1)).postFromUrl(DownloadUrl(any[String]), MovementId(any[String]), MessageId(any[String]))(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
         }
     }
 
@@ -68,6 +88,8 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
       arbitraryMessageId.arbitrary
     ) {
       (movemementId, messageId) =>
+        beforeEach()
+
         when(mockConnector.postFromUrl(DownloadUrl(any[String]), MovementId(any[String]), MessageId(any[String]))(any[HeaderCarrier], any[ExecutionContext]))
           .thenReturn(Future.successful(Left(new Exception("Error"))))
 
@@ -76,8 +98,13 @@ class ObjectStoreServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar
           either =>
             either match {
               case Right(_) => fail("should have returned a Left")
+              case Left(x)  => x
             }
-            verify(mockConnector, times(1)).postFromUrl(any(), any(), any())(any(), any())
+            verify(mockConnector, times(1)).postFromUrl(DownloadUrl(any[String]), MovementId(any[String]), MessageId(any[String]))(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+
         }
     }
   }

@@ -16,13 +16,14 @@ import v2.base.CommonGenerators
 import java.time.Clock
 
 class ObjectStoreConnectorSpec
-    extends AnyFreeSpec
+  extends AnyFreeSpec
     with HttpClientV2Support
     with Matchers
+    with GuiceOneAppPerSuite
+    with GuiceWiremockSuite
     with ScalaFutures
     with IntegrationPatience
-    with WiremockSuite
-    with MockitoSugar
+    with ScalaCheckDrivenPropertyChecks
     with CommonGenerators {
 
   val mockPlayObjectStoreClientEither = mock[PlayObjectStoreClientEither]
@@ -31,23 +32,23 @@ class ObjectStoreConnectorSpec
   val movementId = arbitraryMovementId.arbitrary.sample.get
   val messageId  = arbitraryMessageId.arbitrary.sample.get
 
-  lazy val sut = new ObjectStoreConnectorImpl(mockPlayObjectStoreClientEither, mockClock)
+  lazy val sut = new ObjectStoreConnectorImpl(mockClock, mockPlayObjectStoreClientEither)
 
   "POST /upscan/v2/initiate" - {
     "when making a successful call to upscan initiate, must return upscan upload url" in {
-      //      server.stubFor(
-      //        post(
-      //          urlEqualTo("/upscan/v2/initiate")
-      //        ).willReturn(
-      //          aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(upscanResponse)))
-      //        )
-      //      )
-      //      implicit val hc = HeaderCarrier()
-      //      val result = sut.upscanInitiate(movementId, messageId)
-      //
-      //      whenReady(result) {
-      //        _ mustBe upscanResponse
-      //      }
+      server.stubFor(
+        post(
+          urlEqualTo("/upscan/v2/initiate")
+        ).willReturn(
+          aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(upscanResponse)))
+        )
+      )
+      implicit val hc = HeaderCarrier()
+      val result      = sut.upscanInitiate(movementId, messageId)
+
+      whenReady(result) {
+        _ mustBe upscanResponse
+      }
 
     }
 
