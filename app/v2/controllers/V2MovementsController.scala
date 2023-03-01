@@ -102,7 +102,7 @@ class V2MovementsControllerImpl @Inject() (
     with Logging
     with StreamingParsers
     with VersionedRouting
-    with ErrorTranslator
+    with ConvertError
     with ContentTypeRouting
     with UpscanResponseParser
     with HasActionMetrics {

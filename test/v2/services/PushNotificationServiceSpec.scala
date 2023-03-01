@@ -36,7 +36,7 @@ import play.api.http.Status.NOT_FOUND
 import play.api.test.FakeHeaders
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
-import v2.base.CommonGenerators
+import v2.base.TestCommonGenerators
 import v2.connectors.PushNotificationsConnector
 import v2.models.BoxId
 import v2.models.ClientId
@@ -55,7 +55,7 @@ class PushNotificationServiceSpec
     with OptionValues
     with ScalaFutures
     with MockitoSugar
-    with CommonGenerators
+    with TestCommonGenerators
     with ScalaCheckDrivenPropertyChecks
     with BeforeAndAfterEach {
 

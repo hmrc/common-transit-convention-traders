@@ -25,10 +25,10 @@ import play.api.libs.json.Json
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
 import play.api.test.Helpers.stubControllerComponents
-import v2.base.CommonGenerators
+import v2.base.TestCommonGenerators
 import v2.models.errors.PresentationError
 
-class UpscanResponseParserSpec extends AnyFreeSpec with ScalaFutures with Matchers with ScalaCheckPropertyChecks with CommonGenerators {
+class UpscanResponseParserSpec extends AnyFreeSpec with ScalaFutures with Matchers with ScalaCheckPropertyChecks with TestCommonGenerators {
 
   class TestUpscanResponseParserController extends BaseController with UpscanResponseParser with Logging {
     override protected def controllerComponents: ControllerComponents = stubControllerComponents()

@@ -28,7 +28,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import uk.gov.hmrc.http.HeaderCarrier
-import v2.base.CommonGenerators
+import v2.base.TestCommonGenerators
 import v2.connectors.UpscanConnector
 import v2.models.MessageId
 import v2.models.MovementId
@@ -47,7 +47,7 @@ class UpscanServiceSpec
     with OptionValues
     with ScalaFutures
     with MockitoSugar
-    with CommonGenerators
+    with TestCommonGenerators
     with ScalaCheckDrivenPropertyChecks
     with BeforeAndAfterEach {
 

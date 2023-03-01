@@ -21,12 +21,12 @@ import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.libs.json.Json
-import v2.base.CommonGenerators
+import v2.base.TestCommonGenerators
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
 
-class HateoasMovementUpdateResponseSpec extends AnyFreeSpec with Matchers with OptionValues with CommonGenerators {
+class HateoasMovementUpdateResponseSpec extends AnyFreeSpec with Matchers with OptionValues with TestCommonGenerators {
 
   for (movementType <- MovementType.values)
     s"with a valid ${movementType.movementType} and message response create a valid HateoasMovementUpdateResponse" in {

@@ -62,7 +62,7 @@ import play.api.test.Helpers.status
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.TestMetrics
-import v2.base.CommonGenerators
+import v2.base.TestCommonGenerators
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
 import v2.controllers.actions.providers.AcceptHeaderActionProviderImpl
@@ -105,7 +105,7 @@ class V2MovementsControllerSpec
     with TestSourceProvider
     with BeforeAndAfterEach
     with ScalaCheckDrivenPropertyChecks
-    with CommonGenerators {
+    with TestCommonGenerators {
 
   def CC015C: NodeSeq =
     <CC015C>

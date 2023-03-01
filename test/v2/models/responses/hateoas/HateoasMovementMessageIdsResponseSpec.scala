@@ -23,7 +23,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import v2.base.CommonGenerators
+import v2.base.TestCommonGenerators
 import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementType
@@ -38,7 +38,7 @@ class HateoasMovementMessageIdsResponseSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks
     with OptionValues
-    with CommonGenerators {
+    with TestCommonGenerators {
 
   Seq(arbitrary[OffsetDateTime].sample, None).foreach {
     dateTime =>

@@ -52,7 +52,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-trait CommonGenerators {
+trait TestCommonGenerators {
 
   lazy val genShortUUID: Gen[String] = Gen.long.map {
     l: Long =>

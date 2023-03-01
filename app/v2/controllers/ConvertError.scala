@@ -22,7 +22,7 @@ import v2.models.errors._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-trait ErrorTranslator {
+trait ConvertError {
 
   implicit class ErrorConverter[E, A](value: EitherT[Future, E, A]) {
 

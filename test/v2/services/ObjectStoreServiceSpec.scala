@@ -28,7 +28,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.forAll
 import uk.gov.hmrc.http.HeaderCarrier
-import v2.base.CommonGenerators
+import v2.base.TestCommonGenerators
 import v2.base.TestActorSystem
 import v2.connectors.ObjectStoreConnector
 import v2.models.MessageId
@@ -43,7 +43,7 @@ class ObjectStoreServiceSpec
     with Matchers
     with MockitoSugar
     with ScalaFutures
-    with CommonGenerators
+    with TestCommonGenerators
     with TestActorSystem
     with BeforeAndAfterEach {
 

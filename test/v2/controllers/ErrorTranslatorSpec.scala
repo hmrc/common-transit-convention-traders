@@ -26,7 +26,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import v2.base.CommonGenerators
+import v2.base.TestCommonGenerators
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
@@ -57,9 +57,9 @@ class ErrorTranslatorSpec
     with ScalaFutures
     with MockitoSugar
     with ScalaCheckDrivenPropertyChecks
-    with CommonGenerators {
+    with TestCommonGenerators {
 
-  object Harness extends ErrorTranslator
+  object Harness extends ConvertError
 
   import Harness._
 

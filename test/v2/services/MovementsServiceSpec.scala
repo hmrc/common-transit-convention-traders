@@ -36,7 +36,7 @@ import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.Status.NOT_FOUND
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
-import v2.base.CommonGenerators
+import v2.base.TestCommonGenerators
 import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
 import v2.models.MessageId
@@ -65,7 +65,7 @@ class MovementsServiceSpec
     with OptionValues
     with ScalaFutures
     with MockitoSugar
-    with CommonGenerators
+    with TestCommonGenerators
     with ScalaCheckDrivenPropertyChecks
     with BeforeAndAfterEach {
 
