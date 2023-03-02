@@ -48,12 +48,15 @@ import v2.controllers.stream.StreamingParsers
 import v2.models.AuditType
 import v2.models.EORINumber
 import v2.models.MessageId
+import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementType
+import v2.models.ObjectStoreURI
 import v2.models.errors.ObjectStoreError
 import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
+import v2.models.request.MessageUpdate
 import v2.models.responses.BoxResponse
 import v2.models.responses.LargeMessageAuditRequest
 import v2.models.responses.UpdateMovementResponse
@@ -82,7 +85,7 @@ class V2MovementsControllerImpl @Inject() (
   authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
   validationService: ValidationService,
   conversionService: ConversionService,
-  movementsService: MovementsService,
+  persistenceService: PersistenceService,
   routerService: RouterService,
   auditService: AuditingService,
   pushNotificationsService: PushNotificationsService,
@@ -201,7 +204,7 @@ class V2MovementsControllerImpl @Inject() (
         request.body.runWith(Sink.ignore)
 
         (for {
-          movementResponse  <- movementsService.createMovement(request.eoriNumber, movementType, None).asPresentation
+          movementResponse  <- persistenceService.createMovement(request.eoriNumber, movementType, None).asPresentation
           upscanResponse    <- upscanService.upscanInitiate(movementResponse.movementId, movementResponse.messageId).asPresentation
           boxResponseOption <- mapToOptionalResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
           auditResponse = Json.toJson(
@@ -229,7 +232,7 @@ class V2MovementsControllerImpl @Inject() (
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
-          messageSummary          <- movementsService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
+          messageSummary          <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
           formattedMessageSummary <- responseFormatterService.formatMessageSummary(messageSummary, request.headers.get(HeaderNames.ACCEPT).get)
         } yield formattedMessageSummary).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -242,7 +245,7 @@ class V2MovementsControllerImpl @Inject() (
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-        movementsService
+        persistenceService
           .getMessages(request.eoriNumber, movementType, movementId, receivedSince)
           .asPresentation
           .fold(
@@ -256,7 +259,7 @@ class V2MovementsControllerImpl @Inject() (
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-        movementsService
+        persistenceService
           .getMovement(request.eoriNumber, movementType, movementId)
           .asPresentation
           .fold(
@@ -270,7 +273,7 @@ class V2MovementsControllerImpl @Inject() (
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-        movementsService
+        persistenceService
           .getMovements(request.eoriNumber, movementType, updatedSince, movementEORI)
           .asPresentation
           .fold(
@@ -351,6 +354,13 @@ class V2MovementsControllerImpl @Inject() (
           ](
             objectStoreService.addMessage(upscanResponse.downloadUrl.get, movementId, messageId)
           )
+          val x = MessageUpdate(
+            MessageStatus.Processing,
+            objectStoreResponse.map(
+              o => ObjectStoreURI(o.location.asUri)
+            )
+          )
+          messageUpdate <- persistenceService.updateMessage(movementId, messageId)
         } yield objectStoreResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           _ => Ok
@@ -362,7 +372,7 @@ class V2MovementsControllerImpl @Inject() (
     request: AuthenticatedRequest[_]
   ) =
     for {
-      updateMovementResponse <- movementsService.updateMovement(movementId, movementType, messageType, source).asPresentation
+      updateMovementResponse <- persistenceService.addMessage(movementId, movementType, messageType, source).asPresentation
       _ = pushNotificationsService.update(movementId)
       _ <- routerService
         .send(messageType, request.eoriNumber, movementId, updateMovementResponse.messageId, source)
@@ -388,7 +398,7 @@ class V2MovementsControllerImpl @Inject() (
     messageType: MessageType
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
     for {
-      movementResponse <- movementsService.createMovement(request.eoriNumber, movementType, Some(source)).asPresentation
+      movementResponse <- persistenceService.createMovement(request.eoriNumber, movementType, Some(source)).asPresentation
       boxResponseOption <- mapToOptionalResponse[PushNotificationError, BoxResponse](
         pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers)
       )

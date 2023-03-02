@@ -50,6 +50,14 @@ object MessageStatus {
     case JsString("Success")    => JsSuccess(Success)
     case JsString("Failed")     => JsSuccess(Failed)
     case _                      => JsError("Invalid message status")
-
   }
+
+  implicit val statusWrites: Writes[MessageStatus] = Writes {
+    case Received   => JsString("Received")
+    case Pending    => JsString("Pending")
+    case Processing => JsString("Processing")
+    case Success    => JsString("Success")
+    case Failed     => JsString("Failed")
+  }
+
 }

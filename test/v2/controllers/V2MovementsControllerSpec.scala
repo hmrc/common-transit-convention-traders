@@ -157,7 +157,7 @@ class V2MovementsControllerSpec
   )
 
   val mockValidationService           = mock[ValidationService]
-  val mockMovementsPersistenceService = mock[MovementsService]
+  val mockMovementsPersistenceService = mock[PersistenceService]
   val mockRouterService               = mock[RouterService]
   val mockAuditService                = mock[AuditingService]
   val mockConversionService           = mock[ConversionService]
@@ -2646,7 +2646,7 @@ class V2MovementsControllerSpec
 
             when(
               mockMovementsPersistenceService
-                .updateMovement(any[String].asInstanceOf[MovementId], any[MovementType], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
+                .addMessage(any[String].asInstanceOf[MovementId], any[MovementType], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -2660,7 +2660,7 @@ class V2MovementsControllerSpec
 
             verify(mockAuditService, times(1)).audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())
             verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any())(any(), any())
-            verify(mockMovementsPersistenceService, times(1)).updateMovement(MovementId(any()), any(), any(), any())(any(), any())
+            verify(mockMovementsPersistenceService, times(1)).addMessage(MovementId(any()), any(), any(), any())(any(), any())
             verify(mockRouterService, times(1)).send(eqTo(messageType), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
               any(),
               any()
@@ -2700,7 +2700,7 @@ class V2MovementsControllerSpec
               )
             when(
               mockMovementsPersistenceService
-                .updateMovement(any[String].asInstanceOf[MovementId], any[MovementType], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
+                .addMessage(any[String].asInstanceOf[MovementId], any[MovementType], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -2754,7 +2754,7 @@ class V2MovementsControllerSpec
 
           when(
             mockMovementsPersistenceService
-              .updateMovement(
+              .addMessage(
                 any[String].asInstanceOf[MovementId],
                 any[MovementType],
                 any[String].asInstanceOf[MessageType],
@@ -2803,7 +2803,7 @@ class V2MovementsControllerSpec
             verify(mockAuditService, times(1)).audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())
             verify(mockConversionService, times(1)).jsonToXml(any(), any())(any(), any(), any())
             verify(mockValidationService, times(1)).validateXml(any(), any())(any(), any())
-            verify(mockMovementsPersistenceService, times(1)).updateMovement(MovementId(any()), any(), any(), any())(any(), any())
+            verify(mockMovementsPersistenceService, times(1)).addMessage(MovementId(any()), any(), any(), any())(any(), any())
             verify(mockRouterService, times(1)).send(any(), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
               any(),
               any()

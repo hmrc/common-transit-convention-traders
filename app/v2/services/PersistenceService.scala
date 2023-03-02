@@ -32,6 +32,7 @@ import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
+import v2.models.request.MessageUpdate
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
@@ -42,8 +43,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-@ImplementedBy(classOf[MovementsServiceImpl])
-trait MovementsService {
+@ImplementedBy(classOf[PersistenceServiceImpl])
+trait PersistenceService {
 
   def createMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
@@ -70,15 +71,20 @@ trait MovementsService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MovementSummary]]
 
-  def updateMovement(movementId: MovementId, movementType: MovementType, messageType: MessageType, source: Source[ByteString, _])(implicit
+  def addMessage(movementId: MovementId, movementType: MovementType, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, UpdateMovementResponse]
 
+  def updateMessage(movementId: MovementId, messageId: MessageId, movementType: MovementType, body: MessageUpdate)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, Unit]
+
 }
 
 @Singleton
-class MovementsServiceImpl @Inject() (persistenceConnector: PersistenceConnector) extends MovementsService {
+class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnector) extends PersistenceService {
 
   override def createMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
@@ -151,13 +157,27 @@ class MovementsServiceImpl @Inject() (persistenceConnector: PersistenceConnector
       }
   )
 
-  override def updateMovement(movementId: MovementId, movementType: MovementType, messageType: MessageType, source: Source[ByteString, _])(implicit
+  override def addMessage(movementId: MovementId, movementType: MovementType, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, UpdateMovementResponse] =
     EitherT(
       persistenceConnector
         .postMessage(movementId, messageType, source)
+        .map(Right(_))
+        .recover {
+          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
+          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+        }
+    )
+
+  override def updateMessage(movementId: MovementId, messageId: MessageId, movementType: MovementType, body: MessageUpdate)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, Unit] =
+    EitherT(
+      persistenceConnector
+        .patchMessage(movementId, messageId, body)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))

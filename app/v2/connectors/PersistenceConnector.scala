@@ -31,6 +31,9 @@ import metrics.MetricsKeys
 import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
+import play.api.http.Status.OK
+import play.api.libs.json.Json
+import play.api.mvc.Results.Status
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -39,6 +42,7 @@ import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.request.MessageType
+import v2.models.request.MessageUpdate
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
@@ -81,6 +85,11 @@ trait PersistenceConnector {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[UpdateMovementResponse]
+
+  def patchMessage(movementId: MovementId, messageId: MessageId, body: MessageUpdate)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit]
 
 }
 
@@ -194,5 +203,18 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
         )
       )
       .addParam("movementEORI", movementEORI.map(_.value))
+
+  def patchMessage(movementId: MovementId, messageId: MessageId, body: MessageUpdate)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] = {
+    val url = appConfig.movementsUrl.withPath(updateMessageRoute(movementId, messageId))
+
+    httpClientV2
+      .patch(url"$url")
+      .withBody(Json.stringify(Json.toJson(body)))
+      .setHeader(HeaderNames.ACCEPT -> MimeTypes.JSON)
+      .executeAndExpect(OK)
+  }
 
 }
