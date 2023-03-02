@@ -37,6 +37,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.Try
 import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[ObjectStoreServiceImpl])
@@ -61,26 +62,19 @@ class ObjectStoreServiceImpl @Inject() (clock: Clock, client: PlayObjectStoreCli
     EitherT {
       val formattedDateTime = dateTimeFormatter.format(OffsetDateTime.ofInstant(clock.instant, ZoneOffset.UTC))
 
-      val urlEither =
-        try Right(new URL(downloadUrl.value))
-        catch {
-          case NonFatal(e) => Left(ObjectStoreError.UnexpectedError(thr = Some(e)))
-        }
-
-      urlEither match {
-        case Right(upscanURL) =>
-          client
-            .uploadFromUrl(
-              from = upscanURL,
-              to = Path.Directory("common-transit-convention-traders").file(s"${movementId.value}-${messageId.value}-$formattedDateTime.xml")
-            )
-            .map {
-              case Right(response) =>
-                Right(response)
-              case Left(thr) =>
-                Left(ObjectStoreError.UnexpectedError(thr = Some(thr)))
-            }
-        case Left(ex) => Future.successful(Left(ex))
+      (for {
+        url <- Future.fromTry(Try(new URL(downloadUrl.value)))
+        response <- client
+          .uploadFromUrl(
+            from = url,
+            to = Path.Directory("common-transit-convention-traders").file(s"${movementId.value}-${messageId.value}-$formattedDateTime.xml")
+          )
+          .map {
+            case Right(o)  => Right(o)
+            case Left(thr) => Left(ObjectStoreError.UnexpectedError(thr = Some(thr)))
+          }
+      } yield response).recover {
+        case NonFatal(thr) => Left(ObjectStoreError.UnexpectedError(thr = Some(thr)))
       }
     }
 
