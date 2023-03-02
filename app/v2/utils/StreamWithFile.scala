@@ -16,74 +16,56 @@
 
 package v2.utils
 
+import akka.stream.IOResult
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
-import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import cats.implicits.catsSyntaxMonadError
+import cats.data.EitherT
+import cats.syntax.flatMap._
+import play.api.Logging
 import play.api.libs.Files.TemporaryFileCreator
+import v2.models.errors.PresentationError
 
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
 trait StreamWithFile {
+  self: Logging =>
 
-  def preMaterialisedFutureProvider: PreMaterialisedFutureProvider
-
-  def withReusableSource[R: FutureConversion](
+  def withReusableSource[R](
     src: Source[ByteString, _]
-  )(block: Source[ByteString, _] => R)(implicit temporaryFileCreator: TemporaryFileCreator, mat: Materializer, ec: ExecutionContext): R =
-    withReusableSourceAndAwaiter[R](src)(
-      (source, _) => block(source)
-    )
-
-  def withReusableSourceAndAwaiter[R: FutureConversion](
-    src: Source[ByteString, _]
-  )(block: (Source[ByteString, _], Future[_]) => R)(implicit temporaryFileCreator: TemporaryFileCreator, mat: Materializer, ec: ExecutionContext): R = {
-    val file                      = temporaryFileCreator.create()
-    val (source, fileWriteFuture) = createSource(file.path, src)
-    val result                    = block(source, fileWriteFuture)
-
-    // convert to a future to do cleanup after -- this can be done async so we just get the
-    // future out
-    implicitly[FutureConversion[R]]
-      .toFuture(result)
-      .recoverWith { // acts as a tap
-        case NonFatal(thr) =>
-          source.runWith(Sink.ignore)
-          Future.failed(thr)
-      }
-      .attemptTap {
+  )(
+    block: Source[ByteString, _] => EitherT[Future, PresentationError, R]
+  )(implicit temporaryFileCreator: TemporaryFileCreator, mat: Materializer, ec: ExecutionContext): EitherT[Future, PresentationError, R] = {
+    val file = temporaryFileCreator.create()
+    (for {
+      _      <- writeToFile(file, src)
+      result <- block(FileIO.fromPath(file))
+    } yield result)
+      .flatTap {
         _ =>
           file.delete()
-          Future.successful(())
+          EitherT.rightT(())
       }
-    result // as cleanup can be done async, we just return this result.
+
   }
 
-  private def createSource(path: Path, primary: Source[ByteString, _])(implicit mat: Materializer): (Source[ByteString, _], Future[_]) = {
-    val preMat = preMaterialisedFutureProvider(FileIO.toPath(path, Set(StandardOpenOption.WRITE)))
-    val source = primary
-      .alsoTo(preMat._2)
-      .via(
-        OrElseOnCancel.orElseOrCancelGraph(
-          // This is trying to create a stream that backpressures until the future from the pre-materialisation
-          // (above) is cleared. preMat will complete when the file write is completed the first time.
-          // Then, we throw away the value of the object, and concatenate with the second object
-          // which will then read from the freshly written file. If the future is already completed,
-          // the file read will occur instantly.
-          Source
-            .future(preMat._1)
-            .mapConcat(
-              _ => Seq[ByteString]()
-            ) ++ FileIO.fromPath(path)
-        )
-      )
-    (source, preMat._1)
-  }
+  private def writeToFile(file: Path, src: Source[ByteString, _])(implicit
+    mat: Materializer,
+    ec: ExecutionContext
+  ): EitherT[Future, PresentationError, IOResult] =
+    EitherT(
+      src
+        .runWith(FileIO.toPath(file))
+        .map(Right.apply)
+        .recover {
+          case NonFatal(thr) =>
+            logger.error(s"Failed to create file stream: $thr", thr)
+            Left(PresentationError.internalServiceError(cause = Some(thr)))
+        }
+    )
 
 }

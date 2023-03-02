@@ -38,7 +38,6 @@ import v2.base.TestActorSystem
 import v2.fakes.controllers.FakeV1DepartureMessagesController
 import v2.fakes.controllers.FakeV1DeparturesController
 import v2.fakes.controllers.FakeV2MovementsController
-import v2.fakes.utils.FakePreMaterialisedFutureProvider
 
 import scala.concurrent.duration.DurationInt
 
@@ -50,8 +49,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
     stubControllerComponents(),
     new FakeV1DeparturesController,
     new FakeV1DepartureMessagesController,
-    new FakeV2MovementsController,
-    FakePreMaterialisedFutureProvider
+    new FakeV2MovementsController
   )
 
   "when submitting a departure" - {
