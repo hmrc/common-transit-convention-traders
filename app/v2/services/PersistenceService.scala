@@ -76,7 +76,7 @@ trait PersistenceService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, UpdateMovementResponse]
 
-  def updateMessage(movementId: MovementId, messageId: MessageId, movementType: MovementType, body: MessageUpdate)(implicit
+  def updateMessage(movementId: MovementId, messageId: MessageId, body: MessageUpdate)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Unit]
@@ -171,7 +171,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         }
     )
 
-  override def updateMessage(movementId: MovementId, messageId: MessageId, movementType: MovementType, body: MessageUpdate)(implicit
+  override def updateMessage(movementId: MovementId, messageId: MessageId, body: MessageUpdate)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Unit] =
@@ -180,7 +180,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         .patchMessage(movementId, messageId, body)
         .map(Right(_))
         .recover {
-          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
+          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
           case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )

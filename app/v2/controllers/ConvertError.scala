@@ -59,8 +59,8 @@ trait ConvertError {
     import v2.models.errors.PersistenceError._
 
     def convert(persistenceError: PersistenceError): PresentationError = persistenceError match {
-      case MovementNotFound(departureId, movementType) =>
-        PresentationError.notFoundError(s"${movementType.movementType.capitalize} movement with ID ${departureId.value} was not found")
+      case MovementNotFound(movementId, movementType) =>
+        PresentationError.notFoundError(s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found")
       case MessageNotFound(movement, message) =>
         PresentationError.notFoundError(s"Message with ID ${message.value} for movement ${movement.value} was not found")
       case MovementsNotFound(eori, movementType) =>
@@ -110,6 +110,15 @@ trait ConvertError {
     import v2.models.errors.UpscanInitiateError._
 
     override def convert(upscanInitiateError: UpscanInitiateError): PresentationError = upscanInitiateError match {
+      case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
+    }
+  }
+
+  implicit val objectStoreErrorConverter = new Converter[ObjectStoreError] {
+
+    import v2.models.errors.ObjectStoreError._
+
+    override def convert(objectStoreError: ObjectStoreError): PresentationError = objectStoreError match {
       case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
     }
   }
