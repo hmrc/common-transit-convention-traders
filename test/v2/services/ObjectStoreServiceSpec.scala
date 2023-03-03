@@ -16,37 +16,24 @@
 
 package v2.services
 
-import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.anyString
-import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatest.time.Seconds
 import org.scalatest.time.Span
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.forAll
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.objectstore.client.Md5Hash
-import uk.gov.hmrc.objectstore.client.Path
-import uk.gov.hmrc.objectstore.client.RetentionPeriod
 import uk.gov.hmrc.objectstore.client.RetentionPeriod.SevenYears
 import uk.gov.hmrc.objectstore.client.config.ObjectStoreClientConfig
-import uk.gov.hmrc.objectstore.client.play.FutureEither
-import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClientEither
-import uk.gov.hmrc.objectstore.client.play.test.stub
 import v2.base.TestCommonGenerators
 import v2.base.TestActorSystem
 import v2.fakes.objectstore.ObjectStoreStub
 import v2.models.responses.UpscanResponse.DownloadUrl
 
-import java.net.URL
 import java.time.Clock
 import java.util.UUID.randomUUID
-import scala.concurrent.Future
-import scala.util.Try
 
 class ObjectStoreServiceSpec
     extends AnyFreeSpec
@@ -83,7 +70,7 @@ class ObjectStoreServiceSpec
         }
     }
 
-    "given an exception is thrown in the service, should return a Left with the exception in an ObjectStoreError" in forAll(
+    "given an exception is thrown due to an invalid url, should return a Left with the exception in an ObjectStoreError" in forAll(
       arbitraryMovementId.arbitrary,
       arbitraryMessageId.arbitrary
     ) {

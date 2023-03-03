@@ -21,7 +21,7 @@ import com.google.inject.ImplementedBy
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
-import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClientEither
+import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClient
 import uk.gov.hmrc.objectstore.client.Path
 import v2.models.MessageId
 import v2.models.MovementId
@@ -51,7 +51,7 @@ trait ObjectStoreService {
 }
 
 @Singleton
-class ObjectStoreServiceImpl @Inject() (clock: Clock, client: PlayObjectStoreClientEither) extends ObjectStoreService with Logging {
+class ObjectStoreServiceImpl @Inject() (clock: Clock, client: PlayObjectStoreClient) extends ObjectStoreService with Logging {
 
   private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC)
 
@@ -67,15 +67,16 @@ class ObjectStoreServiceImpl @Inject() (clock: Clock, client: PlayObjectStoreCli
         response <- client
           .uploadFromUrl(
             from = url,
-            to = Path.Directory(s"movements/${movementId.value}").file(s"${movementId.value}-${messageId.value}-$formattedDateTime.xml")
+            to = Path.Directory(s"movements/${movementId.value}").file(s"${movementId.value}-${messageId.value}-$formattedDateTime.xml"),
+            owner = "common-transit-convention-traders"
           )
-          .map {
-            case Right(o)  => Right(o)
-            case Left(thr) => Left(ObjectStoreError.UnexpectedError(thr = Some(thr)))
-          }
-      } yield response).recover {
-        case NonFatal(thr) => Left(ObjectStoreError.UnexpectedError(thr = Some(thr)))
-      }
+      } yield response)
+        .map {
+          o => Right(o)
+        }
+        .recover {
+          case NonFatal(thr) => Left(ObjectStoreError.UnexpectedError(Some(thr)))
+        }
     }
 
 }
