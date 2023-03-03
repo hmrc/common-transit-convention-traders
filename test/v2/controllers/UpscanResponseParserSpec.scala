@@ -41,44 +41,41 @@ class UpscanResponseParserSpec extends AnyFreeSpec with ScalaFutures with Matche
       arbitraryUpscanResponse(true).arbitrary
     ) {
       successUpscanResponse =>
-        val json = Json.toJson(successUpscanResponse)
-        whenReady(testController.parseAndLogUpscanResponse(json).value) {
-          either =>
-            either mustBe Right(successUpscanResponse)
-            either.toOption.get.isSuccess mustBe true
-            either.toOption.get.uploadDetails.isDefined mustBe true
-        }
+        val json   = Json.toJson(successUpscanResponse)
+        val either = testController.parseAndLogUpscanResponse(json)
+
+        either mustBe Right(successUpscanResponse)
+        either.toOption.get.isSuccess mustBe true
+        either.toOption.get.uploadDetails.isDefined mustBe true
     }
 
     "given a failure response in the callback, returns a defined option with value of FailedDetails" in forAll(
       arbitraryUpscanResponse(false).arbitrary
     ) {
       failureUpscanResponse =>
-        val json = Json.toJson(failureUpscanResponse)
-        whenReady(testController.parseAndLogUpscanResponse(json).value) {
-          either =>
-            either mustBe Right(failureUpscanResponse)
-            either.toOption.get.isSuccess mustBe false
-            either.toOption.get.failureDetails.isDefined mustBe true
-        }
+        val json   = Json.toJson(failureUpscanResponse)
+        val either = testController.parseAndLogUpscanResponse(json)
+        either mustBe Right(failureUpscanResponse)
+        either.toOption.get.isSuccess mustBe false
+        either.toOption.get.failureDetails.isDefined mustBe true
+
     }
 
     "given a successful response in the callback without DownloadUrl, returns a PresentationError" in forAll(
       arbitraryUpscanResponseWithOutDownloadUrl().arbitrary
     ) {
       successUpscanResponse =>
-        val json = Json.toJson(successUpscanResponse)
-        whenReady(testController.parseAndLogUpscanResponse(json).value) {
-          either =>
-            either mustBe Left(PresentationError.badRequestError("Unexpected Upscan callback response"))
-        }
+        val json   = Json.toJson(successUpscanResponse)
+        val either = testController.parseAndLogUpscanResponse(json)
+        either mustBe Left(PresentationError.badRequestError("Unexpected Upscan callback response"))
+
     }
 
     "given a response in the callback that we cannot deserialize, returns a PresentationError" in {
-      whenReady(testController.parseAndLogUpscanResponse(Json.obj("reference" -> "abc")).value) {
-        either =>
-          either mustBe Left(PresentationError.badRequestError("Unexpected Upscan callback response"))
-      }
+      val either = testController.parseAndLogUpscanResponse(Json.obj("reference" -> "abc"))
+
+      either mustBe Left(PresentationError.badRequestError("Unexpected Upscan callback response"))
+
     }
   }
 

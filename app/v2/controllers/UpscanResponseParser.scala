@@ -16,43 +16,38 @@
 
 package v2.controllers
 
-import cats.data.EitherT
 import play.api.Logging
 import play.api.libs.json.JsValue
 import play.api.mvc.BaseController
 import v2.models.errors.PresentationError
 import v2.models.responses.UpscanResponse
 
-import scala.concurrent.Future
-
 trait UpscanResponseParser {
   self: BaseController with Logging =>
 
-  def parseAndLogUpscanResponse(responseBody: JsValue): EitherT[Future, PresentationError, UpscanResponse] =
-    EitherT {
-      responseBody
-        .validate[UpscanResponse]
-        .map(
-          upscanResponse => evaluate(upscanResponse)
-        )
-        .getOrElse {
-          logger.error("Unable to parse unexpected response from Upscan")
-          Future.successful(Left(PresentationError.badRequestError("Unexpected Upscan callback response")))
-        }
-    }
+  def parseAndLogUpscanResponse(responseBody: JsValue): Either[PresentationError, UpscanResponse] =
+    responseBody
+      .validate[UpscanResponse]
+      .map(
+        upscanResponse => evaluate(upscanResponse)
+      )
+      .getOrElse {
+        logger.error("Unable to parse unexpected response from Upscan")
+        Left(PresentationError.badRequestError("Unexpected Upscan callback response"))
+      }
 
   private def evaluate(upscanResponse: UpscanResponse) =
     upscanResponse match {
       case UpscanResponse(reference, _, Some(_), Some(_), None) =>
         logger.info(s"Received a successful response from Upscan callback for the following reference: $reference")
-        Future.successful(Right(upscanResponse))
+        Right(upscanResponse)
       case UpscanResponse(reference, _, None, None, Some(failureDetails)) =>
         logger.warn(
           s"Received a failure response from Upscan callback for the following reference: $reference. Failure reason: ${failureDetails.failureReason}. Failure message: ${failureDetails.message}"
         )
-        Future.successful(Right(upscanResponse))
+        Right(upscanResponse)
       case _ =>
         logger.error("Unable to parse unexpected response from Upscan")
-        Future.successful(Left(PresentationError.badRequestError("Unexpected Upscan callback response")))
+        Left(PresentationError.badRequestError("Unexpected Upscan callback response"))
     }
 }

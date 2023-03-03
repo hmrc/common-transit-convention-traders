@@ -157,7 +157,7 @@ class V2MovementsControllerSpec
   )
 
   val mockValidationService           = mock[ValidationService]
-  val mockMovementsPersistenceService = mock[MovementsService]
+  val mockMovementsPersistenceService = mock[PersistenceService]
   val mockRouterService               = mock[RouterService]
   val mockAuditService                = mock[AuditingService]
   val mockConversionService           = mock[ConversionService]

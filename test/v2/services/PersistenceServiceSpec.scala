@@ -59,7 +59,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class MovementsServiceSpec
+class PersistenceServiceSpec
     extends AnyFreeSpec
     with Matchers
     with OptionValues
@@ -72,7 +72,7 @@ class MovementsServiceSpec
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   val mockConnector: PersistenceConnector = mock[PersistenceConnector]
-  val sut                                 = new MovementsServiceImpl(mockConnector)
+  val sut                                 = new PersistenceServiceImpl(mockConnector)
 
   override def beforeEach(): Unit =
     reset(mockConnector)

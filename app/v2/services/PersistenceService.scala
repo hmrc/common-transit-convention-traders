@@ -42,8 +42,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-@ImplementedBy(classOf[MovementsServiceImpl])
-trait MovementsService {
+@ImplementedBy(classOf[PersistenceServiceImpl])
+trait PersistenceService {
 
   def createMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
@@ -78,7 +78,7 @@ trait MovementsService {
 }
 
 @Singleton
-class MovementsServiceImpl @Inject() (persistenceConnector: PersistenceConnector) extends MovementsService {
+class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnector) extends PersistenceService {
 
   override def createMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
