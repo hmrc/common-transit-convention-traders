@@ -50,7 +50,7 @@ import v2.models.errors.FailedToValidateError.XmlSchemaFailedToValidateError
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ErrorTranslatorSpec
+class ConvertErrorSpec
     extends AnyFreeSpec
     with Matchers
     with OptionValues
