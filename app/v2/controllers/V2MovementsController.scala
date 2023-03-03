@@ -55,9 +55,11 @@ import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
+import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.BoxResponse
 import v2.models.responses.LargeMessageAuditRequest
 import v2.models.responses.UpdateMovementResponse
+import v2.models.responses.UpscanResponse
 import v2.models.responses.hateoas._
 import v2.services._
 import v2.utils.StreamWithFile
@@ -344,22 +346,27 @@ class V2MovementsControllerImpl @Inject() (
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         parseAndLogUpscanResponse(request.body)
-          .map {
+          .biflatMap(
+            presentationError => EitherT.leftT(Status(presentationError.code.statusCode)(Json.toJson(presentationError))),
             upscanResponse =>
-              (for {
-                objectSummary <- objectStoreService.addMessage(upscanResponse.downloadUrl.get, movementId, messageId).asPresentation
+              for {
+                downloadUrl   <- handleUpscanSuccessResponse(upscanResponse)
+                objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
                 messageUpdate = MessageUpdate(MessageStatus.Processing, Some(ObjectStoreURI(objectSummary.location.asUri)))
                 messageUpdate <- persistenceService.updateMessage(movementId, messageId, messageUpdate).asPresentation
-              } yield messageUpdate).fold[Result](
-                _ => Ok, //TODO: Send notification to PPNS with details of the error
-                _ => Ok  //TODO: Send notification to PPNS with details of the success
-              )
-          }
-          .fold[Result](
-            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            _ => Ok
+              } yield messageUpdate
           )
+          .fold[Result](
+            _ => Ok, //TODO: Send notification to PPNS with details of the error
+            _ => Ok  //TODO: Send notification to PPNS with details of the success
+          )
+    }
 
+  private def handleUpscanSuccessResponse(upscanResponse: UpscanResponse): EitherT[Future, PresentationError, DownloadUrl] =
+    EitherT {
+      Future.successful(upscanResponse.downloadUrl.toRight {
+        PresentationError.badRequestError("Upscan failed to process file")
+      })
     }
 
   private def updateAndSendToEIS(movementId: MovementId, movementType: MovementType, messageType: MessageType, source: Source[ByteString, _])(implicit

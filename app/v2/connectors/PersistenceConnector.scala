@@ -33,7 +33,6 @@ import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status.OK
 import play.api.libs.json.Json
-import play.api.mvc.Results.Status
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
