@@ -36,7 +36,7 @@ import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.Status.NOT_FOUND
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
-import v2.base.CommonGenerators
+import v2.base.TestCommonGenerators
 import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
 import v2.models.MessageId
@@ -59,20 +59,20 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class MovementsServiceSpec
+class PersistenceServiceSpec
     extends AnyFreeSpec
     with Matchers
     with OptionValues
     with ScalaFutures
     with MockitoSugar
-    with CommonGenerators
+    with TestCommonGenerators
     with ScalaCheckDrivenPropertyChecks
     with BeforeAndAfterEach {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   val mockConnector: PersistenceConnector = mock[PersistenceConnector]
-  val sut                                 = new MovementsServiceImpl(mockConnector)
+  val sut                                 = new PersistenceServiceImpl(mockConnector)
 
   override def beforeEach(): Unit =
     reset(mockConnector)

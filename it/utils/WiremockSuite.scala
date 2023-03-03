@@ -30,6 +30,8 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.guice.GuiceableModule
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier
 
+import java.time.Clock
+
 trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
   this: Suite =>
 
@@ -75,7 +77,8 @@ trait GuiceWiremockSuite extends WiremockSuite with GuiceFakeApplicationFactory 
   protected lazy val injector: Injector = fakeApplication.injector
 
   protected def bindings: Seq[GuiceableModule] = Seq(
-    bind[Metrics].toInstance(new TestMetrics)
+    bind[Metrics].toInstance(new TestMetrics),
+    bind[Clock].toInstance(Clock.systemUTC())
   )
 
   override def beforeAll(): Unit = {

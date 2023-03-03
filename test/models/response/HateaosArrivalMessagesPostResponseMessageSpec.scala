@@ -30,7 +30,6 @@ import play.api.libs.json.Json
 class HateoasArrivalMessagesPostResponseMessageSpec
     extends AnyFreeSpec
     with Matchers
-    with GuiceOneAppPerSuite
     with OptionValues
     with ScalaFutures
     with MockitoSugar

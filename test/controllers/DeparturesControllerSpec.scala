@@ -58,6 +58,7 @@ import utils.TestMetrics
 import v2.controllers.V2MovementsController
 import v2.fakes.controllers.FakeV2MovementsController
 
+import java.time.Clock
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -75,6 +76,7 @@ class DeparturesControllerSpec
   private val mockDepartureConnector: DeparturesConnector  = mock[DeparturesConnector]
   private val mockGuaranteeService: EnsureGuaranteeService = mock[EnsureGuaranteeService]
   private val mockAuditService: AuditService               = mock[AuditService]
+  val mockClock                                            = mock[Clock]
 
   when(mockGuaranteeService.ensureGuarantee(any())).thenReturn(Right(CC015B))
 
@@ -85,7 +87,8 @@ class DeparturesControllerSpec
       bind[V2MovementsController].to[FakeV2MovementsController],
       bind[DeparturesConnector].toInstance(mockDepartureConnector),
       bind[EnsureGuaranteeService].toInstance(mockGuaranteeService),
-      bind[AuditService].toInstance(mockAuditService)
+      bind[AuditService].toInstance(mockAuditService),
+      bind[Clock].toInstance(mockClock)
     )
     .build()
 

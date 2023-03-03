@@ -16,8 +16,11 @@
 
 package models.response
 
-import java.time.LocalDateTime
+import controllers.actions.AuthAction
+import controllers.actions.FakeAuthAction
 
+import java.time.Clock
+import java.time.LocalDateTime
 import models.domain.ArrivalId
 import models.domain.MessageId
 import models.domain.MovementMessage
@@ -28,16 +31,11 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.inject.bind
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 
-class HateoasArrivalResponseMessageSpec
-    extends AnyFreeSpec
-    with Matchers
-    with GuiceOneAppPerSuite
-    with OptionValues
-    with ScalaFutures
-    with MockitoSugar
-    with BeforeAndAfterEach {
+class HateoasArrivalResponseMessageSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
 
   "HateoasArrivalResponseMessage" - {
     "must have valid message structure" in {

@@ -24,7 +24,7 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
-import v2.controllers.ErrorTranslator
+import v2.controllers.ConvertError
 import v2.models.JsonPayload
 import v2.models.XmlPayload
 import v2.models.errors.PresentationError
@@ -45,7 +45,7 @@ trait ResponseFormatterService {
 }
 
 @Singleton
-class ResponseFormatterServiceImpl @Inject() (conversionService: ConversionService) extends ResponseFormatterService with ErrorTranslator {
+class ResponseFormatterServiceImpl @Inject() (conversionService: ConversionService) extends ResponseFormatterService with ConvertError {
 
   override def formatMessageSummary(
     messageSummary: MessageSummary,

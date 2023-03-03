@@ -26,7 +26,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import v2.base.CommonGenerators
+import v2.base.TestCommonGenerators
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
@@ -50,16 +50,16 @@ import v2.models.errors.FailedToValidateError.XmlSchemaFailedToValidateError
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ErrorTranslatorSpec
+class ConvertErrorSpec
     extends AnyFreeSpec
     with Matchers
     with OptionValues
     with ScalaFutures
     with MockitoSugar
     with ScalaCheckDrivenPropertyChecks
-    with CommonGenerators {
+    with TestCommonGenerators {
 
-  object Harness extends ErrorTranslator
+  object Harness extends ConvertError
 
   import Harness._
 

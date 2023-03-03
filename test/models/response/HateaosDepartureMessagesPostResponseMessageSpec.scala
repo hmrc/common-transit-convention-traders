@@ -30,11 +30,11 @@ import play.api.libs.json.Json
 class HateoasDepartureMessagesPostResponseMessageSpec
     extends AnyFreeSpec
     with Matchers
-    with GuiceOneAppPerSuite
     with OptionValues
     with ScalaFutures
     with MockitoSugar
     with BeforeAndAfterEach {
+
   "HateoasDepartureMessagesPostResponseMessage" - {
     "must have valid message structure" in {
       val expectedJson = Json.parse("""{

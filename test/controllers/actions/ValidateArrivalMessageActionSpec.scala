@@ -43,6 +43,8 @@ import scala.concurrent.Future
 import scala.xml.NodeSeq
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.time.Clock
+
 class ValidateArrivalMessageActionSpec
     extends AnyFreeSpec
     with Matchers
@@ -53,8 +55,10 @@ class ValidateArrivalMessageActionSpec
     with BeforeAndAfterEach
     with TestXml {
 
+  val mockClock = mock[Clock]
+
   override lazy val app = GuiceApplicationBuilder()
-    .overrides(bind[AuthAction].to[FakeAuthAction])
+    .overrides(bind[AuthAction].to[FakeAuthAction], bind[Clock].toInstance(mockClock))
     .build()
 
   override def beforeEach(): Unit =

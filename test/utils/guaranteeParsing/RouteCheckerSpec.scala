@@ -33,11 +33,13 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 
+import java.time.Clock
 import scala.xml.NodeSeq
 
 class RouteCheckerSpec extends AnyFreeSpec with ParseHandling with MockitoSugar with BeforeAndAfterEach with Matchers with ScalaCheckPropertyChecks {
 
   val mockXmlReaders = mock[GuaranteeXmlReaders]
+  val mockClock      = mock[Clock]
 
   override def beforeEach = {
     super.beforeEach()
@@ -53,7 +55,8 @@ class RouteCheckerSpec extends AnyFreeSpec with ParseHandling with MockitoSugar 
   def sut: RouteChecker = {
     val application = baseApplicationBuilder
       .overrides(
-        bind[GuaranteeXmlReaders].toInstance(mockXmlReaders)
+        bind[GuaranteeXmlReaders].toInstance(mockXmlReaders),
+        bind[Clock].toInstance(mockClock)
       )
       .build()
 

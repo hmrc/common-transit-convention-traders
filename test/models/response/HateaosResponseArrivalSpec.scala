@@ -29,14 +29,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 
-class HateoasResponseArrivalSpec
-    extends AnyFreeSpec
-    with Matchers
-    with GuiceOneAppPerSuite
-    with OptionValues
-    with ScalaFutures
-    with MockitoSugar
-    with BeforeAndAfterEach {
+class HateoasResponseArrivalSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar with BeforeAndAfterEach {
 
   "HateoasResponseArrival" - {
     "must generate correct message structure" in {

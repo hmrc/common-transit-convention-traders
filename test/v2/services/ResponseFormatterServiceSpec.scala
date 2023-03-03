@@ -31,7 +31,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
-import v2.base.CommonGenerators
+import v2.base.TestCommonGenerators
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider.singleUseStringSource
 import v2.models.JsonPayload
@@ -50,7 +50,7 @@ class ResponseFormatterServiceSpec
     with ScalaFutures
     with MockitoSugar
     with ScalaCheckDrivenPropertyChecks
-    with CommonGenerators
+    with TestCommonGenerators
     with TestActorSystem {
 
   "formatMessageSummary" - {

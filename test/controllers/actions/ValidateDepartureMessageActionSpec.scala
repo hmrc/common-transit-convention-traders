@@ -39,6 +39,7 @@ import play.api.test.Helpers._
 import services.XmlError
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.time.Clock
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.xml.NodeSeq
@@ -53,8 +54,10 @@ class ValidateDepartureMessageActionSpec
     with BeforeAndAfterEach
     with TestXml {
 
+  val mockClock = mock[Clock]
+
   override lazy val app = GuiceApplicationBuilder()
-    .overrides(bind[AuthAction].to[FakeAuthAction])
+    .overrides(bind[AuthAction].to[FakeAuthAction], bind[Clock].toInstance(mockClock))
     .build()
 
   override def beforeEach(): Unit =

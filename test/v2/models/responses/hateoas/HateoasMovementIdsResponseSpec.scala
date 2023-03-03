@@ -24,14 +24,14 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import v2.base.CommonGenerators
+import v2.base.TestCommonGenerators
 import v2.models.EORINumber
 import v2.models.MovementType
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
-class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with OptionValues with CommonGenerators with ScalaCheckDrivenPropertyChecks {
+class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with OptionValues with TestCommonGenerators with ScalaCheckDrivenPropertyChecks {
 
   for (movementType <- MovementType.values)
     s"${movementType.movementType} should produce valid HateoasMovementIdsResponse responses with optional updatedSince, movementEORI" in forAll(

@@ -46,6 +46,7 @@ import play.api.test.FakeRequest
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.TestMetrics
 
+import java.time.Clock
 import scala.concurrent.Future
 
 class PushPullNotificationControllerSpec
@@ -59,12 +60,14 @@ class PushPullNotificationControllerSpec
     with TestXml {
 
   val mockPushPullNotificationConnector = mock[PushPullNotificationConnector]
+  val mockClock                         = mock[Clock]
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(
       bind[Metrics].toInstance(new TestMetrics),
       bind[AuthAction].to[FakeAuthAction],
-      bind[PushPullNotificationConnector].toInstance(mockPushPullNotificationConnector)
+      bind[PushPullNotificationConnector].toInstance(mockPushPullNotificationConnector),
+      bind[Clock].toInstance(mockClock)
     )
     .build()
 

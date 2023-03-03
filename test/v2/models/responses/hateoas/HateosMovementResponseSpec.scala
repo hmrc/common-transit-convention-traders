@@ -21,7 +21,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
-import v2.base.CommonGenerators
+import v2.base.TestCommonGenerators
 import v2.models.EORINumber
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
@@ -30,7 +30,7 @@ import v2.models.responses.MovementSummary
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
-class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with CommonGenerators with OptionValues {
+class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with TestCommonGenerators with OptionValues {
 
   private val dateTime = OffsetDateTime.of(2022, 8, 15, 11, 45, 0, 0, ZoneOffset.UTC)
 

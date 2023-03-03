@@ -37,6 +37,7 @@ import utils.guaranteeParsing.InstructionBuilder
 import utils.guaranteeParsing.RouteChecker
 import utils.guaranteeParsing.XmlBuilder
 
+import java.time.Clock
 import scala.xml.Node
 import scala.xml.NodeSeq
 
@@ -53,6 +54,7 @@ class EnsureGuaranteeServiceSpec
   private val mockInstructionBuilder: InstructionBuilder = mock[InstructionBuilder]
   private val mockRouteChecker: RouteChecker             = mock[RouteChecker]
   private val mockXmlBuilder: XmlBuilder                 = mock[XmlBuilder]
+  private val mockClock                                  = mock[Clock]
 
   override def beforeEach = {
     super.beforeEach()
@@ -74,7 +76,8 @@ class EnsureGuaranteeServiceSpec
         bind[GuaranteeXmlReaders].toInstance(mockXmlReaders),
         bind[InstructionBuilder].toInstance(mockInstructionBuilder),
         bind[RouteChecker].toInstance(mockRouteChecker),
-        bind[XmlBuilder].toInstance(mockXmlBuilder)
+        bind[XmlBuilder].toInstance(mockXmlBuilder),
+        bind[Clock].toInstance(mockClock)
       )
       .build()
 

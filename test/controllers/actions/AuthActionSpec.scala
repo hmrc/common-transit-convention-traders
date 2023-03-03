@@ -18,9 +18,11 @@ package controllers.actions
 
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.inject
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.Action
@@ -33,12 +35,28 @@ import services.FakeEnrolmentLoggingService
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
+import java.time.Clock
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
+class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar with BeforeAndAfterEach {
 
   val fakeEnrolmentLoggingService = new FakeEnrolmentLoggingService()
+
+  val authConnector = mock[AuthConnector]
+  val mockClock     = mock[Clock]
+
+  val application = GuiceApplicationBuilder()
+    .overrides(inject.bind[Clock].toInstance(mockClock))
+    .configure(
+      "metrics.jvm" -> false
+    )
+    .build()
+
+  override def beforeEach = {
+    super.beforeEach()
+    reset(authConnector)
+  }
 
   class Harness(authAction: AuthAction) {
 
@@ -170,16 +188,9 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
   "must execute the block" - {
     "when the user is logged in and has the new enrolment" in {
-      val authConnector = mock[AuthConnector]
 
       when(authConnector.authorise[Enrolments](any(), any())(any(), any()))
         .thenReturn(Future.successful(newEnrolmentWithEori))
-
-      val application = GuiceApplicationBuilder()
-        .configure(
-          "metrics.jvm" -> false
-        )
-        .build()
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
@@ -192,16 +203,9 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
     }
 
     "when the user is logged in and has the legacy enrolment" in {
-      val authConnector = mock[AuthConnector]
 
       when(authConnector.authorise[Enrolments](any(), any())(any(), any()))
         .thenReturn(Future.successful(legacyEnrolmentWithEori))
-
-      val application = GuiceApplicationBuilder()
-        .configure(
-          "metrics.jvm" -> false
-        )
-        .build()
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
@@ -216,16 +220,9 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
   "must return Forbidden" - {
     "when the user is logged in and doesn't have any valid enrolments" in {
-      val authConnector = mock[AuthConnector]
 
       when(authConnector.authorise[Enrolments](any(), any())(any(), any()))
         .thenReturn(Future.successful(noValidEnrolments))
-
-      val application = GuiceApplicationBuilder()
-        .configure(
-          "metrics.jvm" -> false
-        )
-        .build()
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
@@ -238,16 +235,9 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
     }
 
     "when the user is logged in and has no valid enrolment identifier" in {
-      val authConnector = mock[AuthConnector]
 
       when(authConnector.authorise[Enrolments](any(), any())(any(), any()))
         .thenReturn(Future.successful(noValidEnrolmentIdentifier))
-
-      val application = GuiceApplicationBuilder()
-        .configure(
-          "metrics.jvm" -> false
-        )
-        .build()
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
@@ -260,16 +250,9 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
     }
 
     "when the user is logged in and has no valid activated eori enrolments" in {
-      val authConnector = mock[AuthConnector]
 
       when(authConnector.authorise[Enrolments](any(), any())(any(), any()))
         .thenReturn(Future.failed(InsufficientEnrolments()))
-
-      val application = GuiceApplicationBuilder()
-        .configure(
-          "metrics.jvm" -> false
-        )
-        .build()
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
@@ -284,16 +267,9 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
   "must return Unauthorized" - {
     "when the user hasn't logged in" in {
-      val authConnector = mock[AuthConnector]
 
       when(authConnector.authorise[Enrolments](any(), any())(any(), any()))
         .thenReturn(Future.failed(new MissingBearerToken()))
-
-      val application = GuiceApplicationBuilder()
-        .configure(
-          "metrics.jvm" -> false
-        )
-        .build()
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 
@@ -311,16 +287,9 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 
   "must return InternalServerError" - {
     "when the auth connector returns an UpstreamErrorResponse" in {
-      val authConnector = mock[AuthConnector]
 
       when(authConnector.authorise[Enrolments](any(), any())(any(), any()))
         .thenReturn(Future.failed(UpstreamErrorResponse("Invalid auth-client version", 403, 403, Map.empty)))
-
-      val application = GuiceApplicationBuilder()
-        .configure(
-          "metrics.jvm" -> false
-        )
-        .build()
 
       val bodyParser = application.injector.instanceOf[BodyParsers.Default]
 

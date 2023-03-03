@@ -22,7 +22,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
-import v2.base.CommonGenerators
+import v2.base.TestCommonGenerators
 import v2.models.BoxId
 import v2.models.MovementId
 import v2.models.MovementType
@@ -32,7 +32,7 @@ import v2.models.responses.UpscanFormTemplate
 import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.UpscanReference
 
-class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with OptionValues with CommonGenerators {
+class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with OptionValues with TestCommonGenerators {
 
   for (movementType <- MovementType.values)
     s"${movementType.movementType} create a valid HateoasNewMovementResponse" - {

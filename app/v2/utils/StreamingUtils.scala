@@ -21,14 +21,14 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
-import v2.controllers.ErrorTranslator
+import v2.controllers.ConvertError
 import v2.models.errors.StreamingError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-object StreamingUtils extends ErrorTranslator {
+object StreamingUtils extends ConvertError {
 
   def convertSourceToString(
     source: Source[ByteString, _]

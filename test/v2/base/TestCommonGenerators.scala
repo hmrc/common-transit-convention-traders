@@ -19,6 +19,9 @@ package v2.base
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
+import uk.gov.hmrc.objectstore.client.Md5Hash
+import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
+import uk.gov.hmrc.objectstore.client.Path
 import v2.models.AuditType
 import v2.models.BoxId
 import v2.models.EORINumber
@@ -47,8 +50,9 @@ import v2.models.responses.UpscanResponse
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
-trait CommonGenerators {
+trait TestCommonGenerators {
 
   lazy val genShortUUID: Gen[String] = Gen.long.map {
     l: Long =>
@@ -176,6 +180,22 @@ trait CommonGenerators {
       uploadDetails  = if (isSuccess) arbitraryUploadDetails.arbitrary.sample else None
       failureDetails = if (!isSuccess) arbitraryFailureDetails.arbitrary.sample else None
     } yield UpscanResponse(Reference(reference), fileStatus, downloadUrl, uploadDetails, failureDetails)
+  }
+
+  implicit val arbitraryObjectSummaryWithMd5: Arbitrary[ObjectSummaryWithMd5] = Arbitrary {
+    for {
+      movementId <- arbitraryMovementId.arbitrary
+      messageId  <- arbitraryMessageId.arbitrary
+      lastModified      = Instant.now()
+      formattedDateTime = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC).format(lastModified)
+      contentLen <- Gen.long
+      hash       <- Gen.alphaNumStr.map(Md5Hash)
+    } yield ObjectSummaryWithMd5(
+      Path.Directory("common-transit-convention-traders").file(s"${movementId.value}-${messageId.value}-$formattedDateTime.xml"),
+      contentLen,
+      hash,
+      lastModified
+    )
   }
 
   implicit def arbitraryUpscanResponseWithOutDownloadUrl(): Arbitrary[UpscanResponse] = Arbitrary {

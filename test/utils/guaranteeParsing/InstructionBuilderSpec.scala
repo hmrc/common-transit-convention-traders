@@ -30,9 +30,12 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 
+import java.time.Clock
+
 class InstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAndAfterEach with TestXml with Matchers with ScalaCheckPropertyChecks {
 
   val mockGIB: GuaranteeInstructionBuilder = mock[GuaranteeInstructionBuilder]
+  val mockClock                            = mock[Clock]
 
   override def beforeEach = {
     super.beforeEach()
@@ -48,7 +51,8 @@ class InstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAn
   def sut: InstructionBuilder = {
     val application = baseApplicationBuilder
       .overrides(
-        bind[GuaranteeInstructionBuilder].toInstance(mockGIB)
+        bind[GuaranteeInstructionBuilder].toInstance(mockGIB),
+        bind[Clock].toInstance(mockClock)
       )
       .build()
 
@@ -96,8 +100,11 @@ class InstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAn
 
 class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAndAfterEach with TestXml with Matchers with ScalaCheckPropertyChecks {
 
+  val mockClock = mock[Clock]
+
   protected def baseApplicationBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
+      .overrides(bind[Clock].toInstance(mockClock))
       .configure(
         "metrics.jvm" -> false
       )

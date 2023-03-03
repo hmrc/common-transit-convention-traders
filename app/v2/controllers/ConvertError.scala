@@ -22,7 +22,7 @@ import v2.models.errors._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-trait ErrorTranslator {
+trait ConvertError {
 
   implicit class ErrorConverter[E, A](value: EitherT[Future, E, A]) {
 
@@ -110,6 +110,15 @@ trait ErrorTranslator {
     import v2.models.errors.UpscanInitiateError._
 
     override def convert(upscanInitiateError: UpscanInitiateError): PresentationError = upscanInitiateError match {
+      case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
+    }
+  }
+
+  implicit val objectStoreErrorConverter = new Converter[ObjectStoreError] {
+
+    import v2.models.errors.ObjectStoreError._
+
+    override def convert(objectStoreError: ObjectStoreError): PresentationError = objectStoreError match {
       case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
     }
   }

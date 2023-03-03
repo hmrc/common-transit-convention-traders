@@ -46,7 +46,7 @@ import play.api.test.Helpers.defaultAwaitTimeout
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.client.RequestBuilder
-import v2.base.CommonGenerators
+import v2.base.TestCommonGenerators
 import v2.base.TestActorSystem
 import v2.models.AuditType
 import v2.models.EORINumber
@@ -62,7 +62,7 @@ class V2BaseConnectorSpec
     extends AnyFreeSpec
     with Matchers
     with MockitoSugar
-    with CommonGenerators
+    with TestCommonGenerators
     with ScalaCheckDrivenPropertyChecks
     with ScalaFutures
     with OptionValues
