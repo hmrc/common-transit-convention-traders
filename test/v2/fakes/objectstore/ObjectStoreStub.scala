@@ -24,8 +24,8 @@ import uk.gov.hmrc.objectstore.client.Path
 import uk.gov.hmrc.objectstore.client.RetentionPeriod
 import uk.gov.hmrc.objectstore.client.config.ObjectStoreClientConfig
 import uk.gov.hmrc.objectstore.client.play.FutureEither
+import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClient
 import uk.gov.hmrc.objectstore.client.play.test.stub.StubPlayObjectStoreClient
-import uk.gov.hmrc.objectstore.client.play.test.stub.StubPlayObjectStoreClientEither
 import v2.base.TestCommonGenerators
 
 import scala.concurrent.ExecutionContext
@@ -34,7 +34,7 @@ import scala.concurrent.Future
 class ObjectStoreStub(config: ObjectStoreClientConfig)(implicit
   m: Materializer,
   ec: ExecutionContext
-) extends StubPlayObjectStoreClientEither(config)
+) extends StubPlayObjectStoreClient(config)
     with TestCommonGenerators {
 
   override def uploadFromUrl(
@@ -44,9 +44,9 @@ class ObjectStoreStub(config: ObjectStoreClientConfig)(implicit
     contentType: Option[String] = None,
     contentMd5: Option[Md5Hash] = None,
     owner: String = config.owner
-  )(implicit hc: HeaderCarrier): FutureEither[ObjectSummaryWithMd5] = {
+  )(implicit hc: HeaderCarrier): Future[ObjectSummaryWithMd5] = {
     val objectSummaryWithMd5 = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
-    Future.successful(Right(objectSummaryWithMd5))
+    Future.successful(objectSummaryWithMd5)
   }
 
 }

@@ -19,7 +19,6 @@ package v2.services
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
-import config.AppConfig
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.connectors.UpscanConnector
 import v2.connectors.V2BaseConnector
@@ -43,8 +42,7 @@ trait UpscanService {
 }
 
 class UpscanServiceImpl @Inject() (
-  upscanConnector: UpscanConnector,
-  appConfig: AppConfig
+  upscanConnector: UpscanConnector
 ) extends UpscanService
     with V2BaseConnector {
 

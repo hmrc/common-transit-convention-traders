@@ -59,7 +59,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class MovementsServiceSpec
+class PersistenceServiceSpec
     extends AnyFreeSpec
     with Matchers
     with OptionValues
