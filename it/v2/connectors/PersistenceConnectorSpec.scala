@@ -47,12 +47,14 @@ import utils.GuiceWiremockSuite
 import utils.TestMetrics
 import v2.models.EORINumber
 import v2.models.MessageId
+import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.errors.ErrorCode
 import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
+import v2.models.request.MessageUpdate
 import v2.models.responses.MovementResponse
 import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
@@ -1304,6 +1306,91 @@ class PersistenceConnectorSpec
         whenReady(future) {
           result =>
             result.left.toOption.get mustBe a[JsonParseException]
+        }
+    }
+  }
+
+  "PATCH /movements/:movementId/messages/:messageId" - {
+
+    def targetUrl(movementId: MovementId, messageId: MessageId) = s"/transit-movements/traders/movements/${movementId.value}/messages/${messageId.value}"
+
+    lazy val messageUpdate = MessageUpdate(MessageStatus.Processing, None)
+
+    "On successful update to the message in the movement, must return OK" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
+      (movementId, messageId) =>
+        server.stubFor(
+          patch(
+            urlEqualTo(targetUrl(movementId, messageId))
+          )
+            .willReturn(
+              aResponse().withStatus(OK)
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        whenReady(persistenceConnector.patchMessage(movementId, messageId, messageUpdate)) {
+          result =>
+            result mustBe ()
+        }
+    }
+
+    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
+      (movementId, messageId) =>
+        server.stubFor(
+          patch(
+            urlEqualTo(targetUrl(movementId, messageId))
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(INTERNAL_SERVER_ERROR)
+                .withBody(
+                  Json.stringify(Json.toJson(PresentationError.internalServiceError()))
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val future = persistenceConnector.patchMessage(movementId, messageId, messageUpdate).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
+            response.statusCode mustBe INTERNAL_SERVER_ERROR
+            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+        }
+    }
+
+    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
+      (movementId, messageId) =>
+        server.stubFor(
+          patch(
+            urlEqualTo(targetUrl(movementId, messageId))
+          ).willReturn(
+            aResponse()
+              .withStatus(BAD_REQUEST)
+              .withBody(
+                Json.stringify(Json.toJson(PresentationError.badRequestError("Bad request")))
+              )
+          )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val future = persistenceConnector.patchMessage(movementId, messageId, messageUpdate).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
+            response.statusCode mustBe BAD_REQUEST
+            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
         }
     }
   }
