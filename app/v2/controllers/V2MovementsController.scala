@@ -47,11 +47,14 @@ import v2.controllers.stream.StreamingParsers
 import v2.models.AuditType
 import v2.models.EORINumber
 import v2.models.MessageId
+import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementType
+import v2.models.ObjectStoreURI
 import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
+import v2.models.request.MessageUpdate
 import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.BoxResponse
 import v2.models.responses.LargeMessageAuditRequest
@@ -348,7 +351,9 @@ class V2MovementsControllerImpl @Inject() (
             (for {
               downloadUrl   <- handleUpscanSuccessResponse(upscanResponse)
               objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
-            } yield objectSummary).fold[Result](
+              messageUpdate = MessageUpdate(MessageStatus.Processing, Some(ObjectStoreURI(objectSummary.location.asUri)))
+              update <- persistenceService.updateMessage(movementId, messageId, messageUpdate).asPresentation
+            } yield update).fold[Result](
               _ => Ok, //TODO: Send notification to PPNS with details of the error
               _ => Ok  //TODO: Send notification to PPNS with details of the success
             )
