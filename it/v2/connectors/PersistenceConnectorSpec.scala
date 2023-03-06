@@ -1316,18 +1316,18 @@ class PersistenceConnectorSpec
 
     lazy val messageUpdate = MessageUpdate(MessageStatus.Processing, None)
 
-    "On successful update to the message in the movement, must return OK" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
-      (movementId, messageId) =>
+    implicit val hc: HeaderCarrier = HeaderCarrier()
+
+    "On successful update to the message in the movement, must return OK" in forAll(arbitrary[MovementId], arbitrary[MessageId], arbitrary[MessageUpdate]) {
+      (movementId, messageId, messageUpdate) =>
         server.stubFor(
           patch(
             urlEqualTo(targetUrl(movementId, messageId))
-          )
+          ).withRequestBody(equalToJson(Json.stringify(Json.toJson(messageUpdate))))
             .willReturn(
               aResponse().withStatus(OK)
             )
         )
-
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
         whenReady(persistenceConnector.patchMessage(movementId, messageId, messageUpdate)) {
           result =>
@@ -1340,7 +1340,7 @@ class PersistenceConnectorSpec
         server.stubFor(
           patch(
             urlEqualTo(targetUrl(movementId, messageId))
-          )
+          ).withRequestBody(equalToJson(Json.stringify(Json.toJson(messageUpdate))))
             .willReturn(
               aResponse()
                 .withStatus(INTERNAL_SERVER_ERROR)
@@ -1349,8 +1349,6 @@ class PersistenceConnectorSpec
                 )
             )
         )
-
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
         val future = persistenceConnector.patchMessage(movementId, messageId, messageUpdate).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
@@ -1370,16 +1368,15 @@ class PersistenceConnectorSpec
         server.stubFor(
           patch(
             urlEqualTo(targetUrl(movementId, messageId))
-          ).willReturn(
-            aResponse()
-              .withStatus(BAD_REQUEST)
-              .withBody(
-                Json.stringify(Json.toJson(PresentationError.badRequestError("Bad request")))
-              )
-          )
+          ).withRequestBody(equalToJson(Json.stringify(Json.toJson(messageUpdate))))
+            .willReturn(
+              aResponse()
+                .withStatus(BAD_REQUEST)
+                .withBody(
+                  Json.stringify(Json.toJson(PresentationError.badRequestError("Bad request")))
+                )
+            )
         )
-
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
         val future = persistenceConnector.patchMessage(movementId, messageId, messageUpdate).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
