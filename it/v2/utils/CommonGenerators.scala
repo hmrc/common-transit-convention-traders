@@ -24,6 +24,7 @@ import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
 import uk.gov.hmrc.objectstore.client.Path
 import v2.models._
 import v2.models.request.MessageType
+import v2.models.request.MessageUpdate
 import v2.models.request.PushNotificationsAssociation
 import v2.models.responses.BoxResponse
 import v2.models.responses.MessageSummary
@@ -141,6 +142,13 @@ trait CommonGenerators {
       hash,
       lastModified
     )
+  }
+
+  implicit val arbitraryMessageUpdate: Arbitrary[MessageUpdate] = Arbitrary {
+    for {
+      status <- Gen.oneOf(MessageStatus.statusValues)
+      uri    <- Gen.alphaNumStr
+    } yield MessageUpdate(status, Some(ObjectStoreURI(uri)))
   }
 
 }

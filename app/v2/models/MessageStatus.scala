@@ -50,6 +50,6 @@ object MessageStatus {
     case JsString("Success")    => JsSuccess(Success)
     case JsString("Failed")     => JsSuccess(Failed)
     case _                      => JsError("Invalid message status")
-
   }
+
 }

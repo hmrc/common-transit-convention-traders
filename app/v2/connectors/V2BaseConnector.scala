@@ -94,6 +94,9 @@ trait V2BaseConnector extends HttpErrorFunctions {
   def attachLargeMessageRoute(movementId: MovementId, messageId: MessageId): UrlPath =
     UrlPath.parse(s"/movements/${movementId.value}/messages/${messageId.value}")
 
+  def updateMessageRoute(movementId: MovementId, messageId: MessageId): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/movements/${movementId.value}/messages/${messageId.value}")
+
   implicit class HttpResponseHelpers(response: HttpResponse) {
 
     def as[A](implicit reads: Reads[A]): Future[A] =

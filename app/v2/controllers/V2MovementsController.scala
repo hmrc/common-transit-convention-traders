@@ -47,16 +47,19 @@ import v2.controllers.stream.StreamingParsers
 import v2.models.AuditType
 import v2.models.EORINumber
 import v2.models.MessageId
+import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementType
+import v2.models.ObjectStoreURI
 import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
+import v2.models.request.MessageUpdate
+import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.BoxResponse
 import v2.models.responses.LargeMessageAuditRequest
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.UpscanResponse
-import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.hateoas._
 import v2.services._
 import v2.utils.StreamWithFile
@@ -342,14 +345,15 @@ class V2MovementsControllerImpl @Inject() (
     Action.async(parse.json) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
         parseAndLogUpscanResponse(request.body) match {
           case Left(presentationError) => Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
           case Right(upscanResponse) =>
             (for {
               downloadUrl   <- handleUpscanSuccessResponse(upscanResponse)
               objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
-            } yield objectSummary).fold[Result](
+              messageUpdate = MessageUpdate(MessageStatus.Processing, Some(ObjectStoreURI(objectSummary.location.asUri)))
+              update <- persistenceService.updateMessage(movementId, messageId, messageUpdate).asPresentation
+            } yield update).fold[Result](
               _ => Ok, //TODO: Send notification to PPNS with details of the error
               _ => Ok  //TODO: Send notification to PPNS with details of the success
             )
@@ -368,7 +372,7 @@ class V2MovementsControllerImpl @Inject() (
     request: AuthenticatedRequest[_]
   ) =
     for {
-      updateMovementResponse <- persistenceService.updateMovement(movementId, movementType, messageType, source).asPresentation
+      updateMovementResponse <- persistenceService.addMessage(movementId, movementType, messageType, source).asPresentation
       _ = pushNotificationsService.update(movementId)
       _ <- routerService
         .send(messageType, request.eoriNumber, movementId, updateMovementResponse.messageId, source)

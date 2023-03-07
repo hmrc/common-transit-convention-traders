@@ -54,14 +54,11 @@ class UpscanServiceSpec
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   val mockConnector: UpscanConnector = mock[UpscanConnector]
-  val mockAppConfig: AppConfig       = mock[AppConfig]
 
-  val sut = new UpscanServiceImpl(mockConnector, mockAppConfig)
+  val sut = new UpscanServiceImpl(mockConnector)
 
-  override protected def beforeEach(): Unit = {
+  override protected def beforeEach(): Unit =
     reset(mockConnector)
-    reset(mockAppConfig)
-  }
 
   "upscan initiate" - {
 

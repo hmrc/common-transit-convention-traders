@@ -32,6 +32,7 @@ import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
+import v2.models.request.MessageUpdate
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
@@ -70,10 +71,15 @@ trait PersistenceService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MovementSummary]]
 
-  def updateMovement(movementId: MovementId, movementType: MovementType, messageType: MessageType, source: Source[ByteString, _])(implicit
+  def addMessage(movementId: MovementId, movementType: MovementType, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, UpdateMovementResponse]
+
+  def updateMessage(movementId: MovementId, messageId: MessageId, body: MessageUpdate)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, Unit]
 
 }
 
@@ -151,7 +157,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
       }
   )
 
-  override def updateMovement(movementId: MovementId, movementType: MovementType, messageType: MessageType, source: Source[ByteString, _])(implicit
+  override def addMessage(movementId: MovementId, movementType: MovementType, messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, UpdateMovementResponse] =
@@ -161,6 +167,20 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
+          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+        }
+    )
+
+  override def updateMessage(movementId: MovementId, messageId: MessageId, body: MessageUpdate)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, Unit] =
+    EitherT(
+      persistenceConnector
+        .patchMessage(movementId, messageId, body)
+        .map(Right(_))
+        .recover {
+          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
           case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )

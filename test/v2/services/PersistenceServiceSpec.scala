@@ -277,7 +277,7 @@ class PersistenceServiceSpec
         )
       )
         .thenReturn(Future.successful(UpdateMovementResponse(MessageId("123"))))
-      val result                                                     = sut.updateMovement(MovementId("abc"), MovementType.Departure, MessageType.DeclarationInvalidationRequest, validRequest)
+      val result                                                     = sut.addMessage(MovementId("abc"), MovementType.Departure, MessageType.DeclarationInvalidationRequest, validRequest)
       val expected: Either[PersistenceError, UpdateMovementResponse] = Right(UpdateMovementResponse(MessageId("123")))
       whenReady(result.value) {
         _ mustBe expected
@@ -292,7 +292,7 @@ class PersistenceServiceSpec
         )
       ).thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-      val result = sut.updateMovement(MovementId("1234567890abcdef"), MovementType.Departure, MessageType.DeclarationInvalidationRequest, validRequest)
+      val result = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Departure, MessageType.DeclarationInvalidationRequest, validRequest)
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.MovementNotFound(MovementId("1234567890abcdef"), MovementType.Departure))
       }
@@ -306,7 +306,7 @@ class PersistenceServiceSpec
         )
       )
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result                                                     = sut.updateMovement(MovementId("abc"), MovementType.Departure, MessageType.DeclarationInvalidationRequest, invalidRequest)
+      val result                                                     = sut.addMessage(MovementId("abc"), MovementType.Departure, MessageType.DeclarationInvalidationRequest, invalidRequest)
       val expected: Either[PersistenceError, UpdateMovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected
@@ -583,7 +583,7 @@ class PersistenceServiceSpec
         )
       )
         .thenReturn(Future.successful(UpdateMovementResponse(MessageId("1234567890abcdsd"))))
-      val result                                                     = sut.updateMovement(MovementId("1234567890abcdef"), MovementType.Arrival, MessageType.UnloadingRemarks, validRequest)
+      val result                                                     = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Arrival, MessageType.UnloadingRemarks, validRequest)
       val expected: Either[PersistenceError, UpdateMovementResponse] = Right(UpdateMovementResponse(MessageId("1234567890abcdsd")))
       whenReady(result.value) {
         _ mustBe expected
@@ -598,7 +598,7 @@ class PersistenceServiceSpec
         )
       ).thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-      val result = sut.updateMovement(MovementId("1234567890abcdef"), MovementType.Arrival, MessageType.UnloadingRemarks, validRequest)
+      val result = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Arrival, MessageType.UnloadingRemarks, validRequest)
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.MovementNotFound(MovementId("1234567890abcdef"), MovementType.Arrival))
       }
@@ -612,7 +612,7 @@ class PersistenceServiceSpec
         )
       )
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result                                                     = sut.updateMovement(MovementId("1234567890abcdef"), MovementType.Arrival, MessageType.UnloadingRemarks, invalidRequest)
+      val result                                                     = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Arrival, MessageType.UnloadingRemarks, invalidRequest)
       val expected: Either[PersistenceError, UpdateMovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected
