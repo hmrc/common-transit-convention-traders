@@ -27,23 +27,26 @@ import play.api.Logging
 import play.api.libs.Files.TemporaryFileCreator
 import v2.models.errors.PresentationError
 
+import java.nio.file.Files
 import java.nio.file.Path
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.Try
 import scala.util.control.NonFatal
 
 trait StreamWithFile {
   self: Logging =>
 
-  def withReusableSource[R](
-    src: Source[ByteString, _]
-  )(
-    block: Source[ByteString, _] => EitherT[Future, PresentationError, R]
-  )(implicit temporaryFileCreator: TemporaryFileCreator, mat: Materializer, ec: ExecutionContext): EitherT[Future, PresentationError, R] = {
+  def withReusableSourceAndSize[R](
+     src: Source[ByteString, _]
+   )(
+     block: (Source[ByteString, _], Long) => EitherT[Future, PresentationError, R]
+   )(implicit temporaryFileCreator: TemporaryFileCreator, mat: Materializer, ec: ExecutionContext): EitherT[Future, PresentationError, R] = {
     val file = temporaryFileCreator.create()
     (for {
-      _      <- writeToFile(file, src)
-      result <- block(FileIO.fromPath(file))
+      _ <- writeToFile(file, src)
+      size <- calculateSize(file)
+      result <- block(FileIO.fromPath(file), size)
     } yield result)
       .flatTap {
         _ =>
@@ -52,6 +55,24 @@ trait StreamWithFile {
       }
 
   }
+
+  def withReusableSource[R](
+    src: Source[ByteString, _]
+  )(
+    block: Source[ByteString, _] => EitherT[Future, PresentationError, R]
+  )(implicit temporaryFileCreator: TemporaryFileCreator, mat: Materializer, ec: ExecutionContext): EitherT[Future, PresentationError, R] =
+    withReusableSourceAndSize(src)((fileSource, _) => block(fileSource))
+
+  private def calculateSize(file: Path): EitherT[Future, PresentationError, Long] =
+    EitherT(
+      Future.fromTry(
+        Try(Files.size(file))
+          .map(Right.apply)
+          .recover {
+            case NonFatal(e) => Left(PresentationError.internalServiceError(cause = Some(e)))
+          }
+      )
+    )
 
   private def writeToFile(file: Path, src: Source[ByteString, _])(implicit
     mat: Materializer,
