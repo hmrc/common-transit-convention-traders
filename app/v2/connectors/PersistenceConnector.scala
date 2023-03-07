@@ -211,7 +211,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .patch(url"$url")
-      .withBody(Json.stringify(Json.toJson(body)))
+      .withBody(Json.toJson(body))
       .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
       .executeAndExpect(OK)
   }
