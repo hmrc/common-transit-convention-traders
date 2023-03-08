@@ -347,7 +347,7 @@ class V2MovementsControllerImpl @Inject() (
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         parseAndLogUpscanResponse(request.body) match {
           case Left(presentationError) =>
-            println("Upscan failure")
+            logger.error("Upscan failure: bad schema")
             Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
           case Right(upscanResponse) =>
             (for {
@@ -357,7 +357,7 @@ class V2MovementsControllerImpl @Inject() (
               update <- persistenceService.updateMessage(movementId, messageId, messageUpdate).asPresentation
             } yield update).fold[Result](
               {
-                e => println(s"error: $e"); Ok
+                e => logger.error(s"Error ingesting file: $e"); Ok
               },      //TODO: Send notification to PPNS with details of the error
               _ => Ok //TODO: Send notification to PPNS with details of the success
             )
