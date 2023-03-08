@@ -346,7 +346,9 @@ class V2MovementsControllerImpl @Inject() (
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         parseAndLogUpscanResponse(request.body) match {
-          case Left(presentationError) => Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
+          case Left(presentationError) =>
+            println("Upscan failure")
+            Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
           case Right(upscanResponse) =>
             (for {
               downloadUrl   <- handleUpscanSuccessResponse(upscanResponse)
@@ -354,8 +356,10 @@ class V2MovementsControllerImpl @Inject() (
               messageUpdate = MessageUpdate(MessageStatus.Processing, Some(ObjectStoreURI(objectSummary.location.asUri)))
               update <- persistenceService.updateMessage(movementId, messageId, messageUpdate).asPresentation
             } yield update).fold[Result](
-              _ => Ok, //TODO: Send notification to PPNS with details of the error
-              _ => Ok  //TODO: Send notification to PPNS with details of the success
+              {
+                e => println(s"error: $e"); Ok
+              },      //TODO: Send notification to PPNS with details of the error
+              _ => Ok //TODO: Send notification to PPNS with details of the success
             )
         }
     }
@@ -363,6 +367,7 @@ class V2MovementsControllerImpl @Inject() (
   private def handleUpscanSuccessResponse(upscanResponse: UpscanResponse): EitherT[Future, PresentationError, DownloadUrl] =
     EitherT {
       Future.successful(upscanResponse.downloadUrl.toRight {
+        logger.error(s"Upscan failed to process file: ${upscanResponse.failureDetails.get}")
         PresentationError.badRequestError("Upscan failed to process file")
       })
     }
