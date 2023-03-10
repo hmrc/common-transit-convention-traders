@@ -32,6 +32,7 @@ import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
+import play.api.libs.json.JsObject
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.mvc.Action
@@ -58,6 +59,7 @@ import v2.models.request.MessageUpdate
 import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.BoxResponse
 import v2.models.responses.LargeMessageAuditRequest
+import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.UpscanResponse
 import v2.models.responses.hateoas._
@@ -109,8 +111,8 @@ class V2MovementsControllerImpl @Inject() (
     with UpscanResponseParser
     with HasActionMetrics {
 
-  lazy val sCounter: Counter = counter(s"success-counter")
-  lazy val fCounter: Counter = counter(s"failure-counter")
+  private lazy val sCounter: Counter = counter(s"success-counter")
+  private lazy val fCounter: Counter = counter(s"failure-counter")
 
   def createMovement(movementType: MovementType): Action[Source[ByteString, _]] =
     movementType match {
@@ -232,13 +234,38 @@ class V2MovementsControllerImpl @Inject() (
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
-          messageSummary          <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
-          formattedMessageSummary <- responseFormatterService.formatMessageSummary(messageSummary, request.headers.get(HeaderNames.ACCEPT).get)
-        } yield formattedMessageSummary).fold(
+          messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
+          body <-
+            if (messageSummary.uri.isDefined) processLargeMessage(movementId, movementType, messageSummary)
+            else processSmallMessage(movementId, movementType, messageSummary)
+        } yield body).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          response => Ok(Json.toJson(HateoasMovementMessageResponse(movementId, messageId, response, movementType)))
+          response => Ok.chunked(response)
         )
     }
+
+  private def processLargeMessage(movementId: MovementId, movementType: MovementType, messageSummary: MessageSummary)(implicit
+    hc: HeaderCarrier
+  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
+    for {
+      bodyStream <- objectStoreService.getMessage(messageSummary.uri.get).asPresentation
+      json: JsObject = Json.toJson(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)).as[JsObject]
+      stream <- EitherT.rightT[Future, PresentationError](mergeStreamIntoJson(json.fields, "body", bodyStream))
+    } yield stream
+
+  private def processSmallMessage(movementId: MovementId, movementType: MovementType, messageSummary: MessageSummary)(implicit
+    request: AuthenticatedRequest[AnyContent],
+    hc: HeaderCarrier
+  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
+    for {
+      formattedMessageSummary <- responseFormatterService.formatMessageSummary(messageSummary, request.headers.get(HeaderNames.ACCEPT).get)
+      jsonHateoasResponse: JsObject = Json
+        .toJson(
+          HateoasMovementMessageResponse(movementId, formattedMessageSummary.id, formattedMessageSummary, movementType)
+        )
+        .as[JsObject]
+      stream <- EitherT.rightT[Future, PresentationError](jsonToByteStringStream(jsonHateoasResponse.fields))
+    } yield stream
 
   def getMessageIds(movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = true)).async {

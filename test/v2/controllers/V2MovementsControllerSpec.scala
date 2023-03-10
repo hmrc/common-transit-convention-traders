@@ -2134,8 +2134,8 @@ class V2MovementsControllerSpec
     s"/movements/${movementType.urlFragment}/:movementId/messages/:messageId " - {
       val movementId         = arbitraryMovementId.arbitrary.sample.value
       val messageId          = arbitraryMessageId.arbitrary.sample.value
-      val messageSummaryXml  = arbitraryMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = Some(XmlPayload("<test>ABC</test>")))
-      val messageSummaryJson = messageSummaryXml.copy(body = Some(JsonPayload("""{"test": "ABC"}""")))
+      val messageSummaryXml  = arbitraryMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = Some(XmlPayload("<test>ABC</test>")), uri = None)
+      val messageSummaryJson = messageSummaryXml.copy(body = Some(JsonPayload("""{"test": "ABC"}""")), uri = None)
 
       Seq(
         VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
@@ -2182,6 +2182,9 @@ class V2MovementsControllerSpec
 
               val result = sut.getMessage(movementType, movementId, messageId)(request)
 
+              result.map(
+                x => x.body.dataStream
+              )
               status(result) mustBe OK
               contentAsJson(result) mustBe Json.toJson(
                 HateoasMovementMessageResponse(

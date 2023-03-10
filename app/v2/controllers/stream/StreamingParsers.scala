@@ -16,12 +16,15 @@
 
 package v2.controllers.stream
 
+import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.implicits.catsSyntaxMonadError
 import play.api.libs.Files.TemporaryFileCreator
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
 import play.api.libs.streams.Accumulator
 import play.api.mvc.Action
 import play.api.mvc.ActionBuilder
@@ -29,7 +32,6 @@ import play.api.mvc.BaseControllerHelpers
 import play.api.mvc.BodyParser
 import play.api.mvc.Result
 import v2.controllers.request.BodyReplaceableRequest
-
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -80,4 +82,41 @@ trait StreamingParsers {
       }
   }
 
+  private val START_TOKEN: Source[ByteString, NotUsed]      = Source.single(ByteString("{"))
+  private val END_TOKEN_SOURCE: Source[ByteString, NotUsed] = Source.single(ByteString("}"))
+
+  def mergeStreamIntoJson(fields: collection.Seq[(String, JsValue)], fieldName: String, stream: Source[ByteString, _]): Source[ByteString, _] =
+    // We need to start the document and add the final field, and prepare for the string data coming in
+    START_TOKEN ++
+      Source
+        .fromIterator(
+          () => fields.iterator
+        )
+        .map {
+          // convert fields to bytestrings with their values, need to ensure we keep the field names quoted,
+          // separate with a colon and end with a comma, as per the Json spec
+          tuple =>
+            ByteString(s""""${tuple._1}":${Json.stringify(tuple._2)},""")
+        } ++
+      // start adding the new field
+      Source.single(ByteString(s""""$fieldName":"""".stripMargin)) ++
+      // our XML stream that we escape
+      stream.map(
+        bs => ByteString(bs.utf8String.replace("\\", "\\\\").replace("\"", "\\\""))
+      ) ++
+      // and the stream that ends our Json document
+      END_TOKEN_SOURCE
+
+  def jsonToByteStringStream(fields: collection.Seq[(String, JsValue)]) =
+    START_TOKEN ++ Source
+      .fromIterator(
+        () => fields.iterator
+      )
+      .map {
+        // convert fields to bytestrings with their values, need to ensure we keep the field names quoted,
+        // separate with a colon and end with a comma, as per the Json spec
+        tuple =>
+          ByteString(s""""${tuple._1}":${Json.stringify(tuple._2)}""")
+      }
+      .intersperse(ByteString(",")) ++ END_TOKEN_SOURCE
 }

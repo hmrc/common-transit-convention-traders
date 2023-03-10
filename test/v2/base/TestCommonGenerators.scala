@@ -30,6 +30,7 @@ import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
+import v2.models.ObjectStoreURI
 import v2.models.XmlPayload
 import v2.models.request.MessageType
 import v2.models.responses.UpscanResponse.DownloadUrl
@@ -79,14 +80,19 @@ trait TestCommonGenerators {
     Gen.oneOf(AuditType.values)
   }
 
+  implicit lazy val arbitraryObjectStoreURI: Arbitrary[ObjectStoreURI] = Arbitrary {
+    Gen.alphaNumStr.map(ObjectStoreURI(_))
+  }
+
   implicit lazy val arbitraryMessageSummaryXml: Arbitrary[MessageSummary] = Arbitrary {
     for {
-      received    <- arbitrary[OffsetDateTime]
-      messageType <- Gen.oneOf(MessageType.values)
-      body        <- Gen.option(Gen.alphaNumStr.map(XmlPayload(_)))
-      messageId   <- genShortUUID.map(MessageId(_))
-      status      <- Gen.oneOf(MessageStatus.statusValues)
-    } yield MessageSummary(messageId, received, messageType, body, Some(status))
+      received       <- arbitrary[OffsetDateTime]
+      messageType    <- Gen.oneOf(MessageType.values)
+      body           <- Gen.option(Gen.alphaNumStr.map(XmlPayload(_)))
+      messageId      <- genShortUUID.map(MessageId(_))
+      status         <- Gen.oneOf(MessageStatus.statusValues)
+      objectStoreURI <- Gen.option(arbitrary[ObjectStoreURI])
+    } yield MessageSummary(messageId, received, messageType, body, Some(status), objectStoreURI)
   }
 
   implicit lazy val arbitraryMovementId: Arbitrary[MovementId] = Arbitrary {

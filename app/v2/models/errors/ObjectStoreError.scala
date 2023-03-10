@@ -16,8 +16,11 @@
 
 package v2.models.errors
 
+import v2.models.ObjectStoreURI
+
 sealed trait ObjectStoreError
 
 object ObjectStoreError {
+  case class FileNotFound(uri: ObjectStoreURI)              extends ObjectStoreError
   case class UnexpectedError(thr: Option[Throwable] = None) extends ObjectStoreError
 }

@@ -100,6 +100,10 @@ trait CommonGenerators {
     } yield MovementSummary(id, enrollmentEORINumber, Some(movementEORINumber), movementReferenceNumber, created, updated)
   }
 
+  implicit lazy val arbitraryObjectStoreURI: Arbitrary[ObjectStoreURI] = Arbitrary {
+    Gen.alphaNumStr.map(ObjectStoreURI(_))
+  }
+
   implicit lazy val arbitraryMessageSummary: Arbitrary[MessageSummary] =
     Arbitrary {
       for {
@@ -107,7 +111,8 @@ trait CommonGenerators {
         offsetDateTime <- arbitrary[OffsetDateTime]
         messageType    <- arbitrary[MessageType]
         status         <- Gen.oneOf(MessageStatus.statusValues)
-      } yield MessageSummary(id, offsetDateTime, messageType, None, Some(status))
+        objectStoreURI <- Gen.option(arbitrary[ObjectStoreURI])
+      } yield MessageSummary(id, offsetDateTime, messageType, None, Some(status), objectStoreURI)
     }
 
   implicit lazy val arbitraryBoxId: Arbitrary[BoxId] = Arbitrary {
