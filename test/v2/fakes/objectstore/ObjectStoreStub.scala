@@ -86,14 +86,9 @@ class ObjectStoreStub[F[_]](config: ObjectStoreClientConfig)(implicit
       .get(s"$owner/${path.asUri}")
       .map {
         o =>
-          val body = request.body
-            .asInstanceOf[SourceBody]
-            .source
-            .mapMaterializedValue(
-              _ => NotUsed
-            )
+          val source: ResBody = Source.single(ByteString("stream"))
 
-          cr.readContent(SourceBody(Source.single(ByteString("stream"))))
+          cr.readContent(source)
             .flatMap {
               content =>
                 Future.successful(
