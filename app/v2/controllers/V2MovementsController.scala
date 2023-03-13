@@ -352,8 +352,19 @@ class V2MovementsControllerImpl @Inject() (
               downloadUrl   <- handleUpscanSuccessResponse(upscanResponse)
               objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
               messageUpdate = MessageUpdate(MessageStatus.Processing, Some(ObjectStoreURI(objectSummary.location.asUri)))
-              update <- persistenceService.updateMessage(movementId, messageId, messageUpdate).asPresentation
-            } yield update).fold[Result](
+
+              _ <- persistenceService.updateMessage(movementId, messageId, messageUpdate).asPresentation
+
+              sendMessage <- routerService
+                .sendLargeMessage(
+                  MessageType.DeclarationData, // Only IE015 is supported as of now for large message
+                  EORINumber("123456789"),     // Eori number ??
+                  movementId,
+                  messageId,
+                  ObjectStoreURI(objectSummary.location.asUri)
+                )
+                .asPresentation
+            } yield sendMessage).fold[Result](
               _ => Ok, //TODO: Send notification to PPNS with details of the error
               _ => Ok  //TODO: Send notification to PPNS with details of the success
             )

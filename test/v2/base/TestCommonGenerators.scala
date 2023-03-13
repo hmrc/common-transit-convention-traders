@@ -30,6 +30,7 @@ import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
+import v2.models.ObjectStoreURI
 import v2.models.XmlPayload
 import v2.models.request.MessageType
 import v2.models.responses.UpscanResponse.DownloadUrl
@@ -206,6 +207,18 @@ trait TestCommonGenerators {
       uploadDetails  = arbitraryUploadDetails.arbitrary.sample
       failureDetails = None
     } yield UpscanResponse(Reference(reference), fileStatus, downloadUrl, uploadDetails, failureDetails)
+  }
+
+  implicit val arbitraryObjectStoreURI: Arbitrary[ObjectStoreURI] = Arbitrary {
+    for {
+      movementId <- arbitraryMovementId.arbitrary
+      messageId  <- arbitraryMessageId.arbitrary
+      lastModified      = Instant.now()
+      formattedDateTime = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC).format(lastModified)
+
+    } yield ObjectStoreURI(
+      s"common-transit-convention-traders/${movementId.value}-${messageId.value}-$formattedDateTime.xml"
+    )
   }
 
 }

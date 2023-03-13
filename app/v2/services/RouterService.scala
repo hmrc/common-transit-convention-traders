@@ -30,6 +30,7 @@ import v2.connectors.RouterConnector
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.ObjectStoreURI
 import v2.models.errors.InvalidOfficeError
 import v2.models.errors.RouterError
 import v2.models.request.MessageType
@@ -43,6 +44,11 @@ import scala.util.control.NonFatal
 trait RouterService {
 
   def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
+    ec: ExecutionContext,
+    hc: HeaderCarrier
+  ): EitherT[Future, RouterError, Unit]
+
+  def sendLargeMessage(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, objectStoreURI: ObjectStoreURI)(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): EitherT[Future, RouterError, Unit]
@@ -67,6 +73,21 @@ class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends Rou
             Left(RouterError.UnexpectedError(thr = Some(e)))
         }
     )
+
+  def sendLargeMessage(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, objectStoreURI: ObjectStoreURI)(implicit
+    ec: ExecutionContext,
+    hc: HeaderCarrier
+  ): EitherT[Future, RouterError, Unit] = EitherT(
+    routerConnector
+      .postLargeMessage(messageType, eoriNumber, movementId, messageId, objectStoreURI)
+      .map(
+        _ => Right(())
+      )
+      .recover {
+        case NonFatal(e) =>
+          Left(RouterError.UnexpectedError(thr = Some(e)))
+      }
+  )
 
   private def determineError(message: String): RouterError =
     Try(Json.parse(message))

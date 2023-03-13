@@ -3074,6 +3074,18 @@ class V2MovementsControllerSpec
               )
             ).thenReturn(EitherT.rightT(()))
 
+            when(
+              mockRouterService.sendLargeMessage(
+                any[String].asInstanceOf[MessageType],
+                any[String].asInstanceOf[EORINumber],
+                any[String].asInstanceOf[MovementId],
+                any[String].asInstanceOf[MessageId],
+                any[String].asInstanceOf[ObjectStoreURI]
+              )(any[ExecutionContext], any[HeaderCarrier])
+            ).thenAnswer(
+              _ => EitherT.rightT(())
+            )
+
             val request = FakeRequest(
               POST,
               routes.V2MovementsController.attachLargeMessage(movementId, messageId).url,
@@ -3086,7 +3098,7 @@ class V2MovementsControllerSpec
             status(result) mustBe OK
         }
 
-        "and updating the message with the object-store URL fails" in forAll(
+        "and sending the message to router with the object-store URL fails" in forAll(
           arbitraryMovementId.arbitrary,
           arbitraryMessageId.arbitrary,
           arbitraryObjectSummaryWithMd5.arbitrary
@@ -3112,7 +3124,19 @@ class V2MovementsControllerSpec
                 any(),
                 any()
               )
-            ).thenReturn(EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId)))
+            ).thenReturn(EitherT.rightT(()))
+
+            when(
+              mockRouterService.sendLargeMessage(
+                any[String].asInstanceOf[MessageType],
+                any[String].asInstanceOf[EORINumber],
+                any[String].asInstanceOf[MovementId],
+                any[String].asInstanceOf[MessageId],
+                any[String].asInstanceOf[ObjectStoreURI]
+              )(any[ExecutionContext], any[HeaderCarrier])
+            ).thenAnswer(
+              _ => EitherT.leftT(RouterError.UnexpectedError(None))
+            )
 
             val request = FakeRequest(
               POST,

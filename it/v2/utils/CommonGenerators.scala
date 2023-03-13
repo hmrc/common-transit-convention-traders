@@ -151,4 +151,16 @@ trait CommonGenerators {
     } yield MessageUpdate(status, Some(ObjectStoreURI(uri)))
   }
 
+  implicit val arbitraryObjectStoreURI: Arbitrary[ObjectStoreURI] = Arbitrary {
+    for {
+      movementId <- arbitraryMovementId.arbitrary
+      messageId  <- arbitraryMessageId.arbitrary
+      lastModified      = Instant.now()
+      formattedDateTime = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC).format(lastModified)
+
+    } yield ObjectStoreURI(
+      s"common-transit-convention-traders/${movementId.value}-${messageId.value}-$formattedDateTime.xml"
+    )
+  }
+
 }

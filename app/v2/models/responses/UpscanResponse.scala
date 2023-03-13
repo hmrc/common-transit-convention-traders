@@ -21,7 +21,6 @@ import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.UpscanResponse.FileStatus
 import v2.models.responses.UpscanResponse.Reference
 
-import java.net.URL
 import java.time.Instant
 
 final case class UploadDetails(fileName: String, fileMimeType: String, uploadTimestamp: Instant, checksum: String, size: Long)
