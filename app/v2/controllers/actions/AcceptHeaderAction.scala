@@ -40,6 +40,7 @@ class AcceptHeaderActionImpl[R[_] <: Request[_]] @Inject() (acceptOnlyJson: Bool
       Seq(
         VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
         VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML,
+        VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML,
         VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
       )
 

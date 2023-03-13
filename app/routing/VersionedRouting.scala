@@ -34,6 +34,7 @@ import scala.concurrent.Future
 
 object VersionedRouting {
 
+  val VERSION_2_ACCEPT_HEADER_VALUE_XML             = "application/vnd.hmrc.2.0+xml"
   val VERSION_2_ACCEPT_HEADER_VALUE_JSON            = "application/vnd.hmrc.2.0+json"
   val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML        = "application/vnd.hmrc.2.0+json+xml"
   val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN = "application/vnd.hmrc.2.0+json-xml"

@@ -58,6 +58,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers
 import play.api.test.Helpers.POST
 import play.api.test.Helpers.contentAsJson
+import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.status
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
@@ -2134,11 +2135,13 @@ class V2MovementsControllerSpec
     s"/movements/${movementType.urlFragment}/:movementId/messages/:messageId " - {
       val movementId         = arbitraryMovementId.arbitrary.sample.value
       val messageId          = arbitraryMessageId.arbitrary.sample.value
-      val messageSummaryXml  = arbitraryMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = Some(XmlPayload("<test>ABC</test>")), uri = None)
+      val xml                = "<test>ABC</test>"
+      val messageSummaryXml  = arbitraryMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = Some(XmlPayload(xml)), uri = None)
       val messageSummaryJson = messageSummaryXml.copy(body = Some(JsonPayload("""{"test": "ABC"}""")), uri = None)
 
       Seq(
         VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
+        VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML,
         VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML,
         VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
       ).foreach {
@@ -2154,7 +2157,6 @@ class V2MovementsControllerSpec
               headers,
               Source.empty[ByteString]
             )
-          val convertBodyToJson = acceptHeaderValue == VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON
 
           s"when the accept header equals $acceptHeaderValue" - {
 
@@ -2177,7 +2179,14 @@ class V2MovementsControllerSpec
                 )
               )
                 .thenAnswer(
-                  _ => if (convertBodyToJson) EitherT.rightT(messageSummaryJson) else EitherT.rightT(messageSummaryXml)
+                  _ =>
+                    acceptHeaderValue match {
+                      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON => EitherT.rightT(messageSummaryJson)
+                      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML  => EitherT.rightT(xml)
+                      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
+                        EitherT.rightT(messageSummaryXml)
+
+                    }
                 )
 
               val result = sut.getMessage(movementType, movementId, messageId)(request)
@@ -2186,14 +2195,28 @@ class V2MovementsControllerSpec
                 x => x.body.dataStream
               )
               status(result) mustBe OK
-              contentAsJson(result) mustBe Json.toJson(
-                HateoasMovementMessageResponse(
-                  movementId,
-                  messageId,
-                  if (convertBodyToJson) messageSummaryJson else messageSummaryXml,
-                  movementType
-                )
-              )
+              acceptHeaderValue match {
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
+                  contentAsJson(result) mustBe Json.toJson(
+                    HateoasMovementMessageResponse(
+                      movementId,
+                      messageId,
+                      messageSummaryJson,
+                      movementType
+                    )
+                  )
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML => contentAsString(result) mustBe xml
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
+                  contentAsJson(result) mustBe Json.toJson(
+                    HateoasMovementMessageResponse(
+                      movementId,
+                      messageId,
+                      messageSummaryXml,
+                      movementType
+                    )
+                  )
+              }
+
             }
 
             "when no message is found" in {
@@ -2216,7 +2239,7 @@ class V2MovementsControllerSpec
               )
             }
 
-            "when formatter service fail" in {
+            "when formatter service fails" in {
               when(
                 mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
                   any[HeaderCarrier],
@@ -2240,11 +2263,17 @@ class V2MovementsControllerSpec
 
               val result = sut.getMessage(movementType, movementId, messageId)(request)
 
-              status(result) mustBe INTERNAL_SERVER_ERROR
-              contentAsJson(result) mustBe Json.obj(
-                "code"    -> "INTERNAL_SERVER_ERROR",
-                "message" -> "Internal server error"
-              )
+              acceptHeaderValue match {
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
+                  status(result) mustBe INTERNAL_SERVER_ERROR
+                  contentAsJson(result) mustBe Json.obj(
+                    "code"    -> "INTERNAL_SERVER_ERROR",
+                    "message" -> "Internal server error"
+                  )
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML |
+                    VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
+                  status(result) mustBe OK
+              }
             }
 
             "when an unknown error occurs" in {

@@ -235,37 +235,55 @@ class V2MovementsControllerImpl @Inject() (
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
           messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
+          acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
           body <-
-            if (messageSummary.uri.isDefined) processLargeMessage(movementId, movementType, messageSummary)
-            else processSmallMessage(movementId, movementType, messageSummary)
+            if (messageSummary.uri.isDefined) processLargeMessage(movementId, movementType, messageSummary, acceptHeader)
+            else processSmallMessage(movementId, movementType, messageSummary, acceptHeader)
         } yield body).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Ok.chunked(response)
         )
     }
 
-  private def processLargeMessage(movementId: MovementId, movementType: MovementType, messageSummary: MessageSummary)(implicit
+  private def processLargeMessage(movementId: MovementId, movementType: MovementType, messageSummary: MessageSummary, acceptHeader: String)(implicit
     hc: HeaderCarrier
   ): EitherT[Future, PresentationError, Source[ByteString, _]] =
-    for {
-      bodyStream <- objectStoreService.getMessage(messageSummary.uri.get).asPresentation
-      json: JsObject = Json.toJson(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)).as[JsObject]
-      stream <- EitherT.rightT[Future, PresentationError](mergeStreamIntoJson(json.fields, "body", bodyStream))
-    } yield stream
+    acceptHeader match {
+      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON => ??? //TODO: Nonacceptable
+      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML  => objectStoreService.getMessage(messageSummary.uri.get).asPresentation
+      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
+        for {
+          bodyStream <- objectStoreService.getMessage(messageSummary.uri.get).asPresentation
+          json: JsObject = Json.toJson(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)).as[JsObject]
+          stream <- mergeStreamIntoJson(json.fields, "body", bodyStream)
+        } yield stream
+    }
 
-  private def processSmallMessage(movementId: MovementId, movementType: MovementType, messageSummary: MessageSummary)(implicit
+  private def processSmallMessage(movementId: MovementId, movementType: MovementType, messageSummary: MessageSummary, acceptHeader: String)(implicit
     request: AuthenticatedRequest[AnyContent],
     hc: HeaderCarrier
   ): EitherT[Future, PresentationError, Source[ByteString, _]] =
-    for {
-      formattedMessageSummary <- responseFormatterService.formatMessageSummary(messageSummary, request.headers.get(HeaderNames.ACCEPT).get)
-      jsonHateoasResponse: JsObject = Json
-        .toJson(
-          HateoasMovementMessageResponse(movementId, formattedMessageSummary.id, formattedMessageSummary, movementType)
-        )
-        .as[JsObject]
-      stream <- EitherT.rightT[Future, PresentationError](jsonToByteStringStream(jsonHateoasResponse.fields))
-    } yield stream
+    acceptHeader match {
+      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
+        for {
+          formattedMessageSummary <- responseFormatterService.formatMessageSummary(messageSummary, acceptHeader)
+          jsonHateoasResponse: JsObject = Json
+            .toJson(
+              HateoasMovementMessageResponse(movementId, formattedMessageSummary.id, formattedMessageSummary, movementType)
+            )
+            .as[JsObject]
+          stream <- jsonToByteStringStream(jsonHateoasResponse.fields)
+        } yield stream
+      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML =>
+        xmlToByteStringStream(messageSummary.body.get.value)
+      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
+        val jsonHateoasResponse: JsObject = Json
+          .toJson(
+            HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)
+          )
+          .as[JsObject]
+        jsonWrappedXmlToByteStringStream(jsonHateoasResponse.fields)
+    }
 
   def getMessageIds(movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = true)).async {
