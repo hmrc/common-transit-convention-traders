@@ -76,7 +76,7 @@ trait V2MovementsController {
   def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent]
   def getMovements(movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]): Action[AnyContent]
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]]
-  def attachLargeMessage(movementId: MovementId, messageId: MessageId): Action[JsValue]
+  def attachLargeMessage(eori: EORINumber, movementId: MovementId, messageId: MessageId): Action[JsValue]
 }
 
 @Singleton
@@ -205,7 +205,7 @@ class V2MovementsControllerImpl @Inject() (
 
         (for {
           movementResponse  <- persistenceService.createMovement(request.eoriNumber, movementType, None).asPresentation
-          upscanResponse    <- upscanService.upscanInitiate(movementResponse.movementId, movementResponse.messageId).asPresentation
+          upscanResponse    <- upscanService.upscanInitiate(request.eoriNumber, movementResponse.movementId, movementResponse.messageId).asPresentation
           boxResponseOption <- mapToOptionalResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
           auditResponse = Json.toJson(
             LargeMessageAuditRequest(
@@ -341,7 +341,7 @@ class V2MovementsControllerImpl @Inject() (
     }
   }
 
-  def attachLargeMessage(movementId: MovementId, messageId: MessageId): Action[JsValue] =
+  def attachLargeMessage(eori: EORINumber, movementId: MovementId, messageId: MessageId): Action[JsValue] =
     Action.async(parse.json) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -358,7 +358,7 @@ class V2MovementsControllerImpl @Inject() (
               sendMessage <- routerService
                 .sendLargeMessage(
                   MessageType.DeclarationData, // Only IE015 is supported as of now for large message
-                  EORINumber("123456789"),     // Eori number ??
+                  eori,
                   movementId,
                   messageId,
                   ObjectStoreURI(objectSummary.location.asUri)

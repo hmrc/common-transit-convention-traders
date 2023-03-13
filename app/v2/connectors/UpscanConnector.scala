@@ -28,6 +28,7 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
+import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.request.UpscanInitiate
@@ -39,7 +40,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[UpscanConnectorImpl])
 trait UpscanConnector {
 
-  def upscanInitiate(movementId: MovementId, messageId: MessageId)(implicit
+  def upscanInitiate(eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[UpscanInitiateResponse]
@@ -51,10 +52,13 @@ class UpscanConnectorImpl @Inject() (appConfig: AppConfig, httpClientV2: HttpCli
     with V2BaseConnector
     with HasMetrics {
 
-  override def upscanInitiate(movementId: MovementId, messageId: MessageId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[UpscanInitiateResponse] =
+  override def upscanInitiate(eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[UpscanInitiateResponse] =
     withMetricsTimerAsync(MetricsKeys.UpscanInitiateBackend.Post) {
       _ =>
-        val callbackUrl = appConfig.commmonTransitConventionTradersUrl.withPath(attachLargeMessageRoute(movementId, messageId)).toString()
+        val callbackUrl = appConfig.commmonTransitConventionTradersUrl.withPath(attachLargeMessageRoute(eoriNumber, movementId, messageId)).toString()
 
         val upscanInitiate =
           UpscanInitiate(callbackUrl, Some(appConfig.upscanMaximumFileSize))

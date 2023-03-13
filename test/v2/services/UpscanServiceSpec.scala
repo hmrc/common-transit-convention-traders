@@ -16,7 +16,6 @@
 
 package v2.services
 
-import config.AppConfig
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.when
@@ -30,10 +29,10 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.base.TestCommonGenerators
 import v2.connectors.UpscanConnector
+import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.errors.UpscanInitiateError
-import v2.models.request.UpscanInitiate
 import v2.models.responses.UpscanFormTemplate
 import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.UpscanReference
@@ -63,16 +62,20 @@ class UpscanServiceSpec
   "upscan initiate" - {
 
     "when a call to upscanInitiate is success, assert that response contains uploadRequest details" in forAll(
+      arbitraryEORINumber.arbitrary,
       arbitraryMovementId.arbitrary,
       arbitraryMessageId.arbitrary
     ) {
-      (movementId, messageId) =>
+      (eoriNumber, movementId, messageId) =>
         beforeEach()
 
-        when(mockConnector.upscanInitiate(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any()))
+        when(
+          mockConnector
+            .upscanInitiate(any[String].asInstanceOf[EORINumber], any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any())
+        )
           .thenReturn(Future.successful(upscanResponse))
 
-        val result = sut.upscanInitiate(movementId, messageId)
+        val result = sut.upscanInitiate(eoriNumber, movementId, messageId)
 
         whenReady(result.value) {
           r => r mustBe Right(upscanResponse)
@@ -80,15 +83,18 @@ class UpscanServiceSpec
 
     }
 
-    "when an error occurs, return a Left of Unexpected" in forAll(arbitraryMovementId.arbitrary, arbitraryMessageId.arbitrary) {
-      (movementId, messageId) =>
+    "when an error occurs, return a Left of Unexpected" in forAll(arbitraryEORINumber.arbitrary, arbitraryMovementId.arbitrary, arbitraryMessageId.arbitrary) {
+      (eoriNumber, movementId, messageId) =>
         beforeEach()
 
         val expectedException = new Exception()
-        when(mockConnector.upscanInitiate(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any()))
+        when(
+          mockConnector
+            .upscanInitiate(any[String].asInstanceOf[EORINumber], any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any())
+        )
           .thenReturn(Future.failed(expectedException))
 
-        val result = sut.upscanInitiate(movementId, messageId)
+        val result = sut.upscanInitiate(eoriNumber, movementId, messageId)
 
         whenReady(result.value) {
           r => r mustBe Left(UpscanInitiateError.UnexpectedError(thr = Some(expectedException)))

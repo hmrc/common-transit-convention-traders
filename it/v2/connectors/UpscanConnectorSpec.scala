@@ -56,6 +56,7 @@ class UpscanConnectorSpec
 
   val movementId = arbitraryMovementId.arbitrary.sample.get
   val messageId  = arbitraryMessageId.arbitrary.sample.get
+  val eoriNumber = arbitraryEORINumber.arbitrary.sample.get
 
   when(mockAppConfig.upscanInitiateUrl).thenAnswer {
     _ => Url.parse(server.baseUrl())
@@ -77,7 +78,7 @@ class UpscanConnectorSpec
         )
       )
       implicit val hc = HeaderCarrier()
-      val result      = sut.upscanInitiate(movementId, messageId)
+      val result      = sut.upscanInitiate(eoriNumber, movementId, messageId)
 
       whenReady(result) {
         _ mustBe upscanResponse
@@ -93,7 +94,7 @@ class UpscanConnectorSpec
       )
       implicit val hc = HeaderCarrier()
       val result = sut
-        .upscanInitiate(movementId, messageId)
+        .upscanInitiate(eoriNumber, movementId, messageId)
         .map(
           _ => fail("A success was recorded when it shouldn't have been")
         )
