@@ -249,8 +249,9 @@ class V2MovementsControllerImpl @Inject() (
     hc: HeaderCarrier
   ): EitherT[Future, PresentationError, Source[ByteString, _]] =
     acceptHeader match {
-      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON => ??? //TODO: Nonacceptable
-      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML  => objectStoreService.getMessage(messageSummary.uri.get).asPresentation
+      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
+        EitherT.leftT[Future, Source[ByteString, _]](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
+      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML => objectStoreService.getMessage(messageSummary.uri.get).asPresentation
       case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
         for {
           bodyStream <- objectStoreService.getMessage(messageSummary.uri.get).asPresentation
@@ -260,14 +261,13 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def processSmallMessage(movementId: MovementId, movementType: MovementType, messageSummary: MessageSummary, acceptHeader: String)(implicit
-    request: AuthenticatedRequest[AnyContent],
     hc: HeaderCarrier
   ): EitherT[Future, PresentationError, Source[ByteString, _]] =
     acceptHeader match {
       case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
         for {
           formattedMessageSummary <- responseFormatterService.formatMessageSummary(messageSummary, acceptHeader)
-          jsonHateoasResponse: JsObject = Json
+          jsonHateoasResponse = Json
             .toJson(
               HateoasMovementMessageResponse(movementId, formattedMessageSummary.id, formattedMessageSummary, movementType)
             )
@@ -277,7 +277,7 @@ class V2MovementsControllerImpl @Inject() (
       case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML =>
         xmlToByteStringStream(messageSummary.body.get.value)
       case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
-        val jsonHateoasResponse: JsObject = Json
+        val jsonHateoasResponse = Json
           .toJson(
             HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)
           )

@@ -24,7 +24,6 @@ import akka.util.ByteString
 import cats.data.EitherT
 import cats.implicits.catsSyntaxMonadError
 import play.api.libs.Files.TemporaryFileCreator
-import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.libs.streams.Accumulator
@@ -87,8 +86,9 @@ trait StreamingParsers {
       }
   }
 
-  private val START_TOKEN: Source[ByteString, NotUsed]      = Source.single(ByteString("{"))
-  private val END_TOKEN_SOURCE: Source[ByteString, NotUsed] = Source.single(ByteString("}"))
+  private val START_TOKEN: Source[ByteString, NotUsed]                 = Source.single(ByteString("{"))
+  private val END_TOKEN_SOURCE: Source[ByteString, NotUsed]            = Source.single(ByteString("}"))
+  private val END_TOKEN_WITH_QUOTE_SOURCE: Source[ByteString, NotUsed] = Source.single(ByteString("\"}"))
 
   def mergeStreamIntoJson(
     fields: collection.Seq[(String, JsValue)],
@@ -117,11 +117,11 @@ trait StreamingParsers {
                 bs => ByteString(bs.utf8String.replace("\\", "\\\\").replace("\"", "\\\""))
               ) ++
               // and the stream that ends our Json document
-              END_TOKEN_SOURCE
+              END_TOKEN_WITH_QUOTE_SOURCE
           )
         )
         .recover {
-          case NonFatal(e) => println(e.getMessage); Left(PresentationError.internalServiceError(cause = Some(e)))
+          case NonFatal(e) => Left(PresentationError.internalServiceError(cause = Some(e)))
         }
     }
 
@@ -144,7 +144,7 @@ trait StreamingParsers {
           )
         )
         .recover {
-          case NonFatal(e) => println(e.getMessage); Left(PresentationError.internalServiceError(cause = Some(e)))
+          case NonFatal(e) => Left(PresentationError.internalServiceError(cause = Some(e)))
         }
     }
 
@@ -161,15 +161,13 @@ trait StreamingParsers {
                 // convert fields to bytestrings with their values, need to ensure we keep the field names quoted,
                 // separate with a colon and end with a comma, as per the Json spec
                 tuple =>
-                  if (tuple._1 == "body")
-                    ByteString(s""""${tuple._1}":${Json.stringify(JsString(tuple._2.as[JsString].value.replace("\\", "\\\\").replace("\"", "\\\"")))}""")
-                  else ByteString(s""""${tuple._1}":${Json.stringify(tuple._2)}""")
+                  ByteString(s""""${tuple._1}":${Json.stringify(tuple._2)}""")
               }
               .intersperse(ByteString(",")) ++ END_TOKEN_SOURCE
           )
         )
         .recover {
-          case NonFatal(e) => println(e.getMessage); Left(PresentationError.internalServiceError(cause = Some(e)))
+          case NonFatal(e) => Left(PresentationError.internalServiceError(cause = Some(e)))
         }
     }
 
@@ -177,10 +175,10 @@ trait StreamingParsers {
     EitherT {
       Future
         .successful(Right(Source.single(xml) map {
-          str => ByteString(str.replace("\\", "\\\\").replace("\"", "\\\""))
+          str => ByteString(str)
         }))
         .recover {
-          case NonFatal(e) => println(e.getMessage); Left(PresentationError.internalServiceError(cause = Some(e)))
+          case NonFatal(e) => Left(PresentationError.internalServiceError(cause = Some(e)))
         }
     }
 }
