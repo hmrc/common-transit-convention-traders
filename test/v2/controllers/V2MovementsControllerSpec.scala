@@ -2132,7 +2132,7 @@ class V2MovementsControllerSpec
 
     }
 
-    s"/movements/${movementType.urlFragment}/:movementId/messages/:messageId " - {
+    s"/movements/${movementType.urlFragment}/:movementId/messages/:messageId" - {
       val movementId              = arbitraryMovementId.arbitrary.sample.value
       val messageId               = arbitraryMessageId.arbitrary.sample.value
       val xml                     = "<test>ABC</test>"
@@ -2143,7 +2143,6 @@ class V2MovementsControllerSpec
 
       Seq(
         VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
-        VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML,
         VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML,
         VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
       ).foreach {
@@ -2184,7 +2183,6 @@ class V2MovementsControllerSpec
                   _ =>
                     acceptHeaderValue match {
                       case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON => EitherT.rightT(smallMessageSummaryJson)
-                      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML  => EitherT.rightT(xml)
                       case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
                         EitherT.rightT(smallMessageSummaryXml)
 
@@ -2204,7 +2202,6 @@ class V2MovementsControllerSpec
                       movementType
                     )
                   )
-                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML => contentAsString(result) mustBe xml
                 case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
                   contentAsJson(result) mustBe Json.toJson(
                     HateoasMovementMessageResponse(
@@ -2269,8 +2266,7 @@ class V2MovementsControllerSpec
                     "code"    -> "INTERNAL_SERVER_ERROR",
                     "message" -> "Internal server error"
                   )
-                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML |
-                    VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
                   status(result) mustBe OK
               }
             }
@@ -2329,9 +2325,6 @@ class V2MovementsControllerSpec
                     "code"    -> "NOT_ACCEPTABLE",
                     "message" -> "Large messages cannot be returned as json"
                   )
-                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML =>
-                  status(result) mustBe OK
-                  contentAsString(result) mustBe xml
                 case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
                   status(result) mustBe OK
                   contentAsJson(result) mustBe Json.toJson(
@@ -2406,7 +2399,212 @@ class V2MovementsControllerSpec
       }
     }
 
-    s"GET  /movements/${movementType.movementType}" - {
+    s"/movements/${movementType.urlFragment}/:movementId/messages/:messageId/body" - {
+      val movementId             = arbitraryMovementId.arbitrary.sample.value
+      val messageId              = arbitraryMessageId.arbitrary.sample.value
+      val xml                    = "<test>ABC</test>"
+      val smallMessageSummaryXml = arbitraryMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = Some(XmlPayload(xml)), uri = None)
+      val largeMessageSummaryXml =
+        arbitraryMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = None, uri = Some(ObjectStoreURI("http://object-store-uri.com")))
+
+      val headers =
+        FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML))
+      val request =
+        FakeRequest(
+          "GET",
+          v2.controllers.routes.V2MovementsController.getMessageBody(movementType, movementId, messageId).url,
+          headers,
+          Source.empty[ByteString]
+        )
+
+      "for a small message - accept header set to application/vnd.hmrc.2.0+xml" - {
+
+        "when the message is found" in {
+          when(
+            mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.rightT(smallMessageSummaryXml)
+            )
+
+          when(
+            mockResponseFormatterService.formatMessageSummary(any[MessageSummary], eqTo(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML))(
+              any[ExecutionContext],
+              any[HeaderCarrier],
+              any[Materializer]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.rightT(xml)
+            )
+
+          val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+
+          status(result) mustBe OK
+          contentAsString(result) mustBe xml
+        }
+
+        "when no message is found" in {
+          when(
+            mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))
+            )
+
+          val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+
+          status(result) mustBe NOT_FOUND
+          contentAsJson(result) mustBe Json.obj(
+            "code"    -> "NOT_FOUND",
+            "message" -> s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
+          )
+        }
+
+        "when formatter service fails" in {
+          when(
+            mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.rightT(smallMessageSummaryXml)
+            )
+
+          when(
+            mockResponseFormatterService.formatMessageSummary(any[MessageSummary], eqTo(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML))(
+              any[ExecutionContext],
+              any[HeaderCarrier],
+              any[Materializer]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.leftT(PresentationError.internalServiceError())
+            )
+
+          val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+
+          status(result) mustBe OK
+          contentAsString(result) mustBe xml
+        }
+
+        "when an unknown error occurs" in {
+          when(
+            mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
+            )
+
+          val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+
+          status(result) mustBe INTERNAL_SERVER_ERROR
+          contentAsJson(result) mustBe Json.obj(
+            "code"    -> "INTERNAL_SERVER_ERROR",
+            "message" -> "Internal server error"
+          )
+        }
+      }
+
+      "for a large message - accept header set to application/vnd.hmrc.2.0+xml" - {
+
+        "when the message is found" in {
+          when(
+            mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.rightT(largeMessageSummaryXml)
+            )
+
+          when(
+            mockObjectStoreService.getMessage(ObjectStoreURI(any()))(
+              any[ExecutionContext],
+              any[HeaderCarrier]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.rightT(Source.single(ByteString(xml)))
+            )
+
+          val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+
+          status(result) mustBe OK
+          contentAsString(result) mustBe xml
+        }
+
+        "when no message is found" in {
+          when(
+            mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))
+            )
+
+          val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+
+          status(result) mustBe NOT_FOUND
+          contentAsJson(result) mustBe Json.obj(
+            "code"    -> "NOT_FOUND",
+            "message" -> s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
+          )
+        }
+
+        "when an unknown error occurs" in {
+          when(
+            mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
+            )
+
+          val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+
+          status(result) mustBe INTERNAL_SERVER_ERROR
+          contentAsJson(result) mustBe Json.obj(
+            "code"    -> "INTERNAL_SERVER_ERROR",
+            "message" -> "Internal server error"
+          )
+        }
+
+      }
+
+      "must return NOT_ACCEPTABLE when the accept type is invalid" in forAll(
+        arbitraryMovementId.arbitrary
+      ) {
+        movementId =>
+          val standardHeaders = FakeHeaders(
+            Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json123", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
+          )
+
+          val request = fakeAttachMessageRequest("POST", standardHeaders, Source.single(ByteString(contentXml.mkString, StandardCharsets.UTF_8)), movementType)
+
+          val result = sutWithAcceptHeader.getMessageBody(movementType, movementId, messageId)(request)
+
+          status(result) mustBe NOT_ACCEPTABLE
+
+      }
+    }
+
+    s"GET /movements/${movementType.movementType}" - {
       val url =
         if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.getDeparturesForEori().url
         else routing.routes.ArrivalsRouter.getArrivalsForEori().url

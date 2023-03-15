@@ -29,7 +29,8 @@ lazy val microservice = Project(appName, file("."))
       "models.Binders._",
       "java.time.OffsetDateTime",
       "v2.models.EORINumber",
-      "v2.models.MovementId"
+      "v2.models.MovementId",
+      "v2.models.MovementType"
     ),
     javaOptions ++= Seq(
       "-Djdk.xml.maxOccurLimit=10000"

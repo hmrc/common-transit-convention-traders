@@ -18,8 +18,10 @@ package models
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
+import play.api.mvc.PathBindable
 import play.api.mvc.QueryStringBindable
 import v2.models.EORINumber
+import v2.models.MovementType
 
 object Binders {
 
@@ -38,4 +40,16 @@ object Binders {
 
   implicit val optionEORINumberQueryStringBindable: QueryStringBindable[Option[EORINumber]] =
     QueryStringBindable.bindableOption[EORINumber]
+
+  implicit def pathBinder(implicit binder: PathBindable[String]): PathBindable[MovementType] = new PathBindable[MovementType] {
+
+    override def bind(key: String, value: String): Either[String, MovementType] =
+      for {
+        urlFragment  <- binder.bind(key, value)
+        movementType <- MovementType.values.find(_.urlFragment == urlFragment).toRight("Invalid movement type")
+      } yield movementType
+
+    override def unbind(key: String, movementType: MovementType): String =
+      movementType.urlFragment
+  }
 }
