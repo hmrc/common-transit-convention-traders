@@ -34,7 +34,6 @@ import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
-import play.api.mvc.Action
 import play.api.mvc._
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
@@ -44,22 +43,16 @@ import v2.controllers.actions.providers.AcceptHeaderActionProvider
 import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
-import v2.models.AuditType
-import v2.models.EORINumber
-import v2.models.MessageId
-import v2.models.MessageStatus
-import v2.models.MovementId
-import v2.models.MovementType
-import v2.models.ObjectStoreURI
+import v2.models._
 import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
-import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.BoxResponse
 import v2.models.responses.LargeMessageAuditRequest
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.UpscanResponse
+import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.hateoas._
 import v2.services._
 import v2.utils.StreamWithFile
@@ -76,7 +69,7 @@ trait V2MovementsController {
   def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent]
   def getMovements(movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]): Action[AnyContent]
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]]
-  def attachLargeMessage(eori: EORINumber, movementId: MovementId, messageId: MessageId): Action[JsValue]
+  def attachLargeMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[JsValue]
 }
 
 @Singleton
@@ -204,8 +197,10 @@ class V2MovementsControllerImpl @Inject() (
         request.body.runWith(Sink.ignore)
 
         (for {
-          movementResponse  <- persistenceService.createMovement(request.eoriNumber, movementType, None).asPresentation
-          upscanResponse    <- upscanService.upscanInitiate(request.eoriNumber, movementResponse.movementId, movementResponse.messageId).asPresentation
+          movementResponse <- persistenceService.createMovement(request.eoriNumber, movementType, None).asPresentation
+          upscanResponse <- upscanService
+            .upscanInitiate(request.eoriNumber, movementType, movementResponse.movementId, movementResponse.messageId)
+            .asPresentation
           boxResponseOption <- mapToOptionalResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
           auditResponse = Json.toJson(
             LargeMessageAuditRequest(
@@ -341,7 +336,7 @@ class V2MovementsControllerImpl @Inject() (
     }
   }
 
-  def attachLargeMessage(eori: EORINumber, movementId: MovementId, messageId: MessageId): Action[JsValue] =
+  def attachLargeMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[JsValue] =
     Action.async(parse.json) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -351,13 +346,13 @@ class V2MovementsControllerImpl @Inject() (
             (for {
               downloadUrl   <- handleUpscanSuccessResponse(upscanResponse)
               objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
+
               messageUpdate = MessageUpdate(MessageStatus.Processing, Some(ObjectStoreURI(objectSummary.location.asUri)))
-
-              _ <- persistenceService.updateMessage(movementId, messageId, messageUpdate).asPresentation
-
+              _ <- persistenceService.updateMessage(eori, movementType, movementId, messageId, messageUpdate).asPresentation
+              messageType = extractMessageType(movementType)
               sendMessage <- routerService
                 .sendLargeMessage(
-                  MessageType.DeclarationData, // Only IE015 is supported as of now for large message
+                  messageType,
                   eori,
                   movementId,
                   messageId,
@@ -369,6 +364,12 @@ class V2MovementsControllerImpl @Inject() (
               _ => Ok  //TODO: Send notification to PPNS with details of the success
             )
         }
+    }
+
+  private def extractMessageType(movementType: MovementType) =
+    movementType match {
+      case MovementType.Arrival   => MessageType.ArrivalNotification
+      case MovementType.Departure => MessageType.DeclarationData
     }
 
   private def handleUpscanSuccessResponse(upscanResponse: UpscanResponse): EitherT[Future, PresentationError, DownloadUrl] =

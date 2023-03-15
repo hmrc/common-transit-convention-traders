@@ -163,4 +163,8 @@ trait CommonGenerators {
     )
   }
 
+  implicit lazy val arbitraryMovementType: Arbitrary[MovementType] = Arbitrary {
+    Gen.oneOf(MovementType.values)
+  }
+
 }

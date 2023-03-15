@@ -71,7 +71,7 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
       Accepted(Json.obj("version" -> 2))
   }
 
-  override def attachLargeMessage(eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId) = Action(parse.json) {
+  override def attachLargeMessage(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId) = Action(parse.json) {
     request =>
       Ok(Json.obj("version" -> 2))
   }

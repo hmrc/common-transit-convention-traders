@@ -85,7 +85,7 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[UpdateMovementResponse]
 
-  def patchMessage(movementId: MovementId, messageId: MessageId, body: MessageUpdate)(implicit
+  def patchMessage(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId, body: MessageUpdate)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit]
@@ -203,11 +203,11 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       )
       .addParam("movementEORI", movementEORI.map(_.value))
 
-  def patchMessage(movementId: MovementId, messageId: MessageId, body: MessageUpdate)(implicit
+  def patchMessage(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId, body: MessageUpdate)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit] = {
-    val url = appConfig.movementsUrl.withPath(updateMessageRoute(movementId, messageId))
+    val url = appConfig.movementsUrl.withPath(updateMessageRoute(eoriNumber, movementType, movementId, messageId))
 
     httpClientV2
       .patch(url"$url")

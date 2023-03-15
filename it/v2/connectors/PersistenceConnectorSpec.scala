@@ -1310,36 +1310,48 @@ class PersistenceConnectorSpec
     }
   }
 
-  "PATCH /movements/:movementId/messages/:messageId" - {
+  "PATCH traders/:eoriNumber/movements/:movementType/:movementId/messages/:messageId" - {
 
-    def targetUrl(movementId: MovementId, messageId: MessageId) = s"/transit-movements/traders/movements/${movementId.value}/messages/${messageId.value}"
+    def targetUrl(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId) =
+      s"/transit-movements/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
 
     lazy val messageUpdate = MessageUpdate(MessageStatus.Processing, None)
 
     implicit val hc: HeaderCarrier = HeaderCarrier()
 
-    "On successful update to the message in the movement, must return OK" in forAll(arbitrary[MovementId], arbitrary[MessageId], arbitrary[MessageUpdate]) {
-      (movementId, messageId, messageUpdate) =>
+    "On successful update to the message in the movement, must return OK" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementType],
+      arbitrary[MovementId],
+      arbitrary[MessageId],
+      arbitrary[MessageUpdate]
+    ) {
+      (eoriNumber, movementType, movementId, messageId, messageUpdate) =>
         server.stubFor(
           patch(
-            urlEqualTo(targetUrl(movementId, messageId))
+            urlEqualTo(targetUrl(eoriNumber, movementType, movementId, messageId))
           ).withRequestBody(equalToJson(Json.stringify(Json.toJson(messageUpdate))))
             .willReturn(
               aResponse().withStatus(OK)
             )
         )
 
-        whenReady(persistenceConnector.patchMessage(movementId, messageId, messageUpdate)) {
+        whenReady(persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageUpdate)) {
           result =>
             result mustBe ()
         }
     }
 
-    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
-      (movementId, messageId) =>
+    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementType],
+      arbitrary[MovementId],
+      arbitrary[MessageId]
+    ) {
+      (eoriNumber, movementType, movementId, messageId) =>
         server.stubFor(
           patch(
-            urlEqualTo(targetUrl(movementId, messageId))
+            urlEqualTo(targetUrl(eoriNumber, movementType, movementId, messageId))
           ).withRequestBody(equalToJson(Json.stringify(Json.toJson(messageUpdate))))
             .willReturn(
               aResponse()
@@ -1350,7 +1362,7 @@ class PersistenceConnectorSpec
             )
         )
 
-        val future = persistenceConnector.patchMessage(movementId, messageId, messageUpdate).map(Right(_)).recover {
+        val future = persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageUpdate).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -1363,11 +1375,16 @@ class PersistenceConnectorSpec
         }
     }
 
-    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
-      (movementId, messageId) =>
+    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementType],
+      arbitrary[MovementId],
+      arbitrary[MessageId]
+    ) {
+      (eoriNumber, movementType, movementId, messageId) =>
         server.stubFor(
           patch(
-            urlEqualTo(targetUrl(movementId, messageId))
+            urlEqualTo(targetUrl(eoriNumber, movementType, movementId, messageId))
           ).withRequestBody(equalToJson(Json.stringify(Json.toJson(messageUpdate))))
             .willReturn(
               aResponse()
@@ -1378,7 +1395,7 @@ class PersistenceConnectorSpec
             )
         )
 
-        val future = persistenceConnector.patchMessage(movementId, messageId, messageUpdate).map(Right(_)).recover {
+        val future = persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageUpdate).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
