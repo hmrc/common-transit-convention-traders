@@ -297,6 +297,7 @@ class V2MovementsControllerImpl @Inject() (
           _ = auditService.audit(messageType.auditType, request.body, MimeTypes.XML)
           updateMovementResponse <- updateAndSendToEIS(movementId, movementType, messageType, request.body)
         } yield updateMovementResponse).fold[Result](
+          // update status to fail
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Accepted(Json.toJson(HateoasMovementUpdateResponse(movementId, response.messageId, movementType)))
         )
@@ -346,10 +347,12 @@ class V2MovementsControllerImpl @Inject() (
             (for {
               downloadUrl   <- handleUpscanSuccessResponse(upscanResponse)
               objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
-
+              messageType = extractMessageType(
+                movementType
+              ) //TODO:  remove this and extract the messageType using (xmlParsingService.extractMessageType) and then pass to validator and router part of CTCP-2427 implementation
               messageUpdate = MessageUpdate(MessageStatus.Processing, Some(ObjectStoreURI(objectSummary.location.asUri)))
               _ <- persistenceService.updateMessage(eori, movementType, movementId, messageId, messageUpdate).asPresentation
-              messageType = extractMessageType(movementType)
+
               sendMessage <- routerService
                 .sendLargeMessage(
                   messageType,
