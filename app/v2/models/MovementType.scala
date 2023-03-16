@@ -16,11 +16,7 @@
 
 package v2.models
 
-import play.api.libs.json.JsError
-import play.api.libs.json.JsString
-import play.api.libs.json.JsSuccess
-import play.api.libs.json.Reads
-import play.api.libs.json.Writes
+import play.api.libs.json._
 
 sealed abstract class MovementType(val movementType: String, val urlFragment: String)
 
@@ -43,4 +39,5 @@ object MovementType {
   )
 
   private def findByName(name: String): Option[MovementType] = values.find(_.movementType == name)
+
 }
