@@ -55,7 +55,7 @@ class MessageSizeActionSpec extends AnyFreeSpec with Matchers with ScalaFutures 
   }
 
   val appConfig: AppConfig = mock[AppConfig]
-  when(appConfig.messageSizeLimit).thenReturn(500000)
+  when(appConfig.messageSizeLimit).thenReturn(5000000)
 
   val messageSizeAction        = new MessageSizeActionProviderImpl(appConfig)
   val cc: ControllerComponents = Helpers.stubControllerComponents()
@@ -71,10 +71,21 @@ class MessageSizeActionSpec extends AnyFreeSpec with Matchers with ScalaFutures 
       status(result) mustEqual OK
     }
 
-    "must reject a POST over 0.5mb" in {
-      val controller                = new Harness(messageSizeAction(), cc)
-      val req: FakeRequest[NodeSeq] = FakeRequest(method = HttpVerbs.POST, uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_LENGTH -> "500001")), CC044A)
-      val result                    = controller.post()(req)
+    "must allow a POST till 5mb" in {
+
+      val controller = new Harness(messageSizeAction(), cc)
+      val req: FakeRequest[NodeSeq] =
+        FakeRequest(method = HttpVerbs.POST, uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_LENGTH -> "5000000")), CC044A)
+      val result = controller.post()(req)
+
+      status(result) mustEqual OK
+    }
+
+    "must reject a POST over 5mb" in {
+      val controller = new Harness(messageSizeAction(), cc)
+      val req: FakeRequest[NodeSeq] =
+        FakeRequest(method = HttpVerbs.POST, uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_LENGTH -> "5000001")), CC044A)
+      val result = controller.post()(req)
 
       status(result) mustEqual REQUEST_ENTITY_TOO_LARGE
 
@@ -83,9 +94,9 @@ class MessageSizeActionSpec extends AnyFreeSpec with Matchers with ScalaFutures 
       (jsonResult \ "code").as[String] mustEqual "REQUEST_ENTITY_TOO_LARGE"
     }
 
-    "must reject a PUT over 0.5mb" in {
+    "must reject a PUT over 5mb" in {
       val controller                = new Harness(messageSizeAction(), cc)
-      val req: FakeRequest[NodeSeq] = FakeRequest(method = HttpVerbs.PUT, uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_LENGTH -> "500001")), CC044A)
+      val req: FakeRequest[NodeSeq] = FakeRequest(method = HttpVerbs.PUT, uri = "", headers = FakeHeaders(Seq(HeaderNames.CONTENT_LENGTH -> "5000001")), CC044A)
       val result                    = controller.post()(req)
 
       status(result) mustEqual REQUEST_ENTITY_TOO_LARGE
