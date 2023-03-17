@@ -24,6 +24,7 @@ import akka.util.ByteString
 import cats.data.EitherT
 import cats.implicits.catsSyntaxMonadError
 import play.api.libs.Files.TemporaryFileCreator
+import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.libs.streams.Accumulator
@@ -175,7 +176,7 @@ trait StreamingParsers {
     EitherT {
       Future
         .successful(Right(Source.single(xml) map {
-          str => ByteString(str)
+          str => ByteString(str.replace("\\", "\\\\").replace("\"", "\\\""))
         }))
         .recover {
           case NonFatal(e) => Left(PresentationError.internalServiceError(cause = Some(e)))

@@ -139,8 +139,8 @@ class RouterConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
             response.statusCode mustBe INTERNAL_SERVER_ERROR
             Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
         }
@@ -207,8 +207,8 @@ class RouterConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
             response.statusCode mustBe INTERNAL_SERVER_ERROR
             Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
         }

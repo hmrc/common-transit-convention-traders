@@ -32,6 +32,7 @@ import v2.base.TestActorSystem
 import v2.fakes.objectstore.ObjectStoreStub
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.ObjectStoreResourceLocation
 import v2.models.ObjectStoreURI
 import v2.models.responses.UpscanResponse.DownloadUrl
 
@@ -93,7 +94,7 @@ class ObjectStoreServiceSpec
       val messageId  = MessageId("123c4a68e2ele08f")
       objectStoreService.addMessage(DownloadUrl("https://bucketName.s3.eu-west-2.amazonaws.com"), movementId, messageId)
 
-      val result = objectStoreService.getMessage(ObjectStoreURI(s"/movements/${movementId.value}/${movementId.value}-${messageId.value}.xml"))
+      val result = objectStoreService.getMessage(ObjectStoreResourceLocation(s"/movements/${movementId.value}/${movementId.value}-${messageId.value}.xml"))
 
       whenReady(result.value, timeout(Span(6, Seconds))) {
         case Left(e)  => fail(e.toString)
@@ -103,7 +104,7 @@ class ObjectStoreServiceSpec
 
     "given an exception is thrown due to an invalid url, should return a Left with the exception in an ObjectStoreError" in {
 
-      val result = objectStoreService.getMessage(ObjectStoreURI("invalid filename"))
+      val result = objectStoreService.getMessage(ObjectStoreResourceLocation("invalid filename"))
 
       whenReady(result.value) {
         case Right(_) => fail("should have returned a Left")

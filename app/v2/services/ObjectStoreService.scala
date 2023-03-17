@@ -28,6 +28,7 @@ import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClient
 import uk.gov.hmrc.objectstore.client.Path
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.ObjectStoreResourceLocation
 import v2.models.ObjectStoreURI
 import v2.models.errors.ObjectStoreError
 import v2.models.responses.UpscanResponse.DownloadUrl
@@ -54,7 +55,7 @@ trait ObjectStoreService {
   ): EitherT[Future, ObjectStoreError, ObjectSummaryWithMd5]
 
   def getMessage(
-    objectStoreURI: ObjectStoreURI
+    objectStoreResourceLocation: ObjectStoreResourceLocation
   )(implicit ec: ExecutionContext, hc: HeaderCarrier): EitherT[Future, ObjectStoreError, Source[ByteString, _]]
 
 }
@@ -89,17 +90,17 @@ class ObjectStoreServiceImpl @Inject() (clock: Clock, client: PlayObjectStoreCli
     }
 
   override def getMessage(
-    objectStoreURI: ObjectStoreURI
+    objectStoreResourceLocation: ObjectStoreResourceLocation
   )(implicit ec: ExecutionContext, hc: HeaderCarrier): EitherT[Future, ObjectStoreError, Source[ByteString, _]] =
     EitherT(
       client
         .getObject[Source[ByteString, NotUsed]](
-          Path.File(objectStoreURI.value),
+          Path.File(objectStoreResourceLocation.value),
           "common-transit-convention-traders"
         )
         .flatMap {
           case Some(source) => Future.successful(Right(source.content))
-          case _            => Future.successful(Left(ObjectStoreError.FileNotFound(objectStoreURI)))
+          case _            => Future.successful(Left(ObjectStoreError.FileNotFound(objectStoreResourceLocation)))
         }
         .recover {
           case NonFatal(ex) => Left(ObjectStoreError.UnexpectedError(Some(ex)))

@@ -72,7 +72,6 @@ trait V2MovementsController {
   def getMovements(movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]): Action[AnyContent]
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]]
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent]
-
   def attachLargeMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[JsValue]
 }
 
@@ -259,10 +258,19 @@ class V2MovementsControllerImpl @Inject() (
         EitherT.leftT[Future, Source[ByteString, _]](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
       case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
         for {
-          bodyStream <- objectStoreService.getMessage(messageSummary.uri.get).asPresentation
+          resourceLocation <- extractResourceLocation(messageSummary.uri.get)
+          bodyStream       <- objectStoreService.getMessage(resourceLocation).asPresentation
           json: JsObject = Json.toJson(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)).as[JsObject]
           stream <- mergeStreamIntoJson(json.fields, "body", bodyStream)
         } yield stream
+    }
+
+  private def extractResourceLocation(objectStoreURI: ObjectStoreURI): EitherT[Future, PresentationError, ObjectStoreResourceLocation] =
+    EitherT {
+      Future.successful(
+        objectStoreURI.asResourceLocation
+          .toRight(PresentationError.badRequestError(s"Provided Object Store URI is not owned by ${ObjectStoreURI.expectedOwner}"))
+      )
     }
 
   private def processSmallMessage(movementId: MovementId, movementType: MovementType, messageSummary: MessageSummary, acceptHeader: String)(implicit
@@ -295,8 +303,12 @@ class V2MovementsControllerImpl @Inject() (
         (for {
           messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
           body <-
-            if (messageSummary.uri.isDefined) objectStoreService.getMessage(messageSummary.uri.get).asPresentation
-            else xmlToByteStringStream(messageSummary.body.get.value)
+            if (messageSummary.uri.isDefined) {
+              extractResourceLocation(messageSummary.uri.get).flatMap {
+                resourceLocation =>
+                  objectStoreService.getMessage(resourceLocation).asPresentation
+              }
+            } else xmlToByteStringStream(messageSummary.body.get.value)
         } yield body).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Ok.chunked(response)
