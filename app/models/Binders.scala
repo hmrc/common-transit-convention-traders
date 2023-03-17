@@ -41,15 +41,16 @@ object Binders {
   implicit val optionEORINumberQueryStringBindable: QueryStringBindable[Option[EORINumber]] =
     QueryStringBindable.bindableOption[EORINumber]
 
-  implicit def pathBinder(implicit binder: PathBindable[String]): PathBindable[MovementType] = new PathBindable[MovementType] {
+  implicit def movementTypePathBindable: PathBindable[MovementType] = new PathBindable[MovementType] {
 
     override def bind(key: String, value: String): Either[String, MovementType] =
-      for {
-        urlFragment  <- binder.bind(key, value)
-        movementType <- MovementType.values.find(_.urlFragment == urlFragment).toRight("Invalid movement type")
-      } yield movementType
+      value match {
+        case MovementType.Arrival.urlFragment   => Right(MovementType.Arrival)
+        case MovementType.Departure.urlFragment => Right(MovementType.Departure)
+        case _                                  => Left(s"$key value $value is not valid. expecting arrivals or departures")
+      }
 
-    override def unbind(key: String, movementType: MovementType): String =
-      movementType.urlFragment
+    override def unbind(key: String, value: MovementType): String =
+      value.toString
   }
 }

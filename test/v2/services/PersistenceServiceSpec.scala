@@ -38,15 +38,10 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.base.TestCommonGenerators
 import v2.connectors.PersistenceConnector
-import v2.models.EORINumber
-import v2.models.MessageId
-import v2.models.MessageStatus
-import v2.models.MovementId
-import v2.models.MovementReferenceNumber
-import v2.models.MovementType
-import v2.models.XmlPayload
+import v2.models._
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
+import v2.models.request.MessageUpdate
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
@@ -619,6 +614,95 @@ class PersistenceServiceSpec
       whenReady(result.value) {
         _ mustBe expected
       }
+    }
+  }
+
+  "Updating message" - {
+
+    val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
+
+    "on a successful update, should return a Right" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementType],
+      arbitrary[MovementId],
+      arbitrary[MessageId],
+      arbitrary[MessageUpdate]
+    ) {
+      (eoriNumber, movementType, movementId, messageId, messageUpdate) =>
+        when(
+          mockConnector.patchMessage(
+            any[String].asInstanceOf[EORINumber],
+            any[String].asInstanceOf[MovementType],
+            any[String].asInstanceOf[MovementId],
+            any[String].asInstanceOf[MessageId],
+            any[String].asInstanceOf[MessageUpdate]
+          )(
+            any[HeaderCarrier],
+            any[ExecutionContext]
+          )
+        )
+          .thenReturn(Future.successful(()))
+        val result = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageUpdate)
+
+        val expected: Either[PersistenceError, Unit] = Right(())
+        whenReady(result.value) {
+          _ mustBe expected
+        }
+    }
+
+    "on a message is not found, should return MessageNotFound" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementType],
+      arbitrary[MovementId],
+      arbitrary[MessageId],
+      arbitrary[MessageUpdate]
+    ) {
+      (eoriNumber, movementType, movementId, messageId, messageUpdate) =>
+        when(
+          mockConnector.patchMessage(
+            any[String].asInstanceOf[EORINumber],
+            any[String].asInstanceOf[MovementType],
+            any[String].asInstanceOf[MovementId],
+            any[String].asInstanceOf[MessageId],
+            any[String].asInstanceOf[MessageUpdate]
+          )(
+            any[HeaderCarrier],
+            any[ExecutionContext]
+          )
+        ).thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
+
+        val result = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageUpdate)
+        whenReady(result.value) {
+          _ mustBe Left(PersistenceError.MessageNotFound(movementId, messageId))
+        }
+    }
+
+    "on a failed submission, should return a Left with an UnexpectedError" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementType],
+      arbitrary[MovementId],
+      arbitrary[MessageId],
+      arbitrary[MessageUpdate]
+    ) {
+      (eoriNumber, movementType, movementId, messageId, messageUpdate) =>
+        when(
+          mockConnector.patchMessage(
+            any[String].asInstanceOf[EORINumber],
+            any[String].asInstanceOf[MovementType],
+            any[String].asInstanceOf[MovementId],
+            any[String].asInstanceOf[MessageId],
+            any[String].asInstanceOf[MessageUpdate]
+          )(
+            any[HeaderCarrier],
+            any[ExecutionContext]
+          )
+        )
+          .thenReturn(Future.failed(upstreamErrorResponse))
+        val result                                   = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageUpdate)
+        val expected: Either[PersistenceError, Unit] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
+        whenReady(result.value) {
+          _ mustBe expected
+        }
     }
   }
 }

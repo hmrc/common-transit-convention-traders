@@ -125,6 +125,26 @@ class V2BaseConnectorSpec
         .toString() mustBe s"/transit-movements-router/traders/${eori.value}/movements/${messageType.movementType.urlFragment}/${departureId.value}/messages/${messageId.value}"
   }
 
+  "the large message callback URL on localhost for a given EORI, movement ID and message ID should be as expected" in forAll(arbitrary[MovementType]) {
+    movementType =>
+      val eori       = arbitrary[EORINumber].sample.value
+      val movementId = arbitrary[MovementId].sample.value
+      val messageId  = arbitrary[MessageId].sample.value
+      val urlPath    = Harness.attachLargeMessageRoute(eori, movementType, movementId, messageId)
+      urlPath
+        .toString() mustBe s"/traders/${eori.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
+  }
+
+  "the update message submission URL on localhost for a given EORI, movement ID and message ID should be as expected" in forAll(arbitrary[MovementType]) {
+    movementType =>
+      val eori       = arbitrary[EORINumber].sample.value
+      val movementId = arbitrary[MovementId].sample.value
+      val messageId  = arbitrary[MessageId].sample.value
+      val urlPath    = Harness.updateMessageRoute(eori, movementType, movementId, messageId)
+      urlPath
+        .toString() mustBe s"/transit-movements/traders/${eori.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
+  }
+
   "the auditing URL on localhost for a given audit type should be as expected" in forAll(arbitrary[AuditType]) {
     auditType =>
       val urlPath = Harness.auditingRoute(auditType)

@@ -35,6 +35,7 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.ObjectStoreURI
 import v2.models.request.MessageType
 
 import scala.concurrent.ExecutionContext
@@ -44,6 +45,11 @@ import scala.concurrent.Future
 trait RouterConnector {
 
   def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
+    ec: ExecutionContext,
+    hc: HeaderCarrier
+  ): Future[Unit]
+
+  def postLargeMessage(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, objectStoreURI: ObjectStoreURI)(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): Future[Unit]
@@ -70,4 +76,17 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
           .withBody(body)
           .executeAndExpect(ACCEPTED)
     }
+
+  def postLargeMessage(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, objectStoreURI: ObjectStoreURI)(implicit
+    ec: ExecutionContext,
+    hc: HeaderCarrier
+  ): Future[Unit] = withMetricsTimerAsync(MetricsKeys.RouterBackend.Post) {
+    _ =>
+      val url = appConfig.routerUrl.withPath(routerRoute(eoriNumber, messageType, movementId, messageId))
+      httpClientV2
+        .post(url"$url")
+        .transform(_.addHttpHeaders(Constants.XMessageTypeHeader -> messageType.code, Constants.XObjectStoreUriHeader -> objectStoreURI.value))
+        .executeAndExpect(ACCEPTED)
+  }
+
 }

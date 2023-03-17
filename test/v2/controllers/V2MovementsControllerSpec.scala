@@ -49,7 +49,6 @@ import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status._
 import play.api.libs.Files.SingletonTemporaryFileCreator
-import play.api.libs.json.JsString
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.Request
@@ -63,14 +62,13 @@ import play.api.test.Helpers.status
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.TestMetrics
-import v2.base.TestCommonGenerators
 import v2.base.TestActorSystem
+import v2.base.TestCommonGenerators
 import v2.base.TestSourceProvider
 import v2.controllers.actions.providers.AcceptHeaderActionProviderImpl
 import v2.fakes.controllers.actions.FakeAcceptHeaderActionProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import v2.fakes.controllers.actions.FakeMessageSizeActionProvider
-import v2.models.MovementId
 import v2.models._
 import v2.models.errors.ExtractionError.MessageTypeNotFound
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
@@ -957,7 +955,15 @@ class V2MovementsControllerSpec
         (upscanResponse, boxResponse, movementResponse) =>
           beforeEach()
 
-          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any()))
+          when(
+            mockUpscanService
+              .upscanInitiate(
+                any[String].asInstanceOf[EORINumber],
+                any[String].asInstanceOf[MovementType],
+                any[String].asInstanceOf[MovementId],
+                any[String].asInstanceOf[MessageId]
+              )(any(), any())
+          )
             .thenAnswer {
               _ => EitherT.rightT(upscanResponse)
             }
@@ -986,7 +992,7 @@ class V2MovementsControllerSpec
             HateoasNewMovementResponse(movementResponse, Some(boxResponse), Some(upscanResponse), MovementType.Departure)
           )
 
-          verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()), MessageId(any()))(any(), any())
+          verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Departure), MovementId(any()), MessageId(any()))(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.LargeMessageSubmissionRequested), any(), eqTo(MimeTypes.JSON))(any(), any())
@@ -999,7 +1005,15 @@ class V2MovementsControllerSpec
         (upscanResponse, movementResponse) =>
           beforeEach()
 
-          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any()))
+          when(
+            mockUpscanService
+              .upscanInitiate(
+                any[String].asInstanceOf[EORINumber],
+                any[String].asInstanceOf[MovementType],
+                any[String].asInstanceOf[MovementId],
+                any[String].asInstanceOf[MessageId]
+              )(any(), any())
+          )
             .thenAnswer {
               _ => EitherT.rightT(upscanResponse)
             }
@@ -1023,7 +1037,7 @@ class V2MovementsControllerSpec
 
           contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, Some(upscanResponse), MovementType.Departure))
 
-          verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()), MessageId(any()))(any(), any())
+          verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Departure), MovementId(any()), MessageId(any()))(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
       }
@@ -1060,7 +1074,15 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
-          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any()))
+          when(
+            mockUpscanService
+              .upscanInitiate(
+                any[String].asInstanceOf[EORINumber],
+                any[String].asInstanceOf[MovementType],
+                any[String].asInstanceOf[MovementId],
+                any[String].asInstanceOf[MessageId]
+              )(any(), any())
+          )
             .thenAnswer {
               _ => EitherT.leftT(UpscanInitiateError.UnexpectedError(None))
             }
@@ -1788,7 +1810,15 @@ class V2MovementsControllerSpec
         (upscanResponse, movementResponse, boxResponse) =>
           beforeEach()
 
-          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any()))
+          when(
+            mockUpscanService
+              .upscanInitiate(
+                any[String].asInstanceOf[EORINumber],
+                any[String].asInstanceOf[MovementType],
+                any[String].asInstanceOf[MovementId],
+                any[String].asInstanceOf[MessageId]
+              )(any(), any())
+          )
             .thenAnswer {
               _ => EitherT.rightT(upscanResponse)
             }
@@ -1816,7 +1846,7 @@ class V2MovementsControllerSpec
             HateoasNewMovementResponse(movementResponse, Some(boxResponse), Some(upscanResponse), MovementType.Arrival)
           )
 
-          verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()), MessageId(any()))(any(), any())
+          verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Arrival), MovementId(any()), MessageId(any()))(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.LargeMessageSubmissionRequested), any(), eqTo(MimeTypes.JSON))(any(), any())
@@ -1829,7 +1859,15 @@ class V2MovementsControllerSpec
         (upscanResponse, movementResponse) =>
           beforeEach()
 
-          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any()))
+          when(
+            mockUpscanService
+              .upscanInitiate(
+                any[String].asInstanceOf[EORINumber],
+                any[String].asInstanceOf[MovementType],
+                any[String].asInstanceOf[MovementId],
+                any[String].asInstanceOf[MessageId]
+              )(any(), any())
+          )
             .thenAnswer {
               _ => EitherT.rightT(upscanResponse)
             }
@@ -1855,7 +1893,7 @@ class V2MovementsControllerSpec
             HateoasNewMovementResponse(movementResponse, None, Some(upscanResponse), MovementType.Arrival)
           )
 
-          verify(mockUpscanService, times(1)).upscanInitiate(MovementId(any()), MessageId(any()))(any(), any())
+          verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Arrival), MovementId(any()), MessageId(any()))(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
       }
@@ -1892,7 +1930,15 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
-          when(mockUpscanService.upscanInitiate(any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(any(), any()))
+          when(
+            mockUpscanService
+              .upscanInitiate(
+                any[String].asInstanceOf[EORINumber],
+                any[String].asInstanceOf[MovementType],
+                any[String].asInstanceOf[MovementId],
+                any[String].asInstanceOf[MessageId]
+              )(any(), any())
+          )
             .thenAnswer {
               _ => EitherT.leftT(UpscanInitiateError.UnexpectedError(None))
             }
@@ -3367,11 +3413,13 @@ class V2MovementsControllerSpec
 
       "and uploading to object-store succeeds" - {
         "and updating the message with the object-store URL succeeds" in forAll(
+          arbitraryEORINumber.arbitrary,
+          arbitraryMovementType.arbitrary,
           arbitraryMovementId.arbitrary,
           arbitraryMessageId.arbitrary,
           arbitraryObjectSummaryWithMd5.arbitrary
         ) {
-          (movementId, messageId, objectSummary) =>
+          (eoriNumber, movementType, movementId, messageId, objectSummary) =>
             when(
               mockObjectStoreService.addMessage(
                 any[String].asInstanceOf[DownloadUrl],
@@ -3385,6 +3433,8 @@ class V2MovementsControllerSpec
 
             when(
               mockPersistenceService.updateMessage(
+                any[String].asInstanceOf[EORINumber],
+                any[String].asInstanceOf[MovementType],
                 any[String].asInstanceOf[MovementId],
                 any[String].asInstanceOf[MessageId],
                 any[MessageUpdate]
@@ -3394,24 +3444,38 @@ class V2MovementsControllerSpec
               )
             ).thenReturn(EitherT.rightT(()))
 
+            when(
+              mockRouterService.sendLargeMessage(
+                any[String].asInstanceOf[MessageType],
+                any[String].asInstanceOf[EORINumber],
+                any[String].asInstanceOf[MovementId],
+                any[String].asInstanceOf[MessageId],
+                any[String].asInstanceOf[ObjectStoreURI]
+              )(any[ExecutionContext], any[HeaderCarrier])
+            ).thenAnswer(
+              _ => EitherT.rightT(())
+            )
+
             val request = FakeRequest(
               POST,
-              routes.V2MovementsController.attachLargeMessage(movementId, messageId).url,
+              routes.V2MovementsController.attachLargeMessage(eoriNumber, movementType, movementId, messageId).url,
               headers = FakeHeaders(),
               jsonSuccessUpscanResponse
             )
 
-            val result = sut.attachLargeMessage(movementId, messageId)(request)
+            val result = sut.attachLargeMessage(eoriNumber, movementType, movementId, messageId)(request)
 
             status(result) mustBe OK
         }
 
-        "and updating the message with the object-store URL fails" in forAll(
+        "and sending the message to router with the object-store URL fails" in forAll(
+          arbitraryEORINumber.arbitrary,
+          arbitraryMovementType.arbitrary,
           arbitraryMovementId.arbitrary,
           arbitraryMessageId.arbitrary,
           arbitraryObjectSummaryWithMd5.arbitrary
         ) {
-          (movementId, messageId, objectSummary) =>
+          (eoriNumber, movementType, movementId, messageId, objectSummary) =>
             when(
               mockObjectStoreService.addMessage(
                 any[String].asInstanceOf[DownloadUrl],
@@ -3425,6 +3489,8 @@ class V2MovementsControllerSpec
 
             when(
               mockPersistenceService.updateMessage(
+                any[String].asInstanceOf[EORINumber],
+                any[String].asInstanceOf[MovementType],
                 any[String].asInstanceOf[MovementId],
                 any[String].asInstanceOf[MessageId],
                 any[MessageUpdate]
@@ -3432,24 +3498,41 @@ class V2MovementsControllerSpec
                 any(),
                 any()
               )
-            ).thenReturn(EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId)))
+            ).thenReturn(EitherT.rightT(()))
+
+            when(
+              mockRouterService.sendLargeMessage(
+                any[String].asInstanceOf[MessageType],
+                any[String].asInstanceOf[EORINumber],
+                any[String].asInstanceOf[MovementId],
+                any[String].asInstanceOf[MessageId],
+                any[String].asInstanceOf[ObjectStoreURI]
+              )(any[ExecutionContext], any[HeaderCarrier])
+            ).thenAnswer(
+              _ => EitherT.leftT(RouterError.UnexpectedError(None))
+            )
 
             val request = FakeRequest(
               POST,
-              routes.V2MovementsController.attachLargeMessage(movementId, messageId).url,
+              routes.V2MovementsController.attachLargeMessage(eoriNumber, movementType, movementId, messageId).url,
               headers = FakeHeaders(),
               jsonSuccessUpscanResponse
             )
 
-            val result = sut.attachLargeMessage(movementId, messageId)(request)
+            val result = sut.attachLargeMessage(eoriNumber, movementType, movementId, messageId)(request)
 
             status(result) mustBe OK
         }
 
       }
 
-      "and uploading to object-store fails" in forAll(arbitraryMovementId.arbitrary, arbitraryMessageId.arbitrary) {
-        (movementId, messageId) =>
+      "and uploading to object-store fails" in forAll(
+        arbitraryEORINumber.arbitrary,
+        arbitraryMovementType.arbitrary,
+        arbitraryMovementId.arbitrary,
+        arbitraryMessageId.arbitrary
+      ) {
+        (eoriNumber, movementType, movementId, messageId) =>
           when(
             mockObjectStoreService.addMessage(any[String].asInstanceOf[DownloadUrl], any[String].asInstanceOf[MovementId], any[String].asInstanceOf[MessageId])(
               any(),
@@ -3459,27 +3542,32 @@ class V2MovementsControllerSpec
 
           val request = FakeRequest(
             POST,
-            routes.V2MovementsController.attachLargeMessage(movementId, messageId).url,
+            routes.V2MovementsController.attachLargeMessage(eoriNumber, movementType, movementId, messageId).url,
             headers = FakeHeaders(),
             jsonSuccessUpscanResponse
           )
 
-          val result = sut.attachLargeMessage(movementId, messageId)(request)
+          val result = sut.attachLargeMessage(eoriNumber, movementType, movementId, messageId)(request)
 
           status(result) mustBe OK
       }
     }
 
-    "should return Bad Request if it cannot parse the upscan response" in forAll(arbitraryMovementId.arbitrary, arbitraryMessageId.arbitrary) {
-      (movementId, messageId) =>
+    "should return Bad Request if it cannot parse the upscan response" in forAll(
+      arbitraryEORINumber.arbitrary,
+      arbitraryMovementType.arbitrary,
+      arbitraryMovementId.arbitrary,
+      arbitraryMessageId.arbitrary
+    ) {
+      (eoriNumber, movementType, movementId, messageId) =>
         val request = FakeRequest(
           POST,
-          routes.V2MovementsController.attachLargeMessage(movementId, messageId).url,
+          routes.V2MovementsController.attachLargeMessage(eoriNumber, movementType, movementId, messageId).url,
           headers = FakeHeaders(),
           jsonInvalidUpscanResponse
         )
 
-        val result = sut.attachLargeMessage(movementId, messageId)(request)
+        val result = sut.attachLargeMessage(eoriNumber, movementType, movementId, messageId)(request)
 
         status(result) mustBe BAD_REQUEST
     }

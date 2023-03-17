@@ -23,4 +23,7 @@ GET        /movements/:movementType/:movementId/messages/:messageId/body    v2.c
 
 GET        /movements/push-pull-notifications/box                           controllers.PushPullNotificationController.getBoxInfo()
 
-POST       /movements/:movementId/messages/:messageId                       v2.controllers.V2MovementsController.attachLargeMessage(movementId: v2.models.MovementId, messageId: v2.models.MessageId)
+GET        /movements/push-pull-notifications/box                   controllers.PushPullNotificationController.getBoxInfo()
+
+POST       /traders/:eori/movements/:movementType/:movementId/messages/:messageId                         v2.controllers.V2MovementsController.attachLargeMessage(eori: v2.models.EORINumber, movementType: v2.models.MovementType, movementId: v2.models.MovementId, messageId: v2.models.MessageId)
+
