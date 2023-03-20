@@ -241,9 +241,10 @@ class V2MovementsControllerImpl @Inject() (
         (for {
           messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
           acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
-          body <-
-            if (messageSummary.uri.isDefined) processLargeMessage(movementId, movementType, messageSummary, acceptHeader)
-            else processSmallMessage(movementId, movementType, messageSummary, acceptHeader)
+          body <- messageSummary.uri match {
+            case Some(_) => processLargeMessage(movementId, movementType, messageSummary, acceptHeader)
+            case None    => processSmallMessage(movementId, movementType, messageSummary, acceptHeader)
+          }
         } yield body).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Ok.chunked(response)
