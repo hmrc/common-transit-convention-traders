@@ -82,8 +82,16 @@ trait TestCommonGenerators {
     Gen.oneOf(AuditType.values)
   }
 
-  implicit lazy val arbitraryObjectStoreURI: Arbitrary[ObjectStoreURI] = Arbitrary {
-    Gen.alphaNumStr.map(ObjectStoreURI(_))
+  implicit val arbitraryObjectStoreURI: Arbitrary[ObjectStoreURI] = Arbitrary {
+    for {
+      movementId <- arbitraryMovementId.arbitrary
+      messageId  <- arbitraryMessageId.arbitrary
+      lastModified      = Instant.now()
+      formattedDateTime = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC).format(lastModified)
+
+    } yield ObjectStoreURI(
+      s"common-transit-convention-traders/${movementId.value}-${messageId.value}-$formattedDateTime.xml"
+    )
   }
 
   implicit lazy val arbitraryMessageSummaryXml: Arbitrary[MessageSummary] = Arbitrary {
