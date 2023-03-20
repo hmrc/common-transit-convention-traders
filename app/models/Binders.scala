@@ -41,16 +41,16 @@ object Binders {
   implicit val optionEORINumberQueryStringBindable: QueryStringBindable[Option[EORINumber]] =
     QueryStringBindable.bindableOption[EORINumber]
 
-  implicit def movementTypePathBindable: PathBindable[MovementType] = new PathBindable[MovementType] {
-
-    override def bind(key: String, value: String): Either[String, MovementType] =
-      value match {
-        case MovementType.Arrival.urlFragment   => Right(MovementType.Arrival)
-        case MovementType.Departure.urlFragment => Right(MovementType.Departure)
-        case _                                  => Left(s"$key value $value is not valid. expecting arrivals or departures")
-      }
-
-    override def unbind(key: String, value: MovementType): String =
-      value.toString
-  }
+//  implicit def movementTypePathBindable: PathBindable[MovementType] = new PathBindable[MovementType] {
+//
+//    override def bind(key: String, value: String): Either[String, MovementType] =
+//      value match {
+//        case MovementType.Arrival.urlFragment   => Right(MovementType.Arrival)
+//        case MovementType.Departure.urlFragment => Right(MovementType.Departure)
+//        case _                                  => Left(s"$key value $value is not valid. expecting arrivals or departures")
+//      }
+//
+//    override def unbind(key: String, value: MovementType): String =
+//      value.toString
+//  }
 }

@@ -294,7 +294,7 @@ class V2MovementsControllerImpl @Inject() (
             HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)
           )
           .as[JsObject]
-        jsonWrappedXmlToByteStringStream(jsonHateoasResponse.fields)
+        jsonToByteStringStream(jsonHateoasResponse.fields)
     }
 
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =
@@ -309,7 +309,7 @@ class V2MovementsControllerImpl @Inject() (
                 resourceLocation =>
                   objectStoreService.getMessage(resourceLocation).asPresentation
               }
-            } else xmlToByteStringStream(messageSummary.body.get.value)
+            } else stringToByteStringStream(messageSummary.body.get.value)
         } yield body).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Ok.chunked(response)
