@@ -16,17 +16,37 @@
 
 package v2.models.responses
 
-import play.api.libs.json.Json
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
+import play.api.libs.functional.syntax.unlift
+import play.api.libs.json.JsPath
+import play.api.libs.json.OWrites
+import play.api.libs.json.Reads
 import v2.models.MessageId
 import v2.models.MessageStatus
 import v2.models.ObjectStoreURI
 import v2.models.Payload
+import v2.models.XmlPayload
 import v2.models.request.MessageType
 
 import java.time.OffsetDateTime
 
 object MessageSummary {
-  implicit val messageSummaryFormat = Json.format[MessageSummary]
+
+  implicit val messageSummaryReads: Reads[MessageSummary] =
+    ((JsPath \ "id").read[MessageId] and
+      (JsPath \ "received").read[OffsetDateTime] and
+      (JsPath \ "messageType").read[MessageType] and
+      (JsPath \ "body").readNullable[XmlPayload] and
+      (JsPath \ "status").readNullable[MessageStatus] and
+      (JsPath \ "uri").readNullable[ObjectStoreURI])(MessageSummary.apply _)
+
+  implicit val messageSummaryWrites: OWrites[MessageSummary] =
+    ((JsPath \ "id").write[MessageId] and
+      (JsPath \ "received").write[OffsetDateTime] and
+      (JsPath \ "messageType").write[MessageType] and
+      (JsPath \ "body").writeNullable[Payload] and
+      (JsPath \ "status").writeNullable[MessageStatus] and
+      (JsPath \ "uri").writeNullable[ObjectStoreURI])(unlift(MessageSummary.unapply))
 }
 
 case class MessageSummary(

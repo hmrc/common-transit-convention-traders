@@ -37,6 +37,7 @@ import v2.controllers.request.BodyReplaceableRequest
 import v2.models.errors.PresentationError
 
 import java.util.concurrent.Executors
+import java.util.regex.Pattern
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
@@ -115,7 +116,7 @@ trait StreamingParsers {
               Source.single(ByteString(s""""$fieldName":"""".stripMargin)) ++
               // our XML stream that we escape
               stream.map(
-                bs => ByteString(bs.utf8String.replace("\\", "\\\\").replace("\"", "\\\""))
+                bs => ByteString(bs.utf8String.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n"))
               ) ++
               // and the stream that ends our Json document
               END_TOKEN_WITH_QUOTE_SOURCE
@@ -176,7 +177,7 @@ trait StreamingParsers {
     EitherT {
       Future
         .successful(Right(Source.single(xml) map {
-          str => ByteString(str.replace("\\", "\\\\").replace("\"", "\\\""))
+          str => ByteString(str)
         }))
         .recover {
           case NonFatal(e) => Left(PresentationError.internalServiceError(cause = Some(e)))
