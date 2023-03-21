@@ -34,17 +34,17 @@ class MessageSizeServiceSpec extends AnyFreeSpec with MockitoSugar with ScalaChe
 
   "Small message limit " - {
     val service = new MessageSizeService(config)
-    when(config.messageSizeLimit).thenReturn(limit)
+    when(config.largeMessageSizeLimit).thenReturn(limit)
 
     "should return false when below the limit" in forAll(Gen.choose(1, limit)) {
       size =>
-        whenReady(service.contentSizeIsLessThanLimit(size).value) {
+        whenReady(service.contentSizeIsLessThanSmallMessageLimit(size).value) {
           _ mustBe Right(())
         }
     }
 
     "should return true when below the limit" in {
-      whenReady(service.contentSizeIsLessThanLimit(limit + 1).value) {
+      whenReady(service.contentSizeIsLessThanSmallMessageLimit(limit + 1).value) {
         _ mustBe Left(PresentationError.entityTooLargeError(s"Your message size must be less than $limit bytes"))
       }
     }
