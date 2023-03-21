@@ -89,17 +89,20 @@ trait StreamingParsers {
   private val START_TOKEN: Source[ByteString, NotUsed]                 = Source.single(ByteString("{"))
   private val END_TOKEN_SOURCE: Source[ByteString, NotUsed]            = Source.single(ByteString("}"))
   private val END_TOKEN_WITH_QUOTE_SOURCE: Source[ByteString, NotUsed] = Source.single(ByteString("\"}"))
+  private val COMMA_SOURCE: Source[ByteString, NotUsed]                = Source.single(ByteString(","))
 
-  private def jsonFieldsToByteString(fields: collection.Seq[(String, JsValue)]) = Source
-    .fromIterator(
-      () => fields.iterator
-    )
-    .map {
-      // convert fields to bytestrings with their values, need to ensure we keep the field names quoted,
-      // separate with a colon and end with a comma, as per the Json spec
-      tuple =>
-        ByteString(s""""${tuple._1}":${Json.stringify(tuple._2)},""")
-    }
+  private def jsonFieldsToByteString(fields: collection.Seq[(String, JsValue)]) =
+    Source
+      .fromIterator(
+        () => fields.iterator
+      )
+      .map {
+        // convert fields to bytestrings with their values, need to ensure we keep the field names quoted,
+        // separate with a colon and end with a comma, as per the Json spec
+        tuple =>
+          ByteString(s""""${tuple._1}":${Json.stringify(tuple._2)}""")
+      }
+      .intersperse(ByteString(","))
 
   def mergeStreamIntoJson(
     fields: collection.Seq[(String, JsValue)],
@@ -112,13 +115,15 @@ trait StreamingParsers {
           Right( // We need to start the document and add the final field, and prepare for the string data coming in
             START_TOKEN ++
               // convert fields to bytestrings
-              jsonFieldsToByteString(fields) ++
+              jsonFieldsToByteString(fields) ++ COMMA_SOURCE ++
               // start adding the new field
               Source.single(ByteString(s""""$fieldName":"""".stripMargin)) ++
               // our XML stream that we escape
-              stream.map(
-                bs => ByteString(bs.utf8String.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n"))
-              ) ++
+              stream
+                .map(
+                  bs => ByteString(bs.utf8String.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n"))
+                )
+              ++
               // and the stream that ends our Json document
               END_TOKEN_WITH_QUOTE_SOURCE
           )
@@ -133,7 +138,7 @@ trait StreamingParsers {
       Future
         .successful(
           Right(
-            START_TOKEN ++ jsonFieldsToByteString(fields).intersperse(ByteString(",")) ++ END_TOKEN_SOURCE
+            START_TOKEN ++ jsonFieldsToByteString(fields) ++ END_TOKEN_SOURCE
           )
         )
         .recover {

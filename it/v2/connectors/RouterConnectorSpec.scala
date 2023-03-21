@@ -23,7 +23,6 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import config.Constants
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
