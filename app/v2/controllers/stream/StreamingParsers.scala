@@ -23,6 +23,7 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
 import cats.implicits.catsSyntaxMonadError
+import play.api.Logging
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
@@ -31,17 +32,21 @@ import play.api.mvc.Action
 import play.api.mvc.ActionBuilder
 import play.api.mvc.BaseControllerHelpers
 import play.api.mvc.BodyParser
+import play.api.mvc.Request
 import play.api.mvc.Result
+import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.request.BodyReplaceableRequest
 import v2.models.errors.PresentationError
 
+import java.nio.file.Files
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.Try
 import scala.util.control.NonFatal
 
 trait StreamingParsers {
-  self: BaseControllerHelpers =>
+  self: BaseControllerHelpers with Logging =>
 
   implicit val materializer: Materializer
 
@@ -82,6 +87,35 @@ trait StreamingParsers {
               _ =>
                 file.delete()
                 Future.successful(())
+            }
+      }
+
+    def streamWithSize(
+      block: (AuthenticatedRequest[Source[ByteString, _]], Long) => Future[Result]
+    )(implicit temporaryFileCreator: TemporaryFileCreator): Action[Source[ByteString, _]] =
+      actionBuilder.async(streamFromMemory) {
+        request =>
+          // This is outside the for comprehension because we need access to the file
+          // if the rest of the futures fail, which we wouldn't get if it was in there.
+          Future
+            .fromTry(Try(temporaryFileCreator.create()))
+            .flatMap {
+              file =>
+                (for {
+                  _      <- request.body.runWith(FileIO.toPath(file))
+                  size   <- Future.fromTry(Try(Files.size(file)))
+                  result <- block(request.replaceBody(FileIO.fromPath(file)).asInstanceOf[AuthenticatedRequest[Source[ByteString, _]]], size)
+                } yield result)
+                  .attemptTap {
+                    _ =>
+                      file.delete()
+                      Future.successful(())
+                  }
+            }
+            .recover {
+              case NonFatal(ex) =>
+                logger.error(s"Failed call: ${ex.getMessage}", ex)
+                Status(INTERNAL_SERVER_ERROR)(Json.toJson(PresentationError.internalServiceError(cause = Some(ex))))
             }
       }
   }

@@ -41,7 +41,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.AcceptHeaderActionProvider
-import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models._
@@ -85,8 +84,8 @@ class V2MovementsControllerImpl @Inject() (
   routerService: RouterService,
   auditService: AuditingService,
   pushNotificationsService: PushNotificationsService,
-  messageSizeAction: MessageSizeActionProvider,
   acceptHeaderActionProvider: AcceptHeaderActionProvider,
+  messageSizeService: MessageSizeService,
   val metrics: Metrics,
   xmlParsingService: XmlMessageParsingService,
   jsonParsingService: JsonMessageParsingService,
@@ -134,11 +133,12 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitDepartureDeclarationXML(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader) andThen messageSizeAction()).stream {
-      implicit request =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
+      (request: AuthenticatedRequest[Source[ByteString, _]], size: Long) =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
+        implicit val req               = request
         (for {
+          _ <- messageSizeService.contentSizeIsLessThanLimit(size)
           _ <- validationService.validateXml(MessageType.DeclarationData, request.body).asPresentation
           _ = auditService.audit(AuditType.DeclarationData, request.body, MimeTypes.XML)
           hateoasResponse <- persistAndSendToEIS(request.body, MovementType.Departure, MessageType.DeclarationData)
@@ -149,11 +149,12 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitDepartureDeclarationJSON(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader) andThen messageSizeAction()).stream {
-      implicit request =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
+      (request: AuthenticatedRequest[Source[ByteString, _]], size: Long) =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
+        implicit val req               = request
         (for {
+          _ <- messageSizeService.contentSizeIsLessThanLimit(size)
           _ <- validationService.validateJson(MessageType.DeclarationData, request.body).asPresentation
           _ = auditService.audit(AuditType.DeclarationData, request.body, MimeTypes.JSON)
           xmlSource       <- conversionService.jsonToXml(MessageType.DeclarationData, request.body).asPresentation
@@ -171,11 +172,12 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitArrivalNotificationXML(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader) andThen messageSizeAction()).stream {
-      implicit request =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
+      (request: AuthenticatedRequest[Source[ByteString, _]], size: Long) =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
+        implicit val req               = request
         (for {
+          _ <- messageSizeService.contentSizeIsLessThanLimit(size)
           _ <- validationService.validateXml(MessageType.ArrivalNotification, request.body).asPresentation
           _ = auditService.audit(AuditType.ArrivalNotification, request.body, MimeTypes.XML)
           hateoasResponse <- persistAndSendToEIS(request.body, MovementType.Arrival, MessageType.ArrivalNotification)
@@ -186,11 +188,12 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitArrivalNotificationJSON(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader) andThen messageSizeAction()).stream {
-      implicit request =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
+      (request: AuthenticatedRequest[Source[ByteString, _]], size: Long) =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
+        implicit val req               = request
         (for {
+          _ <- messageSizeService.contentSizeIsLessThanLimit(size)
           _ <- validationService.validateJson(MessageType.ArrivalNotification, request.body).asPresentation
           _ = auditService.audit(AuditType.ArrivalNotification, request.body, MimeTypes.JSON)
           xmlSource       <- conversionService.jsonToXml(MessageType.ArrivalNotification, request.body).asPresentation
@@ -365,14 +368,15 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def attachMessageXML(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader) andThen messageSizeAction()).stream {
-      implicit request =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
+      (request: AuthenticatedRequest[Source[ByteString, _]], size: Long) =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
+        implicit val req               = request
         val messageTypeList =
           if (movementType == MovementType.Arrival) MessageType.updateMessageTypesSentByArrivalTrader else MessageType.updateMessageTypesSentByDepartureTrader
 
         (for {
+          _           <- messageSizeService.contentSizeIsLessThanLimit(size)
           messageType <- xmlParsingService.extractMessageType(request.body, messageTypeList).asPresentation
           _           <- validationService.validateXml(messageType, request.body).asPresentation
           _ = auditService.audit(messageType.auditType, request.body, MimeTypes.XML)
@@ -398,10 +402,10 @@ class V2MovementsControllerImpl @Inject() (
           } yield updateResponse
       }
 
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader) andThen messageSizeAction()).stream {
-      implicit request =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
+      (request: AuthenticatedRequest[Source[ByteString, _]], size: Long) =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
+        implicit val req               = request
         val messageTypeList =
           if (movementType == MovementType.Arrival) MessageType.updateMessageTypesSentByArrivalTrader else MessageType.updateMessageTypesSentByDepartureTrader
 
