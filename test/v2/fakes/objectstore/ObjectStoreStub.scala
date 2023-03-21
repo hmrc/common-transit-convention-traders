@@ -61,8 +61,6 @@ class ObjectStoreStub[F[_]](config: ObjectStoreClientConfig)(implicit
     val newFileName   = s"${splitFileName(0)}-${splitFileName(1)}.xml"
     val newToPath     = Path.Directory(s"movements/${splitFileName.head}").file(newFileName)
 
-    println("FILE ADDED: " + s"$owner/${newToPath.asUri}")
-
     objectStore += (s"$owner/${newToPath.asUri}" -> objectSummaryWithMd5)
     Future.successful(objectSummaryWithMd5)
   }
@@ -70,9 +68,7 @@ class ObjectStoreStub[F[_]](config: ObjectStoreClientConfig)(implicit
   override def getObject[CONTENT](path: Path.File, owner: String = config.owner)(implicit
     cr: ObjectStoreContentRead[Future, ResBody, CONTENT],
     hc: HeaderCarrier
-  ): Future[Option[Object[CONTENT]]] = {
-    println("FILE RECEIVED: " + s"$owner/${path.asUri}")
-
+  ): Future[Option[Object[CONTENT]]] =
     objectStore
       .get(s"$owner/${path.asUri}")
       .map {
@@ -100,6 +96,5 @@ class ObjectStoreStub[F[_]](config: ObjectStoreClientConfig)(implicit
             }
       }
       .getOrElse(Future.successful(None))
-  }
 
 }

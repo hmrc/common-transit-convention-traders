@@ -29,7 +29,6 @@ import uk.gov.hmrc.objectstore.client.Path
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.ObjectStoreResourceLocation
-import v2.models.ObjectStoreURI
 import v2.models.errors.ObjectStoreError
 import v2.models.responses.UpscanResponse.DownloadUrl
 import uk.gov.hmrc.objectstore.client.play.Implicits._
