@@ -53,6 +53,8 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesCon
 
   val messageSizeLimit: Int = config.get[Int]("messageSizeLimit")
 
+  val mongoMessageSizeLimit: Int = config.get[Int]("mongoMessageSizeLimit")
+
   val logInsufficientEnrolments: Boolean = config.get[Boolean]("logInsufficientEnrolments")
 
 }

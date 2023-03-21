@@ -26,11 +26,15 @@ import scala.concurrent.Future
 
 @Singleton
 class MessageSizeService @Inject() (config: AppConfig) {
-  private lazy val limit = config.messageSizeLimit
+  private lazy val messageSizeLimit = config.messageSizeLimit
+
+  private lazy val mongoSizeLimit = config.mongoMessageSizeLimit
 
   def contentSizeIsLessThanLimit(size: Long): EitherT[Future, PresentationError, Unit] = EitherT {
-    if (size <= limit) Future.successful(Right(()))
-    else Future.successful(Left(PresentationError.entityTooLargeError(s"Your message size must be less than $limit bytes")))
+    if (size <= messageSizeLimit) Future.successful(Right(()))
+    else Future.successful(Left(PresentationError.entityTooLargeError(s"Your message size must be less than $messageSizeLimit bytes")))
   }
+
+  def isMessageStoredInMongo(size: Long): Boolean = size <= mongoSizeLimit
 
 }

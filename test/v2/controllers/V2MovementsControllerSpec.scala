@@ -69,7 +69,6 @@ import v2.base.TestSourceProvider
 import v2.controllers.actions.providers.AcceptHeaderActionProviderImpl
 import v2.fakes.controllers.actions.FakeAcceptHeaderActionProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
-import v2.fakes.controllers.actions.FakeMessageSizeActionProvider
 import v2.models._
 import v2.models.errors.ExtractionError.MessageTypeNotFound
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
@@ -168,6 +167,7 @@ class V2MovementsControllerSpec
   val mockObjectStoreService        = mock[ObjectStoreService]
   val mockPushNotificationService   = mock[PushNotificationsService]
   val mockUpscanService             = mock[UpscanService]
+  val mockMessageSizeService        = mock[MessageSizeService]
   implicit val temporaryFileCreator = SingletonTemporaryFileCreator
 
   lazy val sut: V2MovementsController = new V2MovementsControllerImpl(
@@ -179,8 +179,8 @@ class V2MovementsControllerSpec
     mockRouterService,
     mockAuditService,
     mockPushNotificationService,
-    FakeMessageSizeActionProvider,
     FakeAcceptHeaderActionProvider,
+    mockMessageSizeService,
     new TestMetrics(),
     mockXmlParsingService,
     mockJsonParsingService,
@@ -198,8 +198,8 @@ class V2MovementsControllerSpec
     mockRouterService,
     mockAuditService,
     mockPushNotificationService,
-    FakeMessageSizeActionProvider,
     new AcceptHeaderActionProviderImpl(),
+    mockMessageSizeService,
     new TestMetrics(),
     mockXmlParsingService,
     mockJsonParsingService,
@@ -253,6 +253,7 @@ class V2MovementsControllerSpec
     reset(mockResponseFormatterService)
     reset(mockPushNotificationService)
     reset(mockUpscanService)
+    reset(mockMessageSizeService)
   }
 
   def testSinkJson(rootNode: String): Sink[ByteString, Future[Either[FailedToValidateError, Unit]]] =
@@ -313,6 +314,10 @@ class V2MovementsControllerSpec
 
           when(mockAuditService.audit(any(), any(), any())(any(), any())).thenReturn(Future.successful(()))
 
+          when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
+
+          when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
+
           when(
             mockPersistenceService
               .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]]())(
@@ -349,6 +354,7 @@ class V2MovementsControllerSpec
             HateoasNewMovementResponse(movementResponse, Some(boxResponse), None, MovementType.Departure)
           )
 
+          verify(mockMessageSizeService, times(1)).contentSizeIsLessThanLimit(any())
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), eqTo(MovementType.Departure), any())(any(), any())
@@ -394,6 +400,8 @@ class V2MovementsControllerSpec
             _ => EitherT.rightT(())
           )
 
+          when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
+
           when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
             .thenAnswer(
               _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
@@ -421,6 +429,8 @@ class V2MovementsControllerSpec
           .thenAnswer(
             _ => EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList(XmlValidationError(1, 1, "an error"), Nil)))
           )
+
+        when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
 
         val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(<test></test>.mkString), MovementType.Departure)
         val result  = sut.createMovement(MovementType.Departure)(request)
@@ -478,6 +488,8 @@ class V2MovementsControllerSpec
             )
 
           when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())).thenReturn(Future.successful(()))
+
+          when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
 
           when(
             mockPersistenceService
@@ -545,6 +557,8 @@ class V2MovementsControllerSpec
           }
           when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())).thenReturn(Future.successful(()))
 
+          when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
+
           when(
             mockConversionService
               .jsonToXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(
@@ -622,6 +636,8 @@ class V2MovementsControllerSpec
           }
           when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())).thenReturn(Future.successful(()))
 
+          when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
+
           when(
             mockConversionService
               .jsonToXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(
@@ -684,6 +700,8 @@ class V2MovementsControllerSpec
             jsonValidationMockAnswer(MovementType.Departure)(invocation)
         }
 
+        when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
+
         val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource("notjson"), MovementType.Departure)
         val result  = sut.createMovement(MovementType.Departure)(request)
         status(result) mustBe BAD_REQUEST
@@ -709,6 +727,8 @@ class V2MovementsControllerSpec
           invocation =>
             jsonValidationMockAnswer(MovementType.Departure)(invocation)
         }
+
+        when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
 
         val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource("{}"), MovementType.Departure)
         val result  = sut.createMovement(MovementType.Departure)(request)
@@ -736,6 +756,8 @@ class V2MovementsControllerSpec
             jsonValidationMockAnswer(MovementType.Departure)(invocation)
         }
         val jsonToXmlConversionError = (_: InvocationOnMock) => EitherT.leftT(ConversionError.UnexpectedError(None))
+
+        when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
 
         when(
           mockConversionService
@@ -773,6 +795,8 @@ class V2MovementsControllerSpec
           invocation =>
             jsonValidationMockAnswer(MovementType.Departure)(invocation)
         }
+
+        when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
 
         when(
           mockConversionService
@@ -818,6 +842,8 @@ class V2MovementsControllerSpec
           invocation =>
             jsonValidationMockAnswer(MovementType.Departure)(invocation)
         }
+
+        when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
 
         when(
           mockConversionService
@@ -867,6 +893,8 @@ class V2MovementsControllerSpec
             _ =>
               EitherT.rightT(())
           }
+
+          when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
 
           when(
             mockValidationService
@@ -1027,6 +1055,8 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
+          when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
+
           when(mockPushNotificationService.associate(MovementId(anyString()), any(), any())(any(), any()))
             .thenAnswer(
               _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
@@ -1181,6 +1211,8 @@ class V2MovementsControllerSpec
 
           when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())).thenReturn(Future.successful(()))
 
+          when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
+
           when(
             mockPersistenceService
               .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]]())(
@@ -1249,6 +1281,7 @@ class V2MovementsControllerSpec
             .thenAnswer {
               _ => EitherT.rightT(movementResponse)
             }
+          when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
 
           when(
             mockRouterService.send(
@@ -1288,6 +1321,8 @@ class V2MovementsControllerSpec
           .thenAnswer(
             _ => EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList(XmlValidationError(1, 1, "an error"), Nil)))
           )
+        when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
+
         val request =
           fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(<test></test>.mkString), MovementType.Arrival)
         val result = sut.createMovement(MovementType.Arrival)(request)
@@ -1446,6 +1481,8 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
+          when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
+
           when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
@@ -1479,6 +1516,8 @@ class V2MovementsControllerSpec
               jsonValidationMockAnswer(MovementType.Arrival)(invocation)
           }
           when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())).thenReturn(Future.successful(()))
+
+          when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
 
           when(
             mockConversionService
@@ -1535,6 +1574,7 @@ class V2MovementsControllerSpec
           invocation =>
             jsonValidationMockAnswer(MovementType.Arrival)(invocation)
         }
+        when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
 
         val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource("notjson"), MovementType.Arrival)
 
@@ -1562,6 +1602,8 @@ class V2MovementsControllerSpec
           invocation =>
             jsonValidationMockAnswer(MovementType.Arrival)(invocation)
         }
+
+        when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
 
         val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource("{}"), MovementType.Arrival)
 
@@ -1603,6 +1645,8 @@ class V2MovementsControllerSpec
             jsonToXmlConversionError(invocation)
         }
 
+        when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
+
         val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC007Cjson), MovementType.Arrival)
 
         val result = sut.createMovement(MovementType.Arrival)(request)
@@ -1628,6 +1672,8 @@ class V2MovementsControllerSpec
           invocation =>
             jsonValidationMockAnswer(MovementType.Arrival)(invocation)
         }
+
+        when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
 
         when(
           mockConversionService
@@ -1688,6 +1734,8 @@ class V2MovementsControllerSpec
             )
         }
 
+        when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
+
         when(
           mockPersistenceService
             .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]])(
@@ -1730,6 +1778,8 @@ class V2MovementsControllerSpec
             invocation =>
               jsonValidationMockAnswer(MovementType.Arrival)(invocation)
           }
+
+          when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
 
           when(
             mockConversionService
@@ -1881,6 +1931,8 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
+          when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
+
           when(mockPushNotificationService.associate(MovementId(anyString()), any(), any())(any(), any()))
             .thenAnswer(
               _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
@@ -1907,6 +1959,8 @@ class V2MovementsControllerSpec
         ).thenAnswer(
           _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
         )
+
+        when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
 
         val request =
           fakeCreateMovementRequest("POST", standardHeaders, Source.empty[ByteString], MovementType.Arrival)
@@ -3038,6 +3092,8 @@ class V2MovementsControllerSpec
                 )
             ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, UpdateMovementResponse](updateMovementResponse)))
 
+            when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
+
             val request = fakeAttachMessageRequest("POST", standardHeaders, singleUseStringSource(contentXml.mkString), movementType)
             val result  = sut.attachMessage(movementType, movementId)(request)
 
@@ -3062,6 +3118,8 @@ class V2MovementsControllerSpec
               .thenAnswer(
                 _ => EitherT.leftT(ExtractionError.MalformedInput)
               )
+
+            when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
 
             val request = fakeAttachMessageRequest("POST", standardHeaders, singleUseStringSource("notxml"), movementType)
             val result  = sut.attachMessage(movementType, movementId)(request)
@@ -3091,6 +3149,8 @@ class V2MovementsControllerSpec
                   any[ExecutionContext]
                 )
             ).thenReturn(EitherT.fromEither[Future](Left[PersistenceError, UpdateMovementResponse](PersistenceError.UnexpectedError(None))))
+
+            when(mockMessageSizeService.contentSizeIsLessThanLimit(any())).thenReturn(EitherT.rightT(()))
 
             val request =
               fakeAttachMessageRequest("POST", standardHeaders, Source.single(ByteString(contentXml.mkString, StandardCharsets.UTF_8)), movementType)

@@ -17,6 +17,7 @@
 package v2.controllers
 
 import akka.stream.Materializer
+import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
@@ -59,8 +60,10 @@ import v2.services._
 import v2.utils.StreamWithFile
 
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import java.time.OffsetDateTime
 import scala.concurrent.Future
+import scala.util.Try
 
 @ImplementedBy(classOf[V2MovementsControllerImpl])
 trait V2MovementsController {
@@ -253,6 +256,23 @@ class V2MovementsControllerImpl @Inject() (
           response => Ok.chunked(response, Some(MimeTypes.JSON))
         )
     }
+
+//  private def saveSourceToTempFile(resourceLocation: ObjectStoreResourceLocation)(implicit hc: HeaderCarrier) =
+//    for {
+//      file <- EitherT.rightT[Future, PresentationError](
+//        Try(temporaryFileCreator.create()).recover(
+//          ex => PresentationError.internalServiceError(cause = Some(ex))
+//        )
+//      )
+//      source <- objectStoreService.getMessage(resourceLocation).asPresentation
+//      // _ <- EitherT.rightT[Future, PresentationError](Try(source.runWith(FileIO.toPath(file)))).recover(_ => PresentationError.internalServiceError())
+//      _    <- EitherT.rightT[Future, PresentationError](source.runWith(FileIO.toPath(file)))
+//      size <- EitherT.rightT[Future, PresentationError](Files.size(file))
+//      result <-
+//        if (messageSizeService.isMessageStoredInMongo(size))
+//          EitherT.leftT[Future, Source[ByteString, _]](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
+//        else EitherT.leftT[Future, Source[ByteString, _]](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
+//    } yield result
 
   private def processLargeMessage(movementId: MovementId, movementType: MovementType, messageSummary: MessageSummary, acceptHeader: String)(implicit
     hc: HeaderCarrier

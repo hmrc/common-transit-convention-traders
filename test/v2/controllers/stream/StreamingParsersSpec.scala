@@ -27,6 +27,7 @@ import org.scalatest.OptionValues
 import org.scalatest.concurrent.Futures.whenReady
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.Status.OK
 import play.api.libs.Files.SingletonTemporaryFileCreator
@@ -76,7 +77,7 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with TestActorSyste
     override def parser: BodyParser[AnyContent] = stubControllerComponents().parsers.defaultBodyParser
   }
 
-  object Harness extends BaseController with StreamingParsers {
+  object Harness extends BaseController with StreamingParsers with Logging {
 
     override val controllerComponents = stubControllerComponents()
     implicit val temporaryFileCreator = SingletonTemporaryFileCreator
