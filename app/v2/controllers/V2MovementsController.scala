@@ -312,7 +312,7 @@ class V2MovementsControllerImpl @Inject() (
             } else stringToByteStringStream(messageSummary.body.get.value)
         } yield body).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          response => Ok.chunked(response)
+          response => Ok.chunked(response, Some(MimeTypes.JSON))
         )
     }
 
