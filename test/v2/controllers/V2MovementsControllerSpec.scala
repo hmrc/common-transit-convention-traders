@@ -58,6 +58,7 @@ import play.api.test.Helpers
 import play.api.test.Helpers.POST
 import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.contentAsString
+import play.api.test.Helpers.contentType
 import play.api.test.Helpers.status
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
@@ -2276,6 +2277,7 @@ class V2MovementsControllerSpec
               val result = sut.getMessage(movementType, movementId, messageId)(request)
 
               status(result) mustBe NOT_FOUND
+              contentType(result).get mustBe MimeTypes.JSON
               contentAsJson(result) mustBe Json.obj(
                 "code"    -> "NOT_FOUND",
                 "message" -> s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
@@ -2309,12 +2311,14 @@ class V2MovementsControllerSpec
               acceptHeaderValue match {
                 case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
                   status(result) mustBe INTERNAL_SERVER_ERROR
+                  contentType(result).get mustBe MimeTypes.JSON
                   contentAsJson(result) mustBe Json.obj(
                     "code"    -> "INTERNAL_SERVER_ERROR",
                     "message" -> "Internal server error"
                   )
                 case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
                   status(result) mustBe OK
+                  contentType(result).get mustBe MimeTypes.JSON
               }
             }
 
@@ -2332,6 +2336,7 @@ class V2MovementsControllerSpec
               val result = sut.getMessage(movementType, movementId, messageId)(request)
 
               status(result) mustBe INTERNAL_SERVER_ERROR
+              contentType(result).get mustBe MimeTypes.JSON
               contentAsJson(result) mustBe Json.obj(
                 "code"    -> "INTERNAL_SERVER_ERROR",
                 "message" -> "Internal server error"
@@ -2367,13 +2372,15 @@ class V2MovementsControllerSpec
 
               acceptHeaderValue match {
                 case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
-//                  status(result) mustBe NOT_ACCEPTABLE
+                  status(result) mustBe NOT_ACCEPTABLE
+                  contentType(result).get mustBe MimeTypes.JSON
                   contentAsJson(result) mustBe Json.obj(
                     "code"    -> "NOT_ACCEPTABLE",
                     "message" -> "Large messages cannot be returned as json"
                   )
                 case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
-                  //status(result) mustBe OK
+                  status(result) mustBe OK
+                  contentType(result).get mustBe MimeTypes.JSON
                   contentAsJson(result) mustBe Json.toJson(
                     HateoasMovementMessageResponse(
                       movementId,
@@ -2400,6 +2407,7 @@ class V2MovementsControllerSpec
               val result = sut.getMessage(movementType, movementId, messageId)(request)
 
               status(result) mustBe NOT_FOUND
+              contentType(result).get mustBe MimeTypes.JSON
               contentAsJson(result) mustBe Json.obj(
                 "code"    -> "NOT_FOUND",
                 "message" -> s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
@@ -2420,6 +2428,7 @@ class V2MovementsControllerSpec
               val result = sut.getMessage(movementType, movementId, messageId)(request)
 
               status(result) mustBe INTERNAL_SERVER_ERROR
+              contentType(result).get mustBe MimeTypes.JSON
               contentAsJson(result) mustBe Json.obj(
                 "code"    -> "INTERNAL_SERVER_ERROR",
                 "message" -> "Internal server error"
@@ -2442,6 +2451,7 @@ class V2MovementsControllerSpec
           val result = sutWithAcceptHeader.getMessage(movementType, movementId, messageId)(request)
 
           status(result) mustBe NOT_ACCEPTABLE
+          contentType(result).get mustBe MimeTypes.JSON
 
       }
     }
@@ -2492,6 +2502,7 @@ class V2MovementsControllerSpec
           val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
           status(result) mustBe OK
+          contentType(result).get mustBe MimeTypes.JSON
           contentAsString(result) mustBe xml
         }
 
@@ -2509,6 +2520,7 @@ class V2MovementsControllerSpec
           val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
           status(result) mustBe NOT_FOUND
+          contentType(result).get mustBe MimeTypes.JSON
           contentAsJson(result) mustBe Json.obj(
             "code"    -> "NOT_FOUND",
             "message" -> s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
@@ -2540,6 +2552,7 @@ class V2MovementsControllerSpec
           val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
           status(result) mustBe OK
+          contentType(result).get mustBe MimeTypes.JSON
           contentAsString(result) mustBe xml
         }
 
@@ -2557,6 +2570,7 @@ class V2MovementsControllerSpec
           val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
           status(result) mustBe INTERNAL_SERVER_ERROR
+          contentType(result).get mustBe MimeTypes.JSON
           contentAsJson(result) mustBe Json.obj(
             "code"    -> "INTERNAL_SERVER_ERROR",
             "message" -> "Internal server error"
@@ -2590,6 +2604,7 @@ class V2MovementsControllerSpec
           val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
           status(result) mustBe OK
+          contentType(result).get mustBe MimeTypes.JSON
           contentAsString(result) mustBe xml
         }
 
@@ -2607,6 +2622,7 @@ class V2MovementsControllerSpec
           val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
           status(result) mustBe NOT_FOUND
+          contentType(result).get mustBe MimeTypes.JSON
           contentAsJson(result) mustBe Json.obj(
             "code"    -> "NOT_FOUND",
             "message" -> s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
@@ -2627,6 +2643,7 @@ class V2MovementsControllerSpec
           val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
           status(result) mustBe INTERNAL_SERVER_ERROR
+          contentType(result).get mustBe MimeTypes.JSON
           contentAsJson(result) mustBe Json.obj(
             "code"    -> "INTERNAL_SERVER_ERROR",
             "message" -> "Internal server error"
@@ -2648,7 +2665,7 @@ class V2MovementsControllerSpec
           val result = sutWithAcceptHeader.getMessageBody(movementType, movementId, messageId)(request)
 
           status(result) mustBe NOT_ACCEPTABLE
-
+          contentType(result).get mustBe MimeTypes.JSON
       }
     }
 
