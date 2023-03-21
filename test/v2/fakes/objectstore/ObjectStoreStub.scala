@@ -16,16 +16,10 @@
 
 package v2.fakes.objectstore
 
-import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import play.api.http.MimeTypes
-import play.api.libs.json.Json
-import play.api.libs.ws.SourceBody
-import play.api.test.FakeHeaders
-import play.api.test.FakeRequest
-import play.api.test.Helpers.POST
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.objectstore.client.Md5Hash
 import uk.gov.hmrc.objectstore.client.Object
@@ -67,21 +61,18 @@ class ObjectStoreStub[F[_]](config: ObjectStoreClientConfig)(implicit
     val newFileName   = s"${splitFileName(0)}-${splitFileName(1)}.xml"
     val newToPath     = Path.Directory(s"movements/${splitFileName.head}").file(newFileName)
 
+    println("FILE ADDED: " + s"$owner/${newToPath.asUri}")
+
     objectStore += (s"$owner/${newToPath.asUri}" -> objectSummaryWithMd5)
     Future.successful(objectSummaryWithMd5)
   }
 
-  private val request = FakeRequest(
-    POST,
-    "url",
-    headers = FakeHeaders(),
-    ByteString("stream")
-  )
-
   override def getObject[CONTENT](path: Path.File, owner: String = config.owner)(implicit
     cr: ObjectStoreContentRead[Future, ResBody, CONTENT],
     hc: HeaderCarrier
-  ): Future[Option[Object[CONTENT]]] =
+  ): Future[Option[Object[CONTENT]]] = {
+    println("FILE RECEIVED: " + s"$owner/${path.asUri}")
+
     objectStore
       .get(s"$owner/${path.asUri}")
       .map {
@@ -109,5 +100,6 @@ class ObjectStoreStub[F[_]](config: ObjectStoreClientConfig)(implicit
             }
       }
       .getOrElse(Future.successful(None))
+  }
 
 }
