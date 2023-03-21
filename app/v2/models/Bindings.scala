@@ -34,4 +34,16 @@ object Bindings {
   implicit val messageIdBinding  = hexBinding[MessageId](MessageId.apply, _.value)
   implicit val movementIdBinding = hexBinding[MovementId](MovementId.apply, _.value)
 
+  implicit def movementTypePathBindable: PathBindable[MovementType] = new PathBindable[MovementType] {
+
+    override def bind(key: String, value: String): Either[String, MovementType] =
+      value match {
+        case MovementType.Arrival.urlFragment   => Right(MovementType.Arrival)
+        case MovementType.Departure.urlFragment => Right(MovementType.Departure)
+        case _                                  => Left(s"$key value $value is not valid. expecting arrivals or departures")
+      }
+
+    override def unbind(key: String, value: MovementType): String =
+      value.toString
+  }
 }

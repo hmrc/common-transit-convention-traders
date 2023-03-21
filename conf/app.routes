@@ -1,26 +1,27 @@
-GET        /movements/arrivals                                      routing.ArrivalsRouter.getArrivalsForEori(updatedSince: Option[OffsetDateTime] ?= None, movementEORI: Option[EORINumber] ?= None)
-POST       /movements/arrivals                                      routing.ArrivalsRouter.createArrivalNotification()
+GET        /movements/arrivals                                                      routing.ArrivalsRouter.getArrivalsForEori(updatedSince: Option[OffsetDateTime] ?= None, movementEORI: Option[EORINumber] ?= None)
+POST       /movements/arrivals                                                      routing.ArrivalsRouter.createArrivalNotification()
 
-PUT        /movements/arrivals/:arrivalId                           controllers.ArrivalMovementController.resubmitArrivalNotification(arrivalId: ArrivalId)
-GET        /movements/arrivals/:arrivalId                           routing.ArrivalsRouter.getArrival(arrivalId: String)
+PUT        /movements/arrivals/:arrivalId                                           controllers.ArrivalMovementController.resubmitArrivalNotification(arrivalId: ArrivalId)
+GET        /movements/arrivals/:arrivalId                                           routing.ArrivalsRouter.getArrival(arrivalId: String)
 
-POST       /movements/arrivals/:arrivalId/messages                  routing.ArrivalsRouter.attachMessage(arrivalId: String)
-GET        /movements/arrivals/:arrivalId/messages                  routing.ArrivalsRouter.getArrivalMessageIds(arrivalId: String, receivedSince: Option[OffsetDateTime] ?= None)
+POST       /movements/arrivals/:arrivalId/messages                                  routing.ArrivalsRouter.attachMessage(arrivalId: String)
+GET        /movements/arrivals/:arrivalId/messages                                  routing.ArrivalsRouter.getArrivalMessageIds(arrivalId: String, receivedSince: Option[OffsetDateTime] ?= None)
 
-GET        /movements/arrivals/:arrivalId/messages/:messageId       routing.ArrivalsRouter.getArrivalMessage(arrivalId: String, messageId: String)
+GET        /movements/arrivals/:arrivalId/messages/:messageId                       routing.ArrivalsRouter.getArrivalMessage(arrivalId: String, messageId: String)
 
+GET        /movements/departures                                                    routing.DeparturesRouter.getDeparturesForEori(updatedSince: Option[OffsetDateTime] ?= None, movementEORI: Option[EORINumber] ?= None)
+POST       /movements/departures                                                    routing.DeparturesRouter.submitDeclaration()
 
+GET        /movements/departures/:departureId                                       routing.DeparturesRouter.getDeparture(departureId: String)
 
-GET        /movements/departures                                    routing.DeparturesRouter.getDeparturesForEori(updatedSince: Option[OffsetDateTime] ?= None, movementEORI: Option[EORINumber] ?= None)
-POST       /movements/departures                                    routing.DeparturesRouter.submitDeclaration()
+POST       /movements/departures/:departureId/messages                              routing.DeparturesRouter.attachMessage(departureId: String)
+GET        /movements/departures/:departureId/messages                              routing.DeparturesRouter.getMessageIds(departureId: String, receivedSince: Option[OffsetDateTime] ?= None)
 
-GET        /movements/departures/:departureId                       routing.DeparturesRouter.getDeparture(departureId: String)
+GET        /movements/departures/:departureId/messages/:messageId                   routing.DeparturesRouter.getMessage(departureId: String, messageId: String)
 
-POST       /movements/departures/:departureId/messages              routing.DeparturesRouter.attachMessage(departureId: String)
-GET        /movements/departures/:departureId/messages              routing.DeparturesRouter.getMessageIds(departureId: String, receivedSince: Option[OffsetDateTime] ?= None)
+GET        /movements/:movementType/:movementId/messages/:messageId/body            v2.controllers.V2MovementsController.getMessageBody(movementType: v2.models.MovementType, movementId: v2.models.MovementId, messageId: v2.models.MessageId)
 
-GET        /movements/departures/:departureId/messages/:messageId    routing.DeparturesRouter.getMessage(departureId: String, messageId: String)
+GET        /movements/push-pull-notifications/box                                   controllers.PushPullNotificationController.getBoxInfo()
 
-GET        /movements/push-pull-notifications/box                   controllers.PushPullNotificationController.getBoxInfo()
+POST       /traders/:eori/movements/:movementType/:movementId/messages/:messageId   v2.controllers.V2MovementsController.attachLargeMessage(eori: v2.models.EORINumber, movementType: v2.models.MovementType, movementId: v2.models.MovementId, messageId: v2.models.MessageId)
 
-POST       /traders/:eori/movements/:movementType/:movementId/messages/:messageId                         v2.controllers.V2MovementsController.attachLargeMessage(eori: v2.models.EORINumber, movementType: v2.models.MovementType, movementId: v2.models.MovementId, messageId: v2.models.MessageId)

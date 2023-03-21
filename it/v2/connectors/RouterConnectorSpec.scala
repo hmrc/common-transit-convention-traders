@@ -23,7 +23,6 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import config.Constants
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -139,8 +138,8 @@ class RouterConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
             response.statusCode mustBe INTERNAL_SERVER_ERROR
             Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
         }
@@ -207,8 +206,8 @@ class RouterConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.get.asInstanceOf[UpstreamErrorResponse]
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
             response.statusCode mustBe INTERNAL_SERVER_ERROR
             Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
         }

@@ -29,6 +29,7 @@ object Payload {
   implicit val payloadWrites: Writes[Payload] = Writes {
     value => value.asJson
   }
+
 }
 
 object XmlPayload {

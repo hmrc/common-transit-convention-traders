@@ -30,6 +30,9 @@ import uk.gov.hmrc.objectstore.client.config.ObjectStoreClientConfig
 import v2.base.TestCommonGenerators
 import v2.base.TestActorSystem
 import v2.fakes.objectstore.ObjectStoreStub
+import v2.models.MessageId
+import v2.models.MovementId
+import v2.models.ObjectStoreResourceLocation
 import v2.models.responses.UpscanResponse.DownloadUrl
 
 import java.time.Clock
@@ -45,7 +48,7 @@ class ObjectStoreServiceSpec
     with BeforeAndAfterEach {
 
   val baseUrl = s"http://baseUrl-${randomUUID().toString}"
-  val owner   = s"owner-${randomUUID().toString}"
+  val owner   = "common-transit-convention-traders"
   val token   = s"token-${randomUUID().toString}"
   val config  = ObjectStoreClientConfig(baseUrl, owner, token, SevenYears)
 
@@ -61,8 +64,8 @@ class ObjectStoreServiceSpec
       arbitraryMovementId.arbitrary,
       arbitraryMessageId.arbitrary
     ) {
-      (movemementId, messageId) =>
-        val result = objectStoreService.addMessage(DownloadUrl("https://bucketName.s3.eu-west-2.amazonaws.com"), movemementId, messageId)
+      (movementId, messageId) =>
+        val result = objectStoreService.addMessage(DownloadUrl("https://bucketName.s3.eu-west-2.amazonaws.com"), movementId, messageId)
 
         whenReady(result.value, timeout(Span(6, Seconds))) {
           case Left(e)  => fail(e.toString)
@@ -74,8 +77,8 @@ class ObjectStoreServiceSpec
       arbitraryMovementId.arbitrary,
       arbitraryMessageId.arbitrary
     ) {
-      (movemementId, messageId) =>
-        val result = objectStoreService.addMessage(DownloadUrl("invalidURL"), movemementId, messageId)
+      (movementId, messageId) =>
+        val result = objectStoreService.addMessage(DownloadUrl("invalidURL"), movementId, messageId)
 
         whenReady(result.value) {
           case Right(_) => fail("should have returned a Left")
@@ -83,4 +86,30 @@ class ObjectStoreServiceSpec
         }
     }
   }
+
+  "On getting a message from object store" - {
+    "given a successful response from the connector, should return a Right with Object Store Summary" in {
+      val movementId = MovementId("308c4a68e2cdc08f")
+      val messageId  = MessageId("123c4a68e2ele08f")
+      objectStoreService.addMessage(DownloadUrl("https://bucketName.s3.eu-west-2.amazonaws.com"), movementId, messageId)
+
+      val result = objectStoreService.getMessage(ObjectStoreResourceLocation(s"/movements/${movementId.value}/${movementId.value}-${messageId.value}.xml"))
+
+      whenReady(result.value, timeout(Span(6, Seconds))) {
+        case Left(e)  => fail(e.toString)
+        case Right(x) => x
+      }
+    }
+
+    "given an exception is thrown due to an invalid url, should return a Left with the exception in an ObjectStoreError" in {
+
+      val result = objectStoreService.getMessage(ObjectStoreResourceLocation("invalid filename"))
+
+      whenReady(result.value) {
+        case Right(_) => fail("should have returned a Left")
+        case Left(x)  => x
+      }
+    }
+  }
+
 }

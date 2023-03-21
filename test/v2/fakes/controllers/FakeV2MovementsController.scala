@@ -75,4 +75,10 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
     request =>
       Ok(Json.obj("version" -> 2))
   }
+
+  override def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] = Action {
+    _ =>
+      Ok(Json.obj("version" -> 2))
+  }
+
 }

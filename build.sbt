@@ -27,6 +27,7 @@ lazy val microservice = Project(appName, file("."))
       "models._",
       "models.domain._",
       "models.Binders._",
+      "v2.models.Bindings._",
       "java.time.OffsetDateTime",
       "v2.models.EORINumber",
       "v2.models.MovementId"
