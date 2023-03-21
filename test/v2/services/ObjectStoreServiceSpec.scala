@@ -33,7 +33,6 @@ import v2.fakes.objectstore.ObjectStoreStub
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.ObjectStoreResourceLocation
-import v2.models.ObjectStoreURI
 import v2.models.responses.UpscanResponse.DownloadUrl
 
 import java.time.Clock
