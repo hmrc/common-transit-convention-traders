@@ -661,11 +661,7 @@ paths:
                       name: CustomsTransitsMovementsDeparturesMessageBodyResponse
                       attribute: false
                       wrapped: false
-              example:
-                >
-                n1.CC015C:
-                  @PhaseID: "NCTS5.0"
-                  ...
+              example: '<ncts:CC015C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">...</ncts:CC015C>'
         '404':
           description: Not Found
           content:
@@ -1345,11 +1341,7 @@ paths:
                       name: CustomsTransitsMovementsArrivalsMessageBodyResponse
                       attribute: false
                       wrapped: false
-              example:
-                >
-                n1.CC007C:
-                  @PhaseID: "NCTS5.0"
-                  ...
+              example: '<ncts:CC007C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">...</ncts:CC007C>'
         '404':
           description: Not Found
           content:
@@ -1755,13 +1747,13 @@ components:
         status: Success
         body: <ncts:CC015C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">...</ncts:CC015C>
     CustomsTransitsMovementsDeparturesMessageBodyResponse:
-      title: CustomsTransitsMovementsDeparturesMessageBodyResponse
-      type: xml
+      title: XML payload
+      type: string
       example:
         <ncts:CC015C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">...</ncts:CC015C>
     CustomsTransitsMovementsArrivalsMessageBodyResponse:
-      title: CustomsTransitsMovementsDeparturesMessageBodyResponse
-      type: xml
+      title: XML payload
+      type: string
       example:
         <ncts:CC007C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">...</ncts:CC007C>
     CustomsTransitsMovementsDeparturesResponse:
