@@ -146,9 +146,8 @@ class V2MovementsControllerImpl @Inject() (
 
   private def submitDepartureDeclarationXML(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
-      (request: AuthenticatedRequest[Source[ByteString, _]], size: Long) =>
+      implicit request => size =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        implicit val req               = request
         (for {
           _ <- contentSizeIsLessThanLimit(size)
           _ <- validationService.validateXml(MessageType.DeclarationData, request.body).asPresentation
@@ -162,9 +161,9 @@ class V2MovementsControllerImpl @Inject() (
 
   private def submitDepartureDeclarationJSON(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
-      (request: AuthenticatedRequest[Source[ByteString, _]], size: Long) =>
+      implicit request => size =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        implicit val req               = request
+
         (for {
           _ <- contentSizeIsLessThanLimit(size)
           _ <- validationService.validateJson(MessageType.DeclarationData, request.body).asPresentation
@@ -185,9 +184,9 @@ class V2MovementsControllerImpl @Inject() (
 
   private def submitArrivalNotificationXML(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
-      (request: AuthenticatedRequest[Source[ByteString, _]], size: Long) =>
+      implicit request => size =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        implicit val req               = request
+
         (for {
           _ <- contentSizeIsLessThanLimit(size)
           _ <- validationService.validateXml(MessageType.ArrivalNotification, request.body).asPresentation
@@ -201,9 +200,9 @@ class V2MovementsControllerImpl @Inject() (
 
   private def submitArrivalNotificationJSON(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
-      (request: AuthenticatedRequest[Source[ByteString, _]], size: Long) =>
+      implicit request => size =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        implicit val req               = request
+
         (for {
           _ <- contentSizeIsLessThanLimit(size)
           _ <- validationService.validateJson(MessageType.ArrivalNotification, request.body).asPresentation
@@ -417,9 +416,9 @@ class V2MovementsControllerImpl @Inject() (
 
   private def attachMessageXML(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
-      (request: AuthenticatedRequest[Source[ByteString, _]], size: Long) =>
+      implicit request => size =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        implicit val req               = request
+
         val messageTypeList =
           if (movementType == MovementType.Arrival) MessageType.updateMessageTypesSentByArrivalTrader else MessageType.updateMessageTypesSentByDepartureTrader
 
@@ -451,13 +450,14 @@ class V2MovementsControllerImpl @Inject() (
       }
 
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
-      (request: AuthenticatedRequest[Source[ByteString, _]], size: Long) =>
+      implicit request => size =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        implicit val req               = request
+
         val messageTypeList =
           if (movementType == MovementType.Arrival) MessageType.updateMessageTypesSentByArrivalTrader else MessageType.updateMessageTypesSentByDepartureTrader
 
         (for {
+          _           <- contentSizeIsLessThanLimit(size)
           messageType <- jsonParsingService.extractMessageType(request.body, messageTypeList).asPresentation
           _           <- validationService.validateJson(messageType, request.body).asPresentation
           _ = auditService.audit(messageType.auditType, request.body, MimeTypes.JSON)

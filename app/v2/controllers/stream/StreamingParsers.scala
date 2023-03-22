@@ -90,7 +90,7 @@ trait StreamingParsers {
       }
 
     def streamWithSize(
-      block: (AuthenticatedRequest[Source[ByteString, _]], Long) => Future[Result]
+      block: AuthenticatedRequest[Source[ByteString, _]] => Long => Future[Result]
     )(implicit temporaryFileCreator: TemporaryFileCreator): Action[Source[ByteString, _]] =
       actionBuilder.async(streamFromMemory) {
         request =>
@@ -103,7 +103,7 @@ trait StreamingParsers {
                 (for {
                   _      <- request.body.runWith(FileIO.toPath(file))
                   size   <- Future.fromTry(Try(Files.size(file)))
-                  result <- block(request.replaceBody(FileIO.fromPath(file)).asInstanceOf[AuthenticatedRequest[Source[ByteString, _]]], size)
+                  result <- block(request.replaceBody(FileIO.fromPath(file)).asInstanceOf[AuthenticatedRequest[Source[ByteString, _]]])(size)
                 } yield result)
                   .attemptTap {
                     _ =>
