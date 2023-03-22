@@ -2183,14 +2183,16 @@ class V2MovementsControllerSpec
     }
 
     s"/movements/${movementType.urlFragment}/:movementId/messages/:messageId" - {
-      val movementId              = arbitraryMovementId.arbitrary.sample.value
-      val messageId               = arbitraryMessageId.arbitrary.sample.value
-      val xml                     = "<test>ABC</test>"
-      val smallMessageSummaryXml  = arbitraryMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = Some(XmlPayload(xml)), uri = None)
-      val smallMessageSummaryJson = smallMessageSummaryXml.copy(body = Some(JsonPayload("""{"test": "ABC"}""")), uri = None)
+      val movementId                       = arbitraryMovementId.arbitrary.sample.value
+      val messageId                        = arbitraryMessageId.arbitrary.sample.value
+      val objectStoreUri                   = arbitraryObjectStoreURI.arbitrary.sample.value
+      val xml                              = "<test>ABC</test>"
+      val smallMessageSummaryXml           = arbitraryMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = Some(XmlPayload(xml)), uri = None)
+      val smallMessageSummaryInObjectStore = smallMessageSummaryXml.copy(body = None, uri = Some(objectStoreUri))
+      val smallMessageSummaryJson          = smallMessageSummaryXml.copy(body = Some(JsonPayload("""{"test": "ABC"}""")), uri = None)
       val largeMessageSummaryXml =
         arbitraryMessageSummaryXml.arbitrary.sample.value
-          .copy(id = messageId, body = None, uri = Some(ObjectStoreURI("common-transit-convention-traders/movements/123.xml")))
+          .copy(id = messageId, body = None, uri = Some(objectStoreUri))
 
       Seq(
         VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
@@ -2212,7 +2214,7 @@ class V2MovementsControllerSpec
 
           s"for a small message, when the accept header equals $acceptHeaderValue" - {
 
-            "when the message is found" in {
+            "when the message is stored in mongo and is found" in {
               when(
                 mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
                   any[HeaderCarrier],
@@ -2263,6 +2265,97 @@ class V2MovementsControllerSpec
                     )
                   )
               }
+
+            }
+
+            "when the message is stored in object store and is found" in {
+              when(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenAnswer(
+                  _ => EitherT.rightT(smallMessageSummaryInObjectStore)
+                )
+
+              when(
+                mockObjectStoreService.getMessage(ObjectStoreResourceLocation(any()))(
+                  any[ExecutionContext],
+                  any[HeaderCarrier]
+                )
+              )
+                .thenAnswer(
+                  _ => EitherT.rightT(Source.single(ByteString(xml)))
+                )
+
+              when(
+                mockResponseFormatterService.formatMessageSummary(any[MessageSummary], eqTo(acceptHeaderValue))(
+                  any[ExecutionContext],
+                  any[HeaderCarrier],
+                  any[Materializer]
+                )
+              )
+                .thenAnswer(
+                  _ =>
+                    acceptHeaderValue match {
+                      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON => EitherT.rightT(smallMessageSummaryJson)
+                      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
+                        EitherT.rightT(smallMessageSummaryInObjectStore)
+
+                    }
+                )
+
+              val result = sut.getMessage(movementType, movementId, messageId)(request)
+
+              status(result) mustBe OK
+              acceptHeaderValue match {
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
+                  contentAsJson(result) mustBe Json.toJson(
+                    HateoasMovementMessageResponse(
+                      movementId,
+                      messageId,
+                      smallMessageSummaryJson,
+                      movementType
+                    )
+                  )
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
+                  contentAsJson(result) mustBe Json.toJson(
+                    HateoasMovementMessageResponse(
+                      movementId,
+                      messageId,
+                      smallMessageSummaryXml,
+                      movementType
+                    )
+                  )
+              }
+
+            }
+
+            "when the message is stored in object store but call to retrieve the message fails" in {
+              when(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenAnswer(
+                  _ => EitherT.rightT(smallMessageSummaryInObjectStore)
+                )
+
+              when(
+                mockObjectStoreService.getMessage(ObjectStoreResourceLocation(any()))(
+                  any[ExecutionContext],
+                  any[HeaderCarrier]
+                )
+              )
+                .thenAnswer(
+                  _ => EitherT.leftT(ObjectStoreError.FileNotFound(objectStoreUri.asResourceLocation.get))
+                )
+
+              val result = sut.getMessage(movementType, movementId, messageId)(request)
+
+              status(result) mustBe INTERNAL_SERVER_ERROR
 
             }
 
