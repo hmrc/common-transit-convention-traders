@@ -353,16 +353,18 @@ class V2MovementsControllerImpl @Inject() (
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
           messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
-          body <-
-            if (messageSummary.uri.isDefined) {
-              extractResourceLocation(messageSummary.uri.get).flatMap {
+          body <- messageSummary match {
+            case MessageSummary(_, _, _, Some(body), _, _) => stringToByteStringStream(body.value)
+            case MessageSummary(_, _, _, _, _, Some(uri)) =>
+              extractResourceLocation(uri).flatMap {
                 resourceLocation =>
                   objectStoreService.getMessage(resourceLocation).asPresentation
               }
-            } else stringToByteStringStream(messageSummary.body.get.value)
+            case _ => EitherT.leftT[Future, Source[ByteString, _]](PresentationError.notFoundError(s"Body for message id ${messageId.value} does not exist"))
+          }
         } yield body).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          response => Ok.chunked(response, Some(MimeTypes.JSON))
+          response => Ok.chunked(response, Some(MimeTypes.XML))
         )
     }
 

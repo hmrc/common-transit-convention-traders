@@ -2600,7 +2600,7 @@ class V2MovementsControllerSpec
           val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
           status(result) mustBe OK
-          contentType(result).get mustBe MimeTypes.JSON
+          contentType(result).get mustBe MimeTypes.XML
           contentAsString(result) mustBe xml
         }
 
@@ -2650,7 +2650,7 @@ class V2MovementsControllerSpec
           val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
           status(result) mustBe OK
-          contentType(result).get mustBe MimeTypes.JSON
+          contentType(result).get mustBe MimeTypes.XML
           contentAsString(result) mustBe xml
         }
 
@@ -2702,7 +2702,7 @@ class V2MovementsControllerSpec
           val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
           status(result) mustBe OK
-          contentType(result).get mustBe MimeTypes.JSON
+          contentType(result).get mustBe MimeTypes.XML
           contentAsString(result) mustBe xml
         }
 
