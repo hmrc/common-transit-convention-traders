@@ -56,16 +56,17 @@ class ResponseFormatterServiceSpec
   "formatMessageSummary" - {
 
     val mockConversionService    = mock[ConversionService]
-    val responseFormatterService = new ResponseFormatterServiceImpl(mockConversionService)
+    val mockObjectStoreService   = mock[ObjectStoreService]
+    val responseFormatterService = new ResponseFormatterServiceImpl(mockConversionService, mockObjectStoreService)
 
     implicit val hc = HeaderCarrier()
     implicit val ec = materializer.executionContext
 
-    val xmlString                 = "<test>example</test>"
-    val jsonString                = Json.stringify(Json.obj("test" -> "example"))
-    val sourceJson                = singleUseStringSource(jsonString)
-    val messageSummary            = arbitraryMessageSummaryXml.arbitrary.sample.get.copy(body = Some(XmlPayload(xmlString)))
-    val messageSummaryWithoutBody = messageSummary.copy(body = None)
+    val xmlString                       = "<test>example</test>"
+    val jsonString                      = Json.stringify(Json.obj("test" -> "example"))
+    val sourceJson                      = singleUseStringSource(jsonString)
+    val messageSummary                  = arbitraryMessageSummaryXml.arbitrary.sample.get.copy(body = Some(XmlPayload(xmlString)))
+    val messageSummaryWithoutBodyAndUri = messageSummary.copy(body = None, uri = None)
 
     "when accept header equals application/vnd.hmrc.2.0+json" - {
 
@@ -84,11 +85,11 @@ class ResponseFormatterServiceSpec
         }
       }
 
-      "when the body in messageSummary is empty, it returns the given messageSummary" in {
+      "when the body and uri in messageSummary are empty, it returns the given messageSummary" in {
         whenReady(
-          responseFormatterService.formatMessageSummary(messageSummaryWithoutBody, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON).value
+          responseFormatterService.formatMessageSummary(messageSummaryWithoutBodyAndUri, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON).value
         ) {
-          result => result mustEqual Right(messageSummaryWithoutBody)
+          result => result mustEqual Right(messageSummaryWithoutBodyAndUri)
         }
       }
 
@@ -111,11 +112,11 @@ class ResponseFormatterServiceSpec
         acceptHeader =>
           s"when accept header equals $acceptHeader" - {
 
-            "when the body in message summary is empty, it returns the given messageSummary" in {
+            "when the body and uri in message summary are empty, it returns the given messageSummary" in {
               whenReady(
-                responseFormatterService.formatMessageSummary(messageSummaryWithoutBody, acceptHeader).value
+                responseFormatterService.formatMessageSummary(messageSummaryWithoutBodyAndUri, acceptHeader).value
               ) {
-                result => result mustEqual Right(messageSummaryWithoutBody)
+                result => result mustEqual Right(messageSummaryWithoutBodyAndUri)
               }
             }
 

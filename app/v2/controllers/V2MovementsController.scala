@@ -123,7 +123,9 @@ class V2MovementsControllerImpl @Inject() (
 
   private def contentSizeIsLessThanLimit(size: Long): EitherT[Future, PresentationError, Unit] = EitherT {
     if (size <= config.smallMessageSizeLimit) Future.successful(Right(()))
-    else Future.successful(Left(PresentationError.entityTooLargeError(s"Your message size must be less than ${config.smallMessageSizeLimit} bytes")))
+    else {
+      Future.successful(Left(PresentationError.entityTooLargeError(s"Your message size must be less than ${config.smallMessageSizeLimit} bytes")))
+    }
   }
 
   def createMovement(movementType: MovementType): Action[Source[ByteString, _]] =
