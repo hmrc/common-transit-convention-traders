@@ -630,7 +630,7 @@ paths:
          * `application/vnd.hmrc.2.0+xml`: XML, where the message is provided without any other metadata.
         
          <br/><br/>
-         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.\n
+         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
       operationId: getMessageBodyRelatedToDepartureAndMessageID
       parameters:
         - $ref: '#/components/parameters/acceptMessageBodyGetHeader'
