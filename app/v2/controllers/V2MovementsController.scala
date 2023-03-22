@@ -293,6 +293,16 @@ class V2MovementsControllerImpl @Inject() (
         }
     }
 
+  private def objectStoreMessageAsJsonWrappedXml(movementId: MovementId, messageSummary: MessageSummary, movementType: MovementType)(implicit
+    hc: HeaderCarrier
+  ) =
+    for {
+      resourceLocation <- extractResourceLocation(messageSummary.uri.get)
+      bodyStream       <- objectStoreService.getMessage(resourceLocation).asPresentation
+      json: JsObject = Json.toJson(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)).as[JsObject]
+      stream <- mergeStreamIntoJson(json.fields, "body", bodyStream)
+    } yield stream
+
   private def processLargeMessage(movementId: MovementId, movementType: MovementType, messageSummary: MessageSummary, acceptHeader: String)(implicit
     hc: HeaderCarrier
   ): EitherT[Future, PresentationError, Source[ByteString, _]] =
@@ -300,12 +310,7 @@ class V2MovementsControllerImpl @Inject() (
       case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
         EitherT.leftT[Future, Source[ByteString, _]](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
       case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
-        for {
-          resourceLocation <- extractResourceLocation(messageSummary.uri.get)
-          bodyStream       <- objectStoreService.getMessage(resourceLocation).asPresentation
-          json: JsObject = Json.toJson(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)).as[JsObject]
-          stream <- mergeStreamIntoJson(json.fields, "body", bodyStream)
-        } yield stream
+        objectStoreMessageAsJsonWrappedXml(movementId, messageSummary, movementType)
     }
 
   private def extractResourceLocation(objectStoreURI: ObjectStoreURI): EitherT[Future, PresentationError, ObjectStoreResourceLocation] =
@@ -331,20 +336,15 @@ class V2MovementsControllerImpl @Inject() (
           stream <- jsonToByteStringStream(jsonHateoasResponse.fields)
         } yield stream
       case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
-        if (messageSummary.uri.isDefined) {
-          for {
-            resourceLocation <- extractResourceLocation(messageSummary.uri.get)
-            bodyStream       <- objectStoreService.getMessage(resourceLocation).asPresentation
-            json: JsObject = Json.toJson(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)).as[JsObject]
-            stream <- mergeStreamIntoJson(json.fields, "body", bodyStream)
-          } yield stream
-        } else {
-          val jsonHateoasResponse = Json
-            .toJson(
-              HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)
-            )
-            .as[JsObject]
-          jsonToByteStringStream(jsonHateoasResponse.fields)
+        messageSummary.uri.isDefined match {
+          case true => objectStoreMessageAsJsonWrappedXml(movementId, messageSummary, movementType)
+          case false =>
+            val jsonHateoasResponse = Json
+              .toJson(
+                HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)
+              )
+              .as[JsObject]
+            jsonToByteStringStream(jsonHateoasResponse.fields)
         }
     }
 
