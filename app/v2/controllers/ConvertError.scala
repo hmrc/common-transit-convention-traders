@@ -120,6 +120,7 @@ trait ConvertError {
 
     override def convert(objectStoreError: ObjectStoreError): PresentationError = objectStoreError match {
       case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
+      case FileNotFound(_)      => PresentationError.internalServiceError()
     }
   }
 }

@@ -89,9 +89,14 @@ class ObjectStoreServiceSpec
 
   "On getting a message from object store" - {
     "given a successful response from the connector, should return a Right with Object Store Summary" in {
-      val movementId = MovementId("308c4a68e2cdc08f")
-      val messageId  = MessageId("123c4a68e2ele08f")
-      objectStoreService.addMessage(DownloadUrl("https://bucketName.s3.eu-west-2.amazonaws.com"), movementId, messageId)
+      val movementId       = MovementId("308c4a68e2cdc08f")
+      val messageId        = MessageId("123c4a68e2ele08f")
+      val addMessageResult = objectStoreService.addMessage(DownloadUrl("https://bucketName.s3.eu-west-2.amazonaws.com"), movementId, messageId)
+
+      whenReady(addMessageResult.value) {
+        case Right(x) => x
+        case Left(_)  => fail("should have added message to object-store")
+      }
 
       val result = objectStoreService.getMessage(ObjectStoreResourceLocation(s"/movements/${movementId.value}/${movementId.value}-${messageId.value}.xml"))
 

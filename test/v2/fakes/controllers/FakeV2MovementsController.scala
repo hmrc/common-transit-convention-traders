@@ -21,6 +21,7 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.google.inject.Inject
+import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
@@ -35,7 +36,11 @@ import v2.models.MovementType
 
 import java.time.OffsetDateTime
 
-class FakeV2MovementsController @Inject() ()(implicit val materializer: Materializer) extends BaseController with V2MovementsController with StreamingParsers {
+class FakeV2MovementsController @Inject() ()(implicit val materializer: Materializer)
+    extends BaseController
+    with V2MovementsController
+    with StreamingParsers
+    with Logging {
 
   override val controllerComponents = stubControllerComponents()
 

@@ -26,6 +26,8 @@ import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.controllers.ConvertError
 import v2.models.JsonPayload
+import v2.models.ObjectStoreResourceLocation
+import v2.models.ObjectStoreURI
 import v2.models.XmlPayload
 import v2.models.errors.PresentationError
 import v2.models.responses.MessageSummary
@@ -45,7 +47,9 @@ trait ResponseFormatterService {
 }
 
 @Singleton
-class ResponseFormatterServiceImpl @Inject() (conversionService: ConversionService) extends ResponseFormatterService with ConvertError {
+class ResponseFormatterServiceImpl @Inject() (conversionService: ConversionService, objectStoreService: ObjectStoreService)
+    extends ResponseFormatterService
+    with ConvertError {
 
   override def formatMessageSummary(
     messageSummary: MessageSummary,
@@ -57,8 +61,23 @@ class ResponseFormatterServiceImpl @Inject() (conversionService: ConversionServi
           jsonSource <- conversionService.xmlToJson(messageType, Source.single(ByteString(body))).asPresentation
           jsonBody   <- StreamingUtils.convertSourceToString(jsonSource).asPresentation
         } yield messageSummary.copy(body = Some(JsonPayload(jsonBody)))
+      case (VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, MessageSummary(_, _, messageType, None, _, Some(objectStoreUri))) =>
+        for {
+          resourceLocation <- extractResourceLocation(objectStoreUri)
+          bodyStream       <- objectStoreService.getMessage(resourceLocation).asPresentation
+          jsonSource       <- conversionService.xmlToJson(messageType, bodyStream).asPresentation
+          jsonBody         <- StreamingUtils.convertSourceToString(jsonSource).asPresentation
+        } yield messageSummary.copy(body = Some(JsonPayload(jsonBody)))
       case _ =>
         EitherT.rightT(messageSummary)
+    }
+
+  private def extractResourceLocation(objectStoreURI: ObjectStoreURI): EitherT[Future, PresentationError, ObjectStoreResourceLocation] =
+    EitherT {
+      Future.successful(
+        objectStoreURI.asResourceLocation
+          .toRight(PresentationError.badRequestError(s"Provided Object Store URI is not owned by ${ObjectStoreURI.expectedOwner}"))
+      )
     }
 
 }
