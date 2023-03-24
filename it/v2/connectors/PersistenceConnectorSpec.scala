@@ -959,7 +959,7 @@ class PersistenceConnectorSpec
         implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
-        whenReady(persistenceConnector.postMessage(departureId, messageType, source)) {
+        whenReady(persistenceConnector.postMessage(departureId, Some(messageType), Some(source))) {
           result =>
             result mustBe resultRes
         }
@@ -986,7 +986,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postMessage(departureId, messageType, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMessage(departureId, Some(messageType), Some(source)).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -1020,7 +1020,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postMessage(departureId, messageType, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMessage(departureId, Some(messageType), Some(source)).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -1053,7 +1053,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.postMessage(departureId, messageType, source).map(Right(_)).recover {
+        val future = persistenceConnector.postMessage(departureId, Some(messageType), Some(source)).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 

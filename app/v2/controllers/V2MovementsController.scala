@@ -414,7 +414,7 @@ class V2MovementsControllerImpl @Inject() (
     contentTypeRoute {
       case Some(MimeTypes.XML)  => attachMessageXML(movementId, movementType)
       case Some(MimeTypes.JSON) => attachMessageJSON(movementId, movementType)
-      case _                    => initiateLargeMessage(movementId, movementType)
+      case None                 => initiateLargeMessage(movementId, movementType)
     }
 
   private def initiateLargeMessage(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, _]] =
