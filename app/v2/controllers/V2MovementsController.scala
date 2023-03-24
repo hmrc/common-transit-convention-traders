@@ -472,41 +472,58 @@ class V2MovementsControllerImpl @Inject() (
     }
   }
 
-  def attachLargeMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[JsValue] =
-    Action.async(parse.json) {
-      implicit request =>
-        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        parseAndLogUpscanResponse(request.body) match {
-          case Left(presentationError) => Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
-          case Right(upscanResponse) =>
-            (for {
-              downloadUrl   <- handleUpscanSuccessResponse(upscanResponse)
-              objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
-              uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
-              source      <- objectStoreService.getMessage(uri.stripOwner).asPresentation
-              messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
-              messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)))
-              persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
-              _ <- validationService
-                .validateLargeMessage(messageType, uri)
-                .asPresentation
-                .leftMap {
-                  err =>
-                    persist(messageUpdate(MessageStatus.Failed)).value
-                    err
-                }
+  def attachLargeMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit authenticatedRequest: AuthenticatedRequest[_]): Action[JsValue] =
+    Action.async(parse.json) { implicit request =>
+      implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+      parseAndLogUpscanResponse(request.body) match {
+        case Left(presentationError) =>
+          Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
+        case Right(upscanResponse) =>
+          handleUpscanSuccessResponse(upscanResponse).flatMap {
+            case (downloadUrl, _) if upscanResponse.uploadDetails.size < 100 * 1024 * 1024 =>
+              val messageTypeList =
+                if (movementType == MovementType.Arrival) MessageType.updateMessageTypesSentByArrivalTrader else MessageType.updateMessageTypesSentByDepartureTrader
 
-              _ <- persist(messageUpdate(MessageStatus.Processing)).asPresentation
+              val jsonByteString = ByteString(request.body.toString())
+              val source = Source.single(jsonByteString)
+              (for {
+                _ <- contentSizeIsLessThanLimit(upscanResponse.uploadDetails.size)
+                messageType <- xmlParsingService.extractMessageType(source, messageTypeList).asPresentation
+                _ <- validationService.validateXml(messageType, source).asPresentation
+                _ = auditService.audit(messageType.auditType, source, MimeTypes.XML)
+                updateMovementResponse <- updateAndSendToEIS(movementId, movementType, messageType, source)
+              } yield updateMovementResponse).biflatMap(
+                presentationError => EitherT.liftF[Future, PresentationError, Result](Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))),
+                response => EitherT.liftF[Future, PresentationError, Result](Future.successful(Accepted(Json.toJson(HateoasMovementUpdateResponse(movementId, response.messageId, movementType)))))
+              )
+            case (downloadUrl, _) =>
+              for {
+                objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
+                uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
+                source <- objectStoreService.getMessage(uri.stripOwner).asPresentation
+                messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
+                messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)))
+                persist = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
+                _ <- validationService
+                  .validateLargeMessage(messageType, uri)
+                  .asPresentation
+                  .leftMap {
+                    err =>
+                      persist(messageUpdate(MessageStatus.Failed)).value
+                      err
+                  }
 
-              sendMessage <- routerService
-                .sendLargeMessage(
-                  messageType,
-                  eori,
-                  movementId,
-                  messageId,
-                  ObjectStoreURI(objectSummary.location.asUri)
-                )
-                .asPresentation
+                _ <- persist(messageUpdate(MessageStatus.Processing)).asPresentation
+
+                sendMessage <- routerService
+                  .sendLargeMessage(
+                    messageType,
+                    eori,
+                    movementId,
+                    messageId,
+                    ObjectStoreURI(objectSummary.location.asUri)
+                  )
+                  .asPresentation
             } yield sendMessage).fold[Result](
               _ => Ok, //TODO: Send notification to PPNS with details of the error
               _ => Ok  //TODO: Send notification to PPNS with details of the success
@@ -514,10 +531,22 @@ class V2MovementsControllerImpl @Inject() (
         }
     }
 
+  private def extractMessageType(movementType: MovementType) =
+    movementType match {
+      case MovementType.Arrival   => MessageType.ArrivalNotification
+      case MovementType.Departure => MessageType.DeclarationData
+    }
+
   private def handleUpscanSuccessResponse(upscanResponse: UpscanResponse): EitherT[Future, PresentationError, DownloadUrl] =
     EitherT {
-      Future.successful(upscanResponse.downloadUrl.toRight {
-        PresentationError.badRequestError("Upscan failed to process file")
+      Future.successful(upscanResponse.uploadDetails match {
+        case Some(uploadDetails) =>
+          (for {
+            url <- upscanResponse.downloadUrl
+          } yield (DownloadUrl(url.value), uploadDetails.size)).toRight {
+            PresentationError.badRequestError("Upscan failed to process file")
+          }
+        case None => Left(PresentationError.badRequestError("Upload details not found in response"))
       })
     }
 
