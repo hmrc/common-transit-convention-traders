@@ -81,11 +81,14 @@ import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
 import v2.models.responses.UpdateMovementResponse
+import v2.models.responses.UploadDetails
+import v2.models.responses.UpscanResponse
 import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.hateoas._
 import v2.services._
 
 import java.nio.charset.StandardCharsets
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -94,6 +97,15 @@ import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.Try
 import scala.xml.NodeSeq
+import akka.http.scaladsl.model.ContentType
+import akka.http.scaladsl.model.ContentTypes
+import akka.http.scaladsl.model.HttpEntity
+
+import v2.models.responses.UpscanResponse.DownloadUrl
+import v2.models.responses.UpscanResponse.FileStatus
+import v2.models.responses.UpscanResponse.Reference
+
+import java.time.Instant
 
 class V2MovementsControllerSpec
     extends AnyFreeSpec
@@ -142,6 +154,19 @@ class V2MovementsControllerSpec
       "uploadTimestamp" -> "2018-04-24T09:30:00Z",
       "checksum"        -> "396f101dd52e8b2ace0dcf5ed09b1d1f030e608938510ce46e7a5c7a4e775100",
       "size"            -> 987
+    )
+  )
+
+  val jsonSuccessLargeUpscanResponse = Json.obj(
+    "reference"   -> "11370e18-6e24-453e-b45a-76d3e32ea33d",
+    "downloadUrl" -> "https://bucketName.s3.eu-west-2.amazonaws.com?1235676",
+    "fileStatus"  -> "READY",
+    "uploadDetails" -> Json.obj(
+      "fileName"        -> "test.pdf",
+      "fileMimeType"    -> "application/pdf",
+      "uploadTimestamp" -> "2018-04-24T09:30:00Z",
+      "checksum"        -> "396f101dd52e8b2ace0dcf5ed09b1d1f030e608938510ce46e7a5c7a4e775100",
+      "size"            -> 6000000
     )
   )
 

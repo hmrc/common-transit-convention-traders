@@ -16,6 +16,8 @@
 
 package v2.services
 
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
@@ -28,6 +30,7 @@ import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.errors.UpscanInitiateError
 import v2.models.responses.UpscanInitiateResponse
+import v2.models.responses.UpscanResponse.DownloadUrl
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -41,6 +44,9 @@ trait UpscanService {
     executionContext: ExecutionContext
   ): EitherT[Future, UpscanInitiateError, UpscanInitiateResponse]
 
+  def upscanGetFile(
+    downloadUrl: DownloadUrl
+  )(implicit headerCarrier: HeaderCarrier, executionContext: ExecutionContext): EitherT[Future, UpscanInitiateError, String]
 }
 
 class UpscanServiceImpl @Inject() (
@@ -60,4 +66,17 @@ class UpscanServiceImpl @Inject() (
           case NonFatal(thr) => Left(UpscanInitiateError.UnexpectedError(thr = Some(thr)))
         }
     }
+
+  override def upscanGetFile(
+    downloadUrl: DownloadUrl
+  )(implicit headerCarrier: HeaderCarrier, executionContext: ExecutionContext): EitherT[Future, UpscanInitiateError, String] =
+    EitherT {
+      upscanConnector
+        .upscanGetFile(downloadUrl)
+        .map(Right(_))
+        .recover {
+          case NonFatal(thr) => Left(UpscanInitiateError.UnexpectedError(thr = Some(thr)))
+        }
+    }
+
 }
