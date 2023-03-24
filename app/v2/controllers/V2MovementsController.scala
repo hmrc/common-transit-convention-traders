@@ -49,6 +49,7 @@ import v2.models._
 import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
+import v2.models.request.MessageType.updateMessageTypeSentByTrader
 import v2.models.request.MessageUpdate
 import v2.models.responses.BoxResponse
 import v2.models.responses.LargeMessageAuditRequest
@@ -482,11 +483,18 @@ class V2MovementsControllerImpl @Inject() (
             (for {
               downloadUrl   <- handleUpscanSuccessResponse(upscanResponse)
               objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
-              messageType = extractMessageType(
-                movementType
-              ) //TODO:  remove this and extract the messageType using (xmlParsingService.extractMessageType) and then pass to validator and router part of CTCP-2427 implementation
-              messageUpdate = MessageUpdate(MessageStatus.Processing, Some(ObjectStoreURI(objectSummary.location.asUri)))
-              _ <- persistenceService.updateMessage(eori, movementType, movementId, messageId, messageUpdate).asPresentation
+              uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
+              source      <- objectStoreService.getMessage(uri).asPresentation
+              messageType <- xmlParsingService.extractMessageType(source, updateMessageTypeSentByTrader).asPresentation
+              messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)))
+              persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
+              _ <- validationService
+                .validateXml(messageType, source)
+                .leftSemiflatTap(
+                  _ => persist(messageUpdate(MessageStatus.Failed)).value
+                )
+                .asPresentation
+              _ <- persist(messageUpdate(MessageStatus.Success)).asPresentation
 
               sendMessage <- routerService
                 .sendLargeMessage(
