@@ -515,20 +515,15 @@ class V2MovementsControllerImpl @Inject() (
 
                 _ <- persist(messageUpdate(MessageStatus.Processing)).asPresentation
 
-              sendMessage <- routerService
-                .sendLargeMessage(
-                  messageType,
-                  eori,
-                  movementId,
-                  messageId,
-                  ObjectStoreURI(objectSummary.location.asUri)
-                )
-                .asPresentation
-                .leftMap {
-                  err =>
-                    persist(messageUpdate(MessageStatus.Failed)).value
-                    err
-                }
+                sendMessage <- routerService
+                  .sendLargeMessage(
+                    messageType,
+                    eori,
+                    movementId,
+                    messageId,
+                    ObjectStoreURI(objectSummary.location.asUri)
+                  )
+                  .asPresentation
             } yield sendMessage).fold[Result](
               _ => Ok, //TODO: Send notification to PPNS with details of the error
               _ => Ok  //TODO: Send notification to PPNS with details of the success

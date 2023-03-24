@@ -37,6 +37,7 @@ import v2.models.errors.UpscanInitiateError
 import v2.models.responses.UpscanFormTemplate
 import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.UpscanReference
+import v2.models.responses.UpscanResponse.DownloadUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -117,6 +118,27 @@ class UpscanServiceSpec
           r => r mustBe Left(UpscanInitiateError.UnexpectedError(thr = Some(expectedException)))
         }
 
+    }
+  }
+
+  "upscanGetFile" - {
+    val downloadUrl = DownloadUrl("http://download.url")
+    "should return Right(result) if the connector returns the result successfully" in {
+      val expected = "file content"
+      when(mockConnector.upscanGetFile(downloadUrl)).thenReturn(Future.successful(expected))
+
+      val result = sut.upscanGetFile(downloadUrl).value.futureValue
+      assert(result.isRight)
+      assert(result.right.get == expected)
+    }
+
+    "should return Left(UpscanInitiateError.UnexpectedError(Some(throwable))) if the connector fails with a NonFatal error" in {
+      val expectedError = new RuntimeException("something went wrong")
+      when(mockConnector.upscanGetFile(downloadUrl)).thenReturn(Future.failed(expectedError))
+
+      val result = sut.upscanGetFile(downloadUrl).value.futureValue
+      assert(result.isLeft)
+      assert(result.left.get == UpscanInitiateError.UnexpectedError(Some(expectedError)))
     }
   }
 
