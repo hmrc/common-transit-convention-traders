@@ -49,7 +49,6 @@ import v2.models._
 import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
-import v2.models.request.MessageType.updateMessageTypeSentByTrader
 import v2.models.request.MessageUpdate
 import v2.models.responses.BoxResponse
 import v2.models.responses.LargeMessageAuditRequest
@@ -483,9 +482,9 @@ class V2MovementsControllerImpl @Inject() (
             (for {
               downloadUrl   <- handleUpscanSuccessResponse(upscanResponse)
               objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
-              uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
+              uri = ObjectStoreResourceLocation(objectSummary.location.asUri).stripOwner
               source      <- objectStoreService.getMessage(uri).asPresentation
-              messageType <- xmlParsingService.extractMessageType(source, updateMessageTypeSentByTrader).asPresentation
+              messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
               messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)))
               persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
               _ <- validationService
