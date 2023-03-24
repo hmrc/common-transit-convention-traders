@@ -38,18 +38,18 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
     s"${movementType.movementType} create a valid HateoasNewMovementResponse" - {
 
       "when the movement response does not contain message Id or box Id" in forAll(
-        arbitraryMovementResponse().arbitrary
+        arbitraryMovementId.arbitrary
       ) {
-        movementResponse =>
-          val actual = HateoasNewMovementResponse(movementResponse, None, None, movementType)
+        movementId =>
+          val actual = HateoasNewMovementResponse(movementId, None, None, movementType)
 
           val expected = Json.obj(
             "_links" -> Json.obj(
               "self" -> Json.obj(
-                "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse.movementId.value}"
+                "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}"
               ),
               "messages" -> Json.obj(
-                "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse.movementId.value}/messages"
+                "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages"
               )
             )
           )
@@ -62,7 +62,7 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
         arbitraryBoxResponse.arbitrary
       ) {
         (movementResponse, boxResponse) =>
-          val actual = HateoasNewMovementResponse(movementResponse, Some(boxResponse), None, movementType)
+          val actual = HateoasNewMovementResponse(movementResponse.movementId, Some(boxResponse), None, movementType)
 
           val expected = Json.obj(
             "_links" -> Json.obj(
@@ -81,19 +81,19 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
 
       "with a movement response that contains box ID and an Upload response" in forAll(
         arbitraryUpscanInitiateResponse.arbitrary,
-        arbitraryMovementResponse().arbitrary,
+        arbitraryMovementId.arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
-        (upscanResponse, movementResponse, boxResponse) =>
-          val actual = HateoasNewMovementResponse(movementResponse, Some(boxResponse), Some(upscanResponse), movementType)
+        (upscanResponse, movementId, boxResponse) =>
+          val actual = HateoasNewMovementResponse(movementId, Some(boxResponse), Some(upscanResponse), movementType)
 
           val expected = Json.obj(
             "_links" -> Json.obj(
               "self" -> Json.obj(
-                "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse.movementId.value}"
+                "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}"
               ),
               "messages" -> Json.obj(
-                "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse.movementId.value}/messages"
+                "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages"
               )
             ),
             "boxId" -> s"${boxResponse.boxId.value}",

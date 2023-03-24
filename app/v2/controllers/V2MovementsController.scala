@@ -242,7 +242,7 @@ class V2MovementsControllerImpl @Inject() (
             Source.single(ByteString(auditResponse.toString(), StandardCharsets.UTF_8)),
             MimeTypes.JSON
           )
-        } yield HateoasNewMovementResponse(movementResponse, boxResponseOption, Some(upscanResponse), movementType)).fold[Result](
+        } yield HateoasNewMovementResponse(movementResponse.movementId, boxResponseOption, Some(upscanResponse), movementType)).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Accepted(response)
         )
@@ -414,6 +414,39 @@ class V2MovementsControllerImpl @Inject() (
     contentTypeRoute {
       case Some(MimeTypes.XML)  => attachMessageXML(movementId, movementType)
       case Some(MimeTypes.JSON) => attachMessageJSON(movementId, movementType)
+      case _                    => initiateLargeMessage(movementId, movementType)
+    }
+
+  private def initiateLargeMessage(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, _]] =
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
+      implicit request =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+        request.body.runWith(Sink.ignore)
+
+        (for {
+          updateMovementResponse <- persistenceService.addMessage(movementId, movementType, None, None).asPresentation
+          upscanResponse <- upscanService
+            .upscanInitiate(request.eoriNumber, movementType, movementId, updateMovementResponse.messageId)
+            .asPresentation
+          auditResponse = Json.toJson(
+            LargeMessageAuditRequest(
+              movementId,
+              updateMovementResponse.messageId,
+              movementType,
+              request.headers.get(XClientIdHeader),
+              upscanResponse
+            )
+          )
+          _ = auditService.audit(
+            AuditType.LargeMessageSubmissionRequested,
+            Source.single(ByteString(auditResponse.toString(), StandardCharsets.UTF_8)),
+            MimeTypes.JSON
+          )
+        } yield HateoasMovementUpdateResponse(movementId, updateMovementResponse.messageId, movementType)).fold[Result](
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          response => Accepted(response)
+        )
     }
 
   private def attachMessageXML(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, _]] =
@@ -522,7 +555,7 @@ class V2MovementsControllerImpl @Inject() (
     request: AuthenticatedRequest[_]
   ) =
     for {
-      updateMovementResponse <- persistenceService.addMessage(movementId, movementType, messageType, source).asPresentation
+      updateMovementResponse <- persistenceService.addMessage(movementId, movementType, Some(messageType), Some(source)).asPresentation
       _ = pushNotificationsService.update(movementId)
       _ <- routerService
         .send(messageType, request.eoriNumber, movementId, updateMovementResponse.messageId, source)
@@ -561,7 +594,7 @@ class V2MovementsControllerImpl @Inject() (
           source
         )
         .asPresentation
-    } yield HateoasNewMovementResponse(movementResponse, boxResponseOption, None, movementType)
+    } yield HateoasNewMovementResponse(movementResponse.movementId, boxResponseOption, None, movementType)
 
   private def mapToOptionalResponse[E, R](
     eitherT: EitherT[Future, E, R]

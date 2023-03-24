@@ -80,7 +80,7 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[Seq[MovementSummary]]
 
-  def postMessage(movementId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
+  def postMessage(movementId: MovementId, messageType: Option[MessageType], source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[UpdateMovementResponse]
@@ -171,18 +171,27 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       .executeAndDeserialise[Seq[MovementSummary]]
   }
 
-  override def postMessage(movementId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
+  override def postMessage(movementId: MovementId, messageType: Option[MessageType], source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[UpdateMovementResponse] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
         val url = appConfig.movementsUrl.withPath(postMessageUrl(movementId))
-        httpClientV2
+
+        val request = httpClientV2
           .post(url"$url")
-          .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code)
-          .withBody(source)
-          .executeAndDeserialise[UpdateMovementResponse]
+
+        source match {
+          case None =>
+            request
+              .executeAndDeserialise[UpdateMovementResponse]
+          case Some(source) =>
+            request
+              .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.get.code)
+              .withBody(source)
+              .executeAndDeserialise[UpdateMovementResponse]
+        }
     }
 
   private def withDateTimeParameter(urlPath: Url, queryName: String, dateTime: Option[OffsetDateTime]) =
