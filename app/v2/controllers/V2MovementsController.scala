@@ -392,6 +392,24 @@ class V2MovementsControllerImpl @Inject() (
       _ <- routerService
         .send(messageType, request.eoriNumber, movementId, updateMovementResponse.messageId, source)
         .asPresentation
+        .leftMap {
+          err =>
+            updateSmallMessageStatus(
+              request.eoriNumber,
+              movementType,
+              movementId,
+              updateMovementResponse.messageId,
+              MessageStatus.Failed
+            )
+            err
+        }
+      result = updateSmallMessageStatus(
+        request.eoriNumber,
+        movementType,
+        movementId,
+        updateMovementResponse.messageId,
+        MessageStatus.Success
+      )
     } yield updateMovementResponse
 
   private def validatePersistAndSendToEIS(
@@ -406,6 +424,27 @@ class V2MovementsControllerImpl @Inject() (
           result <- persistAndSendToEIS(source, movementType, messageType)
         } yield result
     }
+
+  private def updateSmallMessageStatus(
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    messageStatus: MessageStatus
+  )(implicit
+    hc: HeaderCarrier
+  ): Unit =
+    for {
+      result <- persistenceService
+        .updateMessage(
+          eoriNumber,
+          movementType,
+          movementId,
+          messageId,
+          MessageUpdate(messageStatus, None)
+        )
+        .asPresentation
+    } yield result
 
   private def persistAndSendToEIS(
     source: Source[ByteString, _],
@@ -426,6 +465,24 @@ class V2MovementsControllerImpl @Inject() (
           source
         )
         .asPresentation
+        .leftMap {
+          err =>
+            updateSmallMessageStatus(
+              request.eoriNumber,
+              movementType,
+              movementResponse.movementId,
+              movementResponse.messageId,
+              MessageStatus.Failed
+            )
+            err
+        }
+      result = updateSmallMessageStatus(
+        request.eoriNumber,
+        movementType,
+        movementResponse.movementId,
+        movementResponse.messageId,
+        MessageStatus.Success
+      )
     } yield HateoasNewMovementResponse(movementResponse, boxResponseOption, None, movementType)
 
   private def mapToOptionalResponse[E, R](
