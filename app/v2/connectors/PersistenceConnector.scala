@@ -165,6 +165,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       updatedSince,
       movementEORI
     )
+
     httpClientV2
       .get(url"$urlWithOptions")
       .setHeader(HeaderNames.ACCEPT -> MimeTypes.JSON)

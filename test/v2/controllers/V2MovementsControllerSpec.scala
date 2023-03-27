@@ -3092,9 +3092,8 @@ class V2MovementsControllerSpec
 
       "with content type set to application/xml" - {
 
-        // For the content length headers, we have to ensure that we send something
         val standardHeaders = FakeHeaders(
-          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
+          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
         )
 
         "must return Accepted when body length is within limits and is considered valid" in forAll(
@@ -3259,9 +3258,8 @@ class V2MovementsControllerSpec
             .thenReturn(router)
         }
 
-        // For the content length headers, we have to ensure that we send something
         val standardHeaders = FakeHeaders(
-          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.JSON, HeaderNames.CONTENT_LENGTH -> "1000")
+          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
         )
 
         def fakeJsonAttachRequest(content: String): Request[Source[ByteString, _]] =
@@ -3461,6 +3459,166 @@ class V2MovementsControllerSpec
             val result  = sut.attachMessage(movementType, movementId)(request)
 
             status(result) mustBe BAD_REQUEST
+        }
+
+      }
+
+      "without content type" - {
+        val standardHeaders = FakeHeaders(
+          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json")
+        )
+
+        val request: Request[Source[ByteString, _]] =
+          fakeAttachMessageRequest("POST", standardHeaders, Source.empty[ByteString], movementType)
+
+        "must return Accepted when body length is within limits and is considered valid" in forAll(
+          arbitraryMovementId.arbitrary,
+          arbitraryMessageId.arbitrary,
+          arbitraryUpscanInitiateResponse.arbitrary
+        ) {
+          (movementId, messageId, upscanInitiateResponse) =>
+            beforeEach()
+
+            when(
+              mockPersistenceService
+                .addMessage(
+                  any[String].asInstanceOf[MovementId],
+                  any[MovementType],
+                  any[Option[MessageType]],
+                  any[Option[Source[ByteString, _]]]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            ).thenReturn(EitherT.rightT(UpdateMovementResponse(messageId)))
+
+            when(
+              mockUpscanService
+                .upscanInitiate(
+                  any[String].asInstanceOf[EORINumber],
+                  any[MovementType],
+                  any[String].asInstanceOf[MovementId],
+                  any[String].asInstanceOf[MessageId]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            )
+              .thenAnswer {
+                _ => EitherT.rightT(upscanInitiateResponse)
+              }
+
+            when(
+              mockAuditService
+                .audit(
+                  any[AuditType],
+                  any[Source[ByteString, _]],
+                  anyString()
+                )(any(), any())
+            )
+              .thenAnswer {
+                _ => Future.successful(())
+              }
+
+            val result = sut.attachMessage(movementType, movementId)(request)
+
+            status(result) mustBe ACCEPTED
+            contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, messageId, movementType))
+        }
+
+        "must return NotFound when movement not found by Persistence" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            when(
+              mockPersistenceService
+                .addMessage(
+                  any[String].asInstanceOf[MovementId],
+                  any[MovementType],
+                  any[Option[MessageType]],
+                  any[Option[Source[ByteString, _]]]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            ).thenReturn(EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType)))
+
+            val result = sut.attachMessage(movementType, movementId)(request)
+
+            status(result) mustBe NOT_FOUND
+            contentAsJson(result) mustBe Json.obj(
+              "message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found",
+              "code"    -> "NOT_FOUND"
+            )
+        }
+
+        "must return InternalServerError when Persistence return Unexpected Error" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            when(
+              mockPersistenceService
+                .addMessage(
+                  any[String].asInstanceOf[MovementId],
+                  any[MovementType],
+                  any[Option[MessageType]],
+                  any[Option[Source[ByteString, _]]]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            ).thenReturn(EitherT.leftT(PersistenceError.UnexpectedError(None)))
+
+            val result = sut.attachMessage(movementType, movementId)(request)
+
+            status(result) mustBe INTERNAL_SERVER_ERROR
+            contentAsJson(result) mustBe Json.obj(
+              "message" -> "Internal server error",
+              "code"    -> "INTERNAL_SERVER_ERROR"
+            )
+        }
+
+        "must return InternalServerError when Upscan return Unexpected Error" in forAll(
+          arbitraryMovementId.arbitrary,
+          arbitraryMessageId.arbitrary
+        ) {
+          (movementId, messageId) =>
+            when(
+              mockPersistenceService
+                .addMessage(
+                  any[String].asInstanceOf[MovementId],
+                  any[MovementType],
+                  any[Option[MessageType]],
+                  any[Option[Source[ByteString, _]]]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            ).thenReturn(EitherT.rightT(UpdateMovementResponse(messageId)))
+
+            when(
+              mockUpscanService
+                .upscanInitiate(
+                  any[String].asInstanceOf[EORINumber],
+                  any[MovementType],
+                  any[String].asInstanceOf[MovementId],
+                  any[String].asInstanceOf[MessageId]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            )
+              .thenAnswer {
+                _ => EitherT.leftT(UpscanInitiateError.UnexpectedError(None))
+              }
+
+            val result = sut.attachMessage(movementType, movementId)(request)
+
+            status(result) mustBe INTERNAL_SERVER_ERROR
+            contentAsJson(result) mustBe Json.obj(
+              "message" -> "Internal server error",
+              "code"    -> "INTERNAL_SERVER_ERROR"
+            )
         }
 
       }
