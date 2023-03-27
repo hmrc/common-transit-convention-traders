@@ -102,7 +102,7 @@ trait TestCommonGenerators {
       messageId      <- genShortUUID.map(MessageId(_))
       status         <- Gen.oneOf(MessageStatus.statusValues)
       objectStoreURI <- Gen.option(arbitrary[ObjectStoreURI])
-    } yield MessageSummary(messageId, received, messageType, body, Some(status), objectStoreURI)
+    } yield MessageSummary(messageId, received, Some(messageType), body, Some(status), objectStoreURI)
   }
 
   implicit lazy val arbitraryMovementId: Arbitrary[MovementId] = Arbitrary {

@@ -35,7 +35,7 @@ object MessageSummary {
   implicit val messageSummaryReads: Reads[MessageSummary] =
     ((JsPath \ "id").read[MessageId] and
       (JsPath \ "received").read[OffsetDateTime] and
-      (JsPath \ "messageType").read[MessageType] and
+      (JsPath \ "messageType").readNullable[MessageType] and
       (JsPath \ "body").readNullable[XmlPayload] and
       (JsPath \ "status").readNullable[MessageStatus] and
       (JsPath \ "uri").readNullable[ObjectStoreURI])(MessageSummary.apply _)
@@ -43,7 +43,7 @@ object MessageSummary {
   implicit val messageSummaryWrites: OWrites[MessageSummary] =
     ((JsPath \ "id").write[MessageId] and
       (JsPath \ "received").write[OffsetDateTime] and
-      (JsPath \ "messageType").write[MessageType] and
+      (JsPath \ "messageType").writeNullable[MessageType] and
       (JsPath \ "body").writeNullable[Payload] and
       (JsPath \ "status").writeNullable[MessageStatus] and
       (JsPath \ "uri").writeNullable[ObjectStoreURI])(unlift(MessageSummary.unapply))
@@ -52,7 +52,7 @@ object MessageSummary {
 case class MessageSummary(
   id: MessageId,
   received: OffsetDateTime,
-  messageType: MessageType,
+  messageType: Option[MessageType],
   body: Option[Payload],
   status: Option[MessageStatus],
   uri: Option[ObjectStoreURI]

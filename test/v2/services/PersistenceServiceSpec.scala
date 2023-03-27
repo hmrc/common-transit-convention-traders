@@ -174,7 +174,7 @@ class PersistenceServiceSpec
       val successResponse = MessageSummary(
         MessageId("1234567890abcdef"),
         now,
-        MessageType.DeclarationData,
+        Some(MessageType.DeclarationData),
         Some(XmlPayload("<test></test>")),
         Some(MessageStatus.Success),
         None
@@ -527,7 +527,7 @@ class PersistenceServiceSpec
       val successResponse = MessageSummary(
         MessageId("1234567890abcdef"),
         now,
-        MessageType.ArrivalNotification,
+        Some(MessageType.ArrivalNotification),
         Some(XmlPayload("<test></test>")),
         Some(MessageStatus.Success),
         None

@@ -56,12 +56,12 @@ class ResponseFormatterServiceImpl @Inject() (conversionService: ConversionServi
     acceptHeaderValue: String
   )(implicit ec: ExecutionContext, hc: HeaderCarrier, mat: Materializer): EitherT[Future, PresentationError, MessageSummary] =
     (acceptHeaderValue, messageSummary) match {
-      case (VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, MessageSummary(_, _, messageType, Some(XmlPayload(body)), _, _)) =>
+      case (VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, MessageSummary(_, _, Some(messageType), Some(XmlPayload(body)), _, _)) =>
         for {
           jsonSource <- conversionService.xmlToJson(messageType, Source.single(ByteString(body))).asPresentation
           jsonBody   <- StreamingUtils.convertSourceToString(jsonSource).asPresentation
         } yield messageSummary.copy(body = Some(JsonPayload(jsonBody)))
-      case (VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, MessageSummary(_, _, messageType, None, _, Some(objectStoreUri))) =>
+      case (VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, MessageSummary(_, _, Some(messageType), None, _, Some(objectStoreUri))) =>
         for {
           resourceLocation <- extractResourceLocation(objectStoreUri)
           bodyStream       <- objectStoreService.getMessage(resourceLocation).asPresentation
