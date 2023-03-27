@@ -490,10 +490,28 @@ class V2MovementsControllerImpl @Inject() (
               _ <- validationService
                 .validateLargeMessage(messageType, uri)
                 .semiflatTap {
-                  _ => persist(messageUpdate(MessageStatus.Failed)).value
+                  _ =>
+                    persistenceService
+                      .updateMessage(
+                        eori,
+                        movementType,
+                        movementId,
+                        messageId,
+                        MessageUpdate(MessageStatus.Failed, Some(ObjectStoreURI(objectSummary.location.asUri)))
+                      )
+                      .value
+                  //persist(messageUpdate(MessageStatus.Failed)).value
                 }
                 .asPresentation
-              _ <- persist(messageUpdate(MessageStatus.Success)).asPresentation
+              _ <- persistenceService
+                .updateMessage(
+                  eori,
+                  movementType,
+                  movementId,
+                  messageId,
+                  MessageUpdate(MessageStatus.Processing, Some(ObjectStoreURI(objectSummary.location.asUri)))
+                )
+                .asPresentation //persist(messageUpdate(MessageStatus.Processing)).asPresentation
 
               sendMessage <- routerService
                 .sendLargeMessage(
