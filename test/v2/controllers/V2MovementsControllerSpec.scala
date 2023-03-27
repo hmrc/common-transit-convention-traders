@@ -3584,7 +3584,12 @@ class V2MovementsControllerSpec
                     when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any()))
                       .thenReturn(EitherT.rightT(MessageType.DeclarationAmendment))
 
-                    when(mockValidationService.validateXml(any[MessageType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+                    when(
+                      mockValidationService.validateLargeMessage(eqTo(MessageType.DeclarationAmendment), any[String].asInstanceOf[ObjectStoreResourceLocation])(
+                        any[HeaderCarrier],
+                        any[ExecutionContext]
+                      )
+                    )
                       .thenAnswer {
                         _ => EitherT.rightT(())
                       }
@@ -3622,7 +3627,7 @@ class V2MovementsControllerSpec
 
                     verify(mockXmlParsingService, times(1)).extractMessageType(any(), any())(any(), any())
 
-                    verify(mockValidationService, times(1)).validateXml(any(), any())(any(), any())
+                    verify(mockValidationService, times(1)).validateLargeMessage(any(), any())(any(), any())
 
                     verify(mockPersistenceService, times(1)).updateMessage(
                       EORINumber(any()),
@@ -3689,7 +3694,12 @@ class V2MovementsControllerSpec
                       )
                     ).thenReturn(EitherT.rightT(()))
 
-                    when(mockValidationService.validateXml(any[MessageType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+                    when(
+                      mockValidationService.validateLargeMessage(eqTo(MessageType.DeclarationAmendment), any[String].asInstanceOf[ObjectStoreResourceLocation])(
+                        any[HeaderCarrier],
+                        any[ExecutionContext]
+                      )
+                    )
                       .thenAnswer {
                         _ => EitherT.rightT(())
                       }
@@ -3727,7 +3737,7 @@ class V2MovementsControllerSpec
 
                     verify(mockXmlParsingService, times(1)).extractMessageType(any(), any())(any(), any())
 
-                    verify(mockValidationService, times(1)).validateXml(any(), any())(any(), any())
+                    verify(mockValidationService, times(1)).validateLargeMessage(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
 
                     verify(mockPersistenceService, times(1)).updateMessage(
                       EORINumber(any()),
@@ -3796,7 +3806,12 @@ class V2MovementsControllerSpec
                     )
                   ).thenReturn(EitherT.rightT(()))
 
-                  when(mockValidationService.validateXml(any[MessageType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+                  when(
+                    mockValidationService.validateLargeMessage(eqTo(MessageType.DeclarationAmendment), any[String].asInstanceOf[ObjectStoreResourceLocation])(
+                      any[HeaderCarrier],
+                      any[ExecutionContext]
+                    )
+                  )
                     .thenAnswer {
                       _ => EitherT.leftT(FailedToValidateError.ParsingError("A parsing error occurred"))
                     }
@@ -3822,7 +3837,7 @@ class V2MovementsControllerSpec
 
                   verify(mockXmlParsingService, times(1)).extractMessageType(any(), any())(any(), any())
 
-                  verify(mockValidationService, times(1)).validateXml(any(), any())(any(), any())
+                  verify(mockValidationService, times(1)).validateLargeMessage(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
 
                   verify(mockPersistenceService, times(1)).updateMessage(
                     EORINumber(any()),
@@ -3878,7 +3893,12 @@ class V2MovementsControllerSpec
                 when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any()))
                   .thenReturn(EitherT.rightT(MessageType.DeclarationAmendment))
 
-                when(mockValidationService.validateXml(any[MessageType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+                when(
+                  mockValidationService.validateLargeMessage(eqTo(MessageType.DeclarationAmendment), any[String].asInstanceOf[ObjectStoreResourceLocation])(
+                    any[HeaderCarrier],
+                    any[ExecutionContext]
+                  )
+                )
                   .thenAnswer {
                     _ => EitherT.leftT(FailedToValidateError.ParsingError("A parsing error occurred"))
                   }
@@ -3917,7 +3937,7 @@ class V2MovementsControllerSpec
 
                 verify(mockXmlParsingService, times(1)).extractMessageType(any(), any())(any(), any())
 
-                verify(mockValidationService, times(1)).validateXml(any(), any())(any(), any())
+                verify(mockValidationService, times(1)).validateLargeMessage(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
 
                 verify(mockPersistenceService, times(1)).updateMessage(
                   EORINumber(any()),
@@ -3995,7 +4015,7 @@ class V2MovementsControllerSpec
 
               verify(mockXmlParsingService, times(1)).extractMessageType(any(), any())(any(), any())
 
-              verify(mockValidationService, times(0)).validateXml(any(), any())(any(), any())
+              verify(mockValidationService, times(0)).validateLargeMessage(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
 
               verify(mockPersistenceService, times(0)).updateMessage(
                 EORINumber(any()),
@@ -4069,7 +4089,7 @@ class V2MovementsControllerSpec
 
               verify(mockXmlParsingService, times(0)).extractMessageType(any(), any())(any(), any())
 
-              verify(mockValidationService, times(0)).validateXml(any(), any())(any(), any())
+              verify(mockValidationService, times(0)).validateLargeMessage(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
 
               verify(mockPersistenceService, times(0)).updateMessage(
                 EORINumber(any()),

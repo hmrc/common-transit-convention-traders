@@ -485,33 +485,18 @@ class V2MovementsControllerImpl @Inject() (
               uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
               source      <- objectStoreService.getMessage(uri.stripOwner).asPresentation
               messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
-//              messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)))
-//              persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
+              messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)))
+              persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
               _ <- validationService
                 .validateLargeMessage(messageType, uri)
-                .semiflatTap {
-                  _ =>
-                    persistenceService
-                      .updateMessage(
-                        eori,
-                        movementType,
-                        movementId,
-                        messageId,
-                        MessageUpdate(MessageStatus.Failed, Some(ObjectStoreURI(objectSummary.location.asUri)))
-                      )
-                      .value
-                  //persist(messageUpdate(MessageStatus.Failed)).value
-                }
                 .asPresentation
-              _ <- persistenceService
-                .updateMessage(
-                  eori,
-                  movementType,
-                  movementId,
-                  messageId,
-                  MessageUpdate(MessageStatus.Processing, Some(ObjectStoreURI(objectSummary.location.asUri)))
-                )
-                .asPresentation //persist(messageUpdate(MessageStatus.Processing)).asPresentation
+                .leftMap {
+                  err =>
+                    persist(messageUpdate(MessageStatus.Failed)).value
+                    err
+                }
+
+              _ <- persist(messageUpdate(MessageStatus.Processing)).asPresentation
 
               sendMessage <- routerService
                 .sendLargeMessage(

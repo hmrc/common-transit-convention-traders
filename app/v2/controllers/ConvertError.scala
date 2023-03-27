@@ -119,8 +119,8 @@ trait ConvertError {
     import v2.models.errors.ObjectStoreError._
 
     override def convert(objectStoreError: ObjectStoreError): PresentationError = objectStoreError match {
-      case UnexpectedError(thr) => println("HERE1"); PresentationError.internalServiceError(cause = thr)
-      case FileNotFound(_)      => println("HERE2"); PresentationError.internalServiceError()
+      case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
+      case FileNotFound(_)      => PresentationError.internalServiceError()
     }
   }
 }
