@@ -21,14 +21,19 @@ import play.api.libs.json.Json
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
+import v2.models.responses.UpscanInitiateResponse
 
 object HateoasMovementUpdateResponse extends HateoasResponse {
 
-  def apply(movementId: MovementId, messageId: MessageId, movementType: MovementType): JsObject =
+  def apply(movementId: MovementId, messageId: MessageId, movementType: MovementType, upscanInitiateResponse: Option[UpscanInitiateResponse]): JsObject =
     Json.obj(
       "_links" -> Json.obj(
         "self"                    -> Json.obj("href" -> getMessageUri(movementId, messageId, movementType)),
         movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
       )
-    )
+    ) ++ upscanInitiateResponse
+      .map(
+        r => Json.obj("uploadRequest" -> Json.obj("href" -> r.uploadRequest.href, "fields" -> r.uploadRequest.fields))
+      )
+      .getOrElse(Json.obj())
 }

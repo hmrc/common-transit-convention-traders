@@ -3137,7 +3137,7 @@ class V2MovementsControllerSpec
             val result  = sut.attachMessage(movementType, movementId)(request)
 
             status(result) mustBe ACCEPTED
-            contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, updateMovementResponse.messageId, movementType))
+            contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, updateMovementResponse.messageId, movementType, None))
 
             verify(mockAuditService, times(1)).audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())
             verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any())(any(), any())
@@ -3277,7 +3277,7 @@ class V2MovementsControllerSpec
             val result  = sut.attachMessage(movementType, movementId)(request)
 
             status(result) mustBe ACCEPTED
-            contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, MessageId("456"), movementType))
+            contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, MessageId("456"), movementType, None))
 
             verify(mockValidationService, times(1)).validateJson(any(), any())(any(), any())
             verify(mockAuditService, times(1)).audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())
@@ -3523,7 +3523,7 @@ class V2MovementsControllerSpec
             val result = sut.attachMessage(movementType, movementId)(request)
 
             status(result) mustBe ACCEPTED
-            contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, messageId, movementType))
+            contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, messageId, movementType, Some(upscanInitiateResponse)))
         }
 
         "must return NotFound when movement not found by Persistence" in forAll(

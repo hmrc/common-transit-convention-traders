@@ -443,7 +443,7 @@ class V2MovementsControllerImpl @Inject() (
             Source.single(ByteString(auditResponse.toString(), StandardCharsets.UTF_8)),
             MimeTypes.JSON
           )
-        } yield HateoasMovementUpdateResponse(movementId, updateMovementResponse.messageId, movementType)).fold[Result](
+        } yield HateoasMovementUpdateResponse(movementId, updateMovementResponse.messageId, movementType, Some(upscanResponse))).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Accepted(response)
         )
@@ -466,7 +466,7 @@ class V2MovementsControllerImpl @Inject() (
         } yield updateMovementResponse).fold[Result](
           // update status to fail
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          response => Accepted(Json.toJson(HateoasMovementUpdateResponse(movementId, response.messageId, movementType)))
+          response => Accepted(Json.toJson(HateoasMovementUpdateResponse(movementId, response.messageId, movementType, None)))
         )
     }
 
@@ -500,7 +500,7 @@ class V2MovementsControllerImpl @Inject() (
           updateResponse <- handleXml(id, messageType, converted)
         } yield updateResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          updateResponse => Accepted(Json.toJson(HateoasMovementUpdateResponse(id, updateResponse.messageId, movementType)))
+          updateResponse => Accepted(Json.toJson(HateoasMovementUpdateResponse(id, updateResponse.messageId, movementType, None)))
         )
     }
   }

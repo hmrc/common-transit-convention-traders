@@ -16,35 +16,62 @@
 
 package v2.models.responses.hateoas
 
-import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.forAll
 import play.api.libs.json.Json
 import v2.base.TestCommonGenerators
-import v2.models.MessageId
-import v2.models.MovementId
 import v2.models.MovementType
 
 class HateoasMovementUpdateResponseSpec extends AnyFreeSpec with Matchers with OptionValues with TestCommonGenerators {
 
-  for (movementType <- MovementType.values)
-    s"with a valid ${movementType.movementType} and message response create a valid HateoasMovementUpdateResponse" in {
-      val movementId = arbitrary[MovementId].sample.value
-      val messageId  = arbitrary[MessageId].sample.value
-      val actual     = HateoasMovementUpdateResponse(movementId, messageId, movementType)
-      val expected = Json.obj(
-        "_links" -> Json.obj(
-          movementType.movementType -> Json.obj(
-            "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}"
-          ),
-          "self" -> Json.obj(
-            "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
+  for (movementType <- MovementType.values) {
+
+    s"For a small message, with a valid ${movementType.movementType} and message response create a valid HateoasMovementUpdateResponse" in forAll(
+      arbitraryMovementId.arbitrary,
+      arbitraryMessageId.arbitrary
+    ) {
+      (movementId, messageId) =>
+        val actual = HateoasMovementUpdateResponse(movementId, messageId, movementType, None)
+        val expected = Json.obj(
+          "_links" -> Json.obj(
+            movementType.movementType -> Json.obj(
+              "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}"
+            ),
+            "self" -> Json.obj(
+              "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
+            )
           )
         )
-      )
 
-      actual mustBe expected
+        actual mustBe expected
     }
+
+    s"For a large message, with a valid ${movementType.movementType} and message response create a valid HateoasMovementUpdateResponse with upscan details" in forAll(
+      arbitraryMovementId.arbitrary,
+      arbitraryMessageId.arbitrary,
+      arbitraryUpscanInitiateResponse.arbitrary
+    ) {
+      (movementId, messageId, upscanIniateResponse) =>
+        val actual = HateoasMovementUpdateResponse(movementId, messageId, movementType, Some(upscanIniateResponse))
+        val expected = Json.obj(
+          "_links" -> Json.obj(
+            movementType.movementType -> Json.obj(
+              "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}"
+            ),
+            "self" -> Json.obj(
+              "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
+            )
+          ),
+          "uploadRequest" -> Json.obj(
+            "href"   -> upscanIniateResponse.uploadRequest.href,
+            "fields" -> upscanIniateResponse.uploadRequest.fields
+          )
+        )
+
+        actual mustBe expected
+    }
+  }
 
 }
