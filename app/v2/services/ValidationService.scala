@@ -28,6 +28,8 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.ValidationConnector
+import v2.models.ObjectStoreResourceLocation
+import v2.models.ObjectStoreURI
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
@@ -51,10 +53,29 @@ trait ValidationService {
     ec: ExecutionContext
   ): EitherT[Future, FailedToValidateError, Unit]
 
+  def validateLargeMessage(messageType: MessageType, source: ObjectStoreResourceLocation)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, FailedToValidateError, Unit]
+
 }
 
 @Singleton
 class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector) extends ValidationService with Logging {
+
+  def validateLargeMessage(messageType: MessageType, uri: ObjectStoreResourceLocation)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, FailedToValidateError, Unit] =
+    EitherT(
+      validationConnector
+        .postLargeMessage(messageType, uri)
+        .map {
+          case None           => Right(())
+          case Some(response) => Left(FailedToValidateError.XmlSchemaFailedToValidateError(response.validationErrors))
+        }
+        .recover(recoverFromError(messageType))
+    )
 
   override def validateXml(messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
