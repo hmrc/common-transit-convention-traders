@@ -483,7 +483,7 @@ class V2MovementsControllerImpl @Inject() (
               downloadUrl   <- handleUpscanSuccessResponse(upscanResponse)
               objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
               uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
-              source      <- objectStoreService.getMessage(uri).asPresentation
+              source      <- objectStoreService.getMessage(uri.stripOwner).asPresentation
               messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
               messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)))
               persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
