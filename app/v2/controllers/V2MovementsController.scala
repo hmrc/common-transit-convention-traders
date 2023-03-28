@@ -514,12 +514,6 @@ class V2MovementsControllerImpl @Inject() (
         }
     }
 
-  private def extractMessageType(movementType: MovementType) =
-    movementType match {
-      case MovementType.Arrival   => MessageType.ArrivalNotification
-      case MovementType.Departure => MessageType.DeclarationData
-    }
-
   private def handleUpscanSuccessResponse(upscanResponse: UpscanResponse): EitherT[Future, PresentationError, DownloadUrl] =
     EitherT {
       Future.successful(upscanResponse.downloadUrl.toRight {

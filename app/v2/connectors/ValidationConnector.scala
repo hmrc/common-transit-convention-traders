@@ -38,7 +38,6 @@ import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.ObjectStoreResourceLocation
-import v2.models.ObjectStoreURI
 import v2.models.request.MessageType
 import v2.models.responses.JsonValidationResponse
 import v2.models.responses.XmlValidationResponse

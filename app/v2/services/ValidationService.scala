@@ -29,7 +29,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.ValidationConnector
 import v2.models.ObjectStoreResourceLocation
-import v2.models.ObjectStoreURI
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
