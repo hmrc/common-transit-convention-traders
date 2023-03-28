@@ -338,7 +338,7 @@ class ValidationConnectorSpec
               aResponse().withStatus(NO_CONTENT)
             )
         )
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier()
         val uri                        = ObjectStoreResourceLocation("resource/location")
 
         whenReady(validationConnector.postLargeMessage(MessageType.DeclarationData, uri)) {
@@ -366,7 +366,7 @@ class ValidationConnectorSpec
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier()
 
         val uri = ObjectStoreResourceLocation("resource/location")
         whenReady(validationConnector.postLargeMessage(MessageType.DeclarationData, uri)) {
@@ -392,7 +392,7 @@ class ValidationConnectorSpec
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier()
 
         val uri = ObjectStoreResourceLocation("resource/location")
         val future = validationConnector.postLargeMessage(MessageType.DeclarationData, uri).map(Right(_)).recover {
