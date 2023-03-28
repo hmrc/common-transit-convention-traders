@@ -482,7 +482,7 @@ class V2MovementsControllerSpec
 
       }
 
-      "must return Accepted when the message status update fails" in forAll(
+      "must return error when the persistence service of message status update fails" in forAll(
         arbitraryMovementResponse().arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
@@ -545,11 +545,7 @@ class V2MovementsControllerSpec
 
           val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC015C.mkString), MovementType.Departure)
           val result  = sut.createMovement(MovementType.Departure)(request)
-          status(result) mustBe ACCEPTED
-
-          contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse, Some(boxResponse), None, MovementType.Departure)
-          )
+          status(result) mustBe NOT_FOUND
 
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
@@ -919,7 +915,7 @@ class V2MovementsControllerSpec
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
       }
 
-      "must return Accepted when the message status update fails" in forAll(
+      "must return error when the persistence service of message status update fails" in forAll(
         arbitraryMovementResponse().arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
@@ -997,15 +993,13 @@ class V2MovementsControllerSpec
               )
           )
             .thenAnswer {
-              _ => EitherT.leftT(EitherT.leftT(PersistenceError.MovementNotFound(movementResponse.movementId, MovementType.Departure)))
+              _ =>
+                EitherT.leftT(PersistenceError.MovementNotFound(movementResponse.movementId, MovementType.Departure))
             }
 
           val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC015Cjson), MovementType.Departure)
           val result  = sut.createMovement(MovementType.Departure)(request)
-          status(result) mustBe ACCEPTED
-          contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse, Some(boxResponse), None, MovementType.Departure)
-          )
+          status(result) mustBe NOT_FOUND
 
           verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
@@ -1714,7 +1708,7 @@ class V2MovementsControllerSpec
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
       }
 
-      "must return Accepted when the message status update fails" in forAll(
+      "must return error when the persistence service of message status update fails" in forAll(
         arbitraryMovementResponse().arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
@@ -1777,11 +1771,7 @@ class V2MovementsControllerSpec
 
           val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC015C.mkString), MovementType.Arrival)
           val result  = sut.createMovement(MovementType.Arrival)(request)
-          status(result) mustBe ACCEPTED
-
-          contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse, Some(boxResponse), None, MovementType.Arrival)
-          )
+          status(result) mustBe NOT_FOUND
 
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.XML))(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
@@ -4439,6 +4429,19 @@ class V2MovementsControllerSpec
                       _ => EitherT.leftT(RouterError.UnexpectedError(None))
                     )
 
+                    when(
+                      mockPersistenceService.updateMessage(
+                        EORINumber(eqTo(eoriNumber.value)),
+                        eqTo(movementType),
+                        MovementId(eqTo(movementId.value)),
+                        MessageId(eqTo(messageId.value)),
+                        eqTo(messageUpdateFailure)
+                      )(
+                        any(),
+                        any()
+                      )
+                    ).thenReturn(EitherT.rightT(()))
+
                     val request = FakeRequest(
                       POST,
                       routes.V2MovementsController.attachLargeMessage(eoriNumber, movementType, movementId, messageId).url,
@@ -4462,9 +4465,9 @@ class V2MovementsControllerSpec
 
                     verify(mockValidationService, times(1)).validateLargeMessage(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
 
-                    verify(mockPersistenceService, times(1)).updateMessage(
-                      EORINumber(any()),
-                      any[MovementType],
+                    verify(mockPersistenceService, times(2)).updateMessage(
+                      EORINumber(eqTo(eoriNumber.value)),
+                      eqTo(movementType),
                       MovementId(eqTo(movementId.value)),
                       MessageId(eqTo(messageId.value)),
                       any()
