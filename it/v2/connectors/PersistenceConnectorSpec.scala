@@ -1315,7 +1315,7 @@ class PersistenceConnectorSpec
     def targetUrl(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId) =
       s"/transit-movements/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
 
-    lazy val messageUpdate = MessageUpdate(MessageStatus.Processing, None)
+    lazy val messageUpdate = MessageUpdate(MessageStatus.Processing, None, None)
 
     implicit val hc: HeaderCarrier = HeaderCarrier()
 

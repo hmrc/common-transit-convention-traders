@@ -153,7 +153,7 @@ trait CommonGenerators {
     for {
       status <- Gen.oneOf(MessageStatus.statusValues)
       uri    <- Gen.alphaNumStr
-    } yield MessageUpdate(status, Some(ObjectStoreURI(uri)))
+    } yield MessageUpdate(status, Some(ObjectStoreURI(uri)), Some(MessageType.DeclarationData))
   }
 
   implicit lazy val arbitraryMovementType: Arbitrary[MovementType] = Arbitrary {

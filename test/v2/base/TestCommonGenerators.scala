@@ -240,7 +240,7 @@ trait TestCommonGenerators {
     for {
       status <- Gen.oneOf(MessageStatus.statusValues)
       uri    <- Gen.alphaNumStr
-    } yield MessageUpdate(status, Some(ObjectStoreURI(uri)))
+    } yield MessageUpdate(status, Some(ObjectStoreURI(uri)), Some(MessageType.DeclarationData))
   }
 
 }
