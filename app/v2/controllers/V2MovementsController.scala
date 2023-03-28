@@ -33,6 +33,7 @@ import metrics.HasActionMetrics
 import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
+import play.api.http.Status.NOT_FOUND
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsValue
@@ -40,12 +41,14 @@ import play.api.libs.json.Json
 import play.api.mvc._
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.AcceptHeaderActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models._
+import v2.models.errors.PersistenceError
 import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
@@ -53,6 +56,7 @@ import v2.models.request.MessageUpdate
 import v2.models.responses.BoxResponse
 import v2.models.responses.LargeMessageAuditRequest
 import v2.models.responses.MessageSummary
+import v2.models.responses.TraderFailedUploadAuditRequest
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.UpscanResponse
 import v2.models.responses.UpscanResponse.DownloadUrl
@@ -480,7 +484,23 @@ class V2MovementsControllerImpl @Inject() (
           case Left(presentationError) => Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
           case Right(upscanResponse) =>
             (for {
-              downloadUrl   <- handleUpscanSuccessResponse(upscanResponse)
+              downloadUrl <- handleUpscanSuccessResponse(upscanResponse).leftSemiflatTap {
+                _ =>
+                  println("--- failure")
+                  val response = Json.toJson(
+                    TraderFailedUploadAuditRequest(
+                      movementId,
+                      messageId,
+                      eori,
+                      movementType
+                    )
+                  )
+                  auditService.audit(
+                    AuditType.TraderFailedUploadEvent,
+                    Source.single(ByteString(response.toString(), StandardCharsets.UTF_8)),
+                    MimeTypes.JSON
+                  )
+              }
               objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
               messageType = extractMessageType(
                 movementType
@@ -510,7 +530,7 @@ class V2MovementsControllerImpl @Inject() (
       case MovementType.Departure => MessageType.DeclarationData
     }
 
-  private def handleUpscanSuccessResponse(upscanResponse: UpscanResponse): EitherT[Future, PresentationError, DownloadUrl] =
+  def handleUpscanSuccessResponse(upscanResponse: UpscanResponse): EitherT[Future, PresentationError, DownloadUrl] =
     EitherT {
       Future.successful(upscanResponse.downloadUrl.toRight {
         PresentationError.badRequestError("Upscan failed to process file")
