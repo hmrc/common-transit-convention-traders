@@ -176,7 +176,8 @@ class PersistenceServiceSpec
         now,
         MessageType.DeclarationData,
         Some(XmlPayload("<test></test>")),
-        Some(MessageStatus.Success)
+        Some(MessageStatus.Success),
+        None
       )
 
       when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()))(any(), any()))
@@ -528,7 +529,8 @@ class PersistenceServiceSpec
         now,
         MessageType.ArrivalNotification,
         Some(XmlPayload("<test></test>")),
-        Some(MessageStatus.Success)
+        Some(MessageStatus.Success),
+        None
       )
 
       when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()))(any(), any()))

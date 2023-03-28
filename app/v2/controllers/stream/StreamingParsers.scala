@@ -16,26 +16,36 @@
 
 package v2.controllers.stream
 
+import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import cats.data.EitherT
 import cats.implicits.catsSyntaxMonadError
+import play.api.Logging
 import play.api.libs.Files.TemporaryFileCreator
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
 import play.api.libs.streams.Accumulator
 import play.api.mvc.Action
 import play.api.mvc.ActionBuilder
 import play.api.mvc.BaseControllerHelpers
 import play.api.mvc.BodyParser
 import play.api.mvc.Result
+import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.request.BodyReplaceableRequest
+import v2.models.errors.PresentationError
 
+import java.nio.file.Files
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.Try
+import scala.util.control.NonFatal
 
 trait StreamingParsers {
-  self: BaseControllerHelpers =>
+  self: BaseControllerHelpers with Logging =>
 
   implicit val materializer: Materializer
 
@@ -78,6 +88,105 @@ trait StreamingParsers {
                 Future.successful(())
             }
       }
+
+    def streamWithSize(
+      block: AuthenticatedRequest[Source[ByteString, _]] => Long => Future[Result]
+    )(implicit temporaryFileCreator: TemporaryFileCreator): Action[Source[ByteString, _]] =
+      actionBuilder.async(streamFromMemory) {
+        request =>
+          // This is outside the for comprehension because we need access to the file
+          // if the rest of the futures fail, which we wouldn't get if it was in there.
+          Future
+            .fromTry(Try(temporaryFileCreator.create()))
+            .flatMap {
+              file =>
+                (for {
+                  _      <- request.body.runWith(FileIO.toPath(file))
+                  size   <- Future.fromTry(Try(Files.size(file)))
+                  result <- block(request.replaceBody(FileIO.fromPath(file)).asInstanceOf[AuthenticatedRequest[Source[ByteString, _]]])(size)
+                } yield result)
+                  .attemptTap {
+                    _ =>
+                      file.delete()
+                      Future.successful(())
+                  }
+            }
+            .recover {
+              case NonFatal(ex) =>
+                logger.error(s"Failed call: ${ex.getMessage}", ex)
+                Status(INTERNAL_SERVER_ERROR)(Json.toJson(PresentationError.internalServiceError(cause = Some(ex))))
+            }
+      }
   }
 
+  private val START_TOKEN: Source[ByteString, NotUsed]                 = Source.single(ByteString("{"))
+  private val END_TOKEN_SOURCE: Source[ByteString, NotUsed]            = Source.single(ByteString("}"))
+  private val END_TOKEN_WITH_QUOTE_SOURCE: Source[ByteString, NotUsed] = Source.single(ByteString("\"}"))
+  private val COMMA_SOURCE: Source[ByteString, NotUsed]                = Source.single(ByteString(","))
+
+  private def jsonFieldsToByteString(fields: collection.Seq[(String, JsValue)]) =
+    Source
+      .fromIterator(
+        () => fields.iterator
+      )
+      .map {
+        // convert fields to bytestrings with their values, need to ensure we keep the field names quoted,
+        // separate with a colon and end with a comma, as per the Json spec
+        tuple =>
+          ByteString(s""""${tuple._1}":${Json.stringify(tuple._2)}""")
+      }
+      .intersperse(ByteString(","))
+
+  def mergeStreamIntoJson(
+    fields: collection.Seq[(String, JsValue)],
+    fieldName: String,
+    stream: Source[ByteString, _]
+  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
+    EitherT {
+      Future
+        .successful(
+          Right( // We need to start the document and add the final field, and prepare for the string data coming in
+            START_TOKEN ++
+              // convert fields to bytestrings
+              jsonFieldsToByteString(fields) ++ COMMA_SOURCE ++
+              // start adding the new field
+              Source.single(ByteString(s""""$fieldName":"""".stripMargin)) ++
+              // our XML stream that we escape
+              stream
+                .map(
+                  bs => ByteString(bs.utf8String.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n"))
+                )
+              ++
+              // and the stream that ends our Json document
+              END_TOKEN_WITH_QUOTE_SOURCE
+          )
+        )
+        .recover {
+          case NonFatal(e) => Left(PresentationError.internalServiceError(cause = Some(e)))
+        }
+    }
+
+  def jsonToByteStringStream(fields: collection.Seq[(String, JsValue)]): EitherT[Future, PresentationError, Source[ByteString, _]] =
+    EitherT {
+      Future
+        .successful(
+          Right(
+            START_TOKEN ++ jsonFieldsToByteString(fields) ++ END_TOKEN_SOURCE
+          )
+        )
+        .recover {
+          case NonFatal(e) => Left(PresentationError.internalServiceError(cause = Some(e)))
+        }
+    }
+
+  def stringToByteStringStream(value: String): EitherT[Future, PresentationError, Source[ByteString, _]] =
+    EitherT {
+      Future
+        .successful(Right(Source.single(value) map {
+          str => ByteString(str)
+        }))
+        .recover {
+          case NonFatal(e) => Left(PresentationError.internalServiceError(cause = Some(e)))
+        }
+    }
 }

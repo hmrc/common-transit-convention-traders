@@ -24,6 +24,7 @@ import controllers.V1DepartureMessagesController
 import controllers.V1DeparturesController
 import models.domain.{DepartureId => V1DepartureId}
 import models.domain.{MessageId => V1MessageId}
+import play.api.Logging
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
@@ -49,7 +50,8 @@ class DeparturesRouter @Inject() (
   val materializer: Materializer
 ) extends BaseController
     with StreamingParsers
-    with VersionedRouting {
+    with VersionedRouting
+    with Logging {
 
   def submitDeclaration(): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => v2Departures.createMovement(MovementType.Departure)

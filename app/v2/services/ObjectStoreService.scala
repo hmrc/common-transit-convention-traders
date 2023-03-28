@@ -16,6 +16,9 @@
 
 package v2.services
 
+import akka.NotUsed
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import play.api.Logging
@@ -25,8 +28,10 @@ import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClient
 import uk.gov.hmrc.objectstore.client.Path
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.ObjectStoreResourceLocation
 import v2.models.errors.ObjectStoreError
 import v2.models.responses.UpscanResponse.DownloadUrl
+import uk.gov.hmrc.objectstore.client.play.Implicits._
 
 import java.net.URL
 import java.time.Clock
@@ -47,6 +52,10 @@ trait ObjectStoreService {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, ObjectStoreError, ObjectSummaryWithMd5]
+
+  def getMessage(
+    objectStoreResourceLocation: ObjectStoreResourceLocation
+  )(implicit ec: ExecutionContext, hc: HeaderCarrier): EitherT[Future, ObjectStoreError, Source[ByteString, _]]
 
 }
 
@@ -78,5 +87,23 @@ class ObjectStoreServiceImpl @Inject() (clock: Clock, client: PlayObjectStoreCli
           case NonFatal(thr) => Left(ObjectStoreError.UnexpectedError(Some(thr)))
         }
     }
+
+  override def getMessage(
+    objectStoreResourceLocation: ObjectStoreResourceLocation
+  )(implicit ec: ExecutionContext, hc: HeaderCarrier): EitherT[Future, ObjectStoreError, Source[ByteString, _]] =
+    EitherT(
+      client
+        .getObject[Source[ByteString, NotUsed]](
+          Path.File(objectStoreResourceLocation.value),
+          "common-transit-convention-traders"
+        )
+        .flatMap {
+          case Some(source) => Future.successful(Right(source.content))
+          case _            => Future.successful(Left(ObjectStoreError.FileNotFound(objectStoreResourceLocation)))
+        }
+        .recover {
+          case NonFatal(ex) => Left(ObjectStoreError.UnexpectedError(Some(ex)))
+        }
+    )
 
 }

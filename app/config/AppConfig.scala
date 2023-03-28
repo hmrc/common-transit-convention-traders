@@ -51,7 +51,7 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesCon
 
   val blockUnknownNamespaces: Boolean = config.get[Boolean]("xml-validation.block-unknown-namespaces")
 
-  val messageSizeLimit: Int = config.get[Int]("messageSizeLimit")
+  val smallMessageSizeLimit: Int = config.get[Int]("smallMessageSizeLimit")
 
   val logInsufficientEnrolments: Boolean = config.get[Boolean]("logInsufficientEnrolments")
 

@@ -35,6 +35,7 @@ import v2.base.TestCommonGenerators
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider.singleUseStringSource
 import v2.models.JsonPayload
+import v2.models.ObjectStoreResourceLocation
 import v2.models.XmlPayload
 import v2.models.errors.ConversionError
 import v2.models.errors.PresentationError
@@ -56,53 +57,98 @@ class ResponseFormatterServiceSpec
   "formatMessageSummary" - {
 
     val mockConversionService    = mock[ConversionService]
-    val responseFormatterService = new ResponseFormatterServiceImpl(mockConversionService)
+    val mockObjectStoreService   = mock[ObjectStoreService]
+    val responseFormatterService = new ResponseFormatterServiceImpl(mockConversionService, mockObjectStoreService)
 
     implicit val hc = HeaderCarrier()
     implicit val ec = materializer.executionContext
 
-    val xmlString                 = "<test>example</test>"
-    val jsonString                = Json.stringify(Json.obj("test" -> "example"))
-    val sourceJson                = singleUseStringSource(jsonString)
-    val messageSummary            = arbitraryMessageSummaryXml.arbitrary.sample.get.copy(body = Some(XmlPayload(xmlString)))
-    val messageSummaryWithoutBody = messageSummary.copy(body = None)
+    val xmlString                       = "<test>example</test>"
+    val jsonString                      = Json.stringify(Json.obj("test" -> "example"))
+    val messageSummaryWithBody          = arbitraryMessageSummaryXml.arbitrary.sample.get.copy(body = Some(XmlPayload(xmlString)))
+    val messageSummaryWithUri           = messageSummaryWithBody.copy(body = None)
+    val messageSummaryWithoutBodyAndUri = messageSummaryWithBody.copy(body = None, uri = None)
 
     "when accept header equals application/vnd.hmrc.2.0+json" - {
 
       "when the body in messageSummary is defined, it returns a new instance of messageSummary with a json body" in {
         when(mockConversionService.xmlToJson(any[MessageType], any[Source[ByteString, _]])(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
           .thenAnswer(
-            _ => EitherT.rightT[Future, ConversionError](sourceJson)
+            _ => EitherT.rightT[Future, ConversionError](singleUseStringSource(jsonString))
           )
 
-        val expected = messageSummary.copy(body = Some(JsonPayload(jsonString)))
+        val expected = messageSummaryWithBody.copy(body = Some(JsonPayload(jsonString)))
 
         whenReady(
-          responseFormatterService.formatMessageSummary(messageSummary, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON).value
+          responseFormatterService.formatMessageSummary(messageSummaryWithBody, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON).value
         ) {
           result => result mustBe Right(expected)
         }
       }
 
-      "when the body in messageSummary is empty, it returns the given messageSummary" in {
+      "when the uri in messageSummary is defined, it returns a new instance of messageSummary with a json body" in {
+        when(
+          mockObjectStoreService
+            .getMessage(any[ObjectStoreResourceLocation])(any[ExecutionContext], any[HeaderCarrier])
+        )
+          .thenAnswer(
+            _ => EitherT.rightT[Future, ConversionError](singleUseStringSource(xmlString))
+          )
+
+        when(mockConversionService.xmlToJson(any[MessageType], any[Source[ByteString, _]])(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
+          .thenAnswer(
+            _ => EitherT.rightT[Future, ConversionError](singleUseStringSource(jsonString))
+          )
+
+        val expected = messageSummaryWithBody.copy(body = Some(JsonPayload(jsonString)))
+
         whenReady(
-          responseFormatterService.formatMessageSummary(messageSummaryWithoutBody, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON).value
+          responseFormatterService.formatMessageSummary(messageSummaryWithUri, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON).value
         ) {
-          result => result mustEqual Right(messageSummaryWithoutBody)
+          result => result mustBe Right(expected)
         }
       }
 
-      "when the conversion service fails, it returns a presentation error" in {
+      "when the body and uri in messageSummary are empty, it returns the given messageSummary" in {
+        whenReady(
+          responseFormatterService.formatMessageSummary(messageSummaryWithoutBodyAndUri, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON).value
+        ) {
+          result => result mustEqual Right(messageSummaryWithoutBodyAndUri)
+        }
+      }
+
+      "when the conversion service fails for message summary with body, it returns a presentation error" in {
         when(mockConversionService.xmlToJson(any[MessageType], any[Source[ByteString, _]])(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
           .thenAnswer(
             _ => EitherT.leftT[Future, ConversionError](ConversionError.UnexpectedError(None))
           )
 
         whenReady(
-          responseFormatterService.formatMessageSummary(messageSummary, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON).value
+          responseFormatterService.formatMessageSummary(messageSummaryWithBody, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON).value
         ) {
           result => result mustEqual Left(PresentationError.internalServiceError())
         }
+      }
+    }
+
+    "when the conversion service fails for message summary with uri, it returns a presentation error" in {
+      when(
+        mockObjectStoreService
+          .getMessage(any[ObjectStoreResourceLocation])(any[ExecutionContext], any[HeaderCarrier])
+      )
+        .thenAnswer(
+          _ => EitherT.rightT[Future, ConversionError](singleUseStringSource(xmlString))
+        )
+
+      when(mockConversionService.xmlToJson(any[MessageType], any[Source[ByteString, _]])(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
+        .thenAnswer(
+          _ => EitherT.leftT[Future, ConversionError](ConversionError.UnexpectedError(None))
+        )
+
+      whenReady(
+        responseFormatterService.formatMessageSummary(messageSummaryWithUri, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON).value
+      ) {
+        result => result mustEqual Left(PresentationError.internalServiceError())
       }
     }
 
@@ -111,19 +157,19 @@ class ResponseFormatterServiceSpec
         acceptHeader =>
           s"when accept header equals $acceptHeader" - {
 
-            "when the body in message summary is empty, it returns the given messageSummary" in {
+            "when the body and uri in message summary are empty, it returns the given messageSummary" in {
               whenReady(
-                responseFormatterService.formatMessageSummary(messageSummaryWithoutBody, acceptHeader).value
+                responseFormatterService.formatMessageSummary(messageSummaryWithoutBodyAndUri, acceptHeader).value
               ) {
-                result => result mustEqual Right(messageSummaryWithoutBody)
+                result => result mustEqual Right(messageSummaryWithoutBodyAndUri)
               }
             }
 
             "when the body in message summary is defined, it returns the given messageSummary" in {
               whenReady(
-                responseFormatterService.formatMessageSummary(messageSummary, acceptHeader).value
+                responseFormatterService.formatMessageSummary(messageSummaryWithBody, acceptHeader).value
               ) {
-                result => result mustEqual Right(messageSummary)
+                result => result mustEqual Right(messageSummaryWithBody)
               }
             }
           }

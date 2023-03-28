@@ -17,6 +17,7 @@
 package v2.controllers
 
 import akka.stream.Materializer
+import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
@@ -26,12 +27,14 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
+import config.AppConfig
 import config.Constants.XClientIdHeader
 import metrics.HasActionMetrics
 import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
+import play.api.libs.json.JsObject
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -40,7 +43,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.AcceptHeaderActionProvider
-import v2.controllers.actions.providers.MessageSizeActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models._
@@ -50,6 +52,7 @@ import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.responses.BoxResponse
 import v2.models.responses.LargeMessageAuditRequest
+import v2.models.responses.MessageSummary
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.UpscanResponse
 import v2.models.responses.UpscanResponse.DownloadUrl
@@ -58,8 +61,11 @@ import v2.services._
 import v2.utils.StreamWithFile
 
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import java.time.OffsetDateTime
 import scala.concurrent.Future
+import scala.util.Try
+import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[V2MovementsControllerImpl])
 trait V2MovementsController {
@@ -69,6 +75,7 @@ trait V2MovementsController {
   def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent]
   def getMovements(movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]): Action[AnyContent]
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]]
+  def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent]
   def attachLargeMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[JsValue]
 }
 
@@ -82,14 +89,14 @@ class V2MovementsControllerImpl @Inject() (
   routerService: RouterService,
   auditService: AuditingService,
   pushNotificationsService: PushNotificationsService,
-  messageSizeAction: MessageSizeActionProvider,
   acceptHeaderActionProvider: AcceptHeaderActionProvider,
   val metrics: Metrics,
   xmlParsingService: XmlMessageParsingService,
   jsonParsingService: JsonMessageParsingService,
   responseFormatterService: ResponseFormatterService,
   upscanService: UpscanService,
-  objectStoreService: ObjectStoreService
+  objectStoreService: ObjectStoreService,
+  config: AppConfig
 )(implicit val materializer: Materializer, val temporaryFileCreator: TemporaryFileCreator)
     extends BaseController
     with V2MovementsController
@@ -102,8 +109,24 @@ class V2MovementsControllerImpl @Inject() (
     with UpscanResponseParser
     with HasActionMetrics {
 
-  lazy val sCounter: Counter = counter(s"success-counter")
-  lazy val fCounter: Counter = counter(s"failure-counter")
+  private lazy val sCounter: Counter = counter(s"success-counter")
+  private lazy val fCounter: Counter = counter(s"failure-counter")
+
+  private lazy val jsonOnlyAcceptHeader = Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)
+  private lazy val xmlOnlyAcceptHeader  = Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML)
+
+  private lazy val jsonAndJsonWrappedXmlAcceptHeaders = Seq(
+    VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
+    VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML,
+    VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
+  )
+
+  private def contentSizeIsLessThanLimit(size: Long): EitherT[Future, PresentationError, Unit] = EitherT {
+    if (size <= config.smallMessageSizeLimit) Future.successful(Right(()))
+    else {
+      Future.successful(Left(PresentationError.entityTooLargeError(s"Your message size must be less than ${config.smallMessageSizeLimit} bytes")))
+    }
+  }
 
   def createMovement(movementType: MovementType): Action[Source[ByteString, _]] =
     movementType match {
@@ -122,11 +145,11 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitDepartureDeclarationXML(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = true) andThen messageSizeAction()).stream {
-      implicit request =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
+      implicit request => size =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
         (for {
+          _ <- contentSizeIsLessThanLimit(size)
           _ <- validationService.validateXml(MessageType.DeclarationData, request.body).asPresentation
           _ = auditService.audit(AuditType.DeclarationData, request.body, MimeTypes.XML)
           hateoasResponse <- persistAndSendToEIS(request.body, MovementType.Departure, MessageType.DeclarationData)
@@ -137,11 +160,12 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitDepartureDeclarationJSON(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = true) andThen messageSizeAction()).stream {
-      implicit request =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
+      implicit request => size =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         (for {
+          _ <- contentSizeIsLessThanLimit(size)
           _ <- validationService.validateJson(MessageType.DeclarationData, request.body).asPresentation
           _ = auditService.audit(AuditType.DeclarationData, request.body, MimeTypes.JSON)
           xmlSource       <- conversionService.jsonToXml(MessageType.DeclarationData, request.body).asPresentation
@@ -159,11 +183,12 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitArrivalNotificationXML(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = true) andThen messageSizeAction()).stream {
-      implicit request =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
+      implicit request => size =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         (for {
+          _ <- contentSizeIsLessThanLimit(size)
           _ <- validationService.validateXml(MessageType.ArrivalNotification, request.body).asPresentation
           _ = auditService.audit(AuditType.ArrivalNotification, request.body, MimeTypes.XML)
           hateoasResponse <- persistAndSendToEIS(request.body, MovementType.Arrival, MessageType.ArrivalNotification)
@@ -174,11 +199,12 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitArrivalNotificationJSON(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = true) andThen messageSizeAction()).stream {
-      implicit request =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
+      implicit request => size =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         (for {
+          _ <- contentSizeIsLessThanLimit(size)
           _ <- validationService.validateJson(MessageType.ArrivalNotification, request.body).asPresentation
           _ = auditService.audit(AuditType.ArrivalNotification, request.body, MimeTypes.JSON)
           xmlSource       <- conversionService.jsonToXml(MessageType.ArrivalNotification, request.body).asPresentation
@@ -190,7 +216,7 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitLargeMessageXML(movementType: MovementType): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = true)).async(streamFromMemory) {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -223,20 +249,127 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   def getMessage(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = false)).async {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonAndJsonWrappedXmlAcceptHeaders)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
-          messageSummary          <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
-          formattedMessageSummary <- responseFormatterService.formatMessageSummary(messageSummary, request.headers.get(HeaderNames.ACCEPT).get)
-        } yield formattedMessageSummary).fold(
+          messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
+          acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
+          body <- messageSummary.uri match {
+            case Some(uri) =>
+              for {
+                size <- getFileSize(uri.asResourceLocation.get)
+                result <-
+                  if (size <= config.smallMessageSizeLimit) processSmallMessage(movementId, movementType, messageSummary, acceptHeader)
+                  else processLargeMessage(movementId, movementType, messageSummary, acceptHeader)
+              } yield result
+            case None => processSmallMessage(movementId, movementType, messageSummary, acceptHeader)
+          }
+        } yield body).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          response => Ok(Json.toJson(HateoasMovementMessageResponse(movementId, messageId, response, movementType)))
+          response => Ok.chunked(response, Some(MimeTypes.JSON))
+        )
+    }
+
+  private def getFileSize(resourceLocation: ObjectStoreResourceLocation)(implicit hc: HeaderCarrier) =
+    objectStoreService.getMessage(resourceLocation).asPresentation.flatMap {
+      source =>
+        EitherT {
+          Future
+            .fromTry(Try(temporaryFileCreator.create()))
+            .flatMap {
+              file =>
+                for {
+                  _    <- source.runWith(FileIO.toPath(file))
+                  size <- Future.fromTry(Try(Files.size(file)))
+                  _    <- Future.fromTry(Try(file.delete()))
+                } yield Right(size)
+            }
+            .recover {
+              case NonFatal(ex) =>
+                Left(PresentationError.internalServiceError(cause = Some(ex)))
+            }
+        }
+    }
+
+  private def objectStoreMessageAsJsonWrappedXml(movementId: MovementId, messageSummary: MessageSummary, movementType: MovementType)(implicit
+    hc: HeaderCarrier
+  ) =
+    for {
+      resourceLocation <- extractResourceLocation(messageSummary.uri.get)
+      bodyStream       <- objectStoreService.getMessage(resourceLocation).asPresentation
+      json: JsObject = Json.toJson(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)).as[JsObject]
+      stream <- mergeStreamIntoJson(json.fields, "body", bodyStream)
+    } yield stream
+
+  private def processLargeMessage(movementId: MovementId, movementType: MovementType, messageSummary: MessageSummary, acceptHeader: String)(implicit
+    hc: HeaderCarrier
+  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
+    acceptHeader match {
+      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
+        EitherT.leftT[Future, Source[ByteString, _]](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
+      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
+        objectStoreMessageAsJsonWrappedXml(movementId, messageSummary, movementType)
+    }
+
+  private def extractResourceLocation(objectStoreURI: ObjectStoreURI): EitherT[Future, PresentationError, ObjectStoreResourceLocation] =
+    EitherT {
+      Future.successful(
+        objectStoreURI.asResourceLocation
+          .toRight(PresentationError.badRequestError(s"Provided Object Store URI is not owned by ${ObjectStoreURI.expectedOwner}"))
+      )
+    }
+
+  private def processSmallMessage(movementId: MovementId, movementType: MovementType, messageSummary: MessageSummary, acceptHeader: String)(implicit
+    hc: HeaderCarrier
+  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
+    acceptHeader match {
+      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
+        for {
+          formattedMessageSummary <- responseFormatterService.formatMessageSummary(messageSummary, acceptHeader)
+          jsonHateoasResponse = Json
+            .toJson(
+              HateoasMovementMessageResponse(movementId, formattedMessageSummary.id, formattedMessageSummary, movementType)
+            )
+            .as[JsObject]
+          stream <- jsonToByteStringStream(jsonHateoasResponse.fields)
+        } yield stream
+      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
+        messageSummary.uri.isDefined match {
+          case true => objectStoreMessageAsJsonWrappedXml(movementId, messageSummary, movementType)
+          case false =>
+            val jsonHateoasResponse = Json
+              .toJson(
+                HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)
+              )
+              .as[JsObject]
+            jsonToByteStringStream(jsonHateoasResponse.fields)
+        }
+    }
+
+  def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(xmlOnlyAcceptHeader)).async {
+      implicit request =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+        (for {
+          messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
+          body <- messageSummary match {
+            case MessageSummary(_, _, _, Some(body), _, _) => stringToByteStringStream(body.value)
+            case MessageSummary(_, _, _, _, _, Some(uri)) =>
+              extractResourceLocation(uri).flatMap {
+                resourceLocation =>
+                  objectStoreService.getMessage(resourceLocation).asPresentation
+              }
+            case _ => EitherT.leftT[Future, Source[ByteString, _]](PresentationError.notFoundError(s"Body for message id ${messageId.value} does not exist"))
+          }
+        } yield body).fold(
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          response => Ok.chunked(response, Some(MimeTypes.XML))
         )
     }
 
   def getMessageIds(movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = true)).async {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -250,7 +383,7 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = true)).async {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -264,7 +397,7 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   def getMovements(movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]): Action[AnyContent] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = true)).async {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -284,14 +417,15 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def attachMessageXML(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = true) andThen messageSizeAction()).stream {
-      implicit request =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
+      implicit request => size =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         val messageTypeList =
           if (movementType == MovementType.Arrival) MessageType.updateMessageTypesSentByArrivalTrader else MessageType.updateMessageTypesSentByDepartureTrader
 
         (for {
+          _           <- contentSizeIsLessThanLimit(size)
           messageType <- xmlParsingService.extractMessageType(request.body, messageTypeList).asPresentation
           _           <- validationService.validateXml(messageType, request.body).asPresentation
           _ = auditService.audit(messageType.auditType, request.body, MimeTypes.XML)
@@ -317,14 +451,15 @@ class V2MovementsControllerImpl @Inject() (
           } yield updateResponse
       }
 
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(acceptOnlyJson = true) andThen messageSizeAction()).stream {
-      implicit request =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
+      implicit request => size =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         val messageTypeList =
           if (movementType == MovementType.Arrival) MessageType.updateMessageTypesSentByArrivalTrader else MessageType.updateMessageTypesSentByDepartureTrader
 
         (for {
+          _           <- contentSizeIsLessThanLimit(size)
           messageType <- jsonParsingService.extractMessageType(request.body, messageTypeList).asPresentation
           _           <- validationService.validateJson(messageType, request.body).asPresentation
           _ = auditService.audit(messageType.auditType, request.body, MimeTypes.JSON)
@@ -347,11 +482,21 @@ class V2MovementsControllerImpl @Inject() (
             (for {
               downloadUrl   <- handleUpscanSuccessResponse(upscanResponse)
               objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
-              messageType = extractMessageType(
-                movementType
-              ) //TODO:  remove this and extract the messageType using (xmlParsingService.extractMessageType) and then pass to validator and router part of CTCP-2427 implementation
-              messageUpdate = MessageUpdate(MessageStatus.Processing, Some(ObjectStoreURI(objectSummary.location.asUri)))
-              _ <- persistenceService.updateMessage(eori, movementType, movementId, messageId, messageUpdate).asPresentation
+              uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
+              source      <- objectStoreService.getMessage(uri.stripOwner).asPresentation
+              messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
+              messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)))
+              persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
+              _ <- validationService
+                .validateLargeMessage(messageType, uri)
+                .asPresentation
+                .leftMap {
+                  err =>
+                    persist(messageUpdate(MessageStatus.Failed)).value
+                    err
+                }
+
+              _ <- persist(messageUpdate(MessageStatus.Processing)).asPresentation
 
               sendMessage <- routerService
                 .sendLargeMessage(
@@ -367,12 +512,6 @@ class V2MovementsControllerImpl @Inject() (
               _ => Ok  //TODO: Send notification to PPNS with details of the success
             )
         }
-    }
-
-  private def extractMessageType(movementType: MovementType) =
-    movementType match {
-      case MovementType.Arrival   => MessageType.ArrivalNotification
-      case MovementType.Departure => MessageType.DeclarationData
     }
 
   private def handleUpscanSuccessResponse(upscanResponse: UpscanResponse): EitherT[Future, PresentationError, DownloadUrl] =

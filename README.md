@@ -3,7 +3,7 @@
 
 This is a microservice for a public API which provides ability for traders to submit arrival and departure information.
 
-This mircoservice is in [Beta](https://www.gov.uk/help/beta). The signature may change. 
+This microservice is in [Beta](https://www.gov.uk/help/beta). The signature may change. 
 
 You can find our full list of endpoints on [API definitions](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/common-transit-convention-traders/2.0).
 
@@ -43,6 +43,6 @@ You can find helpful guides on the [HMRC Developer Hub](https://developer.servic
 
 You can create a [GitHub issue](https://github.com/hmrc/common-transit-convention-traders/issues). Alternatively you can contact our Software Development Support team. Email them at sdsteam@hmr.gov.uk, to receive a form where you can add details about your requirements and questions.
 
-### License
+### License 
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").

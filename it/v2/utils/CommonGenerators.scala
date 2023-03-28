@@ -100,6 +100,10 @@ trait CommonGenerators {
     } yield MovementSummary(id, enrollmentEORINumber, Some(movementEORINumber), movementReferenceNumber, created, updated)
   }
 
+  implicit lazy val arbitraryObjectStoreURI: Arbitrary[ObjectStoreURI] = Arbitrary {
+    Gen.alphaNumStr.map(ObjectStoreURI(_))
+  }
+
   implicit lazy val arbitraryMessageSummary: Arbitrary[MessageSummary] =
     Arbitrary {
       for {
@@ -107,7 +111,8 @@ trait CommonGenerators {
         offsetDateTime <- arbitrary[OffsetDateTime]
         messageType    <- arbitrary[MessageType]
         status         <- Gen.oneOf(MessageStatus.statusValues)
-      } yield MessageSummary(id, offsetDateTime, messageType, None, Some(status))
+        objectStoreURI <- Gen.option(arbitrary[ObjectStoreURI])
+      } yield MessageSummary(id, offsetDateTime, messageType, None, Some(status), objectStoreURI)
     }
 
   implicit lazy val arbitraryBoxId: Arbitrary[BoxId] = Arbitrary {
@@ -149,18 +154,6 @@ trait CommonGenerators {
       status <- Gen.oneOf(MessageStatus.statusValues)
       uri    <- Gen.alphaNumStr
     } yield MessageUpdate(status, Some(ObjectStoreURI(uri)))
-  }
-
-  implicit val arbitraryObjectStoreURI: Arbitrary[ObjectStoreURI] = Arbitrary {
-    for {
-      movementId <- arbitraryMovementId.arbitrary
-      messageId  <- arbitraryMessageId.arbitrary
-      lastModified      = Instant.now()
-      formattedDateTime = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC).format(lastModified)
-
-    } yield ObjectStoreURI(
-      s"common-transit-convention-traders/${movementId.value}-${messageId.value}-$formattedDateTime.xml"
-    )
   }
 
   implicit lazy val arbitraryMovementType: Arbitrary[MovementType] = Arbitrary {

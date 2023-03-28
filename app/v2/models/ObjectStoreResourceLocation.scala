@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 
-package v2.models.errors
+package v2.models
 
-import v2.models.ObjectStoreResourceLocation
-
-sealed trait ObjectStoreError
-
-object ObjectStoreError {
-  case class FileNotFound(uri: ObjectStoreResourceLocation) extends ObjectStoreError
-  case class UnexpectedError(thr: Option[Throwable] = None) extends ObjectStoreError
+case class ObjectStoreResourceLocation(value: String) {
+  def stripOwner: ObjectStoreResourceLocation = ObjectStoreResourceLocation(value.stripPrefix("common-transit-convention-traders"))
 }

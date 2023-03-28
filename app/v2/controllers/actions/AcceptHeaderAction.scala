@@ -23,7 +23,6 @@ import play.api.mvc.ActionRefiner
 import play.api.mvc.Request
 import play.api.mvc.Result
 import play.api.mvc.Results.NotAcceptable
-import routing.VersionedRouting
 import v2.models.errors.PresentationError
 
 import scala.concurrent.ExecutionContext
@@ -31,17 +30,9 @@ import scala.concurrent.Future
 
 trait AcceptHeaderAction[R[_] <: Request[_]] extends ActionRefiner[R, R]
 
-class AcceptHeaderActionImpl[R[_] <: Request[_]] @Inject() (acceptOnlyJson: Boolean)(implicit val executionContext: ExecutionContext)
-    extends AcceptHeaderAction[R] {
-
-  private lazy val acceptedHeaders =
-    if (acceptOnlyJson) Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)
-    else
-      Seq(
-        VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
-        VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML,
-        VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
-      )
+class AcceptHeaderActionImpl[R[_] <: Request[_]] @Inject() (acceptedHeaders: Seq[String])(implicit
+  val executionContext: ExecutionContext
+) extends AcceptHeaderAction[R] {
 
   override protected def refine[A](request: R[A]): Future[Either[Result, R[A]]] =
     request.headers.get(HeaderNames.ACCEPT) match {

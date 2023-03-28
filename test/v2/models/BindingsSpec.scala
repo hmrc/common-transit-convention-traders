@@ -66,4 +66,39 @@ class BindingsSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenProper
 
   }
 
+  "MovementType Path Binding" - {
+
+    val pathBindable = Bindings.movementTypePathBindable
+
+    "must bind Departure MovementType from a URL" in {
+
+      val result = pathBindable.bind("movementType", MovementType.Departure.urlFragment)
+      result.toOption.get.urlFragment mustEqual MovementType.Departure.urlFragment
+    }
+
+    "must bind Arrival MovementType from a URL" in {
+
+      val result = pathBindable.bind("movementType", MovementType.Arrival.urlFragment)
+      result.toOption.get.urlFragment mustEqual MovementType.Arrival.urlFragment
+    }
+
+    "must return error if MovementType is not valid from a URL" in {
+
+      val result = pathBindable.bind("movementType", "invalid")
+      result mustEqual Left("movementType value invalid is not valid. expecting arrivals or departures")
+    }
+
+    "must unbind Departure MovementType" in {
+
+      val result = pathBindable.unbind("movementType", MovementType.Departure)
+      result mustEqual MovementType.Departure.toString
+    }
+
+    "must unbind Arrival MovementType" in {
+
+      val result = pathBindable.unbind("movementType", MovementType.Arrival)
+      result mustEqual MovementType.Arrival.toString
+    }
+  }
+
 }

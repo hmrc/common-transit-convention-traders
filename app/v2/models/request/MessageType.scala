@@ -111,6 +111,9 @@ object MessageType {
     PositiveAcknowledge
   )
 
+  val updateMessageTypeSentByTrader: Seq[MessageType] =
+    updateMessageTypesSentByDepartureTrader ++ updateMessageTypesSentByArrivalTrader
+
   val values = (messageTypesSentByDepartureTrader ++
     messageTypesSentToDepartureTrader ++
     messageTypesSentByArrivalTrader ++

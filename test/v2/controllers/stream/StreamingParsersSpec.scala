@@ -21,13 +21,20 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import cats.data.EitherT
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
+import org.scalatest.concurrent.Futures.whenReady
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.Status.OK
 import play.api.libs.Files.SingletonTemporaryFileCreator
+import play.api.libs.json.JsNumber
+import play.api.libs.json.JsString
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.ActionBuilder
 import play.api.mvc.ActionRefiner
@@ -45,6 +52,7 @@ import play.api.test.Helpers.stubControllerComponents
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
 import v2.controllers.request.BodyReplaceableRequest
+import v2.models.errors.PresentationError
 
 import java.nio.charset.StandardCharsets
 import scala.annotation.tailrec
@@ -69,7 +77,7 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with TestActorSyste
     override def parser: BodyParser[AnyContent] = stubControllerComponents().parsers.defaultBodyParser
   }
 
-  object Harness extends BaseController with StreamingParsers {
+  object Harness extends BaseController with StreamingParsers with Logging {
 
     override val controllerComponents = stubControllerComponents()
     implicit val temporaryFileCreator = SingletonTemporaryFileCreator
