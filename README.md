@@ -3,7 +3,7 @@
 
 This is a microservice for a public API which provides ability for traders to submit arrival and departure information.
 
-This mircoservice is in [Beta](https://www.gov.uk/help/beta). The signature may change. 
+This microservice is in [Beta](https://www.gov.uk/help/beta). The signature may change. 
 
 You can find our full list of endpoints on [API definitions](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/common-transit-convention-traders/2.0).
 
