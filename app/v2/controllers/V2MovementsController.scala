@@ -482,11 +482,21 @@ class V2MovementsControllerImpl @Inject() (
             (for {
               downloadUrl   <- handleUpscanSuccessResponse(upscanResponse)
               objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
-              messageType = extractMessageType(
-                movementType
-              ) //TODO:  remove this and extract the messageType using (xmlParsingService.extractMessageType) and then pass to validator and router part of CTCP-2427 implementation
-              messageUpdate = MessageUpdate(MessageStatus.Processing, Some(ObjectStoreURI(objectSummary.location.asUri)))
-              _ <- persistenceService.updateMessage(eori, movementType, movementId, messageId, messageUpdate).asPresentation
+              uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
+              source      <- objectStoreService.getMessage(uri.stripOwner).asPresentation
+              messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
+              messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)))
+              persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
+              _ <- validationService
+                .validateLargeMessage(messageType, uri)
+                .asPresentation
+                .leftMap {
+                  err =>
+                    persist(messageUpdate(MessageStatus.Failed)).value
+                    err
+                }
+
+              _ <- persist(messageUpdate(MessageStatus.Processing)).asPresentation
 
               sendMessage <- routerService
                 .sendLargeMessage(
@@ -502,12 +512,6 @@ class V2MovementsControllerImpl @Inject() (
               _ => Ok  //TODO: Send notification to PPNS with details of the success
             )
         }
-    }
-
-  private def extractMessageType(movementType: MovementType) =
-    movementType match {
-      case MovementType.Arrival   => MessageType.ArrivalNotification
-      case MovementType.Departure => MessageType.DeclarationData
     }
 
   private def handleUpscanSuccessResponse(upscanResponse: UpscanResponse): EitherT[Future, PresentationError, DownloadUrl] =

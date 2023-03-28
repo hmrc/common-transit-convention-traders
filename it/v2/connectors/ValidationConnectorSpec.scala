@@ -25,6 +25,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
+import config.Constants.XObjectStoreUriHeader
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -33,6 +34,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.ContentTypes
 import play.api.http.HeaderNames
 import play.api.http.Status.BAD_REQUEST
+import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.Status.NO_CONTENT
 import play.api.http.Status.OK
 import play.api.libs.json.Json
@@ -42,6 +44,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.TestMetrics
+import v2.models.ObjectStoreResourceLocation
+import v2.models.errors.ErrorCode.SchemaValidation
 import v2.models.errors.JsonValidationError
 import v2.models.errors.PresentationError
 import v2.models.errors.XmlValidationError
@@ -320,6 +324,92 @@ class ValidationConnectorSpec
         }
       }
 
+    }
+
+    "When validating large messages" - {
+
+      "then on successful validation of schema valid XML, must return NO_CONTENT" in {
+        server.stubFor(
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
+          )
+            .withHeader(XObjectStoreUriHeader, equalTo("resource/location"))
+            .willReturn(
+              aResponse().withStatus(NO_CONTENT)
+            )
+        )
+        implicit val hc: HeaderCarrier = HeaderCarrier()
+        val uri                        = ObjectStoreResourceLocation("resource/location")
+
+        whenReady(validationConnector.postLargeMessage(MessageType.DeclarationData, uri)) {
+          result =>
+            result mustBe None
+        }
+      }
+
+      "then on validation of invalid XML, must return OK and a validation error" in {
+        server.stubFor(
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
+          )
+            .withHeader(XObjectStoreUriHeader, equalTo("resource/location"))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  Json.stringify(
+                    Json.toJson(
+                      XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))
+                    )
+                  )
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier()
+
+        val uri = ObjectStoreResourceLocation("resource/location")
+        whenReady(validationConnector.postLargeMessage(MessageType.DeclarationData, uri)) {
+          result =>
+            result mustBe Some(XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)))
+        }
+      }
+
+      "then on a invalid payload, must return BAD_REQUEST and an appropriate error message" in {
+        server.stubFor(
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
+          )
+            .withHeader(XObjectStoreUriHeader, equalTo("resource/location"))
+            .willReturn(
+              aResponse()
+                .withStatus(BAD_REQUEST)
+                .withBody(
+                  Json.stringify(
+                    Json.toJson(PresentationError.badRequestError("some bad request"))
+                  )
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier()
+
+        val uri = ObjectStoreResourceLocation("resource/location")
+        val future = validationConnector.postLargeMessage(MessageType.DeclarationData, uri).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            val thr = result.left.get
+            thr mustBe a[http.UpstreamErrorResponse]
+            thr.asInstanceOf[UpstreamErrorResponse].statusCode mustBe BAD_REQUEST
+            Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj(
+              "code"    -> "BAD_REQUEST",
+              "message" -> "some bad request"
+            )
+        }
+      }
     }
 
   }

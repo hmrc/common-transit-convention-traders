@@ -16,4 +16,6 @@
 
 package v2.models
 
-case class ObjectStoreResourceLocation(value: String)
+case class ObjectStoreResourceLocation(value: String) {
+  def stripOwner: ObjectStoreResourceLocation = ObjectStoreResourceLocation(value.stripPrefix("common-transit-convention-traders"))
+}
