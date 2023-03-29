@@ -121,24 +121,37 @@ class UpscanServiceSpec
     }
   }
 
+  import org.scalatest.time.Millis
+  import org.scalatest.time.Seconds
+  import org.scalatest.time.Span
+
   "upscanGetFile" - {
     val downloadUrl = DownloadUrl("http://download.url")
+    implicit val patienceConfig: PatienceConfig =
+      PatienceConfig(Span(5, Seconds), Span(100, Millis))
+
     "should return Right(result) if the connector returns the result successfully" in {
       val expected = "file content"
       when(mockConnector.upscanGetFile(downloadUrl)).thenReturn(Future.successful(expected))
 
-      val result = sut.upscanGetFile(downloadUrl).value.futureValue
-      assert(result.isRight)
-      assert(result.right.get == expected)
+      val result = sut.upscanGetFile(downloadUrl).value
+
+      whenReady(result) {
+        r =>
+          r mustBe Right(expected)
+      }
     }
 
     "should return Left(UpscanInitiateError.UnexpectedError(Some(throwable))) if the connector fails with a NonFatal error" in {
       val expectedError = new RuntimeException("something went wrong")
       when(mockConnector.upscanGetFile(downloadUrl)).thenReturn(Future.failed(expectedError))
 
-      val result = sut.upscanGetFile(downloadUrl).value.futureValue
-      assert(result.isLeft)
-      assert(result.left.get == UpscanInitiateError.UnexpectedError(Some(expectedError)))
+      val result = sut.upscanGetFile(downloadUrl).value
+
+      whenReady(result) {
+        r =>
+          r mustBe Left(UpscanInitiateError.UnexpectedError(Some(expectedError)))
+      }
     }
   }
 

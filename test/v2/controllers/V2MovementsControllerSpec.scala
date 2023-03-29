@@ -81,14 +81,11 @@ import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
 import v2.models.responses.UpdateMovementResponse
-import v2.models.responses.UploadDetails
-import v2.models.responses.UpscanResponse
 import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.hateoas._
 import v2.services._
 
 import java.nio.charset.StandardCharsets
-import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -4286,6 +4283,17 @@ class V2MovementsControllerSpec
                 ) {
                   (eoriNumber, movementType, movementId, messageId, objectSummary) =>
                     beforeEach()
+                    val upscanGetFileResponse = "some file contents"
+
+                    when(
+                      mockUpscanService.upscanGetFile(
+                        any[String].asInstanceOf[DownloadUrl]
+                      )(
+                        any(),
+                        any()
+                      )
+                    ).thenReturn(EitherT.rightT[Future, UpscanInitiateError](upscanGetFileResponse))
+
                     when(
                       mockObjectStoreService.addMessage(
                         any[String].asInstanceOf[DownloadUrl],

@@ -494,23 +494,62 @@ class V2MovementsControllerImpl @Inject() (
                       else MessageType.updateMessageTypesSentByDepartureTrader
                     (for {
                       upscanFile  <- upscanService.upscanGetFile(downloadUrl).asPresentation
-                      _           <- contentSizeIsLessThanLimit(upscanResponse.uploadDetails.size)
                       messageType <- xmlParsingService.extractMessageType(Source.single(ByteString(upscanFile)), messageTypeList).asPresentation
-                      _           <- validationService.validateXml(messageType, Source.single(ByteString(upscanFile))).asPresentation
+                      messageUpdate = MessageUpdate(_, None)
+
+                      updateMovementResponse = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
+                      _ <- updateMovementResponse(messageUpdate(MessageStatus.Processing)).asPresentation
+                      _ <- validationService
+                        .validateXml(messageType, Source.single(ByteString(upscanFile)))
+                        .asPresentation
+                        .leftMap {
+                          err =>
+                            updateMovementResponse(messageUpdate(MessageStatus.Failed)).value
+                            err
+                        }
+                      _ <- updateMovementResponse(messageUpdate(MessageStatus.Processing)).asPresentation
                       _ = auditService.audit(messageType.auditType, Source.single(ByteString(upscanFile)), MimeTypes.XML)
-                      updateMovementResponse <- updateAndSendToEIS(movementId, movementType, messageType, Source.single(ByteString(upscanFile)))
+                      _ <- routerService
+                        .send(messageType, eori, movementId, messageId, Source.single(ByteString(upscanFile)))
+                        .asPresentation
+                        .leftMap {
+                          err =>
+                            updateMovementResponse(messageUpdate(MessageStatus.Failed)).value
+                            err
+                        }
+
                     } yield updateMovementResponse)
-                      .bimap(
-                        presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-                        response => Accepted(Json.toJson(HateoasMovementUpdateResponse(movementId, response.messageId, movementType)))
+                      .fold[Result](
+                        prentationError => {
+                          pushNotificationsService.postPpnsNotification(movementId, messageId, Json.toJson(prentationError))
+                          Ok
+                        },
+                        _ => {
+                          pushNotificationsService
+                            .postPpnsNotification(movementId, messageId, Json.toJson(HateoasMovementUpdateResponse(movementId, messageId, movementType)))
+                          Ok
+                        }
                       )
-                      .merge
                   case (downloadUrl, _) =>
                     for {
+
                       objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
-                      messageType   = extractMessageType(movementType)
-                      messageUpdate = MessageUpdate(MessageStatus.Processing, Some(ObjectStoreURI(objectSummary.location.asUri)))
-                      _ <- persistenceService.updateMessage(eori, movementType, movementId, messageId, messageUpdate).asPresentation
+                      uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
+                      source      <- objectStoreService.getMessage(uri.stripOwner).asPresentation
+                      messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
+                      messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)))
+                      persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
+                      _ <- validationService
+                        .validateLargeMessage(messageType, uri)
+                        .asPresentation
+                        .leftMap {
+                          err =>
+                            persist(messageUpdate(MessageStatus.Failed)).value
+                            err
+                        }
+
+                      _ <- persist(messageUpdate(MessageStatus.Processing)).asPresentation
+
                       sendMessage <- routerService
                         .sendLargeMessage(
                           messageType,
@@ -520,6 +559,7 @@ class V2MovementsControllerImpl @Inject() (
                           ObjectStoreURI(objectSummary.location.asUri)
                         )
                         .asPresentation
+
                     } yield sendMessage
                 }
               )
@@ -536,17 +576,13 @@ class V2MovementsControllerImpl @Inject() (
       case MovementType.Departure => MessageType.DeclarationData
     }
 
-  private def handleUpscanSuccessResponse(upscanResponse: UpscanResponse): EitherT[Future, PresentationError, DownloadUrl] =
-    EitherT {
-      Future.successful(upscanResponse.uploadDetails match {
-        case Some(uploadDetails) =>
-          (for {
-            url <- upscanResponse.downloadUrl
-          } yield (DownloadUrl(url.value), uploadDetails.size)).toRight {
-            PresentationError.badRequestError("Upscan failed to process file")
-          }
-        case None => Left(PresentationError.badRequestError("Upload details not found in response"))
-      })
+  private def handleUpscanSuccessResponse(upscanResponse: UpscanResponse): EitherT[Future, PresentationError, (DownloadUrl, Long)] =
+    upscanResponse.uploadDetails match {
+      case Some(uploadDetails) =>
+        for {
+          url <- EitherT.fromOption[Future](upscanResponse.downloadUrl, PresentationError.badRequestError("Download url not found in response"))
+        } yield (DownloadUrl(url.value), uploadDetails.size)
+      case None => EitherT.leftT[Future, (DownloadUrl, Long)](PresentationError.badRequestError("Upload details not found in response"))
     }
 
   private def updateAndSendToEIS(movementId: MovementId, movementType: MovementType, messageType: MessageType, source: Source[ByteString, _])(implicit
@@ -573,6 +609,24 @@ class V2MovementsControllerImpl @Inject() (
           result <- persistAndSendToEIS(source, movementType, messageType)
         } yield result
     }
+
+  private def updateSmallMessageStatus(
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    messageStatus: MessageStatus
+  )(implicit
+    hc: HeaderCarrier
+  ) =
+    persistenceService
+      .updateMessage(
+        eoriNumber,
+        movementType,
+        movementId,
+        messageId,
+        MessageUpdate(messageStatus, None)
+      )
 
   private def persistAndSendToEIS(
     source: Source[ByteString, _],

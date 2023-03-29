@@ -38,6 +38,7 @@ import utils.WiremockSuite
 import v2.models.responses.UpscanFormTemplate
 import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.UpscanReference
+import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -110,6 +111,130 @@ class UpscanConnectorSpec
     }
 
   }
+
+  "GET /upscan/v2/file/{downloadUrl}" - {
+    "when making a successful call to upscan get file, must return file content" in {
+      val expectedResponse = "file content"
+      server.stubFor(
+        post(
+//          urlEqualTo("/upscan/v2/file/download.url") // encode only path part of URL
+          urlEqualTo("/upscan/v2/file/download.url")
+        ).willReturn(
+          aResponse().withStatus(OK).withBody(expectedResponse)
+        )
+      )
+      implicit val hc = HeaderCarrier()
+      val result      = sut.upscanGetFile(DownloadUrl("http://download.url"))
+
+      whenReady(result) {
+        _ mustBe expectedResponse
+      }
+
+    }
+
+    "when making a failure call to upscan get file, an exception is returned in the future" in {
+      server.stubFor(
+        post(
+          urlEqualTo("/upscan/v2/file/download.url") // encode only path part of URL
+        ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
+      )
+      implicit val hc = HeaderCarrier()
+      val result = sut
+        .upscanGetFile(DownloadUrl("http://download.url"))
+        .map(
+          _ => fail("A success was recorded when it shouldn't have been")
+        )
+        .recover {
+          case _ => ()
+        }
+
+      whenReady(result) {
+        _ => // if we get here, we have a success and a Unit, so all is okay!
+      }
+    }
+  }
+
+  //  "GET /upscan/v2/file/{downloadUrl}" - {
+//    "when making a successful call to upscan get file, must return file content" in {
+//      val expectedResponse = "file content"
+//      server.stubFor(
+//        post(
+//          urlEqualTo("/upscan/v2/file/http%3A%2F%2Fdownload.url") // encode URL
+//        ).willReturn(
+//          aResponse().withStatus(OK).withBody(expectedResponse)
+//        )
+//      )
+//      implicit val hc = HeaderCarrier()
+//      val result      = sut.upscanGetFile(DownloadUrl("http://download.url"))
+//
+//      whenReady(result) {
+//        _ mustBe expectedResponse
+//      }
+//
+//    }
+//
+//    "when making a failure call to upscan get file, an exception is returned in the future" in {
+//      server.stubFor(
+//        post(
+//          urlEqualTo("/upscan/v2/file/http%3A%2F%2Fdownload.url") // encode URL
+//        ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
+//      )
+//      implicit val hc = HeaderCarrier()
+//      val result = sut
+//        .upscanGetFile(DownloadUrl("http://download.url"))
+//        .map(
+//          _ => fail("A success was recorded when it shouldn't have been")
+//        )
+//        .recover {
+//          case _ => ()
+//        }
+//
+//      whenReady(result) {
+//        _ => // if we get here, we have a success and a Unit, so all is okay!
+//      }
+//    }
+//  }
+
+  //  "GET /upscan/v2/file/{downloadUrl}" - {
+//    "when making a successful call to upscan get file, must return file content" in {
+//      val expectedResponse = "file content"
+//      server.stubFor(
+//        post(
+//          urlEqualTo("/upscan/v2/file/http://download.url")
+//        ).willReturn(
+//          aResponse().withStatus(OK).withBody(expectedResponse)
+//        )
+//      )
+//      implicit val hc = HeaderCarrier()
+//      val result      = sut.upscanGetFile(DownloadUrl("http://download.url"))
+//
+//      whenReady(result) {
+//        _ mustBe expectedResponse
+//      }
+//
+//    }
+//
+//    "when making a failure call to upscan get file, an exception is returned in the future" in {
+//      server.stubFor(
+//        post(
+//          urlEqualTo("/upscan/v2/file/http://download.url")
+//        ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
+//      )
+//      implicit val hc = HeaderCarrier()
+//      val result = sut
+//        .upscanGetFile(DownloadUrl("http://download.url"))
+//        .map(
+//          _ => fail("A success was recorded when it shouldn't have been")
+//        )
+//        .recover {
+//          case _ => ()
+//        }
+//
+//      whenReady(result) {
+//        _ => // if we get here, we have a success and a Unit, so all is okay!
+//      }
+//    }
+//  }
 
   private def upscanResponse =
     UpscanInitiateResponse(
