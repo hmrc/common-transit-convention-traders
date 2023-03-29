@@ -472,62 +472,61 @@ class V2MovementsControllerImpl @Inject() (
     }
   }
 
-  def attachLargeMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit authenticatedRequest: AuthenticatedRequest[_]): Action[JsValue] =
-    Action.async(parse.json) { implicit request =>
-      implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-      parseAndLogUpscanResponse(request.body) match {
-        case Left(presentationError) =>
-          Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
-        case Right(upscanResponse) =>
-          handleUpscanSuccessResponse(upscanResponse).flatMap {
-            case (downloadUrl, _) if upscanResponse.uploadDetails.size < 100 * 1024 * 1024 =>
-              val messageTypeList =
-                if (movementType == MovementType.Arrival) MessageType.updateMessageTypesSentByArrivalTrader else MessageType.updateMessageTypesSentByDepartureTrader
+  def attachLargeMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[JsValue] =
+    Action.async(parse.json) {
+      request =>
+        implicit val hc: HeaderCarrier                                   = HeaderCarrierConverter.fromRequest(request)
+        implicit val authenticatedRequest: AuthenticatedRequest[JsValue] = AuthenticatedRequest(eori, request)
 
-              val jsonByteString = ByteString(request.body.toString())
-              val source = Source.single(jsonByteString)
-              (for {
-                _ <- contentSizeIsLessThanLimit(upscanResponse.uploadDetails.size)
-                messageType <- xmlParsingService.extractMessageType(source, messageTypeList).asPresentation
-                _ <- validationService.validateXml(messageType, source).asPresentation
-                _ = auditService.audit(messageType.auditType, source, MimeTypes.XML)
-                updateMovementResponse <- updateAndSendToEIS(movementId, movementType, messageType, source)
-              } yield updateMovementResponse).biflatMap(
-                presentationError => EitherT.liftF[Future, PresentationError, Result](Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))),
-                response => EitherT.liftF[Future, PresentationError, Result](Future.successful(Accepted(Json.toJson(HateoasMovementUpdateResponse(movementId, response.messageId, movementType)))))
+        val maxFileSize: Long = 5 * 1024 * 1024 // 5 MB
+
+        parseAndLogUpscanResponse(request.body) match {
+          case Left(presentationError) =>
+            Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
+          case Right(upscanResponse) =>
+            handleUpscanSuccessResponse(upscanResponse)
+              .fold(
+                presentationError => Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError))),
+                {
+                  case (downloadUrl, _) if upscanResponse.uploadDetails.size < maxFileSize =>
+                    val messageTypeList =
+                      if (movementType == MovementType.Arrival) MessageType.updateMessageTypesSentByArrivalTrader
+                      else MessageType.updateMessageTypesSentByDepartureTrader
+                    (for {
+                      upscanFile  <- upscanService.upscanGetFile(downloadUrl).asPresentation
+                      _           <- contentSizeIsLessThanLimit(upscanResponse.uploadDetails.size)
+                      messageType <- xmlParsingService.extractMessageType(Source.single(ByteString(upscanFile)), messageTypeList).asPresentation
+                      _           <- validationService.validateXml(messageType, Source.single(ByteString(upscanFile))).asPresentation
+                      _ = auditService.audit(messageType.auditType, Source.single(ByteString(upscanFile)), MimeTypes.XML)
+                      updateMovementResponse <- updateAndSendToEIS(movementId, movementType, messageType, Source.single(ByteString(upscanFile)))
+                    } yield updateMovementResponse)
+                      .bimap(
+                        presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+                        response => Accepted(Json.toJson(HateoasMovementUpdateResponse(movementId, response.messageId, movementType)))
+                      )
+                      .merge
+                  case (downloadUrl, _) =>
+                    for {
+                      objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
+                      messageType   = extractMessageType(movementType)
+                      messageUpdate = MessageUpdate(MessageStatus.Processing, Some(ObjectStoreURI(objectSummary.location.asUri)))
+                      _ <- persistenceService.updateMessage(eori, movementType, movementId, messageId, messageUpdate).asPresentation
+                      sendMessage <- routerService
+                        .sendLargeMessage(
+                          messageType,
+                          eori,
+                          movementId,
+                          messageId,
+                          ObjectStoreURI(objectSummary.location.asUri)
+                        )
+                        .asPresentation
+                    } yield sendMessage
+                }
               )
-            case (downloadUrl, _) =>
-              for {
-                objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
-                uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
-                source <- objectStoreService.getMessage(uri.stripOwner).asPresentation
-                messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
-                messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)))
-                persist = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
-                _ <- validationService
-                  .validateLargeMessage(messageType, uri)
-                  .asPresentation
-                  .leftMap {
-                    err =>
-                      persist(messageUpdate(MessageStatus.Failed)).value
-                      err
-                  }
-
-                _ <- persist(messageUpdate(MessageStatus.Processing)).asPresentation
-
-                sendMessage <- routerService
-                  .sendLargeMessage(
-                    messageType,
-                    eori,
-                    movementId,
-                    messageId,
-                    ObjectStoreURI(objectSummary.location.asUri)
-                  )
-                  .asPresentation
-            } yield sendMessage).fold[Result](
-              _ => Ok, //TODO: Send notification to PPNS with details of the error
-              _ => Ok  //TODO: Send notification to PPNS with details of the success
-            )
+              .map {
+                _ =>
+                  Ok //TODO: Send notification to PPNS with details of the success or error
+              }
         }
     }
 
@@ -560,24 +559,6 @@ class V2MovementsControllerImpl @Inject() (
       _ <- routerService
         .send(messageType, request.eoriNumber, movementId, updateMovementResponse.messageId, source)
         .asPresentation
-        .leftMap {
-          err =>
-            updateSmallMessageStatus(
-              request.eoriNumber,
-              movementType,
-              movementId,
-              updateMovementResponse.messageId,
-              MessageStatus.Failed
-            )
-            err
-        }
-      _ <- updateSmallMessageStatus(
-        request.eoriNumber,
-        movementType,
-        movementId,
-        updateMovementResponse.messageId,
-        MessageStatus.Success
-      ).asPresentation
     } yield updateMovementResponse
 
   private def validatePersistAndSendToEIS(
