@@ -151,9 +151,10 @@ trait CommonGenerators {
 
   implicit val arbitraryMessageUpdate: Arbitrary[MessageUpdate] = Arbitrary {
     for {
-      status <- Gen.oneOf(MessageStatus.statusValues)
-      uri    <- Gen.alphaNumStr
-    } yield MessageUpdate(status, Some(ObjectStoreURI(uri)), Some(MessageType.DeclarationData))
+      status      <- Gen.oneOf(MessageStatus.statusValues)
+      uri         <- Gen.alphaNumStr
+      messageType <- Gen.oneOf(MessageType.values)
+    } yield MessageUpdate(status, Some(ObjectStoreURI(uri)), Some(messageType))
   }
 
   implicit lazy val arbitraryMovementType: Arbitrary[MovementType] = Arbitrary {
