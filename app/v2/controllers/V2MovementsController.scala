@@ -79,29 +79,29 @@ trait V2MovementsController {
 
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent]
 
-  def attachLargeMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit authenticatedRequest: AuthenticatedRequest[_]): Action[JsValue]
+  def attachLargeMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[JsValue]
 }
 
 @Singleton
-class V2MovementsControllerImpl @Inject()(
-                                           val controllerComponents: ControllerComponents,
-                                           authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
-                                           validationService: ValidationService,
-                                           conversionService: ConversionService,
-                                           persistenceService: PersistenceService,
-                                           routerService: RouterService,
-                                           auditService: AuditingService,
-                                           pushNotificationsService: PushNotificationsService,
-                                           acceptHeaderActionProvider: AcceptHeaderActionProvider,
-                                           val metrics: Metrics,
-                                           xmlParsingService: XmlMessageParsingService,
-                                           jsonParsingService: JsonMessageParsingService,
-                                           responseFormatterService: ResponseFormatterService,
-                                           upscanService: UpscanService,
-                                           objectStoreService: ObjectStoreService,
-                                           config: AppConfig
-                                         )(implicit val materializer: Materializer, val temporaryFileCreator: TemporaryFileCreator)
-  extends BaseController
+class V2MovementsControllerImpl @Inject() (
+  val controllerComponents: ControllerComponents,
+  authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
+  validationService: ValidationService,
+  conversionService: ConversionService,
+  persistenceService: PersistenceService,
+  routerService: RouterService,
+  auditService: AuditingService,
+  pushNotificationsService: PushNotificationsService,
+  acceptHeaderActionProvider: AcceptHeaderActionProvider,
+  val metrics: Metrics,
+  xmlParsingService: XmlMessageParsingService,
+  jsonParsingService: JsonMessageParsingService,
+  responseFormatterService: ResponseFormatterService,
+  upscanService: UpscanService,
+  objectStoreService: ObjectStoreService,
+  config: AppConfig
+)(implicit val materializer: Materializer, val temporaryFileCreator: TemporaryFileCreator)
+    extends BaseController
     with V2MovementsController
     with Logging
     with StreamingParsers
@@ -497,23 +497,62 @@ class V2MovementsControllerImpl @Inject()(
                       else MessageType.updateMessageTypesSentByDepartureTrader
                     (for {
                       upscanFile  <- upscanService.upscanGetFile(downloadUrl).asPresentation
-                      _           <- contentSizeIsLessThanLimit(upscanResponse.uploadDetails.size)
                       messageType <- xmlParsingService.extractMessageType(Source.single(ByteString(upscanFile)), messageTypeList).asPresentation
-                      _           <- validationService.validateXml(messageType, Source.single(ByteString(upscanFile))).asPresentation
+                      messageUpdate = MessageUpdate(_, None)
+
+                      updateMovementResponse = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
+                      _ <- updateMovementResponse(messageUpdate(MessageStatus.Processing)).asPresentation
+                      _ <- validationService
+                        .validateXml(messageType, Source.single(ByteString(upscanFile)))
+                        .asPresentation
+                        .leftMap {
+                          err =>
+                            updateMovementResponse(messageUpdate(MessageStatus.Failed)).value
+                            err
+                        }
+                      _ <- updateMovementResponse(messageUpdate(MessageStatus.Processing)).asPresentation
                       _ = auditService.audit(messageType.auditType, Source.single(ByteString(upscanFile)), MimeTypes.XML)
-                      updateMovementResponse <- updateAndSendToEIS(movementId, movementType, messageType, Source.single(ByteString(upscanFile)))
+                      _ <- routerService
+                        .send(messageType, eori, movementId, messageId, Source.single(ByteString(upscanFile)))
+                        .asPresentation
+                        .leftMap {
+                          err =>
+                            updateMovementResponse(messageUpdate(MessageStatus.Failed)).value
+                            err
+                        }
+
                     } yield updateMovementResponse)
-                      .bimap(
-                        presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-                        response => Accepted(Json.toJson(HateoasMovementUpdateResponse(movementId, response.messageId, movementType)))
+                      .fold[Result](
+                        prentationError => {
+                          pushNotificationsService.postPpnsNotification(movementId, messageId, Json.toJson(prentationError))
+                          Ok
+                        },
+                        _ => {
+                          pushNotificationsService
+                            .postPpnsNotification(movementId, messageId, Json.toJson(HateoasMovementUpdateResponse(movementId, messageId, movementType)))
+                          Ok
+                        }
                       )
-                      .merge
                   case (downloadUrl, _) =>
                     for {
+
                       objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
-                      messageType   = extractMessageType(movementType)
-                      messageUpdate = MessageUpdate(MessageStatus.Processing, Some(ObjectStoreURI(objectSummary.location.asUri)))
-                      _ <- persistenceService.updateMessage(eori, movementType, movementId, messageId, messageUpdate).asPresentation
+                      uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
+                      source      <- objectStoreService.getMessage(uri.stripOwner).asPresentation
+                      messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
+                      messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)))
+                      persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
+                      _ <- validationService
+                        .validateLargeMessage(messageType, uri)
+                        .asPresentation
+                        .leftMap {
+                          err =>
+                            persist(messageUpdate(MessageStatus.Failed)).value
+                            err
+                        }
+
+                      _ <- persist(messageUpdate(MessageStatus.Processing)).asPresentation
+
                       sendMessage <- routerService
                         .sendLargeMessage(
                           messageType,
@@ -523,6 +562,7 @@ class V2MovementsControllerImpl @Inject()(
                           ObjectStoreURI(objectSummary.location.asUri)
                         )
                         .asPresentation
+
                     } yield sendMessage
                 }
               )
@@ -549,8 +589,8 @@ class V2MovementsControllerImpl @Inject()(
     }
 
   private def updateAndSendToEIS(movementId: MovementId, movementType: MovementType, messageType: MessageType, source: Source[ByteString, _])(implicit
-                                                                                                                                              hc: HeaderCarrier,
-                                                                                                                                              request: AuthenticatedRequest[_]
+    hc: HeaderCarrier,
+    request: AuthenticatedRequest[_]
   ) =
     for {
       updateMovementResponse <- persistenceService.addMessage(movementId, movementType, messageType, source).asPresentation
@@ -595,8 +635,8 @@ class V2MovementsControllerImpl @Inject()(
     } yield HateoasNewMovementResponse(movementResponse, boxResponseOption, None, movementType)
 
   private def mapToOptionalResponse[E, R](
-                                           eitherT: EitherT[Future, E, R]
-                                         ): EitherT[Future, PresentationError, Option[R]] =
+    eitherT: EitherT[Future, E, R]
+  ): EitherT[Future, PresentationError, Option[R]] =
     EitherT[Future, PresentationError, Option[R]] {
       eitherT.fold(
         _ => Right(None),

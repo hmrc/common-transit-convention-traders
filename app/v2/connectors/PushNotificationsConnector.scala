@@ -25,10 +25,13 @@ import metrics.MetricsKeys
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status.NO_CONTENT
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
+//import play.libs.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
+import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.request.PushNotificationsAssociation
 import v2.models.responses.BoxResponse
@@ -49,6 +52,11 @@ trait PushNotificationsConnector {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[BoxResponse]
+
+  def postPpnsNotification(movementId: MovementId, messageId: MessageId, body: JsValue)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit]
 
 }
 
@@ -81,5 +89,19 @@ class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClient
           .withBody(Json.toJson(pushNotificationsAssociation))
           .execute[BoxResponse]
     }
+
+  override def postPpnsNotification(movementId: MovementId, messageId: MessageId, body: JsValue)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] = {
+
+    val url = appConfig.pushNotificationsUrl.withPath(pushPpnsNotifications(movementId, messageId))
+
+    httpClientV2
+      .post(url"$url")
+      .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
+      .withBody(body)
+      .execute[Unit]
+  }
 
 }
