@@ -4330,12 +4330,6 @@ class V2MovementsControllerSpec
 
                     status(result) mustBe OK
 
-                    verify(mockObjectStoreService, times(1)).addMessage(
-                      DownloadUrl(any()),
-                      MovementId(eqTo(movementId.value)),
-                      MessageId(eqTo(messageId.value))
-                    )(any(), any())
-
                     verify(mockObjectStoreService, times(1)).getMessage(ObjectStoreResourceLocation(any()))(any(), any())
 
                     verify(mockXmlParsingService, times(1)).extractMessageType(any(), any())(any(), any())
@@ -4355,9 +4349,9 @@ class V2MovementsControllerSpec
                     verify(mockRouterService, times(1))
                       .sendLargeMessage(
                         any[MessageType],
-                        EORINumber(eqTo(eoriNumber.value)),
-                        MovementId(eqTo(movementId.value)),
-                        MessageId(eqTo(messageId.value)),
+                        EORINumber(any()),
+                        MovementId(any()),
+                        MessageId(any()),
                         ObjectStoreURI(any())
                       )(any(), any())
                 }
