@@ -481,26 +481,28 @@ class V2MovementsControllerImpl @Inject() (
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         parseAndLogUpscanResponse(request.body) match {
-          case Left(presentationError) => Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
+          case Left(presentationError) =>
+            Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
           case Right(upscanResponse) =>
             (for {
-              downloadUrl <- handleUpscanSuccessResponse(upscanResponse).leftSemiflatTap {
-                _ =>
-                  println("--- failure")
-                  val response = Json.toJson(
-                    TraderFailedUploadAuditRequest(
-                      movementId,
-                      messageId,
-                      eori,
-                      movementType
+              downloadUrl <- handleUpscanSuccessResponse(upscanResponse)
+                .leftMap {
+                  err =>
+                    val auditReq = Json.toJson(
+                      TraderFailedUploadAuditRequest(
+                        movementId,
+                        messageId,
+                        eori,
+                        movementType
+                      )
                     )
-                  )
-                  auditService.audit(
-                    AuditType.TraderFailedUploadEvent,
-                    Source.single(ByteString(response.toString(), StandardCharsets.UTF_8)),
-                    MimeTypes.JSON
-                  )
-              }
+                    auditService.audit(
+                      AuditType.TraderFailedUploadEvent,
+                      Source.single(ByteString(auditReq.toString(), StandardCharsets.UTF_8)),
+                      MimeTypes.JSON
+                    )
+                    err
+                }
               objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
               messageType = extractMessageType(
                 movementType
@@ -530,7 +532,7 @@ class V2MovementsControllerImpl @Inject() (
       case MovementType.Departure => MessageType.DeclarationData
     }
 
-  def handleUpscanSuccessResponse(upscanResponse: UpscanResponse): EitherT[Future, PresentationError, DownloadUrl] =
+  private def handleUpscanSuccessResponse(upscanResponse: UpscanResponse): EitherT[Future, PresentationError, DownloadUrl] =
     EitherT {
       Future.successful(upscanResponse.downloadUrl.toRight {
         PresentationError.badRequestError("Upscan failed to process file")

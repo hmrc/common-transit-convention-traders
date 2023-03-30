@@ -31,7 +31,7 @@ class TraderFailedUploadAuditRequestSpec extends AnyFreeSpec with Matchers with 
 
   private val gen = Gen.listOfN(10, Gen.alphaChar).map(_.mkString)
 
-  "when MessageID is serialized, return an appropriate JsObject" in forAll(gen, gen, gen, arbitraryMovementType.arbitrary) {
+  "when request is serialized, return an appropriate JsObject" in forAll(gen, gen, gen, arbitraryMovementType.arbitrary) {
     (movementId, messageId, eoriNumber, movementType) =>
       val actual = TraderFailedUploadAuditRequest.traderFailedUploadAuditResponseFormat.writes(
         TraderFailedUploadAuditRequest(MovementId(movementId), MessageId(messageId), EORINumber(eoriNumber), movementType)
@@ -40,7 +40,7 @@ class TraderFailedUploadAuditRequestSpec extends AnyFreeSpec with Matchers with 
       actual mustBe expected
   }
 
-  "when an appropriate JsObject is deserialized, return a MessageId" in forAll(gen, gen, gen, arbitraryMovementType.arbitrary) {
+  "when an appropriate JsObject is deserialized, return a request" in forAll(gen, gen, gen, arbitraryMovementType.arbitrary) {
     (movementId, messageId, eoriNumber, movementType) =>
       val actual = TraderFailedUploadAuditRequest.traderFailedUploadAuditResponseFormat.reads(
         Json.obj("movementId" -> movementId, "messageId" -> messageId, "enrollmentEORINumber" -> eoriNumber, "movementType" -> movementType)
