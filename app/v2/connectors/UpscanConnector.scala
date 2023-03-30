@@ -16,20 +16,29 @@
 
 package v2.connectors
 
-import com.google.inject.{ImplementedBy, Inject}
+import com.google.inject.ImplementedBy
+import com.google.inject.Inject
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
-import metrics.{HasMetrics, MetricsKeys}
-import play.api.http.{HeaderNames, MimeTypes}
+import metrics.HasMetrics
+import metrics.MetricsKeys
+import play.api.http.HeaderNames
+import play.api.http.MimeTypes
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
-import v2.models.{EORINumber, MessageId, MovementId, MovementType}
+import v2.models.EORINumber
+import v2.models.MessageId
+import v2.models.MovementId
+import v2.models.MovementType
 import v2.models.request.UpscanInitiate
 import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.UpscanResponse.DownloadUrl
 
-import scala.concurrent.{ExecutionContext, Future}
+import java.net.URLEncoder
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 @ImplementedBy(classOf[UpscanConnectorImpl])
 trait UpscanConnector {

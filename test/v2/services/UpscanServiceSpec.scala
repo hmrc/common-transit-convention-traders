@@ -121,7 +121,6 @@ class UpscanServiceSpec
     }
   }
 
-  import org.scalatest.concurrent.ScalaFutures.whenReady
   import org.scalatest.time.Millis
   import org.scalatest.time.Seconds
   import org.scalatest.time.Span
@@ -155,27 +154,6 @@ class UpscanServiceSpec
       }
     }
   }
-
-  //  "upscanGetFile" - {
-//    val downloadUrl = DownloadUrl("http://download.url")
-//    "should return Right(result) if the connector returns the result successfully" in {
-//      val expected = "file content"
-//      when(mockConnector.upscanGetFile(downloadUrl)).thenReturn(Future.successful(expected))
-//
-//      val result = sut.upscanGetFile(downloadUrl).value.futureValue
-//      assert(result.isRight)
-//      assert(result.right.get == expected)
-//    }
-//
-//    "should return Left(UpscanInitiateError.UnexpectedError(Some(throwable))) if the connector fails with a NonFatal error" in {
-//      val expectedError = new RuntimeException("something went wrong")
-//      when(mockConnector.upscanGetFile(downloadUrl)).thenReturn(Future.failed(expectedError))
-//
-//      val result = sut.upscanGetFile(downloadUrl).value.futureValue
-//      assert(result.isLeft)
-//      assert(result.left.get == UpscanInitiateError.UnexpectedError(Some(expectedError)))
-//    }
-//  }
 
   private def upscanResponse =
     UpscanInitiateResponse(
