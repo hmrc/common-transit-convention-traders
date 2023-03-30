@@ -16,40 +16,30 @@
 
 package v2.connectors
 
-import com.github.tomakehurst.wiremock.client.WireMock.aResponse
-import com.github.tomakehurst.wiremock.client.WireMock.equalTo
-import com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath
-import com.github.tomakehurst.wiremock.client.WireMock.patch
-import com.github.tomakehurst.wiremock.client.WireMock.post
-import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
+import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import io.lemonlabs.uri.Url
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
-import org.scalatest.concurrent.IntegrationPatience
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.forAll
-import play.api.http.HeaderNames
-import play.api.http.MimeTypes
-import play.api.http.Status.CREATED
-import play.api.http.Status.INTERNAL_SERVER_ERROR
-import play.api.http.Status.NOT_FOUND
-import play.api.http.Status.NO_CONTENT
-import play.api.libs.json.Json
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.UpstreamErrorResponse
+import play.api.http.{HeaderNames, MimeTypes}
+import play.api.http.Status.{CREATED, INTERNAL_SERVER_ERROR, NOT_FOUND, NO_CONTENT}
+import play.api.libs.json.{JsValue, Json}
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.http.test.HttpClientV2Support
-import utils.TestMetrics
-import utils.WiremockSuite
-import v2.models.MovementId
+import utils.{TestMetrics, WiremockSuite}
+import v2.models.{MessageId, MovementId}
 import v2.models.request.PushNotificationsAssociation
 import v2.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
+
+
 
 class PushNotificationsConnectorSpec
     extends AnyFreeSpec
@@ -191,6 +181,67 @@ class PushNotificationsConnectorSpec
         }
     }
 
+  }
+
+
+
+  "postPpnsNotification" - {
+
+    "should send a POST request to the correct URL with the correct data" in forAll(
+      arbitrary[MovementId],
+      arbitrary[MessageId],
+      arbitrary[JsValue]
+    ) {
+      (movementId, messageId, body) =>
+        val expectedUrl = s"/transit-movements-push-notifications/traders/movements/${movementId.value}/messages/${messageId.value}"
+        val jsonRequest = Json.stringify(body)
+
+        server.stubFor(
+          post(expectedUrl)
+            .withHeader("Content-Type", equalTo("application/json"))
+            .withRequestBody(equalTo(jsonRequest))
+            .willReturn(
+              aResponse()
+                .withStatus(204)
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val response    = sut.postPpnsNotification(movementId, messageId, body)
+        whenReady(response) {
+          result =>
+            result mustBe (())
+        }
+    }
+
+    "should return an exception if the server returns an error status" in forAll(
+      arbitrary[MovementId],
+      arbitrary[MessageId],
+      arbitrary[JsValue],
+      arbitrary[UpstreamErrorResponse]
+    ) {
+      (movementId, messageId, body, upstreamError) =>
+        val connector   = new PushNotificationsConnectorImpl(mockAppConfig, httpClientV2, new TestMetrics)
+        val expectedUrl = s"/transit-movements-push-notifications/traders/movements/${movementId.value}/messages/${messageId.value}"
+        val jsonRequest = Json.stringify(body)
+
+        server.stubFor(
+          post(expectedUrl)
+            .withHeader("Content-Type", equalTo("application/json"))
+            .withRequestBody(equalTo(jsonRequest))
+            .willReturn(
+              aResponse()
+                .withStatus(upstreamError.statusCode)
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val response    = sut.postPpnsNotification(movementId, messageId, body)
+        whenReady(response.failed) {
+          exception =>
+            exception mustBe upstreamError
+        }
+    }
   }
 
 }
