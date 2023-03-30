@@ -50,7 +50,11 @@ import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
-import v2.models.responses._
+import v2.models.responses.BoxResponse
+import v2.models.responses.LargeMessageAuditRequest
+import v2.models.responses.MessageSummary
+import v2.models.responses.UpdateMovementResponse
+import v2.models.responses.UpscanResponse
 import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.hateoas._
 import v2.services._
@@ -66,19 +70,12 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[V2MovementsControllerImpl])
 trait V2MovementsController {
   def createMovement(movementType: MovementType): Action[Source[ByteString, _]]
-
   def getMessage(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent]
-
   def getMessageIds(movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
-
   def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent]
-
   def getMovements(movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]): Action[AnyContent]
-
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]]
-
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent]
-
   def attachLargeMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[JsValue]
 }
 
@@ -492,6 +489,7 @@ class V2MovementsControllerImpl @Inject() (
                 presentationError => Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError))),
                 {
                   case (downloadUrl, _) if upscanResponse.uploadDetails.size < maxFileSize =>
+                    println(s"File size is less than 5MB = " + upscanResponse.uploadDetails.size)
                     val messageTypeList =
                       if (movementType == MovementType.Arrival) MessageType.updateMessageTypesSentByArrivalTrader
                       else MessageType.updateMessageTypesSentByDepartureTrader
@@ -520,6 +518,13 @@ class V2MovementsControllerImpl @Inject() (
                             updateMovementResponse(messageUpdate(MessageStatus.Failed)).value
                             err
                         }
+                      _ <- updateSmallMessageStatus(
+                        eori,
+                        movementType,
+                        movementId,
+                        messageId,
+                        MessageStatus.Success
+                      ).asPresentation
 
                     } yield updateMovementResponse)
                       .fold[Result](
@@ -534,6 +539,7 @@ class V2MovementsControllerImpl @Inject() (
                         }
                       )
                   case (downloadUrl, _) =>
+                    println("File size greater than 5MB")
                     for {
 
                       objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
@@ -613,6 +619,24 @@ class V2MovementsControllerImpl @Inject() (
         } yield result
     }
 
+  private def updateSmallMessageStatus(
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    messageStatus: MessageStatus
+  )(implicit
+    hc: HeaderCarrier
+  ) =
+    persistenceService
+      .updateMessage(
+        eoriNumber,
+        movementType,
+        movementId,
+        messageId,
+        MessageUpdate(messageStatus, None)
+      )
+
   private def persistAndSendToEIS(
     source: Source[ByteString, _],
     movementType: MovementType,
@@ -632,6 +656,24 @@ class V2MovementsControllerImpl @Inject() (
           source
         )
         .asPresentation
+        .leftMap {
+          err =>
+            updateSmallMessageStatus(
+              request.eoriNumber,
+              movementType,
+              movementResponse.movementId,
+              movementResponse.messageId,
+              MessageStatus.Failed
+            )
+            err
+        }
+      _ <- updateSmallMessageStatus(
+        request.eoriNumber,
+        movementType,
+        movementResponse.movementId,
+        movementResponse.messageId,
+        MessageStatus.Success
+      ).asPresentation
     } yield HateoasNewMovementResponse(movementResponse, boxResponseOption, None, movementType)
 
   private def mapToOptionalResponse[E, R](
