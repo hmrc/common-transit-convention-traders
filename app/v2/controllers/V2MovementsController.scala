@@ -475,10 +475,7 @@ class V2MovementsControllerImpl @Inject() (
   def attachLargeMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[JsValue] =
     Action.async(parse.json) {
       request =>
-        implicit val hc: HeaderCarrier                                   = HeaderCarrierConverter.fromRequest(request)
-        implicit val authenticatedRequest: AuthenticatedRequest[JsValue] = AuthenticatedRequest(eori, request)
-
-        val maxFileSize: Long = 5 * 1024 * 1024 // 5 MB
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         parseAndLogUpscanResponse(request.body) match {
           case Left(presentationError) =>
@@ -488,8 +485,7 @@ class V2MovementsControllerImpl @Inject() (
               .fold(
                 presentationError => Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError))),
                 {
-                  case (downloadUrl, _) if upscanResponse.uploadDetails.size < maxFileSize =>
-                    println(s"File size is less than 5MB = " + upscanResponse.uploadDetails.size)
+                  case (downloadUrl, size) if size <= config.smallMessageSizeLimit =>
                     val messageTypeList =
                       if (movementType == MovementType.Arrival) MessageType.updateMessageTypesSentByArrivalTrader
                       else MessageType.updateMessageTypesSentByDepartureTrader
@@ -508,7 +504,6 @@ class V2MovementsControllerImpl @Inject() (
                             updateMovementResponse(messageUpdate(MessageStatus.Failed)).value
                             err
                         }
-                      _ <- updateMovementResponse(messageUpdate(MessageStatus.Processing)).asPresentation
                       _ = auditService.audit(messageType.auditType, Source.single(ByteString(upscanFile)), MimeTypes.XML)
                       _ <- routerService
                         .send(messageType, eori, movementId, messageId, Source.single(ByteString(upscanFile)))
@@ -538,9 +533,8 @@ class V2MovementsControllerImpl @Inject() (
                           Ok
                         }
                       )
-                  case (downloadUrl, _) =>
-                    println("File size greater than 5MB")
-                    for {
+                  case (downloadUrl, size) if size > config.smallMessageSizeLimit =>
+                    (for {
 
                       objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
                       uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
@@ -556,7 +550,6 @@ class V2MovementsControllerImpl @Inject() (
                             persist(messageUpdate(MessageStatus.Failed)).value
                             err
                         }
-
                       _ <- persist(messageUpdate(MessageStatus.Processing)).asPresentation
 
                       sendMessage <- routerService
@@ -568,21 +561,22 @@ class V2MovementsControllerImpl @Inject() (
                           ObjectStoreURI(objectSummary.location.asUri)
                         )
                         .asPresentation
+                        .leftMap {
+                          err =>
+                            persist(messageUpdate(MessageStatus.Failed)).value
+                            err
+                        }
 
-                    } yield sendMessage
+                    } yield sendMessage).fold[Result](
+                      _ => Ok, //TODO: Send notification to PPNS with details of the error
+                      _ => Ok  //TODO: Send notification to PPNS with details of the success
+                    )
                 }
               )
               .map {
-                _ =>
-                  Ok //TODO: Send notification to PPNS with details of the success or error
+                _ => Ok
               }
         }
-    }
-
-  private def extractMessageType(movementType: MovementType) =
-    movementType match {
-      case MovementType.Arrival   => MessageType.ArrivalNotification
-      case MovementType.Departure => MessageType.DeclarationData
     }
 
   private def handleUpscanSuccessResponse(upscanResponse: UpscanResponse): EitherT[Future, PresentationError, (DownloadUrl, Long)] =
@@ -604,6 +598,24 @@ class V2MovementsControllerImpl @Inject() (
       _ <- routerService
         .send(messageType, request.eoriNumber, movementId, updateMovementResponse.messageId, source)
         .asPresentation
+        .leftMap {
+          err =>
+            updateSmallMessageStatus(
+              request.eoriNumber,
+              movementType,
+              movementId,
+              updateMovementResponse.messageId,
+              MessageStatus.Failed
+            )
+            err
+        }
+      _ <- updateSmallMessageStatus(
+        request.eoriNumber,
+        movementType,
+        movementId,
+        updateMovementResponse.messageId,
+        MessageStatus.Success
+      ).asPresentation
     } yield updateMovementResponse
 
   private def validatePersistAndSendToEIS(
