@@ -145,6 +145,15 @@ class V2MovementsControllerSpec
     )
   )
 
+  val jsonFailedUpscanResponse = Json.obj(
+    "reference"  -> "11370e18-6e24-453e-b45a-76d3e32ea33d",
+    "fileStatus" -> "FAILED",
+    "failureDetails" -> Json.obj(
+      "failureReason" -> "QUARANTINE",
+      "message"       -> "e.g. This file has a virus"
+    )
+  )
+
   val jsonInvalidUpscanResponse = Json.obj(
     "reference"   -> "11370e18-6e24-453e-b45a-76d3e32ea33d",
     "downloadUrl" -> "https://bucketName.s3.eu-west-2.amazonaws.com?1235676",
@@ -4902,6 +4911,29 @@ class V2MovementsControllerSpec
               )(any(), any())
         }
       }
+    }
+
+    "should return Ok when failure response from upscan" in forAll(
+      arbitraryEORINumber.arbitrary,
+      arbitraryMovementType.arbitrary,
+      arbitraryMovementId.arbitrary,
+      arbitraryMessageId.arbitrary
+    ) {
+      (eoriNumber, movementType, movementId, messageId) =>
+        beforeEach()
+
+        val request = FakeRequest(
+          POST,
+          v2.controllers.routes.V2MovementsController.attachLargeMessage(eoriNumber, movementType, movementId, messageId).url,
+          headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)),
+          jsonFailedUpscanResponse
+        )
+
+        val result = sut.attachLargeMessage(eoriNumber, movementType, movementId, messageId)(request)
+
+        status(result) mustBe OK
+
+        verify(mockAuditService, times(1)).audit(eqTo(AuditType.TraderFailedUploadEvent), any(), eqTo(MimeTypes.JSON))(any(), any())
     }
 
     "should return Bad Request if it cannot parse the upscan response" in forAll(

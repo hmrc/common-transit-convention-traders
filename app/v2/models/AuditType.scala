@@ -47,6 +47,7 @@ object AuditType {
   final case object ArrivalNotification                                extends AuditType("ArrivalNotification")
   final case object ForwardedIncidentNotificationToED                  extends AuditType("ForwardedIncidentNotificationToED")
   final case object LargeMessageSubmissionRequested                    extends AuditType("LargeMessageSubmissionRequested")
+  final case object TraderFailedUploadEvent                            extends AuditType("TraderFailedUploadEvent")
 
   val values: Seq[AuditType] = Seq(
     AmendmentAcceptance,
@@ -75,7 +76,8 @@ object AuditType {
     UnloadingRemarks,
     InformationAboutNonArrivedMovement,
     ForwardedIncidentNotificationToED,
-    LargeMessageSubmissionRequested
+    LargeMessageSubmissionRequested,
+    TraderFailedUploadEvent
   )
 
   def find(code: String): Option[AuditType] =
