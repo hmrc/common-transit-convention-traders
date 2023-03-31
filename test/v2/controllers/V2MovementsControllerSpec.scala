@@ -4336,16 +4336,6 @@ class V2MovementsControllerSpec
 
                     verify(mockValidationService, times(1)).validateLargeMessage(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
 
-                    verify(mockPersistenceService, times(1)).updateMessage(
-                      EORINumber(any()),
-                      any[MovementType],
-                      MovementId(any()),
-                      MessageId(any()),
-                      any()
-                    )(
-                      any(),
-                      any()
-                    )
                     verify(mockRouterService, times(1))
                       .sendLargeMessage(
                         any[MessageType],

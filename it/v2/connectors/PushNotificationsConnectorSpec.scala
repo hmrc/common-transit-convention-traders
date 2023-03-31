@@ -22,24 +22,31 @@ import io.lemonlabs.uri.Url
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatest.concurrent.IntegrationPatience
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.forAll
-import play.api.http.{HeaderNames, MimeTypes}
-import play.api.http.Status.{CREATED, INTERNAL_SERVER_ERROR, NOT_FOUND, NO_CONTENT}
-import play.api.libs.json.{JsValue, Json}
-import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+import play.api.http.HeaderNames
+import play.api.http.MimeTypes
+import play.api.http.Status.CREATED
+import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.http.Status.NOT_FOUND
+import play.api.http.Status.NO_CONTENT
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
-import utils.{TestMetrics, WiremockSuite}
-import v2.models.{MessageId, MovementId}
+import utils.TestMetrics
+import utils.WiremockSuite
+import v2.models.MessageId
+import v2.models.MovementId
 import v2.models.request.PushNotificationsAssociation
 import v2.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
-
 
 class PushNotificationsConnectorSpec
     extends AnyFreeSpec
@@ -182,8 +189,6 @@ class PushNotificationsConnectorSpec
     }
 
   }
-
-
 
   "postPpnsNotification" - {
 
