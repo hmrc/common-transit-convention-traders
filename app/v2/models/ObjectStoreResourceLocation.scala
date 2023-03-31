@@ -16,6 +16,13 @@
 
 package v2.models
 
+import play.api.libs.json.Format
+import play.api.libs.json.Json
+
+object ObjectStoreResourceLocation {
+  implicit val objectStoreResourceLocationFormat: Format[ObjectStoreResourceLocation] = Json.valueFormat[ObjectStoreResourceLocation]
+}
+
 case class ObjectStoreResourceLocation(value: String) {
   def stripOwner: ObjectStoreResourceLocation = ObjectStoreResourceLocation(value.stripPrefix("common-transit-convention-traders"))
 }
