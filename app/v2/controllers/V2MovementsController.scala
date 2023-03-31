@@ -624,23 +624,21 @@ class V2MovementsControllerImpl @Inject() (
       source =>
         for {
 
-          messageType <- xmlParsingService.extractMessageType(src, messageTypeList).asPresentation
-          _           <- validationService.validateXml(messageType, source).asPresentation
-          messageUpdate = MessageUpdate(_, None)
-
+          messageType <- xmlParsingService.extractMessageType(source, messageTypeList).asPresentation
+          messageUpdate          = MessageUpdate(_, None)
           updateMovementResponse = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
           _ <- updateMovementResponse(messageUpdate(MessageStatus.Processing)).asPresentation
           _ <- validationService
-            .validateXml(messageType, src)
+            .validateXml(messageType, source)
             .asPresentation
             .leftMap {
               err =>
                 updateMovementResponse(messageUpdate(MessageStatus.Failed)).value
                 err
             }
-          _ = auditService.audit(messageType.auditType, src, MimeTypes.XML)
+          _ = auditService.audit(messageType.auditType, source, MimeTypes.XML)
           result <- routerService
-            .send(messageType, eori, movementId, messageId, src)
+            .send(messageType, eori, movementId, messageId, source)
             .asPresentation
             .leftMap {
               err =>
