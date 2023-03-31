@@ -492,29 +492,9 @@ class V2MovementsControllerImpl @Inject() (
                     (for {
                       upscanFile <- upscanService.upscanGetFile(downloadUrl).asPresentation
 
-                      messageType <- xmlParsingService.extractMessageType(upscanFile, messageTypeList).asPresentation
-                      messageUpdate = MessageUpdate(_, None)
+                      _ <- streamLargeMessage(eori, movementId, messageId, messageTypeList, upscanFile, movementType)
 
-                      updateMovementResponse = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
-                      _ <- updateMovementResponse(messageUpdate(MessageStatus.Processing)).asPresentation
-                      _ <- validationService
-                        .validateXml(messageType, upscanFile)
-                        .asPresentation
-                        .leftMap {
-                          err =>
-                            updateMovementResponse(messageUpdate(MessageStatus.Failed)).value
-                            err
-                        }
-                      _ = auditService.audit(messageType.auditType, upscanFile, MimeTypes.XML)
-                      _ <- routerService
-                        .send(messageType, eori, movementId, messageId, upscanFile)
-                        .asPresentation
-                        .leftMap {
-                          err =>
-                            updateMovementResponse(messageUpdate(MessageStatus.Failed)).value
-                            err
-                        }
-                      _ <- updateSmallMessageStatus(
+                      updateMovementResponse <- updateSmallMessageStatus(
                         eori,
                         movementType,
                         movementId,
@@ -629,6 +609,44 @@ class V2MovementsControllerImpl @Inject() (
         for {
           _      <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
           result <- persistAndSendToEIS(source, movementType, messageType)
+        } yield result
+    }
+
+  private def streamLargeMessage(
+    eori: EORINumber,
+    movementId: MovementId,
+    messageId: MessageId,
+    messageTypeList: Seq[MessageType],
+    src: Source[ByteString, _],
+    movementType: MovementType
+  )(implicit hc: HeaderCarrier) =
+    withReusableSource(src) {
+      source =>
+        for {
+
+          messageType <- xmlParsingService.extractMessageType(src, messageTypeList).asPresentation
+          _           <- validationService.validateXml(messageType, source).asPresentation
+          messageUpdate = MessageUpdate(_, None)
+
+          updateMovementResponse = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
+          _ <- updateMovementResponse(messageUpdate(MessageStatus.Processing)).asPresentation
+          _ <- validationService
+            .validateXml(messageType, src)
+            .asPresentation
+            .leftMap {
+              err =>
+                updateMovementResponse(messageUpdate(MessageStatus.Failed)).value
+                err
+            }
+          _ = auditService.audit(messageType.auditType, src, MimeTypes.XML)
+          result <- routerService
+            .send(messageType, eori, movementId, messageId, src)
+            .asPresentation
+            .leftMap {
+              err =>
+                updateMovementResponse(messageUpdate(MessageStatus.Failed)).value
+                err
+            }
         } yield result
     }
 
