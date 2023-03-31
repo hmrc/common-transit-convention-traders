@@ -134,8 +134,9 @@ trait V2BaseConnector extends HttpErrorFunctions {
         .flatMap {
           response =>
             response.status match {
-              case OK => response.as[T]
+              case OK => println("response from upscan" + response.as[T]); response.as[T]
               case _ =>
+                println("response from upscan error" + response.error);
                 response.error
             }
         }

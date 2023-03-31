@@ -487,26 +487,27 @@ class V2MovementsControllerImpl @Inject() (
                 {
                   case (downloadUrl, size) if size <= config.smallMessageSizeLimit =>
                     val messageTypeList =
-                      if (movementType == MovementType.Arrival) MessageType.updateMessageTypesSentByArrivalTrader
-                      else MessageType.updateMessageTypesSentByDepartureTrader
+                      if (movementType == MovementType.Arrival) MessageType.messageTypesSentByArrivalTrader
+                      else MessageType.messageTypesSentByDepartureTrader
                     (for {
-                      upscanFile  <- upscanService.upscanGetFile(downloadUrl).asPresentation
-                      messageType <- xmlParsingService.extractMessageType(Source.single(ByteString(upscanFile)), messageTypeList).asPresentation
+                      upscanFile <- upscanService.upscanGetFile(downloadUrl).asPresentation
+
+                      messageType <- xmlParsingService.extractMessageType(upscanFile, messageTypeList).asPresentation
                       messageUpdate = MessageUpdate(_, None)
 
                       updateMovementResponse = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
                       _ <- updateMovementResponse(messageUpdate(MessageStatus.Processing)).asPresentation
                       _ <- validationService
-                        .validateXml(messageType, Source.single(ByteString(upscanFile)))
+                        .validateXml(messageType, upscanFile)
                         .asPresentation
                         .leftMap {
                           err =>
                             updateMovementResponse(messageUpdate(MessageStatus.Failed)).value
                             err
                         }
-                      _ = auditService.audit(messageType.auditType, Source.single(ByteString(upscanFile)), MimeTypes.XML)
+                      _ = auditService.audit(messageType.auditType, upscanFile, MimeTypes.XML)
                       _ <- routerService
-                        .send(messageType, eori, movementId, messageId, Source.single(ByteString(upscanFile)))
+                        .send(messageType, eori, movementId, messageId, upscanFile)
                         .asPresentation
                         .leftMap {
                           err =>

@@ -16,6 +16,9 @@
 
 package v2.connectors
 
+import akka.stream.Materializer
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.kenshoo.play.metrics.Metrics
@@ -48,7 +51,7 @@ trait UpscanConnector {
     ec: ExecutionContext
   ): Future[UpscanInitiateResponse]
 
-  def upscanGetFile(downloadUrl: DownloadUrl)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[String]
+  def upscanGetFile(downloadUrl: DownloadUrl)(implicit hc: HeaderCarrier, ec: ExecutionContext, materializer: Materializer): Future[Source[ByteString, _]]
 
 }
 
@@ -78,10 +81,11 @@ class UpscanConnectorImpl @Inject() (appConfig: AppConfig, httpClientV2: HttpCli
           .executeAndDeserialise[UpscanInitiateResponse]
     }
 
-  override def upscanGetFile(downloadUrl: DownloadUrl)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[String] =
+  override def upscanGetFile(
+    downloadUrl: DownloadUrl
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext, materializer: Materializer): Future[Source[ByteString, _]] =
     httpClientV2
-      .get(url"$downloadUrl")
-      .setHeader(HeaderNames.ACCEPT -> MimeTypes.XML)
-      .executeAndDeserialise[String]
+      .get(url"${downloadUrl.value}")
+      .executeAsStream
 
 }

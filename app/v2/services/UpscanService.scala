@@ -16,6 +16,7 @@
 
 package v2.services
 
+import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
@@ -46,7 +47,11 @@ trait UpscanService {
 
   def upscanGetFile(
     downloadUrl: DownloadUrl
-  )(implicit headerCarrier: HeaderCarrier, executionContext: ExecutionContext): EitherT[Future, UpscanInitiateError, String]
+  )(implicit
+    headerCarrier: HeaderCarrier,
+    executionContext: ExecutionContext,
+    materializer: Materializer
+  ): EitherT[Future, UpscanInitiateError, Source[ByteString, _]]
 }
 
 class UpscanServiceImpl @Inject() (
@@ -69,13 +74,17 @@ class UpscanServiceImpl @Inject() (
 
   override def upscanGetFile(
     downloadUrl: DownloadUrl
-  )(implicit headerCarrier: HeaderCarrier, executionContext: ExecutionContext): EitherT[Future, UpscanInitiateError, String] =
+  )(implicit
+    headerCarrier: HeaderCarrier,
+    executionContext: ExecutionContext,
+    materializer: Materializer
+  ): EitherT[Future, UpscanInitiateError, Source[ByteString, _]] =
     EitherT {
       upscanConnector
         .upscanGetFile(downloadUrl)
         .map(Right(_))
         .recover {
-          case NonFatal(thr) => Left(UpscanInitiateError.UnexpectedError(thr = Some(thr)))
+          case NonFatal(thr) => println("upscan connection error" + thr); Left(UpscanInitiateError.UnexpectedError(thr = Some(thr)))
         }
     }
 
