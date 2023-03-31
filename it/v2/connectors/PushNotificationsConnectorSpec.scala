@@ -21,7 +21,7 @@ import config.AppConfig
 import io.lemonlabs.uri.Url
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -190,7 +190,16 @@ class PushNotificationsConnectorSpec
 
   }
 
+
   "postPpnsNotification" - {
+    implicit val jsValueArbitrary: Arbitrary[JsValue] = Arbitrary(Gen.const(Json.obj()))
+
+    implicit val upstreamErrorArbitrary: Arbitrary[UpstreamErrorResponse] = Arbitrary(
+      for {
+        statusCode <- Gen.oneOf(400, 401, 403, 404, 500)
+        message <- arbitrary[String]
+      } yield UpstreamErrorResponse(message, statusCode, statusCode, Map.empty)
+    )
 
     "should send a POST request to the correct URL with the correct data" in forAll(
       arbitrary[MovementId],
@@ -198,6 +207,7 @@ class PushNotificationsConnectorSpec
       arbitrary[JsValue]
     ) {
       (movementId, messageId, body) =>
+
         val expectedUrl = s"/transit-movements-push-notifications/traders/movements/${movementId.value}/messages/${messageId.value}"
         val jsonRequest = Json.stringify(body)
 
@@ -212,7 +222,7 @@ class PushNotificationsConnectorSpec
         )
 
         implicit val hc = HeaderCarrier()
-        val response    = sut.postPpnsNotification(movementId, messageId, body)
+        val response = sut.postPpnsNotification(movementId, messageId, body)
         whenReady(response) {
           result =>
             result mustBe (())
@@ -226,7 +236,7 @@ class PushNotificationsConnectorSpec
       arbitrary[UpstreamErrorResponse]
     ) {
       (movementId, messageId, body, upstreamError) =>
-        val connector   = new PushNotificationsConnectorImpl(mockAppConfig, httpClientV2, new TestMetrics)
+        val connector = new PushNotificationsConnectorImpl(mockAppConfig, httpClientV2, new TestMetrics)
         val expectedUrl = s"/transit-movements-push-notifications/traders/movements/${movementId.value}/messages/${messageId.value}"
         val jsonRequest = Json.stringify(body)
 
@@ -241,12 +251,11 @@ class PushNotificationsConnectorSpec
         )
 
         implicit val hc = HeaderCarrier()
-        val response    = sut.postPpnsNotification(movementId, messageId, body)
+        val response = sut.postPpnsNotification(movementId, messageId, body)
         whenReady(response.failed) {
           exception =>
             exception mustBe upstreamError
         }
     }
   }
-
 }
