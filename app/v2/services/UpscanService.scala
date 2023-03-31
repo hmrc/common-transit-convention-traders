@@ -84,7 +84,7 @@ class UpscanServiceImpl @Inject() (
         .upscanGetFile(downloadUrl)
         .map(Right(_))
         .recover {
-          case NonFatal(thr) => println("upscan connection error" + thr); Left(UpscanInitiateError.UnexpectedError(thr = Some(thr)))
+          case NonFatal(thr) => Left(UpscanInitiateError.UnexpectedError(thr = Some(thr)))
         }
     }
 
