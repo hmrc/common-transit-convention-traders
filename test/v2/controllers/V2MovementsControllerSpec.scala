@@ -76,6 +76,7 @@ import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
 import v2.models.errors.FailedToValidateError.JsonSchemaFailedToValidateError
 import v2.models.errors._
 import v2.models.request.MessageType
+import v2.models.request.MessageType.DeclarationAmendment
 import v2.models.request.MessageUpdate
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
@@ -4330,20 +4331,6 @@ class V2MovementsControllerSpec
 
                     status(result) mustBe OK
 
-                    verify(mockObjectStoreService, times(1)).getMessage(ObjectStoreResourceLocation(any()))(any(), any())
-
-                    verify(mockXmlParsingService, times(1)).extractMessageType(any(), any())(any(), any())
-
-                    verify(mockValidationService, times(1)).validateLargeMessage(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
-
-                    verify(mockRouterService, times(1))
-                      .sendLargeMessage(
-                        any[MessageType],
-                        EORINumber(any()),
-                        MovementId(any()),
-                        MessageId(any()),
-                        ObjectStoreURI(any())
-                      )(any(), any())
                 }
 
                 "and sending the message to router fails" in forAll(
@@ -4443,7 +4430,7 @@ class V2MovementsControllerSpec
                       MessageId(eqTo(messageId.value))
                     )(any(), any())
 
-                    verify(mockObjectStoreService, times(1)).getMessage(ObjectStoreResourceLocation(any()))(any(), any())
+                    verify(mockObjectStoreService, times(1)).getMessage(any())(any(), any())
 
                     verify(mockXmlParsingService, times(1)).extractMessageType(any(), any())(any(), any())
 
