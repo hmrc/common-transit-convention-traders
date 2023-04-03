@@ -33,20 +33,20 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.Status.NOT_FOUND
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
 import play.api.test.FakeHeaders
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.base.TestCommonGenerators
 import v2.connectors.PushNotificationsConnector
-import v2.models.BoxId
-import v2.models.ClientId
-import v2.models.MovementId
-import v2.models.MovementType
+import v2.models._
 import v2.models.errors.PushNotificationError
 import v2.models.request.PushNotificationsAssociation
 import v2.models.responses.BoxResponse
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 class PushNotificationServiceSpec
@@ -70,6 +70,18 @@ class PushNotificationServiceSpec
     reset(mockConnector)
     reset(mockAppConfig)
   }
+
+  val jsonPayloadGen: Gen[JsValue] = for {
+    clientRefNum <- arbitrary[String]
+    boxId        <- arbitrary[String]
+    clientId     <- arbitrary[String]
+    movementType <- Gen.oneOf(MovementType.Arrival, MovementType.Departure)
+  } yield Json.obj(
+    "clientRefNum" -> clientRefNum,
+    "boxId"        -> boxId,
+    "clientId"     -> clientId,
+    "movementType" -> movementType.toString
+  )
 
   "associate" - {
 
@@ -228,5 +240,58 @@ class PushNotificationServiceSpec
           r => r mustBe Left(PushNotificationError.UnexpectedError(thr = Some(expectedException)))
         }
     }
+  }
+
+  "postPpnsNotification" - {
+    "should return Right(()) if push notifications are disabled" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
+      (movementId, messageId) =>
+        when(mockAppConfig.pushNotificationsEnabled).thenReturn(false)
+        when(mockConnector.postPpnsNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any())).thenReturn(Future.successful(()))
+
+        val jsonPayload = jsonPayloadGen.sample.get
+
+        val result = sut.postPpnsNotification(movementId, messageId, jsonPayload).value.futureValue
+
+        result mustBe Right(())
+    }
+
+    "should return Right(()) if the push notification was successfully sent" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
+      (movementId, messageId) =>
+        when(mockAppConfig.pushNotificationsEnabled) thenReturn true
+        when(mockConnector.postPpnsNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any())).thenReturn(Future.successful(()))
+
+        val jsonPayload = jsonPayloadGen.sample.get
+        val result      = sut.postPpnsNotification(movementId, messageId, jsonPayload).value.futureValue
+
+        result mustBe Right(())
+
+    }
+
+    "should return Left(BoxNotFound) if the box is not found" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
+      (movementId, messageId) =>
+        val expectedException = new Exception()
+        when(mockAppConfig.pushNotificationsEnabled) thenReturn true
+        when(mockConnector.postPpnsNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
+          .thenReturn(Future.failed(UpstreamErrorResponse("Box not found", NOT_FOUND)))
+        val jsonPayload = jsonPayloadGen.sample.get
+
+        val result = sut.postPpnsNotification(movementId, messageId, jsonPayload).value.futureValue
+
+        result mustBe Left(PushNotificationError.BoxNotFound)
+
+    }
+
+    "should return Left(UnexpectedError) if an unexpected error occurs" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
+      (movementId, messageId) =>
+        when(mockAppConfig.pushNotificationsEnabled) thenReturn true
+        when(mockConnector.postPpnsNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
+          .thenReturn(Future.failed(new RuntimeException("Something went wrong")))
+        val jsonPayload = jsonPayloadGen.sample.get
+        val result      = sut.postPpnsNotification(movementId, messageId, jsonPayload).value.futureValue
+
+        result mustBe a[Left[PushNotificationError, Unit]]
+
+    }
+
   }
 }

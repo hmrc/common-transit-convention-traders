@@ -16,6 +16,8 @@
 
 package v2.services
 
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.when
@@ -27,6 +29,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import uk.gov.hmrc.http.HeaderCarrier
+import v2.base.TestActorSystem
 import v2.base.TestCommonGenerators
 import v2.connectors.UpscanConnector
 import v2.models.EORINumber
@@ -41,6 +44,9 @@ import v2.models.responses.UpscanResponse.DownloadUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import org.scalatest.time.Millis
+import org.scalatest.time.Seconds
+import org.scalatest.time.Span
 
 class UpscanServiceSpec
     extends AnyFreeSpec
@@ -50,7 +56,8 @@ class UpscanServiceSpec
     with MockitoSugar
     with TestCommonGenerators
     with ScalaCheckDrivenPropertyChecks
-    with BeforeAndAfterEach {
+    with BeforeAndAfterEach
+    with TestActorSystem {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
@@ -121,10 +128,6 @@ class UpscanServiceSpec
     }
   }
 
-  import org.scalatest.time.Millis
-  import org.scalatest.time.Seconds
-  import org.scalatest.time.Span
-
   "upscanGetFile" - {
     val downloadUrl = DownloadUrl("http://download.url")
     implicit val patienceConfig: PatienceConfig =
@@ -132,13 +135,13 @@ class UpscanServiceSpec
 
     "should return Right(result) if the connector returns the result successfully" in {
       val expected = "file content"
-      when(mockConnector.upscanGetFile(downloadUrl)).thenReturn(Future.successful(expected))
+      when(mockConnector.upscanGetFile(downloadUrl)).thenReturn(Future.successful(Source.single(ByteString(expected))))
 
       val result = sut.upscanGetFile(downloadUrl).value
 
       whenReady(result) {
         r =>
-          r mustBe Right(expected)
+          r mustBe Right(Source.single(ByteString(expected)))
       }
     }
 
