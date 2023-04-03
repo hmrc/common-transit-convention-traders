@@ -53,6 +53,7 @@ import v2.models.request.MessageUpdate
 import v2.models.responses.BoxResponse
 import v2.models.responses.LargeMessageAuditRequest
 import v2.models.responses.MessageSummary
+import v2.models.responses.TraderFailedUploadAuditRequest
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.UpscanResponse
 import v2.models.responses.UpscanResponse.DownloadUrl

@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-package v2.models
+package v2.models.responses
 
-import play.api.libs.json.Format
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
+import v2.models.EORINumber
+import v2.models.MessageId
+import v2.models.MovementId
+import v2.models.MovementType
 
-object ObjectStoreResourceLocation {
-  implicit val objectStoreResourceLocationFormat: Format[ObjectStoreResourceLocation] = Json.valueFormat[ObjectStoreResourceLocation]
-}
+case class TraderFailedUploadAuditRequest(
+  movementId: MovementId,
+  messageId: MessageId,
+  enrollmentEORINumber: EORINumber,
+  movementType: MovementType
+)
 
-case class ObjectStoreResourceLocation(value: String) {
-  def stripOwner: ObjectStoreResourceLocation = ObjectStoreResourceLocation(value.stripPrefix("common-transit-convention-traders"))
+object TraderFailedUploadAuditRequest {
+  implicit lazy val traderFailedUploadAuditResponseFormat: OFormat[TraderFailedUploadAuditRequest] = Json.format[TraderFailedUploadAuditRequest]
 }
