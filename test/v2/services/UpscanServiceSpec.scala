@@ -16,6 +16,7 @@
 
 package v2.services
 
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import org.mockito.ArgumentMatchers.any
@@ -43,10 +44,13 @@ import v2.models.responses.UpscanReference
 import v2.models.responses.UpscanResponse.DownloadUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Await
 import scala.concurrent.Future
 import org.scalatest.time.Millis
 import org.scalatest.time.Seconds
 import org.scalatest.time.Span
+
+import scala.concurrent.duration.Duration
 
 class UpscanServiceSpec
     extends AnyFreeSpec
@@ -141,7 +145,11 @@ class UpscanServiceSpec
 
       whenReady(result) {
         r =>
-          r mustBe Right(Source.single(ByteString(expected)))
+          val expectedSource = Source.single(ByteString(expected))
+          val actualSource   = r.getOrElse(Source.empty)
+          val expectedBytes  = Await.result(expectedSource.runWith(Sink.seq), Duration.Inf).flatten
+          val actualBytes    = Await.result(actualSource.runWith(Sink.seq), Duration.Inf).flatten
+          actualBytes mustBe expectedBytes
       }
     }
 
