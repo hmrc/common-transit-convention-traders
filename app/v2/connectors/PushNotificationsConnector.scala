@@ -24,6 +24,7 @@ import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
+import play.api.http.Status.ACCEPTED
 import play.api.http.Status.NO_CONTENT
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
@@ -101,7 +102,7 @@ class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClient
       .post(url"$url")
       .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
       .withBody(body)
-      .execute[Unit]
+      .executeAndExpect(ACCEPTED)
   }
 
 }
