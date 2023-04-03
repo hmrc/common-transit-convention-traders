@@ -483,6 +483,23 @@ class V2MovementsControllerImpl @Inject() (
             Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
           case Right(upscanResponse) =>
             handleUpscanSuccessResponse(upscanResponse)
+              .leftMap {
+                err =>
+                  val auditReq = Json.toJson(
+                    TraderFailedUploadAuditRequest(
+                      movementId,
+                      messageId,
+                      eori,
+                      movementType
+                    )
+                  )
+                  auditService.audit(
+                    AuditType.TraderFailedUploadEvent,
+                    Source.single(ByteString(auditReq.toString(), StandardCharsets.UTF_8)),
+                    MimeTypes.JSON
+                  )
+                  err
+              }
               .fold(
                 presentationError => Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError))),
                 {
