@@ -41,6 +41,7 @@ import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.TestMetrics
 import utils.WiremockSuite
 import v2.models.AuditType
+import v2.models.ObjectStoreResourceLocation
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -58,69 +59,127 @@ class AuditingConnectorSpec
     _ => Url.parse(server.baseUrl())
   ) // using thenAnswer for lazy semantics
 
-  lazy val sut                        = new AuditingConnectorImpl(httpClientV2, mockAppConfig, new TestMetrics)
-  def targetUrl(auditType: AuditType) = s"/transit-movements-auditing/audit/${auditType.name}"
+  lazy val sut                                          = new AuditingConnectorImpl(httpClientV2, mockAppConfig, new TestMetrics)
+  def targetUrl(auditType: AuditType)                   = s"/transit-movements-auditing/audit/${auditType.name}"
+  def targetUrlLarge(auditType: AuditType, uri: String) = s"/transit-movements-auditing/audit/${auditType.name}/uri/$uri"
 
-  "when sending an audit message" - Seq(MimeTypes.XML, MimeTypes.JSON).foreach {
-    contentType =>
-      s"when the content-type equals $contentType" - {
-        "return a successful future if the audit message was accepted" in {
+  "For a small message" - {
+    "when sending an audit message" - Seq(MimeTypes.XML, MimeTypes.JSON).foreach {
+      contentType =>
+        s"when the content-type equals $contentType" - {
+          "return a successful future if the audit message was accepted" in {
+
+            // given this endpoint
+            server.stubFor(
+              post(
+                urlEqualTo(targetUrl(AuditType.DeclarationData))
+              )
+                .withHeader(HeaderNames.CONTENT_TYPE, equalTo(contentType))
+                .willReturn(aResponse().withStatus(ACCEPTED))
+            )
+
+            implicit val hc = HeaderCarrier()
+            // when we call the audit service
+            val future = sut.post(AuditType.DeclarationData, Source.empty, contentType)
+
+            // then the future should be ready
+            whenReady(future) {
+              _ =>
+            }
+          }
+
+          "return a failed future if the audit message was not accepted" - Seq(BAD_REQUEST, INTERNAL_SERVER_ERROR).foreach {
+            statusCode =>
+              s"when a $statusCode is returned" in {
+
+                // given this endpoint
+                server.stubFor(
+                  post(
+                    urlEqualTo(targetUrl(AuditType.DeclarationData))
+                  )
+                    .withHeader(HeaderNames.CONTENT_TYPE, equalTo(contentType))
+                    .willReturn(aResponse().withStatus(statusCode))
+                )
+
+                implicit val hc = HeaderCarrier()
+                // when we call the audit service
+                val future = sut.post(AuditType.DeclarationData, Source.empty, contentType)
+
+                val result = future
+                  .map(
+                    _ => fail("A success was registered when it should have been a failure.")
+                  )
+                  .recover {
+                    // backticks for stable identifier
+                    case UpstreamErrorResponse(_, `statusCode`, _, _) => ()
+                    case x: TestFailedException                       => x
+                    case x                                            => fail(s"An unexpected exception was thrown: ${x.getClass.getSimpleName}, ${x.getMessage}")
+                  }
+
+                // then the future should be ready
+                whenReady(result) {
+                  _ =>
+                }
+              }
+          }
+
+        }
+    }
+  }
+
+  "For a large message" - {
+    "return a successful future if the audit message was accepted" in {
+      // given this endpoint
+      server.stubFor(
+        post(
+          urlEqualTo(targetUrlLarge(AuditType.DeclarationData, "part1/part2/large-file.xml"))
+        )
+          .willReturn(aResponse().withStatus(ACCEPTED))
+      )
+
+      implicit val hc = HeaderCarrier()
+      // when we call the audit service
+      val future = sut.post(AuditType.DeclarationData, ObjectStoreResourceLocation("part1/part2/large-file.xml"))
+
+      // then the future should be ready
+      whenReady(future) {
+        _ =>
+      }
+    }
+
+    "return a failed future if the audit message was not accepted" - Seq(BAD_REQUEST, INTERNAL_SERVER_ERROR).foreach {
+      statusCode =>
+        s"when a $statusCode is returned" in {
 
           // given this endpoint
           server.stubFor(
             post(
-              urlEqualTo(targetUrl(AuditType.DeclarationData))
+              urlEqualTo(targetUrlLarge(AuditType.DeclarationData, "part1/part2/large-file.xml"))
             )
-              .withHeader(HeaderNames.CONTENT_TYPE, equalTo(contentType))
-              .willReturn(aResponse().withStatus(ACCEPTED))
+              .willReturn(aResponse().withStatus(statusCode))
           )
 
           implicit val hc = HeaderCarrier()
           // when we call the audit service
-          val future = sut.post(AuditType.DeclarationData, Source.empty, contentType)
+          val future = sut.post(AuditType.DeclarationData, ObjectStoreResourceLocation("part1/part2/large-file.xml"))
+
+          val result = future
+            .map(
+              _ => fail("A success was registered when it should have been a failure.")
+            )
+            .recover {
+              // backticks for stable identifier
+              case UpstreamErrorResponse(_, `statusCode`, _, _) => ()
+              case x: TestFailedException                       => x
+              case x                                            => fail(s"An unexpected exception was thrown: ${x.getClass.getSimpleName}, ${x.getMessage}")
+            }
 
           // then the future should be ready
-          whenReady(future) {
+          whenReady(result) {
             _ =>
           }
         }
-
-        "return a failed future if the audit message was not accepted" - Seq(BAD_REQUEST, INTERNAL_SERVER_ERROR).foreach {
-          statusCode =>
-            s"when a $statusCode is returned" in {
-
-              // given this endpoint
-              server.stubFor(
-                post(
-                  urlEqualTo(targetUrl(AuditType.DeclarationData))
-                )
-                  .withHeader(HeaderNames.CONTENT_TYPE, equalTo(contentType))
-                  .willReturn(aResponse().withStatus(statusCode))
-              )
-
-              implicit val hc = HeaderCarrier()
-              // when we call the audit service
-              val future = sut.post(AuditType.DeclarationData, Source.empty, contentType)
-
-              val result = future
-                .map(
-                  _ => fail("A success was registered when it should have been a failure.")
-                )
-                .recover {
-                  // backticks for stable identifier
-                  case UpstreamErrorResponse(_, `statusCode`, _, _) => ()
-                  case x: TestFailedException                       => x
-                  case x                                            => fail(s"An unexpected exception was thrown: ${x.getClass.getSimpleName}, ${x.getMessage}")
-                }
-
-              // then the future should be ready
-              whenReady(result) {
-                _ =>
-              }
-            }
-        }
-
-      }
+    }
   }
 
 }

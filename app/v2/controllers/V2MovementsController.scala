@@ -53,6 +53,7 @@ import v2.models.request.MessageUpdate
 import v2.models.responses.BoxResponse
 import v2.models.responses.LargeMessageAuditRequest
 import v2.models.responses.MessageSummary
+import v2.models.responses.TraderFailedUploadAuditRequest
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.UpscanResponse
 import v2.models.responses.UpscanResponse.DownloadUrl
@@ -510,17 +511,43 @@ class V2MovementsControllerImpl @Inject() (
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         parseAndLogUpscanResponse(request.body) match {
-          case Left(presentationError) => Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
+          case Left(presentationError) =>
+            Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
           case Right(upscanResponse) =>
             (for {
-              downloadUrl   <- handleUpscanSuccessResponse(upscanResponse)
+              downloadUrl <- handleUpscanSuccessResponse(upscanResponse)
+                .leftMap {
+                  err =>
+                    val auditReq = Json.toJson(
+                      TraderFailedUploadAuditRequest(
+                        movementId,
+                        messageId,
+                        eori,
+                        movementType
+                      )
+                    )
+                    auditService.audit(
+                      AuditType.TraderFailedUploadEvent,
+                      Source.single(ByteString(auditReq.toString(), StandardCharsets.UTF_8)),
+                      MimeTypes.JSON
+                    )
+                    err
+                }
               objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
-              messageType = extractMessageType(
-                movementType
-              ) //TODO:  remove this and extract the messageType using (xmlParsingService.extractMessageType) and then pass to validator and router part of CTCP-2427 implementation
-              messageUpdate = MessageUpdate(MessageStatus.Processing, Some(ObjectStoreURI(objectSummary.location.asUri)))
-              _ <- persistenceService.updateMessage(eori, movementType, movementId, messageId, messageUpdate).asPresentation
-
+              uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
+              source      <- objectStoreService.getMessage(uri.stripOwner).asPresentation
+              messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
+              messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)))
+              persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
+              _ <- validationService
+                .validateLargeMessage(messageType, uri)
+                .asPresentation
+                .leftMap {
+                  err =>
+                    persist(messageUpdate(MessageStatus.Failed)).value
+                    err
+                }
+              _ <- persist(messageUpdate(MessageStatus.Processing)).asPresentation
               sendMessage <- routerService
                 .sendLargeMessage(
                   messageType,
@@ -530,17 +557,12 @@ class V2MovementsControllerImpl @Inject() (
                   ObjectStoreURI(objectSummary.location.asUri)
                 )
                 .asPresentation
+              _ = auditService.audit(messageType.auditType, uri.stripOwner)
             } yield sendMessage).fold[Result](
               _ => Ok, //TODO: Send notification to PPNS with details of the error
               _ => Ok  //TODO: Send notification to PPNS with details of the success
             )
         }
-    }
-
-  private def extractMessageType(movementType: MovementType) =
-    movementType match {
-      case MovementType.Arrival   => MessageType.ArrivalNotification
-      case MovementType.Departure => MessageType.DeclarationData
     }
 
   private def handleUpscanSuccessResponse(upscanResponse: UpscanResponse): EitherT[Future, PresentationError, DownloadUrl] =
@@ -560,6 +582,24 @@ class V2MovementsControllerImpl @Inject() (
       _ <- routerService
         .send(messageType, request.eoriNumber, movementId, updateMovementResponse.messageId, source)
         .asPresentation
+        .leftMap {
+          err =>
+            updateSmallMessageStatus(
+              request.eoriNumber,
+              movementType,
+              movementId,
+              updateMovementResponse.messageId,
+              MessageStatus.Failed
+            )
+            err
+        }
+      _ <- updateSmallMessageStatus(
+        request.eoriNumber,
+        movementType,
+        movementId,
+        updateMovementResponse.messageId,
+        MessageStatus.Success
+      ).asPresentation
     } yield updateMovementResponse
 
   private def validatePersistAndSendToEIS(
@@ -574,6 +614,24 @@ class V2MovementsControllerImpl @Inject() (
           result <- persistAndSendToEIS(source, movementType, messageType)
         } yield result
     }
+
+  private def updateSmallMessageStatus(
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    messageStatus: MessageStatus
+  )(implicit
+    hc: HeaderCarrier
+  ) =
+    persistenceService
+      .updateMessage(
+        eoriNumber,
+        movementType,
+        movementId,
+        messageId,
+        MessageUpdate(messageStatus, None)
+      )
 
   private def persistAndSendToEIS(
     source: Source[ByteString, _],
@@ -594,6 +652,24 @@ class V2MovementsControllerImpl @Inject() (
           source
         )
         .asPresentation
+        .leftMap {
+          err =>
+            updateSmallMessageStatus(
+              request.eoriNumber,
+              movementType,
+              movementResponse.movementId,
+              movementResponse.messageId,
+              MessageStatus.Failed
+            )
+            err
+        }
+      _ <- updateSmallMessageStatus(
+        request.eoriNumber,
+        movementType,
+        movementResponse.movementId,
+        movementResponse.messageId,
+        MessageStatus.Success
+      ).asPresentation
     } yield HateoasNewMovementResponse(movementResponse.movementId, boxResponseOption, None, movementType)
 
   private def mapToOptionalResponse[E, R](

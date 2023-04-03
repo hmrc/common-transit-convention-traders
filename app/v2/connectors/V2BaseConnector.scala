@@ -34,6 +34,7 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
+import v2.models.ObjectStoreResourceLocation
 import v2.models.request.MessageType
 
 import scala.concurrent.ExecutionContext
@@ -73,8 +74,11 @@ trait V2BaseConnector extends HttpErrorFunctions {
 
   val auditingBaseRoute: String = "/transit-movements-auditing"
 
-  def auditingRoute(auditType: AuditType): UrlPath =
-    UrlPath.parse(s"$auditingBaseRoute/audit/${auditType.name}")
+  def auditingRoute(auditType: AuditType, uri: Option[ObjectStoreResourceLocation] = None): UrlPath =
+    uri match {
+      case Some(part) => UrlPath.parse(s"$auditingBaseRoute/audit/${auditType.name}/uri/${part.value}")
+      case None       => UrlPath.parse(s"$auditingBaseRoute/audit/${auditType.name}")
+    }
 
   val conversionBaseRoute: String = "/transit-movements-converter"
 
