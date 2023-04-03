@@ -147,6 +147,19 @@ class V2MovementsControllerSpec
     )
   )
 
+  val jsonSuccessSmallUpscanResponse = Json.obj(
+    "reference"   -> "11370e18-6e24-453e-b45a-76d3e32ea33d",
+    "downloadUrl" -> "https://bucketName.s3.eu-west-2.amazonaws.com?1235676",
+    "fileStatus"  -> "READY",
+    "uploadDetails" -> Json.obj(
+      "fileName"        -> "test.pdf",
+      "fileMimeType"    -> "application/pdf",
+      "uploadTimestamp" -> "2018-04-24T09:30:00Z",
+      "checksum"        -> "396f101dd52e8b2ace0dcf5ed09b1d1f030e608938510ce46e7a5c7a4e775100",
+      "size"            -> 500000
+    )
+  )
+
   val jsonFailedUpscanResponse = Json.obj(
     "reference"  -> "11370e18-6e24-453e-b45a-76d3e32ea33d",
     "fileStatus" -> "FAILED",
@@ -4408,6 +4421,201 @@ class V2MovementsControllerSpec
                           eqTo(AuditType.DeclarationAmendment),
                           ObjectStoreResourceLocation(any())
                         )(any(), any())
+                  }
+
+                  "return OK when the upscan file is processed and is less than 5mb" in forAll(
+                    arbitraryEORINumber.arbitrary,
+                    arbitraryMovementType.arbitrary,
+                    arbitraryMovementId.arbitrary,
+                    arbitraryMessageId.arbitrary
+                  ) {
+                    (eoriNumber, movementType, movementId, messageId) =>
+                      beforeEach()
+                      val messageType =
+                        if (movementType == MovementType.Departure) MessageType.DeclarationAmendment
+                        else MessageType.UnloadingRemarks
+
+                      val messageDataEither: EitherT[Future, ExtractionError, MessageType] =
+                        EitherT.rightT(messageType)
+                      when(
+                        mockUpscanService.upscanGetFile(
+                          eqTo(DownloadUrl("https://bucketName.s3.eu-west-2.amazonaws.com?1235676"))
+                        )(
+                          any[HeaderCarrier],
+                          any[ExecutionContext],
+                          any[Materializer]
+                        )
+                      ).thenAnswer {
+                        invocation =>
+                          EitherT.rightT(
+                            invocation.getArgument[Source[ByteString, _]](1)
+                          )
+                      }.thenReturn(EitherT.rightT(Source.single(ByteString("test".getBytes))))
+
+                      when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any()))
+                        .thenReturn(messageDataEither)
+
+                      when(
+                        mockValidationService.validateLargeMessage(
+                          eqTo(MessageType.DeclarationAmendment),
+                          any[String].asInstanceOf[ObjectStoreResourceLocation]
+                        )(
+                          any[HeaderCarrier],
+                          any[ExecutionContext]
+                        )
+                      )
+                        .thenAnswer {
+                          _ => EitherT.rightT(())
+                        }
+
+                      when(
+                        mockPersistenceService
+                          .updateMessage(
+                            EORINumber(any()),
+                            eqTo(movementType),
+                            MovementId(eqTo(movementId.value)),
+                            eqTo(messageId),
+                            any[MessageUpdate]
+                          )(
+                            any[HeaderCarrier],
+                            any[ExecutionContext]
+                          )
+                      )
+                        .thenAnswer {
+                          _ => EitherT.rightT(())
+                        }
+
+                      when(
+                        mockRouterService.sendLargeMessage(
+                          any[String].asInstanceOf[MessageType],
+                          EORINumber(eqTo(eoriNumber.value)),
+                          MovementId(eqTo(movementId.value)),
+                          MessageId(eqTo(messageId.value)),
+                          any[String].asInstanceOf[ObjectStoreURI]
+                        )(any[ExecutionContext], any[HeaderCarrier])
+                      ).thenAnswer(
+                        _ => EitherT.rightT(())
+                      )
+
+                      val result = sut.attachLargeMessage(eoriNumber, MovementType.Arrival, movementId, messageId)(
+                        FakeRequest(POST, "/movements/arrivals/messages/large").withJsonBody(jsonSuccessSmallUpscanResponse)
+                      )
+
+                      status(result) mustBe OK
+                  }
+
+                  "return OK when the upscan file is processed and is larger than 5mb" in forAll(
+                    arbitraryEORINumber.arbitrary,
+                    arbitraryMovementType.arbitrary,
+                    arbitraryMovementId.arbitrary,
+                    arbitraryMessageId.arbitrary,
+                    arbitraryObjectSummaryWithMd5.arbitrary
+                  ) {
+                    (eoriNumber, movementType, movementId, messageId, objectSummary) =>
+                      beforeEach()
+
+                      val messageType =
+                        if (movementType == MovementType.Departure) MessageType.DeclarationAmendment
+                        else MessageType.UnloadingRemarks
+
+                      val messageDataEither: EitherT[Future, ExtractionError, MessageType] =
+                        EitherT.rightT(messageType)
+
+                      val largeFileUrl  = "https://bucketName.s3.eu-west-2.amazonaws.com?1235676"
+                      val largeFileSize = 6000001 // exceeds the smallMessageSizeLimit of 500000
+                      val fakeRequest   = FakeRequest(POST, "/some-endpoint").withJsonBody(Json.obj("downloadUrl" -> largeFileUrl))
+
+                      when(mockAppConfig.smallMessageSizeLimit).thenReturn(500000)
+
+                      when(
+                        mockUpscanService.upscanGetFile(
+                          eqTo(DownloadUrl("https://bucketName.s3.eu-west-2.amazonaws.com?1235676"))
+                        )(
+                          any[HeaderCarrier],
+                          any[ExecutionContext],
+                          any[Materializer]
+                        )
+                      ).thenAnswer {
+                        invocation =>
+                          EitherT.rightT(
+                            invocation.getArgument[Source[ByteString, _]](1)
+                          )
+                      }.thenReturn(EitherT.rightT(Source.single(ByteString("test".getBytes))))
+
+                      // get the url without the surrounding " " quotes
+                      val upscanUrl = jsonSuccessUpscanResponse.value("downloadUrl").toString().stripPrefix("\"").stripSuffix("\"")
+                      val xml       = "<test>ABC</test>"
+                      when(
+                        mockObjectStoreService.addMessage(
+                          DownloadUrl(eqTo(upscanUrl)),
+                          MovementId(eqTo(movementId.value)),
+                          MessageId(eqTo(messageId.value))
+                        )(
+                          any[HeaderCarrier],
+                          any[ExecutionContext]
+                        )
+                      ).thenReturn(EitherT.rightT(objectSummary))
+
+                      when(
+                        mockObjectStoreService.getMessage(ObjectStoreResourceLocation(any()))(
+                          any[ExecutionContext],
+                          any[HeaderCarrier]
+                        )
+                      )
+                        .thenAnswer(
+                          _ => EitherT.rightT(Source.single(ByteString(xml)))
+                        )
+
+                      when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any()))
+                        .thenReturn(messageDataEither)
+
+                      when(
+                        mockValidationService.validateLargeMessage(
+                          eqTo(MessageType.DeclarationAmendment),
+                          any[String].asInstanceOf[ObjectStoreResourceLocation]
+                        )(
+                          any[HeaderCarrier],
+                          any[ExecutionContext]
+                        )
+                      )
+                        .thenAnswer {
+                          _ => EitherT.rightT(())
+                        }
+
+                      when(
+                        mockRouterService.sendLargeMessage(
+                          any[String].asInstanceOf[MessageType],
+                          EORINumber(eqTo(eoriNumber.value)),
+                          MovementId(eqTo(movementId.value)),
+                          MessageId(eqTo(messageId.value)),
+                          any[String].asInstanceOf[ObjectStoreURI]
+                        )(any[ExecutionContext], any[HeaderCarrier])
+                      ).thenAnswer(
+                        _ => EitherT.rightT(())
+                      )
+
+                      when(
+                        mockPersistenceService
+                          .updateMessage(
+                            EORINumber(any()),
+                            eqTo(movementType),
+                            MovementId(eqTo(movementId.value)),
+                            eqTo(messageId),
+                            any[MessageUpdate]
+                          )(
+                            any[HeaderCarrier],
+                            any[ExecutionContext]
+                          )
+                      )
+                        .thenAnswer {
+                          _ => EitherT.rightT(())
+                        }
+
+                      when(mockPushNotificationService.postPpnsNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
+                        .thenReturn(Future.successful(()))
+
+                      val result = sutWithAcceptHeader.attachLargeMessage(eoriNumber, MovementType.Arrival, movementId, messageId)(fakeRequest)
+                      status(result) mustBe OK
                   }
 
                   "and sending the audit message fails" in forAll(
