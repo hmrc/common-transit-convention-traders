@@ -517,7 +517,6 @@ class V2MovementsControllerImpl @Inject() (
                       )
                   case (downloadUrl, size) if size > config.smallMessageSizeLimit =>
                     (for {
-
                       objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
                       uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
                       source      <- objectStoreService.getMessage(uri.stripOwner).asPresentation
@@ -533,7 +532,6 @@ class V2MovementsControllerImpl @Inject() (
                             err
                         }
                       _ <- persist(messageUpdate(MessageStatus.Processing)).asPresentation
-
                       sendMessage <- routerService
                         .sendLargeMessage(
                           messageType,
@@ -543,11 +541,7 @@ class V2MovementsControllerImpl @Inject() (
                           ObjectStoreURI(objectSummary.location.asUri)
                         )
                         .asPresentation
-                        .leftMap {
-                          err =>
-                            persist(messageUpdate(MessageStatus.Failed)).value
-                            err
-                        }
+                      _ = auditService.audit(messageType.auditType, uri.stripOwner)
 
                     } yield sendMessage).fold[Result](
                       _ => Ok, //TODO: Send notification to PPNS with details of the error
