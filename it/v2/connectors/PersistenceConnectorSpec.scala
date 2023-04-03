@@ -1408,9 +1408,10 @@ class PersistenceConnectorSpec
       arbitrary[MovementType],
       arbitrary[MovementId],
       arbitrary[MessageId],
-      arbitrary[MessageUpdate]
+      arbitrary[MessageUpdate],
+      arbitrary[MessageType]
     ) {
-      (eoriNumber, movementType, movementId, messageId, messageUpdate) =>
+      (eoriNumber, movementType, movementId, messageId, messageUpdate, messageType) =>
         server.stubFor(
           patch(
             urlEqualTo(targetUrl(eoriNumber, movementType, movementId, messageId))
@@ -1420,7 +1421,7 @@ class PersistenceConnectorSpec
             )
         )
 
-        whenReady(persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageUpdate)) {
+        whenReady(persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageType, messageUpdate)) {
           result =>
             result mustBe ()
         }
@@ -1430,9 +1431,10 @@ class PersistenceConnectorSpec
       arbitrary[EORINumber],
       arbitrary[MovementType],
       arbitrary[MovementId],
-      arbitrary[MessageId]
+      arbitrary[MessageId],
+      arbitrary[MessageType]
     ) {
-      (eoriNumber, movementType, movementId, messageId) =>
+      (eoriNumber, movementType, movementId, messageId, messageType) =>
         server.stubFor(
           patch(
             urlEqualTo(targetUrl(eoriNumber, movementType, movementId, messageId))
@@ -1446,7 +1448,7 @@ class PersistenceConnectorSpec
             )
         )
 
-        val future = persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageUpdate).map(Right(_)).recover {
+        val future = persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageType, messageUpdate).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -1463,9 +1465,10 @@ class PersistenceConnectorSpec
       arbitrary[EORINumber],
       arbitrary[MovementType],
       arbitrary[MovementId],
-      arbitrary[MessageId]
+      arbitrary[MessageId],
+      arbitrary[MessageType]
     ) {
-      (eoriNumber, movementType, movementId, messageId) =>
+      (eoriNumber, movementType, movementId, messageId, messageType) =>
         server.stubFor(
           patch(
             urlEqualTo(targetUrl(eoriNumber, movementType, movementId, messageId))
@@ -1479,7 +1482,7 @@ class PersistenceConnectorSpec
             )
         )
 
-        val future = persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageUpdate).map(Right(_)).recover {
+        val future = persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageType, messageUpdate).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 

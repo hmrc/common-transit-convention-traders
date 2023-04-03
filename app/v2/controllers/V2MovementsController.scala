@@ -538,7 +538,7 @@ class V2MovementsControllerImpl @Inject() (
               source      <- objectStoreService.getMessage(uri.stripOwner).asPresentation
               messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
               messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)))
-              persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
+              persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, messageType, _)
               _ <- validationService
                 .validateLargeMessage(messageType, uri)
                 .asPresentation
@@ -589,7 +589,8 @@ class V2MovementsControllerImpl @Inject() (
               movementType,
               movementId,
               updateMovementResponse.messageId,
-              MessageStatus.Failed
+              MessageStatus.Failed,
+              messageType
             )
             err
         }
@@ -598,7 +599,8 @@ class V2MovementsControllerImpl @Inject() (
         movementType,
         movementId,
         updateMovementResponse.messageId,
-        MessageStatus.Success
+        MessageStatus.Success,
+        messageType
       ).asPresentation
     } yield updateMovementResponse
 
@@ -620,7 +622,8 @@ class V2MovementsControllerImpl @Inject() (
     movementType: MovementType,
     movementId: MovementId,
     messageId: MessageId,
-    messageStatus: MessageStatus
+    messageStatus: MessageStatus,
+    messageType: MessageType
   )(implicit
     hc: HeaderCarrier
   ) =
@@ -630,6 +633,7 @@ class V2MovementsControllerImpl @Inject() (
         movementType,
         movementId,
         messageId,
+        messageType,
         MessageUpdate(messageStatus, None)
       )
 
@@ -659,7 +663,8 @@ class V2MovementsControllerImpl @Inject() (
               movementType,
               movementResponse.movementId,
               movementResponse.messageId,
-              MessageStatus.Failed
+              MessageStatus.Failed,
+              messageType
             )
             err
         }
@@ -668,7 +673,8 @@ class V2MovementsControllerImpl @Inject() (
         movementType,
         movementResponse.movementId,
         movementResponse.messageId,
-        MessageStatus.Success
+        MessageStatus.Success,
+        messageType
       ).asPresentation
     } yield HateoasNewMovementResponse(movementResponse.movementId, boxResponseOption, None, movementType)
 

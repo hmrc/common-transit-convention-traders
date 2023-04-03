@@ -371,6 +371,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.DeclarationData),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -401,6 +402,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.DeclarationData),
             eqTo(messageUpdateSuccess)
           )(
             any(),
@@ -451,6 +453,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.DeclarationData),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -484,6 +487,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.DeclarationData),
             eqTo(messageUpdateSuccess)
           )(
             any(),
@@ -544,6 +548,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.DeclarationData),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -576,6 +581,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.DeclarationData),
             eqTo(messageUpdateSuccess)
           )(
             any(),
@@ -680,6 +686,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.DeclarationData),
                 eqTo(messageUpdateFailure)
               )(
                 any[HeaderCarrier],
@@ -705,6 +712,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.DeclarationData),
             eqTo(messageUpdateFailure)
           )(
             any(),
@@ -789,6 +797,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.DeclarationData),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -815,6 +824,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.DeclarationData),
             eqTo(messageUpdateSuccess)
           )(
             any[HeaderCarrier],
@@ -877,6 +887,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.DeclarationData),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -918,6 +929,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.DeclarationData),
             eqTo(messageUpdateSuccess)
           )(
             any[HeaderCarrier],
@@ -997,6 +1009,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.DeclarationData),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -1021,6 +1034,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.DeclarationData),
             eqTo(messageUpdateSuccess)
           )(
             any[HeaderCarrier],
@@ -1285,6 +1299,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.DeclarationData),
                 eqTo(messageUpdateFailure)
               )(
                 any[HeaderCarrier],
@@ -1314,6 +1329,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.DeclarationData),
             eqTo(messageUpdateFailure)
           )(
             any[HeaderCarrier],
@@ -1596,6 +1612,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.ArrivalNotification),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -1624,6 +1641,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.ArrivalNotification),
             eqTo(messageUpdateSuccess)
           )(
             any[HeaderCarrier],
@@ -1676,6 +1694,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.ArrivalNotification),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -1709,6 +1728,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.ArrivalNotification),
             eqTo(messageUpdateSuccess)
           )(
             any[HeaderCarrier],
@@ -1768,6 +1788,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.ArrivalNotification),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -1800,6 +1821,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.ArrivalNotification),
             eqTo(messageUpdateSuccess)
           )(
             any(),
@@ -1891,6 +1913,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.ArrivalNotification),
                 eqTo(messageUpdateFailure)
               )(
                 any[HeaderCarrier],
@@ -1930,6 +1953,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.ArrivalNotification),
             eqTo(messageUpdateFailure)
           )(
             any[HeaderCarrier],
@@ -2008,6 +2032,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.ArrivalNotification),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -2035,6 +2060,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.ArrivalNotification),
             eqTo(messageUpdateSuccess)
           )(
             any[HeaderCarrier],
@@ -2095,6 +2121,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.ArrivalNotification),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -2133,6 +2160,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.ArrivalNotification),
             eqTo(messageUpdateSuccess)
           )(
             any[HeaderCarrier],
@@ -2398,6 +2426,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.ArrivalNotification),
                 eqTo(messageUpdateFailure)
               )(
                 any[HeaderCarrier],
@@ -2428,6 +2457,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.ArrivalNotification),
             eqTo(messageUpdateFailure)
           )(
             any[HeaderCarrier],
@@ -2691,6 +2721,7 @@ class V2MovementsControllerSpec
               eqTo(MovementType.Arrival),
               MovementId(eqTo(movementResponse.movementId.value)),
               MessageId(eqTo(movementResponse.messageId.value)),
+              eqTo(MessageType.ArrivalNotification),
               eqTo(messageUpdateFailure)
             )(
               any[HeaderCarrier],
@@ -2719,6 +2750,7 @@ class V2MovementsControllerSpec
           eqTo(MovementType.Arrival),
           MovementId(eqTo(movementResponse.movementId.value)),
           MessageId(eqTo(movementResponse.messageId.value)),
+          eqTo(MessageType.ArrivalNotification),
           eqTo(messageUpdateFailure)
         )(
           any[HeaderCarrier],
@@ -2732,6 +2764,7 @@ class V2MovementsControllerSpec
 
     val contentJson = if (movementType == MovementType.Departure) CC013Cjson else CC044Cjson
     val contentXml  = if (movementType == MovementType.Departure) CC013C else CC044C
+    val messageType = if (movementType == MovementType.Departure) MessageType.DeclarationAmendment else MessageType.UnloadingRemarks
 
     s"GET /movements/${movementType.urlFragment}/:movementId/messages " - {
 
@@ -3807,6 +3840,7 @@ class V2MovementsControllerSpec
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(updateMovementResponse.messageId.value)),
+                  eqTo(messageType),
                   eqTo(messageUpdateSuccess)
                 )(
                   any[HeaderCarrier],
@@ -3836,6 +3870,7 @@ class V2MovementsControllerSpec
               eqTo(movementType),
               MovementId(eqTo(movementId.value)),
               MessageId(eqTo(updateMovementResponse.messageId.value)),
+              eqTo(messageType),
               eqTo(messageUpdateSuccess)
             )(
               any[HeaderCarrier],
@@ -3959,6 +3994,7 @@ class V2MovementsControllerSpec
                 eqTo(movementType),
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
+                eqTo(messageType),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -4005,6 +4041,7 @@ class V2MovementsControllerSpec
               eqTo(movementType),
               MovementId(eqTo(movementId.value)),
               MessageId(eqTo(messageId.value)),
+              eqTo(messageType),
               eqTo(messageUpdateSuccess)
             )(
               any[HeaderCarrier],
@@ -4463,6 +4500,7 @@ class V2MovementsControllerSpec
                           any[String].asInstanceOf[MovementType],
                           MovementId(eqTo(movementId.value)),
                           MessageId(eqTo(messageId.value)),
+                          eqTo(MessageType.DeclarationAmendment),
                           any[MessageUpdate]
                         )(
                           any(),
@@ -4535,6 +4573,7 @@ class V2MovementsControllerSpec
                         any[MovementType],
                         MovementId(eqTo(movementId.value)),
                         MessageId(eqTo(messageId.value)),
+                        eqTo(MessageType.DeclarationAmendment),
                         any()
                       )(
                         any(),
@@ -4595,6 +4634,7 @@ class V2MovementsControllerSpec
                           any[String].asInstanceOf[MovementType],
                           MovementId(eqTo(movementId.value)),
                           MessageId(eqTo(messageId.value)),
+                          eqTo(MessageType.DeclarationAmendment),
                           any[MessageUpdate]
                         )(
                           any(),
@@ -4667,6 +4707,7 @@ class V2MovementsControllerSpec
                         any[MovementType],
                         MovementId(eqTo(movementId.value)),
                         MessageId(eqTo(messageId.value)),
+                        eqTo(MessageType.DeclarationAmendment),
                         any()
                       )(
                         any(),
@@ -4727,6 +4768,7 @@ class V2MovementsControllerSpec
                         any[String].asInstanceOf[MovementType],
                         MovementId(eqTo(movementId.value)),
                         MessageId(eqTo(messageId.value)),
+                        eqTo(MessageType.DeclarationAmendment),
                         any[MessageUpdate]
                       )(
                         any(),
@@ -4784,6 +4826,7 @@ class V2MovementsControllerSpec
                       any[MovementType],
                       MovementId(eqTo(movementId.value)),
                       MessageId(eqTo(messageId.value)),
+                      eqTo(MessageType.DeclarationAmendment),
                       any()
                     )(
                       any(),
@@ -4839,6 +4882,7 @@ class V2MovementsControllerSpec
                       any[String].asInstanceOf[MovementType],
                       any[String].asInstanceOf[MovementId],
                       any[String].asInstanceOf[MessageId],
+                      eqTo(MessageType.DeclarationAmendment),
                       any[MessageUpdate]
                     )(
                       any(),
@@ -4884,6 +4928,7 @@ class V2MovementsControllerSpec
                     any[MovementType],
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
+                    eqTo(MessageType.DeclarationAmendment),
                     any()
                   )(
                     any(),
@@ -4949,6 +4994,7 @@ class V2MovementsControllerSpec
                     any[String].asInstanceOf[MovementType],
                     any[String].asInstanceOf[MovementId],
                     any[String].asInstanceOf[MessageId],
+                    eqTo(MessageType.DeclarationAmendment),
                     any[MessageUpdate]
                   )(
                     any(),
@@ -4984,6 +5030,7 @@ class V2MovementsControllerSpec
                   any[MovementType],
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
+                  eqTo(MessageType.DeclarationAmendment),
                   any()
                 )(
                   any(),
@@ -5062,6 +5109,7 @@ class V2MovementsControllerSpec
                 any[MovementType],
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
+                eqTo(MessageType.DeclarationAmendment),
                 any()
               )(
                 any(),
@@ -5136,6 +5184,7 @@ class V2MovementsControllerSpec
                 any[MovementType],
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
+                eqTo(MessageType.DeclarationAmendment),
                 any()
               )(
                 any(),
@@ -5200,6 +5249,7 @@ class V2MovementsControllerSpec
               any[MovementType],
               MovementId(eqTo(movementId.value)),
               MessageId(eqTo(messageId.value)),
+              eqTo(MessageType.DeclarationAmendment),
               any()
             )(
               any(),

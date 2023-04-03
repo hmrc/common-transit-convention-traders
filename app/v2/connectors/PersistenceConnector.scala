@@ -85,7 +85,14 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[UpdateMovementResponse]
 
-  def patchMessage(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId, body: MessageUpdate)(implicit
+  def patchMessage(
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    messageType: MessageType,
+    body: MessageUpdate
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit]
@@ -213,7 +220,14 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       )
       .addParam("movementEORI", movementEORI.map(_.value))
 
-  def patchMessage(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId, body: MessageUpdate)(implicit
+  def patchMessage(
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    messageType: MessageType,
+    body: MessageUpdate
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit] = {
@@ -222,6 +236,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     httpClientV2
       .patch(url"$url")
       .withBody(Json.toJson(body))
+      .setHeader(Constants.XMessageTypeHeader -> messageType.code)
       .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
       .executeAndExpect(OK)
   }
