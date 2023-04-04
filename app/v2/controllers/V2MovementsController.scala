@@ -50,12 +50,7 @@ import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
-import v2.models.responses.BoxResponse
-import v2.models.responses.LargeMessageAuditRequest
-import v2.models.responses.MessageSummary
-import v2.models.responses.TraderFailedUploadAuditRequest
-import v2.models.responses.UpdateMovementResponse
-import v2.models.responses.UpscanResponse
+import v2.models.responses._
 import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.hateoas._
 import v2.services._
@@ -538,7 +533,7 @@ class V2MovementsControllerImpl @Inject() (
                       uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
                       source      <- objectStoreService.getMessage(uri.stripOwner).asPresentation
                       messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
-                      messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)))
+                      messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)), Some(messageType))
                       persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
                       _ <- validationService
                         .validateLargeMessage(messageType, uri)
@@ -569,6 +564,7 @@ class V2MovementsControllerImpl @Inject() (
               .map {
                 _ => Ok
               }
+
         }
     }
 
@@ -637,7 +633,7 @@ class V2MovementsControllerImpl @Inject() (
         for {
 
           messageType <- xmlParsingService.extractMessageType(source, messageTypeList).asPresentation
-          messageUpdate          = MessageUpdate(_, None)
+          messageUpdate          = MessageUpdate(_, None, Some(messageType))
           updateMovementResponse = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
           _ <- updateMovementResponse(messageUpdate(MessageStatus.Processing)).asPresentation
           _ <- validationService
@@ -675,7 +671,7 @@ class V2MovementsControllerImpl @Inject() (
         movementType,
         movementId,
         messageId,
-        MessageUpdate(messageStatus, None)
+        MessageUpdate(messageStatus, None, None)
       )
 
   private def persistAndSendToEIS(
