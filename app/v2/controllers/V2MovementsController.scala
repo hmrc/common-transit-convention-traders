@@ -597,7 +597,7 @@ class V2MovementsControllerImpl @Inject() (
         movementType,
         movementId,
         messageId,
-        MessageUpdate(messageStatus, None)
+        MessageUpdate(messageStatus, None, None)
       )
 
   private def persistAndSendToEIS(
