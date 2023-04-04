@@ -31,6 +31,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.forAll
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
+import play.api.http.Status.ACCEPTED
 import play.api.http.Status.CREATED
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.Status.NOT_FOUND
@@ -219,7 +220,7 @@ class PushNotificationsConnectorSpec
             .withRequestBody(equalTo(jsonRequest))
             .willReturn(
               aResponse()
-                .withStatus(204)
+                .withStatus(ACCEPTED)
             )
         )
 
