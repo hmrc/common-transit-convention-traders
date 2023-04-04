@@ -35,6 +35,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.TestMetrics
 import utils.WiremockSuite
+import v2.base.TestActorSystem
 import v2.models.responses.UpscanFormTemplate
 import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.UpscanReference
@@ -51,7 +52,8 @@ class UpscanConnectorSpec
     with IntegrationPatience
     with WiremockSuite
     with MockitoSugar
-    with CommonGenerators {
+    with CommonGenerators
+    with TestActorSystem {
 
   val mockAppConfig = mock[AppConfig]
 

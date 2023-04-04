@@ -505,15 +505,7 @@ class V2MovementsControllerImpl @Inject() (
                     (for {
                       upscanFile <- upscanService.upscanGetFile(downloadUrl).asPresentation
 
-                      _ <- streamLargeMessage(eori, movementId, messageId, messageTypeList, upscanFile, movementType)
-
-                      updateMovementResponse <- updateSmallMessageStatus(
-                        eori,
-                        movementType,
-                        movementId,
-                        messageId,
-                        MessageStatus.Success
-                      ).asPresentation
+                      updateMovementResponse <- streamLargeMessage(eori, movementId, messageId, messageTypeList, upscanFile, movementType)
 
                     } yield updateMovementResponse)
                       .fold[Result](
@@ -644,8 +636,9 @@ class V2MovementsControllerImpl @Inject() (
                 updateMovementResponse(messageUpdate(MessageStatus.Failed)).value
                 err
             }
+          _ <- persistenceService.updateMessageBody(eori, movementType, movementId, messageId, source).asPresentation
           _ = auditService.audit(messageType.auditType, source, MimeTypes.XML)
-          result <- routerService
+          _ <- routerService
             .send(messageType, eori, movementId, messageId, source)
             .asPresentation
             .leftMap {
@@ -653,6 +646,14 @@ class V2MovementsControllerImpl @Inject() (
                 updateMovementResponse(messageUpdate(MessageStatus.Failed)).value
                 err
             }
+          result <- updateSmallMessageStatus(
+            eori,
+            movementType,
+            movementId,
+            messageId,
+            MessageStatus.Success
+          ).asPresentation
+
         } yield result
     }
 

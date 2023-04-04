@@ -18,39 +18,25 @@ package v2.connectors
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import com.google.inject.ImplementedBy
-import com.google.inject.Inject
-import com.google.inject.Singleton
+import com.google.inject.{ImplementedBy, Inject, Singleton}
 import com.kenshoo.play.metrics.Metrics
-import config.AppConfig
-import config.Constants
+import config.{AppConfig, Constants}
 import io.lemonlabs.uri.Url
 import io.lemonlabs.uri.config.ExcludeNones
-import metrics.HasMetrics
-import metrics.MetricsKeys
+import metrics.{HasMetrics, MetricsKeys}
 import play.api.Logging
-import play.api.http.HeaderNames
-import play.api.http.MimeTypes
-import play.api.http.Status.OK
+import play.api.http.{HeaderNames, MimeTypes}
+import play.api.http.Status.{CREATED, OK}
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.StringContextOps
+import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 import uk.gov.hmrc.http.client.HttpClientV2
-import v2.models.EORINumber
-import v2.models.MessageId
-import v2.models.MovementId
-import v2.models.MovementType
-import v2.models.request.MessageType
-import v2.models.request.MessageUpdate
-import v2.models.responses.MessageSummary
-import v2.models.responses.MovementResponse
-import v2.models.responses.MovementSummary
-import v2.models.responses.UpdateMovementResponse
+import v2.models.{EORINumber, MessageId, MovementId, MovementType}
+import v2.models.request.{MessageType, MessageUpdate}
+import v2.models.responses.{MessageSummary, MovementResponse, MovementSummary, UpdateMovementResponse}
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[PersistenceConnectorImpl])
 trait PersistenceConnector {
@@ -86,6 +72,17 @@ trait PersistenceConnector {
   ): Future[UpdateMovementResponse]
 
   def patchMessage(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId, body: MessageUpdate)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit]
+
+  def updateMessageBody(
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    source: Source[ByteString, _]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit]
@@ -214,6 +211,25 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       .withBody(Json.toJson(body))
       .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
       .executeAndExpect(OK)
+  }
+
+  def updateMessageBody(
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    source: Source[ByteString, _]
+  )(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] = {
+    val url = appConfig.movementsUrl.withPath(postMessageBodyUrl(eoriNumber, movementType, movementId, messageId))
+
+    httpClientV2
+      .post(url"$url")
+      .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+      .withBody(source)
+      .executeAndExpect(CREATED)
   }
 
 }
