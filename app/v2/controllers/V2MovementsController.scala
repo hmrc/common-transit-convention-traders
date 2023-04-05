@@ -627,7 +627,6 @@ class V2MovementsControllerImpl @Inject() (
           messageType <- xmlParsingService.extractMessageType(source, messageTypeList).asPresentation
           messageUpdate          = MessageUpdate(_, None, Some(messageType))
           updateMovementResponse = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
-          _ <- updateMovementResponse(messageUpdate(MessageStatus.Processing)).asPresentation
           _ <- validationService
             .validateXml(messageType, source)
             .asPresentation
