@@ -538,7 +538,7 @@ class V2MovementsControllerImpl @Inject() (
               source      <- objectStoreService.getMessage(uri.stripOwner).asPresentation
               messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
               messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)), Some(messageType))
-              persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
+              persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, messageType, _)
               _ <- validationService
                 .validateLargeMessage(messageType, uri)
                 .asPresentation
