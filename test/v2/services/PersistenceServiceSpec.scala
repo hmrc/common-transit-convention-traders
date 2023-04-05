@@ -174,7 +174,7 @@ class PersistenceServiceSpec
       val successResponse = MessageSummary(
         MessageId("1234567890abcdef"),
         now,
-        MessageType.DeclarationData,
+        Some(MessageType.DeclarationData),
         Some(XmlPayload("<test></test>")),
         Some(MessageStatus.Success),
         None
@@ -260,20 +260,20 @@ class PersistenceServiceSpec
 
   "Updating departure with departureId and messageType" - {
 
-    val validRequest: Source[ByteString, NotUsed]   = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
-    val invalidRequest: Source[ByteString, NotUsed] = Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8))
+    val validRequest: Option[Source[ByteString, NotUsed]]   = Some(Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8)))
+    val invalidRequest: Option[Source[ByteString, NotUsed]] = Some(Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8)))
 
     val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
 
     "on a successful submission, should return a Right" in {
       when(
-        mockConnector.postMessage(MovementId(any[String]), any[MessageType], eqTo(validRequest))(
+        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(validRequest))(
           any[HeaderCarrier],
           any[ExecutionContext]
         )
       )
         .thenReturn(Future.successful(UpdateMovementResponse(MessageId("123"))))
-      val result                                                     = sut.addMessage(MovementId("abc"), MovementType.Departure, MessageType.DeclarationInvalidationRequest, validRequest)
+      val result                                                     = sut.addMessage(MovementId("abc"), MovementType.Departure, Some(MessageType.DeclarationInvalidationRequest), validRequest)
       val expected: Either[PersistenceError, UpdateMovementResponse] = Right(UpdateMovementResponse(MessageId("123")))
       whenReady(result.value) {
         _ mustBe expected
@@ -282,13 +282,13 @@ class PersistenceServiceSpec
 
     "on a departure is not found, should return DepartureNotFound" in {
       when(
-        mockConnector.postMessage(MovementId(any[String]), any[MessageType], eqTo(validRequest))(
+        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(validRequest))(
           any[HeaderCarrier],
           any[ExecutionContext]
         )
       ).thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-      val result = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Departure, MessageType.DeclarationInvalidationRequest, validRequest)
+      val result = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Departure, Some(MessageType.DeclarationInvalidationRequest), validRequest)
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.MovementNotFound(MovementId("1234567890abcdef"), MovementType.Departure))
       }
@@ -296,13 +296,13 @@ class PersistenceServiceSpec
 
     "on a failed submission, should return a Left with an UnexpectedError" in {
       when(
-        mockConnector.postMessage(MovementId(any[String]), any[MessageType], eqTo(invalidRequest))(
+        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(invalidRequest))(
           any[HeaderCarrier],
           any[ExecutionContext]
         )
       )
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result                                                     = sut.addMessage(MovementId("abc"), MovementType.Departure, MessageType.DeclarationInvalidationRequest, invalidRequest)
+      val result                                                     = sut.addMessage(MovementId("abc"), MovementType.Departure, Some(MessageType.DeclarationInvalidationRequest), invalidRequest)
       val expected: Either[PersistenceError, UpdateMovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected
@@ -527,7 +527,7 @@ class PersistenceServiceSpec
       val successResponse = MessageSummary(
         MessageId("1234567890abcdef"),
         now,
-        MessageType.ArrivalNotification,
+        Some(MessageType.ArrivalNotification),
         Some(XmlPayload("<test></test>")),
         Some(MessageStatus.Success),
         None
@@ -567,20 +567,20 @@ class PersistenceServiceSpec
 
   "Updating arrival with arrivalId and messageType" - {
 
-    val validRequest: Source[ByteString, NotUsed]   = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
-    val invalidRequest: Source[ByteString, NotUsed] = Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8))
+    val validRequest: Option[Source[ByteString, NotUsed]]   = Some(Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8)))
+    val invalidRequest: Option[Source[ByteString, NotUsed]] = Some(Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8)))
 
     val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
 
     "on a successful submission, should return a Right" in {
       when(
-        mockConnector.postMessage(MovementId(any[String]), any[MessageType], eqTo(validRequest))(
+        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(validRequest))(
           any[HeaderCarrier],
           any[ExecutionContext]
         )
       )
         .thenReturn(Future.successful(UpdateMovementResponse(MessageId("1234567890abcdsd"))))
-      val result                                                     = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Arrival, MessageType.UnloadingRemarks, validRequest)
+      val result                                                     = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Arrival, Some(MessageType.UnloadingRemarks), validRequest)
       val expected: Either[PersistenceError, UpdateMovementResponse] = Right(UpdateMovementResponse(MessageId("1234567890abcdsd")))
       whenReady(result.value) {
         _ mustBe expected
@@ -589,13 +589,13 @@ class PersistenceServiceSpec
 
     "on an arrival is not found, should return ArrivalNotFound" in {
       when(
-        mockConnector.postMessage(MovementId(any[String]), any[MessageType], eqTo(validRequest))(
+        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(validRequest))(
           any[HeaderCarrier],
           any[ExecutionContext]
         )
       ).thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-      val result = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Arrival, MessageType.UnloadingRemarks, validRequest)
+      val result = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Arrival, Some(MessageType.UnloadingRemarks), validRequest)
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.MovementNotFound(MovementId("1234567890abcdef"), MovementType.Arrival))
       }
@@ -603,13 +603,13 @@ class PersistenceServiceSpec
 
     "on a failed submission, should return a Left with an UnexpectedError" in {
       when(
-        mockConnector.postMessage(MovementId(any[String]), any[MessageType], eqTo(invalidRequest))(
+        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(invalidRequest))(
           any[HeaderCarrier],
           any[ExecutionContext]
         )
       )
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result                                                     = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Arrival, MessageType.UnloadingRemarks, invalidRequest)
+      val result                                                     = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Arrival, Some(MessageType.UnloadingRemarks), invalidRequest)
       val expected: Either[PersistenceError, UpdateMovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected
@@ -626,15 +626,17 @@ class PersistenceServiceSpec
       arbitrary[MovementType],
       arbitrary[MovementId],
       arbitrary[MessageId],
-      arbitrary[MessageUpdate]
+      arbitrary[MessageUpdate],
+      arbitrary[MessageType]
     ) {
-      (eoriNumber, movementType, movementId, messageId, messageUpdate) =>
+      (eoriNumber, movementType, movementId, messageId, messageUpdate, messageType) =>
         when(
           mockConnector.patchMessage(
             any[String].asInstanceOf[EORINumber],
             any[String].asInstanceOf[MovementType],
             any[String].asInstanceOf[MovementId],
             any[String].asInstanceOf[MessageId],
+            any[MessageType],
             any[String].asInstanceOf[MessageUpdate]
           )(
             any[HeaderCarrier],
@@ -642,7 +644,7 @@ class PersistenceServiceSpec
           )
         )
           .thenReturn(Future.successful(()))
-        val result = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageUpdate)
+        val result = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageType, messageUpdate)
 
         val expected: Either[PersistenceError, Unit] = Right(())
         whenReady(result.value) {
@@ -655,15 +657,17 @@ class PersistenceServiceSpec
       arbitrary[MovementType],
       arbitrary[MovementId],
       arbitrary[MessageId],
-      arbitrary[MessageUpdate]
+      arbitrary[MessageUpdate],
+      arbitrary[MessageType]
     ) {
-      (eoriNumber, movementType, movementId, messageId, messageUpdate) =>
+      (eoriNumber, movementType, movementId, messageId, messageUpdate, messageType) =>
         when(
           mockConnector.patchMessage(
             any[String].asInstanceOf[EORINumber],
             any[String].asInstanceOf[MovementType],
             any[String].asInstanceOf[MovementId],
             any[String].asInstanceOf[MessageId],
+            any[MessageType],
             any[String].asInstanceOf[MessageUpdate]
           )(
             any[HeaderCarrier],
@@ -671,7 +675,7 @@ class PersistenceServiceSpec
           )
         ).thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-        val result = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageUpdate)
+        val result = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageType, messageUpdate)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.MessageNotFound(movementId, messageId))
         }
@@ -682,15 +686,17 @@ class PersistenceServiceSpec
       arbitrary[MovementType],
       arbitrary[MovementId],
       arbitrary[MessageId],
-      arbitrary[MessageUpdate]
+      arbitrary[MessageUpdate],
+      arbitrary[MessageType]
     ) {
-      (eoriNumber, movementType, movementId, messageId, messageUpdate) =>
+      (eoriNumber, movementType, movementId, messageId, messageUpdate, messageType) =>
         when(
           mockConnector.patchMessage(
             any[String].asInstanceOf[EORINumber],
             any[String].asInstanceOf[MovementType],
             any[String].asInstanceOf[MovementId],
             any[String].asInstanceOf[MessageId],
+            any[MessageType],
             any[String].asInstanceOf[MessageUpdate]
           )(
             any[HeaderCarrier],
@@ -698,7 +704,7 @@ class PersistenceServiceSpec
           )
         )
           .thenReturn(Future.failed(upstreamErrorResponse))
-        val result                                   = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageUpdate)
+        val result                                   = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageType, messageUpdate)
         val expected: Either[PersistenceError, Unit] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
         whenReady(result.value) {
           _ mustBe expected

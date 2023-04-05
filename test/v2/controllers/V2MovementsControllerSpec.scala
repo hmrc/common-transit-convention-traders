@@ -371,6 +371,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.DeclarationData),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -386,7 +387,7 @@ class V2MovementsControllerSpec
           status(result) mustBe ACCEPTED
 
           contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse, Some(boxResponse), None, MovementType.Departure)
+            HateoasNewMovementResponse(movementResponse.movementId, Some(boxResponse), None, MovementType.Departure)
           )
 
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
@@ -401,6 +402,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.DeclarationData),
             eqTo(messageUpdateSuccess)
           )(
             any(),
@@ -451,6 +453,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.DeclarationData),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -470,7 +473,7 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Departure)(request)
           status(result) mustBe ACCEPTED
 
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, None, MovementType.Departure))
+          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse.movementId, None, None, MovementType.Departure))
 
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML))(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
@@ -484,6 +487,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.DeclarationData),
             eqTo(messageUpdateSuccess)
           )(
             any(),
@@ -544,6 +548,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.DeclarationData),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -576,6 +581,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.DeclarationData),
             eqTo(messageUpdateSuccess)
           )(
             any(),
@@ -680,6 +686,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.DeclarationData),
                 eqTo(messageUpdateFailure)
               )(
                 any[HeaderCarrier],
@@ -705,6 +712,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.DeclarationData),
             eqTo(messageUpdateFailure)
           )(
             any(),
@@ -789,6 +797,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.DeclarationData),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -803,7 +812,7 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Departure)(request)
           status(result) mustBe ACCEPTED
           contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse, Some(boxResponse), None, MovementType.Departure)
+            HateoasNewMovementResponse(movementResponse.movementId, Some(boxResponse), None, MovementType.Departure)
           )
 
           verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
@@ -815,6 +824,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.DeclarationData),
             eqTo(messageUpdateSuccess)
           )(
             any[HeaderCarrier],
@@ -877,6 +887,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.DeclarationData),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -907,7 +918,7 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Departure)(request)
           status(result) mustBe ACCEPTED
 
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, None, MovementType.Departure))
+          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse.movementId, None, None, MovementType.Departure))
 
           verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
@@ -918,6 +929,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.DeclarationData),
             eqTo(messageUpdateSuccess)
           )(
             any[HeaderCarrier],
@@ -997,6 +1009,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.DeclarationData),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -1021,6 +1034,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.DeclarationData),
             eqTo(messageUpdateSuccess)
           )(
             any[HeaderCarrier],
@@ -1285,6 +1299,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.DeclarationData),
                 eqTo(messageUpdateFailure)
               )(
                 any[HeaderCarrier],
@@ -1314,6 +1329,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.DeclarationData),
             eqTo(messageUpdateFailure)
           )(
             any[HeaderCarrier],
@@ -1372,7 +1388,7 @@ class V2MovementsControllerSpec
           status(result) mustBe ACCEPTED
 
           contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse, Some(boxResponse), Some(upscanResponse), MovementType.Departure)
+            HateoasNewMovementResponse(movementResponse.movementId, Some(boxResponse), Some(upscanResponse), MovementType.Departure)
           )
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Departure), MovementId(any()), MessageId(any()))(any(), any())
@@ -1418,7 +1434,7 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Departure)(request)
           status(result) mustBe ACCEPTED
 
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, Some(upscanResponse), MovementType.Departure))
+          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse.movementId, None, Some(upscanResponse), MovementType.Departure))
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Departure), MovementId(any()), MessageId(any()))(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
@@ -1499,26 +1515,24 @@ class V2MovementsControllerSpec
 
     }
 
-    s"must return NOT_ACCEPTABLE when the accept type is ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN}" in forAll(
-      arbitraryMovementId.arbitrary
-    ) {
-      movementId =>
-        val standardHeaders = FakeHeaders(
-          Seq(
-            HeaderNames.ACCEPT         -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN,
-            HeaderNames.CONTENT_TYPE   -> MimeTypes.JSON,
-            HeaderNames.CONTENT_LENGTH -> "1000"
-          )
-        )
+    s"must return NOT_ACCEPTABLE when the accept type is ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN}" in {
 
-        val json     = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
-        val request  = fakeCreateMovementRequest("POST", standardHeaders, Source.single(json), MovementType.Departure)
-        val response = sutWithAcceptHeader.createMovement(MovementType.Departure)(request)
-        status(response) mustBe NOT_ACCEPTABLE
-        contentAsJson(response) mustBe Json.obj(
-          "code"    -> "NOT_ACCEPTABLE",
-          "message" -> "The Accept header is missing or invalid."
+      val standardHeaders = FakeHeaders(
+        Seq(
+          HeaderNames.ACCEPT         -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN,
+          HeaderNames.CONTENT_TYPE   -> MimeTypes.JSON,
+          HeaderNames.CONTENT_LENGTH -> "1000"
         )
+      )
+
+      val json     = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
+      val request  = fakeCreateMovementRequest("POST", standardHeaders, Source.single(json), MovementType.Departure)
+      val response = sutWithAcceptHeader.createMovement(MovementType.Departure)(request)
+      status(response) mustBe NOT_ACCEPTABLE
+      contentAsJson(response) mustBe Json.obj(
+        "code"    -> "NOT_ACCEPTABLE",
+        "message" -> "The Accept header is missing or invalid."
+      )
     }
 
     "must return NOT_ACCEPTABLE when the accept type is invalid" in forAll(
@@ -1598,6 +1612,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.ArrivalNotification),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -1612,7 +1627,7 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Arrival)(request)
           status(result) mustBe ACCEPTED
 
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, Some(boxResponse), None, MovementType.Arrival))
+          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse.movementId, Some(boxResponse), None, MovementType.Arrival))
 
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.XML))(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
@@ -1626,6 +1641,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.ArrivalNotification),
             eqTo(messageUpdateSuccess)
           )(
             any[HeaderCarrier],
@@ -1678,6 +1694,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.ArrivalNotification),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -1697,7 +1714,7 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Arrival)(request)
           status(result) mustBe ACCEPTED
 
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, None, MovementType.Arrival))
+          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse.movementId, None, None, MovementType.Arrival))
 
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.XML))(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
@@ -1711,6 +1728,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.ArrivalNotification),
             eqTo(messageUpdateSuccess)
           )(
             any[HeaderCarrier],
@@ -1770,6 +1788,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.ArrivalNotification),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -1802,6 +1821,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.ArrivalNotification),
             eqTo(messageUpdateSuccess)
           )(
             any(),
@@ -1893,6 +1913,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.ArrivalNotification),
                 eqTo(messageUpdateFailure)
               )(
                 any[HeaderCarrier],
@@ -1932,6 +1953,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.ArrivalNotification),
             eqTo(messageUpdateFailure)
           )(
             any[HeaderCarrier],
@@ -2010,6 +2032,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.ArrivalNotification),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -2029,13 +2052,15 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Arrival)(request)
 
           status(result) mustBe ACCEPTED
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, Some(boxResponse), None, MovementType.Arrival))
+
+          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse.movementId, Some(boxResponse), None, MovementType.Arrival))
 
           verify(mockPersistenceService, times(1)).updateMessage(
             EORINumber(any()),
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.ArrivalNotification),
             eqTo(messageUpdateSuccess)
           )(
             any[HeaderCarrier],
@@ -2096,6 +2121,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.ArrivalNotification),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -2126,13 +2152,15 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Arrival)(request)
 
           status(result) mustBe ACCEPTED
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse, None, None, MovementType.Arrival))
+
+          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse.movementId, None, None, MovementType.Arrival))
 
           verify(mockPersistenceService, times(1)).updateMessage(
             EORINumber(any()),
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.ArrivalNotification),
             eqTo(messageUpdateSuccess)
           )(
             any[HeaderCarrier],
@@ -2398,6 +2426,7 @@ class V2MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(MessageType.ArrivalNotification),
                 eqTo(messageUpdateFailure)
               )(
                 any[HeaderCarrier],
@@ -2428,6 +2457,7 @@ class V2MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(MessageType.ArrivalNotification),
             eqTo(messageUpdateFailure)
           )(
             any[HeaderCarrier],
@@ -2484,7 +2514,7 @@ class V2MovementsControllerSpec
           status(result) mustBe ACCEPTED
 
           contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse, Some(boxResponse), Some(upscanResponse), MovementType.Arrival)
+            HateoasNewMovementResponse(movementResponse.movementId, Some(boxResponse), Some(upscanResponse), MovementType.Arrival)
           )
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Arrival), MovementId(any()), MessageId(any()))(any(), any())
@@ -2531,7 +2561,7 @@ class V2MovementsControllerSpec
           status(result) mustBe ACCEPTED
 
           contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse, None, Some(upscanResponse), MovementType.Arrival)
+            HateoasNewMovementResponse(movementResponse.movementId, None, Some(upscanResponse), MovementType.Arrival)
           )
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Arrival), MovementId(any()), MessageId(any()))(any(), any())
@@ -2691,6 +2721,7 @@ class V2MovementsControllerSpec
               eqTo(MovementType.Arrival),
               MovementId(eqTo(movementResponse.movementId.value)),
               MessageId(eqTo(movementResponse.messageId.value)),
+              eqTo(MessageType.ArrivalNotification),
               eqTo(messageUpdateFailure)
             )(
               any[HeaderCarrier],
@@ -2719,6 +2750,7 @@ class V2MovementsControllerSpec
           eqTo(MovementType.Arrival),
           MovementId(eqTo(movementResponse.movementId.value)),
           MessageId(eqTo(movementResponse.messageId.value)),
+          eqTo(MessageType.ArrivalNotification),
           eqTo(messageUpdateFailure)
         )(
           any[HeaderCarrier],
@@ -2732,6 +2764,7 @@ class V2MovementsControllerSpec
 
     val contentJson = if (movementType == MovementType.Departure) CC013Cjson else CC044Cjson
     val contentXml  = if (movementType == MovementType.Departure) CC013C else CC044C
+    val messageType = if (movementType == MovementType.Departure) MessageType.DeclarationAmendment else MessageType.UnloadingRemarks
 
     s"GET /movements/${movementType.urlFragment}/:movementId/messages " - {
 
@@ -3759,9 +3792,8 @@ class V2MovementsControllerSpec
 
       "with content type set to application/xml" - {
 
-        // For the content length headers, we have to ensure that we send something
         val standardHeaders = FakeHeaders(
-          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
+          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
         )
 
         "must return Accepted when body length is within limits and is considered valid" in forAll(
@@ -3795,7 +3827,7 @@ class V2MovementsControllerSpec
 
             when(
               mockPersistenceService
-                .addMessage(any[String].asInstanceOf[MovementId], any[MovementType], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
+                .addMessage(any[String].asInstanceOf[MovementId], any[MovementType], any[Option[MessageType]], any[Option[Source[ByteString, _]]]())(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -3808,6 +3840,7 @@ class V2MovementsControllerSpec
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(updateMovementResponse.messageId.value)),
+                  eqTo(messageType),
                   eqTo(messageUpdateSuccess)
                 )(
                   any[HeaderCarrier],
@@ -3822,7 +3855,7 @@ class V2MovementsControllerSpec
             val result  = sut.attachMessage(movementType, movementId)(request)
 
             status(result) mustBe ACCEPTED
-            contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, updateMovementResponse.messageId, movementType))
+            contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, updateMovementResponse.messageId, movementType, None))
 
             verify(mockAuditService, times(1)).audit(any(), any(), eqTo(MimeTypes.XML))(any(), any())
             verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any())(any(), any())
@@ -3837,6 +3870,7 @@ class V2MovementsControllerSpec
               eqTo(movementType),
               MovementId(eqTo(movementId.value)),
               MessageId(eqTo(updateMovementResponse.messageId.value)),
+              eqTo(messageType),
               eqTo(messageUpdateSuccess)
             )(
               any[HeaderCarrier],
@@ -3876,7 +3910,7 @@ class V2MovementsControllerSpec
               )
             when(
               mockPersistenceService
-                .addMessage(any[String].asInstanceOf[MovementId], any[MovementType], any[String].asInstanceOf[MessageType], any[Source[ByteString, _]]())(
+                .addMessage(any[String].asInstanceOf[MovementId], any[MovementType], any[Option[MessageType]], any[Option[Source[ByteString, _]]])(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -3934,8 +3968,8 @@ class V2MovementsControllerSpec
               .addMessage(
                 any[String].asInstanceOf[MovementId],
                 any[MovementType],
-                any[String].asInstanceOf[MessageType],
-                any[Source[ByteString, _]]()
+                any[Option[MessageType]],
+                any[Option[Source[ByteString, _]]]()
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -3960,6 +3994,7 @@ class V2MovementsControllerSpec
                 eqTo(movementType),
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
+                eqTo(messageType),
                 eqTo(messageUpdateSuccess)
               )(
                 any[HeaderCarrier],
@@ -3972,9 +4007,8 @@ class V2MovementsControllerSpec
 
         }
 
-        // For the content length headers, we have to ensure that we send something
         val standardHeaders = FakeHeaders(
-          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.JSON, HeaderNames.CONTENT_LENGTH -> "1000")
+          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
         )
 
         def fakeJsonAttachRequest(content: String): Request[Source[ByteString, _]] =
@@ -3990,7 +4024,8 @@ class V2MovementsControllerSpec
             val result  = sut.attachMessage(movementType, movementId)(request)
 
             status(result) mustBe ACCEPTED
-            contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, messageId, movementType))
+
+            contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, MessageId("456"), movementType, None))
 
             verify(mockValidationService, times(1)).validateJson(any(), any())(any(), any())
             verify(mockAuditService, times(1)).audit(any(), any(), eqTo(MimeTypes.JSON))(any(), any())
@@ -4006,6 +4041,7 @@ class V2MovementsControllerSpec
               eqTo(movementType),
               MovementId(eqTo(movementId.value)),
               MessageId(eqTo(messageId.value)),
+              eqTo(messageType),
               eqTo(messageUpdateSuccess)
             )(
               any[HeaderCarrier],
@@ -4192,6 +4228,168 @@ class V2MovementsControllerSpec
 
       }
 
+      "without content type" - {
+        val standardHeaders = FakeHeaders(
+          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json")
+        )
+
+        val source = Source.empty[ByteString]
+
+        val request: Request[Source[ByteString, _]] =
+          fakeAttachMessageRequest("POST", standardHeaders, source, movementType)
+
+        "must return Accepted when body length is within limits and is considered valid" in forAll(
+          arbitraryMovementId.arbitrary,
+          arbitraryMessageId.arbitrary,
+          arbitraryUpscanInitiateResponse.arbitrary
+        ) {
+          (movementId, messageId, upscanInitiateResponse) =>
+            beforeEach()
+
+            when(
+              mockPersistenceService
+                .addMessage(
+                  MovementId(eqTo(movementId.value)),
+                  eqTo(movementType),
+                  eqTo(None),
+                  eqTo(None)
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            ).thenReturn(EitherT.rightT(UpdateMovementResponse(messageId)))
+
+            when(
+              mockUpscanService
+                .upscanInitiate(
+                  any[String].asInstanceOf[EORINumber],
+                  eqTo(movementType),
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value))
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            )
+              .thenAnswer {
+                _ => EitherT.rightT(upscanInitiateResponse)
+              }
+
+            when(
+              mockAuditService
+                .audit(
+                  eqTo(AuditType.LargeMessageSubmissionRequested),
+                  any[Source[ByteString, _]],
+                  eqTo(MimeTypes.JSON)
+                )(any(), any())
+            )
+              .thenAnswer {
+                _ => Future.successful(())
+              }
+
+            val result = sut.attachMessage(movementType, movementId)(request)
+
+            status(result) mustBe ACCEPTED
+            contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, messageId, movementType, Some(upscanInitiateResponse)))
+        }
+
+        "must return NotFound when movement not found by Persistence" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            when(
+              mockPersistenceService
+                .addMessage(
+                  MovementId(eqTo(movementId.value)),
+                  eqTo(movementType),
+                  eqTo(None),
+                  eqTo(None)
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            ).thenReturn(EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType)))
+
+            val result = sut.attachMessage(movementType, movementId)(request)
+
+            status(result) mustBe NOT_FOUND
+            contentAsJson(result) mustBe Json.obj(
+              "message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found",
+              "code"    -> "NOT_FOUND"
+            )
+        }
+
+        "must return InternalServerError when Persistence return Unexpected Error" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            when(
+              mockPersistenceService
+                .addMessage(
+                  MovementId(eqTo(movementId.value)),
+                  eqTo(movementType),
+                  eqTo(None),
+                  eqTo(None)
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            ).thenReturn(EitherT.leftT(PersistenceError.UnexpectedError(None)))
+
+            val result = sut.attachMessage(movementType, movementId)(request)
+
+            status(result) mustBe INTERNAL_SERVER_ERROR
+            contentAsJson(result) mustBe Json.obj(
+              "message" -> "Internal server error",
+              "code"    -> "INTERNAL_SERVER_ERROR"
+            )
+        }
+
+        "must return InternalServerError when Upscan return Unexpected Error" in forAll(
+          arbitraryMovementId.arbitrary,
+          arbitraryMessageId.arbitrary
+        ) {
+          (movementId, messageId) =>
+            when(
+              mockPersistenceService
+                .addMessage(
+                  MovementId(eqTo(movementId.value)),
+                  eqTo(movementType),
+                  eqTo(None),
+                  eqTo(None)
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            ).thenReturn(EitherT.rightT(UpdateMovementResponse(messageId)))
+
+            when(
+              mockUpscanService
+                .upscanInitiate(
+                  any[String].asInstanceOf[EORINumber],
+                  eqTo(movementType),
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value))
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            )
+              .thenAnswer {
+                _ => EitherT.leftT(UpscanInitiateError.UnexpectedError(None))
+              }
+
+            val result = sut.attachMessage(movementType, movementId)(request)
+
+            status(result) mustBe INTERNAL_SERVER_ERROR
+            contentAsJson(result) mustBe Json.obj(
+              "message" -> "Internal server error",
+              "code"    -> "INTERNAL_SERVER_ERROR"
+            )
+        }
+
+      }
+
       "must return UNSUPPORTED_MEDIA_TYPE when the content type is invalid" in forAll(
         arbitraryMovementId.arbitrary
       ) {
@@ -4304,6 +4502,7 @@ class V2MovementsControllerSpec
                           any[String].asInstanceOf[MovementType],
                           MovementId(eqTo(movementId.value)),
                           MessageId(eqTo(messageId.value)),
+                          eqTo(MessageType.DeclarationAmendment),
                           any[MessageUpdate]
                         )(
                           any(),
@@ -4376,6 +4575,7 @@ class V2MovementsControllerSpec
                         any[MovementType],
                         MovementId(eqTo(movementId.value)),
                         MessageId(eqTo(messageId.value)),
+                        eqTo(MessageType.DeclarationAmendment),
                         any()
                       )(
                         any(),
@@ -4436,6 +4636,7 @@ class V2MovementsControllerSpec
                           any[String].asInstanceOf[MovementType],
                           MovementId(eqTo(movementId.value)),
                           MessageId(eqTo(messageId.value)),
+                          eqTo(MessageType.DeclarationAmendment),
                           any[MessageUpdate]
                         )(
                           any(),
@@ -4508,6 +4709,7 @@ class V2MovementsControllerSpec
                         any[MovementType],
                         MovementId(eqTo(movementId.value)),
                         MessageId(eqTo(messageId.value)),
+                        eqTo(MessageType.DeclarationAmendment),
                         any()
                       )(
                         any(),
@@ -4568,6 +4770,7 @@ class V2MovementsControllerSpec
                         any[String].asInstanceOf[MovementType],
                         MovementId(eqTo(movementId.value)),
                         MessageId(eqTo(messageId.value)),
+                        eqTo(MessageType.DeclarationAmendment),
                         any[MessageUpdate]
                       )(
                         any(),
@@ -4625,6 +4828,7 @@ class V2MovementsControllerSpec
                       any[MovementType],
                       MovementId(eqTo(movementId.value)),
                       MessageId(eqTo(messageId.value)),
+                      eqTo(MessageType.DeclarationAmendment),
                       any()
                     )(
                       any(),
@@ -4680,6 +4884,7 @@ class V2MovementsControllerSpec
                       any[String].asInstanceOf[MovementType],
                       any[String].asInstanceOf[MovementId],
                       any[String].asInstanceOf[MessageId],
+                      eqTo(MessageType.DeclarationAmendment),
                       any[MessageUpdate]
                     )(
                       any(),
@@ -4725,6 +4930,7 @@ class V2MovementsControllerSpec
                     any[MovementType],
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
+                    eqTo(MessageType.DeclarationAmendment),
                     any()
                   )(
                     any(),
@@ -4790,6 +4996,7 @@ class V2MovementsControllerSpec
                     any[String].asInstanceOf[MovementType],
                     any[String].asInstanceOf[MovementId],
                     any[String].asInstanceOf[MessageId],
+                    eqTo(MessageType.DeclarationAmendment),
                     any[MessageUpdate]
                   )(
                     any(),
@@ -4825,6 +5032,7 @@ class V2MovementsControllerSpec
                   any[MovementType],
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
+                  eqTo(MessageType.DeclarationAmendment),
                   any()
                 )(
                   any(),
@@ -4903,6 +5111,7 @@ class V2MovementsControllerSpec
                 any[MovementType],
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
+                eqTo(MessageType.DeclarationAmendment),
                 any()
               )(
                 any(),
@@ -4977,6 +5186,7 @@ class V2MovementsControllerSpec
                 any[MovementType],
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
+                eqTo(MessageType.DeclarationAmendment),
                 any()
               )(
                 any(),
@@ -5041,6 +5251,7 @@ class V2MovementsControllerSpec
               any[MovementType],
               MovementId(eqTo(movementId.value)),
               MessageId(eqTo(messageId.value)),
+              eqTo(MessageType.DeclarationAmendment),
               any()
             )(
               any(),

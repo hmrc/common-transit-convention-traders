@@ -72,7 +72,7 @@ class HateoasMovementMessageIdsResponseSpec
                   "id"          -> response.id.value,
                   "departureId" -> departureId.value,
                   "received"    -> response.received,
-                  "type"        -> response.messageType.code,
+                  "type"        -> response.messageType.get.code,
                   "status"      -> response.status
                 )
             )
