@@ -537,8 +537,8 @@ class V2MovementsControllerImpl @Inject() (
               uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
               source      <- objectStoreService.getMessage(uri.stripOwner).asPresentation
               messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
-              messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)))
-              persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, messageType, _)
+              messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)), Some(messageType))
+              persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, _)
               _ <- validationService
                 .validateLargeMessage(messageType, uri)
                 .asPresentation
@@ -634,7 +634,7 @@ class V2MovementsControllerImpl @Inject() (
         movementId,
         messageId,
         messageType,
-        MessageUpdate(messageStatus, None)
+        MessageUpdate(messageStatus, None, None)
       )
 
   private def persistAndSendToEIS(

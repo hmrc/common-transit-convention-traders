@@ -226,10 +226,10 @@ class V2MovementsControllerSpec
   implicit val timeout: Timeout = 5.seconds
 
   lazy val messageUpdateSuccess =
-    MessageUpdate(MessageStatus.Success, None)
+    MessageUpdate(MessageStatus.Success, None, None)
 
   lazy val messageUpdateFailure =
-    MessageUpdate(MessageStatus.Failed, None)
+    MessageUpdate(MessageStatus.Failed, None, None)
 
   def fakeHeaders(contentType: String) = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> contentType))
 
