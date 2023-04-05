@@ -4233,8 +4233,10 @@ class V2MovementsControllerSpec
           Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json")
         )
 
+        val source = Source.empty[ByteString]
+
         val request: Request[Source[ByteString, _]] =
-          fakeAttachMessageRequest("POST", standardHeaders, Source.empty[ByteString], movementType)
+          fakeAttachMessageRequest("POST", standardHeaders, source, movementType)
 
         "must return Accepted when body length is within limits and is considered valid" in forAll(
           arbitraryMovementId.arbitrary,
@@ -4247,10 +4249,10 @@ class V2MovementsControllerSpec
             when(
               mockPersistenceService
                 .addMessage(
-                  any[String].asInstanceOf[MovementId],
-                  any[MovementType],
-                  any[Option[MessageType]],
-                  any[Option[Source[ByteString, _]]]
+                  MovementId(eqTo(movementId.value)),
+                  eqTo(movementType),
+                  eqTo(None),
+                  eqTo(None)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -4261,9 +4263,9 @@ class V2MovementsControllerSpec
               mockUpscanService
                 .upscanInitiate(
                   any[String].asInstanceOf[EORINumber],
-                  any[MovementType],
-                  any[String].asInstanceOf[MovementId],
-                  any[String].asInstanceOf[MessageId]
+                  eqTo(movementType),
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value))
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -4276,9 +4278,9 @@ class V2MovementsControllerSpec
             when(
               mockAuditService
                 .audit(
-                  any[AuditType],
+                  eqTo(AuditType.LargeMessageSubmissionRequested),
                   any[Source[ByteString, _]],
-                  anyString()
+                  eqTo(MimeTypes.JSON)
                 )(any(), any())
             )
               .thenAnswer {
@@ -4298,10 +4300,10 @@ class V2MovementsControllerSpec
             when(
               mockPersistenceService
                 .addMessage(
-                  any[String].asInstanceOf[MovementId],
-                  any[MovementType],
-                  any[Option[MessageType]],
-                  any[Option[Source[ByteString, _]]]
+                  MovementId(eqTo(movementId.value)),
+                  eqTo(movementType),
+                  eqTo(None),
+                  eqTo(None)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -4324,10 +4326,10 @@ class V2MovementsControllerSpec
             when(
               mockPersistenceService
                 .addMessage(
-                  any[String].asInstanceOf[MovementId],
-                  any[MovementType],
-                  any[Option[MessageType]],
-                  any[Option[Source[ByteString, _]]]
+                  MovementId(eqTo(movementId.value)),
+                  eqTo(movementType),
+                  eqTo(None),
+                  eqTo(None)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -4351,10 +4353,10 @@ class V2MovementsControllerSpec
             when(
               mockPersistenceService
                 .addMessage(
-                  any[String].asInstanceOf[MovementId],
-                  any[MovementType],
-                  any[Option[MessageType]],
-                  any[Option[Source[ByteString, _]]]
+                  MovementId(eqTo(movementId.value)),
+                  eqTo(movementType),
+                  eqTo(None),
+                  eqTo(None)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -4365,9 +4367,9 @@ class V2MovementsControllerSpec
               mockUpscanService
                 .upscanInitiate(
                   any[String].asInstanceOf[EORINumber],
-                  any[MovementType],
-                  any[String].asInstanceOf[MovementId],
-                  any[String].asInstanceOf[MessageId]
+                  eqTo(movementType),
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value))
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
