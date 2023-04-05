@@ -29,6 +29,7 @@ import play.api.http.Status.NO_CONTENT
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 //import play.libs.Json
+import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -36,7 +37,6 @@ import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.request.PushNotificationsAssociation
 import v2.models.responses.BoxResponse
-import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future

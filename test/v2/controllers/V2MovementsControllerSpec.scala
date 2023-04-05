@@ -4418,8 +4418,6 @@ class V2MovementsControllerSpec
 
                       verify(mockXmlParsingService, times(1)).extractMessageType(any(), any())(any(), any())
 
-//                      verify(mockValidationService, times(1)).validateLargeMessage(any(), any())(any(), any())
-
                   }
 
                   "return OK when the upscan file is processed and is less than 5mb" in forAll(
@@ -4512,11 +4510,7 @@ class V2MovementsControllerSpec
                       ).thenAnswer(
                         _ => EitherT.rightT(())
                       )
-//                      verify(mockAuditService, times(1))
-//                        .audit(
-//                          eqTo(AuditType.DeclarationAmendment),
-//                          ObjectStoreResourceLocation(any())
-//                        )(any(), any())
+
                       val request = FakeRequest(
                         POST,
                         routes.V2MovementsController.attachLargeMessage(eoriNumber, movementType, movementId, messageId).url,
@@ -5016,8 +5010,6 @@ class V2MovementsControllerSpec
                 verify(mockObjectStoreService, times(1)).getMessage(ObjectStoreResourceLocation(any()))(any(), any())
 
                 verify(mockXmlParsingService, times(1)).extractMessageType(any(), any())(any(), any())
-
-//                verify(mockValidationService, times(1)).validateLargeMessage(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
 
                 verify(mockPersistenceService, times(1)).updateMessage(
                   EORINumber(any()),
