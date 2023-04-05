@@ -50,6 +50,7 @@ import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status._
 import play.api.libs.Files.SingletonTemporaryFileCreator
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.Request
@@ -4289,6 +4290,28 @@ class V2MovementsControllerSpec
                       beforeEach()
 
                       when(
+                        mockUpscanService.upscanGetFile(
+                          any[String].asInstanceOf[DownloadUrl]
+                        )(
+                          any[HeaderCarrier],
+                          any[ExecutionContext],
+                          any[Materializer]
+                        )
+                      ).thenReturn(EitherT.rightT(Source.single(ByteString("test".getBytes))))
+
+                      when(
+                        mockPushNotificationService.postPpnsNotification(
+                          any[String].asInstanceOf[MovementId],
+                          any[String].asInstanceOf[MessageId],
+                          any[String].asInstanceOf[JsValue]
+                        )(
+                          any[HeaderCarrier],
+                          any[ExecutionContext]
+                        )
+                      )
+                        .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
+
+                      when(
                         mockPersistenceService.updateMessage(
                           any[String].asInstanceOf[EORINumber],
                           any[String].asInstanceOf[MovementType],
@@ -4395,6 +4418,8 @@ class V2MovementsControllerSpec
 
                       verify(mockXmlParsingService, times(1)).extractMessageType(any(), any())(any(), any())
 
+//                      verify(mockValidationService, times(1)).validateLargeMessage(any(), any())(any(), any())
+
                   }
 
                   "return OK when the upscan file is processed and is less than 5mb" in forAll(
@@ -4419,6 +4444,18 @@ class V2MovementsControllerSpec
                           any[Materializer]
                         )
                       ).thenReturn(EitherT.rightT(Source.single(ByteString("test".getBytes))))
+
+                      when(
+                        mockPushNotificationService.postPpnsNotification(
+                          any[String].asInstanceOf[MovementId],
+                          any[String].asInstanceOf[MessageId],
+                          any[String].asInstanceOf[JsValue]
+                        )(
+                          any[HeaderCarrier],
+                          any[ExecutionContext]
+                        )
+                      )
+                        .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
                       when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any()))
                         .thenReturn(messageDataEither)
@@ -4474,7 +4511,11 @@ class V2MovementsControllerSpec
                       ).thenAnswer(
                         _ => EitherT.rightT(())
                       )
-
+//                      verify(mockAuditService, times(1))
+//                        .audit(
+//                          eqTo(AuditType.DeclarationAmendment),
+//                          ObjectStoreResourceLocation(any())
+//                        )(any(), any())
                       val request = FakeRequest(
                         POST,
                         routes.V2MovementsController.attachLargeMessage(eoriNumber, movementType, movementId, messageId).url,
@@ -4495,6 +4536,28 @@ class V2MovementsControllerSpec
                   ) {
                     (eoriNumber, movementType, movementId, messageId, objectSummary) =>
                       beforeEach()
+
+                      when(
+                        mockUpscanService.upscanGetFile(
+                          any[String].asInstanceOf[DownloadUrl]
+                        )(
+                          any[HeaderCarrier],
+                          any[ExecutionContext],
+                          any[Materializer]
+                        )
+                      ).thenReturn(EitherT.rightT(Source.single(ByteString("test".getBytes))))
+
+                      when(
+                        mockPushNotificationService.postPpnsNotification(
+                          any[String].asInstanceOf[MovementId],
+                          any[String].asInstanceOf[MessageId],
+                          any[String].asInstanceOf[JsValue]
+                        )(
+                          any[HeaderCarrier],
+                          any[ExecutionContext]
+                        )
+                      )
+                        .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
                       // get the url without the " quotes
                       val upscanUrl = jsonSuccessUpscanResponse.value("downloadUrl").toString().stripPrefix("\"").stripSuffix("\"")
@@ -4628,6 +4691,29 @@ class V2MovementsControllerSpec
                 ) {
                   (eoriNumber, movementType, movementId, messageId, objectSummary) =>
                     beforeEach()
+
+                    when(
+                      mockUpscanService.upscanGetFile(
+                        any[String].asInstanceOf[DownloadUrl]
+                      )(
+                        any[HeaderCarrier],
+                        any[ExecutionContext],
+                        any[Materializer]
+                      )
+                    ).thenReturn(EitherT.rightT(Source.single(ByteString("test".getBytes))))
+
+                    when(
+                      mockPushNotificationService.postPpnsNotification(
+                        any[String].asInstanceOf[MovementId],
+                        any[String].asInstanceOf[MessageId],
+                        any[String].asInstanceOf[JsValue]
+                      )(
+                        any[HeaderCarrier],
+                        any[ExecutionContext]
+                      )
+                    )
+                      .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
+
                     when(
                       mockObjectStoreService.addMessage(
                         any[String].asInstanceOf[DownloadUrl],
@@ -4740,6 +4826,29 @@ class V2MovementsControllerSpec
               ) {
                 (eoriNumber, movementType, movementId, messageId, objectSummary) =>
                   beforeEach()
+
+                  when(
+                    mockUpscanService.upscanGetFile(
+                      any[String].asInstanceOf[DownloadUrl]
+                    )(
+                      any[HeaderCarrier],
+                      any[ExecutionContext],
+                      any[Materializer]
+                    )
+                  ).thenReturn(EitherT.rightT(Source.single(ByteString("test".getBytes))))
+
+                  when(
+                    mockPushNotificationService.postPpnsNotification(
+                      any[String].asInstanceOf[MovementId],
+                      any[String].asInstanceOf[MessageId],
+                      any[String].asInstanceOf[JsValue]
+                    )(
+                      any[HeaderCarrier],
+                      any[ExecutionContext]
+                    )
+                  )
+                    .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
+
                   when(
                     mockObjectStoreService.addMessage(
                       any[String].asInstanceOf[DownloadUrl],
@@ -4941,6 +5050,29 @@ class V2MovementsControllerSpec
           ) {
             (eoriNumber, movementType, movementId, messageId, objectSummary) =>
               beforeEach()
+
+              when(
+                mockUpscanService.upscanGetFile(
+                  any[String].asInstanceOf[DownloadUrl]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext],
+                  any[Materializer]
+                )
+              ).thenReturn(EitherT.rightT(Source.single(ByteString("test".getBytes))))
+
+              when(
+                mockPushNotificationService.postPpnsNotification(
+                  any[String].asInstanceOf[MovementId],
+                  any[String].asInstanceOf[MessageId],
+                  any[String].asInstanceOf[JsValue]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
+
               when(
                 mockObjectStoreService.addMessage(
                   any[String].asInstanceOf[DownloadUrl],
@@ -5019,6 +5151,28 @@ class V2MovementsControllerSpec
               beforeEach()
 
               when(
+                mockUpscanService.upscanGetFile(
+                  any[String].asInstanceOf[DownloadUrl]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext],
+                  any[Materializer]
+                )
+              ).thenReturn(EitherT.rightT(Source.single(ByteString("test".getBytes))))
+
+              when(
+                mockPushNotificationService.postPpnsNotification(
+                  any[String].asInstanceOf[MovementId],
+                  any[String].asInstanceOf[MessageId],
+                  any[String].asInstanceOf[JsValue]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
+
+              when(
                 mockObjectStoreService.addMessage(
                   any[String].asInstanceOf[DownloadUrl],
                   any[String].asInstanceOf[MovementId],
@@ -5091,6 +5245,29 @@ class V2MovementsControllerSpec
         ) {
           (eoriNumber, movementType, movementId, messageId) =>
             beforeEach()
+
+            when(
+              mockUpscanService.upscanGetFile(
+                any[String].asInstanceOf[DownloadUrl]
+              )(
+                any[HeaderCarrier],
+                any[ExecutionContext],
+                any[Materializer]
+              )
+            ).thenReturn(EitherT.rightT(Source.single(ByteString("test".getBytes))))
+
+            when(
+              mockPushNotificationService.postPpnsNotification(
+                any[String].asInstanceOf[MovementId],
+                any[String].asInstanceOf[MessageId],
+                any[String].asInstanceOf[JsValue]
+              )(
+                any[HeaderCarrier],
+                any[ExecutionContext]
+              )
+            )
+              .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
+
             when(
               mockObjectStoreService.addMessage(
                 any[String].asInstanceOf[DownloadUrl],
