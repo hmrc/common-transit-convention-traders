@@ -92,6 +92,7 @@ trait PersistenceConnector {
   ): Future[Unit]
 
   def updateMessageBody(
+    messageType: MessageType,
     eoriNumber: EORINumber,
     movementType: MovementType,
     movementId: MovementId,
@@ -229,6 +230,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
   }
 
   def updateMessageBody(
+    messageType: MessageType,
     eoriNumber: EORINumber,
     movementType: MovementType,
     movementId: MovementId,
@@ -242,7 +244,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .post(url"$url")
-      .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+      .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code)
       .withBody(source)
       .executeAndExpect(CREATED)
   }

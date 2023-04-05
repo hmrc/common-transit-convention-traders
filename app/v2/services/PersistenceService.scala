@@ -81,8 +81,14 @@ trait PersistenceService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Unit]
 
-  def updateMessageBody(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId, source: Source[ByteString, _])(
-    implicit
+  def updateMessageBody(
+    messageType: MessageType,
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    source: Source[ByteString, _]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Unit]
@@ -192,6 +198,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
     )
 
   override def updateMessageBody(
+    messageType: MessageType,
     eoriNumber: EORINumber,
     movementType: MovementType,
     movementId: MovementId,
@@ -203,7 +210,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
   ): EitherT[Future, PersistenceError, Unit] =
     EitherT(
       persistenceConnector
-        .updateMessageBody(eoriNumber, movementType, movementId, messageId, source)
+        .updateMessageBody(messageType, eoriNumber, movementType, movementId, messageId, source)
         .map(Right(_))
         .recover {
           case NonFatal(thr) =>

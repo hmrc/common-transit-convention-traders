@@ -4489,6 +4489,7 @@ class V2MovementsControllerSpec
                       when(
                         mockPersistenceService
                           .updateMessageBody(
+                            any[String].asInstanceOf[MessageType],
                             any[String].asInstanceOf[EORINumber],
                             any[String].asInstanceOf[MovementType],
                             any[String].asInstanceOf[MovementId],

@@ -636,7 +636,7 @@ class V2MovementsControllerImpl @Inject() (
                 updateMovementResponse(messageUpdate(MessageStatus.Failed)).value
                 err
             }
-          _ <- persistenceService.updateMessageBody(eori, movementType, movementId, messageId, source).asPresentation
+          _ <- persistenceService.updateMessageBody(messageType, eori, movementType, movementId, messageId, source).asPresentation
           _ = auditService.audit(messageType.auditType, source, MimeTypes.XML)
           _ <- routerService
             .send(messageType, eori, movementId, messageId, source)

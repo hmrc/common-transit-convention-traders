@@ -2025,7 +2025,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
-        whenReady(persistenceConnector.updateMessageBody(eori, movementType, movementId, messageId, source)) {
+        whenReady(persistenceConnector.updateMessageBody(messageType, eori, movementType, movementId, messageId, source)) {
           result =>
             result mustBe ()
         }
@@ -2057,7 +2057,7 @@ class PersistenceConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = persistenceConnector.updateMessageBody(eori, movementType, movementId, messageId, source).map(Right(_)).recover {
+        val future = persistenceConnector.updateMessageBody(messageType, eori, movementType, movementId, messageId, source).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 

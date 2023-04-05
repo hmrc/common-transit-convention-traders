@@ -715,11 +715,13 @@ class PersistenceServiceSpec
       arbitrary[EORINumber],
       arbitrary[MovementType],
       arbitrary[MovementId],
-      arbitrary[MessageId]
+      arbitrary[MessageId],
+      arbitrary[MessageType]
     ) {
-      (eoriNumber, movementType, movementId, messageId) =>
+      (eoriNumber, movementType, movementId, messageId, messageType) =>
         when(
           mockConnector.updateMessageBody(
+            any[String].asInstanceOf[MessageType],
             any[String].asInstanceOf[EORINumber],
             any[String].asInstanceOf[MovementType],
             any[String].asInstanceOf[MovementId],
@@ -732,7 +734,7 @@ class PersistenceServiceSpec
         )
           .thenReturn(Future.successful(()))
 
-        val result = sut.updateMessageBody(eoriNumber, movementType, movementId, messageId, validRequest)
+        val result = sut.updateMessageBody(messageType, eoriNumber, movementType, movementId, messageId, validRequest)
 
         val expected: Either[PersistenceError, Unit] = Right(())
         whenReady(result.value) {
@@ -744,11 +746,13 @@ class PersistenceServiceSpec
       arbitrary[EORINumber],
       arbitrary[MovementType],
       arbitrary[MovementId],
-      arbitrary[MessageId]
+      arbitrary[MessageId],
+      arbitrary[MessageType]
     ) {
-      (eoriNumber, movementType, movementId, messageId) =>
+      (eoriNumber, movementType, movementId, messageId, messageType) =>
         when(
           mockConnector.updateMessageBody(
+            any[String].asInstanceOf[MessageType],
             any[String].asInstanceOf[EORINumber],
             any[String].asInstanceOf[MovementType],
             any[String].asInstanceOf[MovementId],
@@ -760,7 +764,7 @@ class PersistenceServiceSpec
           )
         )
           .thenReturn(Future.failed(upstreamErrorResponse))
-        val result                                   = sut.updateMessageBody(eoriNumber, movementType, movementId, messageId, invalidRequest)
+        val result                                   = sut.updateMessageBody(messageType, eoriNumber, movementType, movementId, messageId, invalidRequest)
         val expected: Either[PersistenceError, Unit] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
         whenReady(result.value) {
           _ mustBe expected
