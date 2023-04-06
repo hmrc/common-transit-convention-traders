@@ -4790,7 +4790,7 @@ class V2MovementsControllerSpec
 
                     verify(mockValidationService, times(1)).validateLargeMessage(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
 
-                    verify(mockPersistenceService, times(1)).updateMessage(
+                    verify(mockPersistenceService, times(2)).updateMessage(
                       EORINumber(any()),
                       any[MovementType],
                       MovementId(eqTo(movementId.value)),
