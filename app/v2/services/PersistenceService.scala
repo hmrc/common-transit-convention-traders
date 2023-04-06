@@ -71,12 +71,19 @@ trait PersistenceService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MovementSummary]]
 
-  def addMessage(movementId: MovementId, movementType: MovementType, messageType: MessageType, source: Source[ByteString, _])(implicit
+  def addMessage(movementId: MovementId, movementType: MovementType, messageType: Option[MessageType], source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, UpdateMovementResponse]
 
-  def updateMessage(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId, body: MessageUpdate)(implicit
+  def updateMessage(
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    messageType: MessageType,
+    body: MessageUpdate
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Unit]
@@ -169,7 +176,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
       }
   )
 
-  override def addMessage(movementId: MovementId, movementType: MovementType, messageType: MessageType, source: Source[ByteString, _])(implicit
+  override def addMessage(movementId: MovementId, movementType: MovementType, messageType: Option[MessageType], source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, UpdateMovementResponse] =
@@ -183,13 +190,20 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         }
     )
 
-  override def updateMessage(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId, body: MessageUpdate)(implicit
+  override def updateMessage(
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    messageType: MessageType,
+    body: MessageUpdate
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Unit] =
     EitherT(
       persistenceConnector
-        .patchMessage(eoriNumber, movementType, movementId, messageId, body)
+        .patchMessage(eoriNumber, movementType, movementId, messageId, messageType, body)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))

@@ -81,12 +81,19 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[Seq[MovementSummary]]
 
-  def postMessage(movementId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
+  def postMessage(movementId: MovementId, messageType: Option[MessageType], source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[UpdateMovementResponse]
 
-  def patchMessage(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId, body: MessageUpdate)(implicit
+  def patchMessage(
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    messageType: MessageType,
+    body: MessageUpdate
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit]
@@ -178,24 +185,34 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       updatedSince,
       movementEORI
     )
+
     httpClientV2
       .get(url"$urlWithOptions")
       .setHeader(HeaderNames.ACCEPT -> MimeTypes.JSON)
       .executeAndDeserialise[Seq[MovementSummary]]
   }
 
-  override def postMessage(movementId: MovementId, messageType: MessageType, source: Source[ByteString, _])(implicit
+  override def postMessage(movementId: MovementId, messageType: Option[MessageType], source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[UpdateMovementResponse] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
         val url = appConfig.movementsUrl.withPath(postMessageUrl(movementId))
-        httpClientV2
+
+        val request = httpClientV2
           .post(url"$url")
-          .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code)
-          .withBody(source)
-          .executeAndDeserialise[UpdateMovementResponse]
+
+        source match {
+          case None =>
+            request
+              .executeAndDeserialise[UpdateMovementResponse]
+          case Some(source) =>
+            request
+              .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.get.code)
+              .withBody(source)
+              .executeAndDeserialise[UpdateMovementResponse]
+        }
     }
 
   private def withDateTimeParameter(urlPath: Url, queryName: String, dateTime: Option[OffsetDateTime]) =
@@ -216,7 +233,14 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       )
       .addParam("movementEORI", movementEORI.map(_.value))
 
-  def patchMessage(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId, body: MessageUpdate)(implicit
+  def patchMessage(
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    messageType: MessageType,
+    body: MessageUpdate
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit] = {
@@ -225,6 +249,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     httpClientV2
       .patch(url"$url")
       .withBody(Json.toJson(body))
+      .setHeader(Constants.XMessageTypeHeader -> messageType.code)
       .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
       .executeAndExpect(OK)
   }

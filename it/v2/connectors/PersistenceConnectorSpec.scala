@@ -142,11 +142,9 @@ class PersistenceConnectorSpec
         }
 
         whenReady(future) {
-          result =>
-            result.left.toOption.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
-            response.statusCode mustBe INTERNAL_SERVER_ERROR
-            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+          case Left(UpstreamErrorResponse(message, INTERNAL_SERVER_ERROR, _, _)) =>
+            Json.parse(message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+          case other => fail(s"Expected internal server error, got $other")
         }
     }
 
@@ -175,11 +173,9 @@ class PersistenceConnectorSpec
         }
 
         whenReady(future) {
-          result =>
-            result.left.toOption.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
-            response.statusCode mustBe BAD_REQUEST
-            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+          case Left(UpstreamErrorResponse(message, BAD_REQUEST, _, _)) =>
+            Json.parse(message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+          case other => fail(s"Expected bad request error, got $other")
         }
     }
 
@@ -272,11 +268,9 @@ class PersistenceConnectorSpec
         }
 
         whenReady(future) {
-          result =>
-            result.left.toOption.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
-            response.statusCode mustBe INTERNAL_SERVER_ERROR
-            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+          case Left(UpstreamErrorResponse(message, INTERNAL_SERVER_ERROR, _, _)) =>
+            Json.parse(message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+          case other => fail(s"Expected internal server error, got $other")
         }
     }
 
@@ -302,11 +296,9 @@ class PersistenceConnectorSpec
         }
 
         whenReady(future) {
-          result =>
-            result.left.toOption.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
-            response.statusCode mustBe BAD_REQUEST
-            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+          case Left(UpstreamErrorResponse(message, BAD_REQUEST, _, _)) =>
+            Json.parse(message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+          case other => fail(s"Expected bad request error, got $other")
         }
     }
 
@@ -944,124 +936,200 @@ class PersistenceConnectorSpec
 
     def targetUrl(movementId: MovementId) = s"/transit-movements/traders/movements/${movementId.value}/messages"
 
-    "On successful update of an element, must return ACCEPTED" in forAll(arbitrary[MovementId], messageType, okResultGen) {
-      (departureId, messageType, resultRes) =>
-        server.stubFor(
-          post(
-            urlEqualTo(targetUrl(departureId))
-          )
-            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-            .withHeader("X-Message-Type", equalTo(messageType.code))
-            .willReturn(
-              aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(resultRes)))
+    "when posting with body and message type" - {
+      "On successful update of an element, must return ACCEPTED" in forAll(arbitrary[MovementId], messageType, okResultGen) {
+        (departureId, messageType, resultRes) =>
+          server.stubFor(
+            post(
+              urlEqualTo(targetUrl(departureId))
             )
-        )
+              .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+              .withHeader("X-Message-Type", equalTo(messageType.code))
+              .willReturn(
+                aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(resultRes)))
+              )
+          )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+          implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
-        val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
-        whenReady(persistenceConnector.postMessage(departureId, messageType, source)) {
-          result =>
-            result mustBe resultRes
-        }
+          val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
+          whenReady(persistenceConnector.postMessage(departureId, Some(messageType), Some(source))) {
+            result =>
+              result mustBe resultRes
+          }
+      }
+
+      "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[MovementId], messageType) {
+        (departureId, messageType) =>
+          server.stubFor(
+            post(
+              urlEqualTo(targetUrl(departureId))
+            )
+              .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+              .withHeader("X-Message-Type", equalTo(messageType.code))
+              .willReturn(
+                aResponse()
+                  .withStatus(INTERNAL_SERVER_ERROR)
+                  .withBody(
+                    Json.stringify(Json.toJson(PresentationError.internalServiceError()))
+                  )
+              )
+          )
+
+          implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+          val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
+
+          val future = persistenceConnector.postMessage(departureId, Some(messageType), Some(source)).map(Right(_)).recover {
+            case NonFatal(e) => Left(e)
+          }
+
+          whenReady(future) {
+            case Left(UpstreamErrorResponse(message, INTERNAL_SERVER_ERROR, _, _)) =>
+              Json.parse(message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+            case other => fail(s"Expected internal server error, got $other")
+          }
+      }
+
+      "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[MovementId], messageType) {
+        (departureId, messageType) =>
+          server.stubFor(
+            post(
+              urlEqualTo(targetUrl(departureId))
+            )
+              .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+              .withHeader("X-Message-Type", equalTo(messageType.code))
+              .willReturn(
+                aResponse()
+                  .withStatus(BAD_REQUEST)
+                  .withBody(
+                    Json.stringify(Json.toJson(PresentationError.badRequestError("Bad request")))
+                  )
+              )
+          )
+
+          implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+          val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
+
+          val future = persistenceConnector.postMessage(departureId, Some(messageType), Some(source)).map(Right(_)).recover {
+            case NonFatal(e) => Left(e)
+          }
+
+          whenReady(future) {
+            case Left(UpstreamErrorResponse(message, BAD_REQUEST, _, _)) =>
+              Json.parse(message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+            case other => fail(s"Expected bad request error, got $other")
+          }
+      }
+
+      "On an incorrect Json fragment, must return a JsResult.Exception" in forAll(arbitrary[MovementId], messageType) {
+        (departureId, messageType) =>
+          server.stubFor(
+            post(
+              urlEqualTo(targetUrl(departureId))
+            )
+              .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+              .withHeader("X-Message-Type", equalTo(messageType.code))
+              .willReturn(
+                aResponse()
+                  .withStatus(OK)
+                  .withBody(
+                    "{ hello"
+                  )
+              )
+          )
+
+          implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+          val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
+
+          val future = persistenceConnector.postMessage(departureId, Some(messageType), Some(source)).map(Right(_)).recover {
+            case NonFatal(e) => Left(e)
+          }
+
+          whenReady(future) {
+            result =>
+              result.left.toOption.get mustBe a[JsonParseException]
+          }
+      }
     }
 
-    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[MovementId], messageType) {
-      (departureId, messageType) =>
-        server.stubFor(
-          post(
-            urlEqualTo(targetUrl(departureId))
-          )
-            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-            .withHeader("X-Message-Type", equalTo(messageType.code))
-            .willReturn(
-              aResponse()
-                .withStatus(INTERNAL_SERVER_ERROR)
-                .withBody(
-                  Json.stringify(Json.toJson(PresentationError.internalServiceError()))
-                )
+    "when posting without body and message type (creating an empty message)" - {
+      "On successful update of an element, must return ACCEPTED" in forAll(arbitrary[MovementId], okResultGen) {
+        (departureId, resultRes) =>
+          server.stubFor(
+            post(
+              urlEqualTo(targetUrl(departureId))
             )
-        )
-
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
-
-        val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
-
-        val future = persistenceConnector.postMessage(departureId, messageType, source).map(Right(_)).recover {
-          case NonFatal(e) => Left(e)
-        }
-
-        whenReady(future) {
-          result =>
-            result.left.toOption.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
-            response.statusCode mustBe INTERNAL_SERVER_ERROR
-            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
-        }
-    }
-
-    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[MovementId], messageType) {
-      (departureId, messageType) =>
-        server.stubFor(
-          post(
-            urlEqualTo(targetUrl(departureId))
+              .willReturn(
+                aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(resultRes)))
+              )
           )
-            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-            .withHeader("X-Message-Type", equalTo(messageType.code))
-            .willReturn(
-              aResponse()
-                .withStatus(BAD_REQUEST)
-                .withBody(
-                  Json.stringify(Json.toJson(PresentationError.badRequestError("Bad request")))
-                )
+
+          implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+          whenReady(persistenceConnector.postMessage(departureId, None, None)) {
+            result =>
+              result mustBe resultRes
+          }
+      }
+
+      "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[MovementId]) {
+        departureId =>
+          server.stubFor(
+            post(
+              urlEqualTo(targetUrl(departureId))
             )
-        )
-
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
-
-        val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
-
-        val future = persistenceConnector.postMessage(departureId, messageType, source).map(Right(_)).recover {
-          case NonFatal(e) => Left(e)
-        }
-
-        whenReady(future) {
-          result =>
-            result.left.toOption.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
-            response.statusCode mustBe BAD_REQUEST
-            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
-        }
-    }
-    "On an incorrect Json fragment, must return a JsResult.Exception" in forAll(arbitrary[MovementId], messageType) {
-      (departureId, messageType) =>
-        server.stubFor(
-          post(
-            urlEqualTo(targetUrl(departureId))
+              .willReturn(
+                aResponse()
+                  .withStatus(INTERNAL_SERVER_ERROR)
+                  .withBody(
+                    Json.stringify(Json.toJson(PresentationError.internalServiceError()))
+                  )
+              )
           )
-            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-            .withHeader("X-Message-Type", equalTo(messageType.code))
-            .willReturn(
-              aResponse()
-                .withStatus(OK)
-                .withBody(
-                  "{ hello"
-                )
+
+          implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+          val future = persistenceConnector.postMessage(departureId, None, None).map(Right(_)).recover {
+            case NonFatal(e) => Left(e)
+          }
+
+          whenReady(future) {
+            case Left(UpstreamErrorResponse(message, INTERNAL_SERVER_ERROR, _, _)) =>
+              Json.parse(message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+            case other => fail(s"Expected internal server error, got $other")
+          }
+      }
+
+      "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[MovementId]) {
+        departureId =>
+          server.stubFor(
+            post(
+              urlEqualTo(targetUrl(departureId))
             )
-        )
+              .willReturn(
+                aResponse()
+                  .withStatus(BAD_REQUEST)
+                  .withBody(
+                    Json.stringify(Json.toJson(PresentationError.badRequestError("Bad request")))
+                  )
+              )
+          )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+          implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
 
-        val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
+          val future = persistenceConnector.postMessage(departureId, None, None).map(Right(_)).recover {
+            case NonFatal(e) => Left(e)
+          }
 
-        val future = persistenceConnector.postMessage(departureId, messageType, source).map(Right(_)).recover {
-          case NonFatal(e) => Left(e)
-        }
-
-        whenReady(future) {
-          result =>
-            result.left.toOption.get mustBe a[JsonParseException]
-        }
+          whenReady(future) {
+            case Left(UpstreamErrorResponse(message, BAD_REQUEST, _, _)) =>
+              Json.parse(message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+            case other => fail(s"Expected bad request error, got $other")
+          }
+      }
     }
   }
 
@@ -1122,11 +1190,9 @@ class PersistenceConnectorSpec
         }
 
         whenReady(future) {
-          result =>
-            result.left.toOption.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
-            response.statusCode mustBe INTERNAL_SERVER_ERROR
-            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+          case Left(UpstreamErrorResponse(message, INTERNAL_SERVER_ERROR, _, _)) =>
+            Json.parse(message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+          case other => fail(s"Expected internal server error, got $other")
         }
     }
 
@@ -1155,11 +1221,9 @@ class PersistenceConnectorSpec
         }
 
         whenReady(future) {
-          result =>
-            result.left.toOption.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
-            response.statusCode mustBe BAD_REQUEST
-            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+          case Left(UpstreamErrorResponse(message, BAD_REQUEST, _, _)) =>
+            Json.parse(message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+          case other => fail(s"Expected bad request error, got $other")
         }
     }
 
@@ -1245,11 +1309,9 @@ class PersistenceConnectorSpec
         }
 
         whenReady(future) {
-          result =>
-            result.left.toOption.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
-            response.statusCode mustBe INTERNAL_SERVER_ERROR
-            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+          case Left(UpstreamErrorResponse(message, INTERNAL_SERVER_ERROR, _, _)) =>
+            Json.parse(message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+          case other => fail(s"Expected internal server error, got $other")
         }
     }
 
@@ -1275,11 +1337,9 @@ class PersistenceConnectorSpec
         }
 
         whenReady(future) {
-          result =>
-            result.left.toOption.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
-            response.statusCode mustBe BAD_REQUEST
-            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+          case Left(UpstreamErrorResponse(message, BAD_REQUEST, _, _)) =>
+            Json.parse(message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+          case other => fail(s"Expected bad request error, got $other")
         }
     }
 
@@ -1325,9 +1385,10 @@ class PersistenceConnectorSpec
       arbitrary[MovementType],
       arbitrary[MovementId],
       arbitrary[MessageId],
-      arbitrary[MessageUpdate]
+      arbitrary[MessageUpdate],
+      arbitrary[MessageType]
     ) {
-      (eoriNumber, movementType, movementId, messageId, messageUpdate) =>
+      (eoriNumber, movementType, movementId, messageId, messageUpdate, messageType) =>
         server.stubFor(
           patch(
             urlEqualTo(targetUrl(eoriNumber, movementType, movementId, messageId))
@@ -1337,7 +1398,7 @@ class PersistenceConnectorSpec
             )
         )
 
-        whenReady(persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageUpdate)) {
+        whenReady(persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageType, messageUpdate)) {
           result =>
             result mustBe ()
         }
@@ -1347,9 +1408,10 @@ class PersistenceConnectorSpec
       arbitrary[EORINumber],
       arbitrary[MovementType],
       arbitrary[MovementId],
-      arbitrary[MessageId]
+      arbitrary[MessageId],
+      arbitrary[MessageType]
     ) {
-      (eoriNumber, movementType, movementId, messageId) =>
+      (eoriNumber, movementType, movementId, messageId, messageType) =>
         server.stubFor(
           patch(
             urlEqualTo(targetUrl(eoriNumber, movementType, movementId, messageId))
@@ -1363,16 +1425,14 @@ class PersistenceConnectorSpec
             )
         )
 
-        val future = persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageUpdate).map(Right(_)).recover {
+        val future = persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageType, messageUpdate).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
         whenReady(future) {
-          result =>
-            result.left.toOption.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
-            response.statusCode mustBe INTERNAL_SERVER_ERROR
-            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+          case Left(UpstreamErrorResponse(message, INTERNAL_SERVER_ERROR, _, _)) =>
+            Json.parse(message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+          case other => fail(s"Expected internal server error, got $other")
         }
     }
 
@@ -1380,9 +1440,10 @@ class PersistenceConnectorSpec
       arbitrary[EORINumber],
       arbitrary[MovementType],
       arbitrary[MovementId],
-      arbitrary[MessageId]
+      arbitrary[MessageId],
+      arbitrary[MessageType]
     ) {
-      (eoriNumber, movementType, movementId, messageId) =>
+      (eoriNumber, movementType, movementId, messageId, messageType) =>
         server.stubFor(
           patch(
             urlEqualTo(targetUrl(eoriNumber, movementType, movementId, messageId))
@@ -1396,16 +1457,14 @@ class PersistenceConnectorSpec
             )
         )
 
-        val future = persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageUpdate).map(Right(_)).recover {
+        val future = persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageType, messageUpdate).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
         whenReady(future) {
-          result =>
-            result.left.toOption.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
-            response.statusCode mustBe BAD_REQUEST
-            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+          case Left(UpstreamErrorResponse(message, BAD_REQUEST, _, _)) =>
+            Json.parse(message).validate[StandardError] mustBe JsSuccess(StandardError("Bad request", ErrorCode.BadRequest))
+          case other => fail(s"Expected bad request error, got $other")
         }
     }
   }
