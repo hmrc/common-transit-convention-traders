@@ -544,7 +544,11 @@ class V2MovementsControllerImpl @Inject() (
                           messageId,
                           ObjectStoreURI(objectSummary.location.asUri)
                         )
-                        .asPresentation
+                        .asPresentation.leftMap {
+                        err =>
+                          persist(messageUpdate(MessageStatus.Failed)).value
+                          err
+                      }
                       _ = auditService.audit(messageType.auditType, uri.stripOwner)
 
                     } yield sendMessage).fold[Result](
