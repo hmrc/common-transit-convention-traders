@@ -33,15 +33,21 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[AuditingServiceImpl])
 trait AuditingService {
 
-  def audit(auditType: AuditType, source: Source[ByteString, _], contentType: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit]
+  def audit(auditType: AuditType, source: Source[ByteString, _], contentType: String, contentLength: Long = 0)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit]
 
   def audit(auditType: AuditType, uri: ObjectStoreResourceLocation)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit]
 }
 
 class AuditingServiceImpl @Inject() (auditingConnector: AuditingConnector) extends AuditingService with Logging {
 
-  override def audit(auditType: AuditType, source: Source[ByteString, _], contentType: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    auditingConnector.post(auditType, source, contentType).recover {
+  override def audit(auditType: AuditType, source: Source[ByteString, _], contentType: String, contentLength: Long)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] =
+    auditingConnector.post(auditType, source, contentType, contentLength).recover {
       case NonFatal(e) =>
         logger.warn("Unable to audit payload due to an exception", e)
     }
