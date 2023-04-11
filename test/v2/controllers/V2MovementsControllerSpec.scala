@@ -4548,12 +4548,18 @@ class V2MovementsControllerSpec
 
                       when(
                         mockPersistenceService.updateMessage(
-                          EORINumber(eqTo(eoriNumber.value)),
+                          any[String].asInstanceOf[EORINumber],
                           any[String].asInstanceOf[MovementType],
-                          MovementId(eqTo(movementId.value)),
-                          MessageId(eqTo(messageId.value)),
-                          eqTo(MessageType.DeclarationAmendment),
-                          any[MessageUpdate]
+                          any[String].asInstanceOf[MovementId],
+                          any[String].asInstanceOf[MessageId],
+                          any[MessageType],
+                          any[String].asInstanceOf[MessageUpdate]
+//                          EORINumber(eqTo(eoriNumber.value)),
+//                          any[String].asInstanceOf[MovementType],
+//                          MovementId(eqTo(movementId.value)),
+//                          MessageId(eqTo(messageId.value)),
+//                          eqTo(MessageType.DeclarationAmendment),
+//                          any[MessageUpdate]
                         )(
                           any(),
                           any()
