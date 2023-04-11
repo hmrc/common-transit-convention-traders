@@ -4618,6 +4618,34 @@ class V2MovementsControllerSpec
 
                       verify(mockXmlParsingService, times(1)).extractMessageType(any(), any())(any(), any())
 
+                      verify(mockValidationService, times(1)).validateLargeMessage(any(), any())(any(), any())
+
+                      verify(mockPersistenceService, times(1)).updateMessage(
+                        EORINumber(eqTo(eoriNumber.value)),
+                        any[MovementType],
+                        MovementId(eqTo(movementId.value)),
+                        MessageId(eqTo(messageId.value)),
+                        eqTo(MessageType.DeclarationAmendment),
+                        any()
+                      )(
+                        any(),
+                        any()
+                      )
+                      verify(mockRouterService, times(1))
+                        .sendLargeMessage(
+                          any[MessageType],
+                          EORINumber(eqTo(eoriNumber.value)),
+                          MovementId(eqTo(movementId.value)),
+                          MessageId(eqTo(messageId.value)),
+                          ObjectStoreURI(any())
+                        )(any(), any())
+
+                      verify(mockAuditService, times(1))
+                        .audit(
+                          eqTo(AuditType.DeclarationAmendment),
+                          ObjectStoreResourceLocation(any())
+                        )(any(), any())
+
                   }
 
                   "return OK when the upscan file is processed and is less than 5mb" in forAll(
