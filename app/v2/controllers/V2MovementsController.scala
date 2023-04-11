@@ -553,6 +553,7 @@ class V2MovementsControllerImpl @Inject() (
                         }
                       )
                   case (downloadUrl, size) if size > config.smallMessageSizeLimit =>
+                    println(s"Debug: size = $size, smallMessageSizeLimit = ${config.smallMessageSizeLimit}")
                     (for {
                       objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
                       uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
