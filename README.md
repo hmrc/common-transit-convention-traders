@@ -14,7 +14,7 @@ You can find our full list of endpoints on [API definitions](https://developer.s
 - sbt > 1.7.2
 - [Service Manager](https://github.com/hmrc/service-manager)
 
-### Development Setup
+### Development Setup 
 
 Run from the console using: `sbt run`
 
