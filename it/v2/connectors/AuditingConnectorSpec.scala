@@ -63,6 +63,8 @@ class AuditingConnectorSpec
   def targetUrl(auditType: AuditType)                   = s"/transit-movements-auditing/audit/${auditType.name}"
   def targetUrlLarge(auditType: AuditType, uri: String) = s"/transit-movements-auditing/audit/${auditType.name}/uri/$uri"
 
+  lazy val contentSize = 49999L
+
   "For a small message" - {
     "when sending an audit message" - Seq(MimeTypes.XML, MimeTypes.JSON).foreach {
       contentType =>
@@ -80,7 +82,7 @@ class AuditingConnectorSpec
 
             implicit val hc = HeaderCarrier()
             // when we call the audit service
-            val future = sut.post(AuditType.DeclarationData, Source.empty, contentType)
+            val future = sut.post(AuditType.DeclarationData, Source.empty, contentType, contentSize)
 
             // then the future should be ready
             whenReady(future) {
@@ -103,7 +105,7 @@ class AuditingConnectorSpec
 
                 implicit val hc = HeaderCarrier()
                 // when we call the audit service
-                val future = sut.post(AuditType.DeclarationData, Source.empty, contentType)
+                val future = sut.post(AuditType.DeclarationData, Source.empty, contentType, contentSize)
 
                 val result = future
                   .map(
