@@ -152,7 +152,7 @@ class V2MovementsControllerImpl @Inject() (
         (for {
           _ <- contentSizeIsLessThanLimit(size)
           _ <- validationService.validateXml(MessageType.DeclarationData, request.body).asPresentation
-          _ = auditService.audit(AuditType.DeclarationData, request.body, MimeTypes.XML)
+          _ = auditService.audit(AuditType.DeclarationData, request.body, MimeTypes.XML, size)
           hateoasResponse <- persistAndSendToEIS(request.body, MovementType.Departure, MessageType.DeclarationData)
         } yield hateoasResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -168,7 +168,7 @@ class V2MovementsControllerImpl @Inject() (
         (for {
           _ <- contentSizeIsLessThanLimit(size)
           _ <- validationService.validateJson(MessageType.DeclarationData, request.body).asPresentation
-          _ = auditService.audit(AuditType.DeclarationData, request.body, MimeTypes.JSON)
+          _ = auditService.audit(AuditType.DeclarationData, request.body, MimeTypes.JSON, size)
           xmlSource       <- conversionService.jsonToXml(MessageType.DeclarationData, request.body).asPresentation
           hateoasResponse <- validatePersistAndSendToEIS(xmlSource, MovementType.Departure, MessageType.DeclarationData)
         } yield hateoasResponse).fold[Result](
@@ -191,7 +191,7 @@ class V2MovementsControllerImpl @Inject() (
         (for {
           _ <- contentSizeIsLessThanLimit(size)
           _ <- validationService.validateXml(MessageType.ArrivalNotification, request.body).asPresentation
-          _ = auditService.audit(AuditType.ArrivalNotification, request.body, MimeTypes.XML)
+          _ = auditService.audit(AuditType.ArrivalNotification, request.body, MimeTypes.XML, size)
           hateoasResponse <- persistAndSendToEIS(request.body, MovementType.Arrival, MessageType.ArrivalNotification)
         } yield hateoasResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -207,7 +207,7 @@ class V2MovementsControllerImpl @Inject() (
         (for {
           _ <- contentSizeIsLessThanLimit(size)
           _ <- validationService.validateJson(MessageType.ArrivalNotification, request.body).asPresentation
-          _ = auditService.audit(AuditType.ArrivalNotification, request.body, MimeTypes.JSON)
+          _ = auditService.audit(AuditType.ArrivalNotification, request.body, MimeTypes.JSON, size)
           xmlSource       <- conversionService.jsonToXml(MessageType.ArrivalNotification, request.body).asPresentation
           hateoasResponse <- validatePersistAndSendToEIS(xmlSource, MovementType.Arrival, MessageType.ArrivalNotification)
         } yield hateoasResponse).fold[Result](
@@ -462,7 +462,7 @@ class V2MovementsControllerImpl @Inject() (
           _           <- contentSizeIsLessThanLimit(size)
           messageType <- xmlParsingService.extractMessageType(request.body, messageTypeList).asPresentation
           _           <- validationService.validateXml(messageType, request.body).asPresentation
-          _ = auditService.audit(messageType.auditType, request.body, MimeTypes.XML)
+          _ = auditService.audit(messageType.auditType, request.body, MimeTypes.XML, size)
           updateMovementResponse <- updateAndSendToEIS(movementId, movementType, messageType, request.body)
         } yield updateMovementResponse).fold[Result](
           // update status to fail
@@ -496,7 +496,7 @@ class V2MovementsControllerImpl @Inject() (
           _           <- contentSizeIsLessThanLimit(size)
           messageType <- jsonParsingService.extractMessageType(request.body, messageTypeList).asPresentation
           _           <- validationService.validateJson(messageType, request.body).asPresentation
-          _ = auditService.audit(messageType.auditType, request.body, MimeTypes.JSON)
+          _ = auditService.audit(messageType.auditType, request.body, MimeTypes.JSON, size)
           converted      <- conversionService.jsonToXml(messageType, request.body).asPresentation
           updateResponse <- handleXml(id, messageType, converted)
         } yield updateResponse).fold[Result](
