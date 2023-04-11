@@ -4607,17 +4607,6 @@ class V2MovementsControllerSpec
                       val result = sut.attachLargeMessage(eoriNumber, movementType, movementId, messageId)(request)
 
                       status(result) mustBe OK
-                      /*
-                      verify(mockObjectStoreService, times(1)).addMessage(
-                        DownloadUrl(eqTo(upscanUrl)),
-                        MovementId(eqTo(movementId.value)),
-                        MessageId(eqTo(messageId.value))
-                      )(any(), any())
-
-                      verify(mockObjectStoreService, times(1)).getMessage(ObjectStoreResourceLocation(any()))(any(), any())
-
-                      verify(mockXmlParsingService, times(1)).extractMessageType(any(), any())(any(), any())
-                       */
 
                       verify(mockObjectStoreService, times(1)).addMessage(
                         DownloadUrl(eqTo(upscanUrl)),
