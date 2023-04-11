@@ -4569,10 +4569,19 @@ class V2MovementsControllerSpec
                       when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any()))
                         .thenReturn(EitherT.rightT(MessageType.DeclarationAmendment))
 
+//                      when(
+//                        mockValidationService.validateLargeMessage(
+//                          eqTo(MessageType.DeclarationAmendment),
+//                          any[String].asInstanceOf[ObjectStoreResourceLocation]
+//                        )(
+//                          any[HeaderCarrier],
+//                          any[ExecutionContext]
+//                        )
+//                      )
                       when(
                         mockValidationService.validateLargeMessage(
-                          eqTo(MessageType.DeclarationAmendment),
-                          any[String].asInstanceOf[ObjectStoreResourceLocation]
+                          any[MessageType],
+                          any[ObjectStoreResourceLocation]
                         )(
                           any[HeaderCarrier],
                           any[ExecutionContext]
