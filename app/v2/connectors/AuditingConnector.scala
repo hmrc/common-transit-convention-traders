@@ -39,7 +39,10 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[AuditingConnectorImpl])
 trait AuditingConnector {
 
-  def post(auditType: AuditType, source: Source[ByteString, _], contentType: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit]
+  def post(auditType: AuditType, source: Source[ByteString, _], contentType: String, contentLength: Long)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit]
 
   def post(auditType: AuditType, uri: ObjectStoreResourceLocation)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit]
 }
@@ -50,14 +53,17 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, appConfig: AppC
     with HasMetrics
     with Logging {
 
-  def post(auditType: AuditType, source: Source[ByteString, _], contentType: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+  def post(auditType: AuditType, source: Source[ByteString, _], contentType: String, contentLength: Long)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] =
     withMetricsTimerAsync(MetricsKeys.AuditingBackend.Post) {
       _ =>
         val url = appConfig.auditingUrl.withPath(auditingRoute(auditType))
 
         httpClient
           .post(url"$url")
-          .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> contentType))
+          .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> contentType, HeaderNames.CONTENT_LENGTH -> contentLength.toString))
           .withBody(source)
           .executeAndExpect(ACCEPTED)
     }
