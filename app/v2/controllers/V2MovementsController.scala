@@ -187,7 +187,6 @@ class V2MovementsControllerImpl @Inject() (
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
       implicit request => size =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
         (for {
           _ <- contentSizeIsLessThanLimit(size)
           _ <- validationService.validateXml(MessageType.ArrivalNotification, request.body).asPresentation
@@ -557,6 +556,11 @@ class V2MovementsControllerImpl @Inject() (
                   ObjectStoreURI(objectSummary.location.asUri)
                 )
                 .asPresentation
+                .leftMap {
+                  err =>
+                    persist(messageUpdate(MessageStatus.Failed)).value
+                    err
+                }
               _ = auditService.audit(messageType.auditType, uri.stripOwner)
             } yield sendMessage).fold[Result](
               _ => Ok, //TODO: Send notification to PPNS with details of the error
