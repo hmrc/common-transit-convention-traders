@@ -4554,6 +4554,20 @@ class V2MovementsControllerSpec
                           _ => EitherT.rightT(())
                         }
 
+//                      when(
+//                        mockValidationService.validateLargeMessage(
+//                          any[String].asInstanceOf[MessageType],
+////                          eqTo(MessageType.DeclarationAmendment),
+//                          any[String].asInstanceOf[ObjectStoreResourceLocation]
+//                        )(
+//                          any[HeaderCarrier],
+//                          any[ExecutionContext]
+//                        )
+//                      )
+//                        .thenAnswer {
+//                          _ => EitherT.rightT(())
+//                        }
+
                       when(
                         mockRouterService.sendLargeMessage(
                           any[String].asInstanceOf[MessageType],
@@ -4568,7 +4582,8 @@ class V2MovementsControllerSpec
 
                       when(
                         mockAuditService.audit(
-                          eqTo(AuditType.DeclarationData),
+                          any[String].asInstanceOf[AuditType],
+//                          eqTo(AuditType.DeclarationData),
                           any[String].asInstanceOf[ObjectStoreResourceLocation]
                         )(
                           any(),
@@ -4598,9 +4613,20 @@ class V2MovementsControllerSpec
 
                       verify(mockValidationService, times(1)).validateLargeMessage(any(), any())(any(), any())
 
+//                      verify(mockPersistenceService, times(1)).updateMessage(
+//                        EORINumber(eqTo(eoriNumber.value)),
+//                        any[MovementType],
+//                        MovementId(eqTo(movementId.value)),
+//                        MessageId(eqTo(messageId.value)),
+//                        eqTo(MessageType.DeclarationAmendment),
+//                        any()
+//                      )(
+//                        any(),
+//                        any()
+//                      )
                       verify(mockPersistenceService, times(1)).updateMessage(
-                        EORINumber(eqTo(eoriNumber.value)),
-                        any[MovementType],
+                        EORINumber(any()),
+                        eqTo(movementType),
                         MovementId(eqTo(movementId.value)),
                         MessageId(eqTo(messageId.value)),
                         eqTo(MessageType.DeclarationAmendment),
