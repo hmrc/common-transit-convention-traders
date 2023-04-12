@@ -37,6 +37,12 @@ import v2.models.responses.UpscanInitiateResponse
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import akka.stream.Materializer
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
+import v2.models.responses.UpscanResponse.DownloadUrl
+
+import java.net.URLEncoder
 
 @ImplementedBy(classOf[UpscanConnectorImpl])
 trait UpscanConnector {
@@ -45,6 +51,8 @@ trait UpscanConnector {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[UpscanInitiateResponse]
+
+  def upscanGetFile(downloadUrl: DownloadUrl)(implicit hc: HeaderCarrier, ec: ExecutionContext, materializer: Materializer): Future[Source[ByteString, _]]
 
 }
 
@@ -73,4 +81,11 @@ class UpscanConnectorImpl @Inject() (appConfig: AppConfig, httpClientV2: HttpCli
           .withBody(Json.toJson(upscanInitiate))
           .executeAndDeserialise[UpscanInitiateResponse]
     }
+
+  override def upscanGetFile(
+    downloadUrl: DownloadUrl
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext, materializer: Materializer): Future[Source[ByteString, _]] =
+    httpClientV2
+      .get(url"${downloadUrl.value}")
+      .executeAsStream
 }

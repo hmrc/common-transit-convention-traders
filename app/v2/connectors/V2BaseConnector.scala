@@ -53,6 +53,9 @@ trait V2BaseConnector extends HttpErrorFunctions {
   def postMessageUrl(movementId: MovementId): UrlPath =
     UrlPath.parse(s"$movementsBaseRoute/traders/movements/${movementId.value}/messages")
 
+  def postMessageBodyUrl(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): UrlPath =
+    UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}/body")
+
   def getMessageUrl(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): UrlPath =
     UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}")
 
@@ -92,6 +95,9 @@ trait V2BaseConnector extends HttpErrorFunctions {
 
   def pushNotificationsBoxRoute(movementId: MovementId): UrlPath =
     UrlPath.parse(s"$pushNotificationsBaseRoute/traders/movements/${movementId.value}/box")
+
+  def pushPpnsNotifications(movementId: MovementId, messageId: MessageId): UrlPath =
+    UrlPath.parse(s"$pushNotificationsBaseRoute/traders/movements/${movementId.value}/messages/${messageId.value}")
 
   lazy val upscanInitiateRoute: UrlPath = UrlPath.parse("/upscan/v2/initiate")
 
