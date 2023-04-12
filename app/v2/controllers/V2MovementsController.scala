@@ -553,7 +553,6 @@ class V2MovementsControllerImpl @Inject() (
                         }
                       )
                   case (downloadUrl, size) if size > config.smallMessageSizeLimit =>
-                    println(s"Debug: size = $size, smallMessageSizeLimit = ${config.smallMessageSizeLimit}")
                     (for {
                       objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
                       uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
@@ -584,7 +583,6 @@ class V2MovementsControllerImpl @Inject() (
                             persist(messageUpdate(MessageStatus.Failed)).value
                             err
                         }
-                      _ = println("Debug: Calling auditService.audit")
                       _ = auditService.audit(messageType.auditType, uri.stripOwner)
 
                     } yield sendMessage).fold[Result](

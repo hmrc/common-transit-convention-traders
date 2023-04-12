@@ -4488,28 +4488,6 @@ class V2MovementsControllerSpec
                       beforeEach()
 
                       when(
-                        mockUpscanService.upscanGetFile(
-                          any[String].asInstanceOf[DownloadUrl]
-                        )(
-                          any[HeaderCarrier],
-                          any[ExecutionContext],
-                          any[Materializer]
-                        )
-                      ).thenReturn(EitherT.rightT(Source.single(ByteString("test".getBytes))))
-
-                      when(
-                        mockPushNotificationService.postPpnsNotification(
-                          any[String].asInstanceOf[MovementId],
-                          any[String].asInstanceOf[MessageId],
-                          any[String].asInstanceOf[JsValue]
-                        )(
-                          any[HeaderCarrier],
-                          any[ExecutionContext]
-                        )
-                      )
-                        .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
-
-                      when(
                         mockPersistenceService.updateMessage(
                           any[String].asInstanceOf[EORINumber],
                           any[String].asInstanceOf[MovementType],
@@ -4548,18 +4526,12 @@ class V2MovementsControllerSpec
 
                       when(
                         mockPersistenceService.updateMessage(
-                          any[String].asInstanceOf[EORINumber],
+                          EORINumber(eqTo(eoriNumber.value)),
                           any[String].asInstanceOf[MovementType],
-                          any[String].asInstanceOf[MovementId],
-                          any[String].asInstanceOf[MessageId],
-                          any[MessageType],
-                          any[String].asInstanceOf[MessageUpdate]
-//                          EORINumber(eqTo(eoriNumber.value)),
-//                          any[String].asInstanceOf[MovementType],
-//                          MovementId(eqTo(movementId.value)),
-//                          MessageId(eqTo(messageId.value)),
-//                          eqTo(MessageType.DeclarationAmendment),
-//                          any[MessageUpdate]
+                          MovementId(eqTo(movementId.value)),
+                          MessageId(eqTo(messageId.value)),
+                          eqTo(MessageType.DeclarationAmendment),
+                          any[MessageUpdate]
                         )(
                           any(),
                           any()
@@ -4569,19 +4541,10 @@ class V2MovementsControllerSpec
                       when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any()))
                         .thenReturn(EitherT.rightT(MessageType.DeclarationAmendment))
 
-//                      when(
-//                        mockValidationService.validateLargeMessage(
-//                          eqTo(MessageType.DeclarationAmendment),
-//                          any[String].asInstanceOf[ObjectStoreResourceLocation]
-//                        )(
-//                          any[HeaderCarrier],
-//                          any[ExecutionContext]
-//                        )
-//                      )
                       when(
                         mockValidationService.validateLargeMessage(
-                          any[MessageType],
-                          any[ObjectStoreResourceLocation]
+                          eqTo(MessageType.DeclarationAmendment),
+                          any[String].asInstanceOf[ObjectStoreResourceLocation]
                         )(
                           any[HeaderCarrier],
                           any[ExecutionContext]
@@ -4636,18 +4599,12 @@ class V2MovementsControllerSpec
                       verify(mockValidationService, times(1)).validateLargeMessage(any(), any())(any(), any())
 
                       verify(mockPersistenceService, times(1)).updateMessage(
-                        any[String].asInstanceOf[EORINumber],
-                        any[String].asInstanceOf[MovementType],
-                        any[String].asInstanceOf[MovementId],
-                        any[String].asInstanceOf[MessageId],
-                        any[MessageType],
-                        any[String].asInstanceOf[MessageUpdate]
-//                        EORINumber(eqTo(eoriNumber.value)),
-//                        any[MovementType],
-//                        MovementId(eqTo(movementId.value)),
-//                        MessageId(eqTo(messageId.value)),
-//                        eqTo(MessageType.DeclarationAmendment),
-//                        any()
+                        EORINumber(eqTo(eoriNumber.value)),
+                        any[MovementType],
+                        MovementId(eqTo(movementId.value)),
+                        MessageId(eqTo(messageId.value)),
+                        eqTo(MessageType.DeclarationAmendment),
+                        any()
                       )(
                         any(),
                         any()
@@ -4663,10 +4620,8 @@ class V2MovementsControllerSpec
 
                       verify(mockAuditService, times(1))
                         .audit(
-                          any[AuditType],
-                          any[ObjectStoreResourceLocation]
-//                          eqTo(AuditType.DeclarationAmendment),
-//                          ObjectStoreResourceLocation(any())
+                          eqTo(AuditType.DeclarationAmendment),
+                          ObjectStoreResourceLocation(any())
                         )(any(), any())
 
                   }
