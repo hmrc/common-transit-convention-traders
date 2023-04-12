@@ -603,64 +603,6 @@ class V2MovementsControllerImpl @Inject() (
         }
     }
 
-//  def attachLargeMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[JsValue] =
-//    Action.async(parse.json) {
-//      implicit request =>
-//        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-//        parseAndLogUpscanResponse(request.body) match {
-//          case Left(presentationError) =>
-//            Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
-//          case Right(upscanResponse) =>
-//            (for {
-//              downloadUrl <- handleUpscanSuccessResponse(upscanResponse)
-//                .leftMap {
-//                  err =>
-//                    val auditReq = Json.toJson(
-//                      TraderFailedUploadAuditRequest(
-//                        movementId,
-//                        messageId,
-//                        eori,
-//                        movementType
-//                      )
-//                    )
-//                    auditService.audit(
-//                      AuditType.TraderFailedUploadEvent,
-//                      Source.single(ByteString(auditReq.toString(), StandardCharsets.UTF_8)),
-//                      MimeTypes.JSON
-//                    )
-//                    err
-//                }
-//              objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
-//              uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
-//              source      <- objectStoreService.getMessage(uri.stripOwner).asPresentation
-//              messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
-//              messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)), Some(messageType))
-//              persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, messageType, _)
-//              _ <- validationService
-//                .validateLargeMessage(messageType, uri)
-//                .asPresentation
-//                .leftMap {
-//                  err =>
-//                    persist(messageUpdate(MessageStatus.Failed)).value
-//                    err
-//                }
-//              _ <- persist(messageUpdate(MessageStatus.Processing)).asPresentation
-//              sendMessage <- routerService
-//                .sendLargeMessage(
-//                  messageType,
-//                  eori,
-//                  movementId,
-//                  messageId,
-//                  ObjectStoreURI(objectSummary.location.asUri)
-//                )
-//                .asPresentation
-//              _ = auditService.audit(messageType.auditType, uri.stripOwner)
-//            } yield sendMessage).fold[Result](
-//              _ => Ok, //TODO: Send notification to PPNS with details of the error
-//              _ => Ok  //TODO: Send notification to PPNS with details of the success
-//            )
-//        }
-//    }
 
   private def handleUpscanSuccessResponse(upscanResponse: UpscanResponse): EitherT[Future, PresentationError, (DownloadUrl, Long)] =
     upscanResponse.uploadDetails match {
