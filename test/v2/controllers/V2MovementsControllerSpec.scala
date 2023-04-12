@@ -95,6 +95,8 @@ import scala.concurrent.duration.DurationInt
 import scala.util.Try
 import scala.xml.NodeSeq
 import scala.annotation.nowarn
+import play.api.libs.json.JsValue
+import scala.annotation.nowarn
 
 @nowarn("msg=dead code following this construct")
 class V2MovementsControllerSpec
@@ -143,7 +145,20 @@ class V2MovementsControllerSpec
       "fileMimeType"    -> "application/pdf",
       "uploadTimestamp" -> "2018-04-24T09:30:00Z",
       "checksum"        -> "396f101dd52e8b2ace0dcf5ed09b1d1f030e608938510ce46e7a5c7a4e775100",
-      "size"            -> 987
+      "size"            -> 6000000
+    )
+  )
+
+  val jsonSuccessSmallUpscanResponse = Json.obj(
+    "reference"   -> "11370e18-6e24-453e-b45a-76d3e32ea33d",
+    "downloadUrl" -> "https://bucketName.s3.eu-west-2.amazonaws.com?1235676",
+    "fileStatus"  -> "READY",
+    "uploadDetails" -> Json.obj(
+      "fileName"        -> "test.pdf",
+      "fileMimeType"    -> "application/pdf",
+      "uploadTimestamp" -> "2018-04-24T09:30:00Z",
+      "checksum"        -> "396f101dd52e8b2ace0dcf5ed09b1d1f030e608938510ce46e7a5c7a4e775100",
+      "size"            -> 5000
     )
   )
 
@@ -4473,6 +4488,28 @@ class V2MovementsControllerSpec
                     (eoriNumber, movementType, movementId, messageId, objectSummary) =>
                       beforeEach()
 
+                      when(
+                        mockUpscanService.upscanGetFile(
+                          any[String].asInstanceOf[DownloadUrl]
+                        )(
+                          any[HeaderCarrier],
+                          any[ExecutionContext],
+                          any[Materializer]
+                        )
+                      ).thenReturn(EitherT.rightT(Source.single(ByteString("test".getBytes))))
+
+                      when(
+                        mockPushNotificationService.postPpnsNotification(
+                          any[String].asInstanceOf[MovementId],
+                          any[String].asInstanceOf[MessageId],
+                          any[String].asInstanceOf[JsValue]
+                        )(
+                          any[HeaderCarrier],
+                          any[ExecutionContext]
+                        )
+                      )
+                        .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
+
                       // get the url without the surrounding " " quotes
                       val upscanUrl = jsonSuccessUpscanResponse.value("downloadUrl").toString().stripPrefix("\"").stripSuffix("\"")
 
@@ -4823,7 +4860,7 @@ class V2MovementsControllerSpec
 
                     verify(mockValidationService, times(1)).validateLargeMessage(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
 
-                    verify(mockPersistenceService, times(1)).updateMessage(
+                    verify(mockPersistenceService, times(2)).updateMessage(
                       EORINumber(any()),
                       any[MovementType],
                       MovementId(eqTo(movementId.value)),
