@@ -4576,7 +4576,7 @@ class V2MovementsControllerSpec
 
                       verify(mockXmlParsingService, times(1)).extractMessageType(any(), any())(any(), any())
 
-                      verify(mockValidationService, times(1)).validateLargeMessage(any(), any())(any(), any())
+                      verify(mockValidationService, times(1)).validateLargeMessage(eqTo(MessageType.DeclarationAmendment), any())(any(), any())
 
                       verify(mockPersistenceService, times(1)).updateMessage(
                         EORINumber(eqTo(eoriNumber.value)),
