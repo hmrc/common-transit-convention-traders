@@ -63,7 +63,7 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, appConfig: AppC
 
         httpClient
           .post(url"$url")
-          .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> contentType, HeaderNames.CONTENT_LENGTH -> contentLength.toString))
+          .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> contentType, "ContentLength" -> contentLength.toString))
           .withBody(source)
           .executeAndExpect(ACCEPTED)
     }

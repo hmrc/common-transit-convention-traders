@@ -100,6 +100,7 @@ class AuditingConnectorSpec
                     urlEqualTo(targetUrl(AuditType.DeclarationData))
                   )
                     .withHeader(HeaderNames.CONTENT_TYPE, equalTo(contentType))
+                    .withHeader("ContentLength", equalTo(contentSize.toString)) // TODO: HeaderNames.CONTENT_LENGTH does not work
                     .willReturn(aResponse().withStatus(statusCode))
                 )
 
