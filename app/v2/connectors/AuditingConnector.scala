@@ -22,6 +22,7 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
+import config.Constants
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
@@ -63,7 +64,7 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, appConfig: AppC
 
         httpClient
           .post(url"$url")
-          .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> contentType, "ContentLength" -> contentLength.toString))
+          .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> contentType, Constants.XContentLengthHeader -> contentLength.toString))
           .withBody(source)
           .executeAndExpect(ACCEPTED)
     }

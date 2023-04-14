@@ -22,6 +22,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
+import config.Constants
 import io.lemonlabs.uri.Url
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.IntegrationPatience
@@ -100,7 +101,7 @@ class AuditingConnectorSpec
                     urlEqualTo(targetUrl(AuditType.DeclarationData))
                   )
                     .withHeader(HeaderNames.CONTENT_TYPE, equalTo(contentType))
-                    .withHeader("ContentLength", equalTo(contentSize.toString)) // TODO: HeaderNames.CONTENT_LENGTH does not work
+                    .withHeader(Constants.XContentLengthHeader, equalTo(contentSize.toString))
                     .willReturn(aResponse().withStatus(statusCode))
                 )
 
