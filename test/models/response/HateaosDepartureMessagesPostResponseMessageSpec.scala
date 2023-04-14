@@ -24,7 +24,6 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
 
 class HateoasDepartureMessagesPostResponseMessageSpec

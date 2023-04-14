@@ -33,6 +33,8 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.Status.NOT_FOUND
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
 import play.api.test.FakeHeaders
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
@@ -42,16 +44,13 @@ import v2.models.BoxId
 import v2.models.ClientId
 import v2.models.MovementId
 import v2.models.MovementType
+import v2.models._
 import v2.models.errors.PushNotificationError
 import v2.models.request.PushNotificationsAssociation
 import v2.models.responses.BoxResponse
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import play.api.libs.json.JsValue
-import play.api.libs.json.Json
-import v2.models._
-import scala.concurrent.ExecutionContext
 
 class PushNotificationServiceSpec
     extends AnyFreeSpec
@@ -291,10 +290,11 @@ class PushNotificationServiceSpec
         when(mockConnector.postPpnsNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
           .thenReturn(Future.failed(new RuntimeException("Something went wrong")))
         val jsonPayload = jsonPayloadGen.sample.get
-        val result      = sut.postPpnsNotification(movementId, messageId, jsonPayload).value.futureValue
 
-        result mustBe a[Left[PushNotificationError, Unit]]
-
+        whenReady(sut.postPpnsNotification(movementId, messageId, jsonPayload).value) {
+          case Left(PushNotificationError.UnexpectedError(_)) => succeed
+          case x                                              => fail(s"Expected Left(UnspectedError), got $x")
+        }
     }
 
   }

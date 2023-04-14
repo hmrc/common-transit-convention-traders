@@ -16,6 +16,9 @@
 
 package v2.connectors
 
+import akka.stream.Materializer
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.kenshoo.play.metrics.Metrics
@@ -34,15 +37,10 @@ import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.request.UpscanInitiate
 import v2.models.responses.UpscanInitiateResponse
+import v2.models.responses.UpscanResponse.DownloadUrl
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import akka.stream.Materializer
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
-import v2.models.responses.UpscanResponse.DownloadUrl
-
-import java.net.URLEncoder
 
 @ImplementedBy(classOf[UpscanConnectorImpl])
 trait UpscanConnector {

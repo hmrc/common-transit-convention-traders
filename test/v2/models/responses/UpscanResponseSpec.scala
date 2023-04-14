@@ -40,8 +40,8 @@ class UpscanResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDriven
       )
 
       jsonSuccessResponse.validate[UpscanResponse] match {
-        case JsSuccess(response, _) => response.isSuccess mustBe true
-        case _                      => fail("Expected to be a success response from upscan")
+        case JsSuccess(x: UpscanSuccessResponse, _) => succeed
+        case _                                      => fail("Expected to be a success response from upscan")
       }
     }
   }
@@ -57,8 +57,8 @@ class UpscanResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDriven
     )
     "deserializes correctly" in {
       jsonFailureResponse.validate[UpscanResponse] match {
-        case JsSuccess(response, _) => response.isSuccess mustBe false
-        case _                      => fail("Expected to be a failure response from upscan")
+        case JsSuccess(x: UpscanFailedResponse, _) => succeed
+        case _                                     => fail("Expected to be a failure response from upscan")
       }
     }
   }

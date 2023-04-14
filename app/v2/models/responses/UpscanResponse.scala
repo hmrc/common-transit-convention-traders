@@ -70,15 +70,33 @@ object UpscanResponse {
     }
   }
 
-  implicit val upscanResponseFormat = Json.format[UpscanResponse]
+  implicit val upscanSuccessResponseFormat: OFormat[UpscanSuccessResponse] = Json.format[UpscanSuccessResponse]
+  implicit val upscanFailedResponseFormat: OFormat[UpscanFailedResponse]   = Json.format[UpscanFailedResponse]
+
+  implicit val upscanResponseReads: Reads[UpscanResponse] = Reads[UpscanResponse] {
+    jsValue =>
+      jsValue \ "fileStatus" match {
+        case JsDefined(JsString("READY"))  => upscanSuccessResponseFormat.reads(jsValue)
+        case JsDefined(JsString("FAILED")) => upscanFailedResponseFormat.reads(jsValue)
+        case _                             => JsError("Invalid")
+      }
+  }
+
+  implicit val upscanResponsWrites: OWrites[UpscanResponse] = OWrites[UpscanResponse] {
+    case x: UpscanSuccessResponse => upscanSuccessResponseFormat.writes(x) ++ Json.obj("fileStatus" -> "READY")
+    case x: UpscanFailedResponse  => upscanFailedResponseFormat.writes(x) ++ Json.obj("fileStatus" -> "FAILED")
+  }
 }
 
-final case class UpscanResponse(
-  reference: Reference,
-  fileStatus: FileStatus,
-  downloadUrl: Option[DownloadUrl],
-  uploadDetails: Option[UploadDetails],
-  failureDetails: Option[FailureDetails]
-) {
-  val isSuccess = uploadDetails.isDefined
+sealed abstract class UpscanResponse {
+  def reference: Reference
+  def fileStatus: FileStatus
+}
+
+final case class UpscanSuccessResponse(reference: Reference, downloadUrl: DownloadUrl, uploadDetails: UploadDetails) extends UpscanResponse {
+  override val fileStatus: FileStatus = FileStatus.Ready
+}
+
+final case class UpscanFailedResponse(reference: Reference, failureDetails: FailureDetails) extends UpscanResponse {
+  override def fileStatus: FileStatus = FileStatus.Failed
 }

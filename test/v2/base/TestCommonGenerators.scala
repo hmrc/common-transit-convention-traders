@@ -36,7 +36,6 @@ import v2.models.XmlPayload
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.responses.UpscanResponse.DownloadUrl
-import v2.models.responses.UpscanResponse.FileStatus
 import v2.models.responses.UpscanResponse.Reference
 import v2.models.responses.BoxResponse
 import v2.models.responses.FailureDetails
@@ -45,10 +44,11 @@ import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.UploadDetails
+import v2.models.responses.UpscanFailedResponse
 import v2.models.responses.UpscanFormTemplate
 import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.UpscanReference
-import v2.models.responses.UpscanResponse
+import v2.models.responses.UpscanSuccessResponse
 
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -188,14 +188,19 @@ trait TestCommonGenerators {
     } yield FailureDetails(failureReason, message)
   }
 
-  implicit def arbitraryUpscanResponse(isSuccess: Boolean): Arbitrary[UpscanResponse] = Arbitrary {
+  implicit val arbitraryUpscanSuccessResponse: Arbitrary[UpscanSuccessResponse] = Arbitrary {
     for {
-      reference  <- Gen.alphaNumStr
-      fileStatus <- Gen.oneOf(FileStatus.values)
-      downloadUrl    = if (isSuccess) Gen.alphaNumStr.sample.map(DownloadUrl(_)) else None
-      uploadDetails  = if (isSuccess) arbitraryUploadDetails.arbitrary.sample else None
-      failureDetails = if (!isSuccess) arbitraryFailureDetails.arbitrary.sample else None
-    } yield UpscanResponse(Reference(reference), fileStatus, downloadUrl, uploadDetails, failureDetails)
+      reference     <- Gen.alphaNumStr
+      downloadUrl   <- Gen.alphaNumStr.map(DownloadUrl(_))
+      uploadDetails <- arbitrary[UploadDetails]
+    } yield UpscanSuccessResponse(Reference(reference), downloadUrl, uploadDetails)
+  }
+
+  implicit val arbitraryUpscanFailedResponse: Arbitrary[UpscanFailedResponse] = Arbitrary {
+    for {
+      reference      <- Gen.alphaNumStr
+      failureDetails <- arbitrary[FailureDetails]
+    } yield UpscanFailedResponse(Reference(reference), failureDetails)
   }
 
   implicit val arbitraryObjectSummaryWithMd5: Arbitrary[ObjectSummaryWithMd5] = Arbitrary {
@@ -212,16 +217,6 @@ trait TestCommonGenerators {
       hash,
       lastModified
     )
-  }
-
-  implicit def arbitraryUpscanResponseWithOutDownloadUrl(): Arbitrary[UpscanResponse] = Arbitrary {
-    for {
-      reference  <- Gen.alphaNumStr
-      fileStatus <- Gen.oneOf(FileStatus.values)
-      downloadUrl    = None
-      uploadDetails  = arbitraryUploadDetails.arbitrary.sample
-      failureDetails = None
-    } yield UpscanResponse(Reference(reference), fileStatus, downloadUrl, uploadDetails, failureDetails)
   }
 
   implicit val arbitraryObjectStoreResourceLocation: Arbitrary[ObjectStoreResourceLocation] = Arbitrary {

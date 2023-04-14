@@ -9,7 +9,6 @@ lazy val microservice = Project(appName, file("."))
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .configs(IntegrationTest)
   .settings(DefaultBuildSettings.integrationTestSettings())
-  .settings(SbtDistributablesPlugin.publishingSettings)
   .settings(inConfig(IntegrationTest)(itSettings))
   .settings(inConfig(IntegrationTest)(ScalafmtPlugin.scalafmtConfigSettings))
   .settings(inThisBuild(buildSettings))
@@ -53,7 +52,7 @@ lazy val scalacSettings = Def.settings(
   // Disable dead code warning as it is triggered by Mockito any()
   Test / scalacOptions ~= {
     opts =>
-      opts.filterNot(Set("-Ywarn-dead-code"))
+      opts.filterNot(Set("-Wdead-code"))
   },
   // Disable warnings arising from generated routing code
   scalacOptions += "-Wconf:src=routes/.*:s"

@@ -33,7 +33,7 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
-import v2.models.errors.UpscanInitiateError
+import v2.models.errors.UpscanError
 import v2.models.responses.UpscanFormTemplate
 import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.UpscanReference
@@ -48,9 +48,12 @@ import v2.models.responses.UpscanResponse.DownloadUrl
 import org.scalatest.time.Millis
 import org.scalatest.time.Seconds
 import org.scalatest.time.Span
+
+import scala.annotation.nowarn
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
+@nowarn("msg=dead code following this construct")
 class UpscanServiceSpec
     extends AnyFreeSpec
     with Matchers
@@ -125,7 +128,7 @@ class UpscanServiceSpec
         val result = sut.upscanInitiate(eoriNumber, movementType, movementId, messageId)
 
         whenReady(result.value) {
-          r => r mustBe Left(UpscanInitiateError.UnexpectedError(thr = Some(expectedException)))
+          r => r mustBe Left(UpscanError.UnexpectedError(thr = Some(expectedException)))
         }
 
     }
@@ -160,7 +163,7 @@ class UpscanServiceSpec
 
       whenReady(result) {
         r =>
-          r mustBe Left(UpscanInitiateError.UnexpectedError(Some(expectedError)))
+          r mustBe Left(UpscanError.UnexpectedError(Some(expectedError)))
       }
     }
   }

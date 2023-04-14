@@ -626,10 +626,9 @@ class PersistenceServiceSpec
       arbitrary[MovementType],
       arbitrary[MovementId],
       arbitrary[MessageId],
-      arbitrary[MessageUpdate],
-      arbitrary[MessageType]
+      arbitrary[MessageUpdate]
     ) {
-      (eoriNumber, movementType, movementId, messageId, messageUpdate, messageType) =>
+      (eoriNumber, movementType, movementId, messageId, messageUpdate) =>
         when(
           mockConnector.patchMessage(
             any[String].asInstanceOf[EORINumber],

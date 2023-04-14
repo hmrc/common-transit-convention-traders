@@ -106,10 +106,10 @@ trait ConvertError {
     }
   }
 
-  implicit val upscanErrorConverter = new Converter[UpscanInitiateError] {
-    import v2.models.errors.UpscanInitiateError._
+  implicit val upscanErrorConverter = new Converter[UpscanError] {
+    import v2.models.errors.UpscanError._
 
-    override def convert(upscanInitiateError: UpscanInitiateError): PresentationError = upscanInitiateError match {
+    override def convert(upscanInitiateError: UpscanError): PresentationError = upscanInitiateError match {
       case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
     }
   }
