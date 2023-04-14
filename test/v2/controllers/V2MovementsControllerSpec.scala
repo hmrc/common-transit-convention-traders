@@ -4246,6 +4246,21 @@ class V2MovementsControllerSpec
           (movementId, messageId, upscanInitiateResponse) =>
             beforeEach()
 
+            val createdTime = OffsetDateTime.now()
+            val departureResponse = MovementSummary(
+              movementId,
+              arbitrary[EORINumber].sample.value,
+              Some(arbitrary[EORINumber].sample.get),
+              Some(arbitrary[MovementReferenceNumber].sample.value),
+              createdTime,
+              createdTime
+            )
+
+            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+              .thenAnswer(
+                _ => EitherT.rightT(departureResponse)
+              )
+
             when(
               mockPersistenceService
                 .addMessage(
@@ -4297,6 +4312,20 @@ class V2MovementsControllerSpec
           arbitraryMovementId.arbitrary
         ) {
           movementId =>
+            val createdTime = OffsetDateTime.now()
+            val departureResponse = MovementSummary(
+              movementId,
+              arbitrary[EORINumber].sample.value,
+              Some(arbitrary[EORINumber].sample.get),
+              Some(arbitrary[MovementReferenceNumber].sample.value),
+              createdTime,
+              createdTime
+            )
+
+            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+              .thenAnswer(
+                _ => EitherT.rightT(departureResponse)
+              )
             when(
               mockPersistenceService
                 .addMessage(
@@ -4323,6 +4352,20 @@ class V2MovementsControllerSpec
           arbitraryMovementId.arbitrary
         ) {
           movementId =>
+            val createdTime = OffsetDateTime.now()
+            val departureResponse = MovementSummary(
+              movementId,
+              arbitrary[EORINumber].sample.value,
+              Some(arbitrary[EORINumber].sample.get),
+              Some(arbitrary[MovementReferenceNumber].sample.value),
+              createdTime,
+              createdTime
+            )
+
+            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+              .thenAnswer(
+                _ => EitherT.rightT(departureResponse)
+              )
             when(
               mockPersistenceService
                 .addMessage(
@@ -4350,6 +4393,20 @@ class V2MovementsControllerSpec
           arbitraryMessageId.arbitrary
         ) {
           (movementId, messageId) =>
+            val createdTime = OffsetDateTime.now()
+            val departureResponse = MovementSummary(
+              movementId,
+              arbitrary[EORINumber].sample.value,
+              Some(arbitrary[EORINumber].sample.get),
+              Some(arbitrary[MovementReferenceNumber].sample.value),
+              createdTime,
+              createdTime
+            )
+
+            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+              .thenAnswer(
+                _ => EitherT.rightT(departureResponse)
+              )
             when(
               mockPersistenceService
                 .addMessage(
@@ -4385,6 +4442,24 @@ class V2MovementsControllerSpec
             contentAsJson(result) mustBe Json.obj(
               "message" -> "Internal server error",
               "code"    -> "INTERNAL_SERVER_ERROR"
+            )
+        }
+
+        "must return NotFound when movement is not found by Persistence getMovement" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+              .thenAnswer(
+                _ => EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType))
+              )
+
+            val result = sut.attachMessage(movementType, movementId)(request)
+
+            status(result) mustBe NOT_FOUND
+            contentAsJson(result) mustBe Json.obj(
+              "message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found",
+              "code"    -> "NOT_FOUND"
             )
         }
 
