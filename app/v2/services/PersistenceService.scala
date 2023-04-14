@@ -81,7 +81,6 @@ trait PersistenceService {
     movementType: MovementType,
     movementId: MovementId,
     messageId: MessageId,
-    messageType: MessageType,
     body: MessageUpdate
   )(implicit
     hc: HeaderCarrier,
@@ -195,7 +194,6 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
     movementType: MovementType,
     movementId: MovementId,
     messageId: MessageId,
-    messageType: MessageType,
     body: MessageUpdate
   )(implicit
     hc: HeaderCarrier,
@@ -203,7 +201,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
   ): EitherT[Future, PersistenceError, Unit] =
     EitherT(
       persistenceConnector
-        .patchMessage(eoriNumber, movementType, movementId, messageId, messageType, body)
+        .patchMessage(eoriNumber, movementType, movementId, messageId, body)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
