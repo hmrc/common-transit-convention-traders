@@ -67,7 +67,6 @@ import java.time.OffsetDateTime
 import scala.concurrent.Future
 import scala.util.Try
 import scala.util.control.NonFatal
-import v2.models.responses._
 
 @ImplementedBy(classOf[V2MovementsControllerImpl])
 trait V2MovementsController {
@@ -507,7 +506,68 @@ class V2MovementsControllerImpl @Inject() (
     }
   }
 
-  def attachLargeMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[JsValue] =
+  def attachLargeMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[JsValue] = {
+    def asSmallMessage(downloadUrl: DownloadUrl)(implicit headerCarrier: HeaderCarrier): Future[Result] = {
+      val messageTypeList =
+        if (movementType == MovementType.Arrival) MessageType.messageTypesSentByArrivalTrader
+        else MessageType.messageTypesSentByDepartureTrader
+      (for {
+        upscanFile <- upscanService.upscanGetFile(downloadUrl).asPresentation
+
+        updateMovementResponse <- streamLargeMessage(eori, movementId, messageId, messageTypeList, upscanFile, movementType)
+
+      } yield updateMovementResponse)
+        .fold[Result](
+          presentationError => {
+            pushNotificationsService.postPpnsNotification(movementId, messageId, Json.toJson(presentationError))
+            Ok
+          },
+          _ => {
+            pushNotificationsService
+              .postPpnsNotification(movementId, messageId, Json.toJson(HateoasMovementUpdateResponse(movementId, messageId, movementType, None)))
+            Ok
+          }
+        )
+    }
+
+    def asLargeMessage(downloadUrl: DownloadUrl)(implicit headerCarrier: HeaderCarrier): Future[Result] =
+      (for {
+        objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
+        uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
+        source      <- objectStoreService.getMessage(uri.stripOwner).asPresentation
+        messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
+        _ <- validationService
+          .validateLargeMessage(messageType, uri)
+          .asPresentation
+        _ <- persistenceService
+          .updateMessage(
+            eori,
+            movementType,
+            movementId,
+            messageId,
+            MessageUpdate(MessageStatus.Processing, Some(ObjectStoreURI(objectSummary.location.asUri)), Some(messageType))
+          )
+          .asPresentation
+        sendMessage <- routerService
+          .sendLargeMessage(
+            messageType,
+            eori,
+            movementId,
+            messageId,
+            ObjectStoreURI(objectSummary.location.asUri)
+          )
+          .asPresentation
+        _ = auditService.audit(messageType.auditType, uri.stripOwner)
+
+      } yield sendMessage).fold[Result](
+        {
+          _ =>
+            persistenceService.updateMessage(eori, movementType, movementId, messageId, MessageUpdate(MessageStatus.Failed, None, None))
+            Ok //TODO: Send notification to PPNS with details of the error
+        },
+        _ => Ok //TODO: Send notification to PPNS with details of the success
+      )
+
     Action.async(parse.json) {
       request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -537,64 +597,8 @@ class V2MovementsControllerImpl @Inject() (
               .fold(
                 presentationError => Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError))),
                 {
-                  case (downloadUrl, size) if size <= config.smallMessageSizeLimit =>
-                    val messageTypeList =
-                      if (movementType == MovementType.Arrival) MessageType.messageTypesSentByArrivalTrader
-                      else MessageType.messageTypesSentByDepartureTrader
-                    (for {
-                      upscanFile <- upscanService.upscanGetFile(downloadUrl).asPresentation
-
-                      updateMovementResponse <- streamLargeMessage(eori, movementId, messageId, messageTypeList, upscanFile, movementType)
-
-                    } yield updateMovementResponse)
-                      .fold[Result](
-                        prentationError => {
-                          pushNotificationsService.postPpnsNotification(movementId, messageId, Json.toJson(prentationError))
-                          Ok
-                        },
-                        _ => {
-                          pushNotificationsService
-                            .postPpnsNotification(movementId, messageId, Json.toJson(HateoasMovementUpdateResponse(movementId, messageId, movementType, None)))
-                          Ok
-                        }
-                      )
-                  case (downloadUrl, size) if size > config.smallMessageSizeLimit =>
-                    (for {
-                      objectSummary <- objectStoreService.addMessage(downloadUrl, movementId, messageId).asPresentation
-                      uri = ObjectStoreResourceLocation(objectSummary.location.asUri)
-                      source      <- objectStoreService.getMessage(uri.stripOwner).asPresentation
-                      messageType <- xmlParsingService.extractMessageType(source, MessageType.values).asPresentation
-                      messageUpdate = MessageUpdate(_, Some(ObjectStoreURI(objectSummary.location.asUri)), Some(messageType))
-                      persist       = persistenceService.updateMessage(eori, movementType, movementId, messageId, messageType, _)
-                      _ <- validationService
-                        .validateLargeMessage(messageType, uri)
-                        .asPresentation
-                        .leftMap {
-                          err =>
-                            persist(messageUpdate(MessageStatus.Failed)).value
-                            err
-                        }
-                      _ <- persist(messageUpdate(MessageStatus.Processing)).asPresentation
-                      sendMessage <- routerService
-                        .sendLargeMessage(
-                          messageType,
-                          eori,
-                          movementId,
-                          messageId,
-                          ObjectStoreURI(objectSummary.location.asUri)
-                        )
-                        .asPresentation
-                        .leftMap {
-                          err =>
-                            persist(messageUpdate(MessageStatus.Failed)).value
-                            err
-                        }
-                      _ = auditService.audit(messageType.auditType, uri.stripOwner)
-
-                    } yield sendMessage).fold[Result](
-                      _ => Ok, //TODO: Send notification to PPNS with details of the error
-                      _ => Ok  //TODO: Send notification to PPNS with details of the success
-                    )
+                  case (downloadUrl, size) if size <= config.smallMessageSizeLimit => asSmallMessage(downloadUrl)
+                  case (downloadUrl, size) if size > config.smallMessageSizeLimit  => asLargeMessage(downloadUrl)
                 }
               )
               .map {
@@ -602,7 +606,7 @@ class V2MovementsControllerImpl @Inject() (
               }
         }
     }
-
+  }
 
   private def handleUpscanSuccessResponse(upscanResponse: UpscanResponse): EitherT[Future, PresentationError, (DownloadUrl, Long)] =
     upscanResponse.uploadDetails match {
@@ -630,8 +634,7 @@ class V2MovementsControllerImpl @Inject() (
               movementType,
               movementId,
               updateMovementResponse.messageId,
-              MessageStatus.Failed,
-              messageType
+              MessageStatus.Failed
             )
             err
         }
@@ -640,8 +643,7 @@ class V2MovementsControllerImpl @Inject() (
         movementType,
         movementId,
         updateMovementResponse.messageId,
-        MessageStatus.Success,
-        messageType
+        MessageStatus.Success
       ).asPresentation
     } yield updateMovementResponse
 
@@ -668,39 +670,29 @@ class V2MovementsControllerImpl @Inject() (
   )(implicit hc: HeaderCarrier) =
     withReusableSource(src) {
       source =>
-        for {
-
+        (for {
           messageType <- xmlParsingService.extractMessageType(source, messageTypeList).asPresentation
-          messageUpdate          = MessageUpdate(_, None, Some(messageType))
-          updateMovementResponse = persistenceService.updateMessage(eori, movementType, movementId, messageId, messageType, _)
           _ <- validationService
             .validateXml(messageType, source)
             .asPresentation
-            .leftMap {
-              err =>
-                updateMovementResponse(messageUpdate(MessageStatus.Failed)).value
-                err
-            }
           _ <- persistenceService.updateMessageBody(messageType, eori, movementType, movementId, messageId, source).asPresentation
           _ = auditService.audit(messageType.auditType, source, MimeTypes.XML)
           _ <- routerService
             .send(messageType, eori, movementId, messageId, source)
             .asPresentation
-            .leftMap {
-              err =>
-                updateMovementResponse(messageUpdate(MessageStatus.Failed)).value
-                err
-            }
           result <- updateSmallMessageStatus(
             eori,
             movementType,
             movementId,
             messageId,
-            MessageStatus.Success,
-            messageType
+            MessageStatus.Success
           ).asPresentation
 
-        } yield result
+        } yield result).leftSemiflatTap {
+          _ =>
+            // we mark as failed, always
+            persistenceService.updateMessage(eori, movementType, movementId, messageId, MessageUpdate(MessageStatus.Failed, None, None)).value
+        }
     }
 
   private def updateSmallMessageStatus(
@@ -708,8 +700,7 @@ class V2MovementsControllerImpl @Inject() (
     movementType: MovementType,
     movementId: MovementId,
     messageId: MessageId,
-    messageStatus: MessageStatus,
-    messageType: MessageType
+    messageStatus: MessageStatus
   )(implicit
     hc: HeaderCarrier
   ) =
@@ -719,7 +710,6 @@ class V2MovementsControllerImpl @Inject() (
         movementType,
         movementId,
         messageId,
-        messageType,
         MessageUpdate(messageStatus, None, None)
       )
 
@@ -749,8 +739,7 @@ class V2MovementsControllerImpl @Inject() (
               movementType,
               movementResponse.movementId,
               movementResponse.messageId,
-              MessageStatus.Failed,
-              messageType
+              MessageStatus.Failed
             )
             err
         }
@@ -759,8 +748,7 @@ class V2MovementsControllerImpl @Inject() (
         movementType,
         movementResponse.movementId,
         movementResponse.messageId,
-        MessageStatus.Success,
-        messageType
+        MessageStatus.Success
       ).asPresentation
     } yield HateoasNewMovementResponse(movementResponse.movementId, boxResponseOption, None, movementType)
 

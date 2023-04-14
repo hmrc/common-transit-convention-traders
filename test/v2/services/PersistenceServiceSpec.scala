@@ -636,15 +636,14 @@ class PersistenceServiceSpec
             any[String].asInstanceOf[MovementType],
             any[String].asInstanceOf[MovementId],
             any[String].asInstanceOf[MessageId],
-            any[MessageType],
-            any[String].asInstanceOf[MessageUpdate]
+            eqTo(messageUpdate)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
           )
         )
           .thenReturn(Future.successful(()))
-        val result = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageType, messageUpdate)
+        val result = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageUpdate)
 
         val expected: Either[PersistenceError, Unit] = Right(())
         whenReady(result.value) {
@@ -657,25 +656,23 @@ class PersistenceServiceSpec
       arbitrary[MovementType],
       arbitrary[MovementId],
       arbitrary[MessageId],
-      arbitrary[MessageUpdate],
-      arbitrary[MessageType]
+      arbitrary[MessageUpdate]
     ) {
-      (eoriNumber, movementType, movementId, messageId, messageUpdate, messageType) =>
+      (eoriNumber, movementType, movementId, messageId, messageUpdate) =>
         when(
           mockConnector.patchMessage(
             any[String].asInstanceOf[EORINumber],
             any[String].asInstanceOf[MovementType],
             any[String].asInstanceOf[MovementId],
             any[String].asInstanceOf[MessageId],
-            any[MessageType],
-            any[String].asInstanceOf[MessageUpdate]
+            eqTo(messageUpdate)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
           )
         ).thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-        val result = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageType, messageUpdate)
+        val result = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageUpdate)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.MessageNotFound(movementId, messageId))
         }
@@ -686,25 +683,23 @@ class PersistenceServiceSpec
       arbitrary[MovementType],
       arbitrary[MovementId],
       arbitrary[MessageId],
-      arbitrary[MessageUpdate],
-      arbitrary[MessageType]
+      arbitrary[MessageUpdate]
     ) {
-      (eoriNumber, movementType, movementId, messageId, messageUpdate, messageType) =>
+      (eoriNumber, movementType, movementId, messageId, messageUpdate) =>
         when(
           mockConnector.patchMessage(
             any[String].asInstanceOf[EORINumber],
             any[String].asInstanceOf[MovementType],
             any[String].asInstanceOf[MovementId],
             any[String].asInstanceOf[MessageId],
-            any[MessageType],
-            any[String].asInstanceOf[MessageUpdate]
+            eqTo(messageUpdate)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
           )
         )
           .thenReturn(Future.failed(upstreamErrorResponse))
-        val result                                   = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageType, messageUpdate)
+        val result                                   = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageUpdate)
         val expected: Either[PersistenceError, Unit] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
         whenReady(result.value) {
           _ mustBe expected

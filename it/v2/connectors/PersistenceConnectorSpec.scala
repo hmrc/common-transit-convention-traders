@@ -1398,7 +1398,7 @@ class PersistenceConnectorSpec
             )
         )
 
-        whenReady(persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageType, messageUpdate)) {
+        whenReady(persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageUpdate)) {
           result =>
             result mustBe ()
         }
@@ -1425,7 +1425,7 @@ class PersistenceConnectorSpec
             )
         )
 
-        val future = persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageType, messageUpdate).map(Right(_)).recover {
+        val future = persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageUpdate).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -1457,7 +1457,7 @@ class PersistenceConnectorSpec
             )
         )
 
-        val future = persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageType, messageUpdate).map(Right(_)).recover {
+        val future = persistenceConnector.patchMessage(eoriNumber, movementType, movementId, messageId, messageUpdate).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 

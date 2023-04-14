@@ -91,7 +91,6 @@ trait PersistenceConnector {
     movementType: MovementType,
     movementId: MovementId,
     messageId: MessageId,
-    messageType: MessageType,
     body: MessageUpdate
   )(implicit
     hc: HeaderCarrier,
@@ -238,7 +237,6 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     movementType: MovementType,
     movementId: MovementId,
     messageId: MessageId,
-    messageType: MessageType,
     body: MessageUpdate
   )(implicit
     hc: HeaderCarrier,
@@ -249,8 +247,6 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     httpClientV2
       .patch(url"$url")
       .withBody(Json.toJson(body))
-      .setHeader(Constants.XMessageTypeHeader -> messageType.code)
-      .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
       .executeAndExpect(OK)
   }
 
