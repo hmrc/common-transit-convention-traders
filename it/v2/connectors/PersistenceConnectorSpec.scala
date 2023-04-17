@@ -66,6 +66,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
+import play.api.http.Status.CREATED
 
 class PersistenceConnectorSpec
     extends AnyFreeSpec
@@ -2054,6 +2055,79 @@ class PersistenceConnectorSpec
         }
     }
 
+  }
+
+  "POST /traders/:EORI/movements/:movementType/:movementId/messages/:messageId/body" - {
+
+    def targetUrl(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId) =
+      s"/transit-movements/traders/${eori.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}/body"
+
+    "On successful update of an element, must return ACCEPTED" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId],
+      arbitrary[MessageId],
+      arbitrary[MovementType],
+      messageType
+    ) {
+      (eori, movementId, messageId, movementType, messageType) =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eori, movementType, movementId, messageId))
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse().withStatus(CREATED)
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier()
+
+        val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
+
+        whenReady(persistenceConnector.updateMessageBody(messageType, eori, movementType, movementId, messageId, source)) {
+          result =>
+            result mustBe ()
+        }
+    }
+
+    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId],
+      arbitrary[MessageId],
+      arbitrary[MovementType],
+      messageType
+    ) {
+      (eori, movementId, messageId, movementType, messageType) =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eori, movementType, movementId, messageId))
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse()
+                .withStatus(INTERNAL_SERVER_ERROR)
+                .withBody(
+                  Json.stringify(Json.toJson(PresentationError.internalServiceError()))
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier()
+
+        val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
+
+        val future = persistenceConnector.updateMessageBody(messageType, eori, movementType, movementId, messageId, source).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
+            response.statusCode mustBe INTERNAL_SERVER_ERROR
+            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+        }
+    }
   }
 
   override protected def portConfigKey: Seq[String] =

@@ -36,6 +36,10 @@ import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import play.api.http.Status.ACCEPTED
+import play.api.libs.json.JsValue
+import uk.gov.hmrc.http.HttpReads.Implicits._
+import v2.models.MessageId
 
 @ImplementedBy(classOf[PushNotificationsConnectorImpl])
 trait PushNotificationsConnector {
@@ -49,6 +53,11 @@ trait PushNotificationsConnector {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[BoxResponse]
+
+  def postPpnsNotification(movementId: MovementId, messageId: MessageId, body: JsValue)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit]
 
 }
 
@@ -81,5 +90,19 @@ class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClient
           .withBody(Json.toJson(pushNotificationsAssociation))
           .execute[BoxResponse]
     }
+
+  override def postPpnsNotification(movementId: MovementId, messageId: MessageId, body: JsValue)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] = {
+
+    val url = appConfig.pushNotificationsUrl.withPath(pushPpnsNotifications(movementId, messageId))
+
+    httpClientV2
+      .post(url"$url")
+      .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
+      .withBody(body)
+      .executeAndExpect(ACCEPTED)
+  }
 
 }

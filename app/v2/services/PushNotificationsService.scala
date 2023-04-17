@@ -22,12 +22,14 @@ import com.google.inject.Inject
 import config.AppConfig
 import config.Constants
 import play.api.http.Status.NOT_FOUND
+import play.api.libs.json.JsValue
 import play.api.mvc.Headers
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.PushNotificationsConnector
 import v2.models.BoxId
 import v2.models.ClientId
+import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.errors.PushNotificationError
@@ -47,6 +49,11 @@ trait PushNotificationsService {
   ): EitherT[Future, PushNotificationError, BoxResponse]
 
   def update(movementId: MovementId)(implicit headerCarrier: HeaderCarrier, executionContext: ExecutionContext): EitherT[Future, PushNotificationError, Unit]
+
+  def postPpnsNotification(movementId: MovementId, messageId: MessageId, body: JsValue)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PushNotificationError, Unit]
 
 }
 
@@ -94,4 +101,21 @@ class PushNotificationsServiceImpl @Inject() (
             case NonFatal(thr)                             => Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
           }
       }
+
+  override def postPpnsNotification(movementId: MovementId, messageId: MessageId, body: JsValue)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PushNotificationError, Unit] =
+    if (!appConfig.pushNotificationsEnabled) EitherT.rightT(())
+    else
+      EitherT {
+        pushNotificationsConnector
+          .postPpnsNotification(movementId, messageId, body)
+          .map(Right(_))
+          .recover {
+            case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.BoxNotFound)
+            case NonFatal(thr)                             => Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
+          }
+      }
+
 }

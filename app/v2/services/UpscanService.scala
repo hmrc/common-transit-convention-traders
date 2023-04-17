@@ -32,6 +32,10 @@ import v2.models.responses.UpscanInitiateResponse
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
+import akka.stream.Materializer
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
+import v2.models.responses.UpscanResponse.DownloadUrl
 
 @ImplementedBy(classOf[UpscanServiceImpl])
 trait UpscanService {
@@ -40,6 +44,14 @@ trait UpscanService {
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
   ): EitherT[Future, UpscanInitiateError, UpscanInitiateResponse]
+
+  def upscanGetFile(
+    downloadUrl: DownloadUrl
+  )(implicit
+    headerCarrier: HeaderCarrier,
+    executionContext: ExecutionContext,
+    materializer: Materializer
+  ): EitherT[Future, UpscanInitiateError, Source[ByteString, _]]
 
 }
 
@@ -55,6 +67,22 @@ class UpscanServiceImpl @Inject() (
     EitherT {
       upscanConnector
         .upscanInitiate(eoriNumber, movementType, movementId, messageId)
+        .map(Right(_))
+        .recover {
+          case NonFatal(thr) => Left(UpscanInitiateError.UnexpectedError(thr = Some(thr)))
+        }
+    }
+
+  override def upscanGetFile(
+    downloadUrl: DownloadUrl
+  )(implicit
+    headerCarrier: HeaderCarrier,
+    executionContext: ExecutionContext,
+    materializer: Materializer
+  ): EitherT[Future, UpscanInitiateError, Source[ByteString, _]] =
+    EitherT {
+      upscanConnector
+        .upscanGetFile(downloadUrl)
         .map(Right(_))
         .recover {
           case NonFatal(thr) => Left(UpscanInitiateError.UnexpectedError(thr = Some(thr)))
