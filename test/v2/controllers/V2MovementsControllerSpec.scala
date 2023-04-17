@@ -6452,6 +6452,15 @@ class V2MovementsControllerSpec
                     any[Source[ByteString, _]]
                   )(any[ExecutionContext], any[HeaderCarrier])
 
+                  // success status
+                  verify(mockPersistenceService, times(0)).updateMessage(
+                    EORINumber(eqTo(eori.value)),
+                    eqTo(movementType),
+                    MovementId(eqTo(movementId.value)),
+                    MessageId(eqTo(messageId.value)),
+                    eqTo(MessageUpdate(MessageStatus.Success, None, None))
+                  )(any[HeaderCarrier], any[ExecutionContext])
+
                   // failed status
                   verify(mockPersistenceService, times(1)).updateMessage(
                     EORINumber(eqTo(eori.value)),
@@ -6575,6 +6584,15 @@ class V2MovementsControllerSpec
                     MessageId(eqTo(messageId.value)),
                     any[Source[ByteString, _]]
                   )(any[ExecutionContext], any[HeaderCarrier])
+
+                  // success status
+                  verify(mockPersistenceService, times(1)).updateMessage(
+                    EORINumber(eqTo(eori.value)),
+                    eqTo(movementType),
+                    MovementId(eqTo(movementId.value)),
+                    MessageId(eqTo(messageId.value)),
+                    eqTo(MessageUpdate(MessageStatus.Success, None, None))
+                  )(any[HeaderCarrier], any[ExecutionContext])
 
                   // failed status
                   verify(mockPersistenceService, times(0)).updateMessage(
@@ -7122,6 +7140,15 @@ class V2MovementsControllerSpec
                     MessageId(eqTo(messageId.value)),
                     any[Source[ByteString, _]]
                   )(any[ExecutionContext], any[HeaderCarrier])
+
+                  // success status -- should not be set as this is for small messages only
+                  verify(mockPersistenceService, times(0)).updateMessage(
+                    EORINumber(eqTo(eori.value)),
+                    eqTo(movementType),
+                    MovementId(eqTo(movementId.value)),
+                    MessageId(eqTo(messageId.value)),
+                    eqTo(MessageUpdate(MessageStatus.Success, None, None))
+                  )(any[HeaderCarrier], any[ExecutionContext])
 
                   // failed status
                   verify(mockPersistenceService, times(0)).updateMessage(

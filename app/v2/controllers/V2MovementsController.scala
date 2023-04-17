@@ -550,6 +550,8 @@ class V2MovementsControllerImpl @Inject() (
             def routeSmall(messageType: MessageType, source: Source[ByteString, _]): EitherT[Future, PresentationError, Unit] =
               for {
                 _ <- routerService.send(messageType, eori, movementId, messageId, source).asPresentation
+                // TODO: This should be in the router
+                _ = persistenceService.updateMessage(eori, movementType, movementId, messageId, MessageUpdate(MessageStatus.Success, None, None))
                 // TODO: Push notification
               } yield ()
 
