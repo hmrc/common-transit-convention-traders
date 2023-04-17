@@ -525,7 +525,7 @@ class V2MovementsControllerImpl @Inject() (
               MimeTypes.JSON
             )
 
-            logger.error(s"""Upscan failed to process trader-uploaded file
+            logger.warn(s"""Upscan failed to process trader-uploaded file
                  |
                  |Movement ID: ${movementId.value}
                  |Message ID: ${messageId.value}
