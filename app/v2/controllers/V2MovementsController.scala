@@ -569,10 +569,10 @@ class V2MovementsControllerImpl @Inject() (
                       messageType <- xmlParsingService.extractMessageType(source, allowedTypes).asPresentation
                       // Audit as soon as we can
                       _ = auditService.audit(messageType.auditType, source, MimeTypes.XML)
-                      // Save file (this will check the size and put it in the right place.
-                      _ <- persistenceService.updateMessageBody(messageType, eori, movementType, movementId, messageId, source).asPresentation
                       // Validate file
                       _ <- validationService.validateXml(messageType, source).asPresentation
+                      // Save file (this will check the size and put it in the right place.
+                      _ <- persistenceService.updateMessageBody(messageType, eori, movementType, movementId, messageId, source).asPresentation
                       // Temporary: if large -- ideally this limit should be set by the router and ONLY by the router, and will do this in a future update (TODO)
                       // We'll also want to return if the file was submitted to EIS and ERMIS directly (OK), or via SDES (Accepted)
                       // as this will determine whether we send a success push notification message

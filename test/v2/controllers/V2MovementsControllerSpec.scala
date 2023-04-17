@@ -6119,114 +6119,6 @@ class V2MovementsControllerSpec
 
         }
 
-        "if the message could not be stored, mark as failure (internal server error) and return Ok" in forAll(
-          arbitrary[EORINumber],
-          arbitrary[MovementType],
-          arbitrary[MovementId],
-          arbitrary[MessageId]
-        ) {
-          (eori, movementType, movementId, messageId) =>
-            val ControllerAndMocks(
-              sut,
-              mockValidationService,
-              mockPersistenceService,
-              mockRouterService,
-              mockAuditService,
-              _,
-              mockXmlParsingService,
-              _,
-              _,
-              _,
-              _,
-              mockUpscanService,
-              _
-            ) = createControllerAndMocks(
-              new AcceptHeaderActionProviderImpl()
-            )
-
-            val allowedTypes =
-              if (movementType == MovementType.Arrival) MessageType.messageTypesSentByArrivalTrader else MessageType.messageTypesSentByDepartureTrader
-
-            val messageType = Gen.oneOf(allowedTypes).sample.value
-
-            when(mockUpscanService.upscanGetFile(DownloadUrl(eqTo(upscanDownloadUrl.value)))(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
-              .thenReturn(EitherT.rightT(singleUseStringSource("<test></test>")))
-            when(mockXmlParsingService.extractMessageType(any(), eqTo(allowedTypes))(any(), any())).thenReturn(EitherT.rightT(messageType))
-            // Audit service is ignored so no need to mock. We should verify though, which we do below.
-            when(
-              mockPersistenceService.updateMessageBody(
-                eqTo(messageType),
-                EORINumber(eqTo(eori.value)),
-                eqTo(movementType),
-                MovementId(eqTo(movementId.value)),
-                MessageId(eqTo(messageId.value)),
-                any[Source[ByteString, _]]
-              )(any[HeaderCarrier], any[ExecutionContext])
-            )
-              .thenReturn(EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))) // it doesn't matter what the error is really.
-
-            val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
-            val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
-
-            whenReady(response) {
-              _ =>
-                status(response) mustBe OK
-
-                // common
-                verify(mockUpscanService, times(1))
-                  .upscanGetFile(DownloadUrl(eqTo(upscanDownloadUrl.value)))(any[HeaderCarrier], any[ExecutionContext], any[Materializer])
-                verify(mockXmlParsingService, times(1))
-                  .extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any[HeaderCarrier], any[ExecutionContext])
-                verify(mockAuditService, times(1)).audit(eqTo(messageType.auditType), any[Source[ByteString, _]], anyString())(
-                  any[HeaderCarrier],
-                  any[ExecutionContext]
-                )
-                verify(mockPersistenceService, times(1)).updateMessageBody(
-                  eqTo(messageType),
-                  EORINumber(eqTo(eori.value)),
-                  eqTo(movementType),
-                  MovementId(eqTo(movementId.value)),
-                  MessageId(eqTo(messageId.value)),
-                  any[Source[ByteString, _]]
-                )(any[HeaderCarrier], any[ExecutionContext])
-                verify(mockValidationService, times(0)).validateXml(any[MessageType], any[Source[ByteString, _]])(any(), any())
-
-                // large messages: TODO: hopefully will disappear
-                verify(mockPersistenceService, times(0)).getMessage(
-                  EORINumber(eqTo(eori.value)),
-                  eqTo(movementType),
-                  MovementId(eqTo(movementId.value)),
-                  MessageId(eqTo(messageId.value))
-                )(any[HeaderCarrier], any[ExecutionContext])
-                verify(mockRouterService, times(0)).sendLargeMessage(
-                  any[MessageType],
-                  EORINumber(eqTo(eori.value)),
-                  MovementId(eqTo(movementId.value)),
-                  MessageId(eqTo(messageId.value)),
-                  ObjectStoreURI(anyString())
-                )(any[ExecutionContext], any[HeaderCarrier])
-
-                // small messages
-                verify(mockRouterService, times(0)).send(
-                  any[MessageType],
-                  EORINumber(eqTo(eori.value)),
-                  MovementId(eqTo(movementId.value)),
-                  MessageId(eqTo(messageId.value)),
-                  any[Source[ByteString, _]]
-                )(any[ExecutionContext], any[HeaderCarrier])
-
-                // failed status
-                verify(mockPersistenceService, times(1)).updateMessage(
-                  EORINumber(eqTo(eori.value)),
-                  eqTo(movementType),
-                  MovementId(eqTo(movementId.value)),
-                  MessageId(eqTo(messageId.value)),
-                  eqTo(MessageUpdate(MessageStatus.Failed, None, None))
-                )(any[HeaderCarrier], any[ExecutionContext])
-
-            }
-        }
-
         "if the message could not be validated, mark as failure (schema validation) and return Ok" in forAll(
           arbitrary[EORINumber],
           arbitrary[MovementType],
@@ -6291,7 +6183,8 @@ class V2MovementsControllerSpec
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
-                verify(mockPersistenceService, times(1)).updateMessageBody(
+                verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any[Source[ByteString, _]])(any(), any())
+                verify(mockPersistenceService, times(0)).updateMessageBody(
                   eqTo(messageType),
                   EORINumber(eqTo(eori.value)),
                   eqTo(movementType),
@@ -6299,7 +6192,6 @@ class V2MovementsControllerSpec
                   MessageId(eqTo(messageId.value)),
                   any[Source[ByteString, _]]
                 )(any[HeaderCarrier], any[ExecutionContext])
-                verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any[Source[ByteString, _]])(any(), any())
 
                 // large messages: TODO: hopefully will disappear
                 verify(mockPersistenceService, times(0)).getMessage(
@@ -6336,6 +6228,116 @@ class V2MovementsControllerSpec
 
             }
 
+        }
+
+        "if the message could not be stored, mark as failure (internal server error) and return Ok" in forAll(
+          arbitrary[EORINumber],
+          arbitrary[MovementType],
+          arbitrary[MovementId],
+          arbitrary[MessageId]
+        ) {
+          (eori, movementType, movementId, messageId) =>
+            val ControllerAndMocks(
+              sut,
+              mockValidationService,
+              mockPersistenceService,
+              mockRouterService,
+              mockAuditService,
+              _,
+              mockXmlParsingService,
+              _,
+              _,
+              _,
+              _,
+              mockUpscanService,
+              _
+            ) = createControllerAndMocks(
+              new AcceptHeaderActionProviderImpl()
+            )
+
+            val allowedTypes =
+              if (movementType == MovementType.Arrival) MessageType.messageTypesSentByArrivalTrader else MessageType.messageTypesSentByDepartureTrader
+
+            val messageType = Gen.oneOf(allowedTypes).sample.value
+
+            when(mockUpscanService.upscanGetFile(DownloadUrl(eqTo(upscanDownloadUrl.value)))(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
+              .thenReturn(EitherT.rightT(singleUseStringSource("<test></test>")))
+            when(mockXmlParsingService.extractMessageType(any(), eqTo(allowedTypes))(any(), any())).thenReturn(EitherT.rightT(messageType))
+            // Audit service is ignored so no need to mock. We should verify though, which we do below.
+            when(mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, _]])(any(), any()))
+              .thenReturn(EitherT.rightT((): Unit))
+            when(
+              mockPersistenceService.updateMessageBody(
+                eqTo(messageType),
+                EORINumber(eqTo(eori.value)),
+                eqTo(movementType),
+                MovementId(eqTo(movementId.value)),
+                MessageId(eqTo(messageId.value)),
+                any[Source[ByteString, _]]
+              )(any[HeaderCarrier], any[ExecutionContext])
+            )
+              .thenReturn(EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))) // it doesn't matter what the error is really.
+
+            val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
+            val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
+
+            whenReady(response) {
+              _ =>
+                status(response) mustBe OK
+
+                // common
+                verify(mockUpscanService, times(1))
+                  .upscanGetFile(DownloadUrl(eqTo(upscanDownloadUrl.value)))(any[HeaderCarrier], any[ExecutionContext], any[Materializer])
+                verify(mockXmlParsingService, times(1))
+                  .extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any[HeaderCarrier], any[ExecutionContext])
+                verify(mockAuditService, times(1)).audit(eqTo(messageType.auditType), any[Source[ByteString, _]], anyString())(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+                verify(mockValidationService, times(1)).validateXml(any[MessageType], any[Source[ByteString, _]])(any(), any())
+                verify(mockPersistenceService, times(1)).updateMessageBody(
+                  eqTo(messageType),
+                  EORINumber(eqTo(eori.value)),
+                  eqTo(movementType),
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value)),
+                  any[Source[ByteString, _]]
+                )(any[HeaderCarrier], any[ExecutionContext])
+
+                // large messages: TODO: hopefully will disappear
+                verify(mockPersistenceService, times(0)).getMessage(
+                  EORINumber(eqTo(eori.value)),
+                  eqTo(movementType),
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value))
+                )(any[HeaderCarrier], any[ExecutionContext])
+                verify(mockRouterService, times(0)).sendLargeMessage(
+                  any[MessageType],
+                  EORINumber(eqTo(eori.value)),
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value)),
+                  ObjectStoreURI(anyString())
+                )(any[ExecutionContext], any[HeaderCarrier])
+
+                // small messages
+                verify(mockRouterService, times(0)).send(
+                  any[MessageType],
+                  EORINumber(eqTo(eori.value)),
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value)),
+                  any[Source[ByteString, _]]
+                )(any[ExecutionContext], any[HeaderCarrier])
+
+                // failed status
+                verify(mockPersistenceService, times(1)).updateMessage(
+                  EORINumber(eqTo(eori.value)),
+                  eqTo(movementType),
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value)),
+                  eqTo(MessageUpdate(MessageStatus.Failed, None, None))
+                )(any[HeaderCarrier], any[ExecutionContext])
+
+            }
         }
 
         // TODO: The below can be consolidated when the router logic handles small vs large.
