@@ -26,6 +26,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import play.api.Logging
 import v2.base.TestCommonGenerators
 import v2.models.EORINumber
 import v2.models.MessageId
@@ -59,7 +60,7 @@ class ConvertErrorSpec
     with ScalaCheckDrivenPropertyChecks
     with TestCommonGenerators {
 
-  object Harness extends ConvertError
+  object Harness extends ConvertError with Logging
 
   import Harness._
 

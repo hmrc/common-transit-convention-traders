@@ -17,17 +17,34 @@
 package v2.controllers
 
 import cats.data.EitherT
+import play.api.Logging
 import v2.models.errors._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-trait ConvertError {
+trait ConvertError extends Logging {
 
   implicit class ErrorConverter[E, A](value: EitherT[Future, E, A]) {
 
     def asPresentation(implicit c: Converter[E], ec: ExecutionContext): EitherT[Future, PresentationError, A] =
-      value.leftMap(c.convert)
+      value.leftMap(c.convert).leftSemiflatTap {
+        case InternalServiceError(message, _, cause) =>
+          val causeText = cause
+            .map {
+              ex =>
+                s"""
+                   |Message: ${ex.getMessage}
+                   |Trace: ${ex.getStackTrace.mkString(System.lineSeparator())}
+                   |""".stripMargin
+            }
+            .getOrElse("No exception is available")
+          logger.error(s"""Internal Server Error: $message
+               |
+               |$causeText""".stripMargin)
+          Future.successful(())
+        case _ => Future.successful(())
+      }
   }
 
   trait Converter[E] {
