@@ -16,7 +16,7 @@ You can find our full list of endpoints on [API definitions](https://developer.s
 
 ### Development Setup
 
-Run from the console using: `sbt run` 
+Run from the console using: `sbt run`
 
 To run the whole stack, using service manager: `sm --start CTC_TRADERS_API` 
 
