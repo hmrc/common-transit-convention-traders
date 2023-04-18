@@ -5648,6 +5648,21 @@ class V2MovementsControllerSpec
               _
             ) = createControllerAndMocks()
 
+            val createdTime = OffsetDateTime.now()
+            val movementResponse = MovementSummary(
+              movementId,
+              arbitrary[EORINumber].sample.value,
+              Some(arbitrary[EORINumber].sample.get),
+              Some(arbitrary[MovementReferenceNumber].sample.value),
+              createdTime,
+              createdTime
+            )
+
+            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+              .thenAnswer(
+                _ => EitherT.rightT(movementResponse)
+              )
+
             when(
               mockPersistenceService
                 .addMessage(
@@ -5715,6 +5730,22 @@ class V2MovementsControllerSpec
               _,
               _
             ) = createControllerAndMocks()
+
+            val createdTime = OffsetDateTime.now()
+            val movementResponse = MovementSummary(
+              movementId,
+              arbitrary[EORINumber].sample.value,
+              Some(arbitrary[EORINumber].sample.get),
+              Some(arbitrary[MovementReferenceNumber].sample.value),
+              createdTime,
+              createdTime
+            )
+
+            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+              .thenAnswer(
+                _ => EitherT.rightT(movementResponse)
+              )
+
             when(
               mockPersistenceService
                 .addMessage(
@@ -5755,7 +5786,21 @@ class V2MovementsControllerSpec
               _,
               _,
               _
-            ) = createControllerAndMocks()
+            )               = createControllerAndMocks()
+            val createdTime = OffsetDateTime.now()
+            val movementResponse = MovementSummary(
+              movementId,
+              arbitrary[EORINumber].sample.value,
+              Some(arbitrary[EORINumber].sample.get),
+              Some(arbitrary[MovementReferenceNumber].sample.value),
+              createdTime,
+              createdTime
+            )
+
+            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+              .thenAnswer(
+                _ => EitherT.rightT(movementResponse)
+              )
             when(
               mockPersistenceService
                 .addMessage(
@@ -5798,6 +5843,22 @@ class V2MovementsControllerSpec
               mockUpscanService,
               _
             ) = createControllerAndMocks()
+
+            val createdTime = OffsetDateTime.now()
+            val movementResponse = MovementSummary(
+              movementId,
+              arbitrary[EORINumber].sample.value,
+              Some(arbitrary[EORINumber].sample.get),
+              Some(arbitrary[MovementReferenceNumber].sample.value),
+              createdTime,
+              createdTime
+            )
+
+            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+              .thenAnswer(
+                _ => EitherT.rightT(movementResponse)
+              )
+
             when(
               mockPersistenceService
                 .addMessage(
@@ -5833,6 +5894,40 @@ class V2MovementsControllerSpec
             contentAsJson(result) mustBe Json.obj(
               "message" -> "Internal server error",
               "code"    -> "INTERNAL_SERVER_ERROR"
+            )
+        }
+
+        "must return NotFound when movement is not found by Persistence getMovement" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            val ControllerAndMocks(
+              sut,
+              _,
+              mockPersistenceService,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _
+            ) = createControllerAndMocks()
+
+            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+              .thenAnswer(
+                _ => EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType))
+              )
+
+            val result = sut.attachMessage(movementType, movementId)(request)
+
+            status(result) mustBe NOT_FOUND
+            contentAsJson(result) mustBe Json.obj(
+              "message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found",
+              "code"    -> "NOT_FOUND"
             )
         }
 

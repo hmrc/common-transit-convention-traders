@@ -424,6 +424,7 @@ class V2MovementsControllerImpl @Inject() (
         request.body.runWith(Sink.ignore)
 
         (for {
+          _                      <- persistenceService.getMovement(request.eoriNumber, movementType, movementId).asPresentation
           updateMovementResponse <- persistenceService.addMessage(movementId, movementType, None, None).asPresentation
           upscanResponse <- upscanService
             .upscanInitiate(request.eoriNumber, movementType, movementId, updateMovementResponse.messageId)
