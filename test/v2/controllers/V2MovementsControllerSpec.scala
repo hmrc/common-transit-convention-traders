@@ -5649,7 +5649,7 @@ class V2MovementsControllerSpec
             ) = createControllerAndMocks()
 
             val createdTime = OffsetDateTime.now()
-            val departureResponse = MovementSummary(
+            val movementResponse = MovementSummary(
               movementId,
               arbitrary[EORINumber].sample.value,
               Some(arbitrary[EORINumber].sample.get),
@@ -5660,7 +5660,7 @@ class V2MovementsControllerSpec
 
             when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
               .thenAnswer(
-                _ => EitherT.rightT(departureResponse)
+                _ => EitherT.rightT(movementResponse)
               )
 
             when(
@@ -5730,6 +5730,22 @@ class V2MovementsControllerSpec
               _,
               _
             ) = createControllerAndMocks()
+
+            val createdTime = OffsetDateTime.now()
+            val movementResponse = MovementSummary(
+              movementId,
+              arbitrary[EORINumber].sample.value,
+              Some(arbitrary[EORINumber].sample.get),
+              Some(arbitrary[MovementReferenceNumber].sample.value),
+              createdTime,
+              createdTime
+            )
+
+            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+              .thenAnswer(
+                _ => EitherT.rightT(movementResponse)
+              )
+
             when(
               mockPersistenceService
                 .addMessage(
@@ -5770,7 +5786,21 @@ class V2MovementsControllerSpec
               _,
               _,
               _
-            ) = createControllerAndMocks()
+            )               = createControllerAndMocks()
+            val createdTime = OffsetDateTime.now()
+            val movementResponse = MovementSummary(
+              movementId,
+              arbitrary[EORINumber].sample.value,
+              Some(arbitrary[EORINumber].sample.get),
+              Some(arbitrary[MovementReferenceNumber].sample.value),
+              createdTime,
+              createdTime
+            )
+
+            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+              .thenAnswer(
+                _ => EitherT.rightT(movementResponse)
+              )
             when(
               mockPersistenceService
                 .addMessage(
@@ -5813,6 +5843,22 @@ class V2MovementsControllerSpec
               mockUpscanService,
               _
             ) = createControllerAndMocks()
+
+            val createdTime = OffsetDateTime.now()
+            val movementResponse = MovementSummary(
+              movementId,
+              arbitrary[EORINumber].sample.value,
+              Some(arbitrary[EORINumber].sample.get),
+              Some(arbitrary[MovementReferenceNumber].sample.value),
+              createdTime,
+              createdTime
+            )
+
+            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+              .thenAnswer(
+                _ => EitherT.rightT(movementResponse)
+              )
+
             when(
               mockPersistenceService
                 .addMessage(
@@ -5855,6 +5901,22 @@ class V2MovementsControllerSpec
           arbitraryMovementId.arbitrary
         ) {
           movementId =>
+            val ControllerAndMocks(
+              sut,
+              _,
+              mockPersistenceService,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _
+            ) = createControllerAndMocks()
+
             when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
               .thenAnswer(
                 _ => EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType))

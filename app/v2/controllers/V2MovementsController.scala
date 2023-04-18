@@ -423,6 +423,8 @@ class V2MovementsControllerImpl @Inject() (
 
         request.body.runWith(Sink.ignore)
 
+        println("calling getMovement().. movementType = " + movementType + "movementId = " + movementId + "request.eoriNumber = " + request.eoriNumber)
+
         (for {
           _                      <- persistenceService.getMovement(request.eoriNumber, movementType, movementId).asPresentation
           updateMovementResponse <- persistenceService.addMessage(movementId, movementType, None, None).asPresentation
