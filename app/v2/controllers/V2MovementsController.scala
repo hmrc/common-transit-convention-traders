@@ -534,7 +534,7 @@ class V2MovementsControllerImpl @Inject() (
                  |Message: ${failureDetails.message}""".stripMargin)
 
             pushNotificationsService
-              .postPpnsNotification(movementId, messageId, Json.toJson(PresentationError.badRequestError("Uploaded file not accepted")))
+              .postPpnsNotification(movementId, messageId, Json.toJson(PresentationError.badRequestError("Uploaded file not accepted.")))
             Future.successful(Ok)
           case UpscanSuccessResponse(_, downloadUrl, uploadDetails) =>
             def routeLarge(messageType: MessageType): EitherT[Future, PresentationError, Unit] =
