@@ -51,6 +51,7 @@ import play.api.http.MimeTypes
 import play.api.http.Status._
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.Files.TemporaryFileCreator
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.Request
@@ -85,13 +86,14 @@ import v2.models.responses.FailureDetails
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
+import v2.models.responses.TraderFailedUploadAuditRequest
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.UploadDetails
 import v2.models.responses.UpscanFailedResponse
 import v2.models.responses.UpscanResponse
+import v2.models.responses.UpscanSuccessResponse
 import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.UpscanResponse.Reference
-import v2.models.responses.UpscanSuccessResponse
 import v2.models.responses.hateoas._
 import v2.services.ConversionService
 import v2.services._
@@ -6058,7 +6060,7 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            _,
+            mockPushNotificationService,
             mockUpscanService,
             _
           ) = createControllerAndMocks(
@@ -6070,6 +6072,18 @@ class V2MovementsControllerSpec
 
           val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
           val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
+
+          when(
+            mockPushNotificationService.postPpnsNotification(
+              MovementId(eqTo(movementId.value)),
+              MessageId(eqTo(messageId.value)),
+              any[JsValue]
+            )(
+              any(),
+              any()
+            )
+          )
+            .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
           whenReady(response) {
             _ =>
@@ -6084,6 +6098,7 @@ class V2MovementsControllerSpec
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
+
               verify(mockPersistenceService, times(0)).updateMessageBody(
                 any[MessageType],
                 EORINumber(eqTo(eori.value)),
@@ -6127,6 +6142,15 @@ class V2MovementsControllerSpec
                 eqTo(MessageUpdate(MessageStatus.Failed, None, None))
               )(any[HeaderCarrier], any[ExecutionContext])
 
+              // Verify that postPpnsNotification was called
+              verify(mockPushNotificationService, times(1)).postPpnsNotification(
+                MovementId(eqTo(movementId.value)),
+                MessageId(eqTo(messageId.value)),
+                any[JsValue]
+              )(
+                any(),
+                any()
+              )
           }
       }
 
@@ -6150,7 +6174,7 @@ class V2MovementsControllerSpec
               _,
               _,
               _,
-              _,
+              mockPushNotificationService,
               mockUpscanService,
               _
             ) = createControllerAndMocks(
@@ -6163,6 +6187,18 @@ class V2MovementsControllerSpec
             when(mockUpscanService.upscanGetFile(DownloadUrl(eqTo(upscanDownloadUrl.value)))(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
               .thenReturn(EitherT.rightT(singleUseStringSource("<test></test>")))
             when(mockXmlParsingService.extractMessageType(any(), eqTo(allowedTypes))(any(), any())).thenReturn(EitherT.leftT(ExtractionError.MalformedInput))
+
+            when(
+              mockPushNotificationService.postPpnsNotification(
+                MovementId(eqTo(movementId.value)),
+                MessageId(eqTo(messageId.value)),
+                any[JsValue]
+              )(
+                any[HeaderCarrier],
+                any[ExecutionContext]
+              )
+            )
+              .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
             val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
             val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
@@ -6214,6 +6250,16 @@ class V2MovementsControllerSpec
                   any[Source[ByteString, _]]
                 )(any[ExecutionContext], any[HeaderCarrier])
 
+                // Verify that postPpnsNotification was  called
+                verify(mockPushNotificationService, times(1)).postPpnsNotification(
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value)),
+                  any[JsValue]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+
                 // failed status
                 verify(mockPersistenceService, times(1)).updateMessage(
                   EORINumber(eqTo(eori.value)),
@@ -6243,7 +6289,7 @@ class V2MovementsControllerSpec
               _,
               _,
               _,
-              _,
+              mockPushNotificationService,
               mockUpscanService,
               _
             ) = createControllerAndMocks(
@@ -6272,6 +6318,18 @@ class V2MovementsControllerSpec
               .thenReturn(EitherT.rightT((): Unit))
             when(mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, _]])(any(), any()))
               .thenReturn(EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList.one(XmlValidationError(1, 1, "nope")))))
+
+            when(
+              mockPushNotificationService.postPpnsNotification(
+                MovementId(eqTo(movementId.value)),
+                MessageId(eqTo(messageId.value)),
+                any[JsValue]
+              )(
+                any[HeaderCarrier],
+                any[ExecutionContext]
+              )
+            )
+              .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
             val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
             val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
@@ -6303,6 +6361,16 @@ class V2MovementsControllerSpec
                   MessageId(eqTo(messageId.value)),
                   any[Source[ByteString, _]]
                 )(any[HeaderCarrier], any[ExecutionContext])
+
+                // Verify that postPpnsNotification was not  called
+                verify(mockPushNotificationService, times(1)).postPpnsNotification(
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value)),
+                  any[JsValue]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
 
                 // large messages: TODO: hopefully will disappear
                 verify(mockPersistenceService, times(0)).getMessage(
@@ -6359,7 +6427,7 @@ class V2MovementsControllerSpec
               _,
               _,
               _,
-              _,
+              mockPushNotificationService,
               mockUpscanService,
               _
             ) = createControllerAndMocks(
@@ -6388,6 +6456,18 @@ class V2MovementsControllerSpec
               )(any[HeaderCarrier], any[ExecutionContext])
             )
               .thenReturn(EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))) // it doesn't matter what the error is really.
+
+            when(
+              mockPushNotificationService.postPpnsNotification(
+                MovementId(eqTo(movementId.value)),
+                MessageId(eqTo(messageId.value)),
+                any[JsValue]
+              )(
+                any[HeaderCarrier],
+                any[ExecutionContext]
+              )
+            )
+              .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
             val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
             val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
@@ -6453,6 +6533,16 @@ class V2MovementsControllerSpec
                   eqTo(MessageUpdate(MessageStatus.Failed, None, None))
                 )(any[HeaderCarrier], any[ExecutionContext])
 
+                // Verify that postPpnsNotification was called
+                verify(mockPushNotificationService, times(1)).postPpnsNotification(
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value)),
+                  any[JsValue]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+
             }
         }
 
@@ -6477,7 +6567,7 @@ class V2MovementsControllerSpec
                 _,
                 _,
                 _,
-                _,
+                mockPushNotificationService,
                 mockUpscanService,
                 mockAppConfig
               ) = createControllerAndMocks(
@@ -6520,6 +6610,18 @@ class V2MovementsControllerSpec
               )
                 .thenReturn(EitherT.leftT(RouterError.UnrecognisedOffice("office", "office")))
 
+              when(
+                mockPushNotificationService.postPpnsNotification(
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value)),
+                  any[JsValue]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
+
               val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
               val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
 
@@ -6584,6 +6686,16 @@ class V2MovementsControllerSpec
                     eqTo(MessageUpdate(MessageStatus.Success, None, None))
                   )(any[HeaderCarrier], any[ExecutionContext])
 
+                  // Verify that postPpnsNotification was not  called
+                  verify(mockPushNotificationService, times(1)).postPpnsNotification(
+                    MovementId(eqTo(movementId.value)),
+                    MessageId(eqTo(messageId.value)),
+                    any[JsValue]
+                  )(
+                    any[HeaderCarrier],
+                    any[ExecutionContext]
+                  )
+
                   // failed status
                   verify(mockPersistenceService, times(1)).updateMessage(
                     EORINumber(eqTo(eori.value)),
@@ -6615,7 +6727,7 @@ class V2MovementsControllerSpec
                 _,
                 _,
                 _,
-                _,
+                mockPushNotificationService,
                 mockUpscanService,
                 mockAppConfig
               ) = createControllerAndMocks(
@@ -6658,6 +6770,18 @@ class V2MovementsControllerSpec
               )
                 .thenReturn(EitherT.rightT((): Unit))
 
+              when(
+                mockPushNotificationService.postPpnsNotification(
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value)),
+                  any[JsValue]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
+
               val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
               val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
 
@@ -6722,6 +6846,16 @@ class V2MovementsControllerSpec
                     eqTo(MessageUpdate(MessageStatus.Success, None, None))
                   )(any[HeaderCarrier], any[ExecutionContext])
 
+                  // Verify that postPpnsNotification was not  called
+                  verify(mockPushNotificationService, times(1)).postPpnsNotification(
+                    MovementId(eqTo(movementId.value)),
+                    MessageId(eqTo(messageId.value)),
+                    any[JsValue]
+                  )(
+                    any[HeaderCarrier],
+                    any[ExecutionContext]
+                  )
+
                   // failed status
                   verify(mockPersistenceService, times(0)).updateMessage(
                     EORINumber(eqTo(eori.value)),
@@ -6756,7 +6890,7 @@ class V2MovementsControllerSpec
                 _,
                 _,
                 _,
-                _,
+                mockPushNotificationService,
                 mockUpscanService,
                 mockAppConfig
               ) = createControllerAndMocks(
@@ -6797,6 +6931,18 @@ class V2MovementsControllerSpec
                 )(any[HeaderCarrier], any[ExecutionContext])
               )
                 .thenReturn(EitherT.leftT(PersistenceError.UnexpectedError(None)))
+
+              when(
+                mockPushNotificationService.postPpnsNotification(
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value)),
+                  any[JsValue]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
               val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
               val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
@@ -6862,6 +7008,16 @@ class V2MovementsControllerSpec
                     eqTo(MessageUpdate(MessageStatus.Failed, None, None))
                   )(any[HeaderCarrier], any[ExecutionContext])
 
+                  // Verify that postPpnsNotification was not  called
+                  verify(mockPushNotificationService, times(1)).postPpnsNotification(
+                    MovementId(eqTo(movementId.value)),
+                    MessageId(eqTo(messageId.value)),
+                    any[JsValue]
+                  )(
+                    any[HeaderCarrier],
+                    any[ExecutionContext]
+                  )
+
               }
           }
 
@@ -6883,7 +7039,7 @@ class V2MovementsControllerSpec
                 _,
                 _,
                 _,
-                _,
+                mockPushNotificationService,
                 mockUpscanService,
                 mockAppConfig
               ) = createControllerAndMocks(
@@ -6936,6 +7092,18 @@ class V2MovementsControllerSpec
                   )
                 )
 
+              when(
+                mockPushNotificationService.postPpnsNotification(
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value)),
+                  any[JsValue]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
+
               val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
               val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
 
@@ -6991,6 +7159,16 @@ class V2MovementsControllerSpec
                     any[Source[ByteString, _]]
                   )(any[ExecutionContext], any[HeaderCarrier])
 
+                  // Verify that postPpnsNotification was not  called
+                  verify(mockPushNotificationService, times(1)).postPpnsNotification(
+                    MovementId(eqTo(movementId.value)),
+                    MessageId(eqTo(messageId.value)),
+                    any[JsValue]
+                  )(
+                    any[HeaderCarrier],
+                    any[ExecutionContext]
+                  )
+
                   // failed status
                   verify(mockPersistenceService, times(1)).updateMessage(
                     EORINumber(eqTo(eori.value)),
@@ -6999,7 +7177,6 @@ class V2MovementsControllerSpec
                     MessageId(eqTo(messageId.value)),
                     eqTo(MessageUpdate(MessageStatus.Failed, None, None))
                   )(any[HeaderCarrier], any[ExecutionContext])
-
               }
           }
 
@@ -7021,7 +7198,7 @@ class V2MovementsControllerSpec
                 _,
                 _,
                 _,
-                _,
+                mockPushNotificationService,
                 mockUpscanService,
                 mockAppConfig
               ) = createControllerAndMocks(
@@ -7084,6 +7261,18 @@ class V2MovementsControllerSpec
               )
                 .thenReturn(EitherT.leftT(RouterError.UnexpectedError(None)))
 
+              when(
+                mockPushNotificationService.postPpnsNotification(
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value)),
+                  any[JsValue]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
+
               val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
               val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
 
@@ -7139,6 +7328,16 @@ class V2MovementsControllerSpec
                     any[Source[ByteString, _]]
                   )(any[ExecutionContext], any[HeaderCarrier])
 
+                  // Verify that postPpnsNotification was not  called
+                  verify(mockPushNotificationService, times(1)).postPpnsNotification(
+                    MovementId(eqTo(movementId.value)),
+                    MessageId(eqTo(messageId.value)),
+                    any[JsValue]
+                  )(
+                    any[HeaderCarrier],
+                    any[ExecutionContext]
+                  )
+
                   // failed status
                   verify(mockPersistenceService, times(1)).updateMessage(
                     EORINumber(eqTo(eori.value)),
@@ -7169,7 +7368,7 @@ class V2MovementsControllerSpec
                 _,
                 _,
                 _,
-                _,
+                mockPushNotificationService,
                 mockUpscanService,
                 mockAppConfig
               ) = createControllerAndMocks(
@@ -7232,6 +7431,18 @@ class V2MovementsControllerSpec
               )
                 .thenReturn(EitherT.rightT((): Unit))
 
+              when(
+                mockPushNotificationService.postPpnsNotification(
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value)),
+                  any[JsValue]
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
+
               // No push notification in this case as we are still only processing
 
               val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
@@ -7280,6 +7491,15 @@ class V2MovementsControllerSpec
                     ObjectStoreURI(anyString())
                   )(any[ExecutionContext], any[HeaderCarrier])
 
+                  // Verify that postPpnsNotification was not  called
+                  verify(mockPushNotificationService, times(0)).postPpnsNotification(
+                    MovementId(eqTo(movementId.value)),
+                    MessageId(eqTo(messageId.value)),
+                    any[JsValue]
+                  )(
+                    any[HeaderCarrier],
+                    any[ExecutionContext]
+                  )
                   // small messages
                   verify(mockRouterService, times(0)).send(
                     any[MessageType],
@@ -7331,10 +7551,22 @@ class V2MovementsControllerSpec
           _,
           _,
           _,
-          _,
+          mockPushNotificationService,
           _,
           _
         ) = createControllerAndMocks()
+
+        when(
+          mockPushNotificationService.postPpnsNotification(
+            MovementId(eqTo(movementId.value)),
+            MessageId(eqTo(messageId.value)),
+            any[JsValue]
+          )(
+            any[HeaderCarrier],
+            any[ExecutionContext]
+          )
+        )
+          .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
         val request = FakeRequest(
           POST,
@@ -7348,6 +7580,16 @@ class V2MovementsControllerSpec
         status(result) mustBe OK
 
         verify(mockAuditService, times(1)).audit(eqTo(AuditType.TraderFailedUploadEvent), any(), eqTo(MimeTypes.JSON), eqTo(0L))(any(), any())
+
+        // Verify that postPpnsNotification was not  called
+        verify(mockPushNotificationService, times(1)).postPpnsNotification(
+          MovementId(eqTo(movementId.value)),
+          MessageId(eqTo(messageId.value)),
+          any[JsValue]
+        )(
+          any[HeaderCarrier],
+          any[ExecutionContext]
+        )
     }
   }
 }
