@@ -16,8 +16,8 @@
 
 package v2.models.errors
 
-sealed trait UpscanInitiateError
+sealed trait UpscanError
 
-object UpscanInitiateError {
-  case class UnexpectedError(thr: Option[Throwable] = None) extends UpscanInitiateError
+object UpscanError {
+  case class UnexpectedError(thr: Option[Throwable] = None) extends UpscanError
 }

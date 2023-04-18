@@ -16,27 +16,24 @@
 
 package controllers.actions
 
-import play.api.mvc.Action
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.mvc.AnyContent
-import play.api.mvc.DefaultActionBuilder
-import utils.analysis.MessageAnalyser
-import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito._
+import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.mvc.AbstractController
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
-import play.api.test.Helpers._
+import play.api.mvc.DefaultActionBuilder
 import play.api.test.FakeRequest
-
-import scala.xml.NodeSeq
-import play.api.mvc.AbstractController
 import play.api.test.Helpers
-import play.api.inject.bind
+import play.api.test.Helpers._
+import utils.analysis.MessageAnalyser
 
 import java.time.Clock
+import scala.xml.NodeSeq
 
 class AnalyseMessageActionSpec extends AnyFreeSpec with Matchers with MockitoSugar {
 

@@ -22,6 +22,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
+import config.Constants
 import io.lemonlabs.uri.Url
 import org.mockito.Mockito.when
 import org.scalatest.concurrent.IntegrationPatience
@@ -63,6 +64,8 @@ class AuditingConnectorSpec
   def targetUrl(auditType: AuditType)                   = s"/transit-movements-auditing/audit/${auditType.name}"
   def targetUrlLarge(auditType: AuditType, uri: String) = s"/transit-movements-auditing/audit/${auditType.name}/uri/$uri"
 
+  lazy val contentSize = 49999L
+
   "For a small message" - {
     "when sending an audit message" - Seq(MimeTypes.XML, MimeTypes.JSON).foreach {
       contentType =>
@@ -80,7 +83,7 @@ class AuditingConnectorSpec
 
             implicit val hc = HeaderCarrier()
             // when we call the audit service
-            val future = sut.post(AuditType.DeclarationData, Source.empty, contentType)
+            val future = sut.post(AuditType.DeclarationData, Source.empty, contentType, contentSize)
 
             // then the future should be ready
             whenReady(future) {
@@ -98,12 +101,13 @@ class AuditingConnectorSpec
                     urlEqualTo(targetUrl(AuditType.DeclarationData))
                   )
                     .withHeader(HeaderNames.CONTENT_TYPE, equalTo(contentType))
+                    .withHeader(Constants.XContentLengthHeader, equalTo(contentSize.toString))
                     .willReturn(aResponse().withStatus(statusCode))
                 )
 
                 implicit val hc = HeaderCarrier()
                 // when we call the audit service
-                val future = sut.post(AuditType.DeclarationData, Source.empty, contentType)
+                val future = sut.post(AuditType.DeclarationData, Source.empty, contentType, contentSize)
 
                 val result = future
                   .map(

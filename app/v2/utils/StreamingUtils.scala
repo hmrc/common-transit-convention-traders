@@ -21,6 +21,7 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
+import play.api.Logging
 import v2.controllers.ConvertError
 import v2.models.errors.StreamingError
 
@@ -28,7 +29,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-object StreamingUtils extends ConvertError {
+object StreamingUtils {
 
   def convertSourceToString(
     source: Source[ByteString, _]

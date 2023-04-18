@@ -33,14 +33,27 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
-import v2.models.errors.UpscanInitiateError
+import v2.models.errors.UpscanError
 import v2.models.responses.UpscanFormTemplate
 import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.UpscanReference
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
+import v2.base.TestActorSystem
+import v2.models.responses.UpscanResponse.DownloadUrl
+import org.scalatest.time.Millis
+import org.scalatest.time.Seconds
+import org.scalatest.time.Span
 
+import scala.annotation.nowarn
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+
+@nowarn("msg=dead code following this construct")
 class UpscanServiceSpec
     extends AnyFreeSpec
     with Matchers
@@ -49,7 +62,8 @@ class UpscanServiceSpec
     with MockitoSugar
     with TestCommonGenerators
     with ScalaCheckDrivenPropertyChecks
-    with BeforeAndAfterEach {
+    with BeforeAndAfterEach
+    with TestActorSystem {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
@@ -114,9 +128,43 @@ class UpscanServiceSpec
         val result = sut.upscanInitiate(eoriNumber, movementType, movementId, messageId)
 
         whenReady(result.value) {
-          r => r mustBe Left(UpscanInitiateError.UnexpectedError(thr = Some(expectedException)))
+          r => r mustBe Left(UpscanError.UnexpectedError(thr = Some(expectedException)))
         }
 
+    }
+  }
+
+  "upscanGetFile" - {
+    val downloadUrl = DownloadUrl("http://download.url")
+    implicit val patienceConfig: PatienceConfig =
+      PatienceConfig(Span(5, Seconds), Span(100, Millis))
+
+    "should return Right(result) if the connector returns the result successfully" in {
+      val expected = "file content"
+      when(mockConnector.upscanGetFile(downloadUrl)).thenReturn(Future.successful(Source.single(ByteString(expected))))
+
+      val result = sut.upscanGetFile(downloadUrl).value
+
+      whenReady(result) {
+        r =>
+          val expectedSource = Source.single(ByteString(expected))
+          val actualSource   = r.getOrElse(Source.empty)
+          val expectedBytes  = Await.result(expectedSource.runWith(Sink.seq), Duration.Inf).flatten
+          val actualBytes    = Await.result(actualSource.runWith(Sink.seq), Duration.Inf).flatten
+          actualBytes mustBe expectedBytes
+      }
+    }
+
+    "should return Left(UpscanInitiateError.UnexpectedError(Some(throwable))) if the connector fails with a NonFatal error" in {
+      val expectedError = new RuntimeException("something went wrong")
+      when(mockConnector.upscanGetFile(downloadUrl)).thenReturn(Future.failed(expectedError))
+
+      val result = sut.upscanGetFile(downloadUrl).value
+
+      whenReady(result) {
+        r =>
+          r mustBe Left(UpscanError.UnexpectedError(Some(expectedError)))
+      }
     }
   }
 

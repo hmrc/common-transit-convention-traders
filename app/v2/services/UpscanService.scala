@@ -26,12 +26,16 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
-import v2.models.errors.UpscanInitiateError
+import v2.models.errors.UpscanError
 import v2.models.responses.UpscanInitiateResponse
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
+import akka.stream.Materializer
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
+import v2.models.responses.UpscanResponse.DownloadUrl
 
 @ImplementedBy(classOf[UpscanServiceImpl])
 trait UpscanService {
@@ -39,7 +43,15 @@ trait UpscanService {
   def upscanInitiate(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
-  ): EitherT[Future, UpscanInitiateError, UpscanInitiateResponse]
+  ): EitherT[Future, UpscanError, UpscanInitiateResponse]
+
+  def upscanGetFile(
+    downloadUrl: DownloadUrl
+  )(implicit
+    headerCarrier: HeaderCarrier,
+    executionContext: ExecutionContext,
+    materializer: Materializer
+  ): EitherT[Future, UpscanError, Source[ByteString, _]]
 
 }
 
@@ -51,13 +63,29 @@ class UpscanServiceImpl @Inject() (
   override def upscanInitiate(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
-  ): EitherT[Future, UpscanInitiateError, UpscanInitiateResponse] =
+  ): EitherT[Future, UpscanError, UpscanInitiateResponse] =
     EitherT {
       upscanConnector
         .upscanInitiate(eoriNumber, movementType, movementId, messageId)
         .map(Right(_))
         .recover {
-          case NonFatal(thr) => Left(UpscanInitiateError.UnexpectedError(thr = Some(thr)))
+          case NonFatal(thr) => Left(UpscanError.UnexpectedError(thr = Some(thr)))
+        }
+    }
+
+  override def upscanGetFile(
+    downloadUrl: DownloadUrl
+  )(implicit
+    headerCarrier: HeaderCarrier,
+    executionContext: ExecutionContext,
+    materializer: Materializer
+  ): EitherT[Future, UpscanError, Source[ByteString, _]] =
+    EitherT {
+      upscanConnector
+        .upscanGetFile(downloadUrl)
+        .map(Right(_))
+        .recover {
+          case NonFatal(thr) => Left(UpscanError.UnexpectedError(thr = Some(thr)))
         }
     }
 }

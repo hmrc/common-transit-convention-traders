@@ -51,6 +51,7 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import play.api.http.Status.CREATED
 
 @ImplementedBy(classOf[PersistenceConnectorImpl])
 trait PersistenceConnector {
@@ -90,8 +91,19 @@ trait PersistenceConnector {
     movementType: MovementType,
     movementId: MovementId,
     messageId: MessageId,
-    messageType: MessageType,
     body: MessageUpdate
+  )(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit]
+
+  def updateMessageBody(
+    messageType: MessageType,
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    source: Source[ByteString, _]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -225,7 +237,6 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     movementType: MovementType,
     movementId: MovementId,
     messageId: MessageId,
-    messageType: MessageType,
     body: MessageUpdate
   )(implicit
     hc: HeaderCarrier,
@@ -236,9 +247,27 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     httpClientV2
       .patch(url"$url")
       .withBody(Json.toJson(body))
-      .setHeader(Constants.XMessageTypeHeader -> messageType.code)
-      .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
       .executeAndExpect(OK)
+  }
+
+  def updateMessageBody(
+    messageType: MessageType,
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    source: Source[ByteString, _]
+  )(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] = {
+    val url = appConfig.movementsUrl.withPath(postMessageBodyUrl(eoriNumber, movementType, movementId, messageId))
+
+    httpClientV2
+      .post(url"$url")
+      .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code)
+      .withBody(source)
+      .executeAndExpect(CREATED)
   }
 
 }

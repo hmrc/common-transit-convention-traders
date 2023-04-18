@@ -82,6 +82,8 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
       hc: HeaderCarrier,
       ec: ExecutionContext
     ): Future[Option[XmlValidationResponse]] =
+      // TODO: Actually test this method, because as it stands it tests nothing (it will ALWAYS match the first case)
+      // It might be that this method can disappear, however, due to the object store rationalisation.
       (messageType, uri) match {
         case (_, uriValid)                => Future.successful(None)
         case (_, uriInvalid)              => Future.successful(Some(XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))))

@@ -50,6 +50,14 @@ import v2.models.request.PushNotificationsAssociation
 import v2.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import com.github.tomakehurst.wiremock.client.WireMock._
+import org.scalacheck.Arbitrary
+import play.api.http.Status.ACCEPTED
+import play.api.libs.json.JsValue
+import play.twirl.api.TemplateMagic.anyToDefault
+import v2.models.MessageId
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 class PushNotificationsConnectorSpec
     extends AnyFreeSpec
@@ -191,6 +199,75 @@ class PushNotificationsConnectorSpec
         }
     }
 
+  }
+
+  "postPpnsNotification" - {
+    implicit val jsValueArbitrary: Arbitrary[JsValue] = Arbitrary(Gen.const(Json.obj()))
+
+    implicit val upstreamErrorArbitrary: Arbitrary[UpstreamErrorResponse] = Arbitrary(
+      for {
+        statusCode <- Gen.oneOf(400, 401, 403, 404, 500)
+        message    <- arbitrary[String]
+      } yield UpstreamErrorResponse(message, statusCode, statusCode, Map.empty)
+    )
+
+    "should send a POST request to the correct URL with the correct data" in forAll(
+      arbitrary[MovementId],
+      arbitrary[MessageId],
+      arbitrary[JsValue]
+    ) {
+      (movementId, messageId, body) =>
+        val expectedUrl = s"/transit-movements-push-notifications/traders/movements/${movementId.value}/messages/${messageId.value}"
+        val jsonRequest = Json.stringify(body)
+
+        server.stubFor(
+          post(expectedUrl)
+            .withHeader("Content-Type", equalTo("application/json"))
+            .withRequestBody(equalTo(jsonRequest))
+            .willReturn(
+              aResponse()
+                .withStatus(ACCEPTED)
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val response    = sut.postPpnsNotification(movementId, messageId, body)
+        whenReady(response) {
+          result =>
+            result mustBe (())
+        }
+    }
+
+    "should return an exception if the server returns an error status" in forAll(
+      arbitrary[MovementId],
+      arbitrary[MessageId],
+      arbitrary[JsValue],
+      arbitrary[UpstreamErrorResponse]
+    ) {
+      (movementId, messageId, body, upstreamError) =>
+        val expectedUrl = s"/transit-movements-push-notifications/traders/movements/${movementId.value}/messages/${messageId.value}"
+        val jsonRequest = Json.stringify(body)
+
+        server.stubFor(
+          post(expectedUrl)
+            .withHeader("Content-Type", equalTo("application/json"))
+            .withRequestBody(equalTo(jsonRequest))
+            .willReturn(
+              aResponse()
+                .withStatus(upstreamError.statusCode)
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val response    = sut.postPpnsNotification(movementId, messageId, body)
+
+        whenReady(response.recover {
+          case UpstreamErrorResponse(_, statusCode, _, _) => ()
+        }) {
+          result =>
+            result mustBe (())
+        }
+    }
   }
 
 }

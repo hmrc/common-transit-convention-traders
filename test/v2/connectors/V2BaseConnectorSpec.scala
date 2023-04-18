@@ -56,9 +56,11 @@ import v2.models.MovementType
 import v2.models.ObjectStoreResourceLocation
 import v2.models.request.MessageType
 
+import scala.annotation.nowarn
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
 
+@nowarn("msg=discarded non-Unit value")
 class V2BaseConnectorSpec
     extends AnyFreeSpec
     with Matchers

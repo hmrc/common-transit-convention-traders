@@ -22,6 +22,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.Application
 import play.api.inject
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
@@ -43,17 +44,17 @@ class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar with Be
 
   val fakeEnrolmentLoggingService = new FakeEnrolmentLoggingService()
 
-  val authConnector = mock[AuthConnector]
-  val mockClock     = mock[Clock]
+  val authConnector: AuthConnector = mock[AuthConnector]
+  val mockClock: Clock             = mock[Clock]
 
-  val application = GuiceApplicationBuilder()
+  val application: Application = GuiceApplicationBuilder()
     .overrides(inject.bind[Clock].toInstance(mockClock))
     .configure(
       "metrics.jvm" -> false
     )
     .build()
 
-  override def beforeEach = {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     reset(authConnector)
   }
