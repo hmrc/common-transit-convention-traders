@@ -41,6 +41,11 @@ import v2.models.responses.UpscanReference
 import v2.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import akka.stream.scaladsl.Sink
+import com.github.tomakehurst.wiremock.client.WireMock.get
+import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
+import v2.base.TestActorSystem
+import v2.models.responses.UpscanResponse.DownloadUrl
 
 class UpscanConnectorSpec
     extends AnyFreeSpec
@@ -50,7 +55,8 @@ class UpscanConnectorSpec
     with IntegrationPatience
     with WiremockSuite
     with MockitoSugar
-    with CommonGenerators {
+    with CommonGenerators
+    with TestActorSystem {
 
   val mockAppConfig = mock[AppConfig]
 
@@ -109,6 +115,52 @@ class UpscanConnectorSpec
 
     }
 
+  }
+
+  "GET upscan call to download url" - {
+    "when making a successful call to upscan get file, must return file content" in {
+      val expectedResponse = "file content"
+      server.stubFor(
+        get(
+          urlEqualTo("/") // encode only path part of URL
+        ).willReturn(
+          aResponse().withStatus(OK).withBody(expectedResponse)
+        )
+      )
+      implicit val hc = HeaderCarrier()
+      val result      = sut.upscanGetFile(DownloadUrl(Url.parse(server.baseUrl()).toString()))
+
+      whenReady(result) {
+        _.reduce(_ ++ _)
+          .map(_.utf8String)
+          .runWith(Sink.last)
+          .map {
+            _ mustBe expectedResponse
+          }
+      }
+
+    }
+
+    "when making a failure call to upscan get file, an exception is returned in the future" in {
+      server.stubFor(
+        get(
+          urlEqualTo("/") // encode only path part of URL
+        ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
+      )
+      implicit val hc = HeaderCarrier()
+      val result = sut
+        .upscanGetFile(DownloadUrl(Url.parse(server.baseUrl()).toString()))
+        .map(
+          _ => fail("A success was recorded when it shouldn't have been")
+        )
+        .recover {
+          case _ => ()
+        }
+
+      whenReady(result) {
+        _ => // if we get here, we have a success and a Unit, so all is okay!
+      }
+    }
   }
 
   private def upscanResponse =

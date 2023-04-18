@@ -26,6 +26,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import play.api.Logging
 import v2.base.TestCommonGenerators
 import v2.models.EORINumber
 import v2.models.MessageId
@@ -39,7 +40,7 @@ import v2.models.errors.PersistenceError
 import v2.models.errors.PresentationError
 import v2.models.errors.RouterError
 import v2.models.errors.StreamingError
-import v2.models.errors.UpscanInitiateError
+import v2.models.errors.UpscanError
 import v2.models.errors.XmlValidationError
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
 import v2.models.errors.FailedToValidateError.JsonSchemaFailedToValidateError
@@ -59,7 +60,7 @@ class ConvertErrorSpec
     with ScalaCheckDrivenPropertyChecks
     with TestCommonGenerators {
 
-  object Harness extends ConvertError
+  object Harness extends ConvertError with Logging
 
   import Harness._
 
@@ -287,7 +288,7 @@ class ConvertErrorSpec
 
   "UpscanInitiate Error" - {
     "an Unexpected Error with no exception returns an internal service error with no exception" in {
-      val input  = UpscanInitiateError.UnexpectedError(None)
+      val input  = UpscanError.UnexpectedError(None)
       val output = PresentationError.internalServiceError()
 
       upscanErrorConverter.convert(input) mustBe output
@@ -295,7 +296,7 @@ class ConvertErrorSpec
 
     "an Unexpected Error with an exception returns an internal service error with an exception" in {
       val exception = new IllegalStateException()
-      val input     = UpscanInitiateError.UnexpectedError(Some(exception))
+      val input     = UpscanError.UnexpectedError(Some(exception))
       val output    = PresentationError.internalServiceError(cause = Some(exception))
 
       upscanErrorConverter.convert(input) mustBe output

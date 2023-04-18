@@ -26,6 +26,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
+import play.api.mvc.ControllerComponents
 import play.api.test.Helpers.stubControllerComponents
 import v2.controllers.V2MovementsController
 import v2.controllers.stream.StreamingParsers
@@ -33,6 +34,7 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
+import v2.models.responses.UpscanResponse
 
 import java.time.OffsetDateTime
 
@@ -42,7 +44,7 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
     with StreamingParsers
     with Logging {
 
-  override val controllerComponents = stubControllerComponents()
+  override val controllerComponents: ControllerComponents = stubControllerComponents()
 
   override def createMovement(movementType: MovementType): Action[Source[ByteString, _]] = Action(streamFromMemory) {
     request =>
@@ -76,10 +78,16 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
       Accepted(Json.obj("version" -> 2))
   }
 
-  override def attachLargeMessage(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId) = Action(parse.json) {
-    request =>
-      Ok(Json.obj("version" -> 2))
-  }
+  override def attachMessageFromUpscan(
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId
+  ): Action[UpscanResponse] =
+    Action(parse.json[UpscanResponse]) {
+      _ =>
+        Ok(Json.obj("version" -> 2))
+    }
 
   override def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] = Action {
     _ =>

@@ -81,8 +81,19 @@ trait PersistenceService {
     movementType: MovementType,
     movementId: MovementId,
     messageId: MessageId,
-    messageType: MessageType,
     body: MessageUpdate
+  )(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, Unit]
+
+  def updateMessageBody(
+    messageType: MessageType,
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    source: Source[ByteString, _]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -183,7 +194,6 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
     movementType: MovementType,
     movementId: MovementId,
     messageId: MessageId,
-    messageType: MessageType,
     body: MessageUpdate
   )(implicit
     hc: HeaderCarrier,
@@ -191,11 +201,32 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
   ): EitherT[Future, PersistenceError, Unit] =
     EitherT(
       persistenceConnector
-        .patchMessage(eoriNumber, movementType, movementId, messageId, messageType, body)
+        .patchMessage(eoriNumber, movementType, movementId, messageId, body)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
           case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+        }
+    )
+
+  override def updateMessageBody(
+    messageType: MessageType,
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    source: Source[ByteString, _]
+  )(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, Unit] =
+    EitherT(
+      persistenceConnector
+        .updateMessageBody(messageType, eoriNumber, movementType, movementId, messageId, source)
+        .map(Right(_))
+        .recover {
+          case NonFatal(thr) =>
+            Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
 
