@@ -533,7 +533,8 @@ class V2MovementsControllerImpl @Inject() (
                  |Reason: ${failureDetails.failureReason}
                  |Message: ${failureDetails.message}""".stripMargin)
 
-            // TODO: Push notification on failure
+            pushNotificationsService
+              .postPpnsNotification(movementId, messageId, Json.toJson(HateoasMovementUpdateResponse(movementId, messageId, movementType, None)))
             Future.successful(Ok)
           case UpscanSuccessResponse(_, downloadUrl, uploadDetails) =>
             def routeLarge(messageType: MessageType): EitherT[Future, PresentationError, Unit] =
@@ -551,7 +552,11 @@ class V2MovementsControllerImpl @Inject() (
                 _ <- routerService.send(messageType, eori, movementId, messageId, source).asPresentation
                 // TODO: This should be in the router
                 _ = persistenceService.updateMessage(eori, movementType, movementId, messageId, MessageUpdate(MessageStatus.Success, None, None))
-                // TODO: Push notification
+                _ = pushNotificationsService.postPpnsNotification(
+                  movementId,
+                  messageId,
+                  Json.toJson(HateoasMovementUpdateResponse(movementId, messageId, movementType, None))
+                )
               } yield ()
 
             // Download file to stream
@@ -585,7 +590,7 @@ class V2MovementsControllerImpl @Inject() (
                 presentationError =>
                   // we failed, so mark message as failure (but we can do that async)
                   persistenceService.updateMessage(eori, movementType, movementId, messageId, MessageUpdate(MessageStatus.Failed, None, None))
-                  // TODO: Push Status(presentationError.code.statusCode)(Json.toJson(presentationError))
+                  pushNotificationsService.postPpnsNotification(movementId, messageId, Json.toJson(presentationError))
                   Ok
               }
         }
