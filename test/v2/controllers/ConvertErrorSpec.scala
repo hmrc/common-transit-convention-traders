@@ -117,7 +117,7 @@ class ConvertErrorSpec
     "a BusinessValidationError returns a bad request error" in forAll(Gen.identifier) {
       message =>
         val input  = BusinessValidationError(message)
-        val output = PresentationError.badRequestError(message)
+        val output = PresentationError.businessValidationError(message)
 
         validationErrorConverter.convert(input) mustBe output
     }

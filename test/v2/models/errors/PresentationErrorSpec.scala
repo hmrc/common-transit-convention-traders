@@ -41,6 +41,8 @@ class PresentationErrorSpec extends AnyFreeSpec with Matchers with MockitoSugar 
 
     "for BadRequest" in testStandard(PresentationError.badRequestError, "bad request", "BAD_REQUEST")
 
+    "for BusinessValidation" in testStandard(PresentationError.businessValidationError, "business validation error", "BUSINESS_VALIDATION_ERROR")
+
     "for NotFound" in testStandard(PresentationError.notFoundError, "not found", "NOT_FOUND")
 
     Seq(Some(new IllegalStateException("message")), None).foreach {
