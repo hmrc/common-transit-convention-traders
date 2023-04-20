@@ -29,6 +29,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.ValidationConnector
 import v2.models.ObjectStoreResourceLocation
+import v2.models.errors.ErrorCode
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
@@ -110,10 +111,10 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
       // This can only be a message type error
       Left(FailedToValidateError.InvalidMessageTypeError(messageType.toString))
     case UpstreamErrorResponse(message, BAD_REQUEST, _, _) =>
-      // This is a parse error, let's get the message out
       Json.parse(message).validate[StandardError] match {
-        case JsSuccess(value, _) => Left(FailedToValidateError.ParsingError(value.message))
-        case _                   => Left(FailedToValidateError.UnexpectedError(None))
+        case JsSuccess(StandardError(value, ErrorCode.BadRequest), _)         => Left(FailedToValidateError.ParsingError(value))
+        case JsSuccess(StandardError(value, ErrorCode.BusinessValidation), _) => Left(FailedToValidateError.BusinessValidationError(value))
+        case _                                                                => Left(FailedToValidateError.UnexpectedError(None))
       }
     case upstreamError: UpstreamErrorResponse => Left(FailedToValidateError.UnexpectedError(Some(upstreamError)))
     case NonFatal(e)                          => Left(FailedToValidateError.UnexpectedError(Some(e)))
