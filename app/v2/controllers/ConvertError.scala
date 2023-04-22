@@ -67,6 +67,7 @@ trait ConvertError extends Logging {
       case UnexpectedError(thr)                              => PresentationError.internalServiceError(cause = thr)
       case InvalidMessageTypeError(messageType)              => PresentationError.badRequestError(s"$messageType is not a valid message type")
       case ParsingError(message)                             => PresentationError.badRequestError(message)
+      case BusinessValidationError(message)                  => PresentationError.businessValidationError(message)
       case XmlSchemaFailedToValidateError(validationErrors)  => PresentationError.xmlSchemaValidationError(validationErrors = validationErrors)
       case JsonSchemaFailedToValidateError(validationErrors) => PresentationError.jsonSchemaValidationError(validationErrors = validationErrors)
     }

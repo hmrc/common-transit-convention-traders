@@ -24,6 +24,7 @@ object FailedToValidateError {
   case class UnexpectedError(thr: Option[Throwable] = None)                                       extends FailedToValidateError
   case class InvalidMessageTypeError(messageType: String)                                         extends FailedToValidateError
   case class ParsingError(message: String)                                                        extends FailedToValidateError
+  case class BusinessValidationError(message: String)                                             extends FailedToValidateError
   case class XmlSchemaFailedToValidateError(validationErrors: NonEmptyList[XmlValidationError])   extends FailedToValidateError
   case class JsonSchemaFailedToValidateError(validationErrors: NonEmptyList[JsonValidationError]) extends FailedToValidateError
 }

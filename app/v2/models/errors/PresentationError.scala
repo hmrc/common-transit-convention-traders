@@ -54,6 +54,9 @@ object PresentationError extends CommonFormats {
   def notFoundError(message: String): PresentationError =
     StandardError(message, ErrorCode.NotFound)
 
+  def businessValidationError(message: String): PresentationError =
+    StandardError(message, ErrorCode.BusinessValidation)
+
   def unauthorized(message: String): PresentationError =
     StandardError(message, ErrorCode.Unauthorized)
 

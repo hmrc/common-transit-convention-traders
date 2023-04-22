@@ -42,6 +42,7 @@ import v2.models.errors.RouterError
 import v2.models.errors.StreamingError
 import v2.models.errors.UpscanError
 import v2.models.errors.XmlValidationError
+import v2.models.errors.FailedToValidateError.BusinessValidationError
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
 import v2.models.errors.FailedToValidateError.JsonSchemaFailedToValidateError
 import v2.models.errors.FailedToValidateError.ParsingError
@@ -109,6 +110,14 @@ class ConvertErrorSpec
       messageType =>
         val input  = InvalidMessageTypeError(messageType)
         val output = PresentationError.badRequestError(s"$messageType is not a valid message type")
+
+        validationErrorConverter.convert(input) mustBe output
+    }
+
+    "a BusinessValidationError returns a bad request error" in forAll(Gen.identifier) {
+      message =>
+        val input  = BusinessValidationError(message)
+        val output = PresentationError.businessValidationError(message)
 
         validationErrorConverter.convert(input) mustBe output
     }
