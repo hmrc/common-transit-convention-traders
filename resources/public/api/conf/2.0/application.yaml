@@ -1384,6 +1384,7 @@ components:
           enum:
             - BAD_REQUEST
             - SCHEMA_VALIDATION
+            - BUSINESS_VALIDATION_ERROR
           type: string
         message:
           type: string
