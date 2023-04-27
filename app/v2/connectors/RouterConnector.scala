@@ -29,13 +29,16 @@ import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status.ACCEPTED
+import play.api.http.Status.CREATED
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.ObjectStoreURI
+import v2.models.SubmissionRoute
 import v2.models.request.MessageType
 
 import scala.concurrent.ExecutionContext
@@ -47,7 +50,7 @@ trait RouterConnector {
   def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
-  ): Future[Unit]
+  ): Future[SubmissionRoute]
 
   def postLargeMessage(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, objectStoreURI: ObjectStoreURI)(implicit
     ec: ExecutionContext,
@@ -65,7 +68,7 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
   override def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
-  ): Future[Unit] =
+  ): Future[SubmissionRoute] =
     withMetricsTimerAsync(MetricsKeys.RouterBackend.Post) {
       _ =>
         val url = appConfig.routerUrl.withPath(routerRoute(eoriNumber, messageType, movementId, messageId))
@@ -74,7 +77,15 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
           .post(url"$url")
           .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code))
           .withBody(body)
-          .executeAndExpect(ACCEPTED)
+          .execute[HttpResponse]
+          .flatMap {
+            response =>
+              response.status match {
+                case CREATED  => Future.successful(SubmissionRoute.ViaEIS)
+                case ACCEPTED => Future.successful(SubmissionRoute.ViaSDES)
+                case _        => response.error
+              }
+          }
     }
 
   def postLargeMessage(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, objectStoreURI: ObjectStoreURI)(implicit

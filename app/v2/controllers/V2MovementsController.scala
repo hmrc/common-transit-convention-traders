@@ -538,34 +538,20 @@ class V2MovementsControllerImpl @Inject() (
               .postPpnsNotification(movementId, messageId, Json.toJson(PresentationError.badRequestError("Uploaded file not accepted.")))
             Future.successful(Ok)
           case UpscanSuccessResponse(_, downloadUrl, uploadDetails) =>
-            def routeLarge(messageType: MessageType): EitherT[Future, PresentationError, Unit] =
-              for {
-                // Get the message to see if we need to send the file via SDES (TODO: this will hopefully disappear if we get the router checking the size)
-                message <- persistenceService.getMessage(eori, movementType, movementId, messageId).asPresentation
-                uri <- EitherT(
-                  Future.successful(message.uri.map(Right(_)).getOrElse(Left(PresentationError.internalServiceError("URI is not there as expected"))))
-                )
-                _ <- routerService.sendLargeMessage(messageType, eori, movementId, messageId, uri).asPresentation
-              } yield ()
-
-            def routeSmall(messageType: MessageType, source: Source[ByteString, _]): EitherT[Future, PresentationError, Unit] =
-              for {
-                _ <- routerService.send(messageType, eori, movementId, messageId, source).asPresentation
-                // TODO: This should be in the router
-                _ = persistenceService.updateMessage(eori, movementType, movementId, messageId, MessageUpdate(MessageStatus.Success, None, None))
-                _ = pushNotificationsService.postPpnsNotification(
+            def completeSmallMessage(): EitherT[Future, PushNotificationError, Unit] = {
+                persistenceService.updateMessage(eori, movementType, movementId, messageId, MessageUpdate(MessageStatus.Success, None, None))
+                pushNotificationsService.postPpnsNotification(
                   movementId,
                   messageId,
-                  Json.toJson(HateoasMovementUpdateResponse(movementId, messageId, movementType, None))
-                )
-              } yield ()
+                  Json.toJson(HateoasMovementUpdateResponse(movementId, messageId, movementType, None)))
+            }
 
             // Download file to stream
             upscanService
               .upscanGetFile(downloadUrl) // TODO: If this fails, maybe consider returning 400 to upscan?
               .asPresentation
               .flatMap {
-                withReusableSource[Status](_) {
+                withReusableSource[SubmissionRoute](_) {
                   source =>
                     val allowedTypes =
                       if (movementType == MovementType.Arrival) MessageType.messageTypesSentByArrivalTrader else MessageType.messageTypesSentByDepartureTrader
@@ -578,14 +564,17 @@ class V2MovementsControllerImpl @Inject() (
                       _ <- validationService.validateXml(messageType, source).asPresentation
                       // Save file (this will check the size and put it in the right place.
                       _ <- persistenceService.updateMessageBody(messageType, eori, movementType, movementId, messageId, source).asPresentation
-                      // Temporary: if large -- ideally this limit should be set by the router and ONLY by the router, and will do this in a future update (TODO)
-                      // We'll also want to return if the file was submitted to EIS and ERMIS directly (OK), or via SDES (Accepted)
-                      // as this will determine whether we send a success push notification message
-                      isLarge = uploadDetails.size > config.smallMessageSizeLimit
-                      // Route file (this will need the object store location for now)
-                      _ <- if (isLarge) routeLarge(messageType) else routeSmall(messageType, source)
-                    } yield Ok)
+                      // Send message to router to be sent
+                      submissionResult <- routerService.send(messageType, eori, movementId, messageId, source).asPresentation
+                    } yield submissionResult)
                 }
+              }
+              .map {
+                case SubmissionRoute.ViaEIS =>
+                  completeSmallMessage()
+                  Ok
+                case SubmissionRoute.ViaSDES =>
+                  Ok
               }
               .valueOr {
                 presentationError =>

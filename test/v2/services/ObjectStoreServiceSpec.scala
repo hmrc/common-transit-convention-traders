@@ -25,6 +25,7 @@ import org.scalatest.time.Span
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.forAll
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.objectstore.client.Path
 import uk.gov.hmrc.objectstore.client.RetentionPeriod.SevenYears
 import uk.gov.hmrc.objectstore.client.config.ObjectStoreClientConfig
 import v2.base.TestCommonGenerators
@@ -37,6 +38,7 @@ import v2.models.responses.UpscanResponse.DownloadUrl
 
 import java.time.Clock
 import java.util.UUID.randomUUID
+import scala.concurrent.ExecutionContextExecutor
 
 class ObjectStoreServiceSpec
     extends AnyFreeSpec
@@ -50,59 +52,26 @@ class ObjectStoreServiceSpec
   val baseUrl = s"http://baseUrl-${randomUUID().toString}"
   val owner   = "common-transit-convention-traders"
   val token   = s"token-${randomUUID().toString}"
-  val config  = ObjectStoreClientConfig(baseUrl, owner, token, SevenYears)
+  val config: ObjectStoreClientConfig = ObjectStoreClientConfig(baseUrl, owner, token, SevenYears)
 
-  implicit val hc = HeaderCarrier()
-  implicit val ec = materializer.executionContext
+  implicit val hc: HeaderCarrier = HeaderCarrier()
+  implicit val ec: ExecutionContextExecutor = materializer.executionContext
 
   lazy val objectStoreStub = new ObjectStoreStub(config)
 
   val objectStoreService = new ObjectStoreServiceImpl(Clock.systemUTC(), objectStoreStub)
 
-  "On adding a message to object store" - {
-    "given a successful response from the connector, should return a Right with Object Store Summary" in forAll(
-      arbitraryMovementId.arbitrary,
-      arbitraryMessageId.arbitrary
-    ) {
-      (movementId, messageId) =>
-        val result = objectStoreService.addMessage(DownloadUrl("https://bucketName.s3.eu-west-2.amazonaws.com"), movementId, messageId)
-
-        whenReady(result.value, timeout(Span(6, Seconds))) {
-          case Left(e)  => fail(e.toString)
-          case Right(x) => x
-        }
-    }
-
-    "given an exception is thrown due to an invalid url, should return a Left with the exception in an ObjectStoreError" in forAll(
-      arbitraryMovementId.arbitrary,
-      arbitraryMessageId.arbitrary
-    ) {
-      (movementId, messageId) =>
-        val result = objectStoreService.addMessage(DownloadUrl("invalidURL"), movementId, messageId)
-
-        whenReady(result.value) {
-          case Right(_) => fail("should have returned a Left")
-          case Left(x)  => x
-        }
-    }
-  }
-
   "On getting a message from object store" - {
     "given a successful response from the connector, should return a Right with Object Store Summary" in {
       val movementId       = MovementId("308c4a68e2cdc08f")
       val messageId        = MessageId("123c4a68e2ele08f")
-      val addMessageResult = objectStoreService.addMessage(DownloadUrl("https://bucketName.s3.eu-west-2.amazonaws.com"), movementId, messageId)
-
-      whenReady(addMessageResult.value) {
-        case Right(x) => x
-        case Left(_)  => fail("should have added message to object-store")
-      }
+      val addMessageResult = objectStoreStub.seed(Path.File(s"movements/${movementId.value}/${movementId.value}-${messageId.value}.xml"))
 
       val result = objectStoreService.getMessage(ObjectStoreResourceLocation(s"/movements/${movementId.value}/${movementId.value}-${messageId.value}.xml"))
 
       whenReady(result.value, timeout(Span(6, Seconds))) {
         case Left(e)  => fail(e.toString)
-        case Right(x) => x
+        case Right(x) => succeed
       }
     }
 

@@ -31,6 +31,7 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.ObjectStoreURI
+import v2.models.SubmissionRoute
 import v2.models.errors.InvalidOfficeError
 import v2.models.errors.RouterError
 import v2.models.request.MessageType
@@ -46,7 +47,7 @@ trait RouterService {
   def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
-  ): EitherT[Future, RouterError, Unit]
+  ): EitherT[Future, RouterError, SubmissionRoute]
 
   def sendLargeMessage(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, objectStoreURI: ObjectStoreURI)(implicit
     ec: ExecutionContext,
@@ -60,12 +61,12 @@ class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends Rou
   def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
-  ): EitherT[Future, RouterError, Unit] =
+  ): EitherT[Future, RouterError, SubmissionRoute] =
     EitherT(
       routerConnector
         .post(messageType, eoriNumber, movementId, messageId, body)
         .map(
-          _ => Right(())
+          result => Right(result)
         )
         .recover {
           case UpstreamErrorResponse(message, BAD_REQUEST, _, _) => Left(determineError(message))

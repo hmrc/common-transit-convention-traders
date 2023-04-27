@@ -48,11 +48,6 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[ObjectStoreServiceImpl])
 trait ObjectStoreService {
 
-  def addMessage(upscanUrl: DownloadUrl, movementId: MovementId, messageId: MessageId)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, ObjectStoreError, ObjectSummaryWithMd5]
-
   def getMessage(
     objectStoreResourceLocation: ObjectStoreResourceLocation
   )(implicit ec: ExecutionContext, hc: HeaderCarrier): EitherT[Future, ObjectStoreError, Source[ByteString, _]]
@@ -61,32 +56,6 @@ trait ObjectStoreService {
 
 @Singleton
 class ObjectStoreServiceImpl @Inject() (clock: Clock, client: PlayObjectStoreClient) extends ObjectStoreService with Logging {
-
-  private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC)
-
-  override def addMessage(downloadUrl: DownloadUrl, movementId: MovementId, messageId: MessageId)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, ObjectStoreError, ObjectSummaryWithMd5] =
-    EitherT {
-      val formattedDateTime = dateTimeFormatter.format(OffsetDateTime.ofInstant(clock.instant, ZoneOffset.UTC))
-
-      (for {
-        url <- Future.fromTry(Try(new URL(downloadUrl.value)))
-        response <- client
-          .uploadFromUrl(
-            from = url,
-            to = Path.Directory(s"movements/${movementId.value}").file(s"${movementId.value}-${messageId.value}-$formattedDateTime.xml"),
-            owner = "common-transit-convention-traders"
-          )
-      } yield response)
-        .map {
-          o => Right(o)
-        }
-        .recover {
-          case NonFatal(thr) => Left(ObjectStoreError.UnexpectedError(Some(thr)))
-        }
-    }
 
   override def getMessage(
     objectStoreResourceLocation: ObjectStoreResourceLocation

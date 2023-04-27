@@ -47,14 +47,10 @@ class ObjectStoreStub[F[_]](config: ObjectStoreClientConfig)(implicit
   private type FilePath = String
   private val objectStore = mutable.Map.empty[FilePath, ObjectSummaryWithMd5]
 
-  override def uploadFromUrl(
-    from: java.net.URL,
+  def seed(
     to: Path.File,
-    retentionPeriod: RetentionPeriod = config.defaultRetentionPeriod,
-    contentType: Option[String] = None,
-    contentMd5: Option[Md5Hash] = None,
     owner: String = config.owner
-  )(implicit hc: HeaderCarrier): Future[ObjectSummaryWithMd5] = {
+  ): ObjectSummaryWithMd5 = {
     val objectSummaryWithMd5 = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
     //remove date from uri as it can't be guessed, and therefore used to retrieve the file later on
     val splitFileName = to.fileName.split("-").dropRight(1)
@@ -62,7 +58,7 @@ class ObjectStoreStub[F[_]](config: ObjectStoreClientConfig)(implicit
     val newToPath     = Path.Directory(s"movements/${splitFileName.head}").file(newFileName)
 
     objectStore += (s"$owner/${newToPath.asUri}" -> objectSummaryWithMd5)
-    Future.successful(objectSummaryWithMd5)
+    objectSummaryWithMd5
   }
 
   override def getObject[CONTENT](path: Path.File, owner: String = config.owner)(implicit
