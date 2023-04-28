@@ -166,12 +166,18 @@ trait StreamingParsers {
         }
     }
 
-  def jsonToByteStringStream(fields: collection.Seq[(String, JsValue)]): EitherT[Future, PresentationError, Source[ByteString, _]] =
+  def jsonToByteStringStream(
+    fields: collection.Seq[(String, JsValue)],
+    fieldName: String,
+    stream: Source[ByteString, _]
+  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
     EitherT {
       Future
         .successful(
           Right(
-            START_TOKEN ++ jsonFieldsToByteString(fields) ++ END_TOKEN_SOURCE
+            START_TOKEN ++ jsonFieldsToByteString(fields) ++ COMMA_SOURCE ++ Source.single(
+              ByteString(s""""$fieldName":""".stripMargin)
+            ) ++ stream ++ END_TOKEN_SOURCE
           )
         )
         .recover {

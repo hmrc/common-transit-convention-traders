@@ -34,7 +34,6 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.ValidationConnector
-import v2.models.ObjectStoreResourceLocation
 import v2.models.errors.FailedToValidateError
 import v2.models.errors.JsonValidationError
 import v2.models.errors.XmlValidationError
@@ -61,8 +60,6 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
   val BusinessValidationError: Source[ByteString, NotUsed] = Source.single(ByteString("invalid business rule", StandardCharsets.UTF_8))
   val BadMessageType: Source[ByteString, NotUsed]          = Source.single(ByteString("badMessageType", StandardCharsets.UTF_8))
 
-  val uriValid               = ObjectStoreResourceLocation("/")
-  val uriInvalid             = ObjectStoreResourceLocation("Invalid path")
   val uriBadMessageType      = "badMessage"
   val uriUpstreamError       = "upstreamError"
   val uriInternalServerError = "internalServerError"
@@ -81,20 +78,6 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
   private val internalException = new JsResult.Exception(JsError("arbitrary failure"))
 
   val fakeValidationConnector: ValidationConnector = new ValidationConnector {
-
-    override def postLargeMessage(messageType: MessageType, uri: ObjectStoreResourceLocation)(implicit
-      hc: HeaderCarrier,
-      ec: ExecutionContext
-    ): Future[Option[XmlValidationResponse]] =
-      // TODO: Actually test this method, because as it stands it tests nothing (it will ALWAYS match the first case)
-      // It might be that this method can disappear, however, due to the object store rationalisation.
-      (messageType, uri) match {
-        case (_, uriValid)                => Future.successful(None)
-        case (_, uriInvalid)              => Future.successful(Some(XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))))
-        case (uriBadMessageType, _)       => Future.failed(badMessageType(messageType))
-        case (uriUpstreamError, _)        => Future.failed(upstreamErrorResponse)
-        case (uriInternalServiceError, _) => Future.failed(internalException)
-      }
 
     override def postXml(messageType: MessageType, stream: Source[ByteString, _])(implicit
       hc: HeaderCarrier,

@@ -32,7 +32,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import v2.connectors.AuditingConnector
 import v2.models.AuditType
 import v2.models.AuditType.DeclarationData
-import v2.models.ObjectStoreResourceLocation
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -77,42 +76,6 @@ class AuditingServiceSpec extends AnyFreeSpec with Matchers with ScalaFutures wi
 
           }
         }
-    }
-  }
-  "For a large message, post an audit message" - {
-
-    val location = ObjectStoreResourceLocation("/part1/part2/large-message.xml")
-
-    "on success, return the successful future" in {
-      val mockConnector = mock[AuditingConnector]
-      when(mockConnector.post(eqTo(AuditType.ArrivalNotification), eqTo(location))(any(), any())).thenReturn(Future.successful(()))
-      val sut = new AuditingServiceImpl(mockConnector)
-
-      whenReady(sut.audit(AuditType.ArrivalNotification, location)) {
-        _ =>
-          verify(mockConnector, times(1)).post(eqTo(AuditType.ArrivalNotification), eqTo(location))(any(), any())
-      }
-    }
-
-    "on failure, will log a message" in {
-      val mockConnector = mock[AuditingConnector]
-      val exception     = new IllegalStateException("failed")
-
-      when(mockConnector.post(eqTo(AuditType.LargeMessageSubmissionRequested), eqTo(location))(any(), any()))
-        .thenReturn(Future.failed(exception))
-
-      object Harness extends AuditingServiceImpl(mockConnector) {
-        val logger0 = mock[org.slf4j.Logger]
-        when(logger0.isWarnEnabled()).thenReturn(true)
-        override val logger: Logger = new Logger(logger0)
-      }
-
-      whenReady(Harness.audit(AuditType.LargeMessageSubmissionRequested, location)) {
-        _ =>
-          verify(mockConnector, times(1))
-            .post(eqTo(AuditType.LargeMessageSubmissionRequested), eqTo(location))(any(), any())
-          verify(Harness.logger0, times(1)).warn(eqTo("Unable to audit payload from object store due to an exception"), eqTo(exception))
-      }
     }
   }
 

@@ -34,7 +34,6 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
-import v2.models.ObjectStoreResourceLocation
 import v2.models.request.MessageType
 
 import scala.concurrent.ExecutionContext
@@ -53,7 +52,8 @@ trait V2BaseConnector extends HttpErrorFunctions {
   def postMessageUrl(movementId: MovementId): UrlPath =
     UrlPath.parse(s"$movementsBaseRoute/traders/movements/${movementId.value}/messages")
 
-  def postMessageBodyUrl(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): UrlPath =
+  // GET and POST
+  def messageBodyUrl(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): UrlPath =
     UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}/body")
 
   def getMessageUrl(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): UrlPath =
@@ -77,11 +77,7 @@ trait V2BaseConnector extends HttpErrorFunctions {
 
   val auditingBaseRoute: String = "/transit-movements-auditing"
 
-  def auditingRoute(auditType: AuditType, uri: Option[ObjectStoreResourceLocation] = None): UrlPath =
-    uri match {
-      case Some(part) => UrlPath.parse(s"$auditingBaseRoute/audit/${auditType.name}/uri/${part.value}")
-      case None       => UrlPath.parse(s"$auditingBaseRoute/audit/${auditType.name}")
-    }
+  def auditingRoute(auditType: AuditType): UrlPath = UrlPath.parse(s"$auditingBaseRoute/audit/${auditType.name}")
 
   val conversionBaseRoute: String = "/transit-movements-converter"
 

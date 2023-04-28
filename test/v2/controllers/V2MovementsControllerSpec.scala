@@ -179,26 +179,22 @@ class V2MovementsControllerSpec
     mockConversionService: ConversionService,
     mockXmlParsingService: XmlMessageParsingService,
     mockJsonParsingService: JsonMessageParsingService,
-    mockResponseFormatterService: ResponseFormatterService,
-    mockObjectStoreService: ObjectStoreService,
     mockPushNotificationService: PushNotificationsService,
     mockUpscanService: UpscanService,
     mockAppConfig: AppConfig
   )
 
   def createControllerAndMocks(acceptHeaderProvider: AcceptHeaderActionProvider = FakeAcceptHeaderActionProvider): ControllerAndMocks = {
-    val mockValidationService        = mock[ValidationService]
-    val mockPersistenceService       = mock[PersistenceService]
-    val mockRouterService            = mock[RouterService]
-    val mockAuditService             = mock[AuditingService]
-    val mockConversionService        = mock[ConversionService]
-    val mockXmlParsingService        = mock[XmlMessageParsingService]
-    val mockJsonParsingService       = mock[JsonMessageParsingService]
-    val mockResponseFormatterService = mock[ResponseFormatterService]
-    val mockObjectStoreService       = mock[ObjectStoreService]
-    val mockPushNotificationService  = mock[PushNotificationsService]
-    val mockUpscanService            = mock[UpscanService]
-    val mockAppConfig                = mock[AppConfig]
+    val mockValidationService       = mock[ValidationService]
+    val mockPersistenceService      = mock[PersistenceService]
+    val mockRouterService           = mock[RouterService]
+    val mockAuditService            = mock[AuditingService]
+    val mockConversionService       = mock[ConversionService]
+    val mockXmlParsingService       = mock[XmlMessageParsingService]
+    val mockJsonParsingService      = mock[JsonMessageParsingService]
+    val mockPushNotificationService = mock[PushNotificationsService]
+    val mockUpscanService           = mock[UpscanService]
+    val mockAppConfig               = mock[AppConfig]
 
     implicit val temporaryFileCreator: TemporaryFileCreator = SingletonTemporaryFileCreator
 
@@ -217,13 +213,11 @@ class V2MovementsControllerSpec
       new TestMetrics(),
       mockXmlParsingService,
       mockJsonParsingService,
-      mockResponseFormatterService,
       mockUpscanService,
-      mockObjectStoreService,
       mockAppConfig
     ) {
       // suppress logging
-      // override protected val logger: Logger = mock[Logger]
+      override protected val logger: Logger = mock[Logger]
     }
 
     ControllerAndMocks(
@@ -235,8 +229,6 @@ class V2MovementsControllerSpec
       mockConversionService,
       mockXmlParsingService,
       mockJsonParsingService,
-      mockResponseFormatterService,
-      mockObjectStoreService,
       mockPushNotificationService,
       mockUpscanService,
       mockAppConfig
@@ -344,8 +336,6 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            _,
-            _,
             mockPushNotificationService,
             _,
             _
@@ -444,8 +434,6 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            _,
-            _,
             mockPushNotificationService,
             _,
             _
@@ -540,8 +528,6 @@ class V2MovementsControllerSpec
             mockPersistenceService,
             mockRouterService,
             mockAuditService,
-            _,
-            _,
             _,
             _,
             _,
@@ -647,8 +633,6 @@ class V2MovementsControllerSpec
           _,
           _,
           _,
-          _,
-          _,
           _
         ) = createControllerAndMocks()
         when(mockValidationService.validateXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
@@ -677,8 +661,6 @@ class V2MovementsControllerSpec
           sut,
           mockValidationService,
           mockPersistenceService,
-          _,
-          _,
           _,
           _,
           _,
@@ -725,8 +707,6 @@ class V2MovementsControllerSpec
             mockPersistenceService,
             mockRouterService,
             mockAuditService,
-            _,
-            _,
             _,
             _,
             _,
@@ -824,8 +804,6 @@ class V2MovementsControllerSpec
             mockRouterService,
             mockAuditService,
             mockConversionService,
-            _,
-            _,
             _,
             _,
             mockPushNotificationService,
@@ -942,8 +920,6 @@ class V2MovementsControllerSpec
             mockRouterService,
             mockAuditService,
             mockConversionService,
-            _,
-            _,
             _,
             _,
             mockPushNotificationService,
@@ -1062,8 +1038,6 @@ class V2MovementsControllerSpec
             mockConversionService,
             _,
             _,
-            _,
-            _,
             mockPushNotificationService,
             _,
             _
@@ -1179,8 +1153,6 @@ class V2MovementsControllerSpec
           _,
           _,
           _,
-          _,
-          _,
           _
         ) = createControllerAndMocks()
         when(
@@ -1212,8 +1184,6 @@ class V2MovementsControllerSpec
         val ControllerAndMocks(
           sut,
           mockValidationService,
-          _,
-          _,
           _,
           _,
           _,
@@ -1261,8 +1231,6 @@ class V2MovementsControllerSpec
           _,
           _,
           _,
-          _,
-          _,
           _
         ) = createControllerAndMocks()
         when(
@@ -1302,8 +1270,6 @@ class V2MovementsControllerSpec
           _,
           _,
           mockConversionService,
-          _,
-          _,
           _,
           _,
           _,
@@ -1362,8 +1328,6 @@ class V2MovementsControllerSpec
           _,
           _,
           mockConversionService,
-          _,
-          _,
           _,
           _,
           _,
@@ -1432,8 +1396,6 @@ class V2MovementsControllerSpec
             mockRouterService,
             _,
             mockConversionService,
-            _,
-            _,
             _,
             _,
             mockPushNotificationService,
@@ -1571,8 +1533,6 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            _,
-            _,
             mockPushNotificationService,
             mockUpscanService,
             _
@@ -1635,8 +1595,6 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            _,
-            _,
             mockPushNotificationService,
             mockUpscanService,
             _
@@ -1691,8 +1649,6 @@ class V2MovementsControllerSpec
           _,
           _,
           _,
-          _,
-          _,
           _
         ) = createControllerAndMocks()
         when(
@@ -1722,8 +1678,6 @@ class V2MovementsControllerSpec
             sut,
             _,
             mockPersistenceService,
-            _,
-            _,
             _,
             _,
             _,
@@ -1779,8 +1733,6 @@ class V2MovementsControllerSpec
         _,
         _,
         _,
-        _,
-        _,
         _
       ) = createControllerAndMocks()
       val standardHeaders = FakeHeaders(
@@ -1801,8 +1753,6 @@ class V2MovementsControllerSpec
     s"must return NOT_ACCEPTABLE when the accept type is ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN}" in {
       val ControllerAndMocks(
         sut,
-        _,
-        _,
         _,
         _,
         _,
@@ -1837,8 +1787,6 @@ class V2MovementsControllerSpec
     "must return NOT_ACCEPTABLE when the accept type is invalid" in {
       val ControllerAndMocks(
         sut,
-        _,
-        _,
         _,
         _,
         _,
@@ -1886,8 +1834,6 @@ class V2MovementsControllerSpec
             mockPersistenceService,
             mockRouterService,
             mockAuditService,
-            _,
-            _,
             _,
             _,
             _,
@@ -1988,8 +1934,6 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            _,
-            _,
             mockPushNotificationService,
             _,
             _
@@ -2085,8 +2029,6 @@ class V2MovementsControllerSpec
             mockPersistenceService,
             mockRouterService,
             mockAuditService,
-            _,
-            _,
             _,
             _,
             _,
@@ -2193,8 +2135,6 @@ class V2MovementsControllerSpec
           _,
           _,
           _,
-          _,
-          _,
           _
         ) = createControllerAndMocks()
         when(mockValidationService.validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
@@ -2224,8 +2164,6 @@ class V2MovementsControllerSpec
           sut,
           mockValidationService,
           mockPersistenceService,
-          _,
-          _,
           _,
           _,
           _,
@@ -2271,8 +2209,6 @@ class V2MovementsControllerSpec
             mockPersistenceService,
             mockRouterService,
             mockAuditService,
-            _,
-            _,
             _,
             _,
             _,
@@ -2371,8 +2307,6 @@ class V2MovementsControllerSpec
             mockRouterService,
             mockAuditService,
             mockConversionService,
-            _,
-            _,
             _,
             _,
             mockPushNotificationService,
@@ -2483,8 +2417,6 @@ class V2MovementsControllerSpec
             mockRouterService,
             mockAuditService,
             mockConversionService,
-            _,
-            _,
             _,
             _,
             mockPushNotificationService,
@@ -2596,8 +2528,6 @@ class V2MovementsControllerSpec
           _,
           _,
           _,
-          _,
-          _,
           _
         ) = createControllerAndMocks()
         when(
@@ -2630,8 +2560,6 @@ class V2MovementsControllerSpec
         val ControllerAndMocks(
           sut,
           mockValidationService,
-          _,
-          _,
           _,
           _,
           _,
@@ -2680,8 +2608,6 @@ class V2MovementsControllerSpec
           _,
           _,
           _,
-          _,
-          _,
           _
         ) = createControllerAndMocks()
         when(
@@ -2722,8 +2648,6 @@ class V2MovementsControllerSpec
           _,
           _,
           mockConversionService,
-          _,
-          _,
           _,
           _,
           _,
@@ -2782,8 +2706,6 @@ class V2MovementsControllerSpec
           _,
           _,
           mockConversionService,
-          _,
-          _,
           _,
           _,
           _,
@@ -2853,8 +2775,6 @@ class V2MovementsControllerSpec
             mockRouterService,
             _,
             mockConversionService,
-            _,
-            _,
             _,
             _,
             mockPushNotificationService,
@@ -2991,8 +2911,6 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            _,
-            _,
             mockPushNotificationService,
             mockUpscanService,
             _
@@ -3054,8 +2972,6 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            _,
-            _,
             mockPushNotificationService,
             mockUpscanService,
             _
@@ -3112,8 +3028,6 @@ class V2MovementsControllerSpec
           _,
           _,
           _,
-          _,
-          _,
           _
         ) = createControllerAndMocks()
         when(
@@ -3142,8 +3056,6 @@ class V2MovementsControllerSpec
             sut,
             _,
             mockPersistenceService,
-            _,
-            _,
             _,
             _,
             _,
@@ -3198,8 +3110,6 @@ class V2MovementsControllerSpec
         _,
         _,
         _,
-        _,
-        _,
         _
       ) = createControllerAndMocks()
       val standardHeaders = FakeHeaders(
@@ -3220,8 +3130,6 @@ class V2MovementsControllerSpec
     s"must return NOT_ACCEPTABLE when the content type is ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN}" in {
       val ControllerAndMocks(
         sut,
-        _,
-        _,
         _,
         _,
         _,
@@ -3266,8 +3174,6 @@ class V2MovementsControllerSpec
         _,
         _,
         _,
-        _,
-        _,
         _
       ) = createControllerAndMocks(
         new AcceptHeaderActionProviderImpl()
@@ -3297,8 +3203,6 @@ class V2MovementsControllerSpec
           mockValidationService,
           mockPersistenceService,
           mockRouterService,
-          _,
-          _,
           _,
           _,
           _,
@@ -3409,8 +3313,6 @@ class V2MovementsControllerSpec
                 _,
                 _,
                 _,
-                _,
-                _,
                 _
               ) = createControllerAndMocks()
               when(
@@ -3446,8 +3348,6 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            _,
-            _,
             _
           ) = createControllerAndMocks()
           when(
@@ -3476,8 +3376,6 @@ class V2MovementsControllerSpec
             sut,
             _,
             mockPersistenceService,
-            _,
-            _,
             _,
             _,
             _,
@@ -3522,8 +3420,6 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            _,
-            _,
             _
           ) = createControllerAndMocks(
             new AcceptHeaderActionProviderImpl()
@@ -3548,8 +3444,6 @@ class V2MovementsControllerSpec
         movementId =>
           val ControllerAndMocks(
             sut,
-            _,
-            _,
             _,
             _,
             _,
@@ -3618,10 +3512,8 @@ class V2MovementsControllerSpec
                 mockPersistenceService,
                 _,
                 _,
+                mockConversionService,
                 _,
-                _,
-                _,
-                mockResponseFormatterService,
                 _,
                 _,
                 _,
@@ -3637,22 +3529,11 @@ class V2MovementsControllerSpec
                   _ => EitherT.rightT(smallMessageSummaryXml)
                 )
 
-              when(
-                mockResponseFormatterService.formatMessageSummary(any[MessageSummary], eqTo(acceptHeaderValue))(
-                  any[ExecutionContext],
-                  any[HeaderCarrier],
-                  any[Materializer]
-                )
-              )
-                .thenAnswer(
-                  _ =>
-                    acceptHeaderValue match {
-                      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON => EitherT.rightT(smallMessageSummaryJson)
-                      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
-                        EitherT.rightT(smallMessageSummaryXml)
-
-                    }
-                )
+              if (acceptHeaderValue == VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) {
+                when(
+                  mockConversionService.xmlToJson(eqTo(smallMessageSummaryXml.messageType.get), any())(any(), any(), any())
+                ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
+              }
 
               val result = sut.getMessage(movementType, movementId, messageId)(request)
 
@@ -3687,11 +3568,9 @@ class V2MovementsControllerSpec
                 mockPersistenceService,
                 _,
                 _,
+                mockConversionService,
                 _,
                 _,
-                _,
-                mockResponseFormatterService,
-                mockObjectStoreService,
                 _,
                 _,
                 _
@@ -3707,31 +3586,21 @@ class V2MovementsControllerSpec
                 )
 
               when(
-                mockObjectStoreService.getMessage(ObjectStoreResourceLocation(any()))(
-                  any[ExecutionContext],
-                  any[HeaderCarrier]
+                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                  any(),
+                  any(),
+                  any()
                 )
               )
                 .thenAnswer(
                   _ => EitherT.rightT(Source.single(ByteString(xml)))
                 )
 
-              when(
-                mockResponseFormatterService.formatMessageSummary(any[MessageSummary], eqTo(acceptHeaderValue))(
-                  any[ExecutionContext],
-                  any[HeaderCarrier],
-                  any[Materializer]
-                )
-              )
-                .thenAnswer(
-                  _ =>
-                    acceptHeaderValue match {
-                      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON => EitherT.rightT(smallMessageSummaryJson)
-                      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
-                        EitherT.rightT(smallMessageSummaryInObjectStore)
-
-                    }
-                )
+              if (acceptHeaderValue == VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) {
+                when(
+                  mockConversionService.xmlToJson(eqTo(smallMessageSummaryXml.messageType.get), any())(any(), any(), any())
+                ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
+              }
 
               val result = sut.getMessage(movementType, movementId, messageId)(request)
 
@@ -3770,8 +3639,6 @@ class V2MovementsControllerSpec
                 _,
                 _,
                 _,
-                mockObjectStoreService,
-                _,
                 _,
                 _
               ) = createControllerAndMocks()
@@ -3786,13 +3653,14 @@ class V2MovementsControllerSpec
                 )
 
               when(
-                mockObjectStoreService.getMessage(ObjectStoreResourceLocation(any()))(
-                  any[ExecutionContext],
-                  any[HeaderCarrier]
+                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                  any(),
+                  any(),
+                  any()
                 )
               )
                 .thenAnswer(
-                  _ => EitherT.leftT(ObjectStoreError.FileNotFound(objectStoreUri.asResourceLocation.get))
+                  _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
                 )
 
               val result = sut.getMessage(movementType, movementId, messageId)(request)
@@ -3806,8 +3674,6 @@ class V2MovementsControllerSpec
                 sut,
                 _,
                 mockPersistenceService,
-                _,
-                _,
                 _,
                 _,
                 _,
@@ -3837,66 +3703,11 @@ class V2MovementsControllerSpec
               )
             }
 
-            "when formatter service fails" in {
-              val ControllerAndMocks(
-                sut,
-                _,
-                mockPersistenceService,
-                _,
-                _,
-                _,
-                _,
-                _,
-                mockResponseFormatterService,
-                _,
-                _,
-                _,
-                _
-              ) = createControllerAndMocks()
-              when(
-                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
-                  any[HeaderCarrier],
-                  any[ExecutionContext]
-                )
-              )
-                .thenAnswer(
-                  _ => EitherT.rightT(smallMessageSummaryXml)
-                )
-
-              when(
-                mockResponseFormatterService.formatMessageSummary(any[MessageSummary], eqTo(acceptHeaderValue))(
-                  any[ExecutionContext],
-                  any[HeaderCarrier],
-                  any[Materializer]
-                )
-              )
-                .thenAnswer(
-                  _ => EitherT.leftT(PresentationError.internalServiceError())
-                )
-
-              val result = sut.getMessage(movementType, movementId, messageId)(request)
-
-              acceptHeaderValue match {
-                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
-                  status(result) mustBe INTERNAL_SERVER_ERROR
-                  contentType(result).get mustBe MimeTypes.JSON
-                  contentAsJson(result) mustBe Json.obj(
-                    "code"    -> "INTERNAL_SERVER_ERROR",
-                    "message" -> "Internal server error"
-                  )
-                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
-                  status(result) mustBe OK
-                  contentType(result).get mustBe MimeTypes.JSON
-              }
-            }
-
             "when an unknown error occurs" in {
               val ControllerAndMocks(
                 sut,
                 _,
                 mockPersistenceService,
-                _,
-                _,
                 _,
                 _,
                 _,
@@ -3941,8 +3752,6 @@ class V2MovementsControllerSpec
                 _,
                 _,
                 _,
-                mockObjectStoreService,
-                _,
                 _,
                 mockAppConfig
               ) = createControllerAndMocks()
@@ -3959,9 +3768,10 @@ class V2MovementsControllerSpec
               when(mockAppConfig.smallMessageSizeLimit).thenReturn(1)
 
               when(
-                mockObjectStoreService.getMessage(ObjectStoreResourceLocation(any()))(
-                  any[ExecutionContext],
-                  any[HeaderCarrier]
+                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                  any(),
+                  any(),
+                  any()
                 )
               )
                 .thenAnswer(
@@ -4005,8 +3815,6 @@ class V2MovementsControllerSpec
                 _,
                 _,
                 _,
-                _,
-                _,
                 _
               ) = createControllerAndMocks()
               when(
@@ -4034,8 +3842,6 @@ class V2MovementsControllerSpec
                 sut,
                 _,
                 mockPersistenceService,
-                _,
-                _,
                 _,
                 _,
                 _,
@@ -4074,8 +3880,6 @@ class V2MovementsControllerSpec
         movementId =>
           val ControllerAndMocks(
             sut,
-            _,
-            _,
             _,
             _,
             _,
@@ -4134,8 +3938,6 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            mockResponseFormatterService,
-            _,
             _,
             _,
             _
@@ -4150,17 +3952,6 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(smallMessageSummaryXml)
             )
 
-          when(
-            mockResponseFormatterService.formatMessageSummary(any[MessageSummary], eqTo(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML))(
-              any[ExecutionContext],
-              any[HeaderCarrier],
-              any[Materializer]
-            )
-          )
-            .thenAnswer(
-              _ => EitherT.rightT(xml)
-            )
-
           val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
           status(result) mustBe OK
@@ -4173,8 +3964,6 @@ class V2MovementsControllerSpec
             sut,
             _,
             mockPersistenceService,
-            _,
-            _,
             _,
             _,
             _,
@@ -4214,8 +4003,6 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            mockResponseFormatterService,
-            _,
             _,
             _,
             _
@@ -4230,17 +4017,6 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(smallMessageSummaryXml)
             )
 
-          when(
-            mockResponseFormatterService.formatMessageSummary(any[MessageSummary], eqTo(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML))(
-              any[ExecutionContext],
-              any[HeaderCarrier],
-              any[Materializer]
-            )
-          )
-            .thenAnswer(
-              _ => EitherT.leftT(PresentationError.internalServiceError())
-            )
-
           val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
           status(result) mustBe OK
@@ -4253,8 +4029,6 @@ class V2MovementsControllerSpec
             sut,
             _,
             mockPersistenceService,
-            _,
-            _,
             _,
             _,
             _,
@@ -4298,8 +4072,6 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            mockObjectStoreService,
-            _,
             _,
             _
           ) = createControllerAndMocks()
@@ -4314,9 +4086,10 @@ class V2MovementsControllerSpec
             )
 
           when(
-            mockObjectStoreService.getMessage(ObjectStoreResourceLocation(any()))(
-              any[ExecutionContext],
-              any[HeaderCarrier]
+            mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+              any(),
+              any(),
+              any()
             )
           )
             .thenAnswer(
@@ -4335,8 +4108,6 @@ class V2MovementsControllerSpec
             sut,
             _,
             mockPersistenceService,
-            _,
-            _,
             _,
             _,
             _,
@@ -4371,8 +4142,6 @@ class V2MovementsControllerSpec
             sut,
             _,
             mockPersistenceService,
-            _,
-            _,
             _,
             _,
             _,
@@ -4419,8 +4188,6 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            _,
-            _,
             _
           ) = createControllerAndMocks(
             new AcceptHeaderActionProviderImpl()
@@ -4448,8 +4215,6 @@ class V2MovementsControllerSpec
           sut,
           _,
           mockPersistenceService,
-          _,
-          _,
           _,
           _,
           _,
@@ -4522,8 +4287,6 @@ class V2MovementsControllerSpec
           _,
           _,
           _,
-          _,
-          _,
           _
         )        = createControllerAndMocks()
         val eori = EORINumber("ERROR")
@@ -4558,8 +4321,6 @@ class V2MovementsControllerSpec
           sut,
           _,
           mockPersistenceService,
-          _,
-          _,
           _,
           _,
           _,
@@ -4606,8 +4367,6 @@ class V2MovementsControllerSpec
           _,
           _,
           _,
-          _,
-          _,
           _
         ) = createControllerAndMocks(
           new AcceptHeaderActionProviderImpl()
@@ -4642,8 +4401,6 @@ class V2MovementsControllerSpec
           sut,
           _,
           mockPersistenceService,
-          _,
-          _,
           _,
           _,
           _,
@@ -4695,8 +4452,6 @@ class V2MovementsControllerSpec
             sut,
             _,
             mockPersistenceService,
-            _,
-            _,
             _,
             _,
             _,
@@ -4763,8 +4518,6 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            _,
-            _,
             _
           ) = createControllerAndMocks()
           when(
@@ -4797,8 +4550,6 @@ class V2MovementsControllerSpec
             sut,
             _,
             mockPersistenceService,
-            _,
-            _,
             _,
             _,
             _,
@@ -4842,8 +4593,6 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            _,
-            _,
             _
           ) = createControllerAndMocks(
             new AcceptHeaderActionProviderImpl()
@@ -4877,8 +4626,6 @@ class V2MovementsControllerSpec
             sut,
             _,
             mockPersistenceService,
-            _,
-            _,
             _,
             _,
             _,
@@ -4939,8 +4686,6 @@ class V2MovementsControllerSpec
               mockAuditService,
               _,
               mockXmlParsingService,
-              _,
-              _,
               _,
               mockPushNotificationService,
               _,
@@ -5035,8 +4780,6 @@ class V2MovementsControllerSpec
               _,
               _,
               _,
-              _,
-              _,
               _
             ) = createControllerAndMocks()
             when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]](), any[Seq[MessageType]])(any(), any()))
@@ -5065,8 +4808,6 @@ class V2MovementsControllerSpec
               _,
               _,
               mockXmlParsingService,
-              _,
-              _,
               _,
               _,
               _,
@@ -5126,8 +4867,6 @@ class V2MovementsControllerSpec
             mockConversionService,
             mockXmlParsingService,
             mockJsonParsingService,
-            _,
-            _,
             _,
             _,
             _
@@ -5214,8 +4953,6 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            _,
-            _,
             _
           ) = setup()
 
@@ -5262,8 +4999,6 @@ class V2MovementsControllerSpec
               _,
               _,
               _,
-              _,
-              _,
               _
             ) = setup(extractMessageTypeJson = EitherT.leftT(ExtractionError.MalformedInput))
 
@@ -5282,8 +5017,6 @@ class V2MovementsControllerSpec
           movementId =>
             val ControllerAndMocks(
               sut,
-              _,
-              _,
               _,
               _,
               _,
@@ -5320,8 +5053,6 @@ class V2MovementsControllerSpec
               _,
               _,
               _,
-              _,
-              _,
               _
             ) = setup(validateJson = EitherT.leftT(InvalidMessageTypeError("contentXml")))
 
@@ -5340,8 +5071,6 @@ class V2MovementsControllerSpec
           movementId =>
             val ControllerAndMocks(
               sut,
-              _,
-              _,
               _,
               _,
               _,
@@ -5379,8 +5108,6 @@ class V2MovementsControllerSpec
               _,
               _,
               _,
-              _,
-              _,
               _
             ) = setup(validateJson = EitherT.leftT(FailedToValidateError.UnexpectedError(None)))
 
@@ -5396,8 +5123,6 @@ class V2MovementsControllerSpec
           movementId =>
             val ControllerAndMocks(
               sut,
-              _,
-              _,
               _,
               _,
               _,
@@ -5431,8 +5156,6 @@ class V2MovementsControllerSpec
               _,
               _,
               _,
-              _,
-              _,
               _
             ) = setup(validateXml = EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList.one(XmlValidationError(1, 1, "message")))))
 
@@ -5448,8 +5171,6 @@ class V2MovementsControllerSpec
           movementId =>
             val ControllerAndMocks(
               sut,
-              _,
-              _,
               _,
               _,
               _,
@@ -5483,8 +5204,6 @@ class V2MovementsControllerSpec
               _,
               _,
               _,
-              _,
-              _,
               _
             ) = setup(validateXml = EitherT.leftT(FailedToValidateError.UnexpectedError(None)))
 
@@ -5500,8 +5219,6 @@ class V2MovementsControllerSpec
           movementId =>
             val ControllerAndMocks(
               sut,
-              _,
-              _,
               _,
               _,
               _,
@@ -5535,8 +5252,6 @@ class V2MovementsControllerSpec
               _,
               _,
               _,
-              _,
-              _,
               _
             ) = setup(persistence = EitherT.leftT(PersistenceError.UnexpectedError(None)))
 
@@ -5549,8 +5264,6 @@ class V2MovementsControllerSpec
         "must return InternalServerError when router throws unexpected error" in {
           val ControllerAndMocks(
             sut,
-            _,
-            _,
             _,
             _,
             _,
@@ -5581,8 +5294,6 @@ class V2MovementsControllerSpec
             _,
             _,
             _,
-            _,
-            _,
             _
           ) = setup(router = EitherT.leftT(RouterError.UnrecognisedOffice("AB012345", "field")))
 
@@ -5596,8 +5307,6 @@ class V2MovementsControllerSpec
         "must return Accepted when persistence message status is not updated" ignore {
           val ControllerAndMocks(
             sut,
-            _,
-            _,
             _,
             _,
             _,
@@ -5640,8 +5349,6 @@ class V2MovementsControllerSpec
               mockPersistenceService,
               _,
               mockAuditService,
-              _,
-              _,
               _,
               _,
               _,
@@ -5728,8 +5435,6 @@ class V2MovementsControllerSpec
               _,
               _,
               _,
-              _,
-              _,
               _
             ) = createControllerAndMocks()
 
@@ -5785,8 +5490,6 @@ class V2MovementsControllerSpec
               _,
               _,
               _,
-              _,
-              _,
               _
             )               = createControllerAndMocks()
             val createdTime = OffsetDateTime.now()
@@ -5834,8 +5537,6 @@ class V2MovementsControllerSpec
               sut,
               _,
               mockPersistenceService,
-              _,
-              _,
               _,
               _,
               _,
@@ -5914,8 +5615,6 @@ class V2MovementsControllerSpec
               _,
               _,
               _,
-              _,
-              _,
               _
             ) = createControllerAndMocks()
 
@@ -5941,8 +5640,6 @@ class V2MovementsControllerSpec
         movementId =>
           val ControllerAndMocks(
             sut,
-            _,
-            _,
             _,
             _,
             _,
@@ -5979,8 +5676,6 @@ class V2MovementsControllerSpec
           _,
           _,
           _,
-          _,
-          _,
           _
         ) = createControllerAndMocks(
           new AcceptHeaderActionProviderImpl()
@@ -6004,8 +5699,6 @@ class V2MovementsControllerSpec
         _ =>
           val ControllerAndMocks(
             sut,
-            _,
-            _,
             _,
             _,
             _,
@@ -6057,8 +5750,6 @@ class V2MovementsControllerSpec
             mockAuditService,
             _,
             mockXmlParsingService,
-            _,
-            _,
             _,
             mockPushNotificationService,
             mockUpscanService,
@@ -6165,8 +5856,6 @@ class V2MovementsControllerSpec
               _,
               mockXmlParsingService,
               _,
-              _,
-              _,
               mockPushNotificationService,
               mockUpscanService,
               _
@@ -6272,8 +5961,6 @@ class V2MovementsControllerSpec
               mockAuditService,
               _,
               mockXmlParsingService,
-              _,
-              _,
               _,
               mockPushNotificationService,
               mockUpscanService,
@@ -6403,8 +6090,6 @@ class V2MovementsControllerSpec
               mockAuditService,
               _,
               mockXmlParsingService,
-              _,
-              _,
               _,
               mockPushNotificationService,
               mockUpscanService,
@@ -6536,8 +6221,6 @@ class V2MovementsControllerSpec
                 mockAuditService,
                 _,
                 mockXmlParsingService,
-                _,
-                _,
                 _,
                 mockPushNotificationService,
                 mockUpscanService,
@@ -6690,8 +6373,6 @@ class V2MovementsControllerSpec
                 _,
                 mockXmlParsingService,
                 _,
-                _,
-                _,
                 mockPushNotificationService,
                 mockUpscanService,
                 mockAppConfig
@@ -6841,8 +6522,6 @@ class V2MovementsControllerSpec
                 mockAuditService,
                 _,
                 mockXmlParsingService,
-                _,
-                _,
                 _,
                 mockPushNotificationService,
                 mockUpscanService,
@@ -6994,8 +6673,6 @@ class V2MovementsControllerSpec
           _,
           _,
           mockAuditService,
-          _,
-          _,
           _,
           _,
           _,

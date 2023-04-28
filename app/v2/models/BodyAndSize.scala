@@ -16,13 +16,7 @@
 
 package v2.models
 
-import play.api.libs.json.Format
-import play.api.libs.json.Json
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 
-object ObjectStoreResourceLocation {
-  implicit val objectStoreResourceLocationFormat: Format[ObjectStoreResourceLocation] = Json.valueFormat[ObjectStoreResourceLocation]
-}
-
-case class ObjectStoreResourceLocation(value: String) {
-  def stripOwner: ObjectStoreResourceLocation = ObjectStoreResourceLocation(value.stripPrefix("common-transit-convention-traders"))
-}
+case class BodyAndSize(size: Long, body: Source[ByteString, _])

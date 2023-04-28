@@ -21,8 +21,6 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
-import play.api.Logging
-import v2.controllers.ConvertError
 import v2.models.errors.StreamingError
 
 import scala.concurrent.ExecutionContext

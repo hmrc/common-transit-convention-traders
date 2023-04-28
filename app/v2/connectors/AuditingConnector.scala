@@ -32,7 +32,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.AuditType
-import v2.models.ObjectStoreResourceLocation
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -45,7 +44,6 @@ trait AuditingConnector {
     ec: ExecutionContext
   ): Future[Unit]
 
-  def post(auditType: AuditType, uri: ObjectStoreResourceLocation)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit]
 }
 
 class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, appConfig: AppConfig, val metrics: Metrics)
@@ -66,16 +64,6 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, appConfig: AppC
           .post(url"$url")
           .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> contentType, Constants.XContentLengthHeader -> contentLength.toString))
           .withBody(source)
-          .executeAndExpect(ACCEPTED)
-    }
-
-  def post(auditType: AuditType, uri: ObjectStoreResourceLocation)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
-    withMetricsTimerAsync(MetricsKeys.AuditingBackend.Post) {
-      _ =>
-        val url = appConfig.auditingUrl.withPath(auditingRoute(auditType, Some(uri)))
-
-        httpClient
-          .post(url"$url")
           .executeAndExpect(ACCEPTED)
     }
 
