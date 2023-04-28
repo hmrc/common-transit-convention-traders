@@ -49,12 +49,12 @@ class ObjectStoreServiceSpec
     with TestActorSystem
     with BeforeAndAfterEach {
 
-  val baseUrl = s"http://baseUrl-${randomUUID().toString}"
-  val owner   = "common-transit-convention-traders"
-  val token   = s"token-${randomUUID().toString}"
+  val baseUrl                         = s"http://baseUrl-${randomUUID().toString}"
+  val owner                           = "common-transit-convention-traders"
+  val token                           = s"token-${randomUUID().toString}"
   val config: ObjectStoreClientConfig = ObjectStoreClientConfig(baseUrl, owner, token, SevenYears)
 
-  implicit val hc: HeaderCarrier = HeaderCarrier()
+  implicit val hc: HeaderCarrier            = HeaderCarrier()
   implicit val ec: ExecutionContextExecutor = materializer.executionContext
 
   lazy val objectStoreStub = new ObjectStoreStub(config)
@@ -63,9 +63,9 @@ class ObjectStoreServiceSpec
 
   "On getting a message from object store" - {
     "given a successful response from the connector, should return a Right with Object Store Summary" in {
-      val movementId       = MovementId("308c4a68e2cdc08f")
-      val messageId        = MessageId("123c4a68e2ele08f")
-      val addMessageResult = objectStoreStub.seed(Path.File(s"movements/${movementId.value}/${movementId.value}-${messageId.value}.xml"))
+      val movementId = MovementId("308c4a68e2cdc08f")
+      val messageId  = MessageId("123c4a68e2ele08f")
+      objectStoreStub.seed(Path.File(Path.Directory(s"movements/${movementId.value}"), s"${movementId.value}-${messageId.value}.xml"))
 
       val result = objectStoreService.getMessage(ObjectStoreResourceLocation(s"/movements/${movementId.value}/${movementId.value}-${messageId.value}.xml"))
 

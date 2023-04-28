@@ -158,17 +158,6 @@ trait V2BaseConnector extends HttpErrorFunctions {
             }
         }
 
-    def executeAndExpectOneOf(expected: Seq[Int])(implicit ec: ExecutionContext): Future[Unit] =
-      requestBuilder
-        .execute[HttpResponse]
-        .flatMap {
-          response =>
-            response.status match {
-              case code if expected.contains(code) => Future.successful(())
-              case _                               => response.error
-            }
-        }
-
     def executeAsStream(implicit m: Materializer, ec: ExecutionContext): Future[Source[ByteString, _]] =
       requestBuilder
         .stream[HttpResponse]

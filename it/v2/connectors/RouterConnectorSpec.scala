@@ -31,6 +31,7 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.HeaderNames
 import play.api.http.Status.ACCEPTED
+import play.api.http.Status.CREATED
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
@@ -44,6 +45,7 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.ObjectStoreURI
+import v2.models.SubmissionRoute
 import v2.models.errors.ErrorCode
 import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
@@ -78,7 +80,37 @@ class RouterConnectorSpec
 
   "POST /traders/:eori/message/:movementType/:messageId/movements/:movementId" - {
 
-    "When ACCEPTED is received, must returned a successful future" in forAll(
+    "When CREATED is received, must the submission route as via EIS" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MessageType],
+      arbitrary[MovementId],
+      arbitrary[MessageId]
+    ) {
+      (eoriNumber, messageType, movementId, messageId) =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(eoriNumber, messageType, movementId, messageId))
+          ).withRequestBody(equalToXml(<test></test>.mkString))
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .withHeader(Constants.XMessageTypeHeader, equalTo(messageType.code))
+            .willReturn(aResponse().withStatus(CREATED))
+        )
+
+        val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
+
+        whenReady(
+          routerConnector
+            .post(messageType, eoriNumber, movementId, messageId, source)
+            .map(Right(_)) // can't test unit, but we want to test for success
+            .recover {
+              case thr => Left(thr)
+            }
+        ) {
+          _ mustBe Right(SubmissionRoute.ViaEIS)
+        }
+    }
+
+    "When ACCEPTED is received, must the submission route as via SDES" in forAll(
       arbitrary[EORINumber],
       arbitrary[MessageType],
       arbitrary[MovementId],
@@ -104,7 +136,7 @@ class RouterConnectorSpec
               case thr => Left(thr)
             }
         ) {
-          _ mustBe Right(())
+          _ mustBe Right(SubmissionRoute.ViaSDES)
         }
     }
 
@@ -133,74 +165,6 @@ class RouterConnectorSpec
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
         val future = routerConnector.post(messageType, eoriNumber, movementId, messageId, source).map(Right(_)).recover {
-          case NonFatal(e) => Left(e)
-        }
-
-        whenReady(future) {
-          result =>
-            result.left.toOption.get mustBe a[UpstreamErrorResponse]
-            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
-            response.statusCode mustBe INTERNAL_SERVER_ERROR
-            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
-        }
-    }
-  }
-
-  "POST /traders/:eori/message/:movementType/:messageId/movements/:movementId for large message route" - {
-
-    "When ACCEPTED is received, must returned a successful future" in forAll(
-      arbitrary[EORINumber],
-      arbitrary[MessageType],
-      arbitrary[MovementId],
-      arbitrary[MessageId],
-      arbitrary[ObjectStoreURI]
-    ) {
-      (eoriNumber, messageType, movementId, messageId, objectStoreURI) =>
-        server.stubFor(
-          post(
-            urlEqualTo(targetUrl(eoriNumber, messageType, movementId, messageId))
-          )
-            .withHeader(Constants.XObjectStoreUriHeader, equalTo(objectStoreURI.value))
-            .withHeader(Constants.XMessageTypeHeader, equalTo(messageType.code))
-            .willReturn(aResponse().withStatus(ACCEPTED))
-        )
-
-        whenReady(
-          routerConnector
-            .postLargeMessage(messageType, eoriNumber, movementId, messageId, objectStoreURI)
-            .map(Right(_)) // can't test unit, but we want to test for success
-            .recover {
-              case thr => Left(thr)
-            }
-        ) {
-          _ mustBe Right(())
-        }
-    }
-
-    "On an upstream internal server error, get a failed Future with an UpstreamErrorResponse" in forAll(
-      arbitrary[EORINumber],
-      arbitrary[MessageType],
-      arbitrary[MovementId],
-      arbitrary[MessageId],
-      arbitrary[ObjectStoreURI]
-    ) {
-      (eoriNumber, messageType, movementId, messageId, objectStoreURI) =>
-        server.stubFor(
-          post(
-            urlEqualTo(targetUrl(eoriNumber, messageType, movementId, messageId))
-          )
-            .withHeader(Constants.XObjectStoreUriHeader, equalTo(objectStoreURI.value))
-            .withHeader(Constants.XMessageTypeHeader, equalTo(messageType.code))
-            .willReturn(
-              aResponse()
-                .withStatus(INTERNAL_SERVER_ERROR)
-                .withBody(
-                  Json.stringify(Json.toJson(PresentationError.internalServiceError()))
-                )
-            )
-        )
-
-        val future = routerConnector.postLargeMessage(messageType, eoriNumber, movementId, messageId, objectStoreURI).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 

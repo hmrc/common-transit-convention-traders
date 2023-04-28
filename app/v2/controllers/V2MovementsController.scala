@@ -539,11 +539,12 @@ class V2MovementsControllerImpl @Inject() (
             Future.successful(Ok)
           case UpscanSuccessResponse(_, downloadUrl, uploadDetails) =>
             def completeSmallMessage(): EitherT[Future, PushNotificationError, Unit] = {
-                persistenceService.updateMessage(eori, movementType, movementId, messageId, MessageUpdate(MessageStatus.Success, None, None))
-                pushNotificationsService.postPpnsNotification(
-                  movementId,
-                  messageId,
-                  Json.toJson(HateoasMovementUpdateResponse(movementId, messageId, movementType, None)))
+              persistenceService.updateMessage(eori, movementType, movementId, messageId, MessageUpdate(MessageStatus.Success, None, None))
+              pushNotificationsService.postPpnsNotification(
+                movementId,
+                messageId,
+                Json.toJson(HateoasMovementUpdateResponse(movementId, messageId, movementType, None))
+              )
             }
 
             // Download file to stream

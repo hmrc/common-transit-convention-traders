@@ -21,12 +21,10 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import play.api.http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.objectstore.client.Md5Hash
 import uk.gov.hmrc.objectstore.client.Object
 import uk.gov.hmrc.objectstore.client.ObjectMetadata
 import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
 import uk.gov.hmrc.objectstore.client.Path
-import uk.gov.hmrc.objectstore.client.RetentionPeriod
 import uk.gov.hmrc.objectstore.client.config.ObjectStoreClientConfig
 import uk.gov.hmrc.objectstore.client.http.ObjectStoreContentRead
 import uk.gov.hmrc.objectstore.client.play.ResBody
@@ -52,12 +50,7 @@ class ObjectStoreStub[F[_]](config: ObjectStoreClientConfig)(implicit
     owner: String = config.owner
   ): ObjectSummaryWithMd5 = {
     val objectSummaryWithMd5 = arbitraryObjectSummaryWithMd5.arbitrary.sample.get
-    //remove date from uri as it can't be guessed, and therefore used to retrieve the file later on
-    val splitFileName = to.fileName.split("-").dropRight(1)
-    val newFileName   = s"${splitFileName(0)}-${splitFileName(1)}.xml"
-    val newToPath     = Path.Directory(s"movements/${splitFileName.head}").file(newFileName)
-
-    objectStore += (s"$owner/${newToPath.asUri}" -> objectSummaryWithMd5)
+    objectStore += (s"$owner/${to.asUri}" -> objectSummaryWithMd5)
     objectSummaryWithMd5
   }
 

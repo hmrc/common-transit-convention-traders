@@ -31,13 +31,13 @@ import play.api.http.MimeTypes
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.CREATED
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
-import v2.models.ObjectStoreURI
 import v2.models.SubmissionRoute
 import v2.models.request.MessageType
 
@@ -51,11 +51,6 @@ trait RouterConnector {
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): Future[SubmissionRoute]
-
-  def postLargeMessage(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, objectStoreURI: ObjectStoreURI)(implicit
-    ec: ExecutionContext,
-    hc: HeaderCarrier
-  ): Future[Unit]
 
 }
 
@@ -75,7 +70,10 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
 
         httpClientV2
           .post(url"$url")
-          .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code))
+          .setHeader(
+            HeaderNames.CONTENT_TYPE     -> MimeTypes.XML,
+            Constants.XMessageTypeHeader -> messageType.code
+          )
           .withBody(body)
           .execute[HttpResponse]
           .flatMap {
@@ -87,17 +85,5 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
               }
           }
     }
-
-  def postLargeMessage(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, objectStoreURI: ObjectStoreURI)(implicit
-    ec: ExecutionContext,
-    hc: HeaderCarrier
-  ): Future[Unit] = withMetricsTimerAsync(MetricsKeys.RouterBackend.Post) {
-    _ =>
-      val url = appConfig.routerUrl.withPath(routerRoute(eoriNumber, messageType, movementId, messageId))
-      httpClientV2
-        .post(url"$url")
-        .transform(_.addHttpHeaders(Constants.XMessageTypeHeader -> messageType.code, Constants.XObjectStoreUriHeader -> objectStoreURI.value))
-        .executeAndExpect(ACCEPTED)
-  }
 
 }

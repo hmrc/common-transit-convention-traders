@@ -49,11 +49,6 @@ trait RouterService {
     hc: HeaderCarrier
   ): EitherT[Future, RouterError, SubmissionRoute]
 
-  def sendLargeMessage(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, objectStoreURI: ObjectStoreURI)(implicit
-    ec: ExecutionContext,
-    hc: HeaderCarrier
-  ): EitherT[Future, RouterError, Unit]
-
 }
 
 class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends RouterService {
@@ -74,21 +69,6 @@ class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends Rou
             Left(RouterError.UnexpectedError(thr = Some(e)))
         }
     )
-
-  def sendLargeMessage(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, objectStoreURI: ObjectStoreURI)(implicit
-    ec: ExecutionContext,
-    hc: HeaderCarrier
-  ): EitherT[Future, RouterError, Unit] = EitherT(
-    routerConnector
-      .postLargeMessage(messageType, eoriNumber, movementId, messageId, objectStoreURI)
-      .map(
-        _ => Right(())
-      )
-      .recover {
-        case NonFatal(e) =>
-          Left(RouterError.UnexpectedError(thr = Some(e)))
-      }
-  )
 
   private def determineError(message: String): RouterError =
     Try(Json.parse(message))
