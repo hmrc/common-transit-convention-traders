@@ -45,6 +45,7 @@ import v2.controllers.actions.providers.AcceptHeaderActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models._
+import v2.models.errors.PersistenceError
 import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
@@ -263,16 +264,24 @@ class V2MovementsControllerImpl @Inject() (
 
   private def getBody(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId, bodyOption: Option[Payload])(implicit
     hc: HeaderCarrier
-  ): EitherT[Future, PresentationError, BodyAndSize] =
+  ): EitherT[Future, PresentationError, Option[BodyAndSize]] =
     bodyOption match {
       case Some(XmlPayload(value)) =>
         val byteString = ByteString(value, StandardCharsets.UTF_8)
-        EitherT.rightT(BodyAndSize(byteString.size, Source.single(byteString)))
+        EitherT.rightT(Option(BodyAndSize(byteString.size, Source.single(byteString))))
       case None =>
         persistenceService
           .getMessageBody(eori, movementType, movementId, messageId)
+          .map(Option(_))
+          .leftFlatMap[Option[Source[ByteString, _]], PersistenceError] {
+            case _: PersistenceError.MessageNotFound => EitherT.rightT[Future, PersistenceError](None)
+            case e                                   => EitherT.leftT[Future, Option[Source[ByteString, _]]](e)
+          }
           .asPresentation
-          .flatMap(getFile)
+          .flatMap[PresentationError, Option[BodyAndSize]] {
+            case Some(x) => getFile(x).map(Option.apply)
+            case None    => EitherT[Future, PresentationError, Option[BodyAndSize]](Future.successful(Right[PresentationError, Option[BodyAndSize]](None)))
+          }
       case _ => EitherT.leftT(PresentationError.internalServiceError("Did not expect JsonPayload when getting message body"))
     }
 
@@ -298,36 +307,46 @@ class V2MovementsControllerImpl @Inject() (
     messageSummary: MessageSummary,
     movementType: MovementType,
     acceptHeader: String,
-    bodyAndSize: BodyAndSize
+    bodyAndSizeMaybe: Option[BodyAndSize]
   )(implicit
     hc: HeaderCarrier
-  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
-    acceptHeader match {
-      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON if bodyAndSize.size > config.smallMessageSizeLimit =>
-        EitherT.leftT[Future, Source[ByteString, _]](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
-      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
-        for {
-          jsonStream <- conversionService.xmlToJson(messageSummary.messageType.get, bodyAndSize.body).asPresentation
-          summary = messageSummary.copy(body = None)
-          jsonHateoasResponse = Json
-            .toJson(
-              HateoasMovementMessageResponse(movementId, summary.id, summary, movementType)
+  ): EitherT[Future, PresentationError, Source[ByteString, _]] = {
+    def bodyExists(bodyAndSize: BodyAndSize): EitherT[Future, PresentationError, Source[ByteString, _]] =
+      acceptHeader match {
+        case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON if bodyAndSize.size > config.smallMessageSizeLimit =>
+          EitherT.leftT[Future, Source[ByteString, _]](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
+        case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
+          for {
+            jsonStream <- conversionService.xmlToJson(messageSummary.messageType.get, bodyAndSize.body).asPresentation
+            summary = messageSummary.copy(body = None)
+            jsonHateoasResponse = Json
+              .toJson(
+                HateoasMovementMessageResponse(movementId, summary.id, summary, movementType)
+              )
+              .as[JsObject]
+            stream <- jsonToByteStringStream(jsonHateoasResponse.fields, "body", jsonStream)
+          } yield stream
+        case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
+          if (messageSummary.body.isDefined)
+            EitherT.rightT[Future, PresentationError](
+              Source.single(ByteString(Json.stringify(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType))))
             )
-            .as[JsObject]
-          stream <- jsonToByteStringStream(jsonHateoasResponse.fields, "body", jsonStream)
-        } yield stream
-      case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
-        if (messageSummary.body.isDefined)
-          EitherT.rightT[Future, PresentationError](
-            Source.single(ByteString(Json.stringify(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType))))
-          )
-        else
-          mergeStreamIntoJson(
-            Json.toJson(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)).as[JsObject].fields,
-            "body",
-            bodyAndSize.body
-          )
+          else
+            mergeStreamIntoJson(
+              Json.toJson(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)).as[JsObject].fields,
+              "body",
+              bodyAndSize.body
+            )
+      }
+
+    bodyAndSizeMaybe match {
+      case Some(value) => bodyExists(value)
+      case None =>
+        EitherT.rightT[Future, PresentationError](
+          Source.single(ByteString(Json.stringify(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType))))
+        )
     }
+  }
 
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(xmlOnlyAcceptHeader)).async {
@@ -337,7 +356,7 @@ class V2MovementsControllerImpl @Inject() (
           messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
           body <- messageSummary match {
             case MessageSummary(_, _, _, Some(body), _, _) => stringToByteStringStream(body.value)
-            case MessageSummary(_, _, _, _, _, Some(uri)) =>
+            case MessageSummary(_, _, _, _, _, Some(_)) =>
               persistenceService.getMessageBody(request.eoriNumber, movementType, movementId, messageId).asPresentation
             case _ => EitherT.leftT[Future, Source[ByteString, _]](PresentationError.notFoundError(s"Body for message id ${messageId.value} does not exist"))
           }
