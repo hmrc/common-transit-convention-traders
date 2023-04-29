@@ -30,6 +30,7 @@ import cats.implicits.toBifunctorOps
 import config.AppConfig
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
+import org.mockito.ArgumentMatchers.argThat
 import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
@@ -51,6 +52,8 @@ import play.api.http.MimeTypes
 import play.api.http.Status._
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.Files.TemporaryFileCreator
+import play.api.libs.json.JsError
+import play.api.libs.json.JsSuccess
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
@@ -67,6 +70,7 @@ import play.api.test.Helpers.status
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.TestMetrics
+import v2.base.SourceMatcher
 import v2.base.TestActorSystem
 import v2.base.TestCommonGenerators
 import v2.base.TestSourceProvider
@@ -3473,7 +3477,7 @@ class V2MovementsControllerSpec
 
     }
 
-    s"/movements/${movementType.urlFragment}/:movementId/messages/:messageId" - {
+    s"GET /movements/${movementType.urlFragment}/:movementId/messages/:messageId" - {
       val movementId                       = arbitraryMovementId.arbitrary.sample.value
       val messageId                        = arbitraryMessageId.arbitrary.sample.value
       val objectStoreUri                   = arbitraryObjectStoreURI.arbitrary.sample.value
@@ -3624,7 +3628,60 @@ class V2MovementsControllerSpec
                       movementType
                     )
                   )
+                case _ => fail("This should not be reached")
               }
+
+            }
+
+            "when the message metadata is stored but the message body has not been stored" in {
+              val ControllerAndMocks(
+                sut,
+                _,
+                mockPersistenceService,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _
+              ) = createControllerAndMocks()
+              when(
+                mockPersistenceService.getMessage(
+                  EORINumber(any[String]),
+                  eqTo(movementType),
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value))
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenAnswer(
+                  _ => EitherT.rightT(smallMessageSummaryInObjectStore)
+                )
+
+              when(
+                mockPersistenceService.getMessageBody(
+                  EORINumber(any[String]),
+                  eqTo(movementType),
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(messageId.value))
+                )(
+                  any(),
+                  any(),
+                  any()
+                )
+              )
+                .thenAnswer(
+                  _ => EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))
+                )
+
+              val result = sut.getMessage(movementType, movementId, messageId)(request)
+
+              status(result) mustBe OK
+              contentAsJson(result) mustBe HateoasMovementMessageResponse(movementId, messageId, smallMessageSummaryInObjectStore, movementType)
 
             }
 
@@ -3799,6 +3856,7 @@ class V2MovementsControllerSpec
                       movementType
                     )
                   )
+                case _ => fail("This should not be reached")
               }
 
             }
@@ -3907,7 +3965,7 @@ class V2MovementsControllerSpec
       }
     }
 
-    s"/movements/${movementType.urlFragment}/:movementId/messages/:messageId/body" - {
+    s"GET /movements/${movementType.urlFragment}/:movementId/messages/:messageId/body" - {
       val movementId             = arbitraryMovementId.arbitrary.sample.value
       val messageId              = arbitraryMessageId.arbitrary.sample.value
       val xml                    = "<test>ABC</test>"
@@ -6704,7 +6762,32 @@ class V2MovementsControllerSpec
 
         status(result) mustBe OK
 
-        verify(mockAuditService, times(1)).audit(eqTo(AuditType.TraderFailedUploadEvent), any(), eqTo(MimeTypes.JSON), eqTo(0L))(any(), any())
+        def matchEvent(in: String): Boolean =
+          Json.parse(in).validate[TraderFailedUploadAuditRequest] match {
+            case JsSuccess(value, _) =>
+              value mustBe TraderFailedUploadAuditRequest(
+                movementId,
+                messageId,
+                value.enrollmentEORINumber,
+                movementType
+              )
+              true
+            case JsError(_) =>
+              false
+          }
+
+        // failure audit should fire
+        verify(mockAuditService, times(1)).audit(
+          eqTo(AuditType.TraderFailedUploadEvent),
+          argThat(SourceMatcher(matchEvent)),
+          eqTo(MimeTypes.JSON),
+          eqTo(0L)
+        )(
+          any[HeaderCarrier],
+          any[ExecutionContext]
+        )
+
+        // verify(mockAuditService, times(1)).audit(eqTo(AuditType.TraderFailedUploadEvent), any(), eqTo(MimeTypes.JSON), eqTo(0L))(any(), any())
 
         // Verify that postPpnsNotification was not  called
         verify(mockPushNotificationService, times(1)).postPpnsNotification(

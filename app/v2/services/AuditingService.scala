@@ -32,7 +32,7 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[AuditingServiceImpl])
 trait AuditingService {
 
-  def audit(auditType: AuditType, source: Source[ByteString, _], contentType: String, contentLength: Long = 0)(implicit
+  def audit(auditType: AuditType, source: Source[ByteString, _], contentType: String, contentLength: Long)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit]

@@ -239,7 +239,8 @@ class V2MovementsControllerImpl @Inject() (
           _ = auditService.audit(
             AuditType.LargeMessageSubmissionRequested,
             Source.single(ByteString(auditResponse.toString(), StandardCharsets.UTF_8)),
-            MimeTypes.JSON
+            MimeTypes.JSON,
+            0L
           )
         } yield HateoasNewMovementResponse(movementResponse.movementId, boxResponseOption, Some(upscanResponse), movementType)).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -440,7 +441,8 @@ class V2MovementsControllerImpl @Inject() (
           _ = auditService.audit(
             AuditType.LargeMessageSubmissionRequested,
             Source.single(ByteString(auditResponse.toString(), StandardCharsets.UTF_8)),
-            MimeTypes.JSON
+            MimeTypes.JSON,
+            0L
           )
         } yield HateoasMovementUpdateResponse(movementId, updateMovementResponse.messageId, movementType, Some(upscanResponse))).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -521,7 +523,8 @@ class V2MovementsControllerImpl @Inject() (
             auditService.audit(
               AuditType.TraderFailedUploadEvent,
               Source.single(ByteString(auditReq.toString(), StandardCharsets.UTF_8)),
-              MimeTypes.JSON
+              MimeTypes.JSON,
+              0L
             )
 
             logger.warn(s"""Upscan failed to process trader-uploaded file

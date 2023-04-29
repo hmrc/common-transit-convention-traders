@@ -68,7 +68,7 @@ class AuditingServiceSpec extends AnyFreeSpec with Matchers with ScalaFutures wi
               override val logger: Logger = new Logger(logger0)
             }
 
-            whenReady(Harness.audit(AuditType.DeclarationData, Source.empty, contentType)) {
+            whenReady(Harness.audit(AuditType.DeclarationData, Source.empty, contentType, 0L)) {
               _ =>
                 verify(mockConnector, times(1)).post(eqTo(DeclarationData), any(), eqTo(contentType), any())(any(), any())
                 verify(Harness.logger0, times(1)).warn(eqTo("Unable to audit payload due to an exception"), eqTo(exception))
