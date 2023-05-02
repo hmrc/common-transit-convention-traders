@@ -70,7 +70,7 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
       _ =>
         val url = appConfig.routerUrl.withPath(routerRoute(eoriNumber, messageType, movementId, messageId))
 
-        val request = httpClientV2
+        httpClientV2
           .post(url"$url")
           .transform(
             _.addHttpHeaders(
@@ -79,11 +79,8 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
             )
           )
           .withBody(body)
-
-        val clientIdHeader = hc.headers(Seq(Constants.XClientIdHeader))
-
-        if (clientIdHeader.isEmpty) request.executeAndExpect(ACCEPTED) else request.transform(_.addHttpHeaders(clientIdHeader.head)).executeAndExpect(ACCEPTED)
-
+          .withClientId
+          .executeAndExpect(ACCEPTED)
     }
 
   def postLargeMessage(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, objectStoreURI: ObjectStoreURI)(implicit
@@ -93,14 +90,11 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
     _ =>
       val url = appConfig.routerUrl.withPath(routerRoute(eoriNumber, messageType, movementId, messageId))
 
-      val request = httpClientV2
+      httpClientV2
         .post(url"$url")
         .setHeader(Constants.XMessageTypeHeader -> messageType.code, Constants.XObjectStoreUriHeader -> objectStoreURI.value)
-
-      val clientIdHeader = hc.headers(Seq(Constants.XClientIdHeader))
-
-      if (clientIdHeader.isEmpty) request.executeAndExpect(ACCEPTED) else request.transform(_.addHttpHeaders(clientIdHeader.head)).executeAndExpect(ACCEPTED)
-
+        .withClientId
+        .executeAndExpect(ACCEPTED)
   }
 
 }
