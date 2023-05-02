@@ -72,8 +72,14 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
 
         httpClientV2
           .post(url"$url")
-          .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code))
+          .transform(
+            _.addHttpHeaders(
+              HeaderNames.CONTENT_TYPE     -> MimeTypes.XML,
+              Constants.XMessageTypeHeader -> messageType.code
+            )
+          )
           .withBody(body)
+          .withClientId
           .executeAndExpect(ACCEPTED)
     }
 
@@ -83,9 +89,11 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
   ): Future[Unit] = withMetricsTimerAsync(MetricsKeys.RouterBackend.Post) {
     _ =>
       val url = appConfig.routerUrl.withPath(routerRoute(eoriNumber, messageType, movementId, messageId))
+
       httpClientV2
         .post(url"$url")
-        .transform(_.addHttpHeaders(Constants.XMessageTypeHeader -> messageType.code, Constants.XObjectStoreUriHeader -> objectStoreURI.value))
+        .setHeader(Constants.XMessageTypeHeader -> messageType.code, Constants.XObjectStoreUriHeader -> objectStoreURI.value)
+        .withClientId
         .executeAndExpect(ACCEPTED)
   }
 

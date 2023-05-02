@@ -23,6 +23,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import config.Constants
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -78,19 +79,21 @@ class RouterConnectorSpec
 
   "POST /traders/:eori/message/:movementType/:messageId/movements/:movementId" - {
 
-    "When ACCEPTED is received, must returned a successful future" in forAll(
+    "When ACCEPTED is received, must return a successful future" in forAll(
       arbitrary[EORINumber],
       arbitrary[MessageType],
       arbitrary[MovementId],
-      arbitrary[MessageId]
+      arbitrary[MessageId],
+      Gen.stringOfN(15, Gen.alphaNumChar)
     ) {
-      (eoriNumber, messageType, movementId, messageId) =>
+      (eoriNumber, messageType, movementId, messageId, clientId) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber, messageType, movementId, messageId))
           ).withRequestBody(equalToXml(<test></test>.mkString))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .withHeader(Constants.XMessageTypeHeader, equalTo(messageType.code))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .willReturn(aResponse().withStatus(ACCEPTED))
         )
 
@@ -98,7 +101,10 @@ class RouterConnectorSpec
 
         whenReady(
           routerConnector
-            .post(messageType, eoriNumber, movementId, messageId, source)
+            .post(messageType, eoriNumber, movementId, messageId, source)(
+              implicitly[ExecutionContext],
+              HeaderCarrier(otherHeaders = Seq((Constants.XClientIdHeader -> clientId)))
+            )
             .map(Right(_)) // can't test unit, but we want to test for success
             .recover {
               case thr => Left(thr)
