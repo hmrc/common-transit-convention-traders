@@ -95,7 +95,7 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
 
       val request = httpClientV2
         .post(url"$url")
-        .transform(_.addHttpHeaders(Constants.XMessageTypeHeader -> messageType.code, Constants.XObjectStoreUriHeader -> objectStoreURI.value))
+        .setHeader(Constants.XMessageTypeHeader -> messageType.code, Constants.XObjectStoreUriHeader -> objectStoreURI.value)
 
       val clientIdHeader = hc.headers(Seq(Constants.XClientIdHeader))
 
