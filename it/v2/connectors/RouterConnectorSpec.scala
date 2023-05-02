@@ -80,7 +80,7 @@ class RouterConnectorSpec
 
   "POST /traders/:eori/message/:movementType/:messageId/movements/:movementId" - {
 
-    "When CREATED is received, must the submission route as via EIS" in forAll(
+    "When CREATED is received, get the submission route as via EIS" in forAll(
       arbitrary[EORINumber],
       arbitrary[MessageType],
       arbitrary[MovementId],
@@ -110,7 +110,7 @@ class RouterConnectorSpec
         }
     }
 
-    "When ACCEPTED is received, must the submission route as via SDES" in forAll(
+    "When ACCEPTED is received, get the submission route as via SDES" in forAll(
       arbitrary[EORINumber],
       arbitrary[MessageType],
       arbitrary[MovementId],
