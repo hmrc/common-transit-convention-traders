@@ -533,7 +533,7 @@ class V2MovementsControllerImpl @Inject() (
                  |Upscan Reference: ${reference.value}
                  |Reason: ${failureDetails.failureReason}
                  |Message: ${failureDetails.message}""".stripMargin)
-
+            persistenceService.updateMessage(eori, movementType, movementId, messageId, MessageUpdate(MessageStatus.Failed, None, None))
             pushNotificationsService
               .postPpnsNotification(movementId, messageId, Json.toJson(PresentationError.badRequestError("Uploaded file not accepted.")))
             Future.successful(Ok)
@@ -556,7 +556,13 @@ class V2MovementsControllerImpl @Inject() (
                 _ = pushNotificationsService.postPpnsNotification(
                   movementId,
                   messageId,
-                  Json.toJson(HateoasMovementUpdateResponse(movementId, messageId, movementType, None))
+                  Json.toJson(
+                    Json.obj(
+                      "code" -> "SUCCESS",
+                      "message" ->
+                        s"The message ${messageId.value} for movement ${movementId.value} was successfully processed"
+                    )
+                  )
                 )
               } yield ()
 

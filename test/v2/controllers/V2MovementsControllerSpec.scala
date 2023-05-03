@@ -6686,7 +6686,6 @@ class V2MovementsControllerSpec
                     eqTo(MessageUpdate(MessageStatus.Success, None, None))
                   )(any[HeaderCarrier], any[ExecutionContext])
 
-                  // Verify that postPpnsNotification was not  called
                   verify(mockPushNotificationService, times(1)).postPpnsNotification(
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
@@ -6734,6 +6733,14 @@ class V2MovementsControllerSpec
                 new AcceptHeaderActionProviderImpl()
               )
 
+              val ppnsMessage = Json.toJson(
+                Json.obj(
+                  "code" -> "SUCCESS",
+                  "message" ->
+                    s"The message ${messageId.value} for movement ${movementId.value} was successfully processed"
+                )
+              )
+
               val allowedTypes =
                 if (movementType == MovementType.Arrival) MessageType.messageTypesSentByArrivalTrader else MessageType.messageTypesSentByDepartureTrader
 
@@ -6774,7 +6781,7 @@ class V2MovementsControllerSpec
                 mockPushNotificationService.postPpnsNotification(
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  any[JsValue]
+                  eqTo(ppnsMessage)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -6846,11 +6853,10 @@ class V2MovementsControllerSpec
                     eqTo(MessageUpdate(MessageStatus.Success, None, None))
                   )(any[HeaderCarrier], any[ExecutionContext])
 
-                  // Verify that postPpnsNotification was not  called
                   verify(mockPushNotificationService, times(1)).postPpnsNotification(
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
-                    any[JsValue]
+                    eqTo(ppnsMessage)
                   )(
                     any[HeaderCarrier],
                     any[ExecutionContext]
