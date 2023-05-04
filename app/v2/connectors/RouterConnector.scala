@@ -75,6 +75,7 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
             Constants.XMessageTypeHeader -> messageType.code
           )
           .withBody(body)
+          .withClientId
           .execute[HttpResponse]
           .flatMap {
             response =>
@@ -85,5 +86,4 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
               }
           }
     }
-
 }

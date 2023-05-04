@@ -16,7 +16,6 @@
 
 package v2.services
 
-import akka.event.Logging.LogLevel
 import akka.stream.Attributes
 import akka.stream.Attributes.LogLevels
 import akka.stream.FlowShape
