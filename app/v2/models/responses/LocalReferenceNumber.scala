@@ -16,23 +16,11 @@
 
 package v2.models.responses
 
-import v2.models.EORINumber
-import v2.models.MovementId
-import v2.models.MovementReferenceNumber
+import play.api.libs.json.Format
 import play.api.libs.json.Json
 
-import java.time.OffsetDateTime
+case class LocalReferenceNumber(value: String) extends AnyVal
 
-object MovementSummary {
-  implicit lazy val movementSummaryFormat = Json.format[MovementSummary]
+object LocalReferenceNumber {
+  implicit val localReferenceNumberFormat: Format[LocalReferenceNumber] = Json.valueFormat[LocalReferenceNumber]
 }
-
-case class MovementSummary(
-  _id: MovementId,
-  enrollmentEORINumber: EORINumber,
-  movementEORINumber: Option[EORINumber],
-  movementReferenceNumber: Option[MovementReferenceNumber],
-  localReferenceNumber: LocalReferenceNumber,
-  created: OffsetDateTime,
-  updated: OffsetDateTime
-)
