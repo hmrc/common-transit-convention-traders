@@ -27,6 +27,7 @@ import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.request.PushNotificationsAssociation
 import v2.models.responses.BoxResponse
+import v2.models.responses.LocalReferenceNumber
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
@@ -89,15 +90,29 @@ trait CommonGenerators {
       } yield MovementReferenceNumber(year ++ country.mkString ++ serial.mkString)
     }
 
+  implicit lazy val arbitraryLocalReferenceNumber: Arbitrary[LocalReferenceNumber] =
+    Arbitrary {
+      for {
+        year <- Gen
+          .choose(0, 99)
+          .map(
+            y => f"$y%02d"
+          )
+        country <- Gen.pick(2, 'A' to 'Z')
+        serial  <- Gen.pick(13, ('A' to 'Z') ++ ('0' to '9'))
+      } yield LocalReferenceNumber(year ++ country.mkString ++ serial.mkString)
+    }
+
   implicit lazy val arbitraryMovementSummary: Arbitrary[MovementSummary] = Arbitrary {
     for {
       id                      <- arbitrary[MovementId]
       enrollmentEORINumber    <- arbitrary[EORINumber]
       movementEORINumber      <- arbitrary[EORINumber]
       movementReferenceNumber <- arbitrary[Option[MovementReferenceNumber]]
+      localReferenceNumber    <- arbitrary[LocalReferenceNumber]
       created                 <- arbitrary[OffsetDateTime]
       updated                 <- arbitrary[OffsetDateTime]
-    } yield MovementSummary(id, enrollmentEORINumber, Some(movementEORINumber), movementReferenceNumber, created, updated)
+    } yield MovementSummary(id, enrollmentEORINumber, Some(movementEORINumber), movementReferenceNumber, localReferenceNumber, created, updated)
   }
 
   implicit lazy val arbitraryObjectStoreURI: Arbitrary[ObjectStoreURI] = Arbitrary {

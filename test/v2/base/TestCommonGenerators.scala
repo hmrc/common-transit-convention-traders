@@ -39,6 +39,7 @@ import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.UpscanResponse.Reference
 import v2.models.responses.BoxResponse
 import v2.models.responses.FailureDetails
+import v2.models.responses.LocalReferenceNumber
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
@@ -72,6 +73,10 @@ trait TestCommonGenerators {
 
   implicit lazy val arbitraryMovementReferenceNumber: Arbitrary[MovementReferenceNumber] = Arbitrary {
     Gen.alphaNumStr.map(MovementReferenceNumber(_))
+  }
+
+  implicit lazy val arbitraryLocalReferenceNumber: Arbitrary[LocalReferenceNumber] = Arbitrary {
+    Gen.alphaNumStr.map(LocalReferenceNumber(_))
   }
 
   implicit lazy val arbitraryMessageType: Arbitrary[MessageType] = Arbitrary {
@@ -127,9 +132,10 @@ trait TestCommonGenerators {
       enrollmentEORINumber    <- arbitrary[EORINumber]
       movementEORINumber      <- arbitrary[EORINumber]
       movementReferenceNumber <- arbitrary[MovementReferenceNumber]
+      localReferenceNumber    <- arbitrary[LocalReferenceNumber]
       created                 <- arbitraryOffsetDateTime.arbitrary
       updated                 <- arbitraryOffsetDateTime.arbitrary
-    } yield MovementSummary(id, enrollmentEORINumber, Some(movementEORINumber), Some(movementReferenceNumber), created, updated)
+    } yield MovementSummary(id, enrollmentEORINumber, Some(movementEORINumber), Some(movementReferenceNumber), localReferenceNumber, created, updated)
   }
 
   implicit private lazy val arbitraryFields: Arbitrary[Map[String, String]] = Arbitrary {

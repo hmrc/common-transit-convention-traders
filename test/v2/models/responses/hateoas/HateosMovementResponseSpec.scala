@@ -25,6 +25,7 @@ import v2.base.TestCommonGenerators
 import v2.models.EORINumber
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
+import v2.models.responses.LocalReferenceNumber
 import v2.models.responses.MovementSummary
 
 import java.time.OffsetDateTime
@@ -43,6 +44,7 @@ class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaChe
         enrollmentEORINumber = EORINumber("GB123"),
         movementEORINumber = Some(EORINumber("GB456")),
         movementReferenceNumber = Some(MovementReferenceNumber("MRN001")),
+        localReferenceNumber = LocalReferenceNumber("LRN001"),
         created = dateTime,
         updated = dateTime
       )
@@ -56,6 +58,7 @@ class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaChe
         ),
         "id"                      -> movementId,
         "movementReferenceNumber" -> "MRN001",
+        "localReferenceNumber"    -> "LRN001",
         "created"                 -> "2022-08-15T11:45:00Z",
         "updated"                 -> "2022-08-15T11:45:00Z",
         "enrollmentEORINumber"    -> "GB123",
