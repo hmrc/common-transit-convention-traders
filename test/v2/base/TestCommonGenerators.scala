@@ -135,7 +135,7 @@ trait TestCommonGenerators {
       localReferenceNumber    <- arbitrary[LocalReferenceNumber]
       created                 <- arbitraryOffsetDateTime.arbitrary
       updated                 <- arbitraryOffsetDateTime.arbitrary
-    } yield MovementSummary(id, enrollmentEORINumber, Some(movementEORINumber), Some(movementReferenceNumber), localReferenceNumber, created, updated)
+    } yield MovementSummary(id, enrollmentEORINumber, Some(movementEORINumber), Some(movementReferenceNumber), Some(localReferenceNumber), created, updated)
   }
 
   implicit private lazy val arbitraryFields: Arbitrary[Map[String, String]] = Arbitrary {

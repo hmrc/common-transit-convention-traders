@@ -77,6 +77,11 @@ trait CommonGenerators {
     } yield PushNotificationsAssociation(clientId, movementType, boxId)
   }
 
+  def alphaNum(maxLen: Int, minLen: Int = 1) = for {
+    len <- Gen.choose(minLen, maxLen)
+    str <- Gen.stringOfN(len, Gen.alphaNumChar)
+  } yield str
+
   implicit lazy val arbitraryMovementReferenceNumber: Arbitrary[MovementReferenceNumber] =
     Arbitrary {
       for {
@@ -90,18 +95,11 @@ trait CommonGenerators {
       } yield MovementReferenceNumber(year ++ country.mkString ++ serial.mkString)
     }
 
-  implicit lazy val arbitraryLocalReferenceNumber: Arbitrary[LocalReferenceNumber] =
-    Arbitrary {
-      for {
-        year <- Gen
-          .choose(0, 99)
-          .map(
-            y => f"$y%02d"
-          )
-        country <- Gen.pick(2, 'A' to 'Z')
-        serial  <- Gen.pick(13, ('A' to 'Z') ++ ('0' to '9'))
-      } yield LocalReferenceNumber(year ++ country.mkString ++ serial.mkString)
-    }
+  implicit lazy val arbitraryLocalReferenceNumber: Arbitrary[LocalReferenceNumber] = Arbitrary {
+    for {
+      ref <- alphaNum(22)
+    } yield LocalReferenceNumber(ref)
+  }
 
   implicit lazy val arbitraryMovementSummary: Arbitrary[MovementSummary] = Arbitrary {
     for {
@@ -109,7 +107,7 @@ trait CommonGenerators {
       enrollmentEORINumber    <- arbitrary[EORINumber]
       movementEORINumber      <- arbitrary[EORINumber]
       movementReferenceNumber <- arbitrary[Option[MovementReferenceNumber]]
-      localReferenceNumber    <- arbitrary[LocalReferenceNumber]
+      localReferenceNumber    <- arbitrary[Option[LocalReferenceNumber]]
       created                 <- arbitrary[OffsetDateTime]
       updated                 <- arbitrary[OffsetDateTime]
     } yield MovementSummary(id, enrollmentEORINumber, Some(movementEORINumber), movementReferenceNumber, localReferenceNumber, created, updated)
