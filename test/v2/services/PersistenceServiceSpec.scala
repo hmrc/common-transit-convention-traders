@@ -36,6 +36,7 @@ import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.Status.NOT_FOUND
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import v2.base.TestActorSystem
 import v2.base.TestCommonGenerators
 import v2.connectors.PersistenceConnector
 import v2.models._
@@ -61,6 +62,7 @@ class PersistenceServiceSpec
     with ScalaFutures
     with MockitoSugar
     with TestCommonGenerators
+    with TestActorSystem
     with ScalaCheckDrivenPropertyChecks
     with BeforeAndAfterEach {
 
@@ -769,6 +771,84 @@ class PersistenceServiceSpec
         whenReady(result.value) {
           _ mustBe expected
         }
+    }
+  }
+
+  "Getting a message body" - {
+
+    val now = OffsetDateTime.now(ZoneOffset.UTC)
+
+    "when a message is found, should return a Right" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementType],
+      arbitrary[MovementId],
+      arbitrary[MessageId]
+    ) {
+      (eori, movementType, movementId, messageId) =>
+        val source = Source.single(ByteString("test"))
+
+        when(
+          mockConnector.getMessageBody(EORINumber(eqTo(eori.value)), eqTo(movementType), MovementId(eqTo(movementId.value)), MessageId(eqTo(messageId.value)))(
+            any(),
+            any(),
+            any()
+          )
+        )
+          .thenReturn(Future.successful(source))
+
+        val result = sut.getMessageBody(eori, movementType, movementId, messageId)
+        whenReady(result.value) {
+          _ mustBe Right(source)
+        }
+    }
+
+    "when a message is not found, should return a Left with an MessageNotFound" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementType],
+      arbitrary[MovementId],
+      arbitrary[MessageId]
+    ) {
+      (eori, movementType, movementId, messageId) =>
+        when(
+          mockConnector.getMessageBody(EORINumber(eqTo(eori.value)), eqTo(movementType), MovementId(eqTo(movementId.value)), MessageId(eqTo(messageId.value)))(
+            any(),
+            any(),
+            any()
+          )
+        )
+          .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
+
+        val result = sut.getMessageBody(eori, movementType, movementId, messageId)
+        whenReady(result.value) {
+          _ mustBe Left(PersistenceError.MessageNotFound(movementId, messageId))
+        }
+    }
+
+    "on a failed submission, should return a Left with an UnexpectedError" in {
+      forAll(
+        arbitrary[EORINumber],
+        arbitrary[MovementType],
+        arbitrary[MovementId],
+        arbitrary[MessageId]
+      ) {
+        (eori, movementType, movementId, messageId) =>
+          val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
+          when(
+            mockConnector.getMessageBody(
+              EORINumber(eqTo(eori.value)),
+              eqTo(movementType),
+              MovementId(eqTo(movementId.value)),
+              MessageId(eqTo(messageId.value))
+            )(any(), any(), any())
+          )
+            .thenReturn(Future.failed(error))
+
+          val result = sut.getMessageBody(eori, movementType, movementId, messageId)
+          whenReady(result.value) {
+            _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
+          }
+      }
+
     }
   }
 }

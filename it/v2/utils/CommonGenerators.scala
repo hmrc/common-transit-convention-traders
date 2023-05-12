@@ -19,9 +19,6 @@ package v2.utils
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
-import uk.gov.hmrc.objectstore.client.Md5Hash
-import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
-import uk.gov.hmrc.objectstore.client.Path
 import v2.models._
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
@@ -34,7 +31,6 @@ import v2.models.responses.MovementSummary
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 import java.util.UUID
 import scala.math.abs
 
@@ -131,22 +127,6 @@ trait CommonGenerators {
       movementId <- arbitrary[MovementId]
       messageId  <- arbitrary[MessageId]
     } yield MovementResponse(movementId, messageId)
-  }
-
-  implicit val arbitraryObjectSummaryWithMd5: Arbitrary[ObjectSummaryWithMd5] = Arbitrary {
-    for {
-      movementId <- arbitraryMovementId.arbitrary
-      messageId  <- arbitraryMessageId.arbitrary
-      lastModified      = Instant.now()
-      formattedDateTime = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC).format(lastModified)
-      contentLen <- Gen.long
-      hash       <- Gen.alphaNumStr.map(Md5Hash)
-    } yield ObjectSummaryWithMd5(
-      Path.Directory("common-transit-convention-traders").file(s"${movementId.value}-${messageId.value}-$formattedDateTime.xml"),
-      contentLen,
-      hash,
-      lastModified
-    )
   }
 
   implicit val arbitraryMessageUpdate: Arbitrary[MessageUpdate] = Arbitrary {

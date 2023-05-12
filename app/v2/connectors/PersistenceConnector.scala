@@ -16,6 +16,7 @@
 
 package v2.connectors
 
+import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.google.inject.ImplementedBy
@@ -108,6 +109,12 @@ trait PersistenceConnector {
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit]
+
+  def getMessageBody(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
+    hc: HeaderCarrier,
+    mat: Materializer,
+    ec: ExecutionContext
+  ): Future[Source[ByteString, _]]
 
 }
 
@@ -250,7 +257,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       .executeAndExpect(OK)
   }
 
-  def updateMessageBody(
+  override def updateMessageBody(
     messageType: MessageType,
     eoriNumber: EORINumber,
     movementType: MovementType,
@@ -261,7 +268,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit] = {
-    val url = appConfig.movementsUrl.withPath(postMessageBodyUrl(eoriNumber, movementType, movementId, messageId))
+    val url = appConfig.movementsUrl.withPath(messageBodyUrl(eoriNumber, movementType, movementId, messageId))
 
     httpClientV2
       .post(url"$url")
@@ -270,4 +277,17 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       .executeAndExpect(CREATED)
   }
 
+  override def getMessageBody(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
+    hc: HeaderCarrier,
+    mat: Materializer,
+    ec: ExecutionContext
+  ): Future[Source[ByteString, _]] = {
+
+    val url = appConfig.movementsUrl.withPath(messageBodyUrl(eoriNumber, movementType, movementId, messageId))
+
+    httpClientV2
+      .get(url"$url")
+      .setHeader(HeaderNames.ACCEPT -> MimeTypes.XML)
+      .executeAsStream
+  }
 }

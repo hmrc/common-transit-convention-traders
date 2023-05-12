@@ -32,7 +32,6 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.MovementId
 import v2.models.request.PushNotificationsAssociation
 import v2.models.responses.BoxResponse
-import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
