@@ -60,6 +60,9 @@ object PresentationError extends CommonFormats {
   def unauthorized(message: String): PresentationError =
     StandardError(message, ErrorCode.Unauthorized)
 
+  def conflictError(message: String): PresentationError =
+    StandardError(message, ErrorCode.Conflict)
+
   def xmlSchemaValidationError(
     message: String = "Request failed schema validation",
     validationErrors: NonEmptyList[XmlValidationError]

@@ -216,6 +216,13 @@ class ConvertErrorSpec
       persistenceErrorConverter.convert(input) mustBe output
     }
 
+    "Departure - LRN + MessageSender already exists returns a conflict error with no exception" in {
+      val input  = PersistenceError.ConflictError("conflict error")
+      val output = PresentationError.conflictError("conflict error")
+
+      persistenceErrorConverter.convert(input) mustBe output
+    }
+
   }
 
   "Router Error" - {

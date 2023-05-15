@@ -83,7 +83,8 @@ trait ConvertError extends Logging {
         PresentationError.notFoundError(s"Message with ID ${messageId.value} for movement ${movementId.value} was not found")
       case MovementsNotFound(eori, movementType) =>
         PresentationError.notFoundError(s"${movementType.movementType.capitalize} movement IDs for ${eori.value} were not found")
-      case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
+      case ConflictError(message) => PresentationError.conflictError(message)
+      case UnexpectedError(thr)   => PresentationError.internalServiceError(cause = thr)
     }
   }
 

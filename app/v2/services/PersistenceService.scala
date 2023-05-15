@@ -22,6 +22,7 @@ import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import play.api.http.Status.CONFLICT
 import play.api.http.Status.NOT_FOUND
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
@@ -115,6 +116,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
           movementResponse => Right(movementResponse)
         }
         .recover {
+          case UpstreamErrorResponse(_, CONFLICT, _, _) => Left(PersistenceError.ConflictError("(\"CC015C\" :: \"TransitOperation\" :: \"LRN\" :: Nil)"))
           case NonFatal(thr) =>
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
