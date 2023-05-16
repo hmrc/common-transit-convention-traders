@@ -27,18 +27,23 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.Logging
 import play.api.http.HeaderNames
+import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.OK
+import play.api.libs.Files
 import play.api.libs.Files.SingletonTemporaryFileCreator
+import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.ActionBuilder
 import play.api.mvc.ActionRefiner
 import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
 import play.api.mvc.BodyParser
+import play.api.mvc.ControllerComponents
 import play.api.mvc.Request
 import play.api.mvc.Result
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
+import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.defaultAwaitTimeout
 import play.api.test.Helpers.status
@@ -54,7 +59,7 @@ import scala.concurrent.Future
 
 class StreamingParsersSpec extends AnyFreeSpec with Matchers with TestActorSystem with OptionValues with TestSourceProvider {
 
-  lazy val headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "text/plain", HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json"))
+  lazy val headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "text/plain", HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json"))
 
   case class TestBodyReplaceableRequest[A](request: Request[A]) extends BodyReplaceableRequest[TestBodyReplaceableRequest, A](request) {
     override def replaceBody(body: A): TestBodyReplaceableRequest[A] = TestBodyReplaceableRequest(request.withBody(body))
@@ -72,9 +77,9 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with TestActorSyste
 
   object Harness extends BaseController with StreamingParsers with Logging {
 
-    override val controllerComponents = stubControllerComponents()
-    implicit val temporaryFileCreator = SingletonTemporaryFileCreator
-    implicit val materializer         = Materializer(TestActorSystem.system)
+    override val controllerComponents: ControllerComponents                     = stubControllerComponents()
+    implicit val temporaryFileCreator: Files.SingletonTemporaryFileCreator.type = SingletonTemporaryFileCreator
+    implicit val materializer: Materializer                                     = Materializer(TestActorSystem.system)
 
     def testFromMemory: Action[Source[ByteString, _]] = Action.async(streamFromMemory) {
       request => result.apply(request).run(request.body)(materializer)
@@ -128,6 +133,28 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with TestActorSyste
       val result  = Harness.resultStream()(request)
       status(result) mustBe OK
       contentAsString(result) mustBe (string ++ string)
+    }
+
+    "via the stream extension method with 0xFF at the beginning should fail" in {
+      val string  = Gen.stringOfN(20, Gen.alphaNumChar).sample.value
+      val request = FakeRequest("POST", "/", headers, Source.single(ByteString.fromArray(Array[Byte](0xff.toByte)) ++ ByteString(string)))
+      val result  = Harness.resultStream()(request)
+      status(result) mustBe BAD_REQUEST
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "BAD_REQUEST",
+        "message" -> s"Invalid character found at beginning of request body: 0xFF. Only UTF-8 is accepted"
+      )
+    }
+
+    "via the stream extension method with 0xFE at the beginning should fail" in {
+      val string  = Gen.stringOfN(20, Gen.alphaNumChar).sample.value
+      val request = FakeRequest("POST", "/", headers, Source.single(ByteString.fromArray(Array[Byte](0xfe.toByte)) ++ ByteString(string)))
+      val result  = Harness.resultStream()(request)
+      status(result) mustBe BAD_REQUEST
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "BAD_REQUEST",
+        "message" -> s"Invalid character found at beginning of request body: 0xFE. Only UTF-8 is accepted"
+      )
     }
 
   }
