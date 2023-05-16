@@ -28,5 +28,5 @@ object PersistenceError {
   case class MovementNotFound(movementId: MovementId, movementType: MovementType) extends PersistenceError
   case class MovementsNotFound(eori: EORINumber, movementType: MovementType)      extends PersistenceError
   case class UnexpectedError(thr: Option[Throwable] = None)                       extends PersistenceError
-  case class ConflictError(message: String)                                       extends PersistenceError
+  case class DuplicateLRNError(message: String)                                   extends PersistenceError
 }

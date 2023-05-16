@@ -116,7 +116,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
           movementResponse => Right(movementResponse)
         }
         .recover {
-          case UpstreamErrorResponse(_, CONFLICT, _, _) => Left(PersistenceError.ConflictError("(\"CC015C\" :: \"TransitOperation\" :: \"LRN\" :: Nil)"))
+          case UpstreamErrorResponse(_, CONFLICT, _, _) => Left(PersistenceError.DuplicateLRNError("LRN has previously been used and cannot be reused"))
           case NonFatal(thr) =>
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }

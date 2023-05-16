@@ -32,6 +32,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import play.api.http.Status.CONFLICT
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.Status.NOT_FOUND
 import uk.gov.hmrc.http.HeaderCarrier
@@ -78,6 +79,7 @@ class PersistenceServiceSpec
     val invalidRequest: Source[ByteString, NotUsed] = Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8))
 
     val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
+    val upstreamConflictResponse         = UpstreamErrorResponse("LRN has previously been used and cannot be reused", CONFLICT)
 
     "on a successful submission, should return a Right" in {
       when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(validRequest)))(any[HeaderCarrier], any[ExecutionContext]))
@@ -94,6 +96,17 @@ class PersistenceServiceSpec
         .thenReturn(Future.failed(upstreamErrorResponse))
       val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, Some(invalidRequest))
       val expected: Either[PersistenceError, MovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
+      whenReady(result.value) {
+        _ mustBe expected
+      }
+    }
+
+    "on a failed submission, should return a Left with a ConflictError" in {
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(invalidRequest)))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenReturn(Future.failed(upstreamConflictResponse))
+      val result = sut.createMovement(EORINumber("1"), MovementType.Departure, Some(invalidRequest))
+      val expected: Either[PersistenceError, MovementResponse] =
+        Left(PersistenceError.DuplicateLRNError("LRN has previously been used and cannot be reused"))
       whenReady(result.value) {
         _ mustBe expected
       }

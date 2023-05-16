@@ -217,8 +217,8 @@ class ConvertErrorSpec
     }
 
     "Departure - LRN + MessageSender already exists returns a conflict error with no exception" in {
-      val input  = PersistenceError.ConflictError("conflict error")
-      val output = PresentationError.conflictError("conflict error")
+      val input  = PersistenceError.DuplicateLRNError("LRN has previously been used and cannot be reused")
+      val output = PresentationError.conflictError("LRN has previously been used and cannot be reused")
 
       persistenceErrorConverter.convert(input) mustBe output
     }
