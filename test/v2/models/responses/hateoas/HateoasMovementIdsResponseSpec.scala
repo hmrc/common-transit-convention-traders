@@ -67,8 +67,6 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
         )
 
         val actual = HateoasMovementIdsResponse(responses, movementType, updatedSince, movementEORI)
-        println(s"EXPECTED: $expected")
-        println(s"ACTUAL: $actual")
         actual mustBe expected
     }
 
