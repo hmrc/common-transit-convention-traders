@@ -4469,7 +4469,7 @@ class V2MovementsControllerSpec
           enrollmentEORINumber = enrolmentEORINumber,
           movementEORINumber = Some(arbitrary[EORINumber].sample.get),
           movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
-          localReferenceNumber = Some(arbitrary[LocalReferenceNumber].sample.value),
+          movementLRN = Some(arbitrary[LocalReferenceNumber].sample.value),
           created = dateTime,
           updated = dateTime.plusHours(1)
         )
@@ -4479,7 +4479,7 @@ class V2MovementsControllerSpec
           enrollmentEORINumber = enrolmentEORINumber,
           movementEORINumber = Some(arbitrary[EORINumber].sample.get),
           movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
-          localReferenceNumber = Some(arbitrary[LocalReferenceNumber].sample.value),
+          movementLRN = Some(arbitrary[LocalReferenceNumber].sample.value),
           created = dateTime.plusHours(2),
           updated = dateTime.plusHours(3)
         )

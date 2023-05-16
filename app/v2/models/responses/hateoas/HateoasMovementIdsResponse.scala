@@ -39,7 +39,7 @@ object HateoasMovementIdsResponse extends HateoasResponse {
             ),
             "id"                      -> response._id.value,
             "movementReferenceNumber" -> response.movementReferenceNumber,
-            "localReferenceNumber"    -> response.localReferenceNumber,
+            "localReferenceNumber"    -> response.movementLRN,
             "created"                 -> response.created,
             "updated"                 -> response.updated,
             "enrollmentEORINumber"    -> response.enrollmentEORINumber,

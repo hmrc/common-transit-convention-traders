@@ -246,7 +246,7 @@ class PersistenceServiceSpec
         enrollmentEORINumber = EORINumber("GB123"),
         movementEORINumber = Some(EORINumber("GB456")),
         movementReferenceNumber = Some(MovementReferenceNumber("MRN001")),
-        localReferenceNumber = Some(LocalReferenceNumber("LRN001")),
+        movementLRN = Some(LocalReferenceNumber("LRN001")),
         created = now,
         updated = now
       )
