@@ -49,6 +49,43 @@ import scala.concurrent.Future
 import scala.util.Try
 import scala.util.control.NonFatal
 
+object StreamingParsers {
+
+  private lazy val invalidBytes: Set[Byte] = Set(
+    0xff,
+    0xfe
+  ).map(_.toByte)
+
+  lazy val isUtf8Sink: Sink[ByteString, Future[Option[Byte]]] =
+    Flow
+      .fromFunction[ByteString, Option[Byte]] {
+        byteString =>
+          if (byteString.isEmpty) None
+          else
+            byteString(0) match {
+              case x if invalidBytes.contains(x) => Some(x) // invalid in UTF-8, these are UTF-16 byte order marks
+              case _                             => None
+            }
+      }
+      .toMat(Sink.head[Option[Byte]])(Keep.right)
+
+  lazy val checkForUtf8: Flow[ByteString, ByteString, Future[Option[Byte]]] =
+    Flow.fromGraph(
+      GraphDSL.createGraph(isUtf8Sink) {
+        implicit builder => sink =>
+          import GraphDSL.Implicits._
+
+          val broadcast = builder.add(Broadcast[ByteString](2))
+
+          // the Sink.head in isUtf8Sink will cause this to only take one element, so we don't need to take(1) it here.
+          broadcast.out(0) ~> sink.in
+
+          FlowShape(broadcast.in, broadcast.out(1))
+      }
+    )
+
+}
+
 trait StreamingParsers {
   self: BaseControllerHelpers with Logging =>
 
@@ -67,39 +104,6 @@ trait StreamingParsers {
   }
 
   implicit class ActionBuilderStreamHelpers[R[A] <: BodyReplaceableRequest[R, A]](actionBuilder: ActionBuilder[R, _]) {
-
-    lazy val invalidBytes: Set[Byte] = Set(
-      0xff,
-      0xfe
-    ).map(_.toByte)
-
-    lazy val isUtf8Sink: Sink[ByteString, Future[Option[Byte]]] =
-      Flow
-        .fromFunction[ByteString, Option[Byte]] {
-          byteString =>
-            if (byteString.isEmpty) None
-            else
-              byteString(0) match {
-                case x if invalidBytes.contains(x) => Some(x) // invalid in UTF-8, these are UTF-16 byte order marks
-                case _                             => None
-              }
-        }
-        .toMat(Sink.head[Option[Byte]])(Keep.right)
-
-    lazy val checkForUtf8: Flow[ByteString, ByteString, Future[Option[Byte]]] =
-      Flow.fromGraph(
-        GraphDSL.createGraph(isUtf8Sink) {
-          implicit builder => sink =>
-            import GraphDSL.Implicits._
-
-            val broadcast = builder.add(Broadcast[ByteString](2))
-
-            // the Sink.head in isUtf8Sink will cause this to only take one element, so we don't need to take(1) it here.
-            broadcast.out(0) ~> sink.in
-
-            FlowShape(broadcast.in, broadcast.out(1))
-        }
-      )
 
     /** Updates the [[Source]] in the [[BodyReplaceableRequest]] with a version that can be used
       *  multiple times via the use of a temporary file.
@@ -129,7 +133,7 @@ trait StreamingParsers {
             .flatMap {
               file =>
                 request.body
-                  .viaMat(checkForUtf8)(Keep.right)
+                  .viaMat(StreamingParsers.checkForUtf8)(Keep.right)
                   .toMat(FileIO.toPath(file))(
                     (utf8, fileIO) =>
                       fileIO.flatMap(
