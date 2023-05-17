@@ -40,7 +40,9 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.base.TestCommonGenerators
 import v2.connectors.PersistenceConnector
 import v2.models._
+import v2.models.errors.LRNError
 import v2.models.errors.PersistenceError
+import v2.models.errors.PersistenceError.DuplicateLRNError
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.responses.MessageSummary
@@ -79,7 +81,10 @@ class PersistenceServiceSpec
     val invalidRequest: Source[ByteString, NotUsed] = Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8))
 
     val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
-    val upstreamConflictResponse         = UpstreamErrorResponse("LRN has previously been used and cannot be reused", CONFLICT)
+    val upstreamLRNErrorResponse = UpstreamErrorResponse(
+      "{\"message\":\"LRN 4CnsTh79I7vtOW54 has previously been used and cannot be reused\",\"code\":\"CONFLICT\",\"lrn\":\"4CnsTh79I7vtOW54\"}",
+      CONFLICT
+    )
 
     "on a successful submission, should return a Right" in {
       when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(validRequest)))(any[HeaderCarrier], any[ExecutionContext]))
@@ -103,10 +108,15 @@ class PersistenceServiceSpec
 
     "on a failed submission, should return a Left with a ConflictError" in {
       when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(invalidRequest)))(any[HeaderCarrier], any[ExecutionContext]))
-        .thenReturn(Future.failed(upstreamConflictResponse))
-      val result = sut.createMovement(EORINumber("1"), MovementType.Departure, Some(invalidRequest))
+        .thenReturn(
+          Future.failed(
+            upstreamLRNErrorResponse
+          )
+        )
+      val result   = sut.createMovement(EORINumber("1"), MovementType.Departure, Some(invalidRequest))
+      val lrnError = LRNError(message = "LRN 4CnsTh79I7vtOW54 has previously been used and cannot be reused", code = "CONFLICT", lrn = "4CnsTh79I7vtOW54")
       val expected: Either[PersistenceError, MovementResponse] =
-        Left(PersistenceError.DuplicateLRNError("LRN has previously been used and cannot be reused"))
+        Left(PersistenceError.DuplicateLRNError(LocalReferenceNumber(lrnError.lrn)))
       whenReady(result.value) {
         _ mustBe expected
       }

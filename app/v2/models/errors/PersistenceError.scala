@@ -17,6 +17,7 @@
 package v2.models.errors
 
 import v2.models.EORINumber
+import v2.models.LocalReferenceNumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
@@ -28,5 +29,5 @@ object PersistenceError {
   case class MovementNotFound(movementId: MovementId, movementType: MovementType) extends PersistenceError
   case class MovementsNotFound(eori: EORINumber, movementType: MovementType)      extends PersistenceError
   case class UnexpectedError(thr: Option[Throwable] = None)                       extends PersistenceError
-  case class DuplicateLRNError(message: String)                                   extends PersistenceError
+  case class DuplicateLRNError(lrn: LocalReferenceNumber)                         extends PersistenceError
 }

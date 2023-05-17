@@ -29,6 +29,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.Logging
 import v2.base.TestCommonGenerators
 import v2.models.EORINumber
+import v2.models.LocalReferenceNumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
@@ -48,6 +49,7 @@ import v2.models.errors.FailedToValidateError.JsonSchemaFailedToValidateError
 import v2.models.errors.FailedToValidateError.ParsingError
 import v2.models.errors.FailedToValidateError.UnexpectedError
 import v2.models.errors.FailedToValidateError.XmlSchemaFailedToValidateError
+import v2.models.errors.PersistenceError.DuplicateLRNError
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -217,8 +219,9 @@ class ConvertErrorSpec
     }
 
     "Departure - LRN + MessageSender already exists returns a conflict error with no exception" in {
-      val input  = PersistenceError.DuplicateLRNError("LRN has previously been used and cannot be reused")
-      val output = PresentationError.conflictError("LRN has previously been used and cannot be reused")
+      val lrn    = LocalReferenceNumber("1234")
+      val input  = DuplicateLRNError(lrn)
+      val output = PresentationError.conflictError(s"LRN ${lrn.value} has previously been used and cannot be reused")
 
       persistenceErrorConverter.convert(input) mustBe output
     }
