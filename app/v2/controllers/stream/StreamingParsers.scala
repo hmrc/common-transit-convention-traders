@@ -67,6 +67,10 @@ object StreamingParsers {
               case _                             => None
             }
       }
+      .take(1)
+      .fold[Option[Byte]](None)(
+        (_, in) => in
+      )
       .toMat(Sink.head[Option[Byte]])(Keep.right)
 
   lazy val checkForUtf8: Flow[ByteString, ByteString, Future[Option[Byte]]] =

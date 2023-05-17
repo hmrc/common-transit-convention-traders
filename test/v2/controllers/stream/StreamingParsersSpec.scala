@@ -172,6 +172,12 @@ class StreamingParsersSpec
   "Companion Object" - {
 
     "isUtf8Sink" - {
+      "for an empty stream, return None" in {
+        whenReady(Source.empty[ByteString].runWith(StreamingParsers.isUtf8Sink)) {
+          case None    => succeed
+          case Some(x) => fail(s"Should have returned nothing, not $x")
+        }
+      }
 
       "for an empty byte string, return None" in {
         whenReady(Source.single(ByteString()).runWith(StreamingParsers.isUtf8Sink)) {
