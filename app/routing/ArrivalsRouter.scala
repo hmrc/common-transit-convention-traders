@@ -30,6 +30,7 @@ import v2.controllers.V2MovementsController
 import v2.controllers.stream.StreamingParsers
 import models.domain.{MessageId => V1MessageId}
 import v2.models.EORINumber
+import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.{MessageId => V2MessageId}
 import v2.models.{MovementId => V2ArrivalId}
@@ -110,9 +111,14 @@ class ArrivalsRouter @Inject() (
       )
   }
 
-  def getArrivalsForEori(updatedSince: Option[OffsetDateTime] = None, movementEORI: Option[EORINumber] = None): Action[Source[ByteString, _]] = route {
-    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => v2Arrivals.getMovements(MovementType.Arrival, updatedSince, movementEORI)
-    case _                                                        => v1Arrivals.getArrivalsForEori(updatedSince)
+  def getArrivalsForEori(
+    updatedSince: Option[OffsetDateTime] = None,
+    movementEORI: Option[EORINumber] = None,
+    movementReferenceNumber: Option[MovementReferenceNumber] = None
+  ): Action[Source[ByteString, _]] = route {
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
+      v2Arrivals.getMovements(MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber)
+    case _ => v1Arrivals.getArrivalsForEori(updatedSince)
   }
 
   def attachMessage(arrivalId: String): Action[Source[ByteString, _]] = route {
