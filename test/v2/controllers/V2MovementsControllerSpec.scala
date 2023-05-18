@@ -87,7 +87,6 @@ import v2.models.LocalReferenceNumber
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
-import v2.models.responses.TraderFailedUploadAuditRequest
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.UploadDetails
 import v2.models.responses.UpscanFailedResponse
