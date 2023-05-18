@@ -17,6 +17,7 @@
 package v2.models.responses
 
 import v2.models.EORINumber
+import v2.models.LocalReferenceNumber
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import play.api.libs.json.Json

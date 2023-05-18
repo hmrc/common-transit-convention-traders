@@ -39,7 +39,7 @@ import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.UpscanResponse.Reference
 import v2.models.responses.BoxResponse
 import v2.models.responses.FailureDetails
-import v2.models.responses.LocalReferenceNumber
+import v2.models.LocalReferenceNumber
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary

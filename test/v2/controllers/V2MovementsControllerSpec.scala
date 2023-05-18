@@ -83,7 +83,7 @@ import v2.models.errors._
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.responses.FailureDetails
-import v2.models.responses.LocalReferenceNumber
+import v2.models.LocalReferenceNumber
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary

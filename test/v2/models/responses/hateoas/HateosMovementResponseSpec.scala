@@ -25,7 +25,7 @@ import v2.base.TestCommonGenerators
 import v2.models.EORINumber
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
-import v2.models.responses.LocalReferenceNumber
+import v2.models.LocalReferenceNumber
 import v2.models.responses.MovementSummary
 
 import java.time.OffsetDateTime

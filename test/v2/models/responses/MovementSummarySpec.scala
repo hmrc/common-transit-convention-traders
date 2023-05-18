@@ -23,6 +23,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
 import v2.models.EORINumber
+import v2.models.LocalReferenceNumber
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 
