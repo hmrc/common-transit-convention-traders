@@ -44,7 +44,7 @@ class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaChe
         enrollmentEORINumber = EORINumber("GB123"),
         movementEORINumber = Some(EORINumber("GB456")),
         movementReferenceNumber = Some(MovementReferenceNumber("MRN001")),
-        movementLRN = Some(LocalReferenceNumber("LRN001")),
+        localReferenceNumber = Some(LocalReferenceNumber("LRN001")),
         created = dateTime,
         updated = dateTime
       )

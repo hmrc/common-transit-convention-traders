@@ -32,7 +32,7 @@ case class MovementSummary(
   enrollmentEORINumber: EORINumber,
   movementEORINumber: Option[EORINumber],
   movementReferenceNumber: Option[MovementReferenceNumber],
-  movementLRN: Option[LocalReferenceNumber],
+  localReferenceNumber: Option[LocalReferenceNumber],
   created: OffsetDateTime,
   updated: OffsetDateTime
 )

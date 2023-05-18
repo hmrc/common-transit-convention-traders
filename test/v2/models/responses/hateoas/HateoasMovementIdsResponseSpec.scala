@@ -57,7 +57,7 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
                 ),
                 "id"                      -> movementResponse._id.value,
                 "movementReferenceNumber" -> movementResponse.movementReferenceNumber.value,
-                "localReferenceNumber"    -> movementResponse.movementLRN.value,
+                "localReferenceNumber"    -> movementResponse.localReferenceNumber.value,
                 "created"                 -> movementResponse.created,
                 "updated"                 -> movementResponse.updated,
                 "enrollmentEORINumber"    -> movementResponse.enrollmentEORINumber,
