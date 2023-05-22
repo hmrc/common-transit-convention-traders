@@ -18,27 +18,35 @@ package v2.controllers.stream
 
 import akka.NotUsed
 import akka.stream.Materializer
+import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.Logging
 import play.api.http.HeaderNames
+import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.OK
+import play.api.libs.Files
 import play.api.libs.Files.SingletonTemporaryFileCreator
+import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.ActionBuilder
 import play.api.mvc.ActionRefiner
 import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
 import play.api.mvc.BodyParser
+import play.api.mvc.ControllerComponents
 import play.api.mvc.Request
 import play.api.mvc.Result
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
+import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.defaultAwaitTimeout
 import play.api.test.Helpers.status
@@ -52,9 +60,16 @@ import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class StreamingParsersSpec extends AnyFreeSpec with Matchers with TestActorSystem with OptionValues with TestSourceProvider {
+class StreamingParsersSpec
+    extends AnyFreeSpec
+    with Matchers
+    with TestActorSystem
+    with OptionValues
+    with TestSourceProvider
+    with ScalaFutures
+    with ScalaCheckDrivenPropertyChecks {
 
-  lazy val headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "text/plain", HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json"))
+  lazy val headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "text/plain", HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json"))
 
   case class TestBodyReplaceableRequest[A](request: Request[A]) extends BodyReplaceableRequest[TestBodyReplaceableRequest, A](request) {
     override def replaceBody(body: A): TestBodyReplaceableRequest[A] = TestBodyReplaceableRequest(request.withBody(body))
@@ -72,9 +87,9 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with TestActorSyste
 
   object Harness extends BaseController with StreamingParsers with Logging {
 
-    override val controllerComponents = stubControllerComponents()
-    implicit val temporaryFileCreator = SingletonTemporaryFileCreator
-    implicit val materializer         = Materializer(TestActorSystem.system)
+    override val controllerComponents: ControllerComponents                     = stubControllerComponents()
+    implicit val temporaryFileCreator: Files.SingletonTemporaryFileCreator.type = SingletonTemporaryFileCreator
+    implicit val materializer: Materializer                                     = Materializer(TestActorSystem.system)
 
     def testFromMemory: Action[Source[ByteString, _]] = Action.async(streamFromMemory) {
       request => result.apply(request).run(request.body)(materializer)
@@ -128,6 +143,146 @@ class StreamingParsersSpec extends AnyFreeSpec with Matchers with TestActorSyste
       val result  = Harness.resultStream()(request)
       status(result) mustBe OK
       contentAsString(result) mustBe (string ++ string)
+    }
+
+    "via the stream extension method with 0xFF at the beginning should fail" in {
+      val string  = Gen.stringOfN(20, Gen.alphaNumChar).sample.value
+      val request = FakeRequest("POST", "/", headers, Source.single(ByteString.fromArray(Array[Byte](0xff.toByte)) ++ ByteString(string)))
+      val result  = Harness.resultStream()(request)
+      status(result) mustBe BAD_REQUEST
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "BAD_REQUEST",
+        "message" -> s"Invalid character found at beginning of request body: 0xFF. Only UTF-8 is accepted"
+      )
+    }
+
+    "via the stream extension method with 0xFE at the beginning should fail" in {
+      val string  = Gen.stringOfN(20, Gen.alphaNumChar).sample.value
+      val request = FakeRequest("POST", "/", headers, Source.single(ByteString.fromArray(Array[Byte](0xfe.toByte)) ++ ByteString(string)))
+      val result  = Harness.resultStream()(request)
+      status(result) mustBe BAD_REQUEST
+      contentAsJson(result) mustBe Json.obj(
+        "code"    -> "BAD_REQUEST",
+        "message" -> s"Invalid character found at beginning of request body: 0xFE. Only UTF-8 is accepted"
+      )
+    }
+
+  }
+
+  "Companion Object" - {
+
+    "isUtf8Sink" - {
+      "for an empty stream, return None" in {
+        whenReady(Source.empty[ByteString].runWith(StreamingParsers.isUtf8Sink)) {
+          case None    => succeed
+          case Some(x) => fail(s"Should have returned nothing, not $x")
+        }
+      }
+
+      "for an empty byte string, return None" in {
+        whenReady(Source.single(ByteString()).runWith(StreamingParsers.isUtf8Sink)) {
+          case None    => succeed
+          case Some(x) => fail(s"Should have returned nothing, not $x")
+        }
+      }
+
+      "for a valid byte string, return None" in {
+        val string = Gen.stringOfN(20, Gen.alphaNumChar).sample.value
+        whenReady(Source.single(ByteString(string)).runWith(StreamingParsers.isUtf8Sink)) {
+          case None    => succeed
+          case Some(x) => fail(s"Should have returned nothing, not $x")
+        }
+      }
+
+      "for a invalid byte string, return Some of that byte string" in forAll(Gen.oneOf[Byte](0xff.toByte, 0xfe.toByte)) {
+        byte =>
+          val string = ByteString(byte) ++ ByteString(Gen.stringOfN(20, Gen.alphaNumChar).sample.value)
+          whenReady(Source.single(string).runWith(StreamingParsers.isUtf8Sink)) {
+            case Some(`byte`) => succeed
+            case Some(x)      => fail(s"Should have returned Some($byte), not $x")
+            case None         => fail(s"Should have returned Some($byte), not None")
+          }
+      }
+
+      "for a invalid byte string at the head of a sequence of byte strings, return Some of that byte string" in forAll(
+        Gen.oneOf[Byte](0xff.toByte, 0xfe.toByte)
+      ) {
+        byte =>
+          val string = ByteString(byte) ++ ByteString(Gen.stringOfN(20, Gen.alphaNumChar).sample.value)
+          val seq    = Seq(string, ByteString(Gen.stringOfN(20, Gen.alphaNumChar).sample.value))
+          whenReady(
+            Source
+              .fromIterator(
+                () => seq.iterator
+              )
+              .runWith(StreamingParsers.isUtf8Sink)
+          ) {
+            case Some(`byte`) => succeed
+            case Some(x)      => fail(s"Should have returned Some($byte), not $x")
+            case None         => fail(s"Should have returned Some($byte), not None")
+          }
+      }
+
+      // We don't want to scan the entire string, we're only interested in the BOM
+      "for a invalid byte string at the tail of a sequence of byte strings, return None" in forAll(Gen.oneOf[Byte](0xff.toByte, 0xfe.toByte)) {
+        byte =>
+          val string = ByteString(byte) ++ ByteString(Gen.stringOfN(20, Gen.alphaNumChar).sample.value)
+          val seq    = Seq(ByteString(Gen.stringOfN(20, Gen.alphaNumChar).sample.value), string)
+          whenReady(
+            Source
+              .fromIterator(
+                () => seq.iterator
+              )
+              .runWith(StreamingParsers.isUtf8Sink)
+          ) {
+            case None    => succeed
+            case Some(x) => fail(s"Should have returned None, not Some($x)")
+          }
+      }
+    }
+
+    "checkForUtf8" - {
+      "ensure we can get the result of the check as well as complete the stream if it's valid" in {
+        val string = ByteString(Gen.stringOfN(20, Gen.alphaNumChar).sample.value)
+        val seq    = Seq(ByteString(Gen.stringOfN(20, Gen.alphaNumChar).sample.value), string)
+        val (utf8future, lastItemFuture) = Source
+          .fromIterator(
+            () => seq.iterator
+          )
+          .viaMat(StreamingParsers.checkForUtf8)(Keep.right)
+          .toMat(Sink.last)(Keep.both)
+          .run()
+        whenReady(utf8future) {
+          case None    => succeed
+          case Some(x) => fail(s"Should have returned None, not Some($x)")
+        }
+
+        whenReady(lastItemFuture) {
+          result => result.utf8String mustBe string.utf8String
+        }
+      }
+
+      "ensure we can get the result of the check as well as complete the stream if it's invalid" in forAll(Gen.oneOf[Byte](0xff.toByte, 0xfe.toByte)) {
+        byte =>
+          val string = ByteString(Gen.stringOfN(20, Gen.alphaNumChar).sample.value)
+          val seq    = Seq(ByteString(byte) ++ ByteString(Gen.stringOfN(20, Gen.alphaNumChar).sample.value), string)
+          val (utf8future, lastItemFuture) = Source
+            .fromIterator(
+              () => seq.iterator
+            )
+            .viaMat(StreamingParsers.checkForUtf8)(Keep.right)
+            .toMat(Sink.last)(Keep.both)
+            .run()
+          whenReady(utf8future) {
+            case Some(`byte`) => succeed
+            case Some(x)      => fail(s"Should have returned Some($byte), not $x")
+            case None         => fail(s"Should have returned Some($byte), not None")
+          }
+
+          whenReady(lastItemFuture) {
+            result => result mustBe string
+          }
+      }
     }
 
   }
