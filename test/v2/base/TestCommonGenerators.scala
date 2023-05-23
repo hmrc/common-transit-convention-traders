@@ -19,9 +19,6 @@ package v2.base
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
-import uk.gov.hmrc.objectstore.client.Md5Hash
-import uk.gov.hmrc.objectstore.client.ObjectSummaryWithMd5
-import uk.gov.hmrc.objectstore.client.Path
 import v2.models.AuditType
 import v2.models.BoxId
 import v2.models.EORINumber
@@ -30,7 +27,6 @@ import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
-import v2.models.ObjectStoreResourceLocation
 import v2.models.ObjectStoreURI
 import v2.models.XmlPayload
 import v2.models.request.MessageType
@@ -207,34 +203,6 @@ trait TestCommonGenerators {
       reference      <- Gen.alphaNumStr
       failureDetails <- arbitrary[FailureDetails]
     } yield UpscanFailedResponse(Reference(reference), failureDetails)
-  }
-
-  implicit val arbitraryObjectSummaryWithMd5: Arbitrary[ObjectSummaryWithMd5] = Arbitrary {
-    for {
-      movementId <- arbitraryMovementId.arbitrary
-      messageId  <- arbitraryMessageId.arbitrary
-      lastModified      = Instant.now()
-      formattedDateTime = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC).format(lastModified)
-      contentLen <- Gen.long
-      hash       <- Gen.alphaNumStr.map(Md5Hash)
-    } yield ObjectSummaryWithMd5(
-      Path.Directory("common-transit-convention-traders").file(s"${movementId.value}-${messageId.value}-$formattedDateTime.xml"),
-      contentLen,
-      hash,
-      lastModified
-    )
-  }
-
-  implicit val arbitraryObjectStoreResourceLocation: Arbitrary[ObjectStoreResourceLocation] = Arbitrary {
-    for {
-      movementId <- arbitraryMovementId.arbitrary
-      messageId  <- arbitraryMessageId.arbitrary
-      lastModified      = Instant.now()
-      formattedDateTime = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC).format(lastModified)
-
-    } yield ObjectStoreResourceLocation(
-      s"${movementId.value}-${messageId.value}-$formattedDateTime.xml"
-    )
   }
 
   implicit val arbitraryMessageUpdate: Arbitrary[MessageUpdate] = Arbitrary {

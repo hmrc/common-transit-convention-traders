@@ -17,8 +17,14 @@
 package v2.controllers.stream
 
 import akka.NotUsed
+import akka.stream.FlowShape
 import akka.stream.Materializer
+import akka.stream.scaladsl.Broadcast
 import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Flow
+import akka.stream.scaladsl.GraphDSL
+import akka.stream.scaladsl.Keep
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
@@ -33,7 +39,6 @@ import play.api.mvc.ActionBuilder
 import play.api.mvc.BaseControllerHelpers
 import play.api.mvc.BodyParser
 import play.api.mvc.Result
-import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.request.BodyReplaceableRequest
 import v2.models.errors.PresentationError
 
@@ -43,6 +48,47 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Try
 import scala.util.control.NonFatal
+
+object StreamingParsers {
+
+  private lazy val invalidBytes: Set[Byte] = Set(
+    0xff,
+    0xfe
+  ).map(_.toByte)
+
+  lazy val isUtf8Sink: Sink[ByteString, Future[Option[Byte]]] =
+    Flow
+      .fromFunction[ByteString, Option[Byte]] {
+        byteString =>
+          if (byteString.isEmpty) None
+          else
+            byteString(0) match {
+              case x if invalidBytes.contains(x) => Some(x) // invalid in UTF-8, these are UTF-16 byte order marks
+              case _                             => None
+            }
+      }
+      .take(1)
+      .fold[Option[Byte]](None)(
+        (_, in) => in
+      )
+      .toMat(Sink.head[Option[Byte]])(Keep.right)
+
+  lazy val checkForUtf8: Flow[ByteString, ByteString, Future[Option[Byte]]] =
+    Flow.fromGraph(
+      GraphDSL.createGraph(isUtf8Sink) {
+        implicit builder => sink =>
+          import GraphDSL.Implicits._
+
+          val broadcast = builder.add(Broadcast[ByteString](2))
+
+          // the Sink.head in isUtf8Sink will cause this to only take one element, so we don't need to take(1) it here.
+          broadcast.out(0) ~> sink.in
+
+          FlowShape(broadcast.in, broadcast.out(1))
+      }
+    )
+
+}
 
 trait StreamingParsers {
   self: BaseControllerHelpers with Logging =>
@@ -75,22 +121,12 @@ trait StreamingParsers {
     def stream(
       block: R[Source[ByteString, _]] => Future[Result]
     )(implicit temporaryFileCreator: TemporaryFileCreator): Action[Source[ByteString, _]] =
-      actionBuilder.async(streamFromMemory) {
-        request =>
-          val file = temporaryFileCreator.create()
-          (for {
-            _      <- request.body.runWith(FileIO.toPath(file))
-            result <- block(request.replaceBody(FileIO.fromPath(file)))
-          } yield result)
-            .attemptTap {
-              _ =>
-                file.delete()
-                Future.successful(())
-            }
-      }
+      streamWithSize(
+        request => _ => block(request)
+      )
 
     def streamWithSize(
-      block: AuthenticatedRequest[Source[ByteString, _]] => Long => Future[Result]
+      block: R[Source[ByteString, _]] => Long => Future[Result]
     )(implicit temporaryFileCreator: TemporaryFileCreator): Action[Source[ByteString, _]] =
       actionBuilder.async(streamFromMemory) {
         request =>
@@ -100,11 +136,26 @@ trait StreamingParsers {
             .fromTry(Try(temporaryFileCreator.create()))
             .flatMap {
               file =>
-                (for {
-                  _      <- request.body.runWith(FileIO.toPath(file))
-                  size   <- Future.fromTry(Try(Files.size(file)))
-                  result <- block(request.replaceBody(FileIO.fromPath(file)).asInstanceOf[AuthenticatedRequest[Source[ByteString, _]]])(size)
-                } yield result)
+                request.body
+                  .viaMat(StreamingParsers.checkForUtf8)(Keep.right)
+                  .toMat(FileIO.toPath(file))(
+                    (utf8, fileIO) =>
+                      fileIO.flatMap(
+                        _ => utf8
+                      )
+                  )
+                  .run()
+                  .flatMap {
+                    case None => calculateResult(file, block(request.replaceBody(FileIO.fromPath(file))))
+                    case Some(firstByte) =>
+                      val hex = "%02X".format(firstByte)
+                      Future.successful(
+                        Status(BAD_REQUEST)(
+                          Json
+                            .toJson(PresentationError.badRequestError(s"Invalid character found at beginning of request body: 0x$hex. Only UTF-8 is accepted"))
+                        )
+                      )
+                  }
                   .attemptTap {
                     _ =>
                       file.delete()
@@ -117,6 +168,12 @@ trait StreamingParsers {
                 Status(INTERNAL_SERVER_ERROR)(Json.toJson(PresentationError.internalServiceError(cause = Some(ex))))
             }
       }
+
+    private def calculateResult(file: play.api.libs.Files.TemporaryFile, block: Long => Future[Result]): Future[Result] =
+      for {
+        size   <- Future.fromTry(Try(Files.size(file)))
+        result <- block(size)
+      } yield result
   }
 
   private val START_TOKEN: Source[ByteString, NotUsed]                 = Source.single(ByteString("{"))
@@ -166,12 +223,18 @@ trait StreamingParsers {
         }
     }
 
-  def jsonToByteStringStream(fields: collection.Seq[(String, JsValue)]): EitherT[Future, PresentationError, Source[ByteString, _]] =
+  def jsonToByteStringStream(
+    fields: collection.Seq[(String, JsValue)],
+    fieldName: String,
+    stream: Source[ByteString, _]
+  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
     EitherT {
       Future
         .successful(
           Right(
-            START_TOKEN ++ jsonFieldsToByteString(fields) ++ END_TOKEN_SOURCE
+            START_TOKEN ++ jsonFieldsToByteString(fields) ++ COMMA_SOURCE ++ Source.single(
+              ByteString(s""""$fieldName":""".stripMargin)
+            ) ++ stream ++ END_TOKEN_SOURCE
           )
         )
         .recover {

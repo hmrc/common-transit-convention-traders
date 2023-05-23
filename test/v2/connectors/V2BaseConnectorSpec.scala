@@ -53,7 +53,6 @@ import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
-import v2.models.ObjectStoreResourceLocation
 import v2.models.request.MessageType
 
 import scala.annotation.nowarn
@@ -148,13 +147,10 @@ class V2BaseConnectorSpec
         .toString() mustBe s"/transit-movements/traders/${eori.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
   }
 
-  "the auditing URL on localhost for a given audit type should be as expected" in forAll(arbitrary[AuditType], arbitrary[ObjectStoreResourceLocation]) {
-    (auditType, location) =>
+  "the auditing URL on localhost for a given audit type should be as expected" in forAll(arbitrary[AuditType]) {
+    auditType =>
       val urlPathSmall = Harness.auditingRoute(auditType)
       urlPathSmall.toString() mustBe s"/transit-movements-auditing/audit/${auditType.name}"
-
-      val urlPathLarge = Harness.auditingRoute(auditType, Some(location))
-      urlPathLarge.toString() mustBe s"/transit-movements-auditing/audit/${auditType.name}/uri/${location.value}"
   }
 
   "the conversion URL on localhost for a given message type should be as expected" in forAll(arbitrary[MessageType]) {

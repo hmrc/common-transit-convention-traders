@@ -132,14 +132,4 @@ trait ConvertError extends Logging {
       case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
     }
   }
-
-  implicit val objectStoreErrorConverter = new Converter[ObjectStoreError] {
-
-    import v2.models.errors.ObjectStoreError._
-
-    override def convert(objectStoreError: ObjectStoreError): PresentationError = objectStoreError match {
-      case UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
-      case FileNotFound(_)      => PresentationError.internalServiceError()
-    }
-  }
 }
