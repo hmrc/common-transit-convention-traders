@@ -14,31 +14,22 @@
  * limitations under the License.
  */
 
-package v2.utils
+package v2.base
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import cats.data.EitherT
-import v2.models.errors.StreamingError
+import org.mockito.ArgumentMatcher
+import play.api.test.Helpers.await
+import play.api.test.Helpers.defaultAwaitTimeout
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.util.control.NonFatal
+object SourceMatcher {
+  def apply(comparison: String => Boolean)(implicit mat: Materializer): ArgumentMatcher[Source[ByteString, _]] = new SourceMatcher(comparison)
+}
 
-object StreamingUtils {
+class SourceMatcher(comparison: String => Boolean)(implicit mat: Materializer) extends ArgumentMatcher[Source[ByteString, _]] {
 
-  def convertSourceToString(
-    source: Source[ByteString, _]
-  )(implicit ec: ExecutionContext, mat: Materializer): EitherT[Future, StreamingError, String] = EitherT {
-    source
-      .reduce(_ ++ _)
-      .map(_.utf8String)
-      .runWith(Sink.head[String])
-      .map(Right[StreamingError, String])
-      .recover {
-        case NonFatal(ex) => Left[StreamingError, String](StreamingError.UnexpectedError(Some(ex)))
-      }
-  }
+  override def matches(argument: Source[ByteString, _]): Boolean =
+    comparison(await(argument.reduce(_ ++ _).map(_.utf8String).runWith(Sink.head[String])))
 }

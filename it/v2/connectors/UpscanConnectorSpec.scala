@@ -16,7 +16,9 @@
 
 package v2.connectors
 
+import akka.stream.scaladsl.Sink
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
+import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
@@ -35,17 +37,14 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.TestMetrics
 import utils.WiremockSuite
+import v2.base.TestActorSystem
 import v2.models.responses.UpscanFormTemplate
 import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.UpscanReference
+import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import akka.stream.scaladsl.Sink
-import com.github.tomakehurst.wiremock.client.WireMock.get
-import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
-import v2.base.TestActorSystem
-import v2.models.responses.UpscanResponse.DownloadUrl
 
 class UpscanConnectorSpec
     extends AnyFreeSpec
