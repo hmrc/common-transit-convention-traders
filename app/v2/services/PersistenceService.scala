@@ -178,7 +178,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[MovementSummary]] = EitherT(
+  ): EitherT[Future, PersistenceError, Seq[MovementSummary]] = EitherT {
     persistenceConnector
       .getMovements(eori, movementType, updatedSince, movementEORI, movementReferenceNumber)
       .map(Right(_))
@@ -186,7 +186,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementsNotFound(eori, movementType))
         case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
       }
-  )
+  }
 
   override def addMessage(movementId: MovementId, movementType: MovementType, messageType: Option[MessageType], source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,

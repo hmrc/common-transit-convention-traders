@@ -410,13 +410,12 @@ class V2MovementsControllerImpl @Inject() (
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
         persistenceService
           .getMovements(request.eoriNumber, movementType, updatedSince, movementEORI, movementReferenceNumber)
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasMovementIdsResponse(response, movementType, updatedSince, movementEORI)))
+            response => Ok(Json.toJson(HateoasMovementIdsResponse(response, movementType, updatedSince, movementEORI, movementReferenceNumber)))
           )
     }
 
