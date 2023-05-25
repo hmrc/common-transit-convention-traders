@@ -16,6 +16,7 @@
 
 package v2.services
 
+import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
@@ -104,6 +105,16 @@ trait PersistenceService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Unit]
 
+  def getMessageBody(
+    eoriNumber: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId
+  )(implicit
+    hc: HeaderCarrier,
+    mat: Materializer,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, Source[ByteString, _]]
 }
 
 @Singleton
@@ -239,4 +250,18 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         }
     )
 
+  override def getMessageBody(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
+    hc: HeaderCarrier,
+    mat: Materializer,
+    ec: ExecutionContext
+  ): EitherT[Future, PersistenceError, Source[ByteString, _]] =
+    EitherT(
+      persistenceConnector
+        .getMessageBody(eoriNumber, movementType, movementId, messageId)
+        .map(Right(_))
+        .recover {
+          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
+          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+        }
+    )
 }

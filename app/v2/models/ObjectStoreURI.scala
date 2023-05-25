@@ -19,26 +19,8 @@ package v2.models
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 
-import scala.util.matching.Regex
-
 object ObjectStoreURI {
-  val expectedOwner = "common-transit-convention-traders"
-
-  // The URI consists of the service name in the first part of the path, followed
-  // by the location of the object in the context of that service. As this service
-  // targets common-transit-convention-traders' objects exclusively, we ensure
-  // the URI is targeting that context. This regex ensures that this is the case.
-  lazy val expectedUriPattern: Regex = s"^$expectedOwner/(.+)$$".r
-
   implicit val objectStoreURIformat: Format[ObjectStoreURI] = Json.valueFormat[ObjectStoreURI]
 }
 
-case class ObjectStoreURI(value: String) extends AnyVal {
-
-  def asResourceLocation: Option[ObjectStoreResourceLocation] =
-    ObjectStoreURI.expectedUriPattern
-      .findFirstMatchIn(value)
-      .map(_.group(1))
-      .map(ObjectStoreResourceLocation.apply)
-
-}
+case class ObjectStoreURI(value: String) extends AnyVal

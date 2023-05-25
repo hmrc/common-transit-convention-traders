@@ -13,8 +13,7 @@ object AppDependencies {
     "io.lemonlabs"            %% "scala-uri"                          % "3.6.0",
     "com.typesafe.akka"       %% "akka-stream-contrib"                % "0.11+4-91b2f9fa",
     "com.lightbend.akka"      %% "akka-stream-alpakka-xml"            % "3.0.4",
-    "com.lightbend.akka"      %% "akka-stream-alpakka-json-streaming" % "3.0.4",
-    "uk.gov.hmrc.objectstore" %% "object-store-client-play-28"        % "1.0.0"
+    "com.lightbend.akka"      %% "akka-stream-alpakka-json-streaming" % "3.0.4"
   )
 
   val test = Seq(

@@ -16,6 +16,8 @@
 
 package v2.services
 
+import akka.stream.Attributes
+import akka.stream.Attributes.LogLevels
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Keep
@@ -56,6 +58,11 @@ class JsonMessageParsingServiceImpl @Inject() (implicit materializer: Materializ
       source
         .viaMat(JsonReader.select("$.*.messageType"))(Keep.right)
         .via(Flow.fromFunction(_.utf8String))
+        .withAttributes(
+          Attributes.logLevels(
+            onFinish = LogLevels.Off // prevents exceptions when traders send malformed XML
+          )
+        )
         .runWith(Sink.head)
         .map {
           mt =>
