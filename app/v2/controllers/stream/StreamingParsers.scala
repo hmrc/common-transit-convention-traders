@@ -17,12 +17,9 @@
 package v2.controllers.stream
 
 import akka.NotUsed
-import akka.stream.FlowShape
 import akka.stream.Materializer
-import akka.stream.scaladsl.Broadcast
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.GraphDSL
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
@@ -40,6 +37,7 @@ import play.api.mvc.BaseControllerHelpers
 import play.api.mvc.BodyParser
 import play.api.mvc.Result
 import v2.controllers.request.BodyReplaceableRequest
+import v2.controllers.stream.StreamingParsers.isUtf8Sink
 import v2.models.errors.PresentationError
 
 import java.nio.file.Files
@@ -73,28 +71,6 @@ object StreamingParsers extends Logging {
         (_, in) => in
       )
       .toMat(Sink.head[Option[Byte]])(Keep.right)
-
-  lazy val checkForUtf8: Flow[ByteString, ByteString, Future[Option[Byte]]] =
-    Flow.fromGraph(
-      GraphDSL.createGraph(isUtf8Sink) {
-        implicit builder => sink =>
-          import GraphDSL.Implicits._
-
-          val broadcast = builder.add(Broadcast[ByteString](2))
-          val log = builder.add(Flow.fromFunction[ByteString, ByteString] {
-            in =>
-              if (!in.isEmpty) {
-                logger.warn("BEFORE:::" + "%02X".format(in(0)))
-              }
-              in
-          })
-
-          // the Sink.head in isUtf8Sink will cause this to only take one element, so we don't need to take(1) it here.
-          broadcast.out(0) ~> log ~> sink.in
-
-          FlowShape(broadcast.in, broadcast.out(1))
-      }
-    )
 
 }
 
@@ -145,14 +121,10 @@ trait StreamingParsers {
             .flatMap {
               file =>
                 request.body
-                  .viaMat(StreamingParsers.checkForUtf8)(Keep.right)
-                  .toMat(FileIO.toPath(file))(
-                    (utf8, fileIO) =>
-                      fileIO.flatMap(
-                        _ => utf8
-                      )
+                  .runWith(FileIO.toPath(file))
+                  .flatMap(
+                    _ => FileIO.fromPath(file).runWith(isUtf8Sink)
                   )
-                  .run()
                   .flatMap {
                     case None => calculateResult(file, block(request.replaceBody(FileIO.fromPath(file))))
                     case Some(firstByte) =>

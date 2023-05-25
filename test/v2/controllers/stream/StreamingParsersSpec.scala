@@ -251,50 +251,6 @@ class StreamingParsersSpec
       }
     }
 
-    "checkForUtf8" - {
-      "ensure we can get the result of the check as well as complete the stream if it's valid" in {
-        val string = ByteString(Gen.stringOfN(20, Gen.alphaNumChar).sample.value)
-        val seq    = Seq(ByteString(Gen.stringOfN(20, Gen.alphaNumChar).sample.value), string)
-        val (utf8future, lastItemFuture) = Source
-          .fromIterator(
-            () => seq.iterator
-          )
-          .viaMat(StreamingParsers.checkForUtf8)(Keep.right)
-          .toMat(Sink.last)(Keep.both)
-          .run()
-        whenReady(utf8future) {
-          case None    => succeed
-          case Some(x) => fail(s"Should have returned None, not Some($x)")
-        }
-
-        whenReady(lastItemFuture) {
-          result => result.utf8String mustBe string.utf8String
-        }
-      }
-
-      "ensure we can get the result of the check as well as complete the stream if it's invalid" in forAll(Gen.oneOf[Byte](0xff.toByte, 0xfe.toByte)) {
-        byte =>
-          val string = ByteString(Gen.stringOfN(20, Gen.alphaNumChar).sample.value)
-          val seq    = Seq(ByteString(byte) ++ ByteString(Gen.stringOfN(20, Gen.alphaNumChar).sample.value), string)
-          val (utf8future, lastItemFuture) = Source
-            .fromIterator(
-              () => seq.iterator
-            )
-            .viaMat(StreamingParsers.checkForUtf8)(Keep.right)
-            .toMat(Sink.last)(Keep.both)
-            .run()
-          whenReady(utf8future) {
-            case Some(`byte`) => succeed
-            case Some(x)      => fail(s"Should have returned Some($byte), not $x")
-            case None         => fail(s"Should have returned Some($byte), not None")
-          }
-
-          whenReady(lastItemFuture) {
-            result => result mustBe string
-          }
-      }
-    }
-
   }
 
 }
