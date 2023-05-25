@@ -58,15 +58,14 @@ object StreamingParsers extends Logging {
 
   lazy val isUtf8Sink: Sink[ByteString, Future[Option[Byte]]] =
     Flow
-      .fromFunction[ByteString, Option[Byte]] {
+      .apply[ByteString]
+      .dropWhile(_.isEmpty)
+      .map[Option[Byte]] {
         byteString =>
-          if (byteString.isEmpty) None
-          else {
-            logger.warn("FIRST BYTE:::: " + "%02X".format(byteString(0)))
-            byteString(0) match {
-              case x if invalidBytes.contains(x) => Some(x) // invalid in UTF-8, these are UTF-16 byte order marks
-              case _                             => None
-            }
+          logger.warn("FIRST BYTE:::: " + "%02X".format(byteString(0)))
+          byteString(0) match {
+            case x if invalidBytes.contains(x) => Some(x) // invalid in UTF-8, these are UTF-16 byte order marks
+            case _                             => None
           }
       }
       .take(1)

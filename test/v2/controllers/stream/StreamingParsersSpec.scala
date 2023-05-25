@@ -194,7 +194,7 @@ class StreamingParsersSpec
         }
       }
 
-      "for a invalid byte string, return Some of that byte string" in forAll(Gen.oneOf[Byte](0xff.toByte, 0xfe.toByte)) {
+      "for an invalid byte string, return Some of that byte string" in forAll(Gen.oneOf[Byte](0xff.toByte, 0xfe.toByte)) {
         byte =>
           val string = ByteString(byte) ++ ByteString(Gen.stringOfN(20, Gen.alphaNumChar).sample.value)
           whenReady(Source.single(string).runWith(StreamingParsers.isUtf8Sink)) {
@@ -204,7 +204,17 @@ class StreamingParsersSpec
           }
       }
 
-      "for a invalid byte string at the head of a sequence of byte strings, return Some of that byte string" in forAll(
+      "for an invalid byte string after an empty ByteString, return Some of that byte string" in forAll(Gen.oneOf[Byte](0xff.toByte, 0xfe.toByte)) {
+        byte =>
+          val string = ByteString.empty ++ ByteString(byte) ++ ByteString(Gen.stringOfN(20, Gen.alphaNumChar).sample.value)
+          whenReady(Source.single(string).runWith(StreamingParsers.isUtf8Sink)) {
+            case Some(`byte`) => succeed
+            case Some(x)      => fail(s"Should have returned Some($byte), not $x")
+            case None         => fail(s"Should have returned Some($byte), not None")
+          }
+      }
+
+      "for an invalid byte string at the head of a sequence of byte strings, return Some of that byte string" in forAll(
         Gen.oneOf[Byte](0xff.toByte, 0xfe.toByte)
       ) {
         byte =>
@@ -224,7 +234,7 @@ class StreamingParsersSpec
       }
 
       // We don't want to scan the entire string, we're only interested in the BOM
-      "for a invalid byte string at the tail of a sequence of byte strings, return None" in forAll(Gen.oneOf[Byte](0xff.toByte, 0xfe.toByte)) {
+      "for an invalid byte string at the tail of a sequence of byte strings, return None" in forAll(Gen.oneOf[Byte](0xff.toByte, 0xfe.toByte)) {
         byte =>
           val string = ByteString(byte) ++ ByteString(Gen.stringOfN(20, Gen.alphaNumChar).sample.value)
           val seq    = Seq(ByteString(Gen.stringOfN(20, Gen.alphaNumChar).sample.value), string)
