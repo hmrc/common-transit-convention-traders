@@ -81,9 +81,16 @@ object StreamingParsers extends Logging {
           import GraphDSL.Implicits._
 
           val broadcast = builder.add(Broadcast[ByteString](2))
+          val log = builder.add(Flow.fromFunction[ByteString, ByteString] {
+            in =>
+              if (!in.isEmpty) {
+                logger.warn("BEFORE:::" + "%02X".format(in(0)))
+              }
+              in
+          })
 
           // the Sink.head in isUtf8Sink will cause this to only take one element, so we don't need to take(1) it here.
-          broadcast.out(0) ~> sink.in
+          broadcast.out(0) ~> log ~> sink.in
 
           FlowShape(broadcast.in, broadcast.out(1))
       }
