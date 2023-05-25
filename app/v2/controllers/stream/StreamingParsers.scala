@@ -49,7 +49,7 @@ import scala.concurrent.Future
 import scala.util.Try
 import scala.util.control.NonFatal
 
-object StreamingParsers {
+object StreamingParsers extends Logging {
 
   private lazy val invalidBytes: Set[Byte] = Set(
     0xff,
@@ -61,11 +61,13 @@ object StreamingParsers {
       .fromFunction[ByteString, Option[Byte]] {
         byteString =>
           if (byteString.isEmpty) None
-          else
+          else {
+            logger.warn("FIRST BYTE:::: " + "%02X".format(byteString(0)))
             byteString(0) match {
               case x if invalidBytes.contains(x) => Some(x) // invalid in UTF-8, these are UTF-16 byte order marks
               case _                             => None
             }
+          }
       }
       .take(1)
       .fold[Option[Byte]](None)(
