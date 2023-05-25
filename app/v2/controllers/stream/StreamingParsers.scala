@@ -114,6 +114,7 @@ trait StreamingParsers {
     )(implicit temporaryFileCreator: TemporaryFileCreator): Action[Source[ByteString, _]] =
       actionBuilder.async(streamFromMemory) {
         request =>
+          logger.warn("CTC_TEST:: Stream")
           // This is outside the for comprehension because we need access to the file
           // if the rest of the futures fail, which we wouldn't get if it was in there.
           Future

@@ -147,6 +147,7 @@ class V2MovementsControllerImpl @Inject() (
   private def submitDepartureDeclarationXML(): Action[Source[ByteString, _]] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
       implicit request => size =>
+        logger.warn("CTC_TEST:: Logging request -- IE015")
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
           _ <- contentSizeIsLessThanLimit(size)
