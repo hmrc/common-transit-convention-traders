@@ -84,6 +84,20 @@ paths:
               example:
                 code: NOT_ACCEPTABLE
                 message: The Accept header is missing or invalid.
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Conflict'
+                  - description: LRN has previously been used and cannot be reused.
+                    example:
+                      code: CONFLICT
+                      message: LRN has previously been used and cannot be reused.
+              example:
+                code: CONFLICT
+                message: LRN has previously been used and cannot be reused.
         '413':
           description: Payload Too Large
           content:
@@ -1415,6 +1429,21 @@ components:
         code:
           enum:
             - REQUEST_ENTITY_TOO_LARGE
+          type: string
+        message:
+          type: string
+          description: The description of the error.
+    Conflict:
+      title: Conflict
+      description: LRN has previously been used and cannot be reused.
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          enum:
+            - CONFLICT
           type: string
         message:
           type: string
