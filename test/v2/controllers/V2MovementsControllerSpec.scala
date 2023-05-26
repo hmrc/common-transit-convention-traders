@@ -5849,6 +5849,9 @@ class V2MovementsControllerSpec
           when(mockUpscanService.upscanGetFile(DownloadUrl(eqTo(upscanDownloadUrl.value)))(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
             .thenReturn(EitherT.leftT(UpscanError.UnexpectedError(None)))
 
+          val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
+          val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
+
           when(
             mockPushNotificationService.postPpnsNotification(
               MovementId(eqTo(movementId.value)),
@@ -5860,9 +5863,6 @@ class V2MovementsControllerSpec
             )
           )
             .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
-
-          val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
-          val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
 
           whenReady(response) {
             _ =>
