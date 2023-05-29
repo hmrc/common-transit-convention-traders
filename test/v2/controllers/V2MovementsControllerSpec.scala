@@ -87,6 +87,8 @@ import v2.models.errors._
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.responses.FailureDetails
+import v2.models.LocalReferenceNumber
+import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
 import v2.models.responses.TraderFailedUploadAuditRequest
@@ -4290,6 +4292,7 @@ class V2MovementsControllerSpec
           enrollmentEORINumber = enrolmentEORINumber,
           movementEORINumber = Some(arbitrary[EORINumber].sample.get),
           movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
+          localReferenceNumber = Some(arbitrary[LocalReferenceNumber].sample.value),
           created = dateTime,
           updated = dateTime.plusHours(1)
         )
@@ -4299,6 +4302,7 @@ class V2MovementsControllerSpec
           enrollmentEORINumber = enrolmentEORINumber,
           movementEORINumber = Some(arbitrary[EORINumber].sample.get),
           movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
+          localReferenceNumber = Some(arbitrary[LocalReferenceNumber].sample.value),
           created = dateTime.plusHours(2),
           updated = dateTime.plusHours(3)
         )
@@ -4502,9 +4506,10 @@ class V2MovementsControllerSpec
         arbitrary[EORINumber],
         arbitrary[EORINumber],
         arbitrary[MovementId],
-        arbitrary[MovementReferenceNumber]
+        arbitrary[MovementReferenceNumber],
+        arbitrary[LocalReferenceNumber]
       ) {
-        (enrollmentEori, movementEori, movementId, mrn) =>
+        (enrollmentEori, movementEori, movementId, mrn, lrn) =>
           val ControllerAndMocks(
             sut,
             _,
@@ -4524,6 +4529,7 @@ class V2MovementsControllerSpec
             enrollmentEori,
             Some(movementEori),
             Some(mrn),
+            Some(lrn),
             createdTime,
             createdTime
           )
@@ -4554,6 +4560,7 @@ class V2MovementsControllerSpec
                 enrollmentEori,
                 Some(movementEori),
                 Some(mrn),
+                Some(lrn),
                 createdTime,
                 createdTime
               ),
@@ -5420,6 +5427,7 @@ class V2MovementsControllerSpec
               arbitrary[EORINumber].sample.value,
               Some(arbitrary[EORINumber].sample.get),
               Some(arbitrary[MovementReferenceNumber].sample.value),
+              Some(arbitrary[LocalReferenceNumber].sample.value),
               createdTime,
               createdTime
             )
@@ -5501,6 +5509,7 @@ class V2MovementsControllerSpec
               arbitrary[EORINumber].sample.value,
               Some(arbitrary[EORINumber].sample.get),
               Some(arbitrary[MovementReferenceNumber].sample.value),
+              Some(arbitrary[LocalReferenceNumber].sample.value),
               createdTime,
               createdTime
             )
@@ -5555,6 +5564,7 @@ class V2MovementsControllerSpec
               arbitrary[EORINumber].sample.value,
               Some(arbitrary[EORINumber].sample.get),
               Some(arbitrary[MovementReferenceNumber].sample.value),
+              Some(arbitrary[LocalReferenceNumber].sample.value),
               createdTime,
               createdTime
             )
@@ -5610,6 +5620,7 @@ class V2MovementsControllerSpec
               arbitrary[EORINumber].sample.value,
               Some(arbitrary[EORINumber].sample.get),
               Some(arbitrary[MovementReferenceNumber].sample.value),
+              Some(arbitrary[LocalReferenceNumber].sample.value),
               createdTime,
               createdTime
             )
