@@ -133,6 +133,13 @@ paths:
           schema:
             type: string
             example: GB1234567890
+        - in: query
+          name: movementReferenceNumber
+          description: This is an optional query parameter that allows a list of departures and or arrivals to be filtered by an MRN.
+          style: form
+          schema:
+            type: string
+            example: 27WF9X1FQ9RCKN0TM3
       responses:
         '200':
           description: A successful get all departures response
@@ -808,6 +815,13 @@ paths:
           schema:
             type: string
             example: GB1234567890
+        - in: query
+          name: movementReferenceNumber
+          description: This is an optional query parameter that allows a list of departures and or arrivals to be filtered by an MRN.
+          style: form
+          schema:
+            type: string
+            example: 27WF9X1FQ9RCKN0TM3
       responses:
         '200':
           description: A successful get all arrivals response
