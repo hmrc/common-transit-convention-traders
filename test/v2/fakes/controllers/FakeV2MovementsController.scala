@@ -33,6 +33,7 @@ import v2.controllers.stream.StreamingParsers
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.responses.UpscanResponse
 
@@ -67,7 +68,12 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
       Ok(Json.obj("version" -> 2))
   }
 
-  def getMovements(movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]): Action[AnyContent] = Action {
+  def getMovements(
+    movementType: MovementType,
+    updatedSince: Option[OffsetDateTime],
+    movementEORI: Option[EORINumber],
+    movementReferenceNumber: Option[MovementReferenceNumber]
+  ): Action[AnyContent] = Action {
     _ =>
       Ok(Json.obj("version" -> 2))
   }

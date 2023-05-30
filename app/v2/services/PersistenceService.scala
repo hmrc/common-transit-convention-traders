@@ -34,6 +34,7 @@ import v2.models.EORINumber
 import v2.models.LocalReferenceNumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.errors.LRNError
 import v2.models.errors.PersistenceError
@@ -72,7 +73,13 @@ trait PersistenceService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MovementSummary]
 
-  def getMovements(eori: EORINumber, movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber])(implicit
+  def getMovements(
+    eori: EORINumber,
+    movementType: MovementType,
+    updatedSince: Option[OffsetDateTime],
+    movementEORI: Option[EORINumber],
+    movementReferenceNumber: Option[MovementReferenceNumber]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MovementSummary]]
@@ -182,18 +189,24 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         }
     )
 
-  override def getMovements(eori: EORINumber, movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber])(implicit
+  override def getMovements(
+    eori: EORINumber,
+    movementType: MovementType,
+    updatedSince: Option[OffsetDateTime],
+    movementEORI: Option[EORINumber],
+    movementReferenceNumber: Option[MovementReferenceNumber]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[MovementSummary]] = EitherT(
+  ): EitherT[Future, PersistenceError, Seq[MovementSummary]] = EitherT {
     persistenceConnector
-      .getMovements(eori, movementType, updatedSince, movementEORI)
+      .getMovements(eori, movementType, updatedSince, movementEORI, movementReferenceNumber)
       .map(Right(_))
       .recover {
         case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementsNotFound(eori, movementType))
         case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
       }
-  )
+  }
 
   override def addMessage(movementId: MovementId, movementType: MovementType, messageType: Option[MessageType], source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
