@@ -25,6 +25,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
 import io.lemonlabs.uri.Url
 import org.mockito.Mockito.when
+import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.concurrent.IntegrationPatience
@@ -35,29 +36,24 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.forAll
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
+import play.api.http.Status.ACCEPTED
 import play.api.http.Status.CREATED
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.Status.NOT_FOUND
 import play.api.http.Status.NO_CONTENT
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.TestMetrics
 import utils.WiremockSuite
+import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.request.PushNotificationsAssociation
 import v2.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.github.tomakehurst.wiremock.client.WireMock._
-import org.scalacheck.Arbitrary
-import play.api.http.Status.ACCEPTED
-import play.api.libs.json.JsValue
-import play.twirl.api.TemplateMagic.anyToDefault
-import v2.models.MessageId
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
 
 class PushNotificationsConnectorSpec
     extends AnyFreeSpec

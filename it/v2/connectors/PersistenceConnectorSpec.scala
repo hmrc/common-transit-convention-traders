@@ -16,6 +16,7 @@
 
 package v2.connectors
 
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.fasterxml.jackson.core.JsonParseException
@@ -68,6 +69,7 @@ import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 import play.api.http.Status.CREATED
+import v2.base.TestActorSystem
 
 class PersistenceConnectorSpec
     extends AnyFreeSpec
@@ -78,6 +80,7 @@ class PersistenceConnectorSpec
     with ScalaFutures
     with IntegrationPatience
     with ScalaCheckDrivenPropertyChecks
+    with TestActorSystem
     with CommonGenerators {
 
   lazy val appConfig: AppConfig                           = app.injector.instanceOf[AppConfig]
@@ -2124,6 +2127,111 @@ class PersistenceConnectorSpec
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
         val future = persistenceConnector.updateMessageBody(messageType, eori, movementType, movementId, messageId, source).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
+            response.statusCode mustBe INTERNAL_SERVER_ERROR
+            Json.parse(response.message).validate[StandardError] mustBe JsSuccess(StandardError("Internal server error", ErrorCode.InternalServerError))
+        }
+    }
+  }
+
+  "GET /traders/:EORI/movements/:movementType/:movementId/messages/:messageId/body" - {
+
+    def targetUrl(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId) =
+      s"/transit-movements/traders/${eori.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}/body"
+
+    "On successful retrieval of an element, must return ACCEPTED" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId],
+      arbitrary[MessageId],
+      arbitrary[MovementType]
+    ) {
+      (eori, movementId, messageId, movementType) =>
+        server.stubFor(
+          get(
+            urlEqualTo(targetUrl(eori, movementType, movementId, messageId))
+          )
+            .withHeader(HeaderNames.ACCEPT, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse().withStatus(OK).withBody("<test></test>")
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier()
+
+        val result = persistenceConnector
+          .getMessageBody(eori, movementType, movementId, messageId)
+          .flatMap(_.reduce(_ ++ _).map(_.utf8String).runWith(Sink.head))
+
+        whenReady(result) {
+          _ mustBe "<test></test>"
+        }
+    }
+
+    "If the message is not found, return as such" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId],
+      arbitrary[MessageId],
+      arbitrary[MovementType]
+    ) {
+      (eori, movementId, messageId, movementType) =>
+        server.stubFor(
+          get(
+            urlEqualTo(targetUrl(eori, movementType, movementId, messageId))
+          )
+            .withHeader(HeaderNames.ACCEPT, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse()
+                .withStatus(NOT_FOUND)
+                .withBody(
+                  Json.stringify(Json.toJson(PresentationError.notFoundError("no")))
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier()
+
+        val future = persistenceConnector.getMessageBody(eori, movementType, movementId, messageId).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            result.left.toOption.get mustBe a[UpstreamErrorResponse]
+            val response = result.left.toOption.get.asInstanceOf[UpstreamErrorResponse]
+            response.statusCode mustBe NOT_FOUND
+        }
+    }
+
+    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId],
+      arbitrary[MessageId],
+      arbitrary[MovementType]
+    ) {
+      (eori, movementId, messageId, movementType) =>
+        server.stubFor(
+          get(
+            urlEqualTo(targetUrl(eori, movementType, movementId, messageId))
+          )
+            .withHeader(HeaderNames.ACCEPT, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse()
+                .withStatus(INTERNAL_SERVER_ERROR)
+                .withBody(
+                  Json.stringify(Json.toJson(PresentationError.internalServiceError()))
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier()
+
+        val future = persistenceConnector.getMessageBody(eori, movementType, movementId, messageId).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 

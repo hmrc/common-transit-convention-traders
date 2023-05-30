@@ -16,13 +16,11 @@
 
 package v2.models
 
-import play.api.libs.json.Format
-import play.api.libs.json.Json
+sealed trait SubmissionRoute
 
-object ObjectStoreResourceLocation {
-  implicit val objectStoreResourceLocationFormat: Format[ObjectStoreResourceLocation] = Json.valueFormat[ObjectStoreResourceLocation]
-}
+object SubmissionRoute {
+  final case object ViaEIS  extends SubmissionRoute
+  final case object ViaSDES extends SubmissionRoute
 
-case class ObjectStoreResourceLocation(value: String) {
-  def stripOwner: ObjectStoreResourceLocation = ObjectStoreResourceLocation(value.stripPrefix("common-transit-convention-traders"))
+  val values: Seq[SubmissionRoute] = Seq(ViaEIS, ViaSDES)
 }

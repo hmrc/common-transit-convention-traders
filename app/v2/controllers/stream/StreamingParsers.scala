@@ -17,8 +17,14 @@
 package v2.controllers.stream
 
 import akka.NotUsed
+import akka.stream.FlowShape
 import akka.stream.Materializer
+import akka.stream.scaladsl.Broadcast
 import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Flow
+import akka.stream.scaladsl.GraphDSL
+import akka.stream.scaladsl.Keep
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import cats.data.EitherT
@@ -33,7 +39,6 @@ import play.api.mvc.ActionBuilder
 import play.api.mvc.BaseControllerHelpers
 import play.api.mvc.BodyParser
 import play.api.mvc.Result
-import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.request.BodyReplaceableRequest
 import v2.models.errors.PresentationError
 
@@ -75,22 +80,12 @@ trait StreamingParsers {
     def stream(
       block: R[Source[ByteString, _]] => Future[Result]
     )(implicit temporaryFileCreator: TemporaryFileCreator): Action[Source[ByteString, _]] =
-      actionBuilder.async(streamFromMemory) {
-        request =>
-          val file = temporaryFileCreator.create()
-          (for {
-            _      <- request.body.runWith(FileIO.toPath(file))
-            result <- block(request.replaceBody(FileIO.fromPath(file)))
-          } yield result)
-            .attemptTap {
-              _ =>
-                file.delete()
-                Future.successful(())
-            }
-      }
+      streamWithSize(
+        request => _ => block(request)
+      )
 
     def streamWithSize(
-      block: AuthenticatedRequest[Source[ByteString, _]] => Long => Future[Result]
+      block: R[Source[ByteString, _]] => Long => Future[Result]
     )(implicit temporaryFileCreator: TemporaryFileCreator): Action[Source[ByteString, _]] =
       actionBuilder.async(streamFromMemory) {
         request =>
@@ -100,11 +95,11 @@ trait StreamingParsers {
             .fromTry(Try(temporaryFileCreator.create()))
             .flatMap {
               file =>
-                (for {
-                  _      <- request.body.runWith(FileIO.toPath(file))
-                  size   <- Future.fromTry(Try(Files.size(file)))
-                  result <- block(request.replaceBody(FileIO.fromPath(file)).asInstanceOf[AuthenticatedRequest[Source[ByteString, _]]])(size)
-                } yield result)
+                request.body
+                  .runWith(FileIO.toPath(file))
+                  .flatMap(
+                    _ => calculateResult(file, block(request.replaceBody(FileIO.fromPath(file))))
+                  )
                   .attemptTap {
                     _ =>
                       file.delete()
@@ -117,6 +112,12 @@ trait StreamingParsers {
                 Status(INTERNAL_SERVER_ERROR)(Json.toJson(PresentationError.internalServiceError(cause = Some(ex))))
             }
       }
+
+    private def calculateResult(file: play.api.libs.Files.TemporaryFile, block: Long => Future[Result]): Future[Result] =
+      for {
+        size   <- Future.fromTry(Try(Files.size(file)))
+        result <- block(size)
+      } yield result
   }
 
   private val START_TOKEN: Source[ByteString, NotUsed]                 = Source.single(ByteString("{"))
@@ -166,12 +167,18 @@ trait StreamingParsers {
         }
     }
 
-  def jsonToByteStringStream(fields: collection.Seq[(String, JsValue)]): EitherT[Future, PresentationError, Source[ByteString, _]] =
+  def jsonToByteStringStream(
+    fields: collection.Seq[(String, JsValue)],
+    fieldName: String,
+    stream: Source[ByteString, _]
+  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
     EitherT {
       Future
         .successful(
           Right(
-            START_TOKEN ++ jsonFieldsToByteString(fields) ++ END_TOKEN_SOURCE
+            START_TOKEN ++ jsonFieldsToByteString(fields) ++ COMMA_SOURCE ++ Source.single(
+              ByteString(s""""$fieldName":""".stripMargin)
+            ) ++ stream ++ END_TOKEN_SOURCE
           )
         )
         .recover {

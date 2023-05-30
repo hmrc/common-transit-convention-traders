@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-package v2.models.errors
+package v2.models
 
-import v2.models.ObjectStoreResourceLocation
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 
-sealed trait ObjectStoreError
-
-object ObjectStoreError {
-  case class FileNotFound(uri: ObjectStoreResourceLocation) extends ObjectStoreError
-  case class UnexpectedError(thr: Option[Throwable] = None) extends ObjectStoreError
-}
+case class BodyAndSize(size: Long, body: Source[ByteString, _])

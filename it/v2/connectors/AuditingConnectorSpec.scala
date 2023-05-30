@@ -42,7 +42,6 @@ import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.TestMetrics
 import utils.WiremockSuite
 import v2.models.AuditType
-import v2.models.ObjectStoreResourceLocation
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -127,61 +126,6 @@ class AuditingConnectorSpec
               }
           }
 
-        }
-    }
-  }
-
-  "For a large message" - {
-    "return a successful future if the audit message was accepted" in {
-      // given this endpoint
-      server.stubFor(
-        post(
-          urlEqualTo(targetUrlLarge(AuditType.DeclarationData, "part1/part2/large-file.xml"))
-        )
-          .willReturn(aResponse().withStatus(ACCEPTED))
-      )
-
-      implicit val hc = HeaderCarrier()
-      // when we call the audit service
-      val future = sut.post(AuditType.DeclarationData, ObjectStoreResourceLocation("part1/part2/large-file.xml"))
-
-      // then the future should be ready
-      whenReady(future) {
-        _ =>
-      }
-    }
-
-    "return a failed future if the audit message was not accepted" - Seq(BAD_REQUEST, INTERNAL_SERVER_ERROR).foreach {
-      statusCode =>
-        s"when a $statusCode is returned" in {
-
-          // given this endpoint
-          server.stubFor(
-            post(
-              urlEqualTo(targetUrlLarge(AuditType.DeclarationData, "part1/part2/large-file.xml"))
-            )
-              .willReturn(aResponse().withStatus(statusCode))
-          )
-
-          implicit val hc = HeaderCarrier()
-          // when we call the audit service
-          val future = sut.post(AuditType.DeclarationData, ObjectStoreResourceLocation("part1/part2/large-file.xml"))
-
-          val result = future
-            .map(
-              _ => fail("A success was registered when it should have been a failure.")
-            )
-            .recover {
-              // backticks for stable identifier
-              case UpstreamErrorResponse(_, `statusCode`, _, _) => ()
-              case x: TestFailedException                       => x
-              case x                                            => fail(s"An unexpected exception was thrown: ${x.getClass.getSimpleName}, ${x.getMessage}")
-            }
-
-          // then the future should be ready
-          whenReady(result) {
-            _ =>
-          }
         }
     }
   }

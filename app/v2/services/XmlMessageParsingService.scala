@@ -16,6 +16,8 @@
 
 package v2.services
 
+import akka.stream.Attributes
+import akka.stream.Attributes.LogLevels
 import akka.stream.FlowShape
 import akka.stream.Materializer
 import akka.stream.SinkShape
@@ -72,6 +74,11 @@ class XmlMessageParsingServiceImpl @Inject() (implicit materializer: Materialize
     EitherT(
       source
         .toMat(messageTypeSink(messageTypeList))(Keep.right)
+        .withAttributes(
+          Attributes.logLevels(
+            onFinish = LogLevels.Off // prevents exceptions when traders send malformed XML
+          )
+        )
         .run()
         .recover {
           case NonFatal(_) => Left(ExtractionError.MalformedInput)
