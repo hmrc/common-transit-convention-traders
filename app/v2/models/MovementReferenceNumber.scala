@@ -16,11 +16,17 @@
 
 package v2.models
 
+import play.api.http.Writeable
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 
 object MovementReferenceNumber {
-  implicit val movementReferenceNumberFormat: Format[MovementReferenceNumber] = Json.valueFormat[MovementReferenceNumber]
+  implicit lazy val movementReferenceNumberFormat: Format[MovementReferenceNumber] = Json.valueFormat[MovementReferenceNumber]
+
+  implicit lazy val movementReferenceNumberWriteable: Writeable[MovementReferenceNumber] = Writeable(
+    movementReferenceNumber => implicitly[Writeable[String]].transform(movementReferenceNumber.value),
+    None
+  )
 }
 
 case class MovementReferenceNumber(value: String) extends AnyVal

@@ -4305,7 +4305,13 @@ class V2MovementsControllerSpec
         val departureResponses = Seq(departureResponse1, departureResponse2)
 
         when(
-          mockPersistenceService.getMovements(EORINumber(any()), any[MovementType], any[Option[OffsetDateTime]], any[Option[EORINumber]])(
+          mockPersistenceService.getMovements(
+            EORINumber(any()),
+            any[MovementType],
+            any[Option[OffsetDateTime]],
+            any[Option[EORINumber]],
+            any[Option[MovementReferenceNumber]]
+          )(
             any[HeaderCarrier],
             any[ExecutionContext]
           )
@@ -4319,13 +4325,14 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None)(request)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(
           HateoasMovementIdsResponse(
             departureResponses,
             movementType,
+            None,
             None,
             None
           )
@@ -4349,7 +4356,13 @@ class V2MovementsControllerSpec
         val eori = EORINumber("ERROR")
 
         when(
-          mockPersistenceService.getMovements(EORINumber(any()), any[MovementType], any[Option[OffsetDateTime]], any[Option[EORINumber]])(
+          mockPersistenceService.getMovements(
+            EORINumber(any()),
+            any[MovementType],
+            any[Option[OffsetDateTime]],
+            any[Option[EORINumber]],
+            any[Option[MovementReferenceNumber]]
+          )(
             any[HeaderCarrier],
             any[ExecutionContext]
           )
@@ -4364,7 +4377,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None)(request)
 
         status(result) mustBe NOT_FOUND
         contentAsJson(result) mustBe Json.obj(
@@ -4388,7 +4401,13 @@ class V2MovementsControllerSpec
           _
         ) = createControllerAndMocks()
         when(
-          mockPersistenceService.getMovements(EORINumber(any()), any[MovementType], any[Option[OffsetDateTime]], any[Option[EORINumber]])(
+          mockPersistenceService.getMovements(
+            EORINumber(any()),
+            any[MovementType],
+            any[Option[OffsetDateTime]],
+            any[Option[EORINumber]],
+            any[Option[MovementReferenceNumber]]
+          )(
             any[HeaderCarrier],
             any[ExecutionContext]
           )
@@ -4403,7 +4422,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None)(request)
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         contentAsJson(result) mustBe Json.obj(
@@ -4429,7 +4448,13 @@ class V2MovementsControllerSpec
           new AcceptHeaderActionProviderImpl()
         )
         when(
-          mockPersistenceService.getMovements(EORINumber(any()), any[MovementType], any[Option[OffsetDateTime]], any[Option[EORINumber]])(
+          mockPersistenceService.getMovements(
+            EORINumber(any()),
+            any[MovementType],
+            any[Option[OffsetDateTime]],
+            any[Option[EORINumber]],
+            any[Option[MovementReferenceNumber]]
+          )(
             any[HeaderCarrier],
             any[ExecutionContext]
           )
@@ -4444,7 +4469,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None)(request)
 
         status(result) mustBe NOT_ACCEPTABLE
         contentAsJson(result) mustBe Json.obj(
@@ -4470,7 +4495,13 @@ class V2MovementsControllerSpec
           new AcceptHeaderActionProviderImpl()
         )
         when(
-          mockPersistenceService.getMovements(EORINumber(any()), any[MovementType], any[Option[OffsetDateTime]], any[Option[EORINumber]])(
+          mockPersistenceService.getMovements(
+            EORINumber(any()),
+            any[MovementType],
+            any[Option[OffsetDateTime]],
+            any[Option[EORINumber]],
+            any[Option[MovementReferenceNumber]]
+          )(
             any[HeaderCarrier],
             any[ExecutionContext]
           )
@@ -4485,7 +4516,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json123")),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None)(request)
 
         status(result) mustBe NOT_ACCEPTABLE
         contentAsJson(result) mustBe Json.obj(

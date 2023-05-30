@@ -40,6 +40,7 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
+import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
@@ -77,7 +78,13 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[MovementSummary]
 
-  def getMovements(eori: EORINumber, movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber])(implicit
+  def getMovements(
+    eori: EORINumber,
+    movementType: MovementType,
+    updatedSince: Option[OffsetDateTime],
+    movementEORI: Option[EORINumber],
+    movementReferenceNumber: Option[MovementReferenceNumber]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MovementSummary]]
@@ -182,14 +189,21 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       .executeAndDeserialise[MovementSummary]
   }
 
-  override def getMovements(eori: EORINumber, movementType: MovementType, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber])(implicit
+  override def getMovements(
+    eori: EORINumber,
+    movementType: MovementType,
+    updatedSince: Option[OffsetDateTime],
+    movementEORI: Option[EORINumber],
+    movementReferenceNumber: Option[MovementReferenceNumber]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MovementSummary]] = {
     val urlWithOptions = withParameters(
       appConfig.movementsUrl.withPath(getAllMovementsUrl(eori, movementType)),
       updatedSince,
-      movementEORI
+      movementEORI,
+      movementReferenceNumber
     )
 
     httpClientV2
@@ -228,7 +242,12 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       )
       .getOrElse(urlPath)
 
-  private def withParameters(urlPath: Url, updatedSince: Option[OffsetDateTime], movementEORI: Option[EORINumber]) =
+  private def withParameters(
+    urlPath: Url,
+    updatedSince: Option[OffsetDateTime],
+    movementEORI: Option[EORINumber],
+    movementReferenceNumber: Option[MovementReferenceNumber]
+  ) =
     urlPath
       .withConfig(urlPath.config.copy(renderQuery = ExcludeNones))
       .addParam(
@@ -238,6 +257,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
         )
       )
       .addParam("movementEORI", movementEORI.map(_.value))
+      .addParam("movementReferenceNumber", movementReferenceNumber.map(_.value))
 
   def patchMessage(
     eoriNumber: EORINumber,
