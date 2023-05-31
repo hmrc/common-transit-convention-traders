@@ -192,15 +192,6 @@ class ConvertErrorSpec
       persistenceErrorConverter.convert(input) mustBe output
     }
 
-    "ArrivalsNotFound error returns a NOT_FOUND" in {
-      val eori = arbitrary[EORINumber].sample.value
-
-      val input  = PersistenceError.MovementsNotFound(eori, MovementType.Arrival)
-      val output = PresentationError.notFoundError(s"Arrival movement IDs for ${eori.value} were not found")
-
-      persistenceErrorConverter.convert(input) mustBe output
-    }
-
     "an Unexpected Error with no exception returns an internal service error with no exception" in {
       val input  = PersistenceError.UnexpectedError(None)
       val output = PresentationError.internalServiceError()

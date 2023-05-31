@@ -87,6 +87,7 @@ import v2.models.errors._
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.responses.FailureDetails
+import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
 import v2.models.responses.TraderFailedUploadAuditRequest
@@ -3360,16 +3361,15 @@ class V2MovementsControllerSpec
             )
           )
             .thenAnswer(
-              _ => EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType))
+              _ => EitherT.rightT(List.empty[MessageSummary])
             )
 
           val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
           val result  = sut.getMessageIds(movementType, movementId, None)(request)
 
-          status(result) mustBe NOT_FOUND
-          contentAsJson(result) mustBe Json.obj(
-            "code"    -> "NOT_FOUND",
-            "message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found"
+          status(result) mustBe OK
+          contentAsJson(result) mustBe Json.toJson(
+            HateoasMovementMessageIdsResponse(movementId, List.empty[MessageSummary], None, movementType)
           )
       }
 
@@ -4339,7 +4339,7 @@ class V2MovementsControllerSpec
         )
       }
 
-      "should return departure not found if persistence service returns 404" in {
+      "should return Ok if persistence service returns empty list" in {
         val ControllerAndMocks(
           sut,
           _,
@@ -4368,7 +4368,7 @@ class V2MovementsControllerSpec
           )
         )
           .thenAnswer(
-            _ => EitherT.leftT(PersistenceError.MovementsNotFound(eori, movementType))
+            _ => EitherT.rightT(List.empty[MovementSummary])
           )
 
         val request = FakeRequest(
@@ -4379,10 +4379,15 @@ class V2MovementsControllerSpec
         )
         val result = sut.getMovements(movementType, None, None, None)(request)
 
-        status(result) mustBe NOT_FOUND
-        contentAsJson(result) mustBe Json.obj(
-          "message" -> s"${movementType.movementType.capitalize} movement IDs for ${eori.value} were not found",
-          "code"    -> "NOT_FOUND"
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(
+          HateoasMovementIdsResponse(
+            List.empty[MovementSummary],
+            movementType,
+            None,
+            None,
+            None
+          )
         )
       }
 
