@@ -25,3 +25,6 @@ GET        /movements/push-pull-notifications/box                               
 
 POST       /traders/:eori/movements/:movementType/:movementId/messages/:messageId   v2.controllers.V2MovementsController.attachMessageFromUpscan(eori: v2.models.EORINumber, movementType: v2.models.MovementType, movementId: v2.models.MovementId, messageId: v2.models.MessageId)
 
+# DO NOT MERGE WITH THIS
+
+POST       /test-only/echo                                                          v2.controllers.TestEndpoint.echo()

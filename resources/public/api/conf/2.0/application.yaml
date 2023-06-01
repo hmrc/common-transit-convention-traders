@@ -15,6 +15,17 @@ servers:
     description: Production
     variables: {}
 paths:
+  /customs/transits/test-only/echo:
+    post:
+      tags:
+        - Departures
+      summary: Echo
+      description: >
+        Echoes in the input.
+      operationId: echo
+      responses:
+        '200':
+          description: OK
   /customs/transits/movements/departures:
     post:
       tags:
