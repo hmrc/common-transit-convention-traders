@@ -145,13 +145,13 @@ class PersistenceServiceSpec
         }
     }
 
-    "when a message is not found, should return empty list" in {
+    "when a given movement is not found, should return a Left with an MovementNotFound" in {
       when(mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any())(any(), any()))
-        .thenReturn(Future.successful(List.empty[MessageSummary]))
+        .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
       val result = sut.getMessages(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"), dateTime.sample.get)
       whenReady(result.value) {
-        _ mustBe Right(List.empty[MessageSummary])
+        _ mustBe Left(PersistenceError.MovementNotFound(MovementId("1234567890abcdef"), MovementType.Departure))
       }
     }
 
@@ -332,7 +332,7 @@ class PersistenceServiceSpec
         }
     }
 
-    "when a departure is not found, should return empty list" in forAll(
+    "when a departure movements are not found for given EORI, should return empty list" in forAll(
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
@@ -439,18 +439,18 @@ class PersistenceServiceSpec
         }
     }
 
-    "when an arrival is not found, should return empty list" in forAll(
+    "when an given arrival is not found, should return a Left with MovementNotFound" in forAll(
       arbitrary[EORINumber],
       arbitrary[MovementId],
       Gen.option(arbitrary[OffsetDateTime])
     ) {
       (eori, arrivalId, receivedSince) =>
         when(mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any())(any(), any()))
-          .thenReturn(Future.successful(List.empty[MessageSummary]))
+          .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
         val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince)
         whenReady(result.value) {
-          _ mustBe Right(List.empty[MessageSummary])
+          _ mustBe Left(PersistenceError.MovementNotFound(arrivalId, MovementType.Arrival))
         }
     }
 

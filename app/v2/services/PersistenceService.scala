@@ -161,7 +161,8 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         .getMessages(eori, movementType, movementId, receivedSince)
         .map(Right(_))
         .recover {
-          case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))
+          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
+          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
 

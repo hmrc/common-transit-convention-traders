@@ -3361,15 +3361,16 @@ class V2MovementsControllerSpec
             )
           )
             .thenAnswer(
-              _ => EitherT.rightT(List.empty[MessageSummary])
+              _ => EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType))
             )
 
           val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
           val result  = sut.getMessageIds(movementType, movementId, None)(request)
 
-          status(result) mustBe OK
-          contentAsJson(result) mustBe Json.toJson(
-            HateoasMovementMessageIdsResponse(movementId, List.empty[MessageSummary], None, movementType)
+          status(result) mustBe NOT_FOUND
+          contentAsJson(result) mustBe Json.obj(
+            "code"    -> "NOT_FOUND",
+            "message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found"
           )
       }
 
