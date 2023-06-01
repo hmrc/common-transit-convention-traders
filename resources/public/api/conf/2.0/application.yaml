@@ -26,6 +26,9 @@ paths:
       responses:
         '200':
           description: OK
+      security:
+        - userRestricted:
+            - common-transit-convention-traders
   /customs/transits/movements/departures:
     post:
       tags:
