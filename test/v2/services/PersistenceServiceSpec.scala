@@ -32,6 +32,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import play.api.http.Status.CONFLICT
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.Status.NOT_FOUND
 import uk.gov.hmrc.http.HeaderCarrier
@@ -40,7 +41,9 @@ import v2.base.TestActorSystem
 import v2.base.TestCommonGenerators
 import v2.connectors.PersistenceConnector
 import v2.models._
+import v2.models.errors.LRNError
 import v2.models.errors.PersistenceError
+import v2.models.errors.PersistenceError.DuplicateLRNError
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.responses.MessageSummary
@@ -80,6 +83,10 @@ class PersistenceServiceSpec
     val invalidRequest: Source[ByteString, NotUsed] = Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8))
 
     val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
+    val upstreamLRNErrorResponse = UpstreamErrorResponse(
+      "{\"message\":\"LRN 4CnsTh79I7vtOW54 has previously been used and cannot be reused\",\"code\":\"CONFLICT\",\"lrn\":\"4CnsTh79I7vtOW54\"}",
+      CONFLICT
+    )
 
     "on a successful submission, should return a Right" in {
       when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(validRequest)))(any[HeaderCarrier], any[ExecutionContext]))
@@ -96,6 +103,22 @@ class PersistenceServiceSpec
         .thenReturn(Future.failed(upstreamErrorResponse))
       val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, Some(invalidRequest))
       val expected: Either[PersistenceError, MovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
+      whenReady(result.value) {
+        _ mustBe expected
+      }
+    }
+
+    "on a failed submission, should return a Left with a ConflictError" in {
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(invalidRequest)))(any[HeaderCarrier], any[ExecutionContext]))
+        .thenReturn(
+          Future.failed(
+            upstreamLRNErrorResponse
+          )
+        )
+      val result   = sut.createMovement(EORINumber("1"), MovementType.Departure, Some(invalidRequest))
+      val lrnError = LRNError(message = "LRN 4CnsTh79I7vtOW54 has previously been used and cannot be reused", code = "CONFLICT", lrn = "4CnsTh79I7vtOW54")
+      val expected: Either[PersistenceError, MovementResponse] =
+        Left(PersistenceError.DuplicateLRNError(LocalReferenceNumber(lrnError.lrn)))
       whenReady(result.value) {
         _ mustBe expected
       }

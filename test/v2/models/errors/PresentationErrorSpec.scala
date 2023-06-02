@@ -45,6 +45,8 @@ class PresentationErrorSpec extends AnyFreeSpec with Matchers with MockitoSugar 
 
     "for NotFound" in testStandard(PresentationError.notFoundError, "not found", "NOT_FOUND")
 
+    "for Conflict" in testStandard(PresentationError.conflictError, "conflict error", "CONFLICT")
+
     Seq(Some(new IllegalStateException("message")), None).foreach {
       exception =>
         val textFragment = exception
