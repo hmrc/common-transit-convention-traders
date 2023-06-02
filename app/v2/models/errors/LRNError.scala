@@ -16,16 +16,19 @@
 
 package v2.models.errors
 
-import v2.models.LocalReferenceNumber
-import v2.models.MessageId
-import v2.models.MovementId
-import v2.models.MovementType
+import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
-sealed trait PersistenceError
+case class LRNError(
+  message: String,
+  code: String,
+  lrn: String
+)
 
-object PersistenceError {
-  case class MessageNotFound(movementId: MovementId, messageId: MessageId)        extends PersistenceError
-  case class MovementNotFound(movementId: MovementId, movementType: MovementType) extends PersistenceError
-  case class UnexpectedError(thr: Option[Throwable] = None)                       extends PersistenceError
-  case class DuplicateLRNError(lrn: LocalReferenceNumber)                         extends PersistenceError
+object LRNError {
+
+  implicit val lrnErrorFormat: OFormat[LRNError] = ((__ \ "message").format[String] and
+    (__ \ "code").format[String] and
+    (__ \ "lrn").format[String])(LRNError.apply, unlift(LRNError.unapply))
+
 }

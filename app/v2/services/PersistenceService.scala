@@ -23,15 +23,20 @@ import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import play.api.http.Status.CONFLICT
 import play.api.http.Status.NOT_FOUND
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
+import v2.models.LocalReferenceNumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
+import v2.models.errors.LRNError
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
@@ -133,6 +138,10 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
           movementResponse => Right(movementResponse)
         }
         .recover {
+          case UpstreamErrorResponse(message, CONFLICT, _, _) =>
+            val jsValue  = Json.parse(message)
+            val lrnError = jsValue.validate[LRNError].get
+            Left(PersistenceError.DuplicateLRNError(LocalReferenceNumber(lrnError.lrn)))
           case NonFatal(thr) =>
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
