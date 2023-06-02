@@ -24,6 +24,7 @@ import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.request.PushNotificationsAssociation
 import v2.models.responses.BoxResponse
+import v2.models.LocalReferenceNumber
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
@@ -72,6 +73,11 @@ trait CommonGenerators {
     } yield PushNotificationsAssociation(clientId, movementType, boxId)
   }
 
+  def alphaNum(maxLen: Int, minLen: Int = 1) = for {
+    len <- Gen.choose(minLen, maxLen)
+    str <- Gen.stringOfN(len, Gen.alphaNumChar)
+  } yield str
+
   implicit lazy val arbitraryMovementReferenceNumber: Arbitrary[MovementReferenceNumber] =
     Arbitrary {
       for {
@@ -85,15 +91,22 @@ trait CommonGenerators {
       } yield MovementReferenceNumber(year ++ country.mkString ++ serial.mkString)
     }
 
+  implicit lazy val arbitraryLocalReferenceNumber: Arbitrary[LocalReferenceNumber] = Arbitrary {
+    for {
+      ref <- alphaNum(22)
+    } yield LocalReferenceNumber(ref)
+  }
+
   implicit lazy val arbitraryMovementSummary: Arbitrary[MovementSummary] = Arbitrary {
     for {
       id                      <- arbitrary[MovementId]
       enrollmentEORINumber    <- arbitrary[EORINumber]
       movementEORINumber      <- arbitrary[EORINumber]
       movementReferenceNumber <- arbitrary[Option[MovementReferenceNumber]]
+      localReferenceNumber    <- arbitrary[Option[LocalReferenceNumber]]
       created                 <- arbitrary[OffsetDateTime]
       updated                 <- arbitrary[OffsetDateTime]
-    } yield MovementSummary(id, enrollmentEORINumber, Some(movementEORINumber), movementReferenceNumber, created, updated)
+    } yield MovementSummary(id, enrollmentEORINumber, Some(movementEORINumber), movementReferenceNumber, localReferenceNumber, created, updated)
   }
 
   implicit lazy val arbitraryObjectStoreURI: Arbitrary[ObjectStoreURI] = Arbitrary {

@@ -84,6 +84,20 @@ paths:
               example:
                 code: NOT_ACCEPTABLE
                 message: The Accept header is missing or invalid.
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Conflict'
+                  - description: LRN has previously been used and cannot be reused.
+                    example:
+                      code: CONFLICT
+                      message: LRN has previously been used and cannot be reused.
+              example:
+                code: CONFLICT
+                message: LRN has previously been used and cannot be reused.
         '413':
           description: Payload Too Large
           content:
@@ -161,6 +175,7 @@ paths:
                             href: /customs/transits/movements/departures/6365135ba5e821ee/messages
                         id: 6365135ba5e821ee
                         movementReferenceNumber: ABC123
+                        localReferenceNumber: DEF456
                         created: 2022-11-10T15:32:51.459Z
                         updated: 2022-11-10T15:32:51.459Z
                         enrollmentEORINumber: GB1234567890
@@ -177,6 +192,7 @@ paths:
                       href: /customs/transits/movements/departures/6365135ba5e821ee/messages
                   id: 6365135ba5e821ee
                   movementReferenceNumber: ABC123
+                  localReferenceNumber: DEF456
                   created: 2022-11-10T15:32:51.459Z
                   updated: 2022-11-10T15:32:51.459Z
                   enrollmentEORINumber: GB1234567890
@@ -1429,6 +1445,21 @@ components:
         code:
           enum:
             - REQUEST_ENTITY_TOO_LARGE
+          type: string
+        message:
+          type: string
+          description: The description of the error.
+    Conflict:
+      title: Conflict
+      description: LRN has previously been used and cannot be reused.
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          enum:
+            - CONFLICT
           type: string
         message:
           type: string
