@@ -344,14 +344,15 @@ class PersistenceServiceSpec
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
-      Gen.option(arbitrary[MovementReferenceNumber])
+      Gen.option(arbitrary[MovementReferenceNumber]),
+      Gen.option(arbitrary[LocalReferenceNumber])
     ) {
 
-      (expected, updatedSinceMaybe, movementEORI, eori, movementReferenceNumber) =>
-        when(mockConnector.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI, movementReferenceNumber))
+      (expected, updatedSinceMaybe, movementEORI, eori, movementReferenceNumber, localReferenceNumber) =>
+        when(mockConnector.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI, movementReferenceNumber, localReferenceNumber))
           .thenReturn(Future.successful(expected))
 
-        val result = sut.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI, movementReferenceNumber)
+        val result = sut.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI, movementReferenceNumber, localReferenceNumber)
         whenReady(result.value) {
           _ mustBe Right(expected)
         }
@@ -361,13 +362,14 @@ class PersistenceServiceSpec
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
-      Gen.option(arbitrary[MovementReferenceNumber])
+      Gen.option(arbitrary[MovementReferenceNumber]),
+      Gen.option(arbitrary[LocalReferenceNumber])
     ) {
-      (updatedSinceMaybe, movementEORI, eori, movementReferenceNumber) =>
-        when(mockConnector.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI, movementReferenceNumber))
+      (updatedSinceMaybe, movementEORI, eori, movementReferenceNumber, localReferenceNumber) =>
+        when(mockConnector.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI, movementReferenceNumber, localReferenceNumber))
           .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-        val result = sut.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI, movementReferenceNumber)
+        val result = sut.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI, movementReferenceNumber, localReferenceNumber)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.MovementsNotFound(eori, MovementType.Departure))
         }
@@ -377,14 +379,15 @@ class PersistenceServiceSpec
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
-      Gen.option(arbitrary[MovementReferenceNumber])
+      Gen.option(arbitrary[MovementReferenceNumber]),
+      Gen.option(arbitrary[LocalReferenceNumber])
     ) {
-      (updatedSinceMaybe, movementEORI, eori, movementReferenceNumber) =>
+      (updatedSinceMaybe, movementEORI, eori, movementReferenceNumber, localReferenceNumber) =>
         val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
-        when(mockConnector.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI, movementReferenceNumber))
+        when(mockConnector.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI, movementReferenceNumber, localReferenceNumber))
           .thenReturn(Future.failed(error))
 
-        val result = sut.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI, movementReferenceNumber)
+        val result = sut.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI, movementReferenceNumber, localReferenceNumber)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
         }
@@ -504,14 +507,15 @@ class PersistenceServiceSpec
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
-      Gen.option(arbitrary[MovementReferenceNumber])
+      Gen.option(arbitrary[MovementReferenceNumber]),
+      Gen.option(arbitrary[LocalReferenceNumber])
     ) {
 
-      (expected, updatedSinceMaybe, movementEORI, eori, movementReferenceNumber) =>
-        when(mockConnector.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber))
+      (expected, updatedSinceMaybe, movementEORI, eori, movementReferenceNumber, localReferenceNumber) =>
+        when(mockConnector.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber, localReferenceNumber))
           .thenReturn(Future.successful(expected))
 
-        val result = sut.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber)
+        val result = sut.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber, localReferenceNumber)
         whenReady(result.value) {
           _ mustBe Right(expected)
         }
@@ -521,13 +525,14 @@ class PersistenceServiceSpec
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
-      Gen.option(arbitrary[MovementReferenceNumber])
+      Gen.option(arbitrary[MovementReferenceNumber]),
+      Gen.option(arbitrary[LocalReferenceNumber])
     ) {
-      (updatedSinceMaybe, movementEORI, eori, movementReferenceNumber) =>
-        when(mockConnector.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber))
+      (updatedSinceMaybe, movementEORI, eori, movementReferenceNumber, localReferenceNumber) =>
+        when(mockConnector.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber, localReferenceNumber))
           .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-        val result = sut.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber)
+        val result = sut.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber, localReferenceNumber)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.MovementsNotFound(eori, MovementType.Arrival))
         }
@@ -537,14 +542,15 @@ class PersistenceServiceSpec
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
-      Gen.option(arbitrary[MovementReferenceNumber])
+      Gen.option(arbitrary[MovementReferenceNumber]),
+      Gen.option(arbitrary[LocalReferenceNumber])
     ) {
-      (updatedSinceMaybe, movementEORI, eori, movementReferenceNumber) =>
+      (updatedSinceMaybe, movementEORI, eori, movementReferenceNumber, localReferenceNumber) =>
         val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
-        when(mockConnector.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber))
+        when(mockConnector.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber, localReferenceNumber))
           .thenReturn(Future.failed(error))
 
-        val result = sut.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber)
+        val result = sut.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber, localReferenceNumber)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
         }

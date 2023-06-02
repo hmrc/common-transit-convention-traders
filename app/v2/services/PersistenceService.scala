@@ -78,7 +78,8 @@ trait PersistenceService {
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    localReferenceNumber: Option[LocalReferenceNumber]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -194,13 +195,14 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    localReferenceNumber: Option[LocalReferenceNumber]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MovementSummary]] = EitherT {
     persistenceConnector
-      .getMovements(eori, movementType, updatedSince, movementEORI, movementReferenceNumber)
+      .getMovements(eori, movementType, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber)
       .map(Right(_))
       .recover {
         case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementsNotFound(eori, movementType))

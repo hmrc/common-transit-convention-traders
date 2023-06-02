@@ -32,6 +32,7 @@ import v2.controllers.V2MovementsController
 import v2.controllers.stream.StreamingParsers
 import v2.models.Bindings._
 import v2.models.EORINumber
+import v2.models.LocalReferenceNumber
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.{MessageId => V2MessageId}
@@ -113,10 +114,11 @@ class DeparturesRouter @Inject() (
   def getDeparturesForEori(
     updatedSince: Option[OffsetDateTime] = None,
     movementEORI: Option[EORINumber] = None,
-    movementReferenceNumber: Option[MovementReferenceNumber] = None
+    movementReferenceNumber: Option[MovementReferenceNumber] = None,
+    localReferenceNumber: Option[LocalReferenceNumber] = None
   ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      v2Departures.getMovements(MovementType.Departure, updatedSince, movementEORI, movementReferenceNumber)
+      v2Departures.getMovements(MovementType.Departure, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber)
     case _ => v1Departures.getDeparturesForEori(updatedSince)
   }
 

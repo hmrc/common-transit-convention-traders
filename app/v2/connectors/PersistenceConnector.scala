@@ -38,6 +38,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.EORINumber
+import v2.models.LocalReferenceNumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
@@ -83,7 +84,8 @@ trait PersistenceConnector {
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    localReferenceNumber: Option[LocalReferenceNumber]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -194,7 +196,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    localReferenceNumber: Option[LocalReferenceNumber]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -203,7 +206,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       appConfig.movementsUrl.withPath(getAllMovementsUrl(eori, movementType)),
       updatedSince,
       movementEORI,
-      movementReferenceNumber
+      movementReferenceNumber,
+      localReferenceNumber
     )
 
     httpClientV2
@@ -246,7 +250,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     urlPath: Url,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    localReferenceNumber: Option[LocalReferenceNumber]
   ) =
     urlPath
       .withConfig(urlPath.config.copy(renderQuery = ExcludeNones))
@@ -258,6 +263,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       )
       .addParam("movementEORI", movementEORI.map(_.value))
       .addParam("movementReferenceNumber", movementReferenceNumber.map(_.value))
+      .addParam("lrn", localReferenceNumber.map(_.value))
 
   def patchMessage(
     eoriNumber: EORINumber,
