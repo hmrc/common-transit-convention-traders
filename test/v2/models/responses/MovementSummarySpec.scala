@@ -23,6 +23,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
 import v2.models.EORINumber
+import v2.models.LocalReferenceNumber
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 
@@ -43,6 +44,7 @@ class MovementSummarySpec extends AnyFreeSpec with Matchers with ScalaCheckDrive
         enrollmentEORINumber = EORINumber("GB123"),
         movementEORINumber = Some(EORINumber("GB456")),
         movementReferenceNumber = Some(MovementReferenceNumber("MRN001")),
+        localReferenceNumber = Some(LocalReferenceNumber("LRN001")),
         created = dateTime,
         updated = dateTime
       )
@@ -53,6 +55,7 @@ class MovementSummarySpec extends AnyFreeSpec with Matchers with ScalaCheckDrive
       "enrollmentEORINumber"    -> "GB123",
       "movementEORINumber"      -> "GB456",
       "movementReferenceNumber" -> "MRN001",
+      "localReferenceNumber"    -> "LRN001",
       "created"                 -> "2022-08-15T11:30:00Z", // due to OffsetDateTime in UTC
       "updated"                 -> "2022-08-15T11:30:00Z"
     )
@@ -68,6 +71,7 @@ class MovementSummarySpec extends AnyFreeSpec with Matchers with ScalaCheckDrive
         enrollmentEORINumber = EORINumber("GB123"),
         movementEORINumber = Some(EORINumber("GB456")),
         movementReferenceNumber = Some(MovementReferenceNumber("MRN001")),
+        localReferenceNumber = Some(LocalReferenceNumber("LRN001")),
         created = dateTime,
         updated = dateTime
       )
@@ -78,6 +82,7 @@ class MovementSummarySpec extends AnyFreeSpec with Matchers with ScalaCheckDrive
         "enrollmentEORINumber"    -> "GB123",
         "movementEORINumber"      -> "GB456",
         "movementReferenceNumber" -> "MRN001",
+        "localReferenceNumber"    -> "LRN001",
         "created"                 -> "2022-08-15T11:30:00Z", // due to OffsetDateTime in UTC
         "updated"                 -> "2022-08-15T11:30:00Z"
       )
