@@ -154,6 +154,13 @@ paths:
           schema:
             type: string
             example: 27WF9X1FQ9RCKN0TM3
+        - in: query
+          name: lrn
+          description: This is an optional query parameter that allows a list of departures to be filtered by an LRN - Local Reference Number.
+          style: form
+          schema:
+            type: string
+            example: 3CnsTh79I7vtOy6
       responses:
         '200':
           description: A successful get all departures response
@@ -838,6 +845,13 @@ paths:
           schema:
             type: string
             example: 27WF9X1FQ9RCKN0TM3
+        - in: query
+          name: lrn
+          description: This is an optional query parameter that allows a list of arrivals to be filtered by an LRN - Local Reference Number.
+          style: form
+          schema:
+            type: string
+            example: 3CnsTh79I7vtOy6
       responses:
         '200':
           description: A successful get all arrivals response
