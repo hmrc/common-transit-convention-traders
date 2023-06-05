@@ -81,7 +81,7 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
     localReferenceNumber: Option[LocalReferenceNumber]
-  ): JsObject = {
+  ): JsObject =
     (updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) match {
       case (Some(updatedSince), Some(movementEORI), Some(movementReferenceNumber), Some(localReferenceNumber)) =>
         val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(updatedSince)
@@ -171,5 +171,4 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
           "href" -> s"/customs/transits/movements/${movementType.urlFragment}"
         )
     }
-  }
 }

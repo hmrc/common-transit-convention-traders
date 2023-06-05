@@ -1,4 +1,4 @@
-GET        /movements/arrivals                                                      routing.ArrivalsRouter.getArrivalsForEori(updatedSince: Option[OffsetDateTime] ?= None, movementEORI: Option[EORINumber] ?= None, movementReferenceNumber: Option[v2.models.MovementReferenceNumber] ?= None, localReferenceNumber: Option[v2.models.LocalReferenceNumber] ?= None)
+GET        /movements/arrivals                                                      routing.ArrivalsRouter.getArrivalsForEori(updatedSince: Option[OffsetDateTime] ?= None, movementEORI: Option[EORINumber] ?= None, movementReferenceNumber: Option[v2.models.MovementReferenceNumber] ?= None, lrn: Option[v2.models.LocalReferenceNumber] ?= None)
 POST       /movements/arrivals                                                      routing.ArrivalsRouter.createArrivalNotification()
 
 PUT        /movements/arrivals/:arrivalId                                           controllers.ArrivalMovementController.resubmitArrivalNotification(arrivalId: ArrivalId)
@@ -9,7 +9,7 @@ GET        /movements/arrivals/:arrivalId/messages                              
 
 GET        /movements/arrivals/:arrivalId/messages/:messageId                       routing.ArrivalsRouter.getArrivalMessage(arrivalId: String, messageId: String)
 
-GET        /movements/departures                                                    routing.DeparturesRouter.getDeparturesForEori(updatedSince: Option[OffsetDateTime] ?= None, movementEORI: Option[EORINumber] ?= None, movementReferenceNumber: Option[v2.models.MovementReferenceNumber] ?= None, localReferenceNumber: Option[v2.models.LocalReferenceNumber] ?= None)
+GET        /movements/departures                                                    routing.DeparturesRouter.getDeparturesForEori(updatedSince: Option[OffsetDateTime] ?= None, movementEORI: Option[EORINumber] ?= None, movementReferenceNumber: Option[v2.models.MovementReferenceNumber] ?= None, lrn: Option[v2.models.LocalReferenceNumber] ?= None)
 POST       /movements/departures                                                    routing.DeparturesRouter.submitDeclaration()
 
 GET        /movements/departures/:departureId                                       routing.DeparturesRouter.getDeparture(departureId: String)
