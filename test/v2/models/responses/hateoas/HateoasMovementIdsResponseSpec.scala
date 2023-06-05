@@ -86,7 +86,7 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
       case (Some(updatedSince), Some(movementEORI), Some(movementReferenceNumber), Some(localReferenceNumber)) =>
         val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(updatedSince)
         Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time&movementEORI=${movementEORI.value}&movementReferenceNumber=${movementReferenceNumber.value}&localReferenceNumber=${localReferenceNumber.value}"
+          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time&movementEORI=${movementEORI.value}&movementReferenceNumber=${movementReferenceNumber.value}&lrn=${localReferenceNumber.value}"
         )
 
       case (Some(updatedSince), Some(movementEORI), Some(movementReferenceNumber), _) =>
@@ -98,18 +98,18 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
       case (Some(updatedSince), Some(movementEORI), _, Some(localReferenceNumber)) =>
         val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(updatedSince)
         Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time&movementEORI=${movementEORI.value}&localReferenceNumber=${localReferenceNumber.value}"
+          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time&movementEORI=${movementEORI.value}&lrn=${localReferenceNumber.value}"
         )
 
       case (Some(updatedSince), _, Some(movementReferenceNumber), Some(localReferenceNumber)) =>
         val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(updatedSince)
         Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time&movementReferenceNumber=${movementReferenceNumber.value}&localReferenceNumber=${localReferenceNumber.value}"
+          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time&movementReferenceNumber=${movementReferenceNumber.value}&lrn=${localReferenceNumber.value}"
         )
 
       case (_, Some(movementEORI), Some(movementReferenceNumber), Some(localReferenceNumber)) =>
         Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?movementEORI=${movementEORI.value}&movementReferenceNumber=${movementReferenceNumber.value}&localReferenceNumber=${localReferenceNumber.value}"
+          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?movementEORI=${movementEORI.value}&movementReferenceNumber=${movementReferenceNumber.value}&lrn=${localReferenceNumber.value}"
         )
 
       case (Some(updatedSince), Some(movementEORI), _, _) =>
@@ -127,7 +127,7 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
       case (Some(updatedSince), _, _, Some(localReferenceNumber)) =>
         val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(updatedSince)
         Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time&localReferenceNumber=${localReferenceNumber.value}"
+          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time&lrn=${localReferenceNumber.value}"
         )
 
       case (_, Some(movementEORI), Some(movementReferenceNumber), _) =>
@@ -137,12 +137,12 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
 
       case (_, Some(movementEORI), _, Some(localReferenceNumber)) =>
         Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?movementEORI=${movementEORI.value}&localReferenceNumber=${localReferenceNumber.value}"
+          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?movementEORI=${movementEORI.value}&lrn=${localReferenceNumber.value}"
         )
 
       case (_, _, Some(movementReferenceNumber), Some(localReferenceNumber)) =>
         Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?movementReferenceNumber=${movementReferenceNumber.value}&localReferenceNumber=${localReferenceNumber.value}"
+          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?movementReferenceNumber=${movementReferenceNumber.value}&lrn=${localReferenceNumber.value}"
         )
 
       case (Some(updatedSince), _, _, _) =>
@@ -163,7 +163,7 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
 
       case (_, _, Some(localReferenceNumber), _) =>
         Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?localReferenceNumber=${localReferenceNumber.value}"
+          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?lrn=${localReferenceNumber.value}"
         )
 
       case (_, _, _, _) =>
