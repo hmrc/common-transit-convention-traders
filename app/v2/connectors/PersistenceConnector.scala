@@ -263,7 +263,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       )
       .addParam("movementEORI", movementEORI.map(_.value))
       .addParam("movementReferenceNumber", movementReferenceNumber.map(_.value))
-      .addParam("lrn", localReferenceNumber.map(_.value))
+      .addParam("localReferenceNumber", localReferenceNumber.map(_.value))
 
   def patchMessage(
     eoriNumber: EORINumber,

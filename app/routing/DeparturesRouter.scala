@@ -115,10 +115,10 @@ class DeparturesRouter @Inject() (
     updatedSince: Option[OffsetDateTime] = None,
     movementEORI: Option[EORINumber] = None,
     movementReferenceNumber: Option[MovementReferenceNumber] = None,
-    lrn: Option[LocalReferenceNumber] = None
+    localReferenceNumber: Option[LocalReferenceNumber] = None
   ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      v2Departures.getMovements(MovementType.Departure, updatedSince, movementEORI, movementReferenceNumber, lrn)
+      v2Departures.getMovements(MovementType.Departure, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber)
     case _ => v1Departures.getDeparturesForEori(updatedSince)
   }
 

@@ -880,7 +880,7 @@ class PersistenceConnectorSpec
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) =>
         server.stubFor(
           get(
-            urlEqualTo(targetUrl(eori) + s"?lrn=${localReferenceNumber.value}")
+            urlEqualTo(targetUrl(eori) + s"?localReferenceNumber=${localReferenceNumber.value}")
           )
             .willReturn(
               aResponse()
@@ -914,7 +914,7 @@ class PersistenceConnectorSpec
             .withQueryParam("updatedSince", equalTo(DateTimeFormatter.ISO_DATE_TIME.format(updatedSince)))
             .withQueryParam("movementEORI", equalTo(movementEORI.value))
             .withQueryParam("movementReferenceNumber", equalTo(movementReferenceNumber.value))
-            .withQueryParam("lrn", equalTo(localReferenceNumber.value))
+            .withQueryParam("localReferenceNumber", equalTo(localReferenceNumber.value))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -1837,7 +1837,7 @@ class PersistenceConnectorSpec
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) =>
         server.stubFor(
           get(
-            urlEqualTo(targetUrl(eori) + s"?lrn=${localReferenceNumber.value}")
+            urlEqualTo(targetUrl(eori) + s"?localReferenceNumber=${localReferenceNumber.value}")
           )
             .willReturn(
               aResponse()
@@ -1871,7 +1871,7 @@ class PersistenceConnectorSpec
             .withQueryParam("updatedSince", equalTo(DateTimeFormatter.ISO_DATE_TIME.format(updatedSince)))
             .withQueryParam("movementEORI", equalTo(movementEORI.value))
             .withQueryParam("movementReferenceNumber", equalTo(movementReferenceNumber.value))
-            .withQueryParam("lrn", equalTo(localReferenceNumber.value))
+            .withQueryParam("localReferenceNumber", equalTo(localReferenceNumber.value))
             .willReturn(
               aResponse()
                 .withStatus(OK)
