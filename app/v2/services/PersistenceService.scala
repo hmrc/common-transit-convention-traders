@@ -31,11 +31,13 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
+import v2.models.ItemCount
 import v2.models.LocalReferenceNumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
+import v2.models.PageNumber
 import v2.models.errors.LRNError
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
@@ -78,7 +80,10 @@ trait PersistenceService {
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    pageNumber: Option[PageNumber],
+    itemCount: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -191,13 +196,16 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    pageNumber: Option[PageNumber],
+    itemCount: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MovementSummary]] = EitherT {
     persistenceConnector
-      .getMovements(eori, movementType, updatedSince, movementEORI, movementReferenceNumber)
+      .getMovements(eori, movementType, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount, receivedUntil)
       .map(Right(_))
       .recover {
         case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))

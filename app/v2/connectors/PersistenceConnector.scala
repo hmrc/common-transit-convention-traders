@@ -38,10 +38,12 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.EORINumber
+import v2.models.ItemCount
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
+import v2.models.PageNumber
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.responses.MessageSummary
@@ -83,7 +85,10 @@ trait PersistenceConnector {
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    pageNumber: Option[PageNumber] = None,
+    itemCount: Option[ItemCount] = None,
+    receivedUntil: Option[OffsetDateTime]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -194,7 +199,10 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    pageNumber: Option[PageNumber] = None,
+    itemCount: Option[ItemCount] = None,
+    receivedUntil: Option[OffsetDateTime]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -203,7 +211,10 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       appConfig.movementsUrl.withPath(getAllMovementsUrl(eori, movementType)),
       updatedSince,
       movementEORI,
-      movementReferenceNumber
+      movementReferenceNumber,
+      pageNumber,
+      itemCount,
+      receivedUntil
     )
 
     httpClientV2
@@ -246,7 +257,10 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     urlPath: Url,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    pageNumber: Option[PageNumber],
+    itemCount: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
   ) =
     urlPath
       .withConfig(urlPath.config.copy(renderQuery = ExcludeNones))
@@ -258,6 +272,14 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       )
       .addParam("movementEORI", movementEORI.map(_.value))
       .addParam("movementReferenceNumber", movementReferenceNumber.map(_.value))
+      .addParam("pageNumber", pageNumber.map(_.value))
+      .addParam("itemCount", itemCount.map(_.value))
+      .addParam(
+        "receivedUntil",
+        receivedUntil.map(
+          time => DateTimeFormatter.ISO_DATE_TIME.format(time)
+        )
+      )
 
   def patchMessage(
     eoriNumber: EORINumber,

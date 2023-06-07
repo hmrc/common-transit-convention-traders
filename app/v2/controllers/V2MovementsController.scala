@@ -433,7 +433,7 @@ class V2MovementsControllerImpl @Inject() (
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         persistenceService
-          .getMovements(request.eoriNumber, movementType, updatedSince, movementEORI, movementReferenceNumber)
+          .getMovements(request.eoriNumber, movementType, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount, receivedUntil)
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
