@@ -74,14 +74,26 @@ import scala.util.control.NonFatal
 trait V2MovementsController {
   def createMovement(movementType: MovementType): Action[Source[ByteString, _]]
   def getMessage(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent]
-  def getMessageIds(movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
+
+  def getMessageIds(
+    movementType: MovementType,
+    movementId: MovementId,
+    receivedSince: Option[OffsetDateTime] = None,
+    pageNumber: Option[PageNumber],
+    itemCount: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
+  ): Action[AnyContent]
+
   def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent]
 
   def getMovements(
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    pageNumber: Option[PageNumber] = None,
+    itemCount: Option[ItemCount] = None,
+    receivedUntil: Option[OffsetDateTime]
   ): Action[AnyContent]
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]]
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent]
@@ -373,7 +385,14 @@ class V2MovementsControllerImpl @Inject() (
         )
     }
 
-  def getMessageIds(movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
+  def getMessageIds(
+    movementType: MovementType,
+    movementId: MovementId,
+    receivedSince: Option[OffsetDateTime],
+    pageNumber: Option[PageNumber],
+    itemCount: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
+  ): Action[AnyContent] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -405,7 +424,10 @@ class V2MovementsControllerImpl @Inject() (
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    pageNumber: Option[PageNumber] = None,
+    itemCount: Option[ItemCount] = None,
+    receivedUntil: Option[OffsetDateTime]
   ): Action[AnyContent] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async {
       implicit request =>
