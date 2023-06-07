@@ -65,7 +65,15 @@ trait PersistenceService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MessageSummary]
 
-  def getMessages(eori: EORINumber, movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
+  def getMessages(
+    eori: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    receivedSince: Option[OffsetDateTime],
+    pageNumber: Option[PageNumber],
+    itemCount: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MessageSummary]]
@@ -163,13 +171,21 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         }
     )
 
-  override def getMessages(eori: EORINumber, movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
+  override def getMessages(
+    eori: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    receivedSince: Option[OffsetDateTime],
+    pageNumber: Option[PageNumber],
+    itemCount: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MessageSummary]] =
     EitherT(
       persistenceConnector
-        .getMessages(eori, movementType, movementId, receivedSince)
+        .getMessages(eori, movementType, movementId, receivedSince, pageNumber, itemCount, receivedUntil)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))

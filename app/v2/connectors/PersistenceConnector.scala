@@ -70,7 +70,15 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[MessageSummary]
 
-  def getMessages(eori: EORINumber, movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
+  def getMessages(
+    eori: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    receivedSince: Option[OffsetDateTime],
+    pageNumber: Option[PageNumber] = None,
+    itemCount: Option[ItemCount] = None,
+    receivedUntil: Option[OffsetDateTime]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MessageSummary]]
@@ -165,15 +173,25 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       .executeAndDeserialise[MessageSummary]
   }
 
-  override def getMessages(eori: EORINumber, movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
+  override def getMessages(
+    eori: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    receivedSince: Option[OffsetDateTime],
+    pageNumber: Option[PageNumber],
+    itemCount: Option[ItemCount] = Some(ItemCount(appConfig.itemsPerPage)),
+    receivedUntil: Option[OffsetDateTime]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MessageSummary]] = {
     val url =
-      withDateTimeParameter(
-        appConfig.movementsUrl.withPath(getMessagesUrl(eori, movementType, movementId)).toUrl,
-        "receivedSince",
-        receivedSince
+      withParameters2(
+        appConfig.movementsUrl.withPath(getMessagesUrl(eori, movementType, movementId)),
+        receivedSince,
+        pageNumber,
+        itemCount,
+        receivedUntil
       )
 
     httpClientV2
@@ -200,8 +218,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
-    pageNumber: Option[PageNumber] = None,
-    itemCount: Option[ItemCount] = None,
+    pageNumber: Option[PageNumber],
+    itemCount: Option[ItemCount] = Some(ItemCount(appConfig.itemsPerPage)),
     receivedUntil: Option[OffsetDateTime]
   )(implicit
     hc: HeaderCarrier,
@@ -253,6 +271,31 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       )
       .getOrElse(urlPath)
 
+  private def withParameters2( // TODO: refactor along with withParameters
+    urlPath: Url,
+    receivedSince: Option[OffsetDateTime],
+    pageNumber: Option[PageNumber],
+    itemCount: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
+  ) = {
+
+    val pageNumberValid: Some[PageNumber] = pageNumber.fold(Some(PageNumber(0)))(Some(_))
+    val itemCountValid: Some[ItemCount]   = itemCount.fold(Some(ItemCount(appConfig.itemsPerPage)))(Some(_))
+
+    urlPath
+      .withConfig(urlPath.config.copy(renderQuery = ExcludeNones))
+      .addParams(
+        "receivedSince" -> receivedSince.map(
+          time => DateTimeFormatter.ISO_DATE_TIME.format(time)
+        ),
+        "pageNumber" -> pageNumberValid.map(_.value.toString),
+        "itemCount"  -> itemCountValid.map(_.value.toString),
+        "receivedUntil" -> receivedUntil.map(
+          time => DateTimeFormatter.ISO_DATE_TIME.format(time)
+        )
+      )
+  }
+
   private def withParameters(
     urlPath: Url,
     updatedSince: Option[OffsetDateTime],
@@ -261,7 +304,11 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     pageNumber: Option[PageNumber],
     itemCount: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime]
-  ) =
+  ) = {
+
+    val pageNumberValid: Some[PageNumber] = pageNumber.fold(Some(PageNumber(0)))(Some(_))
+    val itemCountValid: Some[ItemCount]   = itemCount.fold(Some(ItemCount(appConfig.itemsPerPage)))(Some(_))
+
     urlPath
       .withConfig(urlPath.config.copy(renderQuery = ExcludeNones))
       .addParam(
@@ -272,16 +319,17 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       )
       .addParam("movementEORI", movementEORI.map(_.value))
       .addParam("movementReferenceNumber", movementReferenceNumber.map(_.value))
-      .addParam("pageNumber", pageNumber.map(_.value))
-      .addParam("itemCount", itemCount.map(_.value))
+      .addParam("pageNumber", pageNumberValid.map(_.value))
+      .addParam("itemCount", itemCountValid.map(_.value))
       .addParam(
         "receivedUntil",
         receivedUntil.map(
           time => DateTimeFormatter.ISO_DATE_TIME.format(time)
         )
       )
+  }
 
-  def patchMessage(
+  override def patchMessage(
     eoriNumber: EORINumber,
     movementType: MovementType,
     movementId: MovementId,

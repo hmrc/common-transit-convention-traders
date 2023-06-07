@@ -22,4 +22,5 @@ import play.api.libs.json.Json
 object PageNumber {
   implicit lazy val pageNumberFormats: Format[PageNumber] = Json.valueFormat[PageNumber]
 }
-case class PageNumber(value: String) extends AnyVal
+
+case class PageNumber(value: Long) extends AnyVal

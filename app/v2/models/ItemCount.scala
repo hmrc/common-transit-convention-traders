@@ -23,4 +23,4 @@ object ItemCount {
   implicit lazy val itemCountFormats: Format[ItemCount] = Json.valueFormat[ItemCount]
 }
 
-case class ItemCount(value: String) extends AnyVal
+case class ItemCount(value: Long) extends AnyVal
