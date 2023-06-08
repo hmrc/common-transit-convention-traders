@@ -125,7 +125,7 @@ class ArrivalsRouter @Inject() (
     movementReferenceNumber: Option[MovementReferenceNumber] = None,
     pageNumber: Option[PageNumber] = None,
     itemCount: Option[ItemCount] = None,
-    receivedUntil: Option[OffsetDateTime]
+    receivedUntil: Option[OffsetDateTime] = None
   ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
       v2Arrivals.getMovements(MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount, receivedUntil)
