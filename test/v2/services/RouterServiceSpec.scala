@@ -42,14 +42,13 @@ import v2.connectors.RouterConnector
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
-import v2.models.ObjectStoreURI
 import v2.models.SubmissionRoute
 import v2.models.errors.RouterError
 import v2.models.request.MessageType
 
 import java.nio.charset.StandardCharsets
-import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 class RouterServiceSpec

@@ -169,7 +169,7 @@ class PersistenceServiceSpec
         }
     }
 
-    "when a message is not found, should return a Left with an MessageNotFound" in {
+    "when a given movement is not found, should return a Left with an MovementNotFound" in {
       when(mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any())(any(), any()))
         .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
@@ -357,7 +357,7 @@ class PersistenceServiceSpec
         }
     }
 
-    "when a departure is not found, should return a Left with an MovementsNotFound" in forAll(
+    "when a departure movements are not found for given EORI, should return empty list" in forAll(
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
@@ -365,11 +365,11 @@ class PersistenceServiceSpec
     ) {
       (updatedSinceMaybe, movementEORI, eori, movementReferenceNumber) =>
         when(mockConnector.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI, movementReferenceNumber))
-          .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
+          .thenReturn(Future.successful(List.empty[MovementSummary]))
 
         val result = sut.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI, movementReferenceNumber)
         whenReady(result.value) {
-          _ mustBe Left(PersistenceError.MovementsNotFound(eori, MovementType.Departure))
+          _ mustBe Right(List.empty[MovementSummary])
         }
     }
 
@@ -464,7 +464,7 @@ class PersistenceServiceSpec
         }
     }
 
-    "when an arrival is not found, should return a Left with ArrivalNotFound" in forAll(
+    "when an given arrival is not found, should return a Left with MovementNotFound" in forAll(
       arbitrary[EORINumber],
       arbitrary[MovementId],
       Gen.option(arbitrary[OffsetDateTime])
@@ -517,7 +517,7 @@ class PersistenceServiceSpec
         }
     }
 
-    "when an arrival is not found, should return a Left with an MovementsNotFound" in forAll(
+    "when an arrival is not found, should return empty list" in forAll(
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
@@ -525,11 +525,11 @@ class PersistenceServiceSpec
     ) {
       (updatedSinceMaybe, movementEORI, eori, movementReferenceNumber) =>
         when(mockConnector.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber))
-          .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
+          .thenReturn(Future.successful(List.empty[MovementSummary]))
 
         val result = sut.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber)
         whenReady(result.value) {
-          _ mustBe Left(PersistenceError.MovementsNotFound(eori, MovementType.Arrival))
+          _ mustBe Right(List.empty[MovementSummary])
         }
     }
 
