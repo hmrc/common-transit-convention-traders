@@ -43,7 +43,6 @@ import v2.connectors.PersistenceConnector
 import v2.models._
 import v2.models.errors.LRNError
 import v2.models.errors.PersistenceError
-import v2.models.errors.PersistenceError.DuplicateLRNError
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.LocalReferenceNumber
@@ -109,7 +108,7 @@ class PersistenceServiceSpec
       }
     }
 
-    "on a failed submission, should return a Left with a ConflictError" in {
+    "on a failed submission, should return a Left with a DuplicateLRNError" in {
       when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(invalidRequest)))(any[HeaderCarrier], any[ExecutionContext]))
         .thenReturn(
           Future.failed(
@@ -140,6 +139,34 @@ class PersistenceServiceSpec
       whenReady(result.value) {
         _ mustBe expected
       }
+    }
+
+    "on a failed submission due to a conflict (duplicate LRN), should return a Left with a DuplicateLRNError" in forAll(Gen.alphaNumStr) {
+      lrn =>
+        implicit val hc: HeaderCarrier  = HeaderCarrier()
+        val conflictResponse: Throwable = UpstreamErrorResponse(s"""{ "message": "Duplicate LRN", "code": "CONFLICT", "lrn": "$lrn" }""", CONFLICT)
+        when(mockConnector.postMovement(EORINumber(any[String]), any(), any())(eqTo(hc), any[ExecutionContext]))
+          .thenReturn(Future.failed(conflictResponse))
+        val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, None)
+        val expected: Either[PersistenceError, MovementResponse] = Left(PersistenceError.DuplicateLRNError(LocalReferenceNumber(lrn)))
+        whenReady(result.value) {
+          _ mustBe expected
+        }
+    }
+
+    "on a failed submission due to a conflict (duplicate LRN), but with a mangled payload, should return a Left with an UnexpectedError" in forAll(
+      Gen.alphaNumStr
+    ) {
+      lrn =>
+        implicit val hc: HeaderCarrier  = HeaderCarrier()
+        val conflictResponse: Throwable = UpstreamErrorResponse(s"""{ "message": "Duplicate LRN", "code": "CONFLICT", "nope": "$lrn" }""", CONFLICT)
+        when(mockConnector.postMovement(EORINumber(any[String]), any(), any())(eqTo(hc), any[ExecutionContext]))
+          .thenReturn(Future.failed(conflictResponse))
+        val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, None)
+        val expected: Either[PersistenceError, MovementResponse] = Left(PersistenceError.UnexpectedError())
+        whenReady(result.value) {
+          _ mustBe expected
+        }
     }
 
     "on a failed submission, should return a Left with an UnexpectedError" in {
