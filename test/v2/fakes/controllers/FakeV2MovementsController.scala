@@ -58,7 +58,14 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
       Ok(Json.obj("version" -> 2))
   }
 
-  override def getMessageIds(movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] = Action {
+  override def getMessageIds(
+    movementType: MovementType,
+    movementId: MovementId,
+    receivedSince: Option[OffsetDateTime],
+    pageNumber: Option[v2.models.PageNumber],
+    itemCount: Option[v2.models.ItemCount],
+    receivedUntil: Option[OffsetDateTime]
+  ): Action[AnyContent] = Action {
     _ =>
       Ok(Json.obj("version" -> 2))
   }
@@ -72,7 +79,10 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    pageNumber: Option[v2.models.PageNumber],
+    itemCount: Option[v2.models.ItemCount],
+    receivedUntil: Option[OffsetDateTime]
   ): Action[AnyContent] = Action {
     _ =>
       Ok(Json.obj("version" -> 2))
