@@ -91,8 +91,8 @@ trait V2MovementsController {
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
-    pageNumber: Option[PageNumber] = None,
-    itemCount: Option[ItemCount] = None,
+    pageNumber: Option[PageNumber],
+    itemCount: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime]
   ): Action[AnyContent]
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]]
@@ -425,8 +425,8 @@ class V2MovementsControllerImpl @Inject() (
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
-    pageNumber: Option[PageNumber] = None,
-    itemCount: Option[ItemCount] = None,
+    pageNumber: Option[PageNumber],
+    itemCount: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime]
   ): Action[AnyContent] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async {

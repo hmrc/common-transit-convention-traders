@@ -3305,8 +3305,13 @@ class V2MovementsControllerSpec
             .map(
               _ => "with"
             )
-            .getOrElse("without")} a date filter" in forAll(arbitraryMovementId.arbitrary, Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head)) {
-            (movementId, messageResponse) =>
+            .getOrElse("without")} a date filter" in forAll(
+            arbitraryMovementId.arbitrary,
+            Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head),
+            arbitraryPageNumber.arbitrary,
+            arbitraryItemCount.arbitrary
+          ) {
+            (movementId, messageResponse, pageNumber, itemCount) =>
               val ControllerAndMocks(
                 sut,
                 _,
@@ -3321,7 +3326,15 @@ class V2MovementsControllerSpec
                 _
               ) = createControllerAndMocks()
               when(
-                mockPersistenceService.getMessages(EORINumber(any()), any[MovementType], MovementId(any()), any())(
+                mockPersistenceService.getMessages(
+                  EORINumber(any()),
+                  any[MovementType],
+                  MovementId(any()),
+                  any(),
+                  any[Option[PageNumber]],
+                  any[Option[ItemCount]],
+                  any[Option[OffsetDateTime]]
+                )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -3331,7 +3344,7 @@ class V2MovementsControllerSpec
                 )
 
               val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-              val result  = sut.getMessageIds(movementType, movementId, dateTime)(request)
+              val result  = sut.getMessageIds(movementType, movementId, dateTime, Some(pageNumber), Some(itemCount), dateTime)(request)
 
               status(result) mustBe OK
               contentAsJson(result) mustBe Json.toJson(
@@ -3340,8 +3353,8 @@ class V2MovementsControllerSpec
           }
       }
 
-      "when no movement is found" in forAll(arbitraryMovementId.arbitrary) {
-        movementId =>
+      "when no movement is found" in forAll(arbitraryMovementId.arbitrary, arbitraryPageNumber.arbitrary, arbitraryItemCount.arbitrary) {
+        (movementId, pageNumber, itemCount) =>
           val ControllerAndMocks(
             sut,
             _,
@@ -3356,7 +3369,15 @@ class V2MovementsControllerSpec
             _
           ) = createControllerAndMocks()
           when(
-            mockPersistenceService.getMessages(EORINumber(any()), any[MovementType], MovementId(any()), any())(
+            mockPersistenceService.getMessages(
+              EORINumber(any()),
+              any[MovementType],
+              MovementId(any()),
+              any(),
+              any[Option[PageNumber]],
+              any[Option[ItemCount]],
+              any[Option[OffsetDateTime]]
+            )(
               any[HeaderCarrier],
               any[ExecutionContext]
             )
@@ -3366,7 +3387,7 @@ class V2MovementsControllerSpec
             )
 
           val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-          val result  = sut.getMessageIds(movementType, movementId, None)(request)
+          val result  = sut.getMessageIds(movementType, movementId, None, Some(pageNumber), Some(itemCount), None)(request)
 
           status(result) mustBe NOT_FOUND
           contentAsJson(result) mustBe Json.obj(
@@ -3375,8 +3396,8 @@ class V2MovementsControllerSpec
           )
       }
 
-      "when an unknown error occurs" in forAll(arbitraryMovementId.arbitrary) {
-        movementId =>
+      "when an unknown error occurs" in forAll(arbitraryMovementId.arbitrary, arbitraryPageNumber.arbitrary, arbitraryItemCount.arbitrary) {
+        (movementId, pageNumber, itemCount) =>
           val ControllerAndMocks(
             sut,
             _,
@@ -3391,7 +3412,15 @@ class V2MovementsControllerSpec
             _
           ) = createControllerAndMocks()
           when(
-            mockPersistenceService.getMessages(EORINumber(any()), any[MovementType], MovementId(any()), any())(
+            mockPersistenceService.getMessages(
+              EORINumber(any()),
+              any[MovementType],
+              MovementId(any()),
+              any(),
+              any[Option[PageNumber]],
+              any[Option[ItemCount]],
+              any[Option[OffsetDateTime]]
+            )(
               any[HeaderCarrier],
               any[ExecutionContext]
             )
@@ -3401,7 +3430,7 @@ class V2MovementsControllerSpec
             )
 
           val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-          val result  = sut.getMessageIds(movementType, movementId, None)(request)
+          val result  = sut.getMessageIds(movementType, movementId, None, Some(pageNumber), Some(itemCount), None)(request)
 
           status(result) mustBe INTERNAL_SERVER_ERROR
           contentAsJson(result) mustBe Json.obj(
@@ -3411,9 +3440,11 @@ class V2MovementsControllerSpec
       }
 
       "must return NOT_ACCEPTABLE when the accept type is invalid" in forAll(
-        arbitraryMovementId.arbitrary
+        arbitraryMovementId.arbitrary,
+        arbitraryPageNumber.arbitrary,
+        arbitraryItemCount.arbitrary
       ) {
-        movementId =>
+        (movementId, pageNumber, itemCount) =>
           val ControllerAndMocks(
             sut,
             _,
@@ -3434,7 +3465,7 @@ class V2MovementsControllerSpec
           )
 
           val request  = FakeRequest("GET", "/", standardHeaders, Source.empty[ByteString])
-          val response = sut.getMessageIds(movementType, movementId, None)(request)
+          val response = sut.getMessageIds(movementType, movementId, None, Some(pageNumber), Some(itemCount), None)(request)
 
           status(response) mustBe NOT_ACCEPTABLE
           contentAsJson(response) mustBe Json.obj(
@@ -3444,9 +3475,11 @@ class V2MovementsControllerSpec
       }
 
       "must return NOT_ACCEPTABLE when the accept type is application/vnd.hmrc.2.0+json-xml" in forAll(
-        arbitraryMovementId.arbitrary
+        arbitraryMovementId.arbitrary,
+        arbitraryPageNumber.arbitrary,
+        arbitraryItemCount.arbitrary
       ) {
-        movementId =>
+        (movementId, pageNumber, itemCount) =>
           val ControllerAndMocks(
             sut,
             _,
@@ -3467,7 +3500,7 @@ class V2MovementsControllerSpec
           )
 
           val request  = FakeRequest("GET", "/", standardHeaders, Source.empty[ByteString])
-          val response = sut.getMessageIds(movementType, movementId, None)(request)
+          val response = sut.getMessageIds(movementType, movementId, None, Some(pageNumber), Some(itemCount), None)(request)
 
           status(response) mustBe NOT_ACCEPTABLE
           contentAsJson(response) mustBe Json.obj(
@@ -4314,7 +4347,10 @@ class V2MovementsControllerSpec
             any[MovementType],
             any[Option[OffsetDateTime]],
             any[Option[EORINumber]],
-            any[Option[MovementReferenceNumber]]
+            any[Option[MovementReferenceNumber]],
+            any[Option[PageNumber]],
+            any[Option[ItemCount]],
+            any[Option[OffsetDateTime]]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -4329,7 +4365,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None, None, None, None)(request)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(
@@ -4365,7 +4401,10 @@ class V2MovementsControllerSpec
             any[MovementType],
             any[Option[OffsetDateTime]],
             any[Option[EORINumber]],
-            any[Option[MovementReferenceNumber]]
+            any[Option[MovementReferenceNumber]],
+            any[Option[PageNumber]],
+            any[Option[ItemCount]],
+            any[Option[OffsetDateTime]]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -4381,7 +4420,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None, None, None, None)(request)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(
@@ -4415,7 +4454,10 @@ class V2MovementsControllerSpec
             any[MovementType],
             any[Option[OffsetDateTime]],
             any[Option[EORINumber]],
-            any[Option[MovementReferenceNumber]]
+            any[Option[MovementReferenceNumber]],
+            any[Option[PageNumber]],
+            any[Option[ItemCount]],
+            any[Option[OffsetDateTime]]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -4431,7 +4473,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None, None, None, None)(request)
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         contentAsJson(result) mustBe Json.obj(
@@ -4462,7 +4504,10 @@ class V2MovementsControllerSpec
             any[MovementType],
             any[Option[OffsetDateTime]],
             any[Option[EORINumber]],
-            any[Option[MovementReferenceNumber]]
+            any[Option[MovementReferenceNumber]],
+            any[Option[PageNumber]],
+            any[Option[ItemCount]],
+            any[Option[OffsetDateTime]]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -4478,7 +4523,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None, None, None, None)(request)
 
         status(result) mustBe NOT_ACCEPTABLE
         contentAsJson(result) mustBe Json.obj(
@@ -4509,7 +4554,10 @@ class V2MovementsControllerSpec
             any[MovementType],
             any[Option[OffsetDateTime]],
             any[Option[EORINumber]],
-            any[Option[MovementReferenceNumber]]
+            any[Option[MovementReferenceNumber]],
+            any[Option[PageNumber]],
+            any[Option[ItemCount]],
+            any[Option[OffsetDateTime]]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -4525,7 +4573,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json123")),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None, None, None, None)(request)
 
         status(result) mustBe NOT_ACCEPTABLE
         contentAsJson(result) mustBe Json.obj(

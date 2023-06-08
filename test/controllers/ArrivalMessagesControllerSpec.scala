@@ -273,7 +273,7 @@ class ArrivalMessagesControllerSpec
   }
 
   "POST /movements/arrivals/:arrivalId/messages" - {
-    "must return Accepted when successful" in {
+    "must return Accepted when successfulXXXX" in {
       when(mockMessageConnector.post(any(), ArrivalId(any()))(any(), any()))
         .thenReturn(
           Future.successful(
@@ -352,7 +352,7 @@ class ArrivalMessagesControllerSpec
       status(result) mustBe INTERNAL_SERVER_ERROR
     }
 
-    "must exclude query string if present in downstream Location header" in {
+    "must exclude query string if present in downstream Location headerYYY" in {
       when(mockMessageConnector.post(any(), ArrivalId(any()))(any(), any()))
         .thenReturn(
           Future.successful(
