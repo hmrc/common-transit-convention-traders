@@ -4345,7 +4345,7 @@ class V2MovementsControllerSpec
         )
       }
 
-      "should return departure not found if persistence service returns 404" in {
+      "should return Ok if persistence service returns empty list" in {
         val ControllerAndMocks(
           sut,
           _,
@@ -4375,7 +4375,7 @@ class V2MovementsControllerSpec
           )
         )
           .thenAnswer(
-            _ => EitherT.leftT(PersistenceError.MovementsNotFound(eori, movementType))
+            _ => EitherT.rightT(List.empty[MovementSummary])
           )
 
         val request = FakeRequest(
@@ -4386,10 +4386,15 @@ class V2MovementsControllerSpec
         )
         val result = sut.getMovements(movementType, None, None, None, None)(request)
 
-        status(result) mustBe NOT_FOUND
-        contentAsJson(result) mustBe Json.obj(
-          "message" -> s"${movementType.movementType.capitalize} movement IDs for ${eori.value} were not found",
-          "code"    -> "NOT_FOUND"
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(
+          HateoasMovementIdsResponse(
+            List.empty[MovementSummary],
+            movementType,
+            None,
+            None,
+            None
+          )
         )
       }
 

@@ -25,7 +25,7 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import play.api.http.Status.CONFLICT
 import play.api.http.Status.NOT_FOUND
-import play.api.libs.json.JsValue
+import play.api.libs.json.JsError
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
@@ -139,10 +139,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
           movementResponse => Right(movementResponse)
         }
         .recover {
-          case UpstreamErrorResponse(message, CONFLICT, _, _) =>
-            val jsValue  = Json.parse(message)
-            val lrnError = jsValue.validate[LRNError].get
-            Left(PersistenceError.DuplicateLRNError(LocalReferenceNumber(lrnError.lrn)))
+          case UpstreamErrorResponse(message, CONFLICT, _, _) => Left(onConflict(message))
           case NonFatal(thr) =>
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
@@ -205,8 +202,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
       .getMovements(eori, movementType, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber)
       .map(Right(_))
       .recover {
-        case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementsNotFound(eori, movementType))
-        case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+        case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))
       }
   }
 
@@ -260,6 +256,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         .updateMessageBody(messageType, eoriNumber, movementType, movementId, messageId, source)
         .map(Right(_))
         .recover {
+          case UpstreamErrorResponse(message, CONFLICT, _, _) => Left(onConflict(message))
           case NonFatal(thr) =>
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
@@ -279,4 +276,15 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
           case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
+
+  private def onConflict(message: String): PersistenceError =
+    Json
+      .parse(message)
+      .validate[LRNError]
+      .map(
+        lrnError => PersistenceError.DuplicateLRNError(LocalReferenceNumber(lrnError.lrn))
+      )
+      .recoverTotal {
+        case JsError(_) => PersistenceError.UnexpectedError()
+      }
 }
