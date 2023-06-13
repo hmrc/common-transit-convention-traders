@@ -273,7 +273,7 @@ class ArrivalMessagesControllerSpec
   }
 
   "POST /movements/arrivals/:arrivalId/messages" - {
-    "must return Accepted when successfulXXXX" in {
+    "must return Accepted when successful" in {
       when(mockMessageConnector.post(any(), ArrivalId(any()))(any(), any()))
         .thenReturn(
           Future.successful(

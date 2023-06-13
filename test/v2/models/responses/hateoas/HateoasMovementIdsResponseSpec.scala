@@ -87,14 +87,23 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
     count: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime]
   ): JsObject = {
-    val updated  = updatedSince.fold("")("?updatedSince=" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(_))
-    val eori     = movementEORI.fold("")("&movementEORI=" + _.value)
-    val mrn      = movementReferenceNumber.fold("")("&movementReferenceNumber=" + _.value)
-    val pageNum  = page.fold("")("&pageNumber=" + _.value)
-    val countNum = count.fold("")("&itemCount=" + _.value)
-    val received = receivedUntil.fold("")("&receivedUntil=" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(_))
 
-    val url = "/customs/transits/movements/" + movementType.urlFragment + updated + eori + mrn + pageNum + countNum + received
+    val updated  = updatedSince.fold("")("updatedSince=" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(_)).trim
+    val eori     = movementEORI.fold("")("movementEORI=" + _.value).trim
+    val mrn      = movementReferenceNumber.fold("")("movementReferenceNumber=" + _.value).trim
+    val pageNum  = page.fold("")("page=" + _.value).trim
+    val countNum = count.fold("")("count=" + _.value).trim
+    val received = receivedUntil.fold("")("receivedUntil=" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(_)).trim
+
+    val queryString = Seq(updated, eori, mrn, pageNum, countNum, received)
+      .map(
+        param => if (param.length > 0) "&" + param else ""
+      )
+      .mkString
+      .replaceFirst("&", "?")
+
+    val url = s"/customs/transits/movements/${movementType.urlFragment}$queryString"
+
     Json.obj("href" -> url)
   }
 

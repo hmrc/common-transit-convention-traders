@@ -3348,7 +3348,7 @@ class V2MovementsControllerSpec
 
               status(result) mustBe OK
               contentAsJson(result) mustBe Json.toJson(
-                HateoasMovementMessageIdsResponse(movementId, messageResponse, dateTime, movementType)
+                HateoasMovementMessageIdsResponse(movementId, messageResponse, dateTime, movementType, Some(pageNumber), Some(itemCount), dateTime)
               )
           }
       }

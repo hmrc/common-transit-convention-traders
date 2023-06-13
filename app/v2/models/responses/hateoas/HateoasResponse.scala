@@ -29,20 +29,33 @@ trait HateoasResponse {
       case MovementType.Arrival   => routing.routes.ArrivalsRouter.getArrivalMessage(movementId.value, messageId.value).urlWithContext
     }
 
-  def getMessagesUri(movementId: MovementId, receivedSince: Option[OffsetDateTime], movementType: MovementType): String =
+  def getMessagesUri(
+    movementId: MovementId,
+    receivedSince: Option[OffsetDateTime],
+    movementType: MovementType,
+    page: Option[PageNumber] = None,
+    count: Option[ItemCount] = None,
+    receivedUntil: Option[OffsetDateTime] = None
+  ): String =
     movementType match {
       case MovementType.Arrival =>
         routing.routes.ArrivalsRouter
           .getArrivalMessageIds(
             movementId.value,
-            receivedSince
+            receivedSince,
+            page,
+            count,
+            receivedUntil
           )
           .urlWithContext
       case MovementType.Departure =>
         routing.routes.DeparturesRouter
           .getMessageIds(
             movementId.value,
-            receivedSince
+            receivedSince,
+            page,
+            count,
+            receivedUntil
           )
           .urlWithContext
     }
