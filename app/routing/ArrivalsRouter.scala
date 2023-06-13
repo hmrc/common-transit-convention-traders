@@ -81,15 +81,15 @@ class ArrivalsRouter @Inject() (
   def getArrivalMessageIds(
     arrivalId: String,
     receivedSince: Option[OffsetDateTime] = None,
-    pageNumber: Option[PageNumber] = None,
-    itemCount: Option[ItemCount] = None,
+    page: Option[PageNumber] = None,
+    count: Option[ItemCount] = None,
     receivedUntil: Option[OffsetDateTime] = None
   ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
       runIfBound[V2ArrivalId](
         "arrivalId",
         arrivalId,
-        v2Arrivals.getMessageIds(MovementType.Arrival, _, receivedSince, pageNumber, itemCount, receivedUntil)
+        v2Arrivals.getMessageIds(MovementType.Arrival, _, receivedSince, page, count, receivedUntil)
       )
     case _ =>
       runIfBound[V1ArrivalId](
@@ -123,12 +123,12 @@ class ArrivalsRouter @Inject() (
     updatedSince: Option[OffsetDateTime] = None,
     movementEORI: Option[EORINumber] = None,
     movementReferenceNumber: Option[MovementReferenceNumber] = None,
-    pageNumber: Option[PageNumber] = None,
-    itemCount: Option[ItemCount] = None,
+    page: Option[PageNumber] = None,
+    count: Option[ItemCount] = None,
     receivedUntil: Option[OffsetDateTime] = None
   ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      v2Arrivals.getMovements(MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount, receivedUntil)
+      v2Arrivals.getMovements(MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil)
     case _ => v1Arrivals.getArrivalsForEori(updatedSince)
   }
 

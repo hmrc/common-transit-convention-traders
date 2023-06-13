@@ -75,8 +75,8 @@ trait PersistenceConnector {
     movementType: MovementType,
     movementId: MovementId,
     receivedSince: Option[OffsetDateTime],
-    pageNumber: Option[PageNumber] = None,
-    itemCount: Option[ItemCount] = None,
+    page: Option[PageNumber] = None,
+    count: Option[ItemCount] = None,
     receivedUntil: Option[OffsetDateTime]
   )(implicit
     hc: HeaderCarrier,
@@ -94,8 +94,8 @@ trait PersistenceConnector {
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
-    pageNumber: Option[PageNumber] = None,
-    itemCount: Option[ItemCount] = None,
+    page: Option[PageNumber] = None,
+    count: Option[ItemCount] = None,
     receivedUntil: Option[OffsetDateTime] = None
   )(implicit
     hc: HeaderCarrier,
@@ -178,8 +178,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     movementType: MovementType,
     movementId: MovementId,
     receivedSince: Option[OffsetDateTime],
-    pageNumber: Option[PageNumber],
-    itemCount: Option[ItemCount] = Some(ItemCount(appConfig.itemsPerPage)),
+    page: Option[PageNumber],
+    count: Option[ItemCount] = Some(ItemCount(appConfig.itemsPerPage)),
     receivedUntil: Option[OffsetDateTime]
   )(implicit
     hc: HeaderCarrier,
@@ -190,8 +190,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       withParameters(
         urlPath = appConfig.movementsUrl.withPath(getMessagesUrl(eori, movementType, movementId)),
         receivedSince = receivedSince,
-        pageNumber = pageNumber,
-        itemCount = itemCount,
+        page = page,
+        count = count,
         receivedUntil = receivedUntil
       )
 
@@ -219,8 +219,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
-    pageNumber: Option[PageNumber],
-    itemCount: Option[ItemCount] = Some(ItemCount(appConfig.itemsPerPage)),
+    page: Option[PageNumber],
+    count: Option[ItemCount] = Some(ItemCount(appConfig.itemsPerPage)),
     receivedUntil: Option[OffsetDateTime]
   )(implicit
     hc: HeaderCarrier,
@@ -232,8 +232,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       updatedSince = updatedSince,
       movementEORI = movementEORI,
       movementReferenceNumber = movementReferenceNumber,
-      pageNumber = pageNumber,
-      itemCount = itemCount,
+      page = page,
+      count = count,
       receivedUntil = receivedUntil
     )
 
@@ -272,13 +272,13 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     movementEORI: Option[EORINumber] = None,
     movementReferenceNumber: Option[MovementReferenceNumber] = None,
     receivedSince: Option[OffsetDateTime] = None,
-    pageNumber: Option[PageNumber] = None,
-    itemCount: Option[ItemCount] = None,
+    page: Option[PageNumber] = None,
+    count: Option[ItemCount] = None,
     receivedUntil: Option[OffsetDateTime] = None
   ) = {
 
-    val pageNumberValid: Some[PageNumber] = pageNumber.fold(Some(PageNumber(0)))(Some(_))
-    val itemCountValid: Some[ItemCount]   = itemCount.fold(Some(ItemCount(appConfig.itemsPerPage)))(Some(_))
+    val pageNumberValid: Some[PageNumber] = page.fold(Some(PageNumber(0)))(Some(_))
+    val itemCountValid: Some[ItemCount]   = count.fold(Some(ItemCount(appConfig.itemsPerPage)))(Some(_))
 
     urlPath
       .withConfig(urlPath.config.copy(renderQuery = ExcludeNones))
@@ -291,8 +291,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
         "receivedSince" -> receivedSince.map(
           time => DateTimeFormatter.ISO_DATE_TIME.format(time)
         ),
-        "pageNumber" -> pageNumberValid.map(_.value.toString),
-        "itemCount"  -> itemCountValid.map(_.value.toString),
+        "page"  -> pageNumberValid.map(_.value.toString),
+        "count" -> itemCountValid.map(_.value.toString),
         "receivedUntil" -> receivedUntil.map(
           time => DateTimeFormatter.ISO_DATE_TIME.format(time)
         )

@@ -70,8 +70,8 @@ trait PersistenceService {
     movementType: MovementType,
     movementId: MovementId,
     receivedSince: Option[OffsetDateTime],
-    pageNumber: Option[PageNumber],
-    itemCount: Option[ItemCount],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime]
   )(implicit
     hc: HeaderCarrier,
@@ -89,8 +89,8 @@ trait PersistenceService {
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
-    pageNumber: Option[PageNumber],
-    itemCount: Option[ItemCount],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime]
   )(implicit
     hc: HeaderCarrier,
@@ -176,8 +176,8 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
     movementType: MovementType,
     movementId: MovementId,
     receivedSince: Option[OffsetDateTime],
-    pageNumber: Option[PageNumber],
-    itemCount: Option[ItemCount],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime]
   )(implicit
     hc: HeaderCarrier,
@@ -185,7 +185,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
   ): EitherT[Future, PersistenceError, Seq[MessageSummary]] =
     EitherT(
       persistenceConnector
-        .getMessages(eori, movementType, movementId, receivedSince, pageNumber, itemCount, receivedUntil)
+        .getMessages(eori, movementType, movementId, receivedSince, page, count, receivedUntil)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
@@ -213,15 +213,15 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
-    pageNumber: Option[PageNumber],
-    itemCount: Option[ItemCount],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MovementSummary]] = EitherT {
     persistenceConnector
-      .getMovements(eori, movementType, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount, receivedUntil)
+      .getMovements(eori, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil)
       .map(Right(_))
       .recover {
         case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))

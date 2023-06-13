@@ -85,15 +85,15 @@ class DeparturesRouter @Inject() (
   def getMessageIds(
     departureId: String,
     receivedSince: Option[OffsetDateTime] = None,
-    pageNumber: Option[v2.models.PageNumber],
-    itemCount: Option[v2.models.ItemCount],
+    page: Option[v2.models.PageNumber],
+    count: Option[v2.models.ItemCount],
     receivedUntil: Option[OffsetDateTime]
   ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
       runIfBound[V2DepartureId](
         "departureId",
         departureId,
-        v2Departures.getMessageIds(MovementType.Departure, _, receivedSince, pageNumber, itemCount, receivedUntil)
+        v2Departures.getMessageIds(MovementType.Departure, _, receivedSince, page, count, receivedUntil)
       )
     case _ =>
       runIfBound[V1DepartureId](
@@ -122,12 +122,12 @@ class DeparturesRouter @Inject() (
     updatedSince: Option[OffsetDateTime] = None,
     movementEORI: Option[EORINumber] = None,
     movementReferenceNumber: Option[MovementReferenceNumber] = None,
-    pageNumber: Option[PageNumber] = None,
-    itemCount: Option[ItemCount] = None,
+    page: Option[PageNumber] = None,
+    count: Option[ItemCount] = None,
     receivedUntil: Option[OffsetDateTime] = None
   ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      v2Departures.getMovements(MovementType.Departure, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount, receivedUntil)
+      v2Departures.getMovements(MovementType.Departure, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil)
     case _ => v1Departures.getDeparturesForEori(updatedSince)
   }
 

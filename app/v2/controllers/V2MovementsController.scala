@@ -79,8 +79,8 @@ trait V2MovementsController {
     movementType: MovementType,
     movementId: MovementId,
     receivedSince: Option[OffsetDateTime] = None,
-    pageNumber: Option[PageNumber],
-    itemCount: Option[ItemCount],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime]
   ): Action[AnyContent]
 
@@ -91,8 +91,8 @@ trait V2MovementsController {
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
-    pageNumber: Option[PageNumber],
-    itemCount: Option[ItemCount],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime]
   ): Action[AnyContent]
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]]
@@ -389,8 +389,8 @@ class V2MovementsControllerImpl @Inject() (
     movementType: MovementType,
     movementId: MovementId,
     receivedSince: Option[OffsetDateTime],
-    pageNumber: Option[PageNumber],
-    itemCount: Option[ItemCount],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime]
   ): Action[AnyContent] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async {
@@ -398,7 +398,7 @@ class V2MovementsControllerImpl @Inject() (
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         persistenceService
-          .getMessages(request.eoriNumber, movementType, movementId, receivedSince, pageNumber, itemCount, receivedUntil)
+          .getMessages(request.eoriNumber, movementType, movementId, receivedSince, page, count, receivedUntil)
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -425,15 +425,15 @@ class V2MovementsControllerImpl @Inject() (
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
-    pageNumber: Option[PageNumber],
-    itemCount: Option[ItemCount],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime]
   ): Action[AnyContent] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         persistenceService
-          .getMovements(request.eoriNumber, movementType, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount, receivedUntil)
+          .getMovements(request.eoriNumber, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil)
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
