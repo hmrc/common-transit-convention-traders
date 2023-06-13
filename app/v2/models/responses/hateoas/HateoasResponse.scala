@@ -57,10 +57,15 @@ trait HateoasResponse {
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
   ) =
     movementType match {
-      case MovementType.Arrival   => routing.routes.ArrivalsRouter.getArrivalsForEori(updatedSince, movementEORI, movementReferenceNumber).urlWithContext
-      case MovementType.Departure => routing.routes.DeparturesRouter.getDeparturesForEori(updatedSince, movementEORI, movementReferenceNumber).urlWithContext
+      case MovementType.Arrival =>
+        routing.routes.ArrivalsRouter.getArrivalsForEori(updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil).urlWithContext
+      case MovementType.Departure =>
+        routing.routes.DeparturesRouter.getDeparturesForEori(updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil).urlWithContext
     }
 }

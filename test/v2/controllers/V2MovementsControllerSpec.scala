@@ -4374,6 +4374,9 @@ class V2MovementsControllerSpec
             movementType,
             None,
             None,
+            None,
+            None,
+            None,
             None
           )
         )
@@ -4427,6 +4430,9 @@ class V2MovementsControllerSpec
           HateoasMovementIdsResponse(
             List.empty[MovementSummary],
             movementType,
+            None,
+            None,
+            None,
             None,
             None,
             None
