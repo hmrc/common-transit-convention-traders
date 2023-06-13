@@ -90,7 +90,7 @@ class PersistenceConnectorSpec
   lazy val persistenceConnector: PersistenceConnectorImpl = new PersistenceConnectorImpl(httpClientV2, appConfig, new TestMetrics())
   implicit lazy val ec: ExecutionContext                  = app.materializer.executionContext
 
-  val defaultFilterParams = "?page=0&count=25"
+  val defaultFilterParams = "?page=1&count=25"
 
   "POST /traders/:eori/movements/departures" - {
 
@@ -532,7 +532,7 @@ class PersistenceConnectorSpec
 
       server.stubFor(
         get(
-          urlEqualTo(targetUrlWithTime(eori, departureId, time) + "&page=0&count=25")
+          urlEqualTo(targetUrlWithTime(eori, departureId, time) + "&page=1&count=25")
         )
           .willReturn(
             aResponse()
@@ -881,7 +881,7 @@ class PersistenceConnectorSpec
         server.stubFor(
           get(
             urlEqualTo(
-              targetUrl(eori) + s"?movementEORI=${movementEORI.value}&movementReferenceNumber=${movementReferenceNumber.value}&page=0&count=25"
+              targetUrl(eori) + s"?movementEORI=${movementEORI.value}&movementReferenceNumber=${movementReferenceNumber.value}&page=1&count=25"
             )
           )
             .willReturn(
@@ -1558,7 +1558,7 @@ class PersistenceConnectorSpec
           get(
             urlPathEqualTo(targetUrl(eori, arrivalId))
           ).withQueryParam("receivedSince", equalTo(DateTimeFormatter.ISO_DATE_TIME.format(time)))
-            .withQueryParam("page", equalTo("0"))
+            .withQueryParam("page", equalTo("1"))
             .withQueryParam("count", equalTo("25"))
             .willReturn(
               aResponse()
@@ -1809,7 +1809,7 @@ class PersistenceConnectorSpec
         server.stubFor(
           get(
             urlEqualTo(
-              targetUrl(eori) + s"?movementEORI=${movementEORI.value}&movementReferenceNumber=${movementReferenceNumber.value}&page=0&count=25"
+              targetUrl(eori) + s"?movementEORI=${movementEORI.value}&movementReferenceNumber=${movementReferenceNumber.value}&page=1&count=25"
             )
           )
             .willReturn(
@@ -1848,7 +1848,7 @@ class PersistenceConnectorSpec
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount) =>
         server.stubFor(
           get(
-            urlEqualTo(targetUrl(eori) + s"?page=${pageNumber.getOrElse(PageNumber(0)).value}&count=${itemCount.getOrElse(ItemCount(25)).value}")
+            urlEqualTo(targetUrl(eori) + s"?page=${pageNumber.getOrElse(PageNumber(1)).value}&count=${itemCount.getOrElse(ItemCount(25)).value}")
           )
             .willReturn(
               aResponse()

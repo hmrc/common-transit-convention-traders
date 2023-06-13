@@ -75,7 +75,7 @@ trait PersistenceConnector {
     movementType: MovementType,
     movementId: MovementId,
     receivedSince: Option[OffsetDateTime],
-    page: Option[PageNumber] = None,
+    page: Option[PageNumber] = Some(PageNumber(1)),
     count: Option[ItemCount] = None,
     receivedUntil: Option[OffsetDateTime]
   )(implicit
@@ -94,7 +94,7 @@ trait PersistenceConnector {
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
-    page: Option[PageNumber] = None,
+    page: Option[PageNumber] = Some(PageNumber(1)),
     count: Option[ItemCount] = None,
     receivedUntil: Option[OffsetDateTime] = None
   )(implicit
@@ -178,7 +178,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     movementType: MovementType,
     movementId: MovementId,
     receivedSince: Option[OffsetDateTime],
-    page: Option[PageNumber],
+    page: Option[PageNumber] = Some(PageNumber(1)),
     count: Option[ItemCount] = Some(ItemCount(appConfig.itemsPerPage)),
     receivedUntil: Option[OffsetDateTime]
   )(implicit
@@ -219,7 +219,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
-    page: Option[PageNumber],
+    page: Option[PageNumber] = Some(PageNumber(1)),
     count: Option[ItemCount] = Some(ItemCount(appConfig.itemsPerPage)),
     receivedUntil: Option[OffsetDateTime]
   )(implicit
@@ -272,13 +272,13 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     movementEORI: Option[EORINumber] = None,
     movementReferenceNumber: Option[MovementReferenceNumber] = None,
     receivedSince: Option[OffsetDateTime] = None,
-    page: Option[PageNumber] = None,
+    page: Option[PageNumber] = Some(PageNumber(1)),
     count: Option[ItemCount] = None,
     receivedUntil: Option[OffsetDateTime] = None
   ) = {
 
-    val pageNumberValid: Some[PageNumber] = page.fold(Some(PageNumber(0)))(Some(_))
-    val itemCountValid: Some[ItemCount]   = count.fold(Some(ItemCount(appConfig.itemsPerPage)))(Some(_))
+    val pageNumberValid = page.fold(Some(PageNumber(1)))(Some(_)) // not a Zero based index.
+    val itemCountValid  = count.fold(Some(ItemCount(appConfig.itemsPerPage)))(Some(_))
 
     urlPath
       .withConfig(urlPath.config.copy(renderQuery = ExcludeNones))
