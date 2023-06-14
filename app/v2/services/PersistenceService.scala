@@ -31,11 +31,13 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.PersistenceConnector
 import v2.models.EORINumber
+import v2.models.ItemCount
 import v2.models.LocalReferenceNumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
+import v2.models.PageNumber
 import v2.models.errors.LRNError
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
@@ -63,7 +65,15 @@ trait PersistenceService {
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MessageSummary]
 
-  def getMessages(eori: EORINumber, movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
+  def getMessages(
+    eori: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    receivedSince: Option[OffsetDateTime],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MessageSummary]]
@@ -79,6 +89,9 @@ trait PersistenceService {
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime],
     localReferenceNumber: Option[LocalReferenceNumber]
   )(implicit
     hc: HeaderCarrier,
@@ -159,13 +172,21 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         }
     )
 
-  override def getMessages(eori: EORINumber, movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
+  override def getMessages(
+    eori: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    receivedSince: Option[OffsetDateTime],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MessageSummary]] =
     EitherT(
       persistenceConnector
-        .getMessages(eori, movementType, movementId, receivedSince)
+        .getMessages(eori, movementType, movementId, receivedSince, page, count, receivedUntil)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
@@ -193,13 +214,16 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime],
     localReferenceNumber: Option[LocalReferenceNumber]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MovementSummary]] = EitherT {
     persistenceConnector
-      .getMovements(eori, movementType, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber)
+      .getMovements(eori, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
       .map(Right(_))
       .recover {
         case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))

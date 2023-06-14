@@ -18,9 +18,11 @@ package v2.models.responses.hateoas
 
 import play.api.libs.json._
 import v2.models.EORINumber
+import v2.models.ItemCount
 import v2.models.LocalReferenceNumber
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
+import v2.models.PageNumber
 import v2.models.responses.MovementSummary
 
 import java.time.OffsetDateTime
@@ -33,11 +35,14 @@ object HateoasMovementIdsResponse extends HateoasResponse {
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime],
     localReferenceNumber: Option[LocalReferenceNumber]
   ): JsObject =
     Json.obj(
       "_links" -> Json.obj(
-        "self" -> Json.obj("href" -> getMovementsUri(movementType, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber))
+        "self" -> Json.obj("href" -> getMovementsUri(movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber))
       ),
       movementType.urlFragment -> responses.map(
         response =>

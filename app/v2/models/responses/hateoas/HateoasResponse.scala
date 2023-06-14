@@ -29,20 +29,33 @@ trait HateoasResponse {
       case MovementType.Arrival   => routing.routes.ArrivalsRouter.getArrivalMessage(movementId.value, messageId.value).urlWithContext
     }
 
-  def getMessagesUri(movementId: MovementId, receivedSince: Option[OffsetDateTime], movementType: MovementType): String =
+  def getMessagesUri(
+    movementId: MovementId,
+    receivedSince: Option[OffsetDateTime],
+    movementType: MovementType,
+    page: Option[PageNumber] = None,
+    count: Option[ItemCount] = None,
+    receivedUntil: Option[OffsetDateTime] = None
+  ): String =
     movementType match {
       case MovementType.Arrival =>
         routing.routes.ArrivalsRouter
           .getArrivalMessageIds(
             movementId.value,
-            receivedSince
+            receivedSince,
+            page,
+            count,
+            receivedUntil
           )
           .urlWithContext
       case MovementType.Departure =>
         routing.routes.DeparturesRouter
           .getMessageIds(
             movementId.value,
-            receivedSince
+            receivedSince,
+            page,
+            count,
+            receivedUntil
           )
           .urlWithContext
     }
@@ -58,12 +71,15 @@ trait HateoasResponse {
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime],
     localReferenceNumber: Option[LocalReferenceNumber]
   ) =
     movementType match {
       case MovementType.Arrival =>
-        routing.routes.ArrivalsRouter.getArrivalsForEori(updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber).urlWithContext
+        routing.routes.ArrivalsRouter.getArrivalsForEori(updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber).urlWithContext
       case MovementType.Departure =>
-        routing.routes.DeparturesRouter.getDeparturesForEori(updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber).urlWithContext
+        routing.routes.DeparturesRouter.getDeparturesForEori(updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber).urlWithContext
     }
 }

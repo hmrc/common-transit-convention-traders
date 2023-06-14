@@ -7,13 +7,13 @@ object AppDependencies {
   private val bootstrapPlayVersion = "7.12.0"
 
   val compile = Seq(
-    "uk.gov.hmrc"             %% "bootstrap-backend-play-28"          % bootstrapPlayVersion,
-    "org.typelevel"           %% "cats-core"                          % catsVersion,
-    "org.json"                 % "json"                               % "20210307",
-    "io.lemonlabs"            %% "scala-uri"                          % "3.6.0",
-    "com.typesafe.akka"       %% "akka-stream-contrib"                % "0.11+4-91b2f9fa",
-    "com.lightbend.akka"      %% "akka-stream-alpakka-xml"            % "3.0.4",
-    "com.lightbend.akka"      %% "akka-stream-alpakka-json-streaming" % "3.0.4"
+    "uk.gov.hmrc"        %% "bootstrap-backend-play-28"          % bootstrapPlayVersion,
+    "org.typelevel"      %% "cats-core"                          % catsVersion,
+    "org.json"            % "json"                               % "20210307",
+    "io.lemonlabs"       %% "scala-uri"                          % "3.6.0",
+    "com.typesafe.akka"  %% "akka-stream-contrib"                % "0.11+4-91b2f9fa",
+    "com.lightbend.akka" %% "akka-stream-alpakka-xml"            % "3.0.4",
+    "com.lightbend.akka" %% "akka-stream-alpakka-json-streaming" % "3.0.4"
   )
 
   val test = Seq(

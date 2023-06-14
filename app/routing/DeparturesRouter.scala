@@ -32,9 +32,11 @@ import v2.controllers.V2MovementsController
 import v2.controllers.stream.StreamingParsers
 import v2.models.Bindings._
 import v2.models.EORINumber
+import v2.models.ItemCount
 import v2.models.LocalReferenceNumber
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
+import v2.models.PageNumber
 import v2.models.{MessageId => V2MessageId}
 import v2.models.{MovementId => V2DepartureId}
 
@@ -81,12 +83,18 @@ class DeparturesRouter @Inject() (
         )
     }
 
-  def getMessageIds(departureId: String, receivedSince: Option[OffsetDateTime] = None): Action[Source[ByteString, _]] = route {
+  def getMessageIds(
+    departureId: String,
+    receivedSince: Option[OffsetDateTime] = None,
+    page: Option[v2.models.PageNumber],
+    count: Option[v2.models.ItemCount],
+    receivedUntil: Option[OffsetDateTime]
+  ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
       runIfBound[V2DepartureId](
         "departureId",
         departureId,
-        v2Departures.getMessageIds(MovementType.Departure, _, receivedSince)
+        v2Departures.getMessageIds(MovementType.Departure, _, receivedSince, page, count, receivedUntil)
       )
     case _ =>
       runIfBound[V1DepartureId](
@@ -115,10 +123,13 @@ class DeparturesRouter @Inject() (
     updatedSince: Option[OffsetDateTime] = None,
     movementEORI: Option[EORINumber] = None,
     movementReferenceNumber: Option[MovementReferenceNumber] = None,
+    page: Option[PageNumber] = None,
+    count: Option[ItemCount] = None,
+    receivedUntil: Option[OffsetDateTime] = None,
     localReferenceNumber: Option[LocalReferenceNumber] = None
   ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      v2Departures.getMovements(MovementType.Departure, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber)
+      v2Departures.getMovements(MovementType.Departure, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
     case _ => v1Departures.getDeparturesForEori(updatedSince)
   }
 

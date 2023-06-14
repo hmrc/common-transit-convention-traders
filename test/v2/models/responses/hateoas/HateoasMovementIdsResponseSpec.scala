@@ -26,9 +26,11 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.base.TestCommonGenerators
 import v2.models.EORINumber
+import v2.models.ItemCount
 import v2.models.LocalReferenceNumber
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
+import v2.models.PageNumber
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -36,13 +38,16 @@ import java.time.format.DateTimeFormatter
 class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with OptionValues with TestCommonGenerators with ScalaCheckDrivenPropertyChecks {
 
   for (movementType <- MovementType.values)
-    s"${movementType.movementType} should produce valid HateoasMovementIdsResponse responses with optional updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber" in forAll(
+    s"${movementType.movementType} should produce valid HateoasMovementIdsResponse responses with optional updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil and localReferenceNumber" in forAll(
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       Gen.option(arbitrary[MovementReferenceNumber]),
+      Gen.option(arbitrary[PageNumber]),
+      Gen.option(arbitrary[ItemCount]),
       Gen.option(arbitrary[LocalReferenceNumber])
     ) {
-      (updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) =>
+      (updatedSince, movementEORI, movementReferenceNumber, page, count, localReferenceNumber) =>
+        val receivedUntil     = updatedSince
         val movementResponse1 = arbitraryMovementSummary.arbitrary.sample.value
         val movementResponse2 = arbitraryMovementSummary.arbitrary.sample.value
 
@@ -50,7 +55,7 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
 
         val expected = Json.obj(
           "_links" -> Json.obj(
-            "self" -> selfUrl(movementType, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber)
+            "self" -> selfUrl(movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
           ),
           movementType.urlFragment -> responses.map(
             movementResponse =>
@@ -70,7 +75,7 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
           )
         )
 
-        val actual = HateoasMovementIdsResponse(responses, movementType, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber)
+        val actual = HateoasMovementIdsResponse(responses, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
 
         actual mustBe expected
     }
@@ -80,95 +85,30 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime],
     localReferenceNumber: Option[LocalReferenceNumber]
-  ): JsObject =
-    (updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) match {
-      case (Some(updatedSince), Some(movementEORI), Some(movementReferenceNumber), Some(localReferenceNumber)) =>
-        val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(updatedSince)
-        Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time&movementEORI=${movementEORI.value}&movementReferenceNumber=${movementReferenceNumber.value}&localReferenceNumber=${localReferenceNumber.value}"
-        )
+  ): JsObject = {
 
-      case (Some(updatedSince), Some(movementEORI), Some(movementReferenceNumber), _) =>
-        val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(updatedSince)
-        Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time&movementEORI=${movementEORI.value}&movementReferenceNumber=${movementReferenceNumber.value}"
-        )
+    val updated  = updatedSince.fold("")("updatedSince=" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(_)).trim
+    val eori     = movementEORI.fold("")("movementEORI=" + _.value).trim
+    val mrn      = movementReferenceNumber.fold("")("movementReferenceNumber=" + _.value).trim
+    val pageNum  = page.fold("")("page=" + _.value).trim
+    val countNum = count.fold("")("count=" + _.value).trim
+    val received = receivedUntil.fold("")("receivedUntil=" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(_)).trim
+    val lrn      = localReferenceNumber.fold("")("localReferenceNumber=" + _.value).trim
 
-      case (Some(updatedSince), Some(movementEORI), _, Some(localReferenceNumber)) =>
-        val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(updatedSince)
-        Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time&movementEORI=${movementEORI.value}&localReferenceNumber=${localReferenceNumber.value}"
-        )
+    val queryString = Seq(updated, eori, mrn, pageNum, countNum, received, lrn)
+      .map(
+        param => if (param.length > 0) "&" + param else ""
+      )
+      .mkString
+      .replaceFirst("&", "?")
 
-      case (Some(updatedSince), _, Some(movementReferenceNumber), Some(localReferenceNumber)) =>
-        val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(updatedSince)
-        Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time&movementReferenceNumber=${movementReferenceNumber.value}&localReferenceNumber=${localReferenceNumber.value}"
-        )
+    val url = s"/customs/transits/movements/${movementType.urlFragment}$queryString"
 
-      case (_, Some(movementEORI), Some(movementReferenceNumber), Some(localReferenceNumber)) =>
-        Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?movementEORI=${movementEORI.value}&movementReferenceNumber=${movementReferenceNumber.value}&localReferenceNumber=${localReferenceNumber.value}"
-        )
+    Json.obj("href" -> url)
+  }
 
-      case (Some(updatedSince), Some(movementEORI), _, _) =>
-        val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(updatedSince)
-        Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time&movementEORI=${movementEORI.value}"
-        )
-
-      case (Some(updatedSince), _, Some(movementReferenceNumber), _) =>
-        val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(updatedSince)
-        Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time&movementReferenceNumber=${movementReferenceNumber.value}"
-        )
-
-      case (Some(updatedSince), _, _, Some(localReferenceNumber)) =>
-        val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(updatedSince)
-        Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time&localReferenceNumber=${localReferenceNumber.value}"
-        )
-
-      case (_, Some(movementEORI), Some(movementReferenceNumber), _) =>
-        Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?movementEORI=${movementEORI.value}&movementReferenceNumber=${movementReferenceNumber.value}"
-        )
-
-      case (_, Some(movementEORI), _, Some(localReferenceNumber)) =>
-        Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?movementEORI=${movementEORI.value}&localReferenceNumber=${localReferenceNumber.value}"
-        )
-
-      case (_, _, Some(movementReferenceNumber), Some(localReferenceNumber)) =>
-        Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?movementReferenceNumber=${movementReferenceNumber.value}&localReferenceNumber=${localReferenceNumber.value}"
-        )
-
-      case (Some(updatedSince), _, _, _) =>
-        val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(updatedSince)
-        Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?updatedSince=$time"
-        )
-
-      case (_, Some(movementEORI), _, _) =>
-        Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?movementEORI=${movementEORI.value}"
-        )
-
-      case (_, _, Some(movementReferenceNumber), _) =>
-        Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?movementReferenceNumber=${movementReferenceNumber.value}"
-        )
-
-      case (_, _, Some(localReferenceNumber), _) =>
-        Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}?localReferenceNumber=${localReferenceNumber.value}"
-        )
-
-      case (_, _, _, _) =>
-        Json.obj(
-          "href" -> s"/customs/transits/movements/${movementType.urlFragment}"
-        )
-    }
 }

@@ -17,6 +17,7 @@
 package v2.models.responses.hateoas
 
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -24,9 +25,11 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.base.TestCommonGenerators
+import v2.models.ItemCount
 import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementType
+import v2.models.PageNumber
 import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime
@@ -55,11 +58,11 @@ class HateoasMovementMessageIdsResponseSpec
         (departureId, response) =>
           val responses = Seq(response.copy(status = Some(MessageStatus.Processing)))
 
-          val actual = HateoasMovementMessageIdsResponse(departureId, responses, dateTime, MovementType.Departure)
+          val actual = HateoasMovementMessageIdsResponse(departureId, responses, dateTime, MovementType.Departure, None, None, None)
 
           val expected = Json.obj(
             "_links" -> Json.obj(
-              "self"      -> selfUrl(departureId, dateTime),
+              "self"      -> selfUrl(departureId, dateTime, None, None, None),
               "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
             ),
             "messages" -> responses.map(
@@ -83,15 +86,18 @@ class HateoasMovementMessageIdsResponseSpec
 
       s"with a valid message response and receivedSince $set and MessageStatus is Pending, create a valid HateoasMovementMessageIdsResponse without type" in forAll(
         arbitrary[MovementId],
-        arbitrary[MessageSummary]
+        arbitrary[MessageSummary],
+        Gen.option(arbitrary[PageNumber]),
+        Gen.option(arbitrary[ItemCount]),
+        Gen.option(arbitrary[OffsetDateTime])
       ) {
-        (departureId, response) =>
+        (departureId, response, page, count, receivedUntil) =>
           val responses = Seq(response.copy(status = Some(MessageStatus.Pending)))
-          val actual    = HateoasMovementMessageIdsResponse(departureId, responses, dateTime, MovementType.Departure)
+          val actual    = HateoasMovementMessageIdsResponse(departureId, responses, dateTime, MovementType.Departure, page, count, receivedUntil)
 
           val expected = Json.obj(
             "_links" -> Json.obj(
-              "self"      -> selfUrl(departureId, dateTime),
+              "self"      -> selfUrl(departureId, dateTime, page, count, receivedUntil),
               "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
             ),
             "messages" -> responses.map(
@@ -113,7 +119,38 @@ class HateoasMovementMessageIdsResponseSpec
       }
   }
 
-  private def selfUrl(departureId: MovementId, dateTime: Option[OffsetDateTime]): JsObject = dateTime match {
+  private def selfUrl(
+    departureId: MovementId,
+    dateTime: Option[OffsetDateTime],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
+  ): JsObject = {
+    val time: String     = dateTime.fold("")("receivedSince=" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(_))
+    val pageNum: String  = page.fold("")("page=" + _.value)
+    val countNum: String = count.fold("")("count=" + _.value)
+    val received: String = receivedUntil.fold("")("receivedUntil=" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(_))
+
+    val queryString = Seq(time, pageNum, countNum, received)
+      .map(
+        param => if (param.length > 0) "&" + param else ""
+      )
+      .mkString
+      .replaceFirst("&", "?")
+
+    Json.obj(
+      "href" -> { "/customs/transits/movements/departures/" + departureId.value + "/messages" + queryString }
+    )
+
+  }
+
+  private def selfUrl2(
+    departureId: MovementId,
+    dateTime: Option[OffsetDateTime],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
+  ): JsObject = dateTime match {
     case Some(odt) =>
       val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(odt)
       Json.obj(
