@@ -47,11 +47,25 @@ trait CommonGenerators {
   }
 
   implicit lazy val arbitraryEORINumber: Arbitrary[EORINumber] = Arbitrary {
-    Gen.alphaNumStr.map(EORINumber(_))
+    Gen.alphaNumStr.map(
+      alphaNum => if (alphaNum.trim.size == 0) EORINumber("abc123") else EORINumber(alphaNum) // guard against the empty string
+    )
   }
 
   implicit lazy val arbitraryMovementId: Arbitrary[MovementId] = Arbitrary {
     genShortUUID.map(MovementId(_))
+  }
+
+  implicit lazy val arbitraryPageNumber: Arbitrary[PageNumber] = Arbitrary {
+    Gen.long.map(
+      l => PageNumber(Math.abs(l % Int.MaxValue - 1)) // page number is always >= 0
+    )
+  }
+
+  implicit lazy val arbitraryItemCount: Arbitrary[ItemCount] = Arbitrary {
+    Gen.long.map(
+      l => ItemCount(Math.abs(l % (Int.MaxValue - 1))) // item count is always >= 0
+    )
   }
 
   implicit lazy val arbitraryMessageType: Arbitrary[MessageType] =

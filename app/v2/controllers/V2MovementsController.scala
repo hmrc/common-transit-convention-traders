@@ -74,14 +74,26 @@ import scala.util.control.NonFatal
 trait V2MovementsController {
   def createMovement(movementType: MovementType): Action[Source[ByteString, _]]
   def getMessage(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent]
-  def getMessageIds(movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime] = None): Action[AnyContent]
+
+  def getMessageIds(
+    movementType: MovementType,
+    movementId: MovementId,
+    receivedSince: Option[OffsetDateTime] = None,
+    page: Option[PageNumber],
+    count: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
+  ): Action[AnyContent]
+
   def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent]
 
   def getMovements(
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
   ): Action[AnyContent]
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]]
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent]
@@ -373,17 +385,24 @@ class V2MovementsControllerImpl @Inject() (
         )
     }
 
-  def getMessageIds(movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime]): Action[AnyContent] =
+  def getMessageIds(
+    movementType: MovementType,
+    movementId: MovementId,
+    receivedSince: Option[OffsetDateTime],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
+  ): Action[AnyContent] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         persistenceService
-          .getMessages(request.eoriNumber, movementType, movementId, receivedSince)
+          .getMessages(request.eoriNumber, movementType, movementId, receivedSince, page, count, receivedUntil)
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasMovementMessageIdsResponse(movementId, response, receivedSince, movementType)))
+            response => Ok(Json.toJson(HateoasMovementMessageIdsResponse(movementId, response, receivedSince, movementType, page, count, receivedUntil)))
           )
     }
 
@@ -405,17 +424,23 @@ class V2MovementsControllerImpl @Inject() (
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
   ): Action[AnyContent] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         persistenceService
-          .getMovements(request.eoriNumber, movementType, updatedSince, movementEORI, movementReferenceNumber)
+          .getMovements(request.eoriNumber, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil)
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasMovementIdsResponse(response, movementType, updatedSince, movementEORI, movementReferenceNumber)))
+            response =>
+              Ok(
+                Json.toJson(HateoasMovementIdsResponse(response, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil))
+              )
           )
     }
 

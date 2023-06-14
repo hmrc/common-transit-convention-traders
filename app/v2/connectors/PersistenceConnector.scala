@@ -38,10 +38,12 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.EORINumber
+import v2.models.ItemCount
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
+import v2.models.PageNumber
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.responses.MessageSummary
@@ -68,7 +70,15 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[MessageSummary]
 
-  def getMessages(eori: EORINumber, movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
+  def getMessages(
+    eori: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    receivedSince: Option[OffsetDateTime],
+    page: Option[PageNumber] = Some(PageNumber(1)),
+    count: Option[ItemCount] = None,
+    receivedUntil: Option[OffsetDateTime]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MessageSummary]]
@@ -83,7 +93,10 @@ trait PersistenceConnector {
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    page: Option[PageNumber] = Some(PageNumber(1)),
+    count: Option[ItemCount] = None,
+    receivedUntil: Option[OffsetDateTime] = None
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -160,15 +173,26 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       .executeAndDeserialise[MessageSummary]
   }
 
-  override def getMessages(eori: EORINumber, movementType: MovementType, movementId: MovementId, receivedSince: Option[OffsetDateTime])(implicit
+  override def getMessages(
+    eori: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    receivedSince: Option[OffsetDateTime],
+    page: Option[PageNumber] = Some(PageNumber(1)),
+    count: Option[ItemCount] = Some(ItemCount(appConfig.itemsPerPage)),
+    receivedUntil: Option[OffsetDateTime]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MessageSummary]] = {
+
     val url =
-      withDateTimeParameter(
-        appConfig.movementsUrl.withPath(getMessagesUrl(eori, movementType, movementId)).toUrl,
-        "receivedSince",
-        receivedSince
+      withParameters(
+        urlPath = appConfig.movementsUrl.withPath(getMessagesUrl(eori, movementType, movementId)),
+        receivedSince = receivedSince,
+        page = page,
+        count = count,
+        receivedUntil = receivedUntil
       )
 
     httpClientV2
@@ -194,16 +218,23 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
+    movementReferenceNumber: Option[MovementReferenceNumber],
+    page: Option[PageNumber] = Some(PageNumber(1)),
+    count: Option[ItemCount] = Some(ItemCount(appConfig.itemsPerPage)),
+    receivedUntil: Option[OffsetDateTime]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Seq[MovementSummary]] = {
+
     val urlWithOptions = withParameters(
-      appConfig.movementsUrl.withPath(getAllMovementsUrl(eori, movementType)),
-      updatedSince,
-      movementEORI,
-      movementReferenceNumber
+      urlPath = appConfig.movementsUrl.withPath(getAllMovementsUrl(eori, movementType)),
+      updatedSince = updatedSince,
+      movementEORI = movementEORI,
+      movementReferenceNumber = movementReferenceNumber,
+      page = page,
+      count = count,
+      receivedUntil = receivedUntil
     )
 
     httpClientV2
@@ -235,31 +266,40 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
         }
     }
 
-  private def withDateTimeParameter(urlPath: Url, queryName: String, dateTime: Option[OffsetDateTime]) =
-    dateTime
-      .map(
-        time => urlPath.addParam(queryName, DateTimeFormatter.ISO_DATE_TIME.format(time))
-      )
-      .getOrElse(urlPath)
-
   private def withParameters(
     urlPath: Url,
-    updatedSince: Option[OffsetDateTime],
-    movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber]
-  ) =
+    updatedSince: Option[OffsetDateTime] = None,
+    movementEORI: Option[EORINumber] = None,
+    movementReferenceNumber: Option[MovementReferenceNumber] = None,
+    receivedSince: Option[OffsetDateTime] = None,
+    page: Option[PageNumber] = Some(PageNumber(1)),
+    count: Option[ItemCount] = None,
+    receivedUntil: Option[OffsetDateTime] = None
+  ) = {
+
+    val pageNumberValid = page.fold(Some(PageNumber(1)))(Some(_)) // not a Zero based index.
+    val itemCountValid  = count.fold(Some(ItemCount(appConfig.itemsPerPage)))(Some(_))
+
     urlPath
       .withConfig(urlPath.config.copy(renderQuery = ExcludeNones))
-      .addParam(
-        "updatedSince",
-        updatedSince.map(
+      .addParams(
+        "updatedSince" -> updatedSince.map(
+          time => DateTimeFormatter.ISO_DATE_TIME.format(time)
+        ),
+        "movementEORI"            -> movementEORI.map(_.value),
+        "movementReferenceNumber" -> movementReferenceNumber.map(_.value),
+        "receivedSince" -> receivedSince.map(
+          time => DateTimeFormatter.ISO_DATE_TIME.format(time)
+        ),
+        "page"  -> pageNumberValid.map(_.value.toString),
+        "count" -> itemCountValid.map(_.value.toString),
+        "receivedUntil" -> receivedUntil.map(
           time => DateTimeFormatter.ISO_DATE_TIME.format(time)
         )
       )
-      .addParam("movementEORI", movementEORI.map(_.value))
-      .addParam("movementReferenceNumber", movementReferenceNumber.map(_.value))
+  }
 
-  def patchMessage(
+  override def patchMessage(
     eoriNumber: EORINumber,
     movementType: MovementType,
     movementId: MovementId,

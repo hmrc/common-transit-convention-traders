@@ -18,19 +18,29 @@ package v2.models.responses.hateoas
 
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
+import v2.models.ItemCount
 import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementType
+import v2.models.PageNumber
 import v2.models.responses.MessageSummary
 
 import java.time.OffsetDateTime
 
 object HateoasMovementMessageIdsResponse extends HateoasResponse {
 
-  def apply(movementId: MovementId, messageIds: Seq[MessageSummary], receivedSince: Option[OffsetDateTime], movementType: MovementType): JsObject =
+  def apply(
+    movementId: MovementId,
+    messageIds: Seq[MessageSummary],
+    receivedSince: Option[OffsetDateTime],
+    movementType: MovementType,
+    page: Option[PageNumber],
+    count: Option[ItemCount],
+    receivedUntil: Option[OffsetDateTime]
+  ): JsObject =
     Json.obj(
       "_links" -> Json.obj(
-        "self"                    -> Json.obj("href" -> getMessagesUri(movementId, receivedSince, movementType)),
+        "self"                    -> Json.obj("href" -> getMessagesUri(movementId, receivedSince, movementType, page, count, receivedUntil)),
         movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
       ),
       "messages" -> messageIds.map {

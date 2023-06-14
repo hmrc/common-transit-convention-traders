@@ -30,8 +30,10 @@ import v2.controllers.V2MovementsController
 import v2.controllers.stream.StreamingParsers
 import models.domain.{MessageId => V1MessageId}
 import v2.models.EORINumber
+import v2.models.ItemCount
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
+import v2.models.PageNumber
 import v2.models.{MessageId => V2MessageId}
 import v2.models.{MovementId => V2ArrivalId}
 import models.domain.{ArrivalId => V1ArrivalId}
@@ -76,12 +78,18 @@ class ArrivalsRouter @Inject() (
         )
     }
 
-  def getArrivalMessageIds(arrivalId: String, receivedSince: Option[OffsetDateTime] = None): Action[Source[ByteString, _]] = route {
+  def getArrivalMessageIds(
+    arrivalId: String,
+    receivedSince: Option[OffsetDateTime] = None,
+    page: Option[PageNumber] = None,
+    count: Option[ItemCount] = None,
+    receivedUntil: Option[OffsetDateTime] = None
+  ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
       runIfBound[V2ArrivalId](
         "arrivalId",
         arrivalId,
-        v2Arrivals.getMessageIds(MovementType.Arrival, _, receivedSince)
+        v2Arrivals.getMessageIds(MovementType.Arrival, _, receivedSince, page, count, receivedUntil)
       )
     case _ =>
       runIfBound[V1ArrivalId](
@@ -114,10 +122,13 @@ class ArrivalsRouter @Inject() (
   def getArrivalsForEori(
     updatedSince: Option[OffsetDateTime] = None,
     movementEORI: Option[EORINumber] = None,
-    movementReferenceNumber: Option[MovementReferenceNumber] = None
+    movementReferenceNumber: Option[MovementReferenceNumber] = None,
+    page: Option[PageNumber] = None,
+    count: Option[ItemCount] = None,
+    receivedUntil: Option[OffsetDateTime] = None
   ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      v2Arrivals.getMovements(MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber)
+      v2Arrivals.getMovements(MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil)
     case _ => v1Arrivals.getArrivalsForEori(updatedSince)
   }
 

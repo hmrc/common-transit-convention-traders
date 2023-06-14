@@ -22,12 +22,15 @@ import org.scalacheck.Gen
 import v2.models.AuditType
 import v2.models.BoxId
 import v2.models.EORINumber
+import v2.models.ItemCount
+import v2.models.LocalReferenceNumber
 import v2.models.MessageId
 import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.ObjectStoreURI
+import v2.models.PageNumber
 import v2.models.XmlPayload
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
@@ -35,7 +38,6 @@ import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.UpscanResponse.Reference
 import v2.models.responses.BoxResponse
 import v2.models.responses.FailureDetails
-import v2.models.LocalReferenceNumber
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
@@ -73,6 +75,18 @@ trait TestCommonGenerators {
 
   implicit lazy val arbitraryLocalReferenceNumber: Arbitrary[LocalReferenceNumber] = Arbitrary {
     Gen.alphaNumStr.map(LocalReferenceNumber(_))
+  }
+
+  implicit lazy val arbitraryPageNumber: Arbitrary[PageNumber] = Arbitrary {
+    Gen.long.map(
+      l => PageNumber(Math.abs(l % Int.MaxValue - 1)) // require a positive integer
+    )
+  }
+
+  implicit lazy val arbitraryItemCount: Arbitrary[ItemCount] = Arbitrary {
+    Gen.long.map(
+      l => ItemCount(Math.abs(l % (Int.MaxValue - 1))) // // require a positive integer
+    )
   }
 
   implicit lazy val arbitraryMessageType: Arbitrary[MessageType] = Arbitrary {
