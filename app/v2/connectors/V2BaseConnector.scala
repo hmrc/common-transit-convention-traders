@@ -20,11 +20,14 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import config.AppConfig
 import config.Constants
 import io.lemonlabs.uri.UrlPath
+import play.api.http.HeaderNames
 import play.api.http.Status.OK
 import play.api.libs.json.JsResult
 import play.api.libs.json.Reads
+import uk.gov.hmrc.http.Authorization
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.HttpErrorFunctions
@@ -132,6 +135,9 @@ trait V2BaseConnector extends HttpErrorFunctions {
   }
 
   implicit class RequestBuilderHelpers(requestBuilder: RequestBuilder) {
+
+    def withInternalAuthToken(implicit appConfig: AppConfig): RequestBuilder =
+      requestBuilder.setHeader(HeaderNames.AUTHORIZATION -> appConfig.internalAuthToken)
 
     def withClientId(implicit hc: HeaderCarrier): RequestBuilder =
       hc.headers(Seq(Constants.XClientIdHeader)).headOption match {

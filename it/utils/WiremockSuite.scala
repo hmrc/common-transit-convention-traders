@@ -69,7 +69,10 @@ trait GuiceWiremockSuite extends WiremockSuite with GuiceFakeApplicationFactory 
             key -> server.port.toString()
         }: _*
       )
+      .configure(configurationOverride: _*)
       .overrides(bindings: _*)
+
+  val configurationOverride: Seq[(String, String)] = Seq.empty
 
   override lazy val fakeApplication: Application =
     applicationBuilder.build()

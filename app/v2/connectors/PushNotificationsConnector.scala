@@ -60,7 +60,7 @@ trait PushNotificationsConnector {
 
 }
 
-class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClientV2: HttpClientV2, val metrics: Metrics)
+class PushNotificationsConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metrics: Metrics)(implicit appConfig: AppConfig)
     extends PushNotificationsConnector
     with V2BaseConnector
     with HasMetrics {
@@ -72,6 +72,7 @@ class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClient
 
         httpClientV2
           .patch(url"$url")
+          .withInternalAuthToken
           .executeAndExpect(NO_CONTENT)
     }
 
@@ -85,6 +86,7 @@ class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClient
 
         httpClientV2
           .post(url"$url")
+          .withInternalAuthToken
           .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
           .withBody(Json.toJson(pushNotificationsAssociation))
           .execute[BoxResponse]
@@ -99,6 +101,7 @@ class PushNotificationsConnectorImpl @Inject() (appConfig: AppConfig, httpClient
 
     httpClientV2
       .post(url"$url")
+      .withInternalAuthToken
       .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
       .withBody(body)
       .executeAndExpect(ACCEPTED)

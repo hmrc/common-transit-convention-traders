@@ -139,7 +139,7 @@ trait PersistenceConnector {
 }
 
 @Singleton
-class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig, val metrics: Metrics)
+class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metrics: Metrics)(implicit appConfig: AppConfig)
     extends PersistenceConnector
     with HasMetrics
     with V2BaseConnector
@@ -155,6 +155,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
         val httpClient = httpClientV2
           .post(url"$url")
+          .withInternalAuthToken
 
         (source match {
           case Some(src) => httpClient.setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML).withBody(src)
@@ -169,6 +170,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     val url = appConfig.movementsUrl.withPath(getMessageUrl(eori, movementType, movementId, messageId))
     httpClientV2
       .get(url"$url")
+      .withInternalAuthToken
       .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
       .executeAndDeserialise[MessageSummary]
   }
@@ -197,6 +199,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .get(url"$url")
+      .withInternalAuthToken
       .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
       .executeAndDeserialise[Seq[MessageSummary]]
   }
@@ -209,6 +212,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .get(url"$url")
+      .withInternalAuthToken
       .setHeader(HeaderNames.ACCEPT -> MimeTypes.JSON)
       .executeAndDeserialise[MovementSummary]
   }
@@ -239,6 +243,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .get(url"$urlWithOptions")
+      .withInternalAuthToken
       .setHeader(HeaderNames.ACCEPT -> MimeTypes.JSON)
       .executeAndDeserialise[Seq[MovementSummary]]
   }
@@ -253,6 +258,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
         val request = httpClientV2
           .post(url"$url")
+          .withInternalAuthToken
 
         source match {
           case None =>
@@ -313,6 +319,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .patch(url"$url")
+      .withInternalAuthToken
       .withBody(Json.toJson(body))
       .executeAndExpect(OK)
   }
@@ -332,6 +339,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .post(url"$url")
+      .withInternalAuthToken
       .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code)
       .withBody(source)
       .executeAndExpect(CREATED)
@@ -347,6 +355,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .get(url"$url")
+      .withInternalAuthToken
       .setHeader(HeaderNames.ACCEPT -> MimeTypes.XML)
       .executeAsStream
   }

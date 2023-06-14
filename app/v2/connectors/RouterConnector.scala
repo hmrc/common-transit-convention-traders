@@ -54,7 +54,7 @@ trait RouterConnector {
 
 }
 
-class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig, httpClientV2: HttpClientV2)
+class RouterConnectorImpl @Inject() (val metrics: Metrics, httpClientV2: HttpClientV2)(implicit appConfig: AppConfig)
     extends RouterConnector
     with V2BaseConnector
     with HasMetrics
@@ -70,6 +70,7 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, appConfig: AppConfig,
 
         httpClientV2
           .post(url"$url")
+          .withInternalAuthToken
           .setHeader(
             HeaderNames.CONTENT_TYPE     -> MimeTypes.XML,
             Constants.XMessageTypeHeader -> messageType.code
