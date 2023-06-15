@@ -27,6 +27,7 @@ import play.api.libs.json.Json
 import v2.base.TestCommonGenerators
 import v2.models.EORINumber
 import v2.models.ItemCount
+import v2.models.LocalReferenceNumber
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.PageNumber
@@ -37,14 +38,15 @@ import java.time.format.DateTimeFormatter
 class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with OptionValues with TestCommonGenerators with ScalaCheckDrivenPropertyChecks {
 
   for (movementType <- MovementType.values)
-    s"${movementType.movementType} should produce valid HateoasMovementIdsResponse responses with optional updatedSince, movementEORI, movementReferenceNumber, page, count and receivedUntil" in forAll(
+    s"${movementType.movementType} should produce valid HateoasMovementIdsResponse responses with optional updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil and localReferenceNumber" in forAll(
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       Gen.option(arbitrary[MovementReferenceNumber]),
       Gen.option(arbitrary[PageNumber]),
-      Gen.option(arbitrary[ItemCount])
+      Gen.option(arbitrary[ItemCount]),
+      Gen.option(arbitrary[LocalReferenceNumber])
     ) {
-      (updatedSince, movementEORI, movementReferenceNumber, page, count) =>
+      (updatedSince, movementEORI, movementReferenceNumber, page, count, localReferenceNumber) =>
         val receivedUntil     = updatedSince
         val movementResponse1 = arbitraryMovementSummary.arbitrary.sample.value
         val movementResponse2 = arbitraryMovementSummary.arbitrary.sample.value
@@ -53,7 +55,7 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
 
         val expected = Json.obj(
           "_links" -> Json.obj(
-            "self" -> selfUrl(movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil)
+            "self" -> selfUrl(movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
           ),
           movementType.urlFragment -> responses.map(
             movementResponse =>
@@ -73,7 +75,17 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
           )
         )
 
-        val actual = HateoasMovementIdsResponse(responses, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil)
+        val actual = HateoasMovementIdsResponse(
+          responses,
+          movementType,
+          updatedSince,
+          movementEORI,
+          movementReferenceNumber,
+          page,
+          count,
+          receivedUntil,
+          localReferenceNumber
+        )
 
         actual mustBe expected
     }
@@ -85,7 +97,8 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
     movementReferenceNumber: Option[MovementReferenceNumber],
     page: Option[PageNumber],
     count: Option[ItemCount],
-    receivedUntil: Option[OffsetDateTime]
+    receivedUntil: Option[OffsetDateTime],
+    localReferenceNumber: Option[LocalReferenceNumber]
   ): JsObject = {
 
     val updated  = updatedSince.fold("")("updatedSince=" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(_)).trim
@@ -94,8 +107,9 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
     val pageNum  = page.fold("")("page=" + _.value).trim
     val countNum = count.fold("")("count=" + _.value).trim
     val received = receivedUntil.fold("")("receivedUntil=" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(_)).trim
+    val lrn      = localReferenceNumber.fold("")("localReferenceNumber=" + _.value).trim
 
-    val queryString = Seq(updated, eori, mrn, pageNum, countNum, received)
+    val queryString = Seq(updated, eori, mrn, pageNum, countNum, received, lrn)
       .map(
         param => if (param.length > 0) "&" + param else ""
       )

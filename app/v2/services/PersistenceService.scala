@@ -91,7 +91,8 @@ trait PersistenceService {
     movementReferenceNumber: Option[MovementReferenceNumber],
     page: Option[PageNumber],
     count: Option[ItemCount],
-    receivedUntil: Option[OffsetDateTime]
+    receivedUntil: Option[OffsetDateTime],
+    localReferenceNumber: Option[LocalReferenceNumber]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -215,13 +216,14 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
     movementReferenceNumber: Option[MovementReferenceNumber],
     page: Option[PageNumber],
     count: Option[ItemCount],
-    receivedUntil: Option[OffsetDateTime]
+    receivedUntil: Option[OffsetDateTime],
+    localReferenceNumber: Option[LocalReferenceNumber]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Seq[MovementSummary]] = EitherT {
     persistenceConnector
-      .getMovements(eori, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil)
+      .getMovements(eori, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
       .map(Right(_))
       .recover {
         case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))

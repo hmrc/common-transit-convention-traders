@@ -48,6 +48,7 @@ import utils.GuiceWiremockSuite
 import utils.TestMetrics
 import v2.models.EORINumber
 import v2.models.ItemCount
+import v2.models.LocalReferenceNumber
 import v2.models.MessageId
 import v2.models.MessageStatus
 import v2.models.MovementId
@@ -782,7 +783,7 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getMovements(eori, MovementType.Departure, None, None, None, None, None, None)
+      val result      = persistenceConnector.getMovements(eori, MovementType.Departure, None, None, None, None, None, None, None)
       whenReady(result) {
         _ mustBe movementSummaryList
       }
@@ -823,7 +824,8 @@ class PersistenceConnectorSpec
           Some(movementReferenceNumber),
           Some(pageNumber),
           Some(itemCount),
-          Some(updatedSince)
+          Some(updatedSince),
+          None
         )
         whenReady(result) {
           _ mustBe movementSummaryList
@@ -862,6 +864,7 @@ class PersistenceConnectorSpec
           movementReferenceNumber,
           pageNumber,
           itemCount,
+          None,
           None
         )
         whenReady(result) {
@@ -902,8 +905,91 @@ class PersistenceConnectorSpec
           Some(movementReferenceNumber),
           pageNumber,
           itemCount,
+          None,
           None
         )
+        whenReady(result) {
+          _ mustBe movementSummaryList
+        }
+    }
+
+    "on success with localReferenceNumber filter, return a list of departure IDs" in forAll(
+      Gen.listOfN(3, arbitraryMovementSummary.arbitrary),
+      None,
+      None,
+      None,
+      arbitrary[LocalReferenceNumber]
+    ) {
+      (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) =>
+        server.stubFor(
+          get(
+            urlEqualTo(targetUrl(eori) + s"?localReferenceNumber=${localReferenceNumber.value}&page=1&count=25")
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  Json.toJson(movementSummaryList).toString()
+                )
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val result =
+          persistenceConnector.getMovements(
+            eori,
+            MovementType.Departure,
+            updatedSince,
+            movementEORI,
+            movementReferenceNumber,
+            None,
+            None,
+            None,
+            Some(localReferenceNumber)
+          )
+        whenReady(result) {
+          _ mustBe movementSummaryList
+        }
+    }
+
+    "on success with all the filters, return a list of departure IDs" in forAll(
+      Gen.listOfN(3, arbitraryMovementSummary.arbitrary),
+      arbitrary[OffsetDateTime],
+      arbitrary[EORINumber],
+      arbitrary[MovementReferenceNumber],
+      arbitrary[LocalReferenceNumber]
+    ) {
+      (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) =>
+        server.stubFor(
+          get(
+            urlPathEqualTo(targetUrl(eori))
+          )
+            .withQueryParam("updatedSince", equalTo(DateTimeFormatter.ISO_DATE_TIME.format(updatedSince)))
+            .withQueryParam("movementEORI", equalTo(movementEORI.value))
+            .withQueryParam("movementReferenceNumber", equalTo(movementReferenceNumber.value))
+            .withQueryParam("localReferenceNumber", equalTo(localReferenceNumber.value))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  Json.toJson(movementSummaryList).toString()
+                )
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val result =
+          persistenceConnector.getMovements(
+            eori,
+            MovementType.Departure,
+            Some(updatedSince),
+            Some(movementEORI),
+            Some(movementReferenceNumber),
+            None,
+            None,
+            None,
+            Some(localReferenceNumber)
+          )
         whenReady(result) {
           _ mustBe movementSummaryList
         }
@@ -924,7 +1010,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getMovements(eori, MovementType.Departure, None, None, None, None, None)
+        .getMovements(eori, MovementType.Departure, None, None, None, None, None, None, None)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -959,7 +1045,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getMovements(eori, MovementType.Departure, None, None, None, None, None, None)
+        .getMovements(eori, MovementType.Departure, None, None, None, None, None, None, None)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
@@ -1709,7 +1795,7 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getMovements(eori, MovementType.Arrival, None, None, None, None, None)
+      val result      = persistenceConnector.getMovements(eori, MovementType.Arrival, None, None, None, None, None, None, None)
       whenReady(result) {
         _ mustBe movementSummaryList
       }
@@ -1751,7 +1837,8 @@ class PersistenceConnectorSpec
           Some(movementReferenceNumber),
           Some(pageNumber),
           Some(itemCount),
-          Some(updatedSince)
+          Some(updatedSince),
+          None
         )
         whenReady(result) {
           _ mustBe movementSummaryList
@@ -1790,7 +1877,8 @@ class PersistenceConnectorSpec
           movementReferenceNumber,
           Some(pageNumber),
           Some(itemCount),
-          Some(updatedSince)
+          Some(updatedSince),
+          None
         )
         whenReady(result) {
           _ mustBe movementSummaryList
@@ -1830,6 +1918,7 @@ class PersistenceConnectorSpec
           Some(movementReferenceNumber),
           pageNumber,
           itemCount,
+          None,
           None
         )
         whenReady(result) {
@@ -1861,7 +1950,88 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val result =
-          persistenceConnector.getMovements(eori, MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount, None)
+          persistenceConnector.getMovements(eori, MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount, None, None)
+        whenReady(result) {
+          _ mustBe movementSummaryList
+        }
+    }
+
+    "on success with localReferenceNumber filter, return a list of arrivals" in forAll(
+      Gen.listOfN(3, arbitraryMovementSummary.arbitrary),
+      None,
+      None,
+      None,
+      arbitrary[LocalReferenceNumber]
+    ) {
+      (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) =>
+        server.stubFor(
+          get(
+            urlEqualTo(targetUrl(eori) + s"?localReferenceNumber=${localReferenceNumber.value}&page=1&count=25")
+          )
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  Json.toJson(movementSummaryList).toString()
+                )
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val result =
+          persistenceConnector.getMovements(
+            eori,
+            MovementType.Arrival,
+            updatedSince,
+            movementEORI,
+            movementReferenceNumber,
+            None,
+            None,
+            None,
+            Some(localReferenceNumber)
+          )
+        whenReady(result) {
+          _ mustBe movementSummaryList
+        }
+    }
+
+    "on success with all the filters, return a list of arrivals" in forAll(
+      Gen.listOfN(3, arbitraryMovementSummary.arbitrary),
+      arbitrary[OffsetDateTime],
+      arbitrary[EORINumber],
+      arbitrary[MovementReferenceNumber],
+      arbitrary[LocalReferenceNumber]
+    ) {
+      (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) =>
+        server.stubFor(
+          get(
+            urlPathEqualTo(targetUrl(eori))
+          )
+            .withQueryParam("updatedSince", equalTo(DateTimeFormatter.ISO_DATE_TIME.format(updatedSince)))
+            .withQueryParam("movementEORI", equalTo(movementEORI.value))
+            .withQueryParam("movementReferenceNumber", equalTo(movementReferenceNumber.value))
+            .withQueryParam("localReferenceNumber", equalTo(localReferenceNumber.value))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  Json.toJson(movementSummaryList).toString()
+                )
+            )
+        )
+
+        implicit val hc = HeaderCarrier()
+        val result = persistenceConnector.getMovements(
+          eori,
+          MovementType.Arrival,
+          Some(updatedSince),
+          Some(movementEORI),
+          Some(movementReferenceNumber),
+          None,
+          None,
+          None,
+          Some(localReferenceNumber)
+        )
         whenReady(result) {
           _ mustBe movementSummaryList
         }
@@ -1882,7 +2052,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getMovements(eori, MovementType.Arrival, None, None, None, None, None, None)
+        .getMovements(eori, MovementType.Arrival, None, None, None, None, None, None, None)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -1917,7 +2087,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getMovements(eori, MovementType.Arrival, None, None, None, None, None, None)
+        .getMovements(eori, MovementType.Arrival, None, None, None, None, None, None, None)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )

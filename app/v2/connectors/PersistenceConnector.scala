@@ -39,6 +39,7 @@ import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.EORINumber
 import v2.models.ItemCount
+import v2.models.LocalReferenceNumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
@@ -96,7 +97,8 @@ trait PersistenceConnector {
     movementReferenceNumber: Option[MovementReferenceNumber],
     page: Option[PageNumber] = Some(PageNumber(1)),
     count: Option[ItemCount] = None,
-    receivedUntil: Option[OffsetDateTime] = None
+    receivedUntil: Option[OffsetDateTime] = None,
+    localReferenceNumber: Option[LocalReferenceNumber]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -221,7 +223,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     movementReferenceNumber: Option[MovementReferenceNumber],
     page: Option[PageNumber] = Some(PageNumber(1)),
     count: Option[ItemCount] = Some(ItemCount(appConfig.itemsPerPage)),
-    receivedUntil: Option[OffsetDateTime]
+    receivedUntil: Option[OffsetDateTime],
+    localReferenceNumber: Option[LocalReferenceNumber]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -234,7 +237,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       movementReferenceNumber = movementReferenceNumber,
       page = page,
       count = count,
-      receivedUntil = receivedUntil
+      receivedUntil = receivedUntil,
+      localReferenceNumber = localReferenceNumber
     )
 
     httpClientV2
@@ -274,7 +278,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     receivedSince: Option[OffsetDateTime] = None,
     page: Option[PageNumber] = Some(PageNumber(1)),
     count: Option[ItemCount] = None,
-    receivedUntil: Option[OffsetDateTime] = None
+    receivedUntil: Option[OffsetDateTime] = None,
+    localReferenceNumber: Option[LocalReferenceNumber] = None
   ) = {
 
     val pageNumberValid = page.fold(Some(PageNumber(1)))(Some(_)) // not a Zero based index.
@@ -288,6 +293,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
         ),
         "movementEORI"            -> movementEORI.map(_.value),
         "movementReferenceNumber" -> movementReferenceNumber.map(_.value),
+        "localReferenceNumber"    -> localReferenceNumber.map(_.value),
         "receivedSince" -> receivedSince.map(
           time => DateTimeFormatter.ISO_DATE_TIME.format(time)
         ),

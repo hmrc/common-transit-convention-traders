@@ -31,6 +31,7 @@ import v2.controllers.stream.StreamingParsers
 import models.domain.{MessageId => V1MessageId}
 import v2.models.EORINumber
 import v2.models.ItemCount
+import v2.models.LocalReferenceNumber
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.PageNumber
@@ -125,10 +126,11 @@ class ArrivalsRouter @Inject() (
     movementReferenceNumber: Option[MovementReferenceNumber] = None,
     page: Option[PageNumber] = None,
     count: Option[ItemCount] = None,
-    receivedUntil: Option[OffsetDateTime] = None
+    receivedUntil: Option[OffsetDateTime] = None,
+    localReferenceNumber: Option[LocalReferenceNumber] = None
   ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      v2Arrivals.getMovements(MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil)
+      v2Arrivals.getMovements(MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
     case _ => v1Arrivals.getArrivalsForEori(updatedSince)
   }
 

@@ -404,28 +404,41 @@ class PersistenceServiceSpec
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
-      Gen.option(arbitrary[MovementReferenceNumber]),
+      (Gen.option(arbitrary[MovementReferenceNumber]), Gen.option(arbitrary[LocalReferenceNumber])),
       (Gen.option(arbitrary[PageNumber]), Gen.option(arbitrary[ItemCount]))
     ) {
-      (expected, updatedSinceMaybe, movementEORI, eori, movementReferenceNumber, pagination) =>
+      (expected, updatedSinceMaybe, movementEORI, eori, referenceNumbers, pagination) =>
         val pageNumber = pagination._1.sample.getOrElse(Some(PageNumber(0)))
         val itemCount  = pagination._2.sample.getOrElse(Some(ItemCount(15)))
+        val mrn        = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
+        val lrn        = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
         when(
           mockConnector.getMovements(
             eori,
             MovementType.Departure,
             updatedSinceMaybe,
             movementEORI,
-            movementReferenceNumber,
+            mrn,
             pageNumber,
             itemCount,
-            updatedSinceMaybe
+            updatedSinceMaybe,
+            lrn
           )
         )
           .thenReturn(Future.successful(expected))
 
         val result =
-          sut.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI, movementReferenceNumber, pageNumber, itemCount, updatedSinceMaybe)
+          sut.getMovements(
+            eori,
+            MovementType.Departure,
+            updatedSinceMaybe,
+            movementEORI,
+            mrn,
+            pageNumber,
+            itemCount,
+            updatedSinceMaybe,
+            lrn
+          )
         whenReady(result.value) {
           _ mustBe Right(expected)
         }
@@ -435,13 +448,15 @@ class PersistenceServiceSpec
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
-      Gen.option(arbitrary[MovementReferenceNumber]),
+      (Gen.option(arbitrary[MovementReferenceNumber]), Gen.option(arbitrary[LocalReferenceNumber])),
       (Gen.option(arbitrary[PageNumber]), Gen.option(arbitrary[ItemCount])),
       Gen.option(arbitrary[OffsetDateTime])
     ) {
-      (updatedSinceMaybe, movementEORI, eori, movementReferenceNumber, paginationInfo, receivedUntil) =>
+      (updatedSinceMaybe, movementEORI, eori, referenceNumbers, paginationInfo, receivedUntil) =>
         val pageNumber = paginationInfo._1.sample.getOrElse(Some(PageNumber(0)))
         val itemCount  = paginationInfo._2.sample.getOrElse(Some(ItemCount(15)))
+        val mrn        = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
+        val lrn        = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
 
         when(
           mockConnector.getMovements(
@@ -449,16 +464,27 @@ class PersistenceServiceSpec
             MovementType.Departure,
             updatedSinceMaybe,
             movementEORI,
-            movementReferenceNumber,
+            mrn,
             pageNumber,
             itemCount,
-            receivedUntil
+            receivedUntil,
+            lrn
           )
         )
           .thenReturn(Future.successful(List.empty[MovementSummary]))
 
         val result =
-          sut.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI, movementReferenceNumber, pageNumber, itemCount, receivedUntil)
+          sut.getMovements(
+            eori,
+            MovementType.Departure,
+            updatedSinceMaybe,
+            movementEORI,
+            mrn,
+            pageNumber,
+            itemCount,
+            receivedUntil,
+            lrn
+          )
         whenReady(result.value) {
           _ mustBe Right(List.empty[MovementSummary])
         }
@@ -468,30 +494,43 @@ class PersistenceServiceSpec
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
-      Gen.option(arbitrary[MovementReferenceNumber]),
+      (Gen.option(arbitrary[MovementReferenceNumber]), Gen.option(arbitrary[LocalReferenceNumber])),
       (Gen.option(arbitrary[PageNumber]), Gen.option(arbitrary[ItemCount])),
       Gen.option(arbitrary[OffsetDateTime])
     ) {
-      (updatedSinceMaybe, movementEORI, eori, movementReferenceNumber, pagination, receivedUntil) =>
+      (updatedSinceMaybe, movementEORI, eori, referenceNumbers, pagination, receivedUntil) =>
         val pageNumber = pagination._1.sample.getOrElse(Some(PageNumber(0)))
         val itemCount  = pagination._2.sample.getOrElse(Some(ItemCount(15)))
         val error      = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
+        val mrn        = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
+        val lrn        = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
         when(
           mockConnector.getMovements(
             eori,
             MovementType.Departure,
             updatedSinceMaybe,
             movementEORI,
-            movementReferenceNumber,
+            mrn,
             pageNumber,
             itemCount,
-            receivedUntil
+            receivedUntil,
+            lrn
           )
         )
           .thenReturn(Future.failed(error))
 
         val result =
-          sut.getMovements(eori, MovementType.Departure, updatedSinceMaybe, movementEORI, movementReferenceNumber, pageNumber, itemCount, receivedUntil)
+          sut.getMovements(
+            eori,
+            MovementType.Departure,
+            updatedSinceMaybe,
+            movementEORI,
+            mrn,
+            pageNumber,
+            itemCount,
+            receivedUntil,
+            lrn
+          )
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
         }
@@ -619,13 +658,15 @@ class PersistenceServiceSpec
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
-      Gen.option(arbitrary[MovementReferenceNumber]),
+      (Gen.option(arbitrary[MovementReferenceNumber]), Gen.option(arbitrary[LocalReferenceNumber])),
       (Gen.option(arbitrary[PageNumber]), Gen.option(arbitrary[ItemCount]))
     ) {
 
-      (expected, updatedSinceMaybe, movementEORI, eori, movementReferenceNumber, pagination) =>
-        val pageNumber = pagination._1.sample.getOrElse(Some(PageNumber(0)))
-        val itemCount  = pagination._2.sample.getOrElse(Some(ItemCount(15)))
+      (expected, updatedSinceMaybe, movementEORI, eori, referenceNumbers, pagination) =>
+        val pageNumber              = pagination._1.sample.getOrElse(Some(PageNumber(0)))
+        val itemCount               = pagination._2.sample.getOrElse(Some(ItemCount(15)))
+        val movementReferenceNumber = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
+        val localReferenceNumber    = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
         when(
           mockConnector.getMovements(
             eori,
@@ -635,13 +676,24 @@ class PersistenceServiceSpec
             movementReferenceNumber,
             pageNumber,
             itemCount,
-            updatedSinceMaybe
+            updatedSinceMaybe,
+            localReferenceNumber
           )
         )
           .thenReturn(Future.successful(expected))
 
         val result =
-          sut.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber, pageNumber, itemCount, updatedSinceMaybe)
+          sut.getMovements(
+            eori,
+            MovementType.Arrival,
+            updatedSinceMaybe,
+            movementEORI,
+            movementReferenceNumber,
+            pageNumber,
+            itemCount,
+            updatedSinceMaybe,
+            localReferenceNumber
+          )
         whenReady(result.value) {
           _ mustBe Right(expected)
         }
@@ -651,20 +703,42 @@ class PersistenceServiceSpec
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
-      Gen.option(arbitrary[MovementReferenceNumber]),
+      (Gen.option(arbitrary[MovementReferenceNumber]), Gen.option(arbitrary[LocalReferenceNumber])),
       (Gen.option(arbitrary[PageNumber]), Gen.option(arbitrary[ItemCount])),
       Gen.option(arbitrary[OffsetDateTime])
     ) {
-      (updatedSinceMaybe, movementEORI, eori, movementReferenceNumber, pagination, receivedUntil) =>
-        val pageNumber = pagination._1.sample.getOrElse(Some(PageNumber(0)))
-        val itemCount  = pagination._2.sample.getOrElse(Some(ItemCount(15)))
+      (updatedSinceMaybe, movementEORI, eori, referenceNumbers, pagination, receivedUntil) =>
+        val pageNumber              = pagination._1.sample.getOrElse(Some(PageNumber(0)))
+        val itemCount               = pagination._2.sample.getOrElse(Some(ItemCount(15)))
+        val movementReferenceNumber = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
+        val localReferenceNumber    = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
         when(
-          mockConnector.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber, pageNumber, itemCount, receivedUntil)
+          mockConnector.getMovements(
+            eori,
+            MovementType.Arrival,
+            updatedSinceMaybe,
+            movementEORI,
+            movementReferenceNumber,
+            pageNumber,
+            itemCount,
+            receivedUntil,
+            localReferenceNumber
+          )
         )
           .thenReturn(Future.successful(List.empty[MovementSummary]))
 
         val result =
-          sut.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber, pageNumber, itemCount, receivedUntil)
+          sut.getMovements(
+            eori,
+            MovementType.Arrival,
+            updatedSinceMaybe,
+            movementEORI,
+            movementReferenceNumber,
+            pageNumber,
+            itemCount,
+            receivedUntil,
+            localReferenceNumber
+          )
         whenReady(result.value) {
           _ mustBe Right(List.empty[MovementSummary])
         }
@@ -674,21 +748,43 @@ class PersistenceServiceSpec
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
-      Gen.option(arbitrary[MovementReferenceNumber]),
+      (Gen.option(arbitrary[MovementReferenceNumber]), Gen.option(arbitrary[LocalReferenceNumber])),
       (Gen.option(arbitrary[PageNumber]), Gen.option(arbitrary[ItemCount])),
       Gen.option(arbitrary[OffsetDateTime])
     ) {
-      (updatedSinceMaybe, movementEORI, eori, movementReferenceNumber, pagination, receivedUntil) =>
-        val pageNumber = pagination._1.sample.getOrElse(Some(PageNumber(0)))
-        val itemCount  = pagination._2.sample.getOrElse(Some(ItemCount(15)))
-        val error      = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
+      (updatedSinceMaybe, movementEORI, eori, referenceNumbers, pagination, receivedUntil) =>
+        val pageNumber              = pagination._1.sample.getOrElse(Some(PageNumber(0)))
+        val itemCount               = pagination._2.sample.getOrElse(Some(ItemCount(15)))
+        val error                   = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
+        val movementReferenceNumber = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
+        val localReferenceNumber    = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
         when(
-          mockConnector.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber, pageNumber, itemCount, receivedUntil)
+          mockConnector.getMovements(
+            eori,
+            MovementType.Arrival,
+            updatedSinceMaybe,
+            movementEORI,
+            movementReferenceNumber,
+            pageNumber,
+            itemCount,
+            receivedUntil,
+            localReferenceNumber
+          )
         )
           .thenReturn(Future.failed(error))
 
         val result =
-          sut.getMovements(eori, MovementType.Arrival, updatedSinceMaybe, movementEORI, movementReferenceNumber, pageNumber, itemCount, receivedUntil)
+          sut.getMovements(
+            eori,
+            MovementType.Arrival,
+            updatedSinceMaybe,
+            movementEORI,
+            movementReferenceNumber,
+            pageNumber,
+            itemCount,
+            receivedUntil,
+            localReferenceNumber
+          )
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
         }

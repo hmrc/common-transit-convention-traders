@@ -4350,7 +4350,8 @@ class V2MovementsControllerSpec
             any[Option[MovementReferenceNumber]],
             any[Option[PageNumber]],
             any[Option[ItemCount]],
-            any[Option[OffsetDateTime]]
+            any[Option[OffsetDateTime]],
+            any[Option[LocalReferenceNumber]]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -4365,13 +4366,14 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, None, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None, None, None, None, None)(request)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(
           HateoasMovementIdsResponse(
             departureResponses,
             movementType,
+            None,
             None,
             None,
             None,
@@ -4407,7 +4409,8 @@ class V2MovementsControllerSpec
             any[Option[MovementReferenceNumber]],
             any[Option[PageNumber]],
             any[Option[ItemCount]],
-            any[Option[OffsetDateTime]]
+            any[Option[OffsetDateTime]],
+            any[Option[LocalReferenceNumber]]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -4423,13 +4426,14 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, None, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None, None, None, None, None)(request)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(
           HateoasMovementIdsResponse(
             List.empty[MovementSummary],
             movementType,
+            None,
             None,
             None,
             None,
@@ -4463,7 +4467,8 @@ class V2MovementsControllerSpec
             any[Option[MovementReferenceNumber]],
             any[Option[PageNumber]],
             any[Option[ItemCount]],
-            any[Option[OffsetDateTime]]
+            any[Option[OffsetDateTime]],
+            any[Option[LocalReferenceNumber]]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -4479,7 +4484,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, None, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None, None, None, None, None)(request)
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         contentAsJson(result) mustBe Json.obj(
@@ -4513,7 +4518,8 @@ class V2MovementsControllerSpec
             any[Option[MovementReferenceNumber]],
             any[Option[PageNumber]],
             any[Option[ItemCount]],
-            any[Option[OffsetDateTime]]
+            any[Option[OffsetDateTime]],
+            any[Option[LocalReferenceNumber]]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -4529,7 +4535,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, None, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None, None, None, None, None)(request)
 
         status(result) mustBe NOT_ACCEPTABLE
         contentAsJson(result) mustBe Json.obj(
@@ -4563,7 +4569,8 @@ class V2MovementsControllerSpec
             any[Option[MovementReferenceNumber]],
             any[Option[PageNumber]],
             any[Option[ItemCount]],
-            any[Option[OffsetDateTime]]
+            any[Option[OffsetDateTime]],
+            any[Option[LocalReferenceNumber]]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -4579,7 +4586,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json123")),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, None, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None, None, None, None, None)(request)
 
         status(result) mustBe NOT_ACCEPTABLE
         contentAsJson(result) mustBe Json.obj(

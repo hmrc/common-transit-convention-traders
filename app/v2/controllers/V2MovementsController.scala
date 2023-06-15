@@ -93,7 +93,8 @@ trait V2MovementsController {
     movementReferenceNumber: Option[MovementReferenceNumber],
     page: Option[PageNumber],
     count: Option[ItemCount],
-    receivedUntil: Option[OffsetDateTime]
+    receivedUntil: Option[OffsetDateTime],
+    localReferenceNumber: Option[LocalReferenceNumber]
   ): Action[AnyContent]
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]]
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent]
@@ -427,19 +428,32 @@ class V2MovementsControllerImpl @Inject() (
     movementReferenceNumber: Option[MovementReferenceNumber],
     page: Option[PageNumber],
     count: Option[ItemCount],
-    receivedUntil: Option[OffsetDateTime]
+    receivedUntil: Option[OffsetDateTime],
+    localReferenceNumber: Option[LocalReferenceNumber]
   ): Action[AnyContent] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         persistenceService
-          .getMovements(request.eoriNumber, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil)
+          .getMovements(request.eoriNumber, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
           .asPresentation
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
             response =>
               Ok(
-                Json.toJson(HateoasMovementIdsResponse(response, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil))
+                Json.toJson(
+                  HateoasMovementIdsResponse(
+                    response,
+                    movementType,
+                    updatedSince,
+                    movementEORI,
+                    movementReferenceNumber,
+                    page,
+                    count,
+                    receivedUntil,
+                    localReferenceNumber
+                  )
+                )
               )
           )
     }
