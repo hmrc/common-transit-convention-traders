@@ -25,6 +25,7 @@ import config.AppConfig
 import config.Constants
 import io.lemonlabs.uri.Url
 import org.mockito.Mockito.when
+import org.scalacheck.Gen
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.exceptions.TestFailedException
@@ -54,12 +55,14 @@ class AuditingConnectorSpec
     with IntegrationPatience
     with HttpClientV2Support {
 
-  val mockAppConfig = mock[AppConfig]
+  val token                  = Gen.alphaNumStr.sample.get
+  implicit val mockAppConfig = mock[AppConfig]
+  when(mockAppConfig.internalAuthToken).thenReturn(token)
   when(mockAppConfig.auditingUrl).thenAnswer(
     _ => Url.parse(server.baseUrl())
   ) // using thenAnswer for lazy semantics
 
-  lazy val sut                                          = new AuditingConnectorImpl(httpClientV2, mockAppConfig, new TestMetrics)
+  lazy val sut                                          = new AuditingConnectorImpl(httpClientV2, new TestMetrics)
   def targetUrl(auditType: AuditType)                   = s"/transit-movements-auditing/audit/${auditType.name}"
   def targetUrlLarge(auditType: AuditType, uri: String) = s"/transit-movements-auditing/audit/${auditType.name}/uri/$uri"
 
@@ -76,6 +79,7 @@ class AuditingConnectorSpec
               post(
                 urlEqualTo(targetUrl(AuditType.DeclarationData))
               )
+                .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
                 .withHeader(HeaderNames.CONTENT_TYPE, equalTo(contentType))
                 .willReturn(aResponse().withStatus(ACCEPTED))
             )
@@ -99,6 +103,7 @@ class AuditingConnectorSpec
                   post(
                     urlEqualTo(targetUrl(AuditType.DeclarationData))
                   )
+                    .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
                     .withHeader(HeaderNames.CONTENT_TYPE, equalTo(contentType))
                     .withHeader(Constants.XContentLengthHeader, equalTo(contentSize.toString))
                     .willReturn(aResponse().withStatus(statusCode))

@@ -67,11 +67,18 @@ class RouterConnectorSpec
     with ScalaCheckDrivenPropertyChecks
     with CommonGenerators {
 
-  lazy val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
+  private val token: String = Gen.alphaNumStr.sample.get
+
+  override val configurationOverride: Seq[(String, String)] =
+    Seq(
+      "internal-auth.token" -> token
+    )
+
+  implicit lazy val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
   implicit lazy val materializer: Materializer = app.materializer
   implicit lazy val ec: ExecutionContext       = app.materializer.executionContext
-  lazy val routerConnector: RouterConnector    = new RouterConnectorImpl(new TestMetrics(), appConfig, httpClientV2)
+  lazy val routerConnector: RouterConnector    = new RouterConnectorImpl(new TestMetrics(), httpClientV2)
 
   def targetUrl(eoriNumber: EORINumber, messageType: MessageType, movementId: MovementId, messageId: MessageId) =
     s"/transit-movements-router/traders/${eoriNumber.value}/movements/${messageType.movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
@@ -93,6 +100,7 @@ class RouterConnectorSpec
           ).withRequestBody(equalToXml(<test></test>.mkString))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .withHeader(Constants.XMessageTypeHeader, equalTo(messageType.code))
+            .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .willReturn(aResponse().withStatus(CREATED))
         )
 
@@ -125,6 +133,7 @@ class RouterConnectorSpec
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .withHeader(Constants.XMessageTypeHeader, equalTo(messageType.code))
             .withHeader(Constants.XClientIdHeader, equalTo(clientId))
+            .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .willReturn(aResponse().withStatus(ACCEPTED))
         )
 
@@ -158,6 +167,7 @@ class RouterConnectorSpec
           ).withRequestBody(equalToXml(<test></test>.mkString))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .withHeader(Constants.XMessageTypeHeader, equalTo(messageType.code))
+            .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .willReturn(
               aResponse()
                 .withStatus(INTERNAL_SERVER_ERROR)

@@ -18,7 +18,11 @@ package v2.connectors
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import config.AppConfig
+import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
@@ -29,6 +33,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import play.api.http.HeaderNames
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.BAD_GATEWAY
 import play.api.http.Status.BAD_REQUEST
@@ -281,6 +286,19 @@ class V2BaseConnectorSpec
   }
 
   "RequestBuilderHelpers" - new V2BaseConnector {
+
+    "withInternalAuthToken adds the authorization header" in forAll(Gen.alphaNumStr) {
+      token =>
+        implicit val appConfig: AppConfig = mock[AppConfig]
+        when(appConfig.internalAuthToken).thenReturn(token)
+
+        val sut = mock[RequestBuilder]
+        // any here, verify later
+        when(sut.setHeader(any())).thenReturn(sut)
+
+        sut.withInternalAuthToken
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq((HeaderNames.AUTHORIZATION -> token))): _*)
+    }
 
     "executeAndExpect returns a unit when the expected response is returned" in forAll(
       Gen.oneOf(Seq(ACCEPTED, CREATED, OK, NO_CONTENT))
