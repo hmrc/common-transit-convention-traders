@@ -6913,4 +6913,50 @@ class V2MovementsControllerSpec
         )
     }
   }
+
+  "getMovements method" - {
+    "when page parameter is zero" - {
+      "must return a BAD_REQUEST response" in {
+        val controllerAndMocks = createControllerAndMocks()
+        val result: Future[Result] = controllerAndMocks.sut.getMovements(
+          movementType = mock[MovementType],
+          updatedSince = None,
+          movementEORI = None,
+          movementReferenceNumber = None,
+          page = Some(PageNumber(0)),
+          count = None,
+          receivedUntil = None,
+          localReferenceNumber = None
+        )(FakeRequest())
+
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "BAD_REQUEST",
+          "message" -> "The page parameter must be a positive number"
+        )
+      }
+    }
+
+    "when count parameter is zero" - {
+      "must return a BAD_REQUEST response" in {
+        val controllerAndMocks = createControllerAndMocks()
+        val result: Future[Result] = controllerAndMocks.sut.getMovements(
+          movementType = mock[MovementType],
+          updatedSince = None,
+          movementEORI = None,
+          movementReferenceNumber = None,
+          page = None,
+          count = Some(ItemCount(0)),
+          receivedUntil = None,
+          localReferenceNumber = None
+        )(FakeRequest())
+
+        status(result) mustBe BAD_REQUEST
+        contentAsJson(result) mustBe Json.obj(
+          "code"    -> "BAD_REQUEST",
+          "message" -> "The count parameter must be a positive number"
+        )
+      }
+    }
+  }
 }

@@ -434,28 +434,59 @@ class V2MovementsControllerImpl @Inject() (
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        persistenceService
-          .getMovements(request.eoriNumber, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
-          .asPresentation
-          .fold(
-            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response =>
-              Ok(
-                Json.toJson(
-                  HateoasMovementIdsResponse(
-                    response,
-                    movementType,
-                    updatedSince,
-                    movementEORI,
-                    movementReferenceNumber,
-                    page,
-                    count,
-                    receivedUntil,
-                    localReferenceNumber
-                  )
+        (page, count) match {
+          case (Some(p), _) if p.value <= 0 =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "code"    -> "BAD_REQUEST",
+                  "message" -> "The page parameter must be a positive number"
                 )
               )
-          )
+            )
+          case (_, Some(c)) if c.value <= 0 =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "code"    -> "BAD_REQUEST",
+                  "message" -> "The count parameter must be a positive number"
+                )
+              )
+            )
+          case _ =>
+            persistenceService
+              .getMovements(
+                request.eoriNumber,
+                movementType,
+                updatedSince,
+                movementEORI,
+                movementReferenceNumber,
+                page,
+                count,
+                receivedUntil,
+                localReferenceNumber
+              )
+              .asPresentation
+              .fold(
+                presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+                response =>
+                  Ok(
+                    Json.toJson(
+                      HateoasMovementIdsResponse(
+                        response,
+                        movementType,
+                        updatedSince,
+                        movementEORI,
+                        movementReferenceNumber,
+                        page,
+                        count,
+                        receivedUntil,
+                        localReferenceNumber
+                      )
+                    )
+                  )
+              )
+        }
     }
 
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]] =
