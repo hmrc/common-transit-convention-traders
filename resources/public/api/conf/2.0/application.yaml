@@ -340,7 +340,7 @@ paths:
       description: >
         Get all messages related to a specific departure declaration sent to the customs office of departure within the past 31 days.
 
-        You can filter for departure declarations received after and/or before a specific date and time.
+        You can filter for departure declarations received before and/or after a specific date and time.
 
         Movements older than 31 days are archived, so any messages to related to them cannot be returned by the API.
 
@@ -862,7 +862,7 @@ paths:
       description: >
         Get all arrivals that have been updated within the past 31 days.
         
-        You can filter for arrival notifications updated after and/or before a specific date and time along with/or not, a specified EORI.
+        You can filter for arrival notifications updated before and/or after a specific date and time, and optionally filter for arrival notifications with a specific EORI.
 
         For a multi-page query you can filter for a specific page along with/or not, the number of items per page.     
         
@@ -1097,7 +1097,7 @@ paths:
       description: >
         Get all messages related to a specific arrival that have been received within the past 31 days.
         
-        You can filter for arrival notifications received after and/or before a specific date and time.
+        You can filter for arrival notifications received before and/or after a specific date and time.
 
         For a multi-page query you can filter for a specific page along with/or not, the number of items per page.
         
