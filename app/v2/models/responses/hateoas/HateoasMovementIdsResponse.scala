@@ -42,7 +42,9 @@ object HateoasMovementIdsResponse extends HateoasResponse {
   ): JsObject =
     Json.obj(
       "_links" -> Json.obj(
-        "self" -> Json.obj("href" -> getMovementsUri(movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber))
+        "self" -> Json.obj(
+          "href" -> getMovementsUri(movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
+        )
       ),
       movementType.urlFragment -> responses.map(
         response =>

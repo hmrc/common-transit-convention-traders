@@ -441,7 +441,19 @@ class V2MovementsControllerImpl @Inject() (
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
             response =>
               Ok(
-                Json.toJson(HateoasMovementIdsResponse(response, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber))
+                Json.toJson(
+                  HateoasMovementIdsResponse(
+                    response,
+                    movementType,
+                    updatedSince,
+                    movementEORI,
+                    movementReferenceNumber,
+                    page,
+                    count,
+                    receivedUntil,
+                    localReferenceNumber
+                  )
+                )
               )
           )
     }

@@ -897,7 +897,7 @@ class PersistenceConnectorSpec
         )
 
         implicit val hc = HeaderCarrier()
-        val result      = persistenceConnector.getMovements(
+        val result = persistenceConnector.getMovements(
           eori,
           MovementType.Departure,
           updatedSince,
@@ -906,7 +906,8 @@ class PersistenceConnectorSpec
           pageNumber,
           itemCount,
           None,
-          None)
+          None
+        )
         whenReady(result) {
           _ mustBe movementSummaryList
         }
@@ -922,7 +923,7 @@ class PersistenceConnectorSpec
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) =>
         server.stubFor(
           get(
-            urlEqualTo(targetUrl(eori) + s"?localReferenceNumber=${localReferenceNumber.value}")
+            urlEqualTo(targetUrl(eori) + s"?localReferenceNumber=${localReferenceNumber.value}&page=1&count=25")
           )
             .willReturn(
               aResponse()
@@ -935,7 +936,17 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val result =
-          persistenceConnector.getMovements(eori, MovementType.Departure, updatedSince, movementEORI, movementReferenceNumber, Some(localReferenceNumber))
+          persistenceConnector.getMovements(
+            eori,
+            MovementType.Departure,
+            updatedSince,
+            movementEORI,
+            movementReferenceNumber,
+            None,
+            None,
+            None,
+            Some(localReferenceNumber)
+          )
         whenReady(result) {
           _ mustBe movementSummaryList
         }
@@ -974,6 +985,9 @@ class PersistenceConnectorSpec
             Some(updatedSince),
             Some(movementEORI),
             Some(movementReferenceNumber),
+            None,
+            None,
+            None,
             Some(localReferenceNumber)
           )
         whenReady(result) {
@@ -1904,6 +1918,7 @@ class PersistenceConnectorSpec
           Some(movementReferenceNumber),
           pageNumber,
           itemCount,
+          None,
           None
         )
         whenReady(result) {
@@ -1934,7 +1949,8 @@ class PersistenceConnectorSpec
         )
 
         implicit val hc = HeaderCarrier()
-        val result      = persistenceConnector.getMovements(eori, MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount, None, None)
+        val result =
+          persistenceConnector.getMovements(eori, MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount, None, None)
         whenReady(result) {
           _ mustBe movementSummaryList
         }
@@ -1950,7 +1966,7 @@ class PersistenceConnectorSpec
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) =>
         server.stubFor(
           get(
-            urlEqualTo(targetUrl(eori) + s"?localReferenceNumber=${localReferenceNumber.value}")
+            urlEqualTo(targetUrl(eori) + s"?localReferenceNumber=${localReferenceNumber.value}&page=1&count=25")
           )
             .willReturn(
               aResponse()
@@ -1963,7 +1979,17 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val result =
-          persistenceConnector.getMovements(eori, MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, Some(localReferenceNumber))
+          persistenceConnector.getMovements(
+            eori,
+            MovementType.Arrival,
+            updatedSince,
+            movementEORI,
+            movementReferenceNumber,
+            None,
+            None,
+            None,
+            Some(localReferenceNumber)
+          )
         whenReady(result) {
           _ mustBe movementSummaryList
         }
@@ -2001,6 +2027,9 @@ class PersistenceConnectorSpec
           Some(updatedSince),
           Some(movementEORI),
           Some(movementReferenceNumber),
+          None,
+          None,
+          None,
           Some(localReferenceNumber)
         )
         whenReady(result) {

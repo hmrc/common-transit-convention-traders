@@ -293,7 +293,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
         ),
         "movementEORI"            -> movementEORI.map(_.value),
         "movementReferenceNumber" -> movementReferenceNumber.map(_.value),
-        "localReferenceNumber" -> localReferenceNumber.map(_.value),
+        "localReferenceNumber"    -> localReferenceNumber.map(_.value),
         "receivedSince" -> receivedSince.map(
           time => DateTimeFormatter.ISO_DATE_TIME.format(time)
         ),
