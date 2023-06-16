@@ -121,7 +121,9 @@ paths:
       description: >
         Get all departure declarations sent to the customs office of departure within the past 31 days.
 
-        You can filter for departure declarations updated after a specific date and time and/or submitted with a specified EORI.
+        You can filter for departure declarations updated before and/or after a specific date and time, and optionally filter for departure declarations with a specific EORI.
+
+        For a multi-page query you can filter for a specific page along with/or not, the number of items per page.
 
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
 
@@ -161,6 +163,28 @@ paths:
           schema:
             type: string
             example: 3CnsTh79I7vtOy6
+        - in: query
+          name: page
+          description: This is an optional query parameter, default is 1, that allows the selection of a specific page from a multi-page query.
+          style: form
+          schema:
+            type: integer
+            example: 2
+        - in: query
+          name: count
+          description: This is an optional query parameter, default is 25, that allows the selection of a the number of items per page in a query.
+          style: form
+          schema:
+            type: integer
+            example: 50
+        - in: query
+          name: receivedUntil
+          description: This is an optional query parameter that you can use to filter for departure declarations updated before a specific date and time.
+          style: form
+          schema:
+            type: string
+            format: date-time
+            example: 2023-06-15T09:00:00Z
       responses:
         '200':
           description: A successful get all departures response
@@ -316,10 +340,12 @@ paths:
       description: >
         Get all messages related to a specific departure declaration sent to the customs office of departure within the past 31 days.
 
-        You can filter for departure declarations received after a specific date and time.
+        You can filter for departure declarations received before and/or after a specific date and time.
 
         Movements older than 31 days are archived, so any messages to related to them cannot be returned by the API.
 
+        For a multi-page query you can filter for a specific page along with/or not, the number of items per page.
+  
         A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
         
         The `status` parameter in a successful response can have the following values:
@@ -349,6 +375,28 @@ paths:
             type: string
             format: date-time
             example: 2021-06-21T09:00:00Z
+        - in: query
+          name: page
+          description: This is an optional query parameter, default is 1, that allows the selection of a specific page from a multi-page query.
+          style: form
+          schema:
+            type: integer
+            example: 2
+        - in: query
+          name: count
+          description: This is an optional query parameter, default is 25, that allows the selection of the number of items per page in a multi-page query.
+          style: form
+          schema:
+            type: integer
+            example: 50
+        - in: query
+          name: receivedUntil
+          description: This is an optional query parameter that you can use to filter for arrivals updated before a specific date and time.
+          style: form
+          schema:
+            type: string
+            format: date-time
+            example: 2023-06-15T09:00:00Z
       responses:
         '200':
           description: A successful get all messages related to departure response
@@ -814,7 +862,9 @@ paths:
       description: >
         Get all arrivals that have been updated within the past 31 days.
         
-        You can filter for departure declarations updated after a specific date and time and/or submitted with a specified EORI.
+        You can filter for arrival notifications updated before and/or after a specific date and time, and optionally filter for arrival notifications with a specific EORI.
+
+        For a multi-page query you can filter for a specific page along with/or not, the number of items per page.     
         
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
         <br/><br/>
@@ -852,6 +902,28 @@ paths:
           schema:
             type: string
             example: 3CnsTh79I7vtOy6
+        - in: query
+          name: page
+          description: This is an optional query parameter, default is 1, that allows the selection of a specific page from a multi-page query.
+          style: form
+          schema:
+            type: integer
+            example: 2
+        - in: query
+          name: count
+          description: This is an optional query parameter, default is 25, that allows the selection of a the number of items per page in a multi-page query.
+          style: form
+          schema:
+            type: integer
+            example: 50
+        - in: query
+          name: receivedUntil
+          description: This is an optional query parameter that you can use to filter for arrivals updated before a specific date and time.
+          style: form
+          schema:
+            type: string
+            format: date-time
+            example: 2023-06-15T09:00:00Z
       responses:
         '200':
           description: A successful get all arrivals response
@@ -1025,7 +1097,9 @@ paths:
       description: >
         Get all messages related to a specific arrival that have been received within the past 31 days.
         
-        You can filter for arrivals received after a specific date and time.
+        You can filter for arrival notifications received before and/or after a specific date and time.
+
+        For a multi-page query you can filter for a specific page along with/or not, the number of items per page.
         
         Movements older than 31 days are archived, so any messages related to them cannot be returned by the API.
         <br/><br/>
@@ -1049,6 +1123,28 @@ paths:
             type: string
             format: date-time
             example: 2021-06-21T09:00:00Z
+        - in: query
+          name: page
+          description: This is an optional query parameter, default is 1, that allows the selection of a specific page from a multi-page query.
+          style: form
+          schema:
+            type: integer
+            example: 2
+        - in: query
+          name: count
+          description: This is an optional query parameter, default is 25, that allows the selection of the number of items per page in a multi-page query.
+          style: form
+          schema:
+            type: integer
+            example: 50
+        - in: query
+          name: receivedUntil
+          description: This is an optional query parameter that you can use to filter for arrivals updated before a specific date and time.
+          style: form
+          schema:
+            type: string
+            format: date-time
+            example: 2023-06-15T09:00:00Z
       responses:
         '200':
           description: A successful get all messages related to arrival response
