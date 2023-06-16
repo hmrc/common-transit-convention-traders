@@ -42,8 +42,8 @@ import v2.models.responses.JsonValidationResponse
 import v2.models.responses.XmlValidationResponse
 
 import java.nio.charset.StandardCharsets
-import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar {
@@ -79,33 +79,62 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
   val fakeValidationConnector: ValidationConnector = new ValidationConnector {
 
+    class InvalidMessageTypeError(message: String)  extends Throwable(message)
+    class BusinessValidationError(message: String)  extends Throwable(message)
+    class UnexpectedError(cause: Option[Throwable]) extends Throwable(cause.orNull)
+    class ParsingError(message: String)             extends Throwable(message)
+
     override def postXml(messageType: MessageType, stream: Source[ByteString, _])(implicit
       hc: HeaderCarrier,
       ec: ExecutionContext
-    ): Future[Option[XmlValidationResponse]] =
+    ): Future[Either[FailedToValidateError, Option[XmlValidationResponse]]] =
       stream match {
-        case SchemaValidXml          => Future.successful(None)
-        case SchemaInvalidXml        => Future.successful(Some(XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))))
-        case BadMessageType          => Future.failed(badMessageType(messageType))
-        case BusinessValidationError => Future.failed(businessValidationError)
-        case UpstreamError           => Future.failed(upstreamErrorResponse)
-        case InternalServiceError    => Future.failed(internalException)
+        case SchemaValidXml => Future.successful(Right(None))
+        case SchemaInvalidXml =>
+          Future.successful(
+            Left(
+              FailedToValidateError.XmlSchemaFailedToValidateError(
+                NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)
+              )
+            )
+          )
+        case BadMessageType =>
+          Future.successful(Left(FailedToValidateError.InvalidMessageTypeError(messageType.toString)))
+        case BusinessValidationError =>
+          Future.successful(Left(FailedToValidateError.BusinessValidationError("business validation error")))
+        case UpstreamError =>
+          Future.failed(upstreamErrorResponse)
+        case InternalServiceError =>
+          Future.failed(internalException)
       }
 
     override def postJson(messageType: MessageType, stream: Source[ByteString, _])(implicit
       hc: HeaderCarrier,
       ec: ExecutionContext
-    ): Future[Option[JsonValidationResponse]] =
+    ): Future[Either[FailedToValidateError, Option[JsonValidationResponse]]] =
       stream match {
-        case SchemaValidJson => Future.successful(None)
+        case SchemaValidJson =>
+          Future.successful(Right(None))
         case SchemaInvalidJson =>
-          Future.successful(Some(JsonValidationResponse(NonEmptyList(JsonValidationError("IEO15C:messageSender", "MessageSender not expected"), Nil))))
-        case Invalid                 => Future.failed(parseError)
-        case BusinessValidationError => Future.failed(businessValidationError)
-        case BadMessageType          => Future.failed(badMessageType(messageType))
-        case UpstreamError           => Future.failed(upstreamErrorResponse)
-        case InternalServiceError    => Future.failed(internalException)
+          Future.successful(
+            Left(
+              FailedToValidateError.JsonSchemaFailedToValidateError(
+                NonEmptyList(JsonValidationError("IEO15C:messageSender", "MessageSender not expected"), Nil)
+              )
+            )
+          )
+        case Invalid =>
+          Future.successful(Left(FailedToValidateError.ParsingError("parse error")))
+        case BusinessValidationError =>
+          Future.successful(Left(FailedToValidateError.BusinessValidationError("business validation error")))
+        case BadMessageType =>
+          Future.successful(Left(FailedToValidateError.InvalidMessageTypeError(messageType.toString)))
+        case UpstreamError =>
+          Future.successful(Left(FailedToValidateError.UnexpectedError(Some(upstreamErrorResponse))))
+        case InternalServiceError =>
+          Future.successful(Left(FailedToValidateError.UnexpectedError(Some(internalException))))
       }
+
   }
 
   "validating XML" - {

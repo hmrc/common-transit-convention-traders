@@ -27,7 +27,7 @@ sealed abstract class ErrorCode(val code: String, val statusCode: Int) extends P
 
 object ErrorCode {
   case object BadRequest           extends ErrorCode("BAD_REQUEST", BAD_REQUEST)
-  case object BusinessValidation   extends ErrorCode("BUSINESS_VALIDATION_ERROR", OK)
+  case object BusinessValidation   extends ErrorCode("BUSINESS_VALIDATION_ERROR", BAD_REQUEST)
   case object InvalidOffice        extends ErrorCode("INVALID_OFFICE", BAD_REQUEST)
   case object NotFound             extends ErrorCode("NOT_FOUND", NOT_FOUND)
   case object Forbidden            extends ErrorCode("FORBIDDEN", FORBIDDEN)
