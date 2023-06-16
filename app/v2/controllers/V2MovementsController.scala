@@ -50,14 +50,7 @@ import v2.models.errors.PresentationError
 import v2.models.errors.PushNotificationError
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
-import v2.models.responses.BoxResponse
-import v2.models.responses.LargeMessageAuditRequest
-import v2.models.responses.MessageSummary
-import v2.models.responses.TraderFailedUploadAuditRequest
-import v2.models.responses.UpdateMovementResponse
-import v2.models.responses.UpscanFailedResponse
-import v2.models.responses.UpscanResponse
-import v2.models.responses.UpscanSuccessResponse
+import v2.models.responses._
 import v2.models.responses.hateoas._
 import v2.services._
 import v2.utils.StreamWithFile
@@ -66,7 +59,6 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.time.OffsetDateTime
 import scala.concurrent.Future
-import scala.util.Left
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -421,6 +413,15 @@ class V2MovementsControllerImpl @Inject() (
           )
     }
 
+  def ensurePositive(parameter: Option[Long], keyName: String): EitherT[Future, PresentationError, Unit] =
+    parameter match {
+      case Some(x) if x <= 0 =>
+        val error = PresentationError.badRequestError(s"The $keyName parameter must be a positive number")
+        EitherT.leftT(error)
+      case _ =>
+        EitherT.rightT(())
+    }
+
   def getMovements(
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
@@ -431,62 +432,53 @@ class V2MovementsControllerImpl @Inject() (
     receivedUntil: Option[OffsetDateTime],
     localReferenceNumber: Option[LocalReferenceNumber]
   ): Action[AnyContent] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async {
-      implicit request =>
+    authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader) async {
+      request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        (page, count) match {
-          case (Some(p), _) if p.value <= 0 =>
-            Future.successful(
-              BadRequest(
-                Json.obj(
-                  "code"    -> "BAD_REQUEST",
-                  "message" -> "The page parameter must be a positive number"
+
+        val pageValidation: EitherT[Future, PresentationError, Unit] =
+          ensurePositive(page.map(_.value), "page")
+
+        val countValidation: EitherT[Future, PresentationError, Unit] =
+          ensurePositive(count.map(_.value), "count")
+
+        val result = for {
+          _ <- pageValidation
+          _ <- countValidation
+          response <- persistenceService
+            .getMovements(
+              request.eoriNumber,
+              movementType,
+              updatedSince,
+              movementEORI,
+              movementReferenceNumber,
+              page,
+              count,
+              receivedUntil,
+              localReferenceNumber
+            )
+            .asPresentation
+        } yield response
+
+        result.fold(
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          response =>
+            Ok(
+              Json.toJson(
+                HateoasMovementIdsResponse(
+                  response,
+                  movementType,
+                  updatedSince,
+                  movementEORI,
+                  movementReferenceNumber,
+                  page,
+                  count,
+                  receivedUntil,
+                  localReferenceNumber
                 )
               )
             )
-          case (_, Some(c)) if c.value <= 0 =>
-            Future.successful(
-              BadRequest(
-                Json.obj(
-                  "code"    -> "BAD_REQUEST",
-                  "message" -> "The count parameter must be a positive number"
-                )
-              )
-            )
-          case _ =>
-            persistenceService
-              .getMovements(
-                request.eoriNumber,
-                movementType,
-                updatedSince,
-                movementEORI,
-                movementReferenceNumber,
-                page,
-                count,
-                receivedUntil,
-                localReferenceNumber
-              )
-              .asPresentation
-              .fold(
-                presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-                response =>
-                  Ok(
-                    Json.toJson(
-                      HateoasMovementIdsResponse(
-                        response,
-                        movementType,
-                        updatedSince,
-                        movementEORI,
-                        movementReferenceNumber,
-                        page,
-                        count,
-                        receivedUntil,
-                        localReferenceNumber
-                      )
-                    )
-                  )
-              )
-        }
+        )
     }
 
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]] =
