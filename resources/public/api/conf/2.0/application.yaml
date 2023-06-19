@@ -1626,8 +1626,8 @@ components:
         updated: 2022-11-04T13:36:52.332Z
         enrollmentEORINumber: '9999912345'
         movementEORINumber: GB1234567890
-    Arrival2:
-      title: Arrival2
+    Arrival1:
+      title: Arrival1
       required:
         - href
       type: object
@@ -1742,7 +1742,7 @@ components:
       type: object
       properties:
         _links:
-          $ref: '#/components/schemas/Links8'
+          $ref: '#/components/schemas/Links7'
         arrivals:
           type: array
           items:
@@ -1866,7 +1866,7 @@ components:
       type: object
       properties:
         _links:
-          $ref: '#/components/schemas/Links4'
+          $ref: '#/components/schemas/Links2'
         id:
           type: string
         departureId:
@@ -1964,7 +1964,7 @@ components:
       type: object
       properties:
         _links:
-          $ref: '#/components/schemas/Links8'
+          $ref: '#/components/schemas/Links7'
         departures:
           type: array
           items:
@@ -2077,24 +2077,8 @@ components:
           href: /customs/transits/movements/departures/6365135ba5e821ee/messages
         departure:
           href: /customs/transits/movements/departures/6365135ba5e821ee
-    Links4:
-      title: Links4
-      required:
-        - self
-        - departure
-      type: object
-      properties:
-        self:
-          $ref: '#/components/schemas/Self'
-        departure:
-          $ref: '#/components/schemas/Departure1'
-      example:
-        self:
-          href: /customs/transits/movements/departures/6365135ba5e821ee/messages
-        departure:
-          href: /customs/transits/movements/departures/6365135ba5e821ee
-    Links8:
-      title: Links8
+    Links7:
+      title: Links7
       required:
         - self
       type: object
@@ -2114,7 +2098,7 @@ components:
         self:
           $ref: '#/components/schemas/Self'
         arrival:
-          $ref: '#/components/schemas/Arrival2'
+          $ref: '#/components/schemas/Arrival1'
       example:
         self:
           href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages
