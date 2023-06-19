@@ -55,13 +55,16 @@ import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.PageNumber
+import v2.models.TotalCount
 import v2.models.errors.ErrorCode
 import v2.models.errors.PresentationError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
-import v2.models.responses.MovementResponse
 import v2.models.responses.MessageSummary
+import v2.models.responses.MovementResponse
+import v2.models.responses.PaginationMessageSummary
+import v2.models.responses.PaginationMovementSummary
 import v2.models.responses.UpdateMovementResponse
 import v2.utils.CommonGenerators
 
@@ -522,6 +525,8 @@ class PersistenceConnectorSpec
         id => arbitraryMessageSummary.arbitrary.sample.get.copy(id = id)
       )
 
+      val paginationMessageSummary = PaginationMessageSummary(TotalCount(messageSummaryList.length), messageSummaryList)
+
       server.stubFor(
         get(
           urlEqualTo(targetUrl(eori, departureId) + defaultFilterParams)
@@ -531,7 +536,7 @@ class PersistenceConnectorSpec
             aResponse()
               .withStatus(OK)
               .withBody(
-                Json.toJson(messageSummaryList).toString()
+                Json.toJson(paginationMessageSummary).toString()
               )
           )
       )
@@ -539,7 +544,7 @@ class PersistenceConnectorSpec
       implicit val hc = HeaderCarrier()
       val result      = persistenceConnector.getMessages(eori, MovementType.Departure, departureId, None, None, None, None)
       whenReady(result) {
-        _ mustBe messageSummaryList
+        _ mustBe paginationMessageSummary
       }
     }
 
@@ -551,6 +556,8 @@ class PersistenceConnectorSpec
         id => arbitraryMessageSummary.arbitrary.sample.get.copy(id = id)
       )
 
+      val paginationMessageSummary = PaginationMessageSummary(TotalCount(messageSummaryList.length), messageSummaryList)
+
       server.stubFor(
         get(
           urlEqualTo(targetUrlWithTime(eori, departureId, time) + "&page=1&count=25")
@@ -560,7 +567,7 @@ class PersistenceConnectorSpec
             aResponse()
               .withStatus(OK)
               .withBody(
-                Json.toJson(messageSummaryList).toString()
+                Json.toJson(paginationMessageSummary).toString()
               )
           )
       )
@@ -568,7 +575,7 @@ class PersistenceConnectorSpec
       implicit val hc = HeaderCarrier()
       val result      = persistenceConnector.getMessages(eori, MovementType.Departure, departureId, Some(time), None, None, None)
       whenReady(result) {
-        _ mustBe messageSummaryList
+        _ mustBe paginationMessageSummary
       }
     }
 
@@ -794,6 +801,8 @@ class PersistenceConnectorSpec
     "on success with no date time filter, return a list of departure IDs" in {
       lazy val movementSummaryList = Gen.listOfN(3, arbitraryMovementSummary.arbitrary).sample.get
 
+      val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+
       server.stubFor(
         get(
           urlEqualTo(targetUrl(eori) + defaultFilterParams)
@@ -803,7 +812,7 @@ class PersistenceConnectorSpec
             aResponse()
               .withStatus(OK)
               .withBody(
-                Json.toJson(movementSummaryList).toString()
+                Json.toJson(paginationMovementSummary).toString()
               )
           )
       )
@@ -811,7 +820,7 @@ class PersistenceConnectorSpec
       implicit val hc = HeaderCarrier()
       val result      = persistenceConnector.getMovements(eori, MovementType.Departure, None, None, None, None, None, None, None)
       whenReady(result) {
-        _ mustBe movementSummaryList
+        _ mustBe paginationMovementSummary
       }
     }
 
@@ -824,6 +833,7 @@ class PersistenceConnectorSpec
       arbitrary[ItemCount]
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount) =>
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
         server.stubFor(
           get(
             urlPathEqualTo(targetUrl(eori))
@@ -837,7 +847,7 @@ class PersistenceConnectorSpec
               aResponse()
                 .withStatus(OK)
                 .withBody(
-                  Json.toJson(movementSummaryList).toString()
+                  Json.toJson(paginationMovementSummary).toString()
                 )
             )
         )
@@ -855,7 +865,7 @@ class PersistenceConnectorSpec
           None
         )
         whenReady(result) {
-          _ mustBe movementSummaryList
+          _ mustBe paginationMovementSummary
         }
     }
 
@@ -868,6 +878,8 @@ class PersistenceConnectorSpec
       None
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount) =>
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+
         server.stubFor(
           get(
             urlPathEqualTo(targetUrl(eori))
@@ -878,7 +890,7 @@ class PersistenceConnectorSpec
               aResponse()
                 .withStatus(OK)
                 .withBody(
-                  Json.toJson(movementSummaryList).toString()
+                  Json.toJson(paginationMovementSummary).toString()
                 )
             )
         )
@@ -896,7 +908,7 @@ class PersistenceConnectorSpec
           None
         )
         whenReady(result) {
-          _ mustBe movementSummaryList
+          _ mustBe paginationMovementSummary
         }
     }
 
@@ -909,6 +921,8 @@ class PersistenceConnectorSpec
       None
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount) =>
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+
         server.stubFor(
           get(
             urlEqualTo(
@@ -920,7 +934,7 @@ class PersistenceConnectorSpec
               aResponse()
                 .withStatus(OK)
                 .withBody(
-                  Json.toJson(movementSummaryList).toString()
+                  Json.toJson(paginationMovementSummary).toString()
                 )
             )
         )
@@ -938,7 +952,7 @@ class PersistenceConnectorSpec
           None
         )
         whenReady(result) {
-          _ mustBe movementSummaryList
+          _ mustBe paginationMovementSummary
         }
     }
 
@@ -950,6 +964,8 @@ class PersistenceConnectorSpec
       arbitrary[LocalReferenceNumber]
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) =>
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+
         server.stubFor(
           get(
             urlEqualTo(targetUrl(eori) + s"?localReferenceNumber=${localReferenceNumber.value}&page=1&count=25")
@@ -958,7 +974,7 @@ class PersistenceConnectorSpec
               aResponse()
                 .withStatus(OK)
                 .withBody(
-                  Json.toJson(movementSummaryList).toString()
+                  Json.toJson(paginationMovementSummary).toString()
                 )
             )
         )
@@ -977,7 +993,7 @@ class PersistenceConnectorSpec
             Some(localReferenceNumber)
           )
         whenReady(result) {
-          _ mustBe movementSummaryList
+          _ mustBe paginationMovementSummary
         }
     }
 
@@ -989,6 +1005,8 @@ class PersistenceConnectorSpec
       arbitrary[LocalReferenceNumber]
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) =>
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+
         server.stubFor(
           get(
             urlPathEqualTo(targetUrl(eori))
@@ -1001,7 +1019,7 @@ class PersistenceConnectorSpec
               aResponse()
                 .withStatus(OK)
                 .withBody(
-                  Json.toJson(movementSummaryList).toString()
+                  Json.toJson(paginationMovementSummary).toString()
                 )
             )
         )
@@ -1020,7 +1038,7 @@ class PersistenceConnectorSpec
             Some(localReferenceNumber)
           )
         whenReady(result) {
-          _ mustBe movementSummaryList
+          _ mustBe paginationMovementSummary
         }
     }
 
@@ -1665,6 +1683,7 @@ class PersistenceConnectorSpec
       Gen.nonEmptyListOf(arbitrary[MessageSummary])
     ) {
       (eori, arrivalId, messageSummary) =>
+        val paginationMessageSummary = PaginationMessageSummary(TotalCount(messageSummary.length), messageSummary)
         server.stubFor(
           get(
             urlEqualTo(targetUrl(eori, arrivalId) + defaultFilterParams)
@@ -1674,13 +1693,13 @@ class PersistenceConnectorSpec
               aResponse()
                 .withStatus(OK)
                 .withBody(
-                  Json.toJson(messageSummary).toString()
+                  Json.toJson(paginationMessageSummary).toString()
                 )
             )
         )
         val result = persistenceConnector.getMessages(eori, MovementType.Arrival, arrivalId, None, None, None, None)
         whenReady(result) {
-          _ mustBe messageSummary
+          _ mustBe paginationMessageSummary
         }
     }
 
@@ -1691,6 +1710,8 @@ class PersistenceConnectorSpec
       Gen.nonEmptyListOf(arbitrary[MessageSummary])
     ) {
       (eori, arrivalId, time, messageSummary) =>
+        val paginationMessageSummary = PaginationMessageSummary(TotalCount(messageSummary.length), messageSummary)
+
         server.stubFor(
           get(
             urlPathEqualTo(targetUrl(eori, arrivalId))
@@ -1702,7 +1723,7 @@ class PersistenceConnectorSpec
               aResponse()
                 .withStatus(OK)
                 .withBody(
-                  Json.toJson(messageSummary).toString()
+                  Json.toJson(paginationMessageSummary).toString()
                 )
             )
         )
@@ -1710,7 +1731,7 @@ class PersistenceConnectorSpec
         implicit val hc = HeaderCarrier()
         val result      = persistenceConnector.getMessages(eori, MovementType.Arrival, arrivalId, Some(time), None, None, None)
         whenReady(result) {
-          _ mustBe messageSummary
+          _ mustBe paginationMessageSummary
         }
     }
 
@@ -1834,7 +1855,8 @@ class PersistenceConnectorSpec
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals"
 
     "on success, return a list of arrivals" in {
-      lazy val movementSummaryList = Gen.listOfN(3, arbitraryMovementSummary.arbitrary).sample.get
+      lazy val movementSummaryList  = Gen.listOfN(3, arbitraryMovementSummary.arbitrary).sample.get
+      val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
 
       server.stubFor(
         get(
@@ -1844,7 +1866,7 @@ class PersistenceConnectorSpec
             aResponse()
               .withStatus(OK)
               .withBody(
-                Json.toJson(movementSummaryList).toString()
+                Json.toJson(paginationMovementSummary).toString()
               )
           )
       )
@@ -1852,7 +1874,7 @@ class PersistenceConnectorSpec
       implicit val hc = HeaderCarrier()
       val result      = persistenceConnector.getMovements(eori, MovementType.Arrival, None, None, None, None, None, None, None)
       whenReady(result) {
-        _ mustBe movementSummaryList
+        _ mustBe paginationMovementSummary
       }
     }
 
@@ -1865,6 +1887,8 @@ class PersistenceConnectorSpec
       arbitrary[ItemCount]
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount) =>
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+
         server.stubFor(
           get(
             urlPathEqualTo(targetUrl(eori))
@@ -1879,7 +1903,7 @@ class PersistenceConnectorSpec
               aResponse()
                 .withStatus(OK)
                 .withBody(
-                  Json.toJson(movementSummaryList).toString()
+                  Json.toJson(paginationMovementSummary).toString()
                 )
             )
         )
@@ -1897,7 +1921,7 @@ class PersistenceConnectorSpec
           None
         )
         whenReady(result) {
-          _ mustBe movementSummaryList
+          _ mustBe paginationMovementSummary
         }
     }
 
@@ -1910,6 +1934,8 @@ class PersistenceConnectorSpec
       arbitrary[ItemCount]
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount) =>
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+
         server.stubFor(
           get(
             urlPathEqualTo(targetUrl(eori))
@@ -1920,7 +1946,7 @@ class PersistenceConnectorSpec
               aResponse()
                 .withStatus(OK)
                 .withBody(
-                  Json.toJson(movementSummaryList).toString()
+                  Json.toJson(paginationMovementSummary).toString()
                 )
             )
         )
@@ -1938,7 +1964,7 @@ class PersistenceConnectorSpec
           None
         )
         whenReady(result) {
-          _ mustBe movementSummaryList
+          _ mustBe paginationMovementSummary
         }
     }
 
@@ -1951,6 +1977,8 @@ class PersistenceConnectorSpec
       None
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount) =>
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+
         server.stubFor(
           get(
             urlEqualTo(
@@ -1962,7 +1990,7 @@ class PersistenceConnectorSpec
               aResponse()
                 .withStatus(OK)
                 .withBody(
-                  Json.toJson(movementSummaryList).toString()
+                  Json.toJson(paginationMovementSummary).toString()
                 )
             )
         )
@@ -1980,7 +2008,7 @@ class PersistenceConnectorSpec
           None
         )
         whenReady(result) {
-          _ mustBe movementSummaryList
+          _ mustBe paginationMovementSummary
         }
     }
 
@@ -1993,6 +2021,8 @@ class PersistenceConnectorSpec
       None
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount) =>
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+
         server.stubFor(
           get(
             urlEqualTo(targetUrl(eori) + s"?page=${pageNumber.getOrElse(PageNumber(1)).value}&count=${itemCount.getOrElse(ItemCount(25)).value}")
@@ -2001,7 +2031,7 @@ class PersistenceConnectorSpec
               aResponse()
                 .withStatus(OK)
                 .withBody(
-                  Json.toJson(movementSummaryList).toString()
+                  Json.toJson(paginationMovementSummary).toString()
                 )
             )
         )
@@ -2010,7 +2040,7 @@ class PersistenceConnectorSpec
         val result =
           persistenceConnector.getMovements(eori, MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount, None, None)
         whenReady(result) {
-          _ mustBe movementSummaryList
+          _ mustBe paginationMovementSummary
         }
     }
 
@@ -2022,6 +2052,8 @@ class PersistenceConnectorSpec
       arbitrary[LocalReferenceNumber]
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) =>
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+
         server.stubFor(
           get(
             urlEqualTo(targetUrl(eori) + s"?localReferenceNumber=${localReferenceNumber.value}&page=1&count=25")
@@ -2030,7 +2062,7 @@ class PersistenceConnectorSpec
               aResponse()
                 .withStatus(OK)
                 .withBody(
-                  Json.toJson(movementSummaryList).toString()
+                  Json.toJson(paginationMovementSummary).toString()
                 )
             )
         )
@@ -2049,7 +2081,7 @@ class PersistenceConnectorSpec
             Some(localReferenceNumber)
           )
         whenReady(result) {
-          _ mustBe movementSummaryList
+          _ mustBe paginationMovementSummary
         }
     }
 
@@ -2061,6 +2093,8 @@ class PersistenceConnectorSpec
       arbitrary[LocalReferenceNumber]
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) =>
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+
         server.stubFor(
           get(
             urlPathEqualTo(targetUrl(eori))
@@ -2073,7 +2107,7 @@ class PersistenceConnectorSpec
               aResponse()
                 .withStatus(OK)
                 .withBody(
-                  Json.toJson(movementSummaryList).toString()
+                  Json.toJson(paginationMovementSummary).toString()
                 )
             )
         )
@@ -2091,7 +2125,7 @@ class PersistenceConnectorSpec
           Some(localReferenceNumber)
         )
         whenReady(result) {
-          _ mustBe movementSummaryList
+          _ mustBe paginationMovementSummary
         }
     }
 
