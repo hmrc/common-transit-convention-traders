@@ -45,6 +45,8 @@ import v2.models.request.MessageUpdate
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
+import v2.models.responses.PaginationMessageSummary
+import v2.models.responses.PaginationMovementSummary
 import v2.models.responses.UpdateMovementResponse
 
 import java.time.OffsetDateTime
@@ -76,7 +78,7 @@ trait PersistenceService {
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[MessageSummary]]
+  ): EitherT[Future, PersistenceError, PaginationMessageSummary]
 
   def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId)(implicit
     hc: HeaderCarrier,
@@ -96,7 +98,7 @@ trait PersistenceService {
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[MovementSummary]]
+  ): EitherT[Future, PersistenceError, PaginationMovementSummary]
 
   def addMessage(movementId: MovementId, movementType: MovementType, messageType: Option[MessageType], source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
@@ -183,7 +185,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[MessageSummary]] =
+  ): EitherT[Future, PersistenceError, PaginationMessageSummary] =
     EitherT(
       persistenceConnector
         .getMessages(eori, movementType, movementId, receivedSince, page, count, receivedUntil)
@@ -221,7 +223,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Seq[MovementSummary]] = EitherT {
+  ): EitherT[Future, PersistenceError, PaginationMovementSummary] = EitherT {
     persistenceConnector
       .getMovements(eori, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
       .map(Right(_))
