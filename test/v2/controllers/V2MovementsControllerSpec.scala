@@ -87,16 +87,17 @@ import v2.models.errors._
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.responses.FailureDetails
-import v2.models.LocalReferenceNumber
-import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
+import v2.models.responses.PaginationMessageSummary
+import v2.models.responses.PaginationMovementSummary
 import v2.models.responses.TraderFailedUploadAuditRequest
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.UploadDetails
 import v2.models.responses.UpscanFailedResponse
 import v2.models.responses.UpscanResponse
 import v2.models.responses.UpscanSuccessResponse
+import v2.models.LocalReferenceNumber
 import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.UpscanResponse.Reference
 import v2.models.responses.hateoas._
@@ -3312,6 +3313,8 @@ class V2MovementsControllerSpec
             arbitraryItemCount.arbitrary
           ) {
             (movementId, messageResponse, pageNumber, itemCount) =>
+              val summaries = PaginationMessageSummary(TotalCount(messageResponse.length), messageResponse)
+
               val ControllerAndMocks(
                 sut,
                 _,
@@ -3340,7 +3343,7 @@ class V2MovementsControllerSpec
                 )
               )
                 .thenAnswer(
-                  _ => EitherT.rightT(messageResponse)
+                  _ => EitherT.rightT(summaries)
                 )
 
               val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
@@ -3348,7 +3351,15 @@ class V2MovementsControllerSpec
 
               status(result) mustBe OK
               contentAsJson(result) mustBe Json.toJson(
-                HateoasMovementMessageIdsResponse(movementId, messageResponse, dateTime, movementType, Some(pageNumber), Some(itemCount), dateTime)
+                HateoasMovementMessageIdsResponse(
+                  movementId,
+                  summaries,
+                  dateTime,
+                  movementType,
+                  Some(pageNumber),
+                  Some(itemCount),
+                  dateTime
+                )
               )
           }
       }
@@ -4339,7 +4350,8 @@ class V2MovementsControllerSpec
           created = dateTime.plusHours(2),
           updated = dateTime.plusHours(3)
         )
-        val departureResponses = Seq(departureResponse1, departureResponse2)
+        val departureResponses        = Seq(departureResponse1, departureResponse2)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(departureResponses.length), departureResponses)
 
         when(
           mockPersistenceService.getMovements(
@@ -4358,7 +4370,7 @@ class V2MovementsControllerSpec
           )
         )
           .thenAnswer(
-            _ => EitherT.rightT(departureResponses)
+            _ => EitherT.rightT(paginationMovementSummary)
           )
         val request = FakeRequest(
           GET,
@@ -4371,7 +4383,7 @@ class V2MovementsControllerSpec
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(
           HateoasMovementIdsResponse(
-            departureResponses,
+            paginationMovementSummary,
             movementType,
             None,
             None,
@@ -4397,8 +4409,9 @@ class V2MovementsControllerSpec
           _,
           _,
           _
-        )        = createControllerAndMocks()
-        val eori = EORINumber("ERROR")
+        ) = createControllerAndMocks()
+
+        val summary = PaginationMovementSummary(TotalCount(0), List.empty[MovementSummary])
 
         when(
           mockPersistenceService.getMovements(
@@ -4417,7 +4430,7 @@ class V2MovementsControllerSpec
           )
         )
           .thenAnswer(
-            _ => EitherT.rightT(List.empty[MovementSummary])
+            _ => EitherT.rightT(summary)
           )
 
         val request = FakeRequest(
@@ -4431,7 +4444,7 @@ class V2MovementsControllerSpec
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(
           HateoasMovementIdsResponse(
-            List.empty[MovementSummary],
+            summary,
             movementType,
             None,
             None,
