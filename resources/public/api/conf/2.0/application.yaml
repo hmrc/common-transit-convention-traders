@@ -947,7 +947,6 @@ paths:
                               href: /customs/transits/movements/arrivals/63651574c3447b12/messages
                           id: 63651574c3447b12
                           movementReferenceNumber: 27WF9X1FQ9RCKN0TM3
-                          localReferenceNumber: DEF456
                           created: 2022-11-04T13:36:52.332Z
                           updated: 2022-11-04T13:36:52.332Z
                           enrollmentEORINumber: '9999912345'
@@ -959,7 +958,6 @@ paths:
                               href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages
                           id: 6365135ba5e821ee
                           movementReferenceNumber: 27WF9X1FQ9RCKN0TM3
-                          localReferenceNumber: DEF456
                           created: 2022-11-04T13:27:55.522Z
                           updated: 2022-11-04T13:27:55.522Z
                           enrollmentEORINumber: '9999912345'
@@ -976,7 +974,6 @@ paths:
                         href: /customs/transits/movements/arrivals/63651574c3447b12/messages
                     id: 63651574c3447b12
                     movementReferenceNumber: 27WF9X1FQ9RCKN0TM3
-                    localReferenceNumber: DEF456
                     created: 2022-11-04T13:36:52.332Z
                     updated: 2022-11-04T13:36:52.332Z
                     enrollmentEORINumber: '9999912345'
@@ -988,7 +985,6 @@ paths:
                         href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages
                     id: 6365135ba5e821ee
                     movementReferenceNumber: 27WF9X1FQ9RCKN0TM3
-                    localReferenceNumber: DEF456
                     created: 2022-11-04T13:27:55.522Z
                     updated: 2022-11-04T13:27:55.522Z
                     enrollmentEORINumber: '9999912345'
@@ -1049,7 +1045,6 @@ paths:
                           href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages
                       id: 6365135ba5e821ee
                       movementReferenceNumber: ABC123
-                      localReferenceNumber: DEF456
                       created: 2022-11-10T15:32:51.459Z
                       updated: 2022-11-10T15:32:51.459Z
                       enrollmentEORINumber: GB1234567890
@@ -1062,7 +1057,6 @@ paths:
                     href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages
                 id: 6365135ba5e821ee
                 movementReferenceNumber: ABC123
-                localReferenceNumber: DEF456
                 created: 2022-11-10T15:32:51.459Z
                 updated: 2022-11-10T15:32:51.459Z
                 enrollmentEORINumber: GB1234567890
@@ -1599,14 +1593,18 @@ components:
           description: The description of the error.
     Arrival:
       title: Arrival
+      required:
+        - _links
+        - id
+        - created
+        - enrollmentEORINumber
+      type: object
       properties:
         _links:
-          $ref: '#/components/schemas/Links1'
+          $ref: '#/components/schemas/Links'
         id:
           type: string
         movementReferenceNumber:
-          type: string
-        localReferenceNumber:
           type: string
         created:
           type: string
@@ -1624,18 +1622,10 @@ components:
             href: /customs/transits/movements/arrivals/63651574c3447b12/messages
         id: 63651574c3447b12
         movementReferenceNumber: 27WF9X1FQ9RCKN0TM3
-        localReferenceNumber: DEF456
         created: 2022-11-04T13:36:52.332Z
         updated: 2022-11-04T13:36:52.332Z
         enrollmentEORINumber: '9999912345'
         movementEORINumber: GB1234567890
-    Arrival1:
-      title: Arrival1
-      properties:
-        href:
-          type: string
-      example:
-        href: /customs/transits/movements/arrivals/63498209a2d89ad8
     Arrival2:
       title: Arrival2
       required:
@@ -1790,12 +1780,8 @@ components:
       required:
         - _links
         - id
-        - movementReferenceNumber
-        - localReferenceNumber
         - created
-        - updated
         - enrollmentEORINumber
-        - movementEORINumber
       type: object
       properties:
         _links:
@@ -1803,8 +1789,6 @@ components:
         id:
           type: string
         movementReferenceNumber:
-          type: string
-        localReferenceNumber:
           type: string
         created:
           type: string
@@ -1822,7 +1806,6 @@ components:
             href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages
         id: 6365135ba5e821ee
         movementReferenceNumber: ABC123
-        localReferenceNumber: ABC123
         created: 2022-11-10T15:32:51.459Z
         updated: 2022-11-10T15:32:51.459Z
         enrollmentEORINumber: 'GB1234567890'
@@ -1940,12 +1923,8 @@ components:
       required:
         - _links
         - id
-        - movementReferenceNumber
-        - localReferenceNumber
         - created
-        - updated
         - enrollmentEORINumber
-        - movementEORINumber
       type: object
       properties:
         _links:
@@ -2020,9 +1999,15 @@ components:
             movementEORINumber: GB1234567890
     Departure:
       title: Departure
+      required:
+        - _links
+        - id
+        - created
+        - enrollmentEORINumber
+      type: object
       properties:
         _links:
-          $ref: '#/components/schemas/Links1'
+          $ref: '#/components/schemas/Links'
         id:
           type: string
         movementReferenceNumber:
@@ -2052,13 +2037,6 @@ components:
             movementEORINumber: GB1234567890
     Departure1:
       title: Departure1
-      properties:
-        href:
-          type: string
-      example:
-        href: /customs/transits/movements/departures/6365135ba5e821ee
-    Departure2:
-      title: Departure2
       required:
         - href
       type: object
@@ -2083,19 +2061,6 @@ components:
           href: /customs/transits/movements/departures/62fb8f33d233578e
         messages:
           href: /customs/transits/movements/departures/62fb8f33d233578e/messages
-    Links1:
-      title: Links1
-      properties:
-        self:
-          $ref: '#/components/schemas/Self1'
-        messages:
-          $ref: '#/components/schemas/Messages1'
-      example:
-        self:
-          href: /customs/transits/movements/departures/62fb8f33d233578e
-        messages:
-          href: /customs/transits/movements/departures/62fb8f33d233578e/messages
-
     Links2:
       title: Links2
       required:
@@ -2105,18 +2070,6 @@ components:
       properties:
         self:
           $ref: '#/components/schemas/Self'
-        departure:
-          $ref: '#/components/schemas/Departure2'
-      example:
-        self:
-          href: /customs/transits/movements/departures/6365135ba5e821ee/messages
-        departure:
-          href: /customs/transits/movements/departures/6365135ba5e821ee
-    Links3:
-      title: Links3
-      properties:
-        self:
-          $ref: '#/components/schemas/Self1'
         departure:
           $ref: '#/components/schemas/Departure1'
       example:
@@ -2140,15 +2093,6 @@ components:
           href: /customs/transits/movements/departures/6365135ba5e821ee/messages
         departure:
           href: /customs/transits/movements/departures/6365135ba5e821ee
-
-    Links7:
-      title: Links7
-      properties:
-        self:
-          $ref: '#/components/schemas/Self'
-      example:
-        self:
-          href: /customs/transits/movements/arrivals
     Links8:
       title: Links8
       required:
@@ -2176,18 +2120,6 @@ components:
           href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages
         arrival:
           href: /customs/transits/movements/arrivals/63498209a2d89ad8
-    Links11:
-      title: Links11
-      properties:
-        self:
-          $ref: '#/components/schemas/Self2'
-        arrival:
-          $ref: '#/components/schemas/Arrival1'
-      example:
-        self:
-          href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages
-        arrival:
-          href: /customs/transits/movements/arrivals/63498209a2d89ad8
     Messages:
       title: Messages
       required:
@@ -2198,18 +2130,18 @@ components:
           type: string
       example:
         href: /customs/transits/movements/departures/62fb8f33d233578e/messages
-    Messages1:
-      title: Messages1
-      properties:
-        href:
-          type: string
-      example:
-        href: /customs/transits/movements/departures/62fb8f33d233578e/messages
     Messages2:
       title: Messages2
+      required:
+        - _links
+        - id
+        - departureId
+        - received
+        - status
+      type: object
       properties:
         _links:
-          $ref: '#/components/schemas/Links3'
+          $ref: '#/components/schemas/Links2'
         id:
           type: string
         departureId:
@@ -2233,9 +2165,15 @@ components:
         status: Success
     Messages6:
       title: Messages6
+      required:
+        - _links
+        - id
+        - arrivalId
+        - received
+        - status
       properties:
         _links:
-          $ref: '#/components/schemas/Links11'
+          $ref: '#/components/schemas/Links10'
         id:
           type: string
         arrivalId:
@@ -2262,20 +2200,6 @@ components:
       required:
         - href
       type: object
-      properties:
-        href:
-          type: string
-      example:
-        href: /customs/transits/movements/departures/62fb8f33d233578e
-    Self1:
-      title: Self1
-      properties:
-        href:
-          type: string
-      example:
-        href: /customs/transits/movements/departures/62fb8f33d233578e
-    Self2:
-      title: Self2
       properties:
         href:
           type: string
