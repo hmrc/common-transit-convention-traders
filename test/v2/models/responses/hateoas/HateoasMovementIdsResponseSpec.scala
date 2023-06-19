@@ -25,12 +25,14 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.base.TestCommonGenerators
+import v2.models.responses.PaginationMovementSummary
 import v2.models.EORINumber
 import v2.models.ItemCount
 import v2.models.LocalReferenceNumber
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.PageNumber
+import v2.models.TotalCount
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -50,14 +52,15 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
         val receivedUntil     = updatedSince
         val movementResponse1 = arbitraryMovementSummary.arbitrary.sample.value
         val movementResponse2 = arbitraryMovementSummary.arbitrary.sample.value
-
-        val responses = Seq(movementResponse1, movementResponse2)
+        val responses         = Seq(movementResponse1, movementResponse2)
+        val response          = PaginationMovementSummary(TotalCount(responses.length), responses)
 
         val expected = Json.obj(
           "_links" -> Json.obj(
             "self" -> selfUrl(movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
           ),
-          movementType.urlFragment -> responses.map(
+          "totalCount" -> response.totalCount,
+          movementType.urlFragment -> response.movementSummary.map(
             movementResponse =>
               Json.obj(
                 "_links" -> Json.obj(
@@ -76,7 +79,7 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
         )
 
         val actual = HateoasMovementIdsResponse(
-          responses,
+          response,
           movementType,
           updatedSince,
           movementEORI,
@@ -87,6 +90,7 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
           localReferenceNumber
         )
 
+        println(s"ACTUAL - $actual")
         actual mustBe expected
     }
 
