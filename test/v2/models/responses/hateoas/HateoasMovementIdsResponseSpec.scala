@@ -90,7 +90,6 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
           localReferenceNumber
         )
 
-        println(s"ACTUAL - $actual")
         actual mustBe expected
     }
 

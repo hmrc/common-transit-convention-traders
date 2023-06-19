@@ -122,7 +122,6 @@ class HateoasMovementMessageIdsResponseSpec
             )
           )
 
-          println(s"ACTUAL - $actual")
           actual mustBe expected
       }
   }

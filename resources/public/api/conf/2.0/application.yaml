@@ -127,7 +127,7 @@ paths:
 
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
 
-        A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
+        A successful response will include the total count of the number of movements and a Movement Reference Number (MRN) only after it has been allocated to a movement.
         <br/><br/>
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. 
         Your EORI number is part of the bearer token that you use for API authentication.
@@ -198,6 +198,7 @@ paths:
                       _links:
                         self:
                           href: /customs/transits/movements/departures
+                      totalCount: 1
                       departures:
                         _links:
                           self:
@@ -215,6 +216,7 @@ paths:
                 _links:
                   self:
                     href: /customs/transits/movements/departures
+                totalCount: 1
                 departures:
                   _links:
                     self:
@@ -348,7 +350,7 @@ paths:
 
         For a multi-page query you can filter for a specific page along with/or not, the number of items per page.
   
-        A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
+        A successful response will include the total count of the number of messages and Movement Reference Number (MRN) only after it has been allocated to a movement.
         
         The `status` parameter in a successful response can have the following values:
 
@@ -414,6 +416,7 @@ paths:
                           href: /customs/transits/movements/departures/6365135ba5e821ee/messages
                         departure:
                           href: /customs/transits/movements/departures/6365135ba5e821ee
+                      totalCount: 1
                       messages:
                         - _links:
                             self:
@@ -431,6 +434,7 @@ paths:
                     href: /customs/transits/movements/departures/6365135ba5e821ee/messages
                   departure:
                     href: /customs/transits/movements/departures/6365135ba5e821ee
+                totalCount: 1
                 messages:
                   - _links:
                       self:
@@ -866,7 +870,7 @@ paths:
         
         You can filter for arrival notifications updated before and/or after a specific date and time, and optionally filter for arrival notifications with a specific EORI.
 
-        For a multi-page query you can filter for a specific page along with/or not, the number of items per page.     
+        For a multi-page query you can filter for a specific page along with/or not, the number of items per page.
         
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
         <br/><br/>
@@ -928,7 +932,7 @@ paths:
             example: 2023-06-15T09:00:00Z
       responses:
         '200':
-          description: A successful get all arrivals response
+          description: A successful get includes the total count of the number of movement arrivals and all arrivals response
           content:
             application/json:
               schema:
@@ -939,6 +943,7 @@ paths:
                       _links:
                         self:
                           href: /customs/transits/movements/arrivals
+                      totalCount: 1
                       arrivals:
                         - _links:
                             self:
@@ -966,6 +971,7 @@ paths:
                 _links:
                   self:
                     href: /customs/transits/movements/arrivals
+                totalCount: 2
                 arrivals:
                   - _links:
                       self:
@@ -1149,7 +1155,7 @@ paths:
             example: 2023-06-15T09:00:00Z
       responses:
         '200':
-          description: A successful get all messages related to arrival response
+          description: A successful get includes the total count of the number of messages and all messages related to arrival response
           content:
             application/json:
               schema:
@@ -1162,6 +1168,7 @@ paths:
                           href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages
                         arrival:
                           href: /customs/transits/movements/arrivals/63498209a2d89ad8
+                      totalCount: 1
                       messages:
                         - _links:
                             self:
@@ -1179,6 +1186,7 @@ paths:
                     href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages
                   arrival:
                     href: /customs/transits/movements/arrivals/63498209a2d89ad8
+                totalCount: 1
                 messages:
                   - _links:
                       self:
