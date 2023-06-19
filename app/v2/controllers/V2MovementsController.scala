@@ -390,13 +390,24 @@ class V2MovementsControllerImpl @Inject() (
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-        persistenceService
-          .getMessages(request.eoriNumber, movementType, movementId, receivedSince, page, count, receivedUntil)
-          .asPresentation
-          .fold(
-            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok(Json.toJson(HateoasMovementMessageIdsResponse(movementId, response, receivedSince, movementType, page, count, receivedUntil)))
-          )
+        val pageValidation: EitherT[Future, PresentationError, Unit] =
+          ensurePositive(page.map(_.value), "page")
+
+        val countValidation: EitherT[Future, PresentationError, Unit] =
+          ensurePositive(count.map(_.value), "count")
+
+        val result = for {
+          _ <- pageValidation
+          _ <- countValidation
+          response <- persistenceService
+            .getMessages(request.eoriNumber, movementType, movementId, receivedSince, page, count, receivedUntil)
+            .asPresentation
+        } yield response
+
+        result.fold(
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          response => Ok(Json.toJson(HateoasMovementMessageIdsResponse(movementId, response, receivedSince, movementType, page, count, receivedUntil)))
+        )
     }
 
   def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent] =
