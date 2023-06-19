@@ -2177,7 +2177,7 @@ components:
         arrival:
           href: /customs/transits/movements/arrivals/63498209a2d89ad8
     Links11:
-      title: Links10
+      title: Links11
       properties:
         self:
           $ref: '#/components/schemas/Self2'
