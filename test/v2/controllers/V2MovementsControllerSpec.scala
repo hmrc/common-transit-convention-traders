@@ -6913,4 +6913,168 @@ class V2MovementsControllerSpec
         )
     }
   }
+
+  "getMovements method" - {
+    "when page parameter is zero" - {
+      "must return a BAD_REQUEST response" in forAll(
+        arbitrary[MovementType]
+      ) {
+        movementType =>
+          val controllerAndMocks = createControllerAndMocks()
+          val result: Future[Result] = controllerAndMocks.sut.getMovements(
+            movementType = movementType,
+            updatedSince = None,
+            movementEORI = None,
+            movementReferenceNumber = None,
+            page = Some(PageNumber(0)),
+            count = None,
+            receivedUntil = None,
+            localReferenceNumber = None
+          )(FakeRequest())
+
+          status(result) mustBe BAD_REQUEST
+          contentAsJson(result) mustBe Json.obj(
+            "code"    -> "BAD_REQUEST",
+            "message" -> "The page parameter must be a positive number"
+          )
+      }
+    }
+
+    "when count parameter is zero" - {
+      "must return a BAD_REQUEST response" in forAll(
+        arbitrary[MovementType]
+      ) {
+        movementType =>
+          val controllerAndMocks = createControllerAndMocks()
+          val result: Future[Result] = controllerAndMocks.sut.getMovements(
+            movementType = movementType,
+            updatedSince = None,
+            movementEORI = None,
+            movementReferenceNumber = None,
+            page = None,
+            count = Some(ItemCount(0)),
+            receivedUntil = None,
+            localReferenceNumber = None
+          )(FakeRequest())
+
+          status(result) mustBe BAD_REQUEST
+          contentAsJson(result) mustBe Json.obj(
+            "code"    -> "BAD_REQUEST",
+            "message" -> "The count parameter must be a positive number"
+          )
+      }
+    }
+  }
+
+  "getMessageIds method" - {
+    "when provided with valid parameters" - {
+      "should return OK status" in forAll(
+        arbitrary[MovementType],
+        arbitrary[MovementId],
+        Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head)
+      ) {
+        (movementType, movementId, messageResponse) =>
+          val controllerAndMocks = createControllerAndMocks()
+
+          when(
+            controllerAndMocks.mockPersistenceService.getMessages(
+              EORINumber(any()),
+              any[MovementType],
+              MovementId(any()),
+              any(),
+              any[Option[PageNumber]],
+              any[Option[ItemCount]],
+              any[Option[OffsetDateTime]]
+            )(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.rightT(messageResponse)
+            )
+
+          val result: Future[Result] = controllerAndMocks.sut.getMessageIds(
+            movementType = movementType,
+            movementId = movementId,
+            receivedSince = Some(OffsetDateTime.now),
+            page = Some(PageNumber(1)),
+            count = Some(ItemCount(10)),
+            receivedUntil = Some(OffsetDateTime.now)
+          )(FakeRequest())
+
+          status(result) mustBe OK
+      }
+    }
+
+    "when page parameter is negative" - {
+      "must return a BAD_REQUEST response" in forAll(
+        arbitrary[MovementType],
+        arbitrary[MovementId],
+        Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head)
+      ) {
+        (movementType, movementId, messageResponse) =>
+          val controllerAndMocks = createControllerAndMocks()
+
+          when(
+            controllerAndMocks.mockPersistenceService.getMessages(
+              EORINumber(any()),
+              any[MovementType],
+              MovementId(any()),
+              any(),
+              any[Option[PageNumber]],
+              any[Option[ItemCount]],
+              any[Option[OffsetDateTime]]
+            )(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.rightT(messageResponse)
+            )
+
+          val result: Future[Result] = controllerAndMocks.sut.getMessageIds(
+            movementType = movementType,
+            movementId = movementId,
+            receivedSince = Some(OffsetDateTime.now),
+            page = Some(PageNumber(-1)),
+            count = Some(ItemCount(10)),
+            receivedUntil = Some(OffsetDateTime.now)
+          )(FakeRequest())
+
+          status(result) mustBe BAD_REQUEST
+          contentAsJson(result) mustBe Json.obj(
+            "code"    -> "BAD_REQUEST",
+            "message" -> "The page parameter must be a positive number"
+          )
+      }
+    }
+
+    "when count parameter is negative" - {
+      "must return a BAD_REQUEST response" in forAll(
+        arbitrary[MovementType],
+        arbitrary[MovementId]
+      ) {
+        (movementType, movementId) =>
+          val controllerAndMocks = createControllerAndMocks()
+
+          val result: Future[Result] = controllerAndMocks.sut.getMessageIds(
+            movementType = movementType,
+            movementId = movementId,
+            receivedSince = Some(OffsetDateTime.now),
+            page = Some(PageNumber(1)),
+            count = Some(ItemCount(-10)),
+            receivedUntil = Some(OffsetDateTime.now)
+          )(FakeRequest())
+
+          status(result) mustBe BAD_REQUEST
+          contentAsJson(result) mustBe Json.obj(
+            "code"    -> "BAD_REQUEST",
+            "message" -> "The count parameter must be a positive number"
+          )
+      }
+    }
+  }
+
 }

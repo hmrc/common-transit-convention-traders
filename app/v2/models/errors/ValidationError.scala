@@ -18,6 +18,7 @@ package v2.models.errors
 
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.functional.syntax.unlift
+import play.api.libs.json.Json
 import play.api.libs.json.OWrites
 import play.api.libs.json.Reads
 import play.api.libs.json.__
@@ -58,4 +59,11 @@ object XmlValidationError {
         (__ \ "columnNumber").write[Int] and
         (__ \ "message").write[String]
     )(unlift(XmlValidationError.unapply))
+}
+
+case class ParameterValidationError(message: String) extends ValidationError
+
+object ParameterValidationError {
+  implicit val parameterValidationErrorWrites: OWrites[ParameterValidationError] = Json.writes[ParameterValidationError]
+  implicit val parameterValidationErrorReads: Reads[ParameterValidationError]    = Json.reads[ParameterValidationError]
 }
