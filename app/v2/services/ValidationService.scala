@@ -30,6 +30,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.ValidationConnector
 import v2.models.errors.ErrorCode
 import v2.models.errors.FailedToValidateError
+import v2.models.errors.FailedToValidateError.BusinessValidationError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
 
@@ -64,9 +65,13 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
     EitherT(
       validationConnector
         .postXml(messageType, source)
-        .map {
-          case None           => Right(())
-          case Some(response) => Left(FailedToValidateError.XmlSchemaFailedToValidateError(response.validationErrors))
+        .flatMap {
+          case Right(None) => Future.successful(Right(()))
+          case Right(Some(response)) if response.validationErrors.exists(_.message.contains("BusinessValidation")) =>
+            Future.successful(Left(FailedToValidateError.BusinessValidationError(response.validationErrors.toList.map(_.message).mkString(", "))))
+          case Right(Some(response)) =>
+            Future.successful(Left(FailedToValidateError.XmlSchemaFailedToValidateError(response.validationErrors)))
+          case Left(error) => Future.successful(Left(error))
         }
         .recover(recoverFromError(messageType))
     )
@@ -78,9 +83,13 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
     EitherT(
       validationConnector
         .postJson(messageType, source)
-        .map {
-          case None           => Right(())
-          case Some(response) => Left(FailedToValidateError.JsonSchemaFailedToValidateError(response.validationErrors))
+        .flatMap {
+          case Right(None) => Future.successful(Right(()))
+          case Right(Some(response)) if response.validationErrors.exists(_.message.contains("BusinessValidation")) =>
+            Future.successful(Left(FailedToValidateError.BusinessValidationError(response.validationErrors.toList.map(_.message).mkString(", "))))
+          case Right(Some(response)) =>
+            Future.successful(Left(FailedToValidateError.JsonSchemaFailedToValidateError(response.validationErrors)))
+          case Left(error) => Future.successful(Left(error))
         }
         .recover(recoverFromError(messageType))
     )

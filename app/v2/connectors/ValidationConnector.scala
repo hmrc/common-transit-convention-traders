@@ -28,6 +28,7 @@ import metrics.MetricsKeys
 import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
+import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.NO_CONTENT
 import play.api.http.Status.OK
 import play.api.libs.json.Reads
@@ -36,6 +37,8 @@ import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
+import v2.models.errors.ErrorCode
+import v2.models.errors.FailedToValidateError
 import v2.models.request.MessageType
 import v2.models.responses.JsonValidationResponse
 import v2.models.responses.XmlValidationResponse
@@ -46,15 +49,15 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[ValidationConnectorImpl])
 trait ValidationConnector {
 
-  def postXml(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit
+  def postXml(messageType: MessageType, stream: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Option[XmlValidationResponse]]
+  ): Future[Either[FailedToValidateError, Option[XmlValidationResponse]]]
 
-  def postJson(messageType: MessageType, xmlStream: Source[ByteString, _])(implicit
+  def postJson(messageType: MessageType, stream: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Option[JsonValidationResponse]]
+  ): Future[Either[FailedToValidateError, Option[JsonValidationResponse]]]
 
 }
 
@@ -68,7 +71,7 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
   override def postXml(messageType: MessageType, stream: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Option[XmlValidationResponse]] =
+  ): Future[Either[FailedToValidateError, Option[XmlValidationResponse]]] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
         post[XmlValidationResponse](messageType, stream, MimeTypes.XML)
@@ -77,7 +80,7 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
   override def postJson(messageType: MessageType, stream: Source[ByteString, _])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Option[JsonValidationResponse]] =
+  ): Future[Either[FailedToValidateError, Option[JsonValidationResponse]]] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
         post[JsonValidationResponse](messageType, stream, MimeTypes.JSON)
@@ -87,7 +90,7 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
     hc: HeaderCarrier,
     ec: ExecutionContext,
     reads: Reads[A]
-  ): Future[Option[A]] = {
+  ): Future[Either[FailedToValidateError, Option[A]]] = {
     val url = appConfig.validatorUrl.withPath(validationRoute(messageType))
 
     httpClientV2
@@ -98,11 +101,26 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
       .flatMap {
         response =>
           response.status match {
-            case NO_CONTENT => Future.successful(None)
-            case OK         => response.as[A].map(Option(_))
-            case _          => response.error
-
+            case NO_CONTENT => Future.successful(Right(None))
+            case BAD_REQUEST =>
+              response.as[A].map {
+                validationResponse =>
+                  validationResponse.asInstanceOf[Map[String, Any]].get("code") match {
+                    case Some(code) if code == ErrorCode.BusinessValidation.code =>
+                      Left(FailedToValidateError.BusinessValidationError(validationResponse.asInstanceOf[Map[String, Any]].get("message").get.toString))
+                    case _ =>
+                      Right(Some(validationResponse))
+                  }
+              }
+            case OK =>
+              response
+                .as[A]
+                .map(
+                  response => Right(Some(response))
+                )
+            case _ => response.error
           }
       }
   }
+
 }
