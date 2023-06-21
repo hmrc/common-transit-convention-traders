@@ -22,16 +22,20 @@ import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import play.api.http.Status.BAD_REQUEST
+import play.api.http.Status.CONFLICT
+import play.api.libs.json.JsError
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.RouterConnector
 import v2.models.EORINumber
+import v2.models.LocalReferenceNumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.SubmissionRoute
 import v2.models.errors.InvalidOfficeError
+import v2.models.errors.LRNError
 import v2.models.errors.RouterError
 import v2.models.request.MessageType
 
@@ -64,6 +68,7 @@ class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends Rou
         )
         .recover {
           case UpstreamErrorResponse(message, BAD_REQUEST, _, _) => Left(determineError(message))
+          case UpstreamErrorResponse(message, CONFLICT, _, _)    => Left(onConflict(message))
           case NonFatal(e) =>
             Left(RouterError.UnexpectedError(thr = Some(e)))
         }
@@ -78,4 +83,16 @@ class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends Rou
       }
       .getOrElse(RouterError.UnexpectedError()) // we didn't get Json, but the exception here would then be a
   // red herring, so don't pass it on
+
+  private def onConflict(message: String): RouterError =
+    Json
+      .parse(message)
+      .validate[LRNError]
+      .map(
+        lrnError => RouterError.DuplicateLRN(LocalReferenceNumber(lrnError.lrn))
+      )
+      .recoverTotal {
+        case JsError(_) => RouterError.UnexpectedError()
+      }
+
 }
