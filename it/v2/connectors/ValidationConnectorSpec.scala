@@ -29,6 +29,7 @@ import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.ContentTypes
 import play.api.http.HeaderNames
@@ -40,6 +41,7 @@ import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.TestMetrics
+import v2.models.errors.FailedToValidateError
 import v2.models.errors.JsonValidationError
 import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
@@ -136,8 +138,18 @@ class ValidationConnectorSpec
 
         whenReady(future) {
           result =>
-            val error = result.left.get
-            error mustBe a[JsonParseException] // replace with the actual exception type you're expecting
+            result.fold(
+              error => fail(s"Did not expect an error on the outer Either: $error"),
+              innerEither =>
+                innerEither.fold(
+                  error =>
+                    error match {
+                      case FailedToValidateError.UnexpectedError(Some(cause)) => cause shouldBe a[JsonParseException]
+                      case _                                                  => fail("Expected UnexpectedError with a JsonParseException cause")
+                    },
+                  _ => fail("Did not expect a Right on the inner Either")
+                )
+            )
         }
       }
 

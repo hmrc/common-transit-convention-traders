@@ -33,6 +33,8 @@ import v2.models.errors.FailedToValidateError
 import v2.models.errors.FailedToValidateError.BusinessValidationError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
+import v2.models.responses.JsonValidationResponse
+import v2.models.responses.XmlValidationResponse
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -67,7 +69,7 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
         .postXml(messageType, source)
         .flatMap {
           case Right(None) => Future.successful(Right(()))
-          case Right(Some(response)) if response.validationErrors.exists(_.message.contains("BusinessValidation")) =>
+          case Right(Some(response)) if response.validationErrors.exists(_.message.contains("BUSINESS_VALIDATION_ERROR")) =>
             Future.successful(Left(FailedToValidateError.BusinessValidationError(response.validationErrors.toList.map(_.message).mkString(", "))))
           case Right(Some(response)) =>
             Future.successful(Left(FailedToValidateError.XmlSchemaFailedToValidateError(response.validationErrors)))
@@ -85,7 +87,7 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
         .postJson(messageType, source)
         .flatMap {
           case Right(None) => Future.successful(Right(()))
-          case Right(Some(response)) if response.validationErrors.exists(_.message.contains("BusinessValidation")) =>
+          case Right(Some(response)) if response.validationErrors.exists(_.message.contains("BUSINESS_VALIDATION_ERROR")) =>
             Future.successful(Left(FailedToValidateError.BusinessValidationError(response.validationErrors.toList.map(_.message).mkString(", "))))
           case Right(Some(response)) =>
             Future.successful(Left(FailedToValidateError.JsonSchemaFailedToValidateError(response.validationErrors)))

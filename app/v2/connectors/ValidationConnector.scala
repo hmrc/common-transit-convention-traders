@@ -18,6 +18,7 @@ package v2.connectors
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import cats.implicits.toUnorderedFoldableOps
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
@@ -32,12 +33,11 @@ import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.NO_CONTENT
 import play.api.http.Status.OK
 import play.api.libs.json.Reads
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
-import v2.models.errors.ErrorCode
 import v2.models.errors.FailedToValidateError
 import v2.models.request.MessageType
 import v2.models.responses.JsonValidationResponse
@@ -102,22 +102,37 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
         response =>
           response.status match {
             case NO_CONTENT => Future.successful(Right(None))
-            case BAD_REQUEST =>
+            case OK =>
               response.as[A].map {
                 validationResponse =>
-                  validationResponse.asInstanceOf[Map[String, Any]].get("code") match {
-                    case Some(code) if code == ErrorCode.BusinessValidation.code =>
-                      Left(FailedToValidateError.BusinessValidationError(validationResponse.asInstanceOf[Map[String, Any]].get("message").get.toString))
+                  validationResponse match {
+                    case json: JsonValidationResponse =>
+                      val validationErrors = json.validationErrors
+                      if (validationErrors.nonEmpty && validationErrors.head.message == "BUSINESS_VALIDATION_ERROR") {
+                        Left(FailedToValidateError.BusinessValidationError(validationErrors.head.message))
+                      } else {
+                        Right(Some(validationResponse))
+                      }
+                    case xml: XmlValidationResponse =>
+                      val validationErrors = xml.validationErrors
+                      if (validationErrors.nonEmpty && validationErrors.head.message == "BUSINESS_VALIDATION_ERROR") {
+                        Left(FailedToValidateError.XmlSchemaFailedToValidateError(validationErrors))
+                      } else {
+                        Right(Some(validationResponse))
+                      }
                     case _ =>
-                      Right(Some(validationResponse))
+                      Left(FailedToValidateError.UnexpectedError(Some(new Exception("Unexpected validation response type."))))
                   }
               }
-            case OK =>
-              response
-                .as[A]
-                .map(
-                  response => Right(Some(response))
-                )
+            case BAD_REQUEST =>
+              // Parse response body as a string and try to parse it as JSON, if fails, then throw JsonParseException
+              try {
+                val json = play.api.libs.json.Json.parse(response.body)
+                Future.successful(Left(FailedToValidateError.UnexpectedError(Some(new Exception("Invalid JSON response.")))))
+              } catch {
+                case e: com.fasterxml.jackson.core.JsonParseException =>
+                  Future.successful(Left(FailedToValidateError.UnexpectedError(Some(e))))
+              }
             case _ => response.error
           }
       }
