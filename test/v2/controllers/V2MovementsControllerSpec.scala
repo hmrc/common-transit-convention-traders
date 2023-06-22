@@ -6987,6 +6987,8 @@ class V2MovementsControllerSpec
         Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head)
       ) {
         (movementType, movementId, messageResponse) =>
+          val summaries = PaginationMessageSummary(TotalCount(messageResponse.length), messageResponse)
+
           val controllerAndMocks = createControllerAndMocks()
 
           when(
@@ -7004,7 +7006,7 @@ class V2MovementsControllerSpec
             )
           )
             .thenAnswer(
-              _ => EitherT.rightT(messageResponse)
+              _ => EitherT.rightT(summaries)
             )
 
           val result: Future[Result] = controllerAndMocks.sut.getMessageIds(
@@ -7027,6 +7029,8 @@ class V2MovementsControllerSpec
         Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head)
       ) {
         (movementType, movementId, messageResponse) =>
+          val summaries = PaginationMessageSummary(TotalCount(messageResponse.length), messageResponse)
+
           val controllerAndMocks = createControllerAndMocks()
 
           when(
@@ -7044,7 +7048,7 @@ class V2MovementsControllerSpec
             )
           )
             .thenAnswer(
-              _ => EitherT.rightT(messageResponse)
+              _ => EitherT.rightT(summaries)
             )
 
           val result: Future[Result] = controllerAndMocks.sut.getMessageIds(
