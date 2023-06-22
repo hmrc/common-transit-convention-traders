@@ -32,7 +32,7 @@ object XmlValidationErrorResponse {
 
   implicit val reads: Reads[XmlValidationErrorResponse] = Reads {
     case x: JsObject
-        if x.fields.exists(
+        if x.fields.exists( // only the business validation error will have "message" as a field
           x => x._1 == "message"
         ) =>
       BusinessValidationResponse.validationResponseFormat.reads(x)
@@ -47,7 +47,7 @@ object JsonValidationErrorResponse {
 
   implicit val reads: Reads[JsonValidationErrorResponse] = Reads {
     case x: JsObject
-        if x.fields.exists(
+        if x.fields.exists( // only the business validation error will have "message" as a field
           x => x._1 == "message"
         ) =>
       BusinessValidationResponse.validationResponseFormat.reads(x)
