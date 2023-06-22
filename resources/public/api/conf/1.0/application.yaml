@@ -1603,7 +1603,6 @@ components:
       - _links
       - arrivalId
       - messageId
-      - received
       - messageType
       - body
       type: object
@@ -1841,7 +1840,6 @@ components:
       - _links
       - departureId
       - messageId
-      - received
       - messageType
       - body
       type: object
@@ -1944,7 +1942,6 @@ components:
       - id
       - created
       - updated
-      - movementReferenceNumber
       - _links
       type: object
       properties:
@@ -1994,7 +1991,6 @@ components:
       - id
       - created
       - updated
-      - movementReferenceNumber
       - _links
       type: object
       properties:
@@ -2282,7 +2278,6 @@ components:
       - _links
       - arrivalId
       - messageId
-      - received
       - messageType
       - body
       type: object
@@ -2316,7 +2311,6 @@ components:
       - _links
       - departureId
       - messageId
-      - received
       - messageType
       - body
       type: object
