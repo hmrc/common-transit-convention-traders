@@ -37,14 +37,18 @@ import play.api.http.Status.NO_CONTENT
 import play.api.http.Status.OK
 import play.api.libs.json.Json
 import play.mvc.Http.MimeTypes
+import uk.gov.hmrc.http
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.TestMetrics
 import v2.models.errors.JsonValidationError
+import v2.models.errors.PresentationError
 import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
-import v2.models.responses.JsonValidationResponse
-import v2.models.responses.XmlValidationResponse
+import v2.models.responses.BusinessValidationResponse
+import v2.models.responses.JsonSchemaValidationResponse
+import v2.models.responses.XmlSchemaValidationResponse
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext
@@ -69,36 +73,14 @@ class ValidationConnectorSpec
     "When validating XML" - {
 
       "On successful validation of schema valid XML, must return NO_CONTENT" in {
+
         server.stubFor(
-          post(urlEqualTo("/transit-movements-validator/messages/IE015/validation"))
-            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-            .willReturn(aResponse().withStatus(NO_CONTENT))
-        )
-
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
-
-        val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8)) // TODO: IE015C
-
-        whenReady(validationConnector.postXml(MessageType.DeclarationData, source)) {
-          result =>
-            result mustBe Right(None)
-        }
-      }
-
-      "On successful validation of schema invalid XML, must return OK and a validation error" in {
-        server.stubFor(
-          post(urlEqualTo("/transit-movements-validator/messages/IE015/validation"))
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
+          )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .willReturn(
-              aResponse()
-                .withStatus(OK)
-                .withBody(
-                  Json.stringify(
-                    Json.toJson(
-                      XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))
-                    )
-                  )
-                )
+              aResponse().withStatus(NO_CONTENT)
             )
         )
 
@@ -108,11 +90,71 @@ class ValidationConnectorSpec
 
         whenReady(validationConnector.postXml(MessageType.DeclarationData, source)) {
           result =>
-            result mustBe Right(Some(XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))))
+            result mustBe None
         }
       }
 
-      "an invalid message type, must return BAD_REQUEST and an appropriate error message" in {
+      "On successful validation of schema invalid XML, must return OK and a validation error" in {
+
+        server.stubFor(
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  Json.stringify(
+                    Json.toJson(
+                      XmlSchemaValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))
+                    )
+                  )
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
+
+        whenReady(validationConnector.postXml(MessageType.DeclarationData, source)) {
+          result =>
+            result mustBe Some(XmlSchemaValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)))
+        }
+      }
+
+      "On successful validation of business invalid XML, must return OK and a validation error" in {
+
+        server.stubFor(
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  """{
+                    |    "code": "BUSINESS_VALIDATION_ERROR",
+                    |    "message": "business error"
+                    |}
+                    |""".stripMargin
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
+
+        whenReady(validationConnector.postXml(MessageType.DeclarationData, source)) {
+          result =>
+            result mustBe Some(BusinessValidationResponse("business error"))
+        }
+      }
+
+      "On an invalid message type, must return BAD_REQUEST and an appropriate error message" in {
 
         server.stubFor(
           post(
@@ -122,7 +164,13 @@ class ValidationConnectorSpec
             .willReturn(
               aResponse()
                 .withStatus(BAD_REQUEST)
-                .withBody("Not a JSON string") // replace with invalid JSON string
+                .withBody(
+                  Json.stringify(
+                    Json.toJson(
+                      PresentationError.badRequestError("Invalid message type") // The message doesn't matter here
+                    )
+                  )
+                )
             )
         )
 
@@ -136,9 +184,15 @@ class ValidationConnectorSpec
 
         whenReady(future) {
           result =>
-            val error = result.left.get
-            error mustBe a[JsonParseException] // replace with the actual exception type you're expecting
+            val thr = result.left.get
+            thr mustBe a[http.UpstreamErrorResponse]
+            thr.asInstanceOf[UpstreamErrorResponse].statusCode mustBe BAD_REQUEST
+            Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj(
+              "code"    -> "BAD_REQUEST",
+              "message" -> "Invalid message type"
+            )
         }
+
       }
 
       "On an incorrect Json fragment, must return a JsResult.Exception" in {
@@ -192,7 +246,7 @@ class ValidationConnectorSpec
 
         whenReady(validationConnector.postJson(MessageType.DeclarationData, source)) {
           result =>
-            result mustBe Right(None)
+            result mustBe None
         }
       }
 
@@ -209,7 +263,7 @@ class ValidationConnectorSpec
                 .withBody(
                   Json.stringify(
                     Json.toJson(
-                      JsonValidationResponse(NonEmptyList(JsonValidationError("path", "error"), Nil))
+                      JsonSchemaValidationResponse(NonEmptyList(JsonValidationError("path", "error"), Nil))
                     )
                   )
                 )
@@ -222,8 +276,79 @@ class ValidationConnectorSpec
 
         whenReady(validationConnector.postJson(MessageType.DeclarationData, source)) {
           result =>
-            result mustBe Right(Some(JsonValidationResponse(NonEmptyList(JsonValidationError("path", "error"), Nil))))
+            result mustBe Some(JsonSchemaValidationResponse(NonEmptyList(JsonValidationError("path", "error"), Nil)))
         }
+      }
+
+      "On successful validation of business invalid XML, must return OK and a validation error" in {
+
+        server.stubFor(
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  """{
+                    |    "code": "BUSINESS_VALIDATION_ERROR",
+                    |    "message": "business error"
+                    |}
+                    |""".stripMargin
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
+
+        whenReady(validationConnector.postXml(MessageType.DeclarationData, source)) {
+          result =>
+            result mustBe Some(BusinessValidationResponse("business error"))
+        }
+      }
+
+      "On an invalid message type, must return BAD_REQUEST and an appropriate error message" in {
+
+        server.stubFor(
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.JSON))
+            .willReturn(
+              aResponse()
+                .withStatus(BAD_REQUEST)
+                .withBody(
+                  Json.stringify(
+                    Json.toJson(
+                      PresentationError.badRequestError("Invalid message type") // The message doesn't matter here
+                    )
+                  )
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val source = Source.single(ByteString("{}", StandardCharsets.UTF_8)) // TODO: IE015C
+
+        val future = validationConnector.postJson(MessageType.DeclarationData, source).map(Right(_)).recover {
+          case NonFatal(e) => Left(e)
+        }
+
+        whenReady(future) {
+          result =>
+            val thr = result.left.get
+            thr mustBe a[http.UpstreamErrorResponse]
+            thr.asInstanceOf[UpstreamErrorResponse].statusCode mustBe BAD_REQUEST
+            Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj(
+              "code"    -> "BAD_REQUEST",
+              "message" -> "Invalid message type"
+            )
+        }
+
       }
 
       "On an incorrect Json fragment, must return a JsResult.Exception" in {

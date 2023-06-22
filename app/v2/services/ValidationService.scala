@@ -30,9 +30,11 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.ValidationConnector
 import v2.models.errors.ErrorCode
 import v2.models.errors.FailedToValidateError
-import v2.models.errors.FailedToValidateError.BusinessValidationError
 import v2.models.errors.StandardError
 import v2.models.request.MessageType
+import v2.models.responses.BusinessValidationResponse
+import v2.models.responses.JsonSchemaValidationResponse
+import v2.models.responses.XmlSchemaValidationResponse
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -66,12 +68,11 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
       validationConnector
         .postXml(messageType, source)
         .flatMap {
-          case Right(None) => Future.successful(Right(()))
-          case Right(Some(response)) if response.validationErrors.exists(_.message.contains("BusinessValidation")) =>
-            Future.successful(Left(FailedToValidateError.BusinessValidationError(response.validationErrors.toList.map(_.message).mkString(", "))))
-          case Right(Some(response)) =>
+          case None => Future.successful(Right(()))
+          case Some(response: BusinessValidationResponse) =>
+            Future.successful(Left(FailedToValidateError.BusinessValidationError(response.message)))
+          case Some(response: XmlSchemaValidationResponse) =>
             Future.successful(Left(FailedToValidateError.XmlSchemaFailedToValidateError(response.validationErrors)))
-          case Left(error) => Future.successful(Left(error))
         }
         .recover(recoverFromError(messageType))
     )
@@ -84,12 +85,11 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
       validationConnector
         .postJson(messageType, source)
         .flatMap {
-          case Right(None) => Future.successful(Right(()))
-          case Right(Some(response)) if response.validationErrors.exists(_.message.contains("BusinessValidation")) =>
-            Future.successful(Left(FailedToValidateError.BusinessValidationError(response.validationErrors.toList.map(_.message).mkString(", "))))
-          case Right(Some(response)) =>
+          case None => Future.successful(Right(()))
+          case Some(response: BusinessValidationResponse) =>
+            Future.successful(Left(FailedToValidateError.BusinessValidationError(response.message)))
+          case Some(response: JsonSchemaValidationResponse) =>
             Future.successful(Left(FailedToValidateError.JsonSchemaFailedToValidateError(response.validationErrors)))
-          case Left(error) => Future.successful(Left(error))
         }
         .recover(recoverFromError(messageType))
     )
@@ -101,9 +101,8 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
       Left(FailedToValidateError.InvalidMessageTypeError(messageType.toString))
     case UpstreamErrorResponse(message, BAD_REQUEST, _, _) =>
       Json.parse(message).validate[StandardError] match {
-        case JsSuccess(StandardError(value, ErrorCode.BadRequest), _)         => Left(FailedToValidateError.ParsingError(value))
-        case JsSuccess(StandardError(value, ErrorCode.BusinessValidation), _) => Left(FailedToValidateError.BusinessValidationError(value))
-        case _                                                                => Left(FailedToValidateError.UnexpectedError(None))
+        case JsSuccess(StandardError(value, ErrorCode.BadRequest), _) => Left(FailedToValidateError.ParsingError(value))
+        case _                                                        => Left(FailedToValidateError.UnexpectedError(None))
       }
     case upstreamError: UpstreamErrorResponse => Left(FailedToValidateError.UnexpectedError(Some(upstreamError)))
     case NonFatal(e)                          => Left(FailedToValidateError.UnexpectedError(Some(e)))
