@@ -274,7 +274,6 @@ paths:
               example:
                 statusCode: 400
                 message: 'Invalid XML: Premature end of file.'
-
       deprecated: false
       security:
         - userRestricted:
