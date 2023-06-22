@@ -49,6 +49,8 @@ import v2.models.LocalReferenceNumber
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
+import v2.models.responses.PaginationMessageSummary
+import v2.models.responses.PaginationMovementSummary
 import v2.models.responses.UpdateMovementResponse
 
 import java.nio.charset.StandardCharsets
@@ -185,8 +187,11 @@ class PersistenceServiceSpec
 
     val dateTime = Gen.option(arbitrary[OffsetDateTime])
 
-    "when a departure is found, should return a Right of the sequence of message IDs" in forAll(Gen.listOfN(3, arbitrary[MessageSummary])) {
-      expected =>
+    "when a departure is found, should return a Right of the sequence of message IDs" in forAll(
+      Gen.listOfN(3, arbitrary[MessageSummary])
+    ) {
+      summaries =>
+        val expected = PaginationMessageSummary(TotalCount(summaries.length), summaries)
         when(
           mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(2))), eqTo(Some(ItemCount(30))), any())(
             any(),
@@ -407,11 +412,14 @@ class PersistenceServiceSpec
       (Gen.option(arbitrary[MovementReferenceNumber]), Gen.option(arbitrary[LocalReferenceNumber])),
       (Gen.option(arbitrary[PageNumber]), Gen.option(arbitrary[ItemCount]))
     ) {
-      (expected, updatedSinceMaybe, movementEORI, eori, referenceNumbers, pagination) =>
+      (movementSummaries, updatedSinceMaybe, movementEORI, eori, referenceNumbers, pagination) =>
         val pageNumber = pagination._1.sample.getOrElse(Some(PageNumber(0)))
         val itemCount  = pagination._2.sample.getOrElse(Some(ItemCount(15)))
         val mrn        = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
         val lrn        = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
+
+        val expected = PaginationMovementSummary(TotalCount(movementSummaries.length), movementSummaries)
+
         when(
           mockConnector.getMovements(
             eori,
@@ -458,6 +466,8 @@ class PersistenceServiceSpec
         val mrn        = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
         val lrn        = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
 
+        val expected = PaginationMovementSummary(TotalCount(0), List.empty[MovementSummary])
+
         when(
           mockConnector.getMovements(
             eori,
@@ -471,7 +481,7 @@ class PersistenceServiceSpec
             lrn
           )
         )
-          .thenReturn(Future.successful(List.empty[MovementSummary]))
+          .thenReturn(Future.successful(expected))
 
         val result =
           sut.getMovements(
@@ -486,7 +496,7 @@ class PersistenceServiceSpec
             lrn
           )
         whenReady(result.value) {
-          _ mustBe Right(List.empty[MovementSummary])
+          _ mustBe Right(expected)
         }
     }
 
@@ -602,7 +612,9 @@ class PersistenceServiceSpec
       Gen.option(arbitrary[PageNumber]),
       Gen.option(arbitrary[ItemCount])
     ) {
-      (eori, arrivalId, receivedSince, expected, pageNumber, itemCount) =>
+      (eori, arrivalId, receivedSince, summary, pageNumber, itemCount) =>
+        val expected = PaginationMessageSummary(TotalCount(summary.length), summary)
+
         when(
           mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(pageNumber), eqTo(itemCount), eqTo(receivedSince))(any(), any())
         )
@@ -662,11 +674,14 @@ class PersistenceServiceSpec
       (Gen.option(arbitrary[PageNumber]), Gen.option(arbitrary[ItemCount]))
     ) {
 
-      (expected, updatedSinceMaybe, movementEORI, eori, referenceNumbers, pagination) =>
+      (summaries, updatedSinceMaybe, movementEORI, eori, referenceNumbers, pagination) =>
         val pageNumber              = pagination._1.sample.getOrElse(Some(PageNumber(0)))
         val itemCount               = pagination._2.sample.getOrElse(Some(ItemCount(15)))
         val movementReferenceNumber = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
         val localReferenceNumber    = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
+
+        val expected = PaginationMovementSummary(TotalCount(summaries.length), summaries)
+
         when(
           mockConnector.getMovements(
             eori,
@@ -712,6 +727,8 @@ class PersistenceServiceSpec
         val itemCount               = pagination._2.sample.getOrElse(Some(ItemCount(15)))
         val movementReferenceNumber = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
         val localReferenceNumber    = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
+
+        val expected = PaginationMovementSummary(TotalCount(0), List.empty[MovementSummary])
         when(
           mockConnector.getMovements(
             eori,
@@ -725,7 +742,7 @@ class PersistenceServiceSpec
             localReferenceNumber
           )
         )
-          .thenReturn(Future.successful(List.empty[MovementSummary]))
+          .thenReturn(Future.successful(expected))
 
         val result =
           sut.getMovements(
@@ -740,7 +757,7 @@ class PersistenceServiceSpec
             localReferenceNumber
           )
         whenReady(result.value) {
-          _ mustBe Right(List.empty[MovementSummary])
+          _ mustBe Right(expected)
         }
     }
 
