@@ -38,6 +38,7 @@ import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.PageNumber
+import v2.models.TotalCount
 import v2.models.errors.LRNError
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
@@ -189,7 +190,9 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
     EitherT(
       persistenceConnector
         .getMessages(eori, movementType, movementId, receivedSince, page, count, receivedUntil)
-        .map(Right(_))
+        .map {
+          summary => messages(page, summary)
+        }
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
           case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
@@ -226,11 +229,33 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
   ): EitherT[Future, PersistenceError, PaginationMovementSummary] = EitherT {
     persistenceConnector
       .getMovements(eori, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
-      .map(Right(_))
+      .map {
+        summary => movements(page, summary)
+      }
       .recover {
         case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))
       }
   }
+
+  private def isEmptyPage(page: Option[PageNumber], numberOfItemsForPage: Int): Boolean =
+    (page, numberOfItemsForPage) match {
+      case (Some(PageNumber(1)), _)                                     => false
+      case (Some(_), numberOfItemsForPage) if numberOfItemsForPage == 0 => true
+      case (None, _)                                                    => true
+      case (_, _)                                                       => false
+    }
+
+  private def movements(page: Option[PageNumber], summary: PaginationMovementSummary) =
+    if (isEmptyPage(page, summary.movementSummary.length))
+      Left(PersistenceError.PageNotFound)
+    else
+      Right(summary)
+
+  private def messages(page: Option[PageNumber], summary: PaginationMessageSummary) =
+    if (isEmptyPage(page, summary.messageSummary.length))
+      Left(PersistenceError.PageNotFound)
+    else
+      Right(summary)
 
   override def addMessage(movementId: MovementId, movementType: MovementType, messageType: Option[MessageType], source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
