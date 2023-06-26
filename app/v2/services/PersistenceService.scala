@@ -241,7 +241,6 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
     (page, numberOfItemsForPage) match {
       case (Some(PageNumber(1)), _)                                     => false
       case (Some(_), numberOfItemsForPage) if numberOfItemsForPage == 0 => true
-      case (None, _)                                                    => true
       case (_, _)                                                       => false
     }
 

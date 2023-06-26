@@ -216,8 +216,7 @@ class PersistenceServiceSpec
         }
     }
 
-    //TODO:  is this still correct? should it be MovementNotFound or PageNotFound
-    "when a given movement is not found, and the page is 1, should return a Left with an MovementNotFound" in {
+    "when a given movement is not found, and the page is 1, should return a MovementNotFound" in {
 
       when(
         mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(1))), eqTo(Some(ItemCount(35))), any())(any(), any())
@@ -498,7 +497,7 @@ class PersistenceServiceSpec
         val mrn       = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
         val lrn       = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
 
-        val expected = PaginationMovementSummary(TotalCount(11), List.empty[MovementSummary])
+        val expected = PaginationMovementSummary(TotalCount(0), List.empty[MovementSummary])
 
         when(
           mockConnector.getMovements(
@@ -750,7 +749,6 @@ class PersistenceServiceSpec
         }
     }
 
-    // TODO: MovementNotFound or PageNotFound - contrast with below!
     "when a given arrival is not found, should return a Left with MovementNotFound" in forAll(
       arbitrary[EORINumber],
       arbitrary[MovementId],
@@ -768,22 +766,22 @@ class PersistenceServiceSpec
         }
     }
 
-    "when a given arrival is not found and page is 1, should return an empty list" in forAll(
+    "when a given arrival is not found and page is 1, should return a Left with MovementNotFound" in forAll(
       arbitrary[EORINumber],
       arbitrary[MovementId],
       Gen.option(arbitrary[OffsetDateTime]),
-      Gen.option(arbitrary[PageNumber]),
       Gen.option(arbitrary[ItemCount])
     ) {
-      (eori, arrivalId, receivedSince, pageNumber, itemCount) =>
-        val summary = PaginationMessageSummary(TotalCount(0), List.empty[MessageSummary])
+      (eori, arrivalId, receivedSince, itemCount) =>
+        val pageNumber = Some(PageNumber(1))
+        val summary    = PaginationMessageSummary(TotalCount(0), List.empty[MessageSummary])
 
         when(mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(pageNumber), eqTo(itemCount), any())(any(), any()))
-          .thenReturn(Future.successful(summary))
+          .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
         val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, pageNumber, itemCount, receivedSince)
         whenReady(result.value) {
-          _ mustBe Left(PersistenceError.PageNotFound)
+          _ mustBe Left(PersistenceError.MovementNotFound(arrivalId, MovementType.Arrival))
         }
     }
 
@@ -908,7 +906,7 @@ class PersistenceServiceSpec
         }
     }
 
-    "when an arrival is not found and page is None, should return page not found" in forAll(
+    "when an arrival is not found and page is None, should return empty list" in forAll(
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
@@ -951,7 +949,7 @@ class PersistenceServiceSpec
             localReferenceNumber
           )
         whenReady(result.value) {
-          _ mustBe Left(PageNotFound)
+          _ mustBe Right(expected)
         }
     }
 
