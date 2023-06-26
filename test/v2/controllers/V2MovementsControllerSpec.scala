@@ -3364,8 +3364,11 @@ class V2MovementsControllerSpec
           }
       }
 
-      "when no movement is found" in forAll(arbitraryMovementId.arbitrary, arbitraryPageNumber.arbitrary, arbitraryItemCount.arbitrary) {
-        (movementId, pageNumber, itemCount) =>
+      // TODO: should this be MovementNotFound or PageNotFound ?
+      "when no movement is found and page is 1" in forAll(arbitraryMovementId.arbitrary, arbitraryItemCount.arbitrary) {
+        (movementId, itemCount) =>
+          val page = Some(PageNumber(1))
+
           val ControllerAndMocks(
             sut,
             _,
@@ -3385,7 +3388,7 @@ class V2MovementsControllerSpec
               any[MovementType],
               MovementId(any()),
               any(),
-              any[Option[PageNumber]],
+              eqTo(page),
               any[Option[ItemCount]],
               any[Option[OffsetDateTime]]
             )(
@@ -3394,16 +3397,70 @@ class V2MovementsControllerSpec
             )
           )
             .thenAnswer(
-              _ => EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType))
+              //_ => EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType))
+              _ => EitherT.leftT(PersistenceError.PageNotFound)
             )
 
           val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-          val result  = sut.getMessageIds(movementType, movementId, None, Some(pageNumber), Some(itemCount), None)(request)
+          val result  = sut.getMessageIds(movementType, movementId, None, page, Some(itemCount), None)(request)
 
           status(result) mustBe NOT_FOUND
           contentAsJson(result) mustBe Json.obj(
-            "code"    -> "NOT_FOUND",
-            "message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found"
+            "code" -> "NOT_FOUND",
+            //"message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found"
+            "message" -> "The requested page does not exist"
+          )
+      }
+
+      "when no movement is found and page is greater than 1" in forAll(
+        arbitraryMovementId.arbitrary,
+        arbitraryItemCount.arbitrary,
+        arbitraryPageNumber.arbitrary
+      ) {
+        (movementId, itemCount, pageNumber) =>
+          // ensure it's not page 1
+          val page = if (pageNumber == PageNumber(1)) PageNumber(2) else pageNumber
+
+          val ControllerAndMocks(
+            sut,
+            _,
+            mockPersistenceService,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _
+          ) = createControllerAndMocks()
+
+          // We request page 2 which has no messages and therefore should get a page not found.
+          when(
+            mockPersistenceService.getMessages(
+              EORINumber(any()),
+              any[MovementType],
+              MovementId(any()),
+              any(),
+              eqTo(Some(page)),
+              any[Option[ItemCount]],
+              any[Option[OffsetDateTime]]
+            )(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.leftT(PersistenceError.PageNotFound)
+            )
+
+          val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+          val result  = sut.getMessageIds(movementType, movementId, None, Some(page), Some(itemCount), None)(request)
+
+          status(result) mustBe NOT_FOUND
+          contentAsJson(result) mustBe Json.obj(
+            "message" -> "The requested page does not exist",
+            "code"    -> "NOT_FOUND"
           )
       }
 
@@ -4396,7 +4453,10 @@ class V2MovementsControllerSpec
         )
       }
 
-      "should return Ok if persistence service returns empty list" in {
+      "should return Ok if persistence service returns empty list for page 1" in {
+
+        val page = Some(PageNumber(1))
+
         val ControllerAndMocks(
           sut,
           _,
@@ -4420,7 +4480,7 @@ class V2MovementsControllerSpec
             any[Option[OffsetDateTime]],
             any[Option[EORINumber]],
             any[Option[MovementReferenceNumber]],
-            any[Option[PageNumber]],
+            eqTo(page),
             any[Option[ItemCount]],
             any[Option[OffsetDateTime]],
             any[Option[LocalReferenceNumber]]
@@ -4439,7 +4499,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, None, None, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None, page, None, None, None)(request)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(
@@ -4449,11 +4509,66 @@ class V2MovementsControllerSpec
             None,
             None,
             None,
-            None,
+            page,
             None,
             None,
             None
           )
+        )
+      }
+
+      "should return not found if the persistence service returns an empty list for a page number other than 1" in {
+        val ControllerAndMocks(
+          sut,
+          _,
+          mockPersistenceService,
+          _,
+          _,
+          _,
+          _,
+          _,
+          _,
+          _,
+          _
+        ) = createControllerAndMocks()
+
+        // We request page 2 which has no movements
+        val page = Some(PageNumber(2))
+
+        when(
+          mockPersistenceService.getMovements(
+            EORINumber(any()),
+            any[MovementType],
+            any[Option[OffsetDateTime]],
+            any[Option[EORINumber]],
+            any[Option[MovementReferenceNumber]],
+            eqTo(page),
+            any[Option[ItemCount]],
+            any[Option[OffsetDateTime]],
+            any[Option[LocalReferenceNumber]]
+          )(
+            any[HeaderCarrier],
+            any[ExecutionContext]
+          )
+        )
+          .thenAnswer(
+            _ => EitherT.leftT(PersistenceError.PageNotFound)
+          )
+
+        val request = FakeRequest(
+          GET,
+          url,
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
+          AnyContentAsEmpty
+        )
+
+        val result = sut.getMovements(movementType, None, None, None, page, None, None, None)(request)
+
+        status(result) mustBe NOT_FOUND
+
+        contentAsJson(result) mustBe Json.obj(
+          "message" -> "The requested page does not exist",
+          "code"    -> "NOT_FOUND"
         )
       }
 
