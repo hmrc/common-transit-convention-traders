@@ -3364,7 +3364,6 @@ class V2MovementsControllerSpec
           }
       }
 
-      // TODO: should this be MovementNotFound or PageNotFound ?
       "when no movement is found and page is 1" in forAll(arbitraryMovementId.arbitrary, arbitraryItemCount.arbitrary) {
         (movementId, itemCount) =>
           val page = Some(PageNumber(1))
@@ -3397,8 +3396,7 @@ class V2MovementsControllerSpec
             )
           )
             .thenAnswer(
-              //_ => EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType))
-              _ => EitherT.leftT(PersistenceError.PageNotFound)
+              _ => EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType))
             )
 
           val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
@@ -3406,9 +3404,8 @@ class V2MovementsControllerSpec
 
           status(result) mustBe NOT_FOUND
           contentAsJson(result) mustBe Json.obj(
-            "code" -> "NOT_FOUND",
-            //"message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found"
-            "message" -> "The requested page does not exist"
+            "code"    -> "NOT_FOUND",
+            "message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found"
           )
       }
 
