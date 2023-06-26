@@ -237,7 +237,28 @@ class PersistenceServiceSpec
       }
     }
 
-    "when the page is not found and the page is greater than 1, then should return a Page Not Found" in {
+    "when a given movement is not found, and the page is greater than 1, should return a MovementNotFound" in {
+
+      when(
+        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(9))), eqTo(Some(ItemCount(35))), any())(any(), any())
+      )
+        .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
+
+      val result = sut.getMessages(
+        EORINumber("1"),
+        MovementType.Departure,
+        MovementId("1234567890abcdef"),
+        dateTime.sample.get,
+        Some(PageNumber(9)),
+        Some(ItemCount(35)),
+        dateTime.sample.get
+      )
+      whenReady(result.value) {
+        _ mustBe Left(PersistenceError.MovementNotFound(MovementId("1234567890abcdef"), MovementType.Departure))
+      }
+    }
+
+    "when a given movement is found and the page is greater than 1 and empty, then should return a Page Not Found" in {
 
       val expected = PaginationMessageSummary(TotalCount(0), Seq.empty[MessageSummary])
 
@@ -745,24 +766,7 @@ class PersistenceServiceSpec
         }
     }
 
-    "when a given arrival is not found, should return a Left with MovementNotFound" in forAll(
-      arbitrary[EORINumber],
-      arbitrary[MovementId],
-      Gen.option(arbitrary[OffsetDateTime]),
-      Gen.option(arbitrary[PageNumber]),
-      Gen.option(arbitrary[ItemCount])
-    ) {
-      (eori, arrivalId, receivedSince, pageNumber, itemCount) =>
-        when(mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(pageNumber), eqTo(itemCount), any())(any(), any()))
-          .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
-
-        val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, pageNumber, itemCount, receivedSince)
-        whenReady(result.value) {
-          _ mustBe Left(PersistenceError.MovementNotFound(arrivalId, MovementType.Arrival))
-        }
-    }
-
-    "when a given arrival is not found and page is 1, should return a Left with MovementNotFound" in forAll(
+    "when a given arrival is not found and the page is 1, should return a MovementNotFound" in forAll(
       arbitrary[EORINumber],
       arbitrary[MovementId],
       Gen.option(arbitrary[OffsetDateTime]),
@@ -778,6 +782,44 @@ class PersistenceServiceSpec
         val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, pageNumber, itemCount, receivedSince)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.MovementNotFound(arrivalId, MovementType.Arrival))
+        }
+    }
+
+    "when a given arrival is not found and the page is greater than 1, should return a MovementNotFound" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId],
+      Gen.option(arbitrary[OffsetDateTime]),
+      Gen.option(arbitrary[ItemCount])
+    ) {
+      (eori, arrivalId, receivedSince, itemCount) =>
+        val pageNumber = Some(PageNumber(12))
+        val summary    = PaginationMessageSummary(TotalCount(0), List.empty[MessageSummary])
+
+        when(mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(pageNumber), eqTo(itemCount), any())(any(), any()))
+          .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
+
+        val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, pageNumber, itemCount, receivedSince)
+        whenReady(result.value) {
+          _ mustBe Left(PersistenceError.MovementNotFound(arrivalId, MovementType.Arrival))
+        }
+    }
+
+    "when a given arrival is found and the page is greater than 1 and empty, should return a PageNotFound" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId],
+      Gen.option(arbitrary[OffsetDateTime]),
+      Gen.option(arbitrary[ItemCount])
+    ) {
+      (eori, arrivalId, receivedSince, itemCount) =>
+        val pageNumber = Some(PageNumber(12))
+        val summary    = PaginationMessageSummary(TotalCount(0), List.empty[MessageSummary])
+
+        when(mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(pageNumber), eqTo(itemCount), any())(any(), any()))
+          .thenReturn(Future.successful(summary))
+
+        val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, pageNumber, itemCount, receivedSince)
+        whenReady(result.value) {
+          _ mustBe Left(PersistenceError.PageNotFound)
         }
     }
 
