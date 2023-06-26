@@ -483,21 +483,17 @@ class PersistenceServiceSpec
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
       (Gen.option(arbitrary[MovementReferenceNumber]), Gen.option(arbitrary[LocalReferenceNumber])),
-      (Gen.option(arbitrary[PageNumber]), Gen.option(arbitrary[ItemCount])),
+      Gen.option(arbitrary[ItemCount]),
       Gen.option(arbitrary[OffsetDateTime])
     ) {
-      (updatedSinceMaybe, movementEORI, eori, referenceNumbers, paginationInfo, receivedUntil) =>
+      (updatedSinceMaybe, movementEORI, eori, referenceNumbers, count, receivedUntil) =>
         // ensure page other than 1
-        val pageNumber = paginationInfo._1.sample.getOrElse(Some(PageNumber(2))) match {
-          case Some(PageNumber(1)) => Some(PageNumber(2))
-          case page                => page
-        }
+        val pageNumber = Some(PageNumber(12))
 
-        val itemCount = paginationInfo._2.sample.getOrElse(Some(ItemCount(15)))
+        val itemCount = count.sample.getOrElse(Some(ItemCount(15)))
         val mrn       = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
         val lrn       = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
-
-        val expected = PaginationMovementSummary(TotalCount(0), List.empty[MovementSummary])
+        val expected  = PaginationMovementSummary(TotalCount(0), List.empty[MovementSummary])
 
         when(
           mockConnector.getMovements(
