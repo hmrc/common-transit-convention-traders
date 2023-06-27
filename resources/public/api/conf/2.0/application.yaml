@@ -1241,10 +1241,12 @@ paths:
                   - $ref: '#/components/schemas/NotFound'
                   - example:
                       code: NOT_FOUND
-                      message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
+                      message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.                               
+                               Not found if the page requested is greater than the total number of pages.
               example:
                 code: NOT_FOUND
                 message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
+                         Not found if the page requested is greater than the total number of pages.
         '406':
           description: Not Acceptable
           content:
