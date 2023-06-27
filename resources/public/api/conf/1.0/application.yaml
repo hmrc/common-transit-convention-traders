@@ -1664,6 +1664,7 @@ components:
       title: CustomsTransitsMovementsArrivalsResponse1
       required:
       - _links
+      - _embedded
       type: object
       properties:
         _links:
