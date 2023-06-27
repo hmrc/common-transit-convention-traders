@@ -39,6 +39,7 @@ import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.EORINumber
 import v2.models.ItemCount
+import v2.models.LocalReferenceNumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
@@ -49,6 +50,8 @@ import v2.models.request.MessageUpdate
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
+import v2.models.responses.PaginationMessageSummary
+import v2.models.responses.PaginationMovementSummary
 import v2.models.responses.UpdateMovementResponse
 
 import java.time.OffsetDateTime
@@ -81,7 +84,7 @@ trait PersistenceConnector {
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Seq[MessageSummary]]
+  ): Future[PaginationMessageSummary]
 
   def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId)(implicit
     hc: HeaderCarrier,
@@ -96,11 +99,12 @@ trait PersistenceConnector {
     movementReferenceNumber: Option[MovementReferenceNumber],
     page: Option[PageNumber] = Some(PageNumber(1)),
     count: Option[ItemCount] = None,
-    receivedUntil: Option[OffsetDateTime] = None
+    receivedUntil: Option[OffsetDateTime] = None,
+    localReferenceNumber: Option[LocalReferenceNumber]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Seq[MovementSummary]]
+  ): Future[PaginationMovementSummary]
 
   def postMessage(movementId: MovementId, messageType: Option[MessageType], source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
@@ -139,7 +143,7 @@ trait PersistenceConnector {
 }
 
 @Singleton
-class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig, val metrics: Metrics)
+class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metrics: Metrics)(implicit appConfig: AppConfig)
     extends PersistenceConnector
     with HasMetrics
     with V2BaseConnector
@@ -155,6 +159,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
         val httpClient = httpClientV2
           .post(url"$url")
+          .withInternalAuthToken
 
         (source match {
           case Some(src) => httpClient.setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML).withBody(src)
@@ -169,6 +174,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     val url = appConfig.movementsUrl.withPath(getMessageUrl(eori, movementType, movementId, messageId))
     httpClientV2
       .get(url"$url")
+      .withInternalAuthToken
       .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
       .executeAndDeserialise[MessageSummary]
   }
@@ -184,7 +190,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Seq[MessageSummary]] = {
+  ): Future[PaginationMessageSummary] = {
 
     val url =
       withParameters(
@@ -197,8 +203,9 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .get(url"$url")
+      .withInternalAuthToken
       .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
-      .executeAndDeserialise[Seq[MessageSummary]]
+      .executeAndDeserialise[PaginationMessageSummary]
   }
 
   override def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId)(implicit
@@ -209,6 +216,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .get(url"$url")
+      .withInternalAuthToken
       .setHeader(HeaderNames.ACCEPT -> MimeTypes.JSON)
       .executeAndDeserialise[MovementSummary]
   }
@@ -221,11 +229,12 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     movementReferenceNumber: Option[MovementReferenceNumber],
     page: Option[PageNumber] = Some(PageNumber(1)),
     count: Option[ItemCount] = Some(ItemCount(appConfig.itemsPerPage)),
-    receivedUntil: Option[OffsetDateTime]
+    receivedUntil: Option[OffsetDateTime],
+    localReferenceNumber: Option[LocalReferenceNumber]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Seq[MovementSummary]] = {
+  ): Future[PaginationMovementSummary] = {
 
     val urlWithOptions = withParameters(
       urlPath = appConfig.movementsUrl.withPath(getAllMovementsUrl(eori, movementType)),
@@ -234,13 +243,15 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
       movementReferenceNumber = movementReferenceNumber,
       page = page,
       count = count,
-      receivedUntil = receivedUntil
+      receivedUntil = receivedUntil,
+      localReferenceNumber = localReferenceNumber
     )
 
     httpClientV2
       .get(url"$urlWithOptions")
+      .withInternalAuthToken
       .setHeader(HeaderNames.ACCEPT -> MimeTypes.JSON)
-      .executeAndDeserialise[Seq[MovementSummary]]
+      .executeAndDeserialise[PaginationMovementSummary]
   }
 
   override def postMessage(movementId: MovementId, messageType: Option[MessageType], source: Option[Source[ByteString, _]])(implicit
@@ -253,6 +264,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
         val request = httpClientV2
           .post(url"$url")
+          .withInternalAuthToken
 
         source match {
           case None =>
@@ -274,7 +286,8 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
     receivedSince: Option[OffsetDateTime] = None,
     page: Option[PageNumber] = Some(PageNumber(1)),
     count: Option[ItemCount] = None,
-    receivedUntil: Option[OffsetDateTime] = None
+    receivedUntil: Option[OffsetDateTime] = None,
+    localReferenceNumber: Option[LocalReferenceNumber] = None
   ) = {
 
     val pageNumberValid = page.fold(Some(PageNumber(1)))(Some(_)) // not a Zero based index.
@@ -288,6 +301,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
         ),
         "movementEORI"            -> movementEORI.map(_.value),
         "movementReferenceNumber" -> movementReferenceNumber.map(_.value),
+        "localReferenceNumber"    -> localReferenceNumber.map(_.value),
         "receivedSince" -> receivedSince.map(
           time => DateTimeFormatter.ISO_DATE_TIME.format(time)
         ),
@@ -313,6 +327,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .patch(url"$url")
+      .withInternalAuthToken
       .withBody(Json.toJson(body))
       .executeAndExpect(OK)
   }
@@ -332,6 +347,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .post(url"$url")
+      .withInternalAuthToken
       .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML, Constants.XMessageTypeHeader -> messageType.code)
       .withBody(source)
       .executeAndExpect(CREATED)
@@ -347,6 +363,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig:
 
     httpClientV2
       .get(url"$url")
+      .withInternalAuthToken
       .setHeader(HeaderNames.ACCEPT -> MimeTypes.XML)
       .executeAsStream
   }

@@ -57,4 +57,6 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesCon
 
   val itemsPerPage: Int = config.get[Int]("defaultItemsPerPage")
 
+  val internalAuthToken: String = config.get[String]("internal-auth.token")
+
 }

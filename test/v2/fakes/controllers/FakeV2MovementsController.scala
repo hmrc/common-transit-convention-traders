@@ -31,6 +31,7 @@ import play.api.test.Helpers.stubControllerComponents
 import v2.controllers.V2MovementsController
 import v2.controllers.stream.StreamingParsers
 import v2.models.EORINumber
+import v2.models.LocalReferenceNumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
@@ -82,7 +83,8 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
     movementReferenceNumber: Option[MovementReferenceNumber],
     pageNumber: Option[v2.models.PageNumber],
     itemCount: Option[v2.models.ItemCount],
-    receivedUntil: Option[OffsetDateTime]
+    receivedUntil: Option[OffsetDateTime],
+    localReferenceNumber: Option[LocalReferenceNumber]
   ): Action[AnyContent] = Action {
     _ =>
       Ok(Json.obj("version" -> 2))

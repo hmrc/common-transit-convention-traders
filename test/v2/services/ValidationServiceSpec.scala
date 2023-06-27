@@ -38,8 +38,11 @@ import v2.models.errors.FailedToValidateError
 import v2.models.errors.JsonValidationError
 import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
-import v2.models.responses.JsonValidationResponse
-import v2.models.responses.XmlValidationResponse
+import v2.models.responses.BusinessValidationResponse
+import v2.models.responses.JsonSchemaValidationResponse
+import v2.models.responses.JsonValidationErrorResponse
+import v2.models.responses.XmlSchemaValidationResponse
+import v2.models.responses.XmlValidationErrorResponse
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext
@@ -50,25 +53,18 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  val SchemaValidJson: Source[ByteString, NotUsed]         = Source.single(ByteString("{}", StandardCharsets.UTF_8))
-  val SchemaInvalidJson: Source[ByteString, NotUsed]       = Source.single(ByteString("{", StandardCharsets.UTF_8))
-  val SchemaValidXml: Source[ByteString, NotUsed]          = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
-  val SchemaInvalidXml: Source[ByteString, NotUsed]        = Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8))
-  val UpstreamError: Source[ByteString, NotUsed]           = Source.single(ByteString("error", StandardCharsets.UTF_8))
-  val InternalServiceError: Source[ByteString, NotUsed]    = Source.single(ByteString("exception", StandardCharsets.UTF_8))
-  val Invalid: Source[ByteString, NotUsed]                 = Source.single(ByteString("invalid", StandardCharsets.UTF_8))
-  val BusinessValidationError: Source[ByteString, NotUsed] = Source.single(ByteString("invalid business rule", StandardCharsets.UTF_8))
-  val BadMessageType: Source[ByteString, NotUsed]          = Source.single(ByteString("badMessageType", StandardCharsets.UTF_8))
-
-  val uriBadMessageType      = "badMessage"
-  val uriUpstreamError       = "upstreamError"
-  val uriInternalServerError = "internalServerError"
+  val SchemaValidJson: Source[ByteString, NotUsed]      = Source.single(ByteString("{}", StandardCharsets.UTF_8))
+  val SchemaInvalidJson: Source[ByteString, NotUsed]    = Source.single(ByteString("{", StandardCharsets.UTF_8))
+  val SchemaValidXml: Source[ByteString, NotUsed]       = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
+  val SchemaInvalidXml: Source[ByteString, NotUsed]     = Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8))
+  val BusinessError: Source[ByteString, NotUsed]        = Source.single(ByteString(<be></be>.mkString, StandardCharsets.UTF_8))
+  val UpstreamError: Source[ByteString, NotUsed]        = Source.single(ByteString("error", StandardCharsets.UTF_8))
+  val InternalServiceError: Source[ByteString, NotUsed] = Source.single(ByteString("exception", StandardCharsets.UTF_8))
+  val Invalid: Source[ByteString, NotUsed]              = Source.single(ByteString("invalid", StandardCharsets.UTF_8))
+  val BadMessageType: Source[ByteString, NotUsed]       = Source.single(ByteString("badMessageType", StandardCharsets.UTF_8))
 
   private val parseError =
     UpstreamErrorResponse(Json.obj("code" -> "BAD_REQUEST", "message" -> "parse error").toString, BAD_REQUEST)
-
-  private val businessValidationError =
-    UpstreamErrorResponse(Json.obj("code" -> "BUSINESS_VALIDATION_ERROR", "message" -> "business validation error").toString, BAD_REQUEST)
 
   private def badMessageType(messageType: MessageType) =
     UpstreamErrorResponse(Json.obj("code" -> "NOT_FOUND", "message" -> messageType.toString).toString, NOT_FOUND)
@@ -82,29 +78,29 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
     override def postXml(messageType: MessageType, stream: Source[ByteString, _])(implicit
       hc: HeaderCarrier,
       ec: ExecutionContext
-    ): Future[Option[XmlValidationResponse]] =
+    ): Future[Option[XmlValidationErrorResponse]] =
       stream match {
-        case SchemaValidXml          => Future.successful(None)
-        case SchemaInvalidXml        => Future.successful(Some(XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))))
-        case BadMessageType          => Future.failed(badMessageType(messageType))
-        case BusinessValidationError => Future.failed(businessValidationError)
-        case UpstreamError           => Future.failed(upstreamErrorResponse)
-        case InternalServiceError    => Future.failed(internalException)
+        case SchemaValidXml       => Future.successful(None)
+        case SchemaInvalidXml     => Future.successful(Some(XmlSchemaValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))))
+        case BusinessError        => Future.successful(Some(BusinessValidationResponse("business error")))
+        case BadMessageType       => Future.failed(badMessageType(messageType))
+        case UpstreamError        => Future.failed(upstreamErrorResponse)
+        case InternalServiceError => Future.failed(internalException)
       }
 
     override def postJson(messageType: MessageType, stream: Source[ByteString, _])(implicit
       hc: HeaderCarrier,
       ec: ExecutionContext
-    ): Future[Option[JsonValidationResponse]] =
+    ): Future[Option[JsonValidationErrorResponse]] =
       stream match {
         case SchemaValidJson => Future.successful(None)
         case SchemaInvalidJson =>
-          Future.successful(Some(JsonValidationResponse(NonEmptyList(JsonValidationError("IEO15C:messageSender", "MessageSender not expected"), Nil))))
-        case Invalid                 => Future.failed(parseError)
-        case BusinessValidationError => Future.failed(businessValidationError)
-        case BadMessageType          => Future.failed(badMessageType(messageType))
-        case UpstreamError           => Future.failed(upstreamErrorResponse)
-        case InternalServiceError    => Future.failed(internalException)
+          Future.successful(Some(JsonSchemaValidationResponse(NonEmptyList(JsonValidationError("IEO15C:messageSender", "MessageSender not expected"), Nil))))
+        case BusinessError        => Future.successful(Some(BusinessValidationResponse("business error")))
+        case Invalid              => Future.failed(parseError)
+        case BadMessageType       => Future.failed(badMessageType(messageType))
+        case UpstreamError        => Future.failed(upstreamErrorResponse)
+        case InternalServiceError => Future.failed(internalException)
       }
   }
 
@@ -128,21 +124,24 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
       }
     }
 
+    "business invalid XML should return a left with a SchemaFailedToValidateError" in {
+      val sut    = new ValidationServiceImpl(fakeValidationConnector)
+      val result = sut.validateXml(MessageType.DeclarationData, BusinessError)
+
+      whenReady(result.value) {
+        result =>
+          result mustBe Left(
+            FailedToValidateError.BusinessValidationError("business error")
+          )
+      }
+    }
+
     "a bad message type should return a left with a InvalidMessageTypeError" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
       val result = sut.validateXml(MessageType.DeclarationData, BadMessageType)
 
       whenReady(result.value) {
         result => result mustBe Left(FailedToValidateError.InvalidMessageTypeError(MessageType.DeclarationData.toString))
-      }
-    }
-
-    "a bad business validation rule should return a left with a BusinessValidationError" in {
-      val sut    = new ValidationServiceImpl(fakeValidationConnector)
-      val result = sut.validateXml(MessageType.DeclarationData, BusinessValidationError)
-
-      whenReady(result.value) {
-        result => result mustBe Left(FailedToValidateError.BusinessValidationError("business validation error"))
       }
     }
 
@@ -189,21 +188,24 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
       }
     }
 
+    "business invalid JSON should return a left with a SchemaFailedToValidateError" in {
+      val sut    = new ValidationServiceImpl(fakeValidationConnector)
+      val result = sut.validateJson(MessageType.DeclarationData, BusinessError)
+
+      whenReady(result.value) {
+        result =>
+          result mustBe Left(
+            FailedToValidateError.BusinessValidationError("business error")
+          )
+      }
+    }
+
     "invalid JSON should return a left with a ParsingError" in {
       val sut    = new ValidationServiceImpl(fakeValidationConnector)
       val result = sut.validateJson(MessageType.DeclarationData, Invalid)
 
       whenReady(result.value) {
         result => result mustBe Left(FailedToValidateError.ParsingError("parse error"))
-      }
-    }
-
-    "a bad business validation rule should return a left with a BusinessValidationError" in {
-      val sut    = new ValidationServiceImpl(fakeValidationConnector)
-      val result = sut.validateXml(MessageType.DeclarationData, BusinessValidationError)
-
-      whenReady(result.value) {
-        result => result mustBe Left(FailedToValidateError.BusinessValidationError("business validation error"))
       }
     }
 

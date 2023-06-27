@@ -87,16 +87,17 @@ import v2.models.errors._
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.responses.FailureDetails
-import v2.models.LocalReferenceNumber
-import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
+import v2.models.responses.PaginationMessageSummary
+import v2.models.responses.PaginationMovementSummary
 import v2.models.responses.TraderFailedUploadAuditRequest
 import v2.models.responses.UpdateMovementResponse
 import v2.models.responses.UploadDetails
 import v2.models.responses.UpscanFailedResponse
 import v2.models.responses.UpscanResponse
 import v2.models.responses.UpscanSuccessResponse
+import v2.models.LocalReferenceNumber
 import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.UpscanResponse.Reference
 import v2.models.responses.hateoas._
@@ -3312,6 +3313,8 @@ class V2MovementsControllerSpec
             arbitraryItemCount.arbitrary
           ) {
             (movementId, messageResponse, pageNumber, itemCount) =>
+              val summaries = PaginationMessageSummary(TotalCount(messageResponse.length), messageResponse)
+
               val ControllerAndMocks(
                 sut,
                 _,
@@ -3340,7 +3343,7 @@ class V2MovementsControllerSpec
                 )
               )
                 .thenAnswer(
-                  _ => EitherT.rightT(messageResponse)
+                  _ => EitherT.rightT(summaries)
                 )
 
               val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
@@ -3348,13 +3351,23 @@ class V2MovementsControllerSpec
 
               status(result) mustBe OK
               contentAsJson(result) mustBe Json.toJson(
-                HateoasMovementMessageIdsResponse(movementId, messageResponse, dateTime, movementType, Some(pageNumber), Some(itemCount), dateTime)
+                HateoasMovementMessageIdsResponse(
+                  movementId,
+                  summaries,
+                  dateTime,
+                  movementType,
+                  Some(pageNumber),
+                  Some(itemCount),
+                  dateTime
+                )
               )
           }
       }
 
-      "when no movement is found" in forAll(arbitraryMovementId.arbitrary, arbitraryPageNumber.arbitrary, arbitraryItemCount.arbitrary) {
-        (movementId, pageNumber, itemCount) =>
+      "when no movement is found and page is 1" in forAll(arbitraryMovementId.arbitrary, arbitraryItemCount.arbitrary) {
+        (movementId, itemCount) =>
+          val page = Some(PageNumber(1))
+
           val ControllerAndMocks(
             sut,
             _,
@@ -3374,7 +3387,7 @@ class V2MovementsControllerSpec
               any[MovementType],
               MovementId(any()),
               any(),
-              any[Option[PageNumber]],
+              eqTo(page),
               any[Option[ItemCount]],
               any[Option[OffsetDateTime]]
             )(
@@ -3387,12 +3400,64 @@ class V2MovementsControllerSpec
             )
 
           val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
-          val result  = sut.getMessageIds(movementType, movementId, None, Some(pageNumber), Some(itemCount), None)(request)
+          val result  = sut.getMessageIds(movementType, movementId, None, page, Some(itemCount), None)(request)
 
           status(result) mustBe NOT_FOUND
           contentAsJson(result) mustBe Json.obj(
             "code"    -> "NOT_FOUND",
             "message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found"
+          )
+      }
+
+      "when no movement is found and page is greater than 1" in forAll(
+        arbitraryMovementId.arbitrary,
+        arbitraryItemCount.arbitrary,
+        arbitraryPageNumber.arbitrary
+      ) {
+        (movementId, itemCount, pageNumber) =>
+          // ensure it's not page 1
+          val page = if (pageNumber == PageNumber(1)) PageNumber(2) else pageNumber
+
+          val ControllerAndMocks(
+            sut,
+            _,
+            mockPersistenceService,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _
+          ) = createControllerAndMocks()
+
+          // We request page 2 which has no messages and therefore should get a page not found.
+          when(
+            mockPersistenceService.getMessages(
+              EORINumber(any()),
+              any[MovementType],
+              MovementId(any()),
+              any(),
+              eqTo(Some(page)),
+              any[Option[ItemCount]],
+              any[Option[OffsetDateTime]]
+            )(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.leftT(PersistenceError.PageNotFound)
+            )
+
+          val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+          val result  = sut.getMessageIds(movementType, movementId, None, Some(page), Some(itemCount), None)(request)
+
+          status(result) mustBe NOT_FOUND
+          contentAsJson(result) mustBe Json.obj(
+            "message" -> "The requested page does not exist",
+            "code"    -> "NOT_FOUND"
           )
       }
 
@@ -4339,7 +4404,8 @@ class V2MovementsControllerSpec
           created = dateTime.plusHours(2),
           updated = dateTime.plusHours(3)
         )
-        val departureResponses = Seq(departureResponse1, departureResponse2)
+        val departureResponses        = Seq(departureResponse1, departureResponse2)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(departureResponses.length), departureResponses)
 
         when(
           mockPersistenceService.getMovements(
@@ -4350,14 +4416,15 @@ class V2MovementsControllerSpec
             any[Option[MovementReferenceNumber]],
             any[Option[PageNumber]],
             any[Option[ItemCount]],
-            any[Option[OffsetDateTime]]
+            any[Option[OffsetDateTime]],
+            any[Option[LocalReferenceNumber]]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
           )
         )
           .thenAnswer(
-            _ => EitherT.rightT(departureResponses)
+            _ => EitherT.rightT(paginationMovementSummary)
           )
         val request = FakeRequest(
           GET,
@@ -4365,13 +4432,14 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, None, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None, None, None, None, None)(request)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(
           HateoasMovementIdsResponse(
-            departureResponses,
+            paginationMovementSummary,
             movementType,
+            None,
             None,
             None,
             None,
@@ -4382,7 +4450,10 @@ class V2MovementsControllerSpec
         )
       }
 
-      "should return Ok if persistence service returns empty list" in {
+      "should return Ok if persistence service returns empty list for page 1" in {
+
+        val page = Some(PageNumber(1))
+
         val ControllerAndMocks(
           sut,
           _,
@@ -4395,8 +4466,9 @@ class V2MovementsControllerSpec
           _,
           _,
           _
-        )        = createControllerAndMocks()
-        val eori = EORINumber("ERROR")
+        ) = createControllerAndMocks()
+
+        val summary = PaginationMovementSummary(TotalCount(0), List.empty[MovementSummary])
 
         when(
           mockPersistenceService.getMovements(
@@ -4405,16 +4477,17 @@ class V2MovementsControllerSpec
             any[Option[OffsetDateTime]],
             any[Option[EORINumber]],
             any[Option[MovementReferenceNumber]],
-            any[Option[PageNumber]],
+            eqTo(page),
             any[Option[ItemCount]],
-            any[Option[OffsetDateTime]]
+            any[Option[OffsetDateTime]],
+            any[Option[LocalReferenceNumber]]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
           )
         )
           .thenAnswer(
-            _ => EitherT.rightT(List.empty[MovementSummary])
+            _ => EitherT.rightT(summary)
           )
 
         val request = FakeRequest(
@@ -4423,20 +4496,76 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, None, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None, page, None, None, None)(request)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(
           HateoasMovementIdsResponse(
-            List.empty[MovementSummary],
+            summary,
             movementType,
             None,
             None,
             None,
+            page,
             None,
             None,
             None
           )
+        )
+      }
+
+      "should return not found if the persistence service returns an empty list for a page number other than 1" in {
+        val ControllerAndMocks(
+          sut,
+          _,
+          mockPersistenceService,
+          _,
+          _,
+          _,
+          _,
+          _,
+          _,
+          _,
+          _
+        ) = createControllerAndMocks()
+
+        // We request page 2 which has no movements
+        val page = Some(PageNumber(2))
+
+        when(
+          mockPersistenceService.getMovements(
+            EORINumber(any()),
+            any[MovementType],
+            any[Option[OffsetDateTime]],
+            any[Option[EORINumber]],
+            any[Option[MovementReferenceNumber]],
+            eqTo(page),
+            any[Option[ItemCount]],
+            any[Option[OffsetDateTime]],
+            any[Option[LocalReferenceNumber]]
+          )(
+            any[HeaderCarrier],
+            any[ExecutionContext]
+          )
+        )
+          .thenAnswer(
+            _ => EitherT.leftT(PersistenceError.PageNotFound)
+          )
+
+        val request = FakeRequest(
+          GET,
+          url,
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
+          AnyContentAsEmpty
+        )
+
+        val result = sut.getMovements(movementType, None, None, None, page, None, None, None)(request)
+
+        status(result) mustBe NOT_FOUND
+
+        contentAsJson(result) mustBe Json.obj(
+          "message" -> "The requested page does not exist",
+          "code"    -> "NOT_FOUND"
         )
       }
 
@@ -4463,7 +4592,8 @@ class V2MovementsControllerSpec
             any[Option[MovementReferenceNumber]],
             any[Option[PageNumber]],
             any[Option[ItemCount]],
-            any[Option[OffsetDateTime]]
+            any[Option[OffsetDateTime]],
+            any[Option[LocalReferenceNumber]]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -4479,7 +4609,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, None, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None, None, None, None, None)(request)
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         contentAsJson(result) mustBe Json.obj(
@@ -4513,7 +4643,8 @@ class V2MovementsControllerSpec
             any[Option[MovementReferenceNumber]],
             any[Option[PageNumber]],
             any[Option[ItemCount]],
-            any[Option[OffsetDateTime]]
+            any[Option[OffsetDateTime]],
+            any[Option[LocalReferenceNumber]]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -4529,7 +4660,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, None, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None, None, None, None, None)(request)
 
         status(result) mustBe NOT_ACCEPTABLE
         contentAsJson(result) mustBe Json.obj(
@@ -4563,7 +4694,8 @@ class V2MovementsControllerSpec
             any[Option[MovementReferenceNumber]],
             any[Option[PageNumber]],
             any[Option[ItemCount]],
-            any[Option[OffsetDateTime]]
+            any[Option[OffsetDateTime]],
+            any[Option[LocalReferenceNumber]]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -4579,7 +4711,7 @@ class V2MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json123")),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, None, None, None)(request)
+        val result = sut.getMovements(movementType, None, None, None, None, None, None, None)(request)
 
         status(result) mustBe NOT_ACCEPTABLE
         contentAsJson(result) mustBe Json.obj(
@@ -6906,4 +7038,172 @@ class V2MovementsControllerSpec
         )
     }
   }
+
+  "getMovements method" - {
+    "when page parameter is zero" - {
+      "must return a BAD_REQUEST response" in forAll(
+        arbitrary[MovementType]
+      ) {
+        movementType =>
+          val controllerAndMocks = createControllerAndMocks()
+          val result: Future[Result] = controllerAndMocks.sut.getMovements(
+            movementType = movementType,
+            updatedSince = None,
+            movementEORI = None,
+            movementReferenceNumber = None,
+            page = Some(PageNumber(0)),
+            count = None,
+            receivedUntil = None,
+            localReferenceNumber = None
+          )(FakeRequest())
+
+          status(result) mustBe BAD_REQUEST
+          contentAsJson(result) mustBe Json.obj(
+            "code"    -> "BAD_REQUEST",
+            "message" -> "The page parameter must be a positive number"
+          )
+      }
+    }
+
+    "when count parameter is zero" - {
+      "must return a BAD_REQUEST response" in forAll(
+        arbitrary[MovementType]
+      ) {
+        movementType =>
+          val controllerAndMocks = createControllerAndMocks()
+          val result: Future[Result] = controllerAndMocks.sut.getMovements(
+            movementType = movementType,
+            updatedSince = None,
+            movementEORI = None,
+            movementReferenceNumber = None,
+            page = None,
+            count = Some(ItemCount(0)),
+            receivedUntil = None,
+            localReferenceNumber = None
+          )(FakeRequest())
+
+          status(result) mustBe BAD_REQUEST
+          contentAsJson(result) mustBe Json.obj(
+            "code"    -> "BAD_REQUEST",
+            "message" -> "The count parameter must be a positive number"
+          )
+      }
+    }
+  }
+
+  "getMessageIds method" - {
+    "when provided with valid parameters" - {
+      "should return OK status" in forAll(
+        arbitrary[MovementType],
+        arbitrary[MovementId],
+        Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head)
+      ) {
+        (movementType, movementId, messageResponse) =>
+          val summaries = PaginationMessageSummary(TotalCount(messageResponse.length), messageResponse)
+
+          val controllerAndMocks = createControllerAndMocks()
+
+          when(
+            controllerAndMocks.mockPersistenceService.getMessages(
+              EORINumber(any()),
+              any[MovementType],
+              MovementId(any()),
+              any(),
+              any[Option[PageNumber]],
+              any[Option[ItemCount]],
+              any[Option[OffsetDateTime]]
+            )(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.rightT(summaries)
+            )
+
+          val result: Future[Result] = controllerAndMocks.sut.getMessageIds(
+            movementType = movementType,
+            movementId = movementId,
+            receivedSince = Some(OffsetDateTime.now),
+            page = Some(PageNumber(1)),
+            count = Some(ItemCount(10)),
+            receivedUntil = Some(OffsetDateTime.now)
+          )(FakeRequest())
+
+          status(result) mustBe OK
+      }
+    }
+
+    "when page parameter is negative" - {
+      "must return a BAD_REQUEST response" in forAll(
+        arbitrary[MovementType],
+        arbitrary[MovementId],
+        Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head)
+      ) {
+        (movementType, movementId, messageResponse) =>
+          val summaries = PaginationMessageSummary(TotalCount(messageResponse.length), messageResponse)
+
+          val controllerAndMocks = createControllerAndMocks()
+
+          when(
+            controllerAndMocks.mockPersistenceService.getMessages(
+              EORINumber(any()),
+              any[MovementType],
+              MovementId(any()),
+              any(),
+              any[Option[PageNumber]],
+              any[Option[ItemCount]],
+              any[Option[OffsetDateTime]]
+            )(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.rightT(summaries)
+            )
+
+          val result: Future[Result] = controllerAndMocks.sut.getMessageIds(
+            movementType = movementType,
+            movementId = movementId,
+            receivedSince = Some(OffsetDateTime.now),
+            page = Some(PageNumber(-1)),
+            count = Some(ItemCount(10)),
+            receivedUntil = Some(OffsetDateTime.now)
+          )(FakeRequest())
+
+          status(result) mustBe BAD_REQUEST
+          contentAsJson(result) mustBe Json.obj(
+            "code"    -> "BAD_REQUEST",
+            "message" -> "The page parameter must be a positive number"
+          )
+      }
+    }
+
+    "when count parameter is negative" - {
+      "must return a BAD_REQUEST response" in forAll(
+        arbitrary[MovementType],
+        arbitrary[MovementId]
+      ) {
+        (movementType, movementId) =>
+          val controllerAndMocks = createControllerAndMocks()
+
+          val result: Future[Result] = controllerAndMocks.sut.getMessageIds(
+            movementType = movementType,
+            movementId = movementId,
+            receivedSince = Some(OffsetDateTime.now),
+            page = Some(PageNumber(1)),
+            count = Some(ItemCount(-10)),
+            receivedUntil = Some(OffsetDateTime.now)
+          )(FakeRequest())
+
+          status(result) mustBe BAD_REQUEST
+          contentAsJson(result) mustBe Json.obj(
+            "code"    -> "BAD_REQUEST",
+            "message" -> "The count parameter must be a positive number"
+          )
+      }
+    }
+  }
+
 }

@@ -68,6 +68,12 @@ trait CommonGenerators {
     )
   }
 
+  implicit lazy val arbitraryTotalCount: Arbitrary[TotalCount] = Arbitrary {
+    Gen.long.map(
+      l => TotalCount(Math.abs(l % (Int.MaxValue - 1))) // total count is always >= 0
+    )
+  }
+
   implicit lazy val arbitraryMessageType: Arbitrary[MessageType] =
     Arbitrary(Gen.oneOf(MessageType.values))
 

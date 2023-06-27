@@ -33,10 +33,12 @@ paths:
         This request is also called an ‘Declaration Data’ E_DEC_DAT (IE015) message.
         <br/><br/>
         If you use this endpoint to send a small message (up to 5MB), a successful response:
+        
         - will contain a URI, which you can use to get the message status
         - can also include an optional box ID, which you can use to match this movement to any messages received from the Push Pull Notifications API
       
         If you use this endpoint to send a large message (up to 5MB - this limit will later increase to 8MB), a successful response will include:
+        
         - a URL and additional metadata that you must use when uploading your file
         - a message ID that allows you track the status of that specific message
 
@@ -132,11 +134,13 @@ paths:
       description: >
         Get all departure declarations sent to the customs office of departure within the past 31 days.
 
-        You can filter for departure declarations updated after a specific date and time and/or submitted with a specified EORI.
+        You can filter for departure declarations updated before and/or after a specific date and time, and optionally filter for departure declarations with a specific EORI.
+
+        For a multi-page query you can filter for a specific page, and optionally the number of items per page.
 
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
-        <br/><br/>
-        A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
+        
+        A successful response will include the total count of the number of movements and a Movement Reference Number (MRN) only after it has been allocated to a movement.
         <br/><br/>
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. 
         Your EORI number is part of the bearer token that you use for API authentication.
@@ -165,6 +169,35 @@ paths:
           schema:
             type: string
             example: 27WF9X1FQ9RCKN0TM3
+        - in: query
+          name: localReferenceNumber
+          description: This is an optional query parameter that allows a list of departures to be filtered by an LRN.
+          style: form
+          schema:
+            type: string
+            example: 3CnsTh79I7vtOy6
+        - in: query
+          name: page
+          description: This is an optional query parameter, default is 1, that allows the selection of a specific page from a multi-page query.
+          style: form
+          schema:
+            type: integer
+            example: 2
+        - in: query
+          name: count
+          description: This is an optional query parameter, default is 25, that allows the selection of a the number of items per page in a query.
+          style: form
+          schema:
+            type: integer
+            example: 50
+        - in: query
+          name: receivedUntil
+          description: This is an optional query parameter that you can use to filter for departure declarations updated before a specific date and time.
+          style: form
+          schema:
+            type: string
+            format: date-time
+            example: 2023-06-15T09:00:00Z
       responses:
         '200':
           description: A successful get all departures response
@@ -178,6 +211,7 @@ paths:
                       _links:
                         self:
                           href: /customs/transits/movements/departures
+                      totalCount: 1
                       departures:
                         _links:
                           self:
@@ -195,6 +229,7 @@ paths:
                 _links:
                   self:
                     href: /customs/transits/movements/departures
+                totalCount: 1
                 departures:
                   _links:
                     self:
@@ -208,6 +243,21 @@ paths:
                   updated: 2022-11-10T15:32:51.459Z
                   enrollmentEORINumber: GB1234567890
                   movementEORINumber: GB1234567890
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotFound'
+                  - example:
+                      code: NOT_FOUND
+                      message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                               Not found if the page requested is greater than the total number of pages.
+              example:
+                code: NOT_FOUND
+                message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                         Not found if the page requested is greater than the total number of pages.
         '406':
           description: Not Acceptable
           content:
@@ -234,7 +284,7 @@ paths:
         Get a specific departure declaration sent to the customs office of departure within the past 31 days.
         
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
-        <br/><br/>
+        
         A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
         <br/><br/>
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. 
@@ -266,6 +316,7 @@ paths:
                           href: /customs/transits/movements/departures/6365135ba5e821ee/messages
                       id: 6365135ba5e821ee
                       movementReferenceNumber: ABC123
+                      localReferenceNumber: DEF456
                       created: 2022-11-10T15:32:51.459Z
                       updated: 2022-11-10T15:32:51.459Z
                       enrollmentEORINumber: GB1234567890
@@ -278,6 +329,7 @@ paths:
                     href: /customs/transits/movements/departures/6365135ba5e821ee/messages
                 id: 6365135ba5e821ee
                 movementReferenceNumber: ABC123
+                localReferenceNumber: DEF456
                 created: 2022-11-10T15:32:51.459Z
                 updated: 2022-11-10T15:32:51.459Z
                 enrollmentEORINumber: GB1234567890
@@ -320,11 +372,13 @@ paths:
       description: >
         Get all messages related to a specific departure declaration sent to the customs office of departure within the past 31 days.
 
-        You can filter for departure declarations received after a specific date and time.
+        You can filter for departure declarations received before and/or after a specific date and time.
 
         Movements older than 31 days are archived, so any messages to related to them cannot be returned by the API.
-        <br/><br/>
-        A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
+        
+        For a multi-page query you can filter for a specific page, and optionally the number of items per page.
+  
+        A successful response will include the total count of the number of messages and Movement Reference Number (MRN) only after it has been allocated to a movement.
         <br/><br/>
         The `status` parameter in a successful response can have the following values:
 
@@ -353,6 +407,28 @@ paths:
             type: string
             format: date-time
             example: 2021-06-21T09:00:00Z
+        - in: query
+          name: page
+          description: This is an optional query parameter, default is 1, that allows the selection of a specific page from a multi-page query.
+          style: form
+          schema:
+            type: integer
+            example: 2
+        - in: query
+          name: count
+          description: This is an optional query parameter, default is 25, that allows the selection of the number of items per page in a multi-page query.
+          style: form
+          schema:
+            type: integer
+            example: 50
+        - in: query
+          name: receivedUntil
+          description: This is an optional query parameter that you can use to filter for arrivals updated before a specific date and time.
+          style: form
+          schema:
+            type: string
+            format: date-time
+            example: 2023-06-15T09:00:00Z
       responses:
         '200':
           description: A successful get all messages related to departure response
@@ -368,6 +444,7 @@ paths:
                           href: /customs/transits/movements/departures/6365135ba5e821ee/messages
                         departure:
                           href: /customs/transits/movements/departures/6365135ba5e821ee
+                      totalCount: 1
                       messages:
                         - _links:
                             self:
@@ -385,6 +462,7 @@ paths:
                     href: /customs/transits/movements/departures/6365135ba5e821ee/messages
                   departure:
                     href: /customs/transits/movements/departures/6365135ba5e821ee
+                totalCount: 1
                 messages:
                   - _links:
                       self:
@@ -406,9 +484,11 @@ paths:
                   - example:
                       code: NOT_FOUND
                       message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                               Not found if the page requested is greater than the total number of pages.
               example:
                 code: NOT_FOUND
                 message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                         Not found if the page requested is greater than the total number of pages.
         '406':
           description: Not Acceptable
           content:
@@ -438,6 +518,7 @@ paths:
         If you use this endpoint to send a small message (up to 5MB), a successful response will contain a URI and a message ID related to the departure that you can use to get the message status.
         <br/><br/>
         If you use this endpoint to send a large message (up to 5MB - this limit will later increase to 8MB), a successful response will include:
+        
         - a URL and additional metadata that you must use when uploading your file
         - a message ID that allows you track the status of that specific message
 
@@ -825,7 +906,9 @@ paths:
       description: >
         Get all arrivals that have been updated within the past 31 days.
         
-        You can filter for departure declarations updated after a specific date and time and/or submitted with a specified EORI.
+        You can filter for arrival notifications updated before and/or after a specific date and time, and optionally filter for arrival notifications with a specific EORI.
+
+        For a multi-page query you can filter for a specific page and optionally the number of items per page.
         
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
         <br/><br/>
@@ -856,6 +939,35 @@ paths:
           schema:
             type: string
             example: 27WF9X1FQ9RCKN0TM3
+        - in: query
+          name: localReferenceNumber
+          description: This is an optional query parameter that allows a list of arrivals to be filtered by an LRN.
+          style: form
+          schema:
+            type: string
+            example: 3CnsTh79I7vtOy6
+        - in: query
+          name: page
+          description: This is an optional query parameter, default is 1, that allows the selection of a specific page from a multi-page query.
+          style: form
+          schema:
+            type: integer
+            example: 2
+        - in: query
+          name: count
+          description: This is an optional query parameter, default is 25, that allows the selection of a the number of items per page in a multi-page query.
+          style: form
+          schema:
+            type: integer
+            example: 50
+        - in: query
+          name: receivedUntil
+          description: This is an optional query parameter that you can use to filter for arrivals updated before a specific date and time.
+          style: form
+          schema:
+            type: string
+            format: date-time
+            example: 2023-06-15T09:00:00Z
       responses:
         '200':
           description: A successful get all arrivals response
@@ -869,6 +981,7 @@ paths:
                       _links:
                         self:
                           href: /customs/transits/movements/arrivals
+                      totalCount: 1
                       arrivals:
                         - _links:
                             self:
@@ -896,6 +1009,7 @@ paths:
                 _links:
                   self:
                     href: /customs/transits/movements/arrivals
+                totalCount: 2
                 arrivals:
                   - _links:
                       self:
@@ -919,6 +1033,21 @@ paths:
                     updated: 2022-11-04T13:27:55.522Z
                     enrollmentEORINumber: '9999912345'
                     movementEORINumber: GB1234567890
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotFound'
+                  - example:
+                      code: NOT_FOUND
+                      message: Supplied arrival notification not found or does not exist or has been archived or is not available to the EORI number.
+                               Not found if the page requested is greater than the total number of pages.
+              example:
+                code: NOT_FOUND
+                message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                         Not found if the page requested is greater than the total number of pages.
         '406':
           description: Not Acceptable
           content:
@@ -1001,9 +1130,11 @@ paths:
                   - example:
                       code: NOT_FOUND
                       message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
+                               Not found if the page requested is greater than the total number of pages.
               example:
                 code: NOT_FOUND
                 message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
+                         Not found if the page requested is greater than the total number of pages.
         '406':
           description: Not Acceptable
           content:
@@ -1029,7 +1160,9 @@ paths:
       description: >
         Get all messages related to a specific arrival that have been received within the past 31 days.
         
-        You can filter for arrivals received after a specific date and time.
+        You can filter for arrival notifications received before and/or after a specific date and time.
+
+        For a multi-page query you can filter for a specific page, and optionally the number of items per page.
         
         Movements older than 31 days are archived, so any messages related to them cannot be returned by the API.
         <br/><br/>
@@ -1053,6 +1186,28 @@ paths:
             type: string
             format: date-time
             example: 2021-06-21T09:00:00Z
+        - in: query
+          name: page
+          description: This is an optional query parameter, default is 1, that allows the selection of a specific page from a multi-page query.
+          style: form
+          schema:
+            type: integer
+            example: 2
+        - in: query
+          name: count
+          description: This is an optional query parameter, default is 25, that allows the selection of the number of items per page in a multi-page query.
+          style: form
+          schema:
+            type: integer
+            example: 50
+        - in: query
+          name: receivedUntil
+          description: This is an optional query parameter that you can use to filter for arrivals updated before a specific date and time.
+          style: form
+          schema:
+            type: string
+            format: date-time
+            example: 2023-06-15T09:00:00Z
       responses:
         '200':
           description: A successful get all messages related to arrival response
@@ -1068,6 +1223,7 @@ paths:
                           href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages
                         arrival:
                           href: /customs/transits/movements/arrivals/63498209a2d89ad8
+                      totalCount: 1
                       messages:
                         - _links:
                             self:
@@ -1085,6 +1241,7 @@ paths:
                     href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages
                   arrival:
                     href: /customs/transits/movements/arrivals/63498209a2d89ad8
+                totalCount: 1
                 messages:
                   - _links:
                       self:
@@ -1105,10 +1262,12 @@ paths:
                   - $ref: '#/components/schemas/NotFound'
                   - example:
                       code: NOT_FOUND
-                      message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
+                      message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.                               
+                               Not found if the page requested is greater than the total number of pages.
               example:
                 code: NOT_FOUND
                 message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
+                         Not found if the page requested is greater than the total number of pages.
         '406':
           description: Not Acceptable
           content:
@@ -1138,6 +1297,7 @@ paths:
         If you use this endpoint to send a small message (up to 5MB), a successful response will contain a URI and a message ID related to the arrival, which you can use to get the message status.
         <br/><br/>
         If you use this endpoint to send a large message (up to 5MB - this limit will later increase to 8MB), a successful response will include:
+        
         - a URL and additional metadata that you must use when uploading your file
         - a message ID that allows you track the status of that specific message
 
@@ -1506,11 +1666,8 @@ components:
       required:
         - _links
         - id
-        - movementReferenceNumber
         - created
-        - updated
         - enrollmentEORINumber
-        - movementEORINumber
       type: object
       properties:
         _links:
@@ -1601,9 +1758,7 @@ components:
         - id
         - arrivalId
         - received
-        - type
         - status
-        - body
       type: object
       properties:
         _links:
@@ -1636,7 +1791,6 @@ components:
       title: CustomsTransitsMovementsArrivalsResponse
       required:
         - _links
-        - boxId
       type: object
       properties:
         _links:
@@ -1696,11 +1850,8 @@ components:
       required:
         - _links
         - id
-        - movementReferenceNumber
         - created
-        - updated
         - enrollmentEORINumber
-        - movementEORINumber
       type: object
       properties:
         _links:
@@ -1781,9 +1932,7 @@ components:
         - id
         - departureId
         - received
-        - type
         - status
-        - body
       type: object
       properties:
         _links:
@@ -1826,7 +1975,6 @@ components:
       title: CustomsTransitsMovementsDeparturesResponse
       required:
         - _links
-        - boxId
       type: object
       properties:
         _links:
@@ -1845,11 +1993,8 @@ components:
       required:
         - _links
         - id
-        - movementReferenceNumber
         - created
-        - updated
         - enrollmentEORINumber
-        - movementEORINumber
       type: object
       properties:
         _links:
@@ -1857,6 +2002,8 @@ components:
         id:
           type: string
         movementReferenceNumber:
+          type: string
+        localReferenceNumber:
           type: string
         created:
           type: string
@@ -1874,6 +2021,7 @@ components:
             href: /customs/transits/movements/departures/6365135ba5e821ee/messages
         id: 6365135ba5e821ee
         movementReferenceNumber: ABC123
+        localReferenceNumber: DEF456
         created: 2022-11-10T15:32:51.459Z
         updated: 2022-11-10T15:32:51.459Z
         enrollmentEORINumber: 'GB1234567890'
@@ -1887,7 +2035,7 @@ components:
       properties:
         _links:
           $ref: '#/components/schemas/Links7'
-        arrivals:
+        departures:
           type: array
           items:
             $ref: '#/components/schemas/Departure'
@@ -1922,6 +2070,44 @@ components:
     Departure:
       title: Departure
       required:
+        - _links
+        - id
+        - created
+        - enrollmentEORINumber
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/Links'
+        id:
+          type: string
+        movementReferenceNumber:
+          type: string
+        localReferenceNumber:
+          type: string
+        created:
+          type: string
+        updated:
+          type: string
+        enrollmentEORINumber:
+          type: string
+        movementEORINumber:
+          type: string
+          example:
+            _links:
+              self:
+                href: /customs/transits/movements/departures/6365135ba5e821ee
+              messages:
+                href: /customs/transits/movements/departures/6365135ba5e821ee/messages
+            id: 63651574c3447b12
+            movementReferenceNumber: 27WF9X1FQ9RCKN0TM3
+            localReferenceNumber: DEF456
+            created: 2022-11-04T13:36:52.332Z
+            updated: 2022-11-04T13:36:52.332Z
+            enrollmentEORINumber: '9999912345'
+            movementEORINumber: GB1234567890
+    Departure1:
+      title: Departure1
+      required:
         - href
       type: object
       properties:
@@ -1955,7 +2141,7 @@ components:
         self:
           $ref: '#/components/schemas/Self'
         departure:
-          $ref: '#/components/schemas/Departure'
+          $ref: '#/components/schemas/Departure1'
       example:
         self:
           href: /customs/transits/movements/departures/6365135ba5e821ee/messages
@@ -2005,7 +2191,6 @@ components:
         - id
         - departureId
         - received
-        - type
         - status
       type: object
       properties:
@@ -2039,9 +2224,7 @@ components:
         - id
         - arrivalId
         - received
-        - type
         - status
-      type: object
       properties:
         _links:
           $ref: '#/components/schemas/Links10'

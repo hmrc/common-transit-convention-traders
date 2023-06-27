@@ -46,7 +46,7 @@ trait AuditingConnector {
 
 }
 
-class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, appConfig: AppConfig, val metrics: Metrics)
+class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Metrics)(implicit appConfig: AppConfig)
     extends AuditingConnector
     with V2BaseConnector
     with HasMetrics
@@ -62,7 +62,11 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, appConfig: AppC
 
         httpClient
           .post(url"$url")
-          .transform(_.addHttpHeaders(HeaderNames.CONTENT_TYPE -> contentType, Constants.XContentLengthHeader -> contentLength.toString))
+          .withInternalAuthToken
+          .setHeader(
+            HeaderNames.CONTENT_TYPE       -> contentType,
+            Constants.XContentLengthHeader -> contentLength.toString
+          )
           .withBody(source)
           .executeAndExpect(ACCEPTED)
     }

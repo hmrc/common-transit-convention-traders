@@ -65,13 +65,15 @@ class PushNotificationsConnectorSpec
     with MockitoSugar
     with CommonGenerators {
 
-  val mockAppConfig = mock[AppConfig]
+  val token                  = Gen.alphaNumStr.sample.get
+  implicit val mockAppConfig = mock[AppConfig]
+  when(mockAppConfig.internalAuthToken).thenReturn(token)
   when(mockAppConfig.pushNotificationsUrl).thenAnswer {
     _ => Url.parse(server.baseUrl())
   }
   // using thenAnswer for lazy semantics
 
-  lazy val sut = new PushNotificationsConnectorImpl(mockAppConfig, httpClientV2, new TestMetrics)
+  lazy val sut = new PushNotificationsConnectorImpl(httpClientV2, new TestMetrics)
 
   "associate" - {
 
@@ -83,6 +85,7 @@ class PushNotificationsConnectorSpec
           post(
             urlEqualTo(targetUrl(movementId))
           )
+            .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.JSON))
             .withRequestBody(matchingJsonPath(s"$$[?(@.clientId == '${assoc.clientId.value}')]"))
             .withRequestBody(matchingJsonPath(s"$$[?(@.movementType == '${assoc.movementType.movementType}')]"))
@@ -124,6 +127,7 @@ class PushNotificationsConnectorSpec
           post(
             urlEqualTo(targetUrl(movementId))
           )
+            .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.JSON))
             .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
         )
@@ -155,6 +159,7 @@ class PushNotificationsConnectorSpec
           patch(
             urlEqualTo(targetUrl(movementId))
           )
+            .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .willReturn(aResponse().withStatus(NO_CONTENT))
         )
 
@@ -176,6 +181,7 @@ class PushNotificationsConnectorSpec
           patch(
             urlEqualTo(targetUrl(movementId))
           )
+            .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .willReturn(aResponse().withStatus(statusCode))
         )
 
@@ -219,6 +225,7 @@ class PushNotificationsConnectorSpec
         server.stubFor(
           post(expectedUrl)
             .withHeader("Content-Type", equalTo("application/json"))
+            .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .withRequestBody(equalTo(jsonRequest))
             .willReturn(
               aResponse()
@@ -247,6 +254,7 @@ class PushNotificationsConnectorSpec
         server.stubFor(
           post(expectedUrl)
             .withHeader("Content-Type", equalTo("application/json"))
+            .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .withRequestBody(equalTo(jsonRequest))
             .willReturn(
               aResponse()

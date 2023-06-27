@@ -194,6 +194,15 @@ class ConvertErrorSpec
       persistenceErrorConverter.convert(input) mustBe output
     }
 
+    "PageNotFound error returns a NOT_FOUND" in {
+      val movementId = arbitrary[MovementId].sample.value
+
+      val input  = PersistenceError.PageNotFound
+      val output = PresentationError.notFoundError("The requested page does not exist")
+
+      persistenceErrorConverter.convert(input) mustBe output
+    }
+
     "an Unexpected Error with no exception returns an internal service error with no exception" in {
       val input  = PersistenceError.UnexpectedError(None)
       val output = PresentationError.internalServiceError()

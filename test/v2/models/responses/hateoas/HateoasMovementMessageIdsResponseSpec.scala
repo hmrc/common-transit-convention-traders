@@ -30,7 +30,9 @@ import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.PageNumber
+import v2.models.TotalCount
 import v2.models.responses.MessageSummary
+import v2.models.responses.PaginationMessageSummary
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -56,7 +58,8 @@ class HateoasMovementMessageIdsResponseSpec
         arbitrary[MessageSummary]
       ) {
         (departureId, response) =>
-          val responses = Seq(response.copy(status = Some(MessageStatus.Processing)))
+          val processingResponse = Seq(response.copy(status = Some(MessageStatus.Processing)))
+          val responses          = PaginationMessageSummary(TotalCount(processingResponse.length), processingResponse)
 
           val actual = HateoasMovementMessageIdsResponse(departureId, responses, dateTime, MovementType.Departure, None, None, None)
 
@@ -65,7 +68,8 @@ class HateoasMovementMessageIdsResponseSpec
               "self"      -> selfUrl(departureId, dateTime, None, None, None),
               "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
             ),
-            "messages" -> responses.map(
+            "totalCount" -> responses.totalCount.value,
+            "messages" -> responses.messageSummary.map(
               response =>
                 Json.obj(
                   "_links" -> Json.obj(
@@ -92,15 +96,18 @@ class HateoasMovementMessageIdsResponseSpec
         Gen.option(arbitrary[OffsetDateTime])
       ) {
         (departureId, response, page, count, receivedUntil) =>
-          val responses = Seq(response.copy(status = Some(MessageStatus.Pending)))
-          val actual    = HateoasMovementMessageIdsResponse(departureId, responses, dateTime, MovementType.Departure, page, count, receivedUntil)
+          val pendingResponses = Seq(response.copy(status = Some(MessageStatus.Pending)))
+          val responses        = PaginationMessageSummary(TotalCount(pendingResponses.length), pendingResponses)
+
+          val actual = HateoasMovementMessageIdsResponse(departureId, responses, dateTime, MovementType.Departure, page, count, receivedUntil)
 
           val expected = Json.obj(
             "_links" -> Json.obj(
               "self"      -> selfUrl(departureId, dateTime, page, count, receivedUntil),
               "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
             ),
-            "messages" -> responses.map(
+            "totalCount" -> responses.totalCount,
+            "messages" -> responses.messageSummary.map(
               response =>
                 Json.obj(
                   "_links" -> Json.obj(

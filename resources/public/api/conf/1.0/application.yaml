@@ -182,22 +182,6 @@ paths:
               example:
                 statusCode: 406
                 message: The accept header is missing or invalid
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/NotFound'
-                  - description: No record found.
-                    example:
-                      code: CLIENT_ERROR
-                      message: ''
-                      statusCode: 404
-              example:
-                code: CLIENT_ERROR
-                message: ''
-                statusCode: 404
       deprecated: false
       security:
         - userRestricted:
@@ -243,6 +227,11 @@ paths:
                     arrivalId: '1'
                     messageType: IE007
                     body: <CC007A>...</CC007A>
+                    _embedded:
+                      notifications:
+                        boxId: 1234-5678-abcd-def
+                        requestId: /customs/transits/movements/arrivals/1
+                        boxName: customs/transits##1.0##notificationUrl
               example:
                 _links:
                   self:
@@ -250,6 +239,27 @@ paths:
                 arrivalId: '1'
                 messageType: IE007
                 body: <CC007A>...</CC007A>
+                _embedded:
+                  notifications:
+                    boxId: 1234-5678-abcd-def
+                    requestId: /customs/transits/movements/arrivals/1
+                    boxName: customs/transits##1.0##notificationUrl
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotFound'
+                  - description: Supplied arrival not found or does not exist.
+                    example:
+                      statusCode: 404
+                      message: ''
+                      code: CLIENT_ERROR
+              example:
+                statusCode: 404
+                message: ''
+                code: CLIENT_ERROR
         '400':
           description: Bad Request
           content:
@@ -341,13 +351,29 @@ paths:
                   - $ref: '#/components/schemas/NotFound'
                   - description: Supplied arrival not found or does not exist.
                     example:
-                      code: CLIENT_ERROR
-                      message: ''
                       statusCode: 404
+                      message: ''
+                      code: CLIENT_ERROR
               example:
-                code: CLIENT_ERROR
-                message: ''
                 statusCode: 404
+                message: ''
+                code: CLIENT_ERROR
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BadRequest1'
+                  - description: Cannot parse parameter
+                    example:
+                      statusCode: 400
+                      message: Cannot parse parameter
+                      code: BAD_REQUEST
+              example:
+                statusCode: 400
+                message: Cannot parse parameter
+                code: BAD_REQUEST
       deprecated: false
       security:
         - userRestricted:
@@ -396,6 +422,9 @@ paths:
                     messageId: '2'
                     messageType: IE044
                     body: <CC044A>...</CC044A>
+                    _embedded:
+                      notifications:
+                        requestId: /customs/transits/movements/arrivals/1
               example:
                 _links:
                   self:
@@ -406,6 +435,9 @@ paths:
                 messageId: '2'
                 messageType: IE044
                 body: <CC044A>...</CC044A>
+                _embedded:
+                  notifications:
+                    requestId: /customs/transits/movements/arrivals/1
         '400':
           description: Bad Request
           content:
@@ -420,6 +452,18 @@ paths:
               example:
                 statusCode: 400
                 message: 'Invalid XML: Premature end of file.'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotFound'
+                  - description: Supplied arrival not found or does not exist.
+                    example:
+                      statusCode: 404
+                      message: ''
+                      code: CLIENT_ERROR
       deprecated: false
       security:
         - userRestricted:
@@ -532,6 +576,34 @@ paths:
               example:
                 statusCode: 406
                 message: The accept header is missing or invalid
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotFound'
+                  - description: Supplied arrival not found or does not exist.
+                    example:
+                      statusCode: 404
+                      message: ''
+                      code: CLIENT_ERROR
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BadRequest1'
+                  - description: Cannot parse parameter
+                    example:
+                      statusCode: 400
+                      message: Cannot parse parameter
+                      code: BAD_REQUEST
+              example:
+                statusCode: 400
+                message: Cannot parse parameter
+                code: BAD_REQUEST
       deprecated: false
       security:
         - userRestricted:
@@ -623,13 +695,29 @@ paths:
                   - $ref: '#/components/schemas/NotFound'
                   - description: Supplied arrival not found or does not exist.
                     example:
-                      code: CLIENT_ERROR
-                      message: ''
                       statusCode: 404
+                      message: ''
+                      code: CLIENT_ERROR
               example:
-                code: CLIENT_ERROR
-                message: ''
                 statusCode: 404
+                message: ''
+                code: CLIENT_ERROR
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BadRequest1'
+                  - description: Cannot parse parameter
+                    example:
+                      statusCode: 400
+                      message: Cannot parse parameter
+                      code: BAD_REQUEST
+              example:
+                statusCode: 400
+                message: Cannot parse parameter
+                code: BAD_REQUEST
       deprecated: false
       security:
         - userRestricted:
@@ -885,13 +973,29 @@ paths:
                   - $ref: '#/components/schemas/NotFound'
                   - description: Supplied departure not found or does not exist.
                     example:
-                      code: CLIENT_ERROR
-                      message: ''
                       statusCode: 404
+                      message: ''
+                      code: CLIENT_ERROR
               example:
-                code: CLIENT_ERROR
-                message: ''
                 statusCode: 404
+                message: ''
+                code: CLIENT_ERROR
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BadRequest1'
+                  - description: Cannot parse parameter
+                    example:
+                      statusCode: 400
+                      message: Cannot parse parameter
+                      code: BAD_REQUEST
+              example:
+                statusCode: 400
+                message: Cannot parse parameter
+                code: BAD_REQUEST
       deprecated: false
       security:
         - userRestricted:
@@ -939,6 +1043,9 @@ paths:
                     messageId: '2'
                     messageType: IE014
                     body: <CC014A>...</CC014A>
+                    _embedded:
+                      notifications:
+                        requestId: /customs/transits/movements/departures/1
               example:
                 _links:
                   self:
@@ -949,6 +1056,25 @@ paths:
                 messageId: '2'
                 messageType: IE014
                 body: <CC014A>...</CC014A>
+                _embedded:
+                  notifications:
+                    requestId: /customs/transits/movements/departures/1
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotFound'
+                  - description: Supplied departure not found or does not exist.
+                    example:
+                      statusCode: 404
+                      message: ''
+                      code: CLIENT_ERROR
+              example:
+                statusCode: 404
+                message: ''
+                code: CLIENT_ERROR
         '400':
           description: Bad Request
           content:
@@ -1085,13 +1211,29 @@ paths:
                   - $ref: '#/components/schemas/NotFound'
                   - description: Supplied departure not found or does not exist.
                     example:
-                      code: CLIENT_ERROR
-                      message: ''
                       statusCode: 404
+                      message: ''
+                      code: CLIENT_ERROR
               example:
-                code: CLIENT_ERROR
-                message: ''
                 statusCode: 404
+                message: ''
+                code: CLIENT_ERROR
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BadRequest1'
+                  - description: Cannot parse parameter
+                    example:
+                      statusCode: 400
+                      message: Cannot parse parameter
+                      code: BAD_REQUEST
+              example:
+                statusCode: 400
+                message: Cannot parse parameter
+                code: BAD_REQUEST
       deprecated: false
       security:
         - userRestricted:
@@ -1181,13 +1323,29 @@ paths:
                   - $ref: '#/components/schemas/NotFound'
                   - description: Supplied departure not found or does not exist.
                     example:
-                      code: CLIENT_ERROR
-                      message: ''
                       statusCode: 404
+                      message: ''
+                      code: CLIENT_ERROR
               example:
-                code: CLIENT_ERROR
-                message: ''
                 statusCode: 404
+                message: ''
+                code: CLIENT_ERROR
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BadRequest1'
+                  - description: Cannot parse parameter
+                    example:
+                      statusCode: 400
+                      message: Cannot parse parameter
+                      code: BAD_REQUEST
+              example:
+                statusCode: 400
+                message: Cannot parse parameter
+                code: BAD_REQUEST
       deprecated: false
       security:
         - userRestricted:
@@ -1224,20 +1382,38 @@ paths:
                 _links:
                   self:
                     href: /customs/transits/movements/push-pull-notifications/box
-        '406':
-          description: Not Acceptable
+        '400':
+          description: Bad Request
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/NotAcceptable'
-                  - description: The Accept header is missing or invalid.
+                  - $ref: '#/components/schemas/BadRequest1'
+                  - description: Client Id Required.
                     example:
-                      statusCode: 406
-                      message: The accept header is missing or invalid
+                      statusCode: 400
+                      message: Client Id Required
+                      code: CLIENT_ERROR
               example:
-                statusCode: 406
-                message: The accept header is missing or invalid
+                statusCode: 400
+                message: Client Id Required
+                code: CLIENT_ERROR
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotFound'
+                  - description: No box found for your client id
+                    example:
+                      statusCode: 404
+                      message: No box found for your client id
+                      code: CLIENT_ERROR
+              example:
+                statusCode: 404
+                message: No box found for your client id
+                code: CLIENT_ERROR
       deprecated: false
       security:
         - applicationRestricted:
@@ -1270,24 +1446,43 @@ components:
         message:
           type: string
           description: The description of the error.
+    BadRequest1:
+      title: BadRequest1
+      description: An error in the supplied payload.
+      required:
+        - statusCode
+        - message
+        - code
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        message:
+          type: string
+          description: The description of the error.
+        code:
+          enum:
+            - CLIENT_ERROR
+            - BAD_REQUEST
+          type: string
     NotFound:
       title: NotFound
       description: Supplied arrival/departure not found in the database or does not exist.
       required:
-        - code
-        - message
         - statusCode
+        - message
+        - code
       type: object
       properties:
+        statusCode:
+          type: integer
+        message:
+          type: string
+          description: The description of the error.
         code:
           enum:
             - CLIENT_ERROR
           type: string
-        message:
-          type: string
-          description: The description of the error.
-        statusCode:
-          type: integer
     Arrival:
       title: Arrival
       required:
@@ -1336,6 +1531,7 @@ components:
       - messageId
       - messageType
       - body
+      - _embedded
       type: object
       properties:
         _links:
@@ -1348,6 +1544,8 @@ components:
           type: string
         body:
           type: string
+        _embedded:
+          $ref: '#/components/schemas/Embedded6'
       example:
         _links:
           self:
@@ -1358,6 +1556,9 @@ components:
         messageId: '2'
         messageType: IE044
         body: <CC044A>...</CC044A>
+        _embedded:
+          notifications:
+            requestId: /customs/transits/movements/arrivals/1
     CustomsTransitsMovementsArrivalsMessagesResponse1:
       title: CustomsTransitsMovementsArrivalsMessagesResponse1
       required:
@@ -1401,7 +1602,6 @@ components:
       - _links
       - arrivalId
       - messageId
-      - received
       - messageType
       - body
       type: object
@@ -1436,7 +1636,6 @@ components:
       - arrivalId
       - messageType
       - body
-      - _embedded
       type: object
       properties:
         _links:
@@ -1515,6 +1714,8 @@ components:
           type: string
         body:
           type: string
+        _embedded:
+          $ref: '#/components/schemas/Embedded'
       example:
         _links:
           self:
@@ -1522,6 +1723,11 @@ components:
         arrivalId: '1'
         messageType: IE007
         body: <CC007A>...</CC007A>
+        _embedded:
+          notifications:
+            boxId: 1234-5678-abcd-def
+            requestId: /customs/transits/movements/arrivals/1
+            boxName: customs/transits##1.0##notificationUrl
     CustomsTransitsMovementsArrivalsResponse3:
       title: CustomsTransitsMovementsArrivalsResponse3
       required:
@@ -1560,6 +1766,7 @@ components:
       - messageId
       - messageType
       - body
+      - _embedded
       type: object
       properties:
         _links:
@@ -1572,6 +1779,8 @@ components:
           type: string
         body:
           type: string
+        _embedded:
+          $ref: '#/components/schemas/Embedded6'
       example:
         _links:
           self:
@@ -1582,6 +1791,9 @@ components:
         messageId: '2'
         messageType: IE014
         body: <CC014A>...</CC014A>
+        _embedded:
+          notifications:
+            requestId: /customs/transits/movements/departures/1
     CustomsTransitsMovementsDeparturesMessagesResponse1:
       title: CustomsTransitsMovementsDeparturesMessagesResponse1
       required:
@@ -1625,7 +1837,6 @@ components:
       - _links
       - departureId
       - messageId
-      - received
       - messageType
       - body
       type: object
@@ -1660,7 +1871,6 @@ components:
       - departureId
       - messageType
       - body
-      - _embedded
       type: object
       properties:
         _links:
@@ -1728,7 +1938,6 @@ components:
       - id
       - created
       - updated
-      - movementReferenceNumber
       - _links
       type: object
       properties:
@@ -1778,7 +1987,6 @@ components:
       - id
       - created
       - updated
-      - movementReferenceNumber
       - _links
       type: object
       properties:
@@ -1814,9 +2022,6 @@ components:
         href: /customs/transits/movements/departures/1
     Embedded:
       title: Embedded
-      required:
-      - notifications
-      type: object
       properties:
         notifications:
           $ref: '#/components/schemas/Notifications'
@@ -1979,6 +2184,18 @@ components:
               href: /customs/transits/movements/departures/1
             messages:
               href: /customs/transits/movements/departures/1/messages
+    Embedded6:
+      title: Embedded6
+      required:
+        - notifications
+      type: object
+      properties:
+        notifications:
+          $ref: '#/components/schemas/Notifications1'
+      example:
+        notifications:
+          requestId: /customs/transits/movements/arrivals/1
+
     Links:
       title: Links
       required:
@@ -2054,7 +2271,6 @@ components:
       - _links
       - arrivalId
       - messageId
-      - received
       - messageType
       - body
       type: object
@@ -2088,7 +2304,6 @@ components:
       - _links
       - departureId
       - messageId
-      - received
       - messageType
       - body
       type: object
@@ -2118,11 +2333,6 @@ components:
         body: <CC015B>...</CC015B>
     Notifications:
       title: Notifications
-      required:
-      - boxId
-      - requestId
-      - boxName
-      type: object
       properties:
         boxId:
           type: string
@@ -2134,6 +2344,16 @@ components:
         boxId: 1234-5678-abcd-def
         requestId: /customs/transits/movements/arrivals/1
         boxName: customs/transits##1.0##notificationUrl
+    Notifications1:
+      title: Notifications1
+      required:
+        - requestId
+      type: object
+      properties:
+        requestId:
+          type: string
+      example:
+        requestId: /customs/transits/movements/arrivals/1
     Self:
       title: Self
       required:
