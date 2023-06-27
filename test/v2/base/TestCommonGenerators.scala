@@ -31,6 +31,7 @@ import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.ObjectStoreURI
 import v2.models.PageNumber
+import v2.models.TotalCount
 import v2.models.XmlPayload
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
@@ -85,7 +86,13 @@ trait TestCommonGenerators {
 
   implicit lazy val arbitraryItemCount: Arbitrary[ItemCount] = Arbitrary {
     Gen.long.map(
-      l => ItemCount(Math.abs(l % (Int.MaxValue - 1))) // // require a positive integer
+      l => ItemCount(Math.abs(l % (Int.MaxValue - 1))) // require a positive integer
+    )
+  }
+
+  implicit lazy val arbitraryTotalCount: Arbitrary[TotalCount] = Arbitrary {
+    Gen.long.map(
+      l => TotalCount(Math.abs(l % (Int.MaxValue - 1))) //require a positive integer
     )
   }
 

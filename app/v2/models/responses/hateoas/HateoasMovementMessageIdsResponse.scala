@@ -23,7 +23,7 @@ import v2.models.MessageStatus
 import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.PageNumber
-import v2.models.responses.MessageSummary
+import v2.models.responses.PaginationMessageSummary
 
 import java.time.OffsetDateTime
 
@@ -31,7 +31,7 @@ object HateoasMovementMessageIdsResponse extends HateoasResponse {
 
   def apply(
     movementId: MovementId,
-    messageIds: Seq[MessageSummary],
+    messageIds: PaginationMessageSummary,
     receivedSince: Option[OffsetDateTime],
     movementType: MovementType,
     page: Option[PageNumber],
@@ -43,7 +43,8 @@ object HateoasMovementMessageIdsResponse extends HateoasResponse {
         "self"                    -> Json.obj("href" -> getMessagesUri(movementId, receivedSince, movementType, page, count, receivedUntil)),
         movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
       ),
-      "messages" -> messageIds.map {
+      "totalCount" -> messageIds.totalCount.value,
+      "messages" -> messageIds.messageSummary.map {
         message =>
           val jsMessageLinksObject = Json.obj(
             "self"                    -> Json.obj("href" -> getMessageUri(movementId, message.id, movementType)),

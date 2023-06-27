@@ -46,8 +46,9 @@ import v2.models.errors.JsonValidationError
 import v2.models.errors.PresentationError
 import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
-import v2.models.responses.JsonValidationResponse
-import v2.models.responses.XmlValidationResponse
+import v2.models.responses.BusinessValidationResponse
+import v2.models.responses.JsonSchemaValidationResponse
+import v2.models.responses.XmlSchemaValidationResponse
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext
@@ -106,7 +107,7 @@ class ValidationConnectorSpec
                 .withBody(
                   Json.stringify(
                     Json.toJson(
-                      XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))
+                      XmlSchemaValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil))
                     )
                   )
                 )
@@ -119,7 +120,37 @@ class ValidationConnectorSpec
 
         whenReady(validationConnector.postXml(MessageType.DeclarationData, source)) {
           result =>
-            result mustBe Some(XmlValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)))
+            result mustBe Some(XmlSchemaValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)))
+        }
+      }
+
+      "On successful validation of business invalid XML, must return OK and a validation error" in {
+
+        server.stubFor(
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  """{
+                    |    "code": "BUSINESS_VALIDATION_ERROR",
+                    |    "message": "business error"
+                    |}
+                    |""".stripMargin
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
+
+        whenReady(validationConnector.postXml(MessageType.DeclarationData, source)) {
+          result =>
+            result mustBe Some(BusinessValidationResponse("business error"))
         }
       }
 
@@ -232,7 +263,7 @@ class ValidationConnectorSpec
                 .withBody(
                   Json.stringify(
                     Json.toJson(
-                      JsonValidationResponse(NonEmptyList(JsonValidationError("path", "error"), Nil))
+                      JsonSchemaValidationResponse(NonEmptyList(JsonValidationError("path", "error"), Nil))
                     )
                   )
                 )
@@ -245,7 +276,37 @@ class ValidationConnectorSpec
 
         whenReady(validationConnector.postJson(MessageType.DeclarationData, source)) {
           result =>
-            result mustBe Some(JsonValidationResponse(NonEmptyList(JsonValidationError("path", "error"), Nil)))
+            result mustBe Some(JsonSchemaValidationResponse(NonEmptyList(JsonValidationError("path", "error"), Nil)))
+        }
+      }
+
+      "On successful validation of business invalid XML, must return OK and a validation error" in {
+
+        server.stubFor(
+          post(
+            urlEqualTo("/transit-movements-validator/messages/IE015/validation")
+          )
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .willReturn(
+              aResponse()
+                .withStatus(OK)
+                .withBody(
+                  """{
+                    |    "code": "BUSINESS_VALIDATION_ERROR",
+                    |    "message": "business error"
+                    |}
+                    |""".stripMargin
+                )
+            )
+        )
+
+        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+
+        val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
+
+        whenReady(validationConnector.postXml(MessageType.DeclarationData, source)) {
+          result =>
+            result mustBe Some(BusinessValidationResponse("business error"))
         }
       }
 

@@ -50,6 +50,8 @@ import v2.models.request.MessageUpdate
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
+import v2.models.responses.PaginationMessageSummary
+import v2.models.responses.PaginationMovementSummary
 import v2.models.responses.UpdateMovementResponse
 
 import java.time.OffsetDateTime
@@ -82,7 +84,7 @@ trait PersistenceConnector {
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Seq[MessageSummary]]
+  ): Future[PaginationMessageSummary]
 
   def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId)(implicit
     hc: HeaderCarrier,
@@ -102,7 +104,7 @@ trait PersistenceConnector {
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Seq[MovementSummary]]
+  ): Future[PaginationMovementSummary]
 
   def postMessage(movementId: MovementId, messageType: Option[MessageType], source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
@@ -188,7 +190,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metric
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Seq[MessageSummary]] = {
+  ): Future[PaginationMessageSummary] = {
 
     val url =
       withParameters(
@@ -203,7 +205,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metric
       .get(url"$url")
       .withInternalAuthToken
       .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
-      .executeAndDeserialise[Seq[MessageSummary]]
+      .executeAndDeserialise[PaginationMessageSummary]
   }
 
   override def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId)(implicit
@@ -232,7 +234,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metric
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
-  ): Future[Seq[MovementSummary]] = {
+  ): Future[PaginationMovementSummary] = {
 
     val urlWithOptions = withParameters(
       urlPath = appConfig.movementsUrl.withPath(getAllMovementsUrl(eori, movementType)),
@@ -249,7 +251,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metric
       .get(url"$urlWithOptions")
       .withInternalAuthToken
       .setHeader(HeaderNames.ACCEPT -> MimeTypes.JSON)
-      .executeAndDeserialise[Seq[MovementSummary]]
+      .executeAndDeserialise[PaginationMovementSummary]
   }
 
   override def postMessage(movementId: MovementId, messageType: Option[MessageType], source: Option[Source[ByteString, _]])(implicit

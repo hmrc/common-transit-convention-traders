@@ -23,14 +23,14 @@ import v2.models.LocalReferenceNumber
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.PageNumber
-import v2.models.responses.MovementSummary
+import v2.models.responses.PaginationMovementSummary
 
 import java.time.OffsetDateTime
 
 object HateoasMovementIdsResponse extends HateoasResponse {
 
   def apply(
-    responses: Seq[MovementSummary],
+    responses: PaginationMovementSummary,
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
@@ -46,7 +46,8 @@ object HateoasMovementIdsResponse extends HateoasResponse {
           "href" -> getMovementsUri(movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
         )
       ),
-      movementType.urlFragment -> responses.map(
+      "totalCount" -> responses.totalCount,
+      movementType.urlFragment -> responses.movementSummary.map(
         response =>
           Json.obj(
             "_links" -> Json.obj(
