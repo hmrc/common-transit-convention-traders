@@ -790,6 +790,96 @@ class V2MovementsControllerSpec
             any()
           )
       }
+
+      "must return Conflict Error if the router service reports a duplicate lrn error" in forAll(
+        arbitraryMovementResponse().arbitrary,
+        arbitraryBoxResponse.arbitrary
+      ) {
+        (movementResponse, boxResponse) =>
+          val ControllerAndMocks(
+            sut,
+            mockValidationService,
+            mockPersistenceService,
+            mockRouterService,
+            mockAuditService,
+            _,
+            _,
+            _,
+            mockPushNotificationService,
+            _,
+            _
+          ) = createControllerAndMocks()
+
+          when(mockValidationService.validateXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
+            .thenAnswer(
+              _ => EitherT.rightT(())
+            )
+
+          when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.JSON), any[Long]())(any(), any())).thenReturn(Future.successful(()))
+
+          when(
+            mockPersistenceService
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]]())(
+                any[HeaderCarrier],
+                any[ExecutionContext]
+              )
+          ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, MovementResponse](movementResponse)))
+
+          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
+            .thenAnswer(
+              _ => EitherT.rightT(boxResponse)
+            )
+
+          when(
+            mockRouterService.send(
+              any[String].asInstanceOf[MessageType],
+              any[String].asInstanceOf[EORINumber],
+              any[String].asInstanceOf[MovementId],
+              any[String].asInstanceOf[MessageId],
+              any[Source[ByteString, _]]
+            )(any[ExecutionContext], any[HeaderCarrier])
+          ).thenAnswer(
+            _ => EitherT.leftT(RouterError.DuplicateLRN(LocalReferenceNumber("1234")))
+          )
+
+          when(
+            mockPersistenceService
+              .updateMessage(
+                EORINumber(any()),
+                eqTo(MovementType.Departure),
+                MovementId(eqTo(movementResponse.movementId.value)),
+                MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(messageUpdateFailure)
+              )(
+                any[HeaderCarrier],
+                any[ExecutionContext]
+              )
+          )
+            .thenAnswer {
+              _ => EitherT.rightT(())
+            }
+
+          val request =
+            fakeCreateMovementRequest("POST", standardHeaders, Source.single(ByteString(CC015C.mkString, StandardCharsets.UTF_8)), MovementType.Departure)
+          val response = sut.createMovement(MovementType.Departure)(request)
+
+          status(response) mustBe CONFLICT
+          contentAsJson(response) mustBe Json.obj(
+            "code"    -> "CONFLICT",
+            "message" -> "LRN 1234 has previously been used and cannot be reused"
+          )
+
+          verify(mockPersistenceService, times(1)).updateMessage(
+            EORINumber(any()),
+            eqTo(MovementType.Departure),
+            MovementId(eqTo(movementResponse.movementId.value)),
+            MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(messageUpdateFailure)
+          )(
+            any(),
+            any()
+          )
+      }
     }
 
     "with content type set to application/json" - {
