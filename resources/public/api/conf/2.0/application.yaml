@@ -230,6 +230,21 @@ paths:
                   updated: 2022-11-10T15:32:51.459Z
                   enrollmentEORINumber: GB1234567890
                   movementEORINumber: GB1234567890
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotFound'
+                  - example:
+                      code: NOT_FOUND
+                      message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                               Not found if the page requested is greater than the total number of pages.
+              example:
+                code: NOT_FOUND
+                message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                         Not found if the page requested is greater than the total number of pages.
         '406':
           description: Not Acceptable
           content:
@@ -306,19 +321,19 @@ paths:
                 updated: 2022-11-10T15:32:51.459Z
                 enrollmentEORINumber: GB1234567890
                 movementEORINumber: GB1234567890
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/NotFound'
-                  - example:
-                      code: NOT_FOUND
-                      message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
-              example:
-                code: NOT_FOUND
-                message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+          '404':
+            description: Not Found
+            content:
+              application/json:
+                schema:
+                  allOf:
+                    - $ref: '#/components/schemas/NotFound'
+                    - example:
+                        code: NOT_FOUND
+                        message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                example:
+                  code: NOT_FOUND
+                  message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
         '406':
           description: Not Acceptable
           content:
@@ -456,9 +471,11 @@ paths:
                   - example:
                       code: NOT_FOUND
                       message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                               Not found if the page requested is greater than the total number of pages.
               example:
                 code: NOT_FOUND
                 message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                         Not found if the page requested is greater than the total number of pages.
         '406':
           description: Not Acceptable
           content:
@@ -995,6 +1012,21 @@ paths:
                     updated: 2022-11-04T13:27:55.522Z
                     enrollmentEORINumber: '9999912345'
                     movementEORINumber: GB1234567890
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/NotFound'
+                  - example:
+                      code: NOT_FOUND
+                      message: Supplied arrival notification not found or does not exist or has been archived or is not available to the EORI number.
+                               Not found if the page requested is greater than the total number of pages.
+              example:
+                code: NOT_FOUND
+                message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                         Not found if the page requested is greater than the total number of pages.
         '406':
           description: Not Acceptable
           content:
@@ -1077,9 +1109,11 @@ paths:
                   - example:
                       code: NOT_FOUND
                       message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
+                               Not found if the page requested is greater than the total number of pages.
               example:
                 code: NOT_FOUND
                 message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
+                         Not found if the page requested is greater than the total number of pages.
         '406':
           description: Not Acceptable
           content:
