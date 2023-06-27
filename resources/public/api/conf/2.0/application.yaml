@@ -6,7 +6,14 @@ info:
   description: |
     # Overview
     Use the CTC Traders API to send departure and arrival movements to the New Computerised Transit System (NCTS)
-    and to get messages sent from customs offices of departure and destination. For a detailed overview of v2.0 of the API, 
+    and to get messages sent from customs offices of departure and destination.
+    <br/><br/>
+    You can use this version of the API to send both small messages (up to 5MB in size) and large messages 
+    (up to 5MB in size - this limit will later increase to 8MB). The large messages capability applies only to POST endpoints. 
+    Although you can use the large messages functionality of the API to send both large and small messages, 
+    you cannot use the small messages functionality of the API to send large messages.
+    <br/><br/>
+    For a detailed overview of v2.0 of the API and information about how to send large messages, 
     see [CTC Traders API phase 5 service guide](/guides/ctc-traders-phase5-service-guide/).
 servers:
   - url: https://test-api.service.hmrc.gov.uk
@@ -20,15 +27,21 @@ paths:
       tags:
         - Departures
       summary: Send a declaration data message
-      description: >
+      description: |
         Send a transit declaration to the customs office of departure to notify it that you wish to carry out a transit operation.
 
         This request is also called an ‘Declaration Data’ E_DEC_DAT (IE015) message.
-
-        A successful response will contain a URI, which you can use to get the message status. 
-        
-        A successful response can also include an optional box ID, which you can use to match this movement to any messages received from the Push Pull Notifications API.
         <br/><br/>
+        If you use this endpoint to send a small message (up to 5MB), a successful response:
+        
+        - will contain a URI, which you can use to get the message status
+        - can also include an optional box ID, which you can use to match this movement to any messages received from the Push Pull Notifications API
+      
+        If you use this endpoint to send a large message (up to 5MB - this limit will later increase to 8MB), a successful response will include:
+        
+        - a URL and additional metadata that you must use when uploading your file
+        - a message ID that allows you track the status of that specific message
+
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
       operationId: postDeclarationDataMessage
       parameters:
@@ -123,10 +136,10 @@ paths:
 
         You can filter for departure declarations updated before and/or after a specific date and time, and optionally filter for departure declarations with a specific EORI.
 
-        For a multi-page query you can filter for a specific page along with/or not, the number of items per page.
+        For a multi-page query you can filter for a specific page, and optionally the number of items per page.
 
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
-
+        
         A successful response will include the total count of the number of movements and a Movement Reference Number (MRN) only after it has been allocated to a movement.
         <br/><br/>
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. 
@@ -271,7 +284,7 @@ paths:
         Get a specific departure declaration sent to the customs office of departure within the past 31 days.
         
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
-
+        
         A successful response will include a Movement Reference Number (MRN) only after it has been allocated to a movement.
         <br/><br/>
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. 
@@ -362,11 +375,11 @@ paths:
         You can filter for departure declarations received before and/or after a specific date and time.
 
         Movements older than 31 days are archived, so any messages to related to them cannot be returned by the API.
-
-        For a multi-page query you can filter for a specific page along with/or not, the number of items per page.
+        
+        For a multi-page query you can filter for a specific page, and optionally the number of items per page.
   
         A successful response will include the total count of the number of messages and Movement Reference Number (MRN) only after it has been allocated to a movement.
-        
+        <br/><br/>
         The `status` parameter in a successful response can have the following values:
 
          - `Pending`: the file has not yet been uploaded or checks are not yet completed
@@ -497,13 +510,18 @@ paths:
       tags:
         - Departures
       summary: Send a message related to a departure
-      description: >
+      description: |
         Send a message to the customs office of departure about a departure.
 
         For example, if you want to cancel a ‘Declaration Data’ E_DEC_DAT (IE015) message, you must send a ‘Declaration Invalidation Request’ E_DEC_INV (IE014) message to the office of departure.
-
-        A successful response will contain a URI and a message ID related to the departure that you can use to get the message status.
         <br/><br/>
+        If you use this endpoint to send a small message (up to 5MB), a successful response will contain a URI and a message ID related to the departure that you can use to get the message status.
+        <br/><br/>
+        If you use this endpoint to send a large message (up to 5MB - this limit will later increase to 8MB), a successful response will include:
+        
+        - a URL and additional metadata that you must use when uploading your file
+        - a message ID that allows you track the status of that specific message
+
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
       operationId: postMessageRelatedToDeparture
       parameters:
@@ -604,7 +622,7 @@ paths:
         For example, this could include ‘Declaration rejected’ or Movement Reference Number (MRN) allocated messages.
         
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
-        
+        <br/><br/>
         A successful response can be returned in one of the following formats based on the provided `Accept` header:
         
          - `application/vnd.hmrc.2.0+json-xml`: JSON-wrapped XML, where the message is provided as an XML string sent as part of JSON payload containing other metadata
@@ -725,7 +743,7 @@ paths:
         For example, this could include ‘Declaration rejected’ or Movement Reference Number (MRN) allocated messages.
         
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
-        
+        <br/><br/>
         The response can be returned in the following format based on the provided `Accept` header:
         
          - `application/vnd.hmrc.2.0+xml`: XML, where the message is provided without any other metadata
@@ -797,16 +815,19 @@ paths:
       tags:
         - Arrivals
       summary: Send an arrival notification message
-      description: >
+      description: |
         Notify the customs office of destination that a transit movement has arrived at its final destination.
         
         This request is also called an ‘Arrival Notification’ E_ARR_NOT (IE007) message.
-        
-        A successful response will contain a URI that you can use to get the message status.
-        
-        A successful response can also include an optional box ID, which you can use to match this movement to any messages received from the Push Pull Notifications API.
-        
         <br/><br/>
+        If you use this endpoint to send a small message (up to 5MB), a successful response:
+        - will contain a URI that you can use to get the message status
+        - can also include an optional box ID, which you can use to match this movement to any messages received from the Push Pull Notifications API
+
+        If you use this endpoint to send a large message (up to 5MB - this limit will later increase to 8MB), a successful response will include:
+        - a URL and additional metadata that you must use when uploading your file
+        - a message ID that allows you track the status of that specific message
+
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
       operationId: postArrivalNotificationMessage
       parameters:
@@ -1141,7 +1162,7 @@ paths:
         
         You can filter for arrival notifications received before and/or after a specific date and time.
 
-        For a multi-page query you can filter for a specific page along with/or not, the number of items per page.
+        For a multi-page query you can filter for a specific page, and optionally the number of items per page.
         
         Movements older than 31 days are archived, so any messages related to them cannot be returned by the API.
         <br/><br/>
@@ -1268,13 +1289,18 @@ paths:
       tags:
         - Arrivals
       summary: Send a message related to an arrival
-      description: >
+      description: |
         Send a message to the customs office of destination about an arrival.
         
         For example, if you are a trader at destination, you will send an ‘Unloading Remarks’ E_ULD_REM (IE044) message to the office of destination indicating that unloading of the goods has been completed.
-        
-        A successful response will contain a URI and a message ID related to the arrival, which you can use to get the message status.
         <br/><br/>
+        If you use this endpoint to send a small message (up to 5MB), a successful response will contain a URI and a message ID related to the arrival, which you can use to get the message status.
+        <br/><br/>
+        If you use this endpoint to send a large message (up to 5MB - this limit will later increase to 8MB), a successful response will include:
+        
+        - a URL and additional metadata that you must use when uploading your file
+        - a message ID that allows you track the status of that specific message
+
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
       operationId: postMessageRelatedToArrival
       parameters:
@@ -1375,7 +1401,7 @@ paths:
         For example, this could include messages about route diversions or unloading permissions.
         
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
-        
+        <br/><br/>
         A successful response can be returned in one of the following formats based on the provided `Accept` header:
         
          - `application/vnd.hmrc.2.0+json-xml`: JSON-wrapped XML, where the message is provided as an XML string sent as part of JSON payload containing other metadata
@@ -1489,7 +1515,7 @@ paths:
         For example, this could include messages about route diversions or unloading permissions.
         
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
-        
+        <br/><br/>
         The response can be returned in the following format based on the provided `Accept` header:
         
          - `application/vnd.hmrc.2.0+xml`: XML, where the message is provided without any other metadata
