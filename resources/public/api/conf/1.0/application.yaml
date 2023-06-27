@@ -1636,7 +1636,6 @@ components:
       - arrivalId
       - messageType
       - body
-      - _embedded
       type: object
       properties:
         _links:
@@ -1665,7 +1664,6 @@ components:
       title: CustomsTransitsMovementsArrivalsResponse1
       required:
       - _links
-      - _embedded
       type: object
       properties:
         _links:
@@ -1705,7 +1703,6 @@ components:
       - arrivalId
       - messageType
       - body
-      - _embedded
       type: object
       properties:
         _links:
@@ -1873,7 +1870,6 @@ components:
       - departureId
       - messageType
       - body
-      - _embedded
       type: object
       properties:
         _links:
@@ -2025,9 +2021,6 @@ components:
         href: /customs/transits/movements/departures/1
     Embedded:
       title: Embedded
-      required:
-      - notifications
-      type: object
       properties:
         notifications:
           $ref: '#/components/schemas/Notifications'
@@ -2339,11 +2332,6 @@ components:
         body: <CC015B>...</CC015B>
     Notifications:
       title: Notifications
-      required:
-      - boxId
-      - requestId
-      - boxName
-      type: object
       properties:
         boxId:
           type: string
