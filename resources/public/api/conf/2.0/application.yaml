@@ -191,34 +191,14 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/CustomsTransitsMovementsDeparturesResponse2'
-                  - description: JSON payload
-                    example:
-                      _links:
-                        self:
-                          href: /customs/transits/movements/departures
-                      totalCount: 1
-                      departures:
-                        _links:
-                          self:
-                            href: /customs/transits/movements/departures/6365135ba5e821ee
-                          messages:
-                            href: /customs/transits/movements/departures/6365135ba5e821ee/messages
-                        id: 6365135ba5e821ee
-                        movementReferenceNumber: ABC123
-                        localReferenceNumber: DEF456
-                        created: 2022-11-10T15:32:51.459Z
-                        updated: 2022-11-10T15:32:51.459Z
-                        enrollmentEORINumber: GB1234567890
-                        movementEORINumber: GB1234567890
+                $ref: '#/components/schemas/CustomsTransitsMovementsDeparturesResponse2'
               example:
                 _links:
                   self:
                     href: /customs/transits/movements/departures
                 totalCount: 1
                 departures:
-                  _links:
+                - _links:
                     self:
                       href: /customs/transits/movements/departures/6365135ba5e821ee
                     messages:
@@ -235,16 +215,16 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/NotFound'
-                  - example:
-                      code: NOT_FOUND
-                      message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
-                               Not found if the page requested is greater than the total number of pages.
-              example:
-                code: NOT_FOUND
-                message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
-                         Not found if the page requested is greater than the total number of pages.
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                MovementNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                PageNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: The requested page does not exist.
         '406':
           description: Not Acceptable
           content:
@@ -292,22 +272,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/CustomsTransitsMovementsDeparturesResponse1'
-                  - description: JSON payload
-                    example:
-                      _links:
-                        self:
-                          href: /customs/transits/movements/departures/6365135ba5e821ee
-                        messages:
-                          href: /customs/transits/movements/departures/6365135ba5e821ee/messages
-                      id: 6365135ba5e821ee
-                      movementReferenceNumber: ABC123
-                      localReferenceNumber: DEF456
-                      created: 2022-11-10T15:32:51.459Z
-                      updated: 2022-11-10T15:32:51.459Z
-                      enrollmentEORINumber: GB1234567890
-                      movementEORINumber: GB1234567890
+                $ref: '#/components/schemas/CustomsTransitsMovementsDeparturesResponse1'
               example:
                 _links:
                   self:
@@ -326,11 +291,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/NotFound'
-                  - example:
-                      code: NOT_FOUND
-                      message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                $ref: '#/components/schemas/NotFound'
               example:
                 code: NOT_FOUND
                 message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
@@ -339,12 +300,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: The Accept header is missing or invalid.
-                    example:
-                      code: NOT_ACCEPTABLE
-                      message: The Accept header is missing or invalid.
+                $ref: '#/components/schemas/AcceptHeaderInvalid'
               example:
                 code: NOT_ACCEPTABLE
                 message: The Accept header is missing or invalid.
@@ -422,27 +378,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/CustomsTransitsMovementsDeparturesMessagesResponse'
-                  - description: JSON payload
-                    example:
-                      _links:
-                        self:
-                          href: /customs/transits/movements/departures/6365135ba5e821ee/messages
-                        departure:
-                          href: /customs/transits/movements/departures/6365135ba5e821ee
-                      totalCount: 1
-                      messages:
-                        - _links:
-                            self:
-                              href: /customs/transits/movements/departures/6365135ba5e821ee/message/634982098f02f00a
-                            departure:
-                              href: /customs/transits/movements/departures/6365135ba5e821ee
-                          id: 634982098f02f00a
-                          departureId: 6365135ba5e821ee
-                          received: 2022-11-10T15:32:51.459Z
-                          type: IE015
-                          status: Success
+                $ref: '#/components/schemas/CustomsTransitsMovementsDeparturesMessagesResponse'
               example:
                 _links:
                   self:
@@ -462,20 +398,20 @@ paths:
                     type: IE015
                     status: Success
         '404':
-          description: Not Found
+          description: Departure or Page Not Found
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/NotFound'
-                  - example:
-                      code: NOT_FOUND
-                      message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
-                               Not found if the page requested is greater than the total number of pages.
-              example:
-                code: NOT_FOUND
-                message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
-                         Not found if the page requested is greater than the total number of pages.
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                MovementNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                PageNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: The requested page does not exist.
         '406':
           description: Not Acceptable
           content:
@@ -522,15 +458,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/CustomsTransitsMovementsDeparturesMessagesResponse1'
-                  - description: JSON payload
-                    example:
-                      _links:
-                        self:
-                          href: /customs/transits/movements/departures/6365135ba5e821ee/messages/634982098f02f00a
-                        departure:
-                          href: /customs/transits/movements/departures/6365135ba5e821ee
+                $ref: '#/components/schemas/CustomsTransitsMovementsDeparturesMessagesResponse1'
               example:
                 _links:
                   self:
@@ -651,24 +579,7 @@ paths:
                       wrapped: false
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/CustomsTransitsMovementsDeparturesMessagesResponse2'
-                  - description: JSON payload
-                    example:
-                      _links:
-                        self:
-                          href: /customs/transits/movements/departures/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2
-                        departure:
-                          href: /customs/transits/movements/departures/62f4ebbbf581d4aa
-                      id: 62f4ebbb765ba8c2
-                      departureId: 62f4ebbbf581d4aa
-                      received: 2022-08-11T11:44:59.83705
-                      type: IE015
-                      status: Success
-                      body: >
-                        n1.CC015C:
-                          @PhaseID: NCTS5.0
-                          ...
+                $ref: '#/components/schemas/CustomsTransitsMovementsDeparturesMessagesResponse2'
               example:
                 _links:
                   self:
@@ -754,13 +665,7 @@ paths:
           content:
             application/xml:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/CustomsTransitsMovementsDeparturesMessageBodyResponse'
-                  - description: XML payload
-                    xml:
-                      name: CustomsTransitsMovementsDeparturesMessageBodyResponse
-                      attribute: false
-                      wrapped: false
+                $ref: '#/components/schemas/CustomsTransitsMovementsDeparturesMessageBodyResponse'
               example: '<ncts:CC015C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">...</ncts:CC015C>'
         '404':
           description: Not Found
@@ -953,37 +858,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsResponse1'
-                  - description: JSON payload
-                    example:
-                      _links:
-                        self:
-                          href: /customs/transits/movements/arrivals
-                      totalCount: 1
-                      arrivals:
-                        - _links:
-                            self:
-                              href: /customs/transits/movements/arrivals/63651574c3447b12
-                            messages:
-                              href: /customs/transits/movements/arrivals/63651574c3447b12/messages
-                          id: 63651574c3447b12
-                          movementReferenceNumber: 27WF9X1FQ9RCKN0TM3
-                          created: 2022-11-04T13:36:52.332Z
-                          updated: 2022-11-04T13:36:52.332Z
-                          enrollmentEORINumber: '9999912345'
-                          movementEORINumber: GB1234567890
-                        - _links:
-                            self:
-                              href: /customs/transits/movements/arrivals/6365135ba5e821ee
-                            messages:
-                              href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages
-                          id: 6365135ba5e821ee
-                          movementReferenceNumber: 27WF9X1FQ9RCKN0TM3
-                          created: 2022-11-04T13:27:55.522Z
-                          updated: 2022-11-04T13:27:55.522Z
-                          enrollmentEORINumber: '9999912345'
-                          movementEORINumber: GB1234567890
+                $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsResponse1'
               example:
                 _links:
                   self:
@@ -1017,16 +892,16 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/NotFound'
-                  - example:
-                      code: NOT_FOUND
-                      message: Supplied arrival notification not found or does not exist or has been archived or is not available to the EORI number.
-                               Not found if the page requested is greater than the total number of pages.
-              example:
-                code: NOT_FOUND
-                message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
-                         Not found if the page requested is greater than the total number of pages.
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                MovementNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                PageNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: The requested page does not exist.
         '406':
           description: Not Acceptable
           content:
@@ -1072,21 +947,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsResponse2'
-                  - description: JSON payload
-                    example:
-                      _links:
-                        self:
-                          href: /customs/transits/movements/arrivals/6365135ba5e821ee
-                        messages:
-                          href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages
-                      id: 6365135ba5e821ee
-                      movementReferenceNumber: ABC123
-                      created: 2022-11-10T15:32:51.459Z
-                      updated: 2022-11-10T15:32:51.459Z
-                      enrollmentEORINumber: GB1234567890
-                      movementEORINumber: GB1234567890
+                $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsResponse2'
               example:
                 _links:
                   self:
@@ -1104,16 +965,16 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/NotFound'
-                  - example:
-                      code: NOT_FOUND
-                      message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
-                               Not found if the page requested is greater than the total number of pages.
-              example:
-                code: NOT_FOUND
-                message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
-                         Not found if the page requested is greater than the total number of pages.
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                MovementNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                PageNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: The requested page does not exist.
         '406':
           description: Not Acceptable
           content:
@@ -1193,27 +1054,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsMessagesResponse'
-                  - description: JSON payload
-                    example:
-                      _links:
-                        self:
-                          href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages
-                        arrival:
-                          href: /customs/transits/movements/arrivals/63498209a2d89ad8
-                      totalCount: 1
-                      messages:
-                        - _links:
-                            self:
-                              href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages/634982098f02f00a
-                            arrival:
-                              href: /customs/transits/movements/arrivals/63498209a2d89ad8
-                          id: 634982098f02f00a
-                          arrivalId: 63498209a2d89ad8
-                          received: 2022-11-10T15:32:51.459Z
-                          type: IE007
-                          status: Success
+                $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsMessagesResponse'
               example:
                 _links:
                   self:
@@ -1233,31 +1074,26 @@ paths:
                     type: IE007
                     status: Success
         '404':
-          description: Not Found
+          description: Arrival or Page Not Found
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/NotFound'
-                  - example:
-                      code: NOT_FOUND
-                      message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.                               
-                               Not found if the page requested is greater than the total number of pages.
-              example:
-                code: NOT_FOUND
-                message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
-                         Not found if the page requested is greater than the total number of pages.
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                MovementNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                PageNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: The requested page does not exist.
         '406':
           description: Not Acceptable
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: The Accept header is missing or invalid.
-                    example:
-                      code: NOT_ACCEPTABLE
-                      message: The Accept header is missing or invalid.
+                $ref: '#/components/schemas/AcceptHeaderInvalid'
               example:
                 code: NOT_ACCEPTABLE
                 message: The Accept header is missing or invalid.
@@ -1293,15 +1129,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsMessagesResponse1'
-                  - description: JSON payload
-                    example:
-                      _links:
-                        self:
-                          href: /customs/transits/movements/arrivals/6365135ba5e821ee/messages/634982098f02f00a
-                        arrival:
-                          href: /customs/transits/movements/arrivals/6365135ba5e821ee
+                $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsMessagesResponse1'
               example:
                 _links:
                   self:
@@ -1313,11 +1141,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/BadRequest'
-                  - example:
-                      code: BAD_REQUEST
-                      message: The arrival message type is not available within XML or the message failed schema validation.
+                $ref: '#/components/schemas/BadRequest'
               example:
                 code: BAD_REQUEST
                 message: The arrival message type is not available within XML or the message failed schema validation.
@@ -1326,11 +1150,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/NotFound'
-                  - example:
-                      code: NOT_FOUND
-                      message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
+                $ref: '#/components/schemas/NotFound'
               example:
                 code: NOT_FOUND
                 message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
@@ -1339,12 +1159,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: The Accept header is missing or invalid.
-                    example:
-                      code: NOT_ACCEPTABLE
-                      message: The Accept header is missing or invalid.
+                $ref: '#/components/schemas/AcceptHeaderInvalid'
               example:
                 code: NOT_ACCEPTABLE
                 message: The Accept header is missing or invalid.
@@ -1353,11 +1168,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/RequestEntityTooLarge'
-                  - example:
-                      code: REQUEST_ENTITY_TOO_LARGE
-                      message: Your message size must be less than 5000000 bytes
+                $ref: '#/components/schemas/RequestEntityTooLarge'
               example:
                 code: REQUEST_ENTITY_TOO_LARGE
                 message: Your message size must be less than 5000000 bytes
@@ -1453,11 +1264,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/NotFound'
-                  - example:
-                      code: NOT_FOUND
-                      message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
+                $ref: '#/components/schemas/NotFound'
               example:
                 code: NOT_FOUND
                 message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
@@ -1466,12 +1273,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: The Accept header is missing or invalid.
-                    example:
-                      code: NOT_ACCEPTABLE
-                      message: The Accept header is missing or invalid.
+                $ref: '#/components/schemas/AcceptHeaderInvalid'
               example:
                 code: NOT_ACCEPTABLE
                 message: The Accept header is missing or invalid.
@@ -1518,24 +1320,14 @@ paths:
           content:
             application/xml:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsMessageBodyResponse'
-                  - description: XML payload
-                    xml:
-                      name: CustomsTransitsMovementsArrivalsMessageBodyResponse
-                      attribute: false
-                      wrapped: false
+                $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsMessageBodyResponse'
               example: '<ncts:CC007C PhaseID="NCTS5.0" xmlns:ncts="http://ncts.dgtaxud.ec">...</ncts:CC007C>'
         '404':
           description: Not Found
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/NotFound'
-                  - example:
-                      code: NOT_FOUND
-                      message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
+                $ref: '#/components/schemas/NotFound'
               example:
                 code: NOT_FOUND
                 message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
@@ -1684,11 +1476,14 @@ components:
       title: CustomsTransitsMovementsArrivalsMessagesResponse
       required:
         - _links
+        - totalCount
         - messages
       type: object
       properties:
         _links:
           $ref: '#/components/schemas/Links10'
+        totalCount:
+          type: number
         messages:
           type: array
           items:
@@ -1700,6 +1495,7 @@ components:
             href: /customs/transits/movements/arrivals/63498209a2d89ad8/messages
           arrival:
             href: /customs/transits/movements/arrivals/63498209a2d89ad8
+        totalCount: 1
         messages:
           - _links:
               self:
@@ -1782,11 +1578,14 @@ components:
       title: CustomsTransitsMovementsArrivalsResponse1
       required:
         - _links
+        - totalCount
         - arrivals
       type: object
       properties:
         _links:
           $ref: '#/components/schemas/Links7'
+        totalCount:
+          type: number
         arrivals:
           type: array
           items:
@@ -1796,6 +1595,7 @@ components:
         _links:
           self:
             href: /customs/transits/movements/arrivals
+        totalCount: 2
         arrivals:
           - _links:
               self:
@@ -1858,11 +1658,14 @@ components:
       title: CustomsTransitsMovementsDeparturesMessagesResponse
       required:
         - _links
+        - totalCount
         - messages
       type: object
       properties:
         _links:
           $ref: '#/components/schemas/Links2'
+        totalCount:
+          type: number
         messages:
           type: array
           items:
@@ -1874,6 +1677,7 @@ components:
             href: /customs/transits/movements/departures/6365135ba5e821ee/messages
           departure:
             href: /customs/transits/movements/departures/6365135ba5e821ee
+        totalCount: 1
         messages:
           - _links:
               self:
@@ -2005,10 +1809,14 @@ components:
       required:
         - _links
         - departures
+        - totalCount
       type: object
       properties:
         _links:
           $ref: '#/components/schemas/Links7'
+        totalCount:
+          type: number
+          description: Number of movements returned by the filter
         departures:
           type: array
           items:
@@ -2018,6 +1826,7 @@ components:
         _links:
           self:
             href: /customs/transits/movements/departures
+        totalCount: 1
         departures:
           - _links:
               self:
@@ -2066,19 +1875,19 @@ components:
           type: string
         movementEORINumber:
           type: string
-          example:
-            _links:
-              self:
-                href: /customs/transits/movements/departures/6365135ba5e821ee
-              messages:
-                href: /customs/transits/movements/departures/6365135ba5e821ee/messages
-            id: 63651574c3447b12
-            movementReferenceNumber: 27WF9X1FQ9RCKN0TM3
-            localReferenceNumber: DEF456
-            created: 2022-11-04T13:36:52.332Z
-            updated: 2022-11-04T13:36:52.332Z
-            enrollmentEORINumber: '9999912345'
-            movementEORINumber: GB1234567890
+      example:
+        _links:
+          self:
+            href: /customs/transits/movements/departures/6365135ba5e821ee
+          messages:
+            href: /customs/transits/movements/departures/6365135ba5e821ee/messages
+        id: 63651574c3447b12
+        movementReferenceNumber: 27WF9X1FQ9RCKN0TM3
+        localReferenceNumber: DEF456
+        created: 2022-11-04T13:36:52.332Z
+        updated: 2022-11-04T13:36:52.332Z
+        enrollmentEORINumber: '9999912345'
+        movementEORINumber: GB1234567890
     Departure1:
       title: Departure1
       required:
