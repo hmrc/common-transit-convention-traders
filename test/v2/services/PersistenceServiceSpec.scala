@@ -25,6 +25,7 @@ import org.mockito.Mockito.reset
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
+import org.scalacheck.Gen.const
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -46,6 +47,7 @@ import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.LocalReferenceNumber
+import v2.models.errors.PersistenceError.PageNotFound
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary
@@ -214,9 +216,10 @@ class PersistenceServiceSpec
         }
     }
 
-    "when a given movement is not found, should return a Left with an MovementNotFound" in {
+    "when a given movement is not found, and the page is 1, should return a MovementNotFound" in {
+
       when(
-        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(3))), eqTo(Some(ItemCount(35))), any())(any(), any())
+        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(1))), eqTo(Some(ItemCount(35))), any())(any(), any())
       )
         .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
@@ -225,12 +228,56 @@ class PersistenceServiceSpec
         MovementType.Departure,
         MovementId("1234567890abcdef"),
         dateTime.sample.get,
-        Some(PageNumber(3)),
+        Some(PageNumber(1)),
         Some(ItemCount(35)),
         dateTime.sample.get
       )
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.MovementNotFound(MovementId("1234567890abcdef"), MovementType.Departure))
+      }
+    }
+
+    "when a given movement is not found, and the page is greater than 1, should return a MovementNotFound" in {
+
+      when(
+        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(9))), eqTo(Some(ItemCount(35))), any())(any(), any())
+      )
+        .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
+
+      val result = sut.getMessages(
+        EORINumber("1"),
+        MovementType.Departure,
+        MovementId("1234567890abcdef"),
+        dateTime.sample.get,
+        Some(PageNumber(9)),
+        Some(ItemCount(35)),
+        dateTime.sample.get
+      )
+      whenReady(result.value) {
+        _ mustBe Left(PersistenceError.MovementNotFound(MovementId("1234567890abcdef"), MovementType.Departure))
+      }
+    }
+
+    "when a given movement is found and the page is greater than 1 and empty, then should return a Page Not Found" in {
+
+      val expected = PaginationMessageSummary(TotalCount(0), Seq.empty[MessageSummary])
+
+      when(
+        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(2))), eqTo(Some(ItemCount(35))), any())(any(), any())
+      )
+        .thenReturn(Future.successful(expected))
+
+      val result = sut.getMessages(
+        EORINumber("1"),
+        MovementType.Departure,
+        MovementId("1234567890abcdef"),
+        dateTime.sample.get,
+        Some(PageNumber(2)),
+        Some(ItemCount(35)),
+        dateTime.sample.get
+      )
+      whenReady(result.value) {
+        _ mustBe Left(PersistenceError.PageNotFound)
       }
     }
 
@@ -404,17 +451,17 @@ class PersistenceServiceSpec
 
   "Getting a list of Departures (Movement) by EORI" - {
 
-    "when a departure (movement) is found, should return a Right" in forAll(
+    "when a departure (movement) is found and page is 1, then should return the movements" in forAll(
       Gen.listOfN(3, arbitrary[MovementSummary]),
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
       (Gen.option(arbitrary[MovementReferenceNumber]), Gen.option(arbitrary[LocalReferenceNumber])),
-      (Gen.option(arbitrary[PageNumber]), Gen.option(arbitrary[ItemCount]))
+      Gen.option(arbitrary[ItemCount])
     ) {
-      (movementSummaries, updatedSinceMaybe, movementEORI, eori, referenceNumbers, pagination) =>
-        val pageNumber = pagination._1.sample.getOrElse(Some(PageNumber(0)))
-        val itemCount  = pagination._2.sample.getOrElse(Some(ItemCount(15)))
+      (movementSummaries, updatedSinceMaybe, movementEORI, eori, referenceNumbers, count) =>
+        val pageNumber = Some(PageNumber(1))
+        val itemCount  = count.sample.getOrElse(Some(ItemCount(15)))
         val mrn        = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
         val lrn        = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
 
@@ -452,21 +499,22 @@ class PersistenceServiceSpec
         }
     }
 
-    "when a departure movements are not found for given EORI, should return empty list" in forAll(
+    "when a departure movement is not found for a given EORI and the page is greater than 1, should return PageNotFound" in forAll(
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
       (Gen.option(arbitrary[MovementReferenceNumber]), Gen.option(arbitrary[LocalReferenceNumber])),
-      (Gen.option(arbitrary[PageNumber]), Gen.option(arbitrary[ItemCount])),
+      Gen.option(arbitrary[ItemCount]),
       Gen.option(arbitrary[OffsetDateTime])
     ) {
-      (updatedSinceMaybe, movementEORI, eori, referenceNumbers, paginationInfo, receivedUntil) =>
-        val pageNumber = paginationInfo._1.sample.getOrElse(Some(PageNumber(0)))
-        val itemCount  = paginationInfo._2.sample.getOrElse(Some(ItemCount(15)))
-        val mrn        = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
-        val lrn        = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
+      (updatedSinceMaybe, movementEORI, eori, referenceNumbers, count, receivedUntil) =>
+        // ensure page other than 1
+        val pageNumber = Some(PageNumber(12))
 
-        val expected = PaginationMovementSummary(TotalCount(0), List.empty[MovementSummary])
+        val itemCount = count.sample.getOrElse(Some(ItemCount(15)))
+        val mrn       = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
+        val lrn       = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
+        val expected  = PaginationMovementSummary(TotalCount(0), List.empty[MovementSummary])
 
         when(
           mockConnector.getMovements(
@@ -496,8 +544,98 @@ class PersistenceServiceSpec
             lrn
           )
         whenReady(result.value) {
-          _ mustBe Right(expected)
+          _ mustBe Left(PersistenceError.PageNotFound)
         }
+    }
+
+    "when departure movements are not found for page 1 for a given EORI, should return an empty list" in {
+
+      val movementEORI      = Some(EORINumber("GB1111111"))
+      val eori              = EORINumber("GB2222222")
+      val pageNumber        = Some(PageNumber(1))
+      val itemCount         = Some(ItemCount(15))
+      val mrn               = Some(MovementReferenceNumber("3CnsTh79I7vtOW1"))
+      val lrn               = Some(LocalReferenceNumber("2CnsTh79I7vtOW1"))
+      val updatedSinceMaybe = Some(OffsetDateTime.now())
+      val receivedUntil     = Some(OffsetDateTime.now())
+
+      val expected = PaginationMovementSummary(TotalCount(0), List.empty[MovementSummary])
+
+      when(
+        mockConnector.getMovements(
+          eori,
+          MovementType.Departure,
+          updatedSinceMaybe,
+          movementEORI,
+          mrn,
+          pageNumber,
+          itemCount,
+          receivedUntil,
+          lrn
+        )
+      )
+        .thenReturn(Future.successful(expected))
+
+      val result =
+        sut.getMovements(
+          eori,
+          MovementType.Departure,
+          updatedSinceMaybe,
+          movementEORI,
+          mrn,
+          pageNumber,
+          itemCount,
+          receivedUntil,
+          lrn
+        )
+      whenReady(result.value) {
+        _ mustBe Right(expected)
+      }
+    }
+
+    "when departure movements are not found for a page greater than 1 for given EORI, should return PageNotFound" in {
+
+      val movementEORI      = Some(EORINumber("GB1111111"))
+      val eori              = EORINumber("GB2222222")
+      val pageNumber        = Some(PageNumber(2))
+      val itemCount         = Some(ItemCount(15))
+      val mrn               = Some(MovementReferenceNumber("3CnsTh79I7vtOW1"))
+      val lrn               = Some(LocalReferenceNumber("2CnsTh79I7vtOW1"))
+      val updatedSinceMaybe = Some(OffsetDateTime.now())
+      val receivedUntil     = Some(OffsetDateTime.now())
+
+      val expected = PaginationMovementSummary(TotalCount(10), List.empty[MovementSummary])
+
+      when(
+        mockConnector.getMovements(
+          eori,
+          MovementType.Departure,
+          updatedSinceMaybe,
+          movementEORI,
+          mrn,
+          pageNumber,
+          itemCount,
+          receivedUntil,
+          lrn
+        )
+      )
+        .thenReturn(Future.successful(expected))
+
+      val result =
+        sut.getMovements(
+          eori,
+          MovementType.Departure,
+          updatedSinceMaybe,
+          movementEORI,
+          mrn,
+          pageNumber,
+          itemCount,
+          receivedUntil,
+          lrn
+        )
+      whenReady(result.value) {
+        _ mustBe Left(PersistenceError.PageNotFound)
+      }
     }
 
     "on a failed submission, should return a Left with an UnexpectedError" in forAll(
@@ -604,7 +742,7 @@ class PersistenceServiceSpec
 
   "Getting a list of Arrival message IDs" - {
 
-    "when an arrival is found, should return a Right of the sequence of message IDs" in forAll(
+    "when an arrival is found, should return a Right of the sequence of message IDs for any page number" in forAll(
       arbitrary[EORINumber],
       arbitrary[MovementId],
       Gen.option(arbitrary[OffsetDateTime]),
@@ -615,31 +753,73 @@ class PersistenceServiceSpec
       (eori, arrivalId, receivedSince, summary, pageNumber, itemCount) =>
         val expected = PaginationMessageSummary(TotalCount(summary.length), summary)
 
+        val page = Some(pageNumber.getOrElse(PageNumber(1)))
+
         when(
-          mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(pageNumber), eqTo(itemCount), eqTo(receivedSince))(any(), any())
+          mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(page), eqTo(itemCount), eqTo(receivedSince))(any(), any())
         )
           .thenReturn(Future.successful(expected))
 
-        val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, pageNumber, itemCount, receivedSince)
+        val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, page, itemCount, receivedSince)
         whenReady(result.value) {
           _ mustBe Right(expected)
         }
     }
 
-    "when an given arrival is not found, should return a Left with MovementNotFound" in forAll(
+    "when a given arrival is not found and the page is 1, should return a MovementNotFound" in forAll(
       arbitrary[EORINumber],
       arbitrary[MovementId],
       Gen.option(arbitrary[OffsetDateTime]),
-      Gen.option(arbitrary[PageNumber]),
       Gen.option(arbitrary[ItemCount])
     ) {
-      (eori, arrivalId, receivedSince, pageNumber, itemCount) =>
+      (eori, arrivalId, receivedSince, itemCount) =>
+        val pageNumber = Some(PageNumber(1))
+        val summary    = PaginationMessageSummary(TotalCount(0), List.empty[MessageSummary])
+
         when(mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(pageNumber), eqTo(itemCount), any())(any(), any()))
           .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
         val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, pageNumber, itemCount, receivedSince)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.MovementNotFound(arrivalId, MovementType.Arrival))
+        }
+    }
+
+    "when a given arrival is not found and the page is greater than 1, should return a MovementNotFound" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId],
+      Gen.option(arbitrary[OffsetDateTime]),
+      Gen.option(arbitrary[ItemCount])
+    ) {
+      (eori, arrivalId, receivedSince, itemCount) =>
+        val pageNumber = Some(PageNumber(12))
+        val summary    = PaginationMessageSummary(TotalCount(0), List.empty[MessageSummary])
+
+        when(mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(pageNumber), eqTo(itemCount), any())(any(), any()))
+          .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
+
+        val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, pageNumber, itemCount, receivedSince)
+        whenReady(result.value) {
+          _ mustBe Left(PersistenceError.MovementNotFound(arrivalId, MovementType.Arrival))
+        }
+    }
+
+    "when a given arrival is found and the page is greater than 1 and empty, should return a PageNotFound" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementId],
+      Gen.option(arbitrary[OffsetDateTime]),
+      Gen.option(arbitrary[ItemCount])
+    ) {
+      (eori, arrivalId, receivedSince, itemCount) =>
+        val pageNumber = Some(PageNumber(12))
+        val summary    = PaginationMessageSummary(TotalCount(0), List.empty[MessageSummary])
+
+        when(mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(pageNumber), eqTo(itemCount), any())(any(), any()))
+          .thenReturn(Future.successful(summary))
+
+        val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, pageNumber, itemCount, receivedSince)
+        whenReady(result.value) {
+          _ mustBe Left(PersistenceError.PageNotFound)
         }
     }
 
@@ -665,7 +845,7 @@ class PersistenceServiceSpec
 
   "Getting a list of Arrivals (Movement) by EORI" - {
 
-    "when an arrival (movement) is found, should return a Right" in forAll(
+    "when an arrival (movement) is found, then should return the movements, regardless of the page selected" in forAll(
       Gen.listOfN(3, arbitrary[MovementSummary]),
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
@@ -673,14 +853,17 @@ class PersistenceServiceSpec
       (Gen.option(arbitrary[MovementReferenceNumber]), Gen.option(arbitrary[LocalReferenceNumber])),
       (Gen.option(arbitrary[PageNumber]), Gen.option(arbitrary[ItemCount]))
     ) {
-
       (summaries, updatedSinceMaybe, movementEORI, eori, referenceNumbers, pagination) =>
-        val pageNumber              = pagination._1.sample.getOrElse(Some(PageNumber(0)))
+        val pageNumber = pagination._1.sample.getOrElse(Some(PageNumber(1))) match {
+          case None => Some(PageNumber(1))
+          case page => page
+        }
+
         val itemCount               = pagination._2.sample.getOrElse(Some(ItemCount(15)))
         val movementReferenceNumber = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
         val localReferenceNumber    = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
 
-        val expected = PaginationMovementSummary(TotalCount(summaries.length), summaries)
+        val expected = PaginationMovementSummary(TotalCount(100), summaries)
 
         when(
           mockConnector.getMovements(
@@ -714,17 +897,17 @@ class PersistenceServiceSpec
         }
     }
 
-    "when an arrival is not found, should return empty list" in forAll(
+    "when an arrival is not found and page is 1, should return empty list" in forAll(
       Gen.option(arbitrary[OffsetDateTime]),
       Gen.option(arbitrary[EORINumber]),
       arbitrary[EORINumber],
       (Gen.option(arbitrary[MovementReferenceNumber]), Gen.option(arbitrary[LocalReferenceNumber])),
-      (Gen.option(arbitrary[PageNumber]), Gen.option(arbitrary[ItemCount])),
+      Gen.option(arbitrary[ItemCount]),
       Gen.option(arbitrary[OffsetDateTime])
     ) {
-      (updatedSinceMaybe, movementEORI, eori, referenceNumbers, pagination, receivedUntil) =>
-        val pageNumber              = pagination._1.sample.getOrElse(Some(PageNumber(0)))
-        val itemCount               = pagination._2.sample.getOrElse(Some(ItemCount(15)))
+      (updatedSinceMaybe, movementEORI, eori, referenceNumbers, itemCount, receivedUntil) =>
+        val pageNumber              = Some(PageNumber(1))
+        val count                   = itemCount.sample.getOrElse(Some(ItemCount(15)))
         val movementReferenceNumber = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
         val localReferenceNumber    = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
 
@@ -737,7 +920,7 @@ class PersistenceServiceSpec
             movementEORI,
             movementReferenceNumber,
             pageNumber,
-            itemCount,
+            count,
             receivedUntil,
             localReferenceNumber
           )
@@ -752,7 +935,54 @@ class PersistenceServiceSpec
             movementEORI,
             movementReferenceNumber,
             pageNumber,
-            itemCount,
+            count,
+            receivedUntil,
+            localReferenceNumber
+          )
+        whenReady(result.value) {
+          _ mustBe Right(expected)
+        }
+    }
+
+    "when an arrival is not found and page is None, should return empty list" in forAll(
+      Gen.option(arbitrary[OffsetDateTime]),
+      Gen.option(arbitrary[EORINumber]),
+      arbitrary[EORINumber],
+      (Gen.option(arbitrary[MovementReferenceNumber]), Gen.option(arbitrary[LocalReferenceNumber])),
+      Gen.option(arbitrary[ItemCount]),
+      Gen.option(arbitrary[OffsetDateTime])
+    ) {
+      (updatedSinceMaybe, movementEORI, eori, referenceNumbers, itemCount, receivedUntil) =>
+        val pageNumber              = None
+        val count                   = itemCount.sample.getOrElse(Some(ItemCount(15)))
+        val movementReferenceNumber = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
+        val localReferenceNumber    = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
+
+        val expected = PaginationMovementSummary(TotalCount(0), List.empty[MovementSummary])
+        when(
+          mockConnector.getMovements(
+            eori,
+            MovementType.Arrival,
+            updatedSinceMaybe,
+            movementEORI,
+            movementReferenceNumber,
+            pageNumber,
+            count,
+            receivedUntil,
+            localReferenceNumber
+          )
+        )
+          .thenReturn(Future.successful(expected))
+
+        val result =
+          sut.getMovements(
+            eori,
+            MovementType.Arrival,
+            updatedSinceMaybe,
+            movementEORI,
+            movementReferenceNumber,
+            pageNumber,
+            count,
             receivedUntil,
             localReferenceNumber
           )
@@ -770,7 +1000,7 @@ class PersistenceServiceSpec
       Gen.option(arbitrary[OffsetDateTime])
     ) {
       (updatedSinceMaybe, movementEORI, eori, referenceNumbers, pagination, receivedUntil) =>
-        val pageNumber              = pagination._1.sample.getOrElse(Some(PageNumber(0)))
+        val pageNumber              = pagination._1.sample.getOrElse(Some(PageNumber(1)))
         val itemCount               = pagination._2.sample.getOrElse(Some(ItemCount(15)))
         val error                   = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
         val movementReferenceNumber = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
