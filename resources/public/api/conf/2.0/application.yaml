@@ -216,15 +216,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotFound'
-              examples:
-                MovementNotFound:
-                  value:
-                    code: NOT_FOUND
-                    message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
-                PageNotFound:
-                  value:
-                    code: NOT_FOUND
-                    message: The requested page does not exist.
+              example:
+                code: NOT_FOUND
+                message: The requested page does not exist
         '406':
           description: Not Acceptable
           content:
@@ -294,7 +288,7 @@ paths:
                 $ref: '#/components/schemas/NotFound'
               example:
                 code: NOT_FOUND
-                message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                message: Departure movement with ID abcdef0123456789 was not found.
         '406':
           description: Not Acceptable
           content:
@@ -407,11 +401,11 @@ paths:
                 MovementNotFound:
                   value:
                     code: NOT_FOUND
-                    message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                    message: Departure movement with ID abcdef0123456789 was not found.
                 PageNotFound:
                   value:
                     code: NOT_FOUND
-                    message: The requested page does not exist.
+                    message: The requested page does not exist
         '406':
           description: Not Acceptable
           content:
@@ -600,14 +594,16 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/NotFound'
-                  - example:
-                      code: NOT_FOUND
-                      message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
-              example:
-                code: NOT_FOUND
-                message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                MovementNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: Departure movement with ID abcdef0123456789 was not found
+                MessageNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: Message with ID fedcba9876543210 for movement abcdef0123456789 was not found
         '406':
           description: Not Acceptable
           content:
@@ -672,14 +668,20 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/NotFound'
-                  - example:
-                      code: NOT_FOUND
-                      message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
-              example:
-                code: NOT_FOUND
-                message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                $ref: '#/components/schemas/NotFound'
+              examples:
+                MovementNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: Departure movement with ID abcdef0123456789 was not found
+                MessageNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: Message with ID fedcba9876543210 for movement abcdef0123456789 was not found
+                BodyNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: Body for message id abcdef0123456789 does not exist
         '406':
           description: Not Acceptable
           content:
@@ -723,16 +725,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsResponse'
-                  - description: JSON payload
-                    example:
-                      _links:
-                        self:
-                          href: /customs/transits/movements/arrivals/62fb8f33d233578e
-                        messages:
-                          href: /customs/transits/movements/arrivals/62fb8f33d233578e/messages
-                      boxId: b54c2424-955b-496c-bbce-dfb9f57cd797
+                $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsResponse'
               example:
                 _links:
                   self:
@@ -893,26 +886,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotFound'
-              examples:
-                MovementNotFound:
-                  value:
-                    code: NOT_FOUND
-                    message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
-                PageNotFound:
-                  value:
-                    code: NOT_FOUND
-                    message: The requested page does not exist.
+              example:
+                code: NOT_FOUND
+                message: The requested page does not exist
         '406':
           description: Not Acceptable
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/AcceptHeaderInvalid'
-                  - description: The Accept header is missing or invalid.
-                    example:
-                      code: NOT_ACCEPTABLE
-                      message: The Accept header is missing or invalid.
+                $ref: '#/components/schemas/AcceptHeaderInvalid'
               example:
                 code: NOT_ACCEPTABLE
                 message: The Accept header is missing or invalid.
@@ -966,15 +948,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotFound'
-              examples:
-                MovementNotFound:
-                  value:
-                    code: NOT_FOUND
-                    message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
-                PageNotFound:
-                  value:
-                    code: NOT_FOUND
-                    message: The requested page does not exist.
+              example:
+                code: NOT_FOUND
+                message: Arrival movement with ID abcdef0123456789 was not found
         '406':
           description: Not Acceptable
           content:
@@ -1083,11 +1059,11 @@ paths:
                 MovementNotFound:
                   value:
                     code: NOT_FOUND
-                    message: Supplied departure not found or does not exist or has been archived or is not available to the EORI number.
+                    message: Arrival movement with ID abcdef0123456789 was not found
                 PageNotFound:
                   value:
                     code: NOT_FOUND
-                    message: The requested page does not exist.
+                    message: The requested page does not exist
         '406':
           description: Not Acceptable
           content:
@@ -1217,33 +1193,10 @@ paths:
           content:
             application/json+xml:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsMessagesResponse2'
-                  - description: JSON+XML payload
-                    xml:
-                      name: CustomsTransitsMovementsArrivalsMessagesResponse2
-                      attribute: false
-                      wrapped: false
+                $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsMessagesResponse2'
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsMessagesResponse2'
-                  - description: JSON payload
-                    example:
-                      _links:
-                        self:
-                          href: /customs/transits/movements/arrivals/62f4ebbbf581d4aa/messages/62f4ebbb765ba8c2
-                        arrival:
-                          href: /customs/transits/movements/arrivals/62f4ebbbf581d4aa
-                      id: 62f4ebbb765ba8c2
-                      arrivalId: 62f4ebbbf581d4aa
-                      received: 2022-08-11T11:44:59.83705
-                      type: IE007
-                      status: Success
-                      body: >
-                        n1.CC007C:
-                          @PhaseID: NCTS5.0
-                          ...
+                $ref: '#/components/schemas/CustomsTransitsMovementsArrivalsMessagesResponse2'
               example:
                 _links:
                   self:
@@ -1265,9 +1218,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotFound'
-              example:
-                code: NOT_FOUND
-                message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
+              examples:
+                MovementNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: Departure movement with ID abcdef0123456789 was not found
+                MessageNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: Message with ID fedcba9876543210 for movement abcdef0123456789 was not found
         '406':
           description: Not Acceptable
           content:
@@ -1328,9 +1287,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotFound'
-              example:
-                code: NOT_FOUND
-                message: Supplied arrival not found or does not exist or has been archived or is not available to the EORI number.
+              examples:
+                MovementNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: Arrival movement with ID abcdef0123456789 was not found
+                MessageNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: Message with ID fedcba9876543210 for movement abcdef0123456789 was not found
+                BodyNotFound:
+                  value:
+                    code: NOT_FOUND
+                    message: Body for message id abcdef0123456789 does not exist
         '406':
           description: Not Acceptable
           content:
