@@ -28,6 +28,7 @@ import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.models.errors.ExtractionError
+import v2.models.errors.FailedToValidateError
 import v2.models.request.MessageType
 
 import javax.inject.Inject
@@ -35,7 +36,7 @@ import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import akka.stream.alpakka.json.scaladsl.JsonReader
-import v2.models.errors.ExtractionError.MessageTypeNotFound
+import v2.models.errors.ExtractionError.BusinessValidationExtractionError
 
 @ImplementedBy(classOf[JsonMessageParsingServiceImpl])
 trait JsonMessageParsingService {
@@ -69,7 +70,7 @@ class JsonMessageParsingServiceImpl @Inject() (implicit materializer: Materializ
             val root = mt.replace("\"", "")
             messageTypeList.find(_.rootNode == root) match {
               case Some(messageType) => Right(messageType)
-              case None              => Left(MessageTypeNotFound(root))
+              case None              => Left(BusinessValidationExtractionError(root))
             }
         }
         .recover {
