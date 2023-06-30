@@ -124,7 +124,6 @@ class V2MovementsControllerImpl @Inject() (
   private lazy val fCounter: Counter = counter(s"failure-counter")
 
   private lazy val jsonOnlyAcceptHeader = Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)
-  private lazy val xmlOnlyAcceptHeader  = Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML)
 
   private lazy val jsonAndXmlAcceptHeaders = Seq(
     VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
@@ -319,7 +318,7 @@ class V2MovementsControllerImpl @Inject() (
         }
     }
 
-  private def acceptedMessageBody(
+  private def formatMessageBody(
     messageSummary: MessageSummary,
     acceptHeader: String,
     bodyAndSizeMaybe: Option[BodyAndSize]
@@ -340,6 +339,7 @@ class V2MovementsControllerImpl @Inject() (
             BodyAndContentType(MimeTypes.XML, bodyAndSize.body)
           )
       }
+
     bodyAndSizeMaybe match {
       case Some(value) => bodyExists(value)
       case None =>
@@ -401,7 +401,7 @@ class V2MovementsControllerImpl @Inject() (
           messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
           acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
           messageBody <- getBody(request.eoriNumber, movementType, movementId, messageId, messageSummary.body)
-          body        <- acceptedMessageBody(messageSummary, acceptHeader, messageBody)
+          body        <- formatMessageBody(messageSummary, acceptHeader, messageBody)
         } yield body).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Ok.chunked(response.body, Some(response.contentType))
