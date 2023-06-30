@@ -166,8 +166,8 @@ paths:
         - in: query
           name: page
           description: >
-            This is an optional query parameter, default is 1, that allows the selection of a specific page from a multi-page query.
-            A check is made on the page parameter to ensure it is a positive number.
+            This is an optional query parameter (default value is 1) that allows the selection of a specific page from a multi-page query. 
+            If used, you must enter a positive number.
           style: form
           schema:
             type: integer
@@ -175,8 +175,8 @@ paths:
         - in: query
           name: count
           description: >
-            This is an optional query parameter, default is 25, that allows the selection of a the number of items per page in a query.
-            A check is made on the count parameter to ensure it is a positive number.
+            This is an optional query parameter (default value is 25) that allows the selection of the number of items per page in a multi-page query. 
+            If used, you must enter a positive number.
           style: form
           schema:
             type: integer
@@ -384,8 +384,8 @@ paths:
         - in: query
           name: page
           description: >
-            This is an optional query parameter, default is 1, that allows the selection of a specific page from a multi-page query.
-            A check is made on the page parameter to ensure it is a positive number.
+            This is an optional query parameter (default value is 1) that allows the selection of a specific page from a multi-page query. 
+            If used, you must enter a positive number.
           style: form
           schema:
             type: integer
@@ -393,8 +393,8 @@ paths:
         - in: query
           name: count
           description: >
-            This is an optional query parameter, default is 25, that allows the selection of the number of items per page in a multi-page query.
-            A check is made on the count parameter to ensure it is a positive number.
+            This is an optional query parameter (default value is 25) that allows the selection of the number of items per page in a multi-page query. 
+            If used, you must enter a positive number.
           style: form
           schema:
             type: integer
@@ -915,8 +915,8 @@ paths:
         - in: query
           name: page
           description: >
-            This is an optional query parameter, default is 1, that allows the selection of a specific page from a multi-page query.
-            A check is made on the page parameter to ensure it is a positive number.
+            This is an optional query parameter (default value is 1) that allows the selection of a specific page from a multi-page query. 
+            If used, you must enter a positive number.
           style: form
           schema:
             type: integer
@@ -924,8 +924,8 @@ paths:
         - in: query
           name: count
           description: >
-            This is an optional query parameter, default is 25, that allows the selection of a the number of items per page in a multi-page query.
-            A check is made on the count parameter to ensure it is a positive number.
+            This is an optional query parameter (default value is 25) that allows the selection of the number of items per page in a multi-page query. 
+            If used, you must enter a positive number.
           style: form
           schema:
             type: integer
@@ -1140,8 +1140,8 @@ paths:
         - in: query
           name: page
           description: >
-            This is an optional query parameter, default is 1, that allows the selection of a specific page from a multi-page query.
-            A check is made on the page parameter to ensure it is a positive number.
+            This is an optional query parameter (default value is 1) that allows the selection of a specific page from a multi-page query. 
+            If used, you must enter a positive number.
           style: form
           schema:
             type: integer
@@ -1149,8 +1149,8 @@ paths:
         - in: query
           name: count
           description: >
-            This is an optional query parameter, default is 25, that allows the selection of the number of items per page in a multi-page query.
-            A check is made on the count parameter to ensure it is a positive number.
+            This is an optional query parameter (default value is 25) that allows the selection of the number of items per page in a multi-page query. 
+            If used, you must enter a positive number.
           style: form
           schema:
             type: integer
