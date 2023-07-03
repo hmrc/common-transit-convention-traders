@@ -36,7 +36,7 @@ paths:
         
         - will contain a URI, which you can use to get the message status
         - can also include an optional box ID, which you can use to match this movement to any messages received from the Push Pull Notifications API
-      
+        
         If you use this endpoint to send a large message (up to 5MB - this limit will later increase to 8MB), a successful response will include:
         
         - a URL and additional metadata that you must use when uploading your file
@@ -178,14 +178,18 @@ paths:
             example: 3CnsTh79I7vtOy6
         - in: query
           name: page
-          description: This is an optional query parameter, default is 1, that allows the selection of a specific page from a multi-page query.
+          description: >
+            This is an optional query parameter (default value is `1`) that allows the selection of a specific page from a multi-page query. 
+            If used, you must enter a positive number.
           style: form
           schema:
             type: integer
             example: 2
         - in: query
           name: count
-          description: This is an optional query parameter, default is 25, that allows the selection of a the number of items per page in a query.
+          description: >
+            This is an optional query parameter (default value is `25`) that allows the selection of the number of items per page in a multi-page query. 
+            If used, you must enter a positive number.
           style: form
           schema:
             type: integer
@@ -211,18 +215,18 @@ paths:
                     href: /customs/transits/movements/departures
                 totalCount: 1
                 departures:
-                - _links:
-                    self:
-                      href: /customs/transits/movements/departures/6365135ba5e821ee
-                    messages:
-                      href: /customs/transits/movements/departures/6365135ba5e821ee/messages
-                  id: 6365135ba5e821ee
-                  movementReferenceNumber: ABC123
-                  localReferenceNumber: DEF456
-                  created: 2022-11-10T15:32:51.459Z
-                  updated: 2022-11-10T15:32:51.459Z
-                  enrollmentEORINumber: GB1234567890
-                  movementEORINumber: GB1234567890
+                  - _links:
+                      self:
+                        href: /customs/transits/movements/departures/6365135ba5e821ee
+                      messages:
+                        href: /customs/transits/movements/departures/6365135ba5e821ee/messages
+                    id: 6365135ba5e821ee
+                    movementReferenceNumber: ABC123
+                    localReferenceNumber: DEF456
+                    created: 2022-11-10T15:32:51.459Z
+                    updated: 2022-11-10T15:32:51.459Z
+                    enrollmentEORINumber: GB1234567890
+                    movementEORINumber: GB1234567890
         '404':
           description: Not Found
           content:
@@ -327,7 +331,7 @@ paths:
         Movements older than 31 days are archived, so any messages to related to them cannot be returned by the API.
         
         For a multi-page query you can filter for a specific page, and optionally the number of items per page.
-  
+        
         A successful response will include the total count of the number of messages and Movement Reference Number (MRN) only after it has been allocated to a movement.
         <br/><br/>
         The `status` parameter in a successful response can have the following values:
@@ -359,14 +363,18 @@ paths:
             example: 2021-06-21T09:00:00Z
         - in: query
           name: page
-          description: This is an optional query parameter, default is 1, that allows the selection of a specific page from a multi-page query.
+          description: >
+            This is an optional query parameter (default value is `1`) that allows the selection of a specific page from a multi-page query. 
+            If used, you must enter a positive number.
           style: form
           schema:
             type: integer
             example: 2
         - in: query
           name: count
-          description: This is an optional query parameter, default is 25, that allows the selection of the number of items per page in a multi-page query.
+          description: >
+            This is an optional query parameter (default value is `25`) that allows the selection of the number of items per page in a multi-page query. 
+            If used, you must enter a positive number.
           style: form
           schema:
             type: integer
@@ -846,14 +854,18 @@ paths:
             example: 3CnsTh79I7vtOy6
         - in: query
           name: page
-          description: This is an optional query parameter, default is 1, that allows the selection of a specific page from a multi-page query.
+          description: >
+            This is an optional query parameter (default value is `1`) that allows the selection of a specific page from a multi-page query. 
+            If used, you must enter a positive number.
           style: form
           schema:
             type: integer
             example: 2
         - in: query
           name: count
-          description: This is an optional query parameter, default is 25, that allows the selection of a the number of items per page in a multi-page query.
+          description: >
+            This is an optional query parameter (default value is `25`) that allows the selection of the number of items per page in a multi-page query. 
+            If used, you must enter a positive number.
           style: form
           schema:
             type: integer
@@ -1025,14 +1037,18 @@ paths:
             example: 2021-06-21T09:00:00Z
         - in: query
           name: page
-          description: This is an optional query parameter, default is 1, that allows the selection of a specific page from a multi-page query.
+          description: >
+            This is an optional query parameter (default value is `1`) that allows the selection of a specific page from a multi-page query. 
+            If used, you must enter a positive number.
           style: form
           schema:
             type: integer
             example: 2
         - in: query
           name: count
-          description: This is an optional query parameter, default is 25, that allows the selection of the number of items per page in a multi-page query.
+          description: >
+            This is an optional query parameter (default value is `25`) that allows the selection of the number of items per page in a multi-page query. 
+            If used, you must enter a positive number.
           style: form
           schema:
             type: integer
