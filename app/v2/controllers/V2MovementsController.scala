@@ -345,7 +345,7 @@ class V2MovementsControllerImpl @Inject() (
     bodyAndSizeMaybe match {
       case Some(value) => bodyExists(value)
       case None =>
-        EitherT.leftT[Future, BodyAndContentType](PresentationError.notFoundError(s"Body for message id ${messageSummary.id} does not exist"))
+        EitherT.leftT[Future, BodyAndContentType](PresentationError.notFoundError(s"Body for message id ${messageSummary.id.value} does not exist"))
     }
   }
 
