@@ -4304,7 +4304,7 @@ class V2MovementsControllerSpec
                   contentType(result).get mustBe MimeTypes.JSON
                   contentAsJson(result) mustBe Json.obj(
                     "code"    -> "NOT_ACCEPTABLE",
-                    "message" -> "Message are greater then 1 bytes and can not retrieve as json"
+                    "message" -> "Messages larger than 1 bytes cannot be retrieved in JSON"
                   )
                 case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML =>
                   status(result) mustBe OK

@@ -329,7 +329,7 @@ class V2MovementsControllerImpl @Inject() (
       acceptHeader match {
         case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON if bodyAndSize.size > config.smallMessageSizeLimit =>
           EitherT.leftT[Future, BodyAndContentType](
-            PresentationError.notAcceptableError(s"Message are greater then ${config.smallMessageSizeLimit} bytes and can not retrieve as json")
+            PresentationError.notAcceptableError(s"Messages larger than ${config.smallMessageSizeLimit} bytes cannot be retrieved in JSON")
           )
         case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
           for {
