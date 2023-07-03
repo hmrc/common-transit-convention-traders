@@ -328,7 +328,9 @@ class V2MovementsControllerImpl @Inject() (
     def bodyExists(bodyAndSize: BodyAndSize): EitherT[Future, PresentationError, BodyAndContentType] =
       acceptHeader match {
         case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON if bodyAndSize.size > config.smallMessageSizeLimit =>
-          EitherT.leftT[Future, BodyAndContentType](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
+          EitherT.leftT[Future, BodyAndContentType](
+            PresentationError.notAcceptableError(s"Message are greater then ${config.smallMessageSizeLimit} bytes and can not retrieve as json")
+          )
         case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
           for {
             jsonStream <- conversionService.xmlToJson(messageSummary.messageType.get, bodyAndSize.body).asPresentation

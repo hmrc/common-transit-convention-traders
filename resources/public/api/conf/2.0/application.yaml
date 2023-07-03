@@ -653,7 +653,8 @@ paths:
         <br/><br/>
         The response can be returned in the following format based on the provided `Accept` header:
         
-         - `application/vnd.hmrc.2.0+xml`: XML, where the message is provided without any other metadata
+         - `application/vnd.hmrc.2.0+xml`: XML, where the message is provided without any other metadata.
+         - `application/vnd.hmrc.2.0+json`: JSON, where the message is provided without any other metadata.
         
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.
       operationId: getMessageBodyRelatedToDepartureAndMessageID
@@ -1279,7 +1280,8 @@ paths:
         <br/><br/>
         The response can be returned in the following format based on the provided `Accept` header:
         
-         - `application/vnd.hmrc.2.0+xml`: XML, where the message is provided without any other metadata
+         - `application/vnd.hmrc.2.0+xml`: XML, where the message is provided without any other metadata.
+         - `application/vnd.hmrc.2.0+json`: JSON, where the message is provided without any other metadata.
         
         **Note:** You can view a transit movement only if your Economic Operators Registration and Identification (EORI) number matches the EORI number that created the transit declaration for that movement. Your EORI number is part of the bearer token that you use for API authentication.\n
       operationId: getMessageBodyRelatedToArrivalAndMessageID
@@ -2066,13 +2068,14 @@ components:
       name: Accept
       in: header
       description: >-
-        Specifies the response format, which must be XML, and the [version](/api-documentation/docs/reference-guide#versioning) of the API to be used.
-        Acceptable value: `application/vnd.hmrc.2.0+xml`.
+        Specifies the response format, which must be XML or JSON, and the [version](/api-documentation/docs/reference-guide#versioning) of the API to be used.
+        Acceptable values are : `application/vnd.hmrc.2.0+xml` or `application/vnd.hmrc.2.0+json`.
       required: true
       schema:
         type: string
         enum:
           - application/vnd.hmrc.2.0+xml
+          - application/vnd.hmrc.2.0+json
     contentXmlJsonHeader:
       name: Content-Type
       in: header
