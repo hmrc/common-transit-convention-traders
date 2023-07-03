@@ -41,6 +41,9 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import v2.models.errors.ExtractionError.MessageTypeNotFound
 
+import scala.concurrent.duration.DurationInt
+import scala.util.Using
+
 @ImplementedBy(classOf[JsonMessageParsingServiceImpl])
 trait JsonMessageParsingService {
 
@@ -61,27 +64,18 @@ class JsonMessageParsingServiceImpl @Inject() (implicit materializer: Materializ
     messageTypeList: Seq[MessageType]
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, ExtractionError, MessageType] =
     EitherT(
-      source
-        .viaMat(JsonReader.select("$"))(Keep.right)
-        .via(Flow.fromFunction(_.utf8String))
-        .withAttributes(
-          Attributes.logLevels(
-            onFinish = LogLevels.Off // prevents exceptions when traders send malformed XML
-          )
-        )
-        .runWith(Sink.head)
-        .map {
-          mt =>
-            val jsonNode: JsonNode      = mapper.readTree(mt)
-            val rootNode                = jsonNode.fields().next().getKey
-            val messageTypeFromRootNode = rootNode.split(":")(1)
-            messageTypeList.find(_.rootNode == messageTypeFromRootNode) match {
-              case Some(messageType) => Right(messageType)
-              case None              => Left(MessageTypeNotFound(messageTypeFromRootNode))
-            }
-        }
-        .recover {
-          case _ => Left(ExtractionError.MalformedInput)
-        }
+      Future.fromTry(Using(source.runWith(StreamConverters.asInputStream(20.seconds))) {
+        jsonInput =>
+          val jsonNode: JsonNode      = mapper.readTree(jsonInput)
+          val rootNode                = jsonNode.fields().next().getKey
+          val messageTypeFromRootNode = rootNode.split(":")(1)
+          messageTypeList.find(_.rootNode == messageTypeFromRootNode) match {
+            case Some(messageType) => Right(messageType)
+            case None              => Left(MessageTypeNotFound(messageTypeFromRootNode))
+          }
+      }.recover {
+        case _ => Left(ExtractionError.MalformedInput)
+      })
     )
+
 }
