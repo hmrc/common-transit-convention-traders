@@ -23,12 +23,12 @@ import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.models.errors.ExtractionError
-import v2.models.errors.FailedToValidateError
 import v2.models.request.MessageType
 
 import javax.inject.Inject
@@ -36,7 +36,10 @@ import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import akka.stream.alpakka.json.scaladsl.JsonReader
-import v2.models.errors.ExtractionError.BusinessValidationExtractionError
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import v2.models.errors.ExtractionError.MessageTypeNotFound
 
 @ImplementedBy(classOf[JsonMessageParsingServiceImpl])
 trait JsonMessageParsingService {
@@ -51,13 +54,15 @@ trait JsonMessageParsingService {
 @Singleton
 class JsonMessageParsingServiceImpl @Inject() (implicit materializer: Materializer) extends JsonMessageParsingService {
 
+  private val mapper = new ObjectMapper().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+
   override def extractMessageType(
     source: Source[ByteString, _],
     messageTypeList: Seq[MessageType]
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, ExtractionError, MessageType] =
     EitherT(
       source
-        .viaMat(JsonReader.select("$.*.messageType"))(Keep.right)
+        .viaMat(JsonReader.select("$"))(Keep.right)
         .via(Flow.fromFunction(_.utf8String))
         .withAttributes(
           Attributes.logLevels(
@@ -67,10 +72,12 @@ class JsonMessageParsingServiceImpl @Inject() (implicit materializer: Materializ
         .runWith(Sink.head)
         .map {
           mt =>
-            val root = mt.replace("\"", "")
-            messageTypeList.find(_.rootNode == root) match {
+            val jsonNode: JsonNode      = mapper.readTree(mt)
+            val rootNode                = jsonNode.fields().next().getKey
+            val messageTypeFromRootNode = rootNode.split(":")(1)
+            messageTypeList.find(_.rootNode == messageTypeFromRootNode) match {
               case Some(messageType) => Right(messageType)
-              case None              => Left(BusinessValidationExtractionError(root))
+              case None              => Left(MessageTypeNotFound(messageTypeFromRootNode))
             }
         }
         .recover {

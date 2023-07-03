@@ -18,7 +18,6 @@ package v2.controllers
 
 import cats.data.EitherT
 import play.api.Logging
-import v2.models.errors.FailedToValidateError.BusinessValidationError
 import v2.models.errors._
 
 import scala.concurrent.ExecutionContext
@@ -112,9 +111,8 @@ trait ConvertError extends Logging {
     import v2.models.errors.ExtractionError._
 
     override def convert(extractionError: ExtractionError): PresentationError = extractionError match {
-      case MalformedInput                       => PresentationError.badRequestError("Input was malformed")
-      case MessageTypeNotFound(messageType)     => PresentationError.badRequestError(s"$messageType is not a valid message type")
-      case BusinessValidationExtractionError(_) => PresentationError.businessValidationError("Root node doesn't match with the messageType")
+      case MalformedInput                   => PresentationError.badRequestError("Input was malformed")
+      case MessageTypeNotFound(messageType) => PresentationError.badRequestError(s"$messageType is not a valid message type")
     }
   }
 
