@@ -18,17 +18,22 @@ package v2.connectors
 
 import akka.stream.scaladsl.Sink
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
+import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
 import io.lemonlabs.uri.Url
+import org.mockito.Mockito.reset
 import org.mockito.Mockito.when
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.Status.OK
 import play.api.libs.json.Json
@@ -38,6 +43,11 @@ import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.TestMetrics
 import utils.WiremockSuite
 import v2.base.TestActorSystem
+import v2.models.ClientId
+import v2.models.EORINumber
+import v2.models.MessageId
+import v2.models.MovementId
+import v2.models.MovementType
 import v2.models.responses.UpscanFormTemplate
 import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.UpscanReference
@@ -48,6 +58,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class UpscanConnectorSpec
     extends AnyFreeSpec
+    with BeforeAndAfterEach
     with HttpClientV2Support
     with Matchers
     with ScalaFutures
@@ -55,40 +66,97 @@ class UpscanConnectorSpec
     with WiremockSuite
     with MockitoSugar
     with CommonGenerators
-    with TestActorSystem {
+    with TestActorSystem
+    with ScalaCheckDrivenPropertyChecks {
 
-  val mockAppConfig = mock[AppConfig]
+  val mockAppConfig: AppConfig = mock[AppConfig]
 
-  val movementId   = arbitraryMovementId.arbitrary.sample.get
-  val messageId    = arbitraryMessageId.arbitrary.sample.get
-  val eoriNumber   = arbitraryEORINumber.arbitrary.sample.get
-  val movementType = arbitraryMovementType.arbitrary.sample.get
+  val movementId: MovementId     = arbitraryMovementId.arbitrary.sample.get
+  val messageId: MessageId       = arbitraryMessageId.arbitrary.sample.get
+  val eoriNumber: EORINumber     = arbitraryEORINumber.arbitrary.sample.get
+  val movementType: MovementType = arbitraryMovementType.arbitrary.sample.get
 
-  when(mockAppConfig.upscanInitiateUrl).thenAnswer {
-    _ => Url.parse(server.baseUrl())
-  }
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    reset(mockAppConfig)
 
-  when(mockAppConfig.commmonTransitConventionTradersUrl).thenAnswer {
-    _ => Url.parse(server.baseUrl())
+    when(mockAppConfig.upscanInitiateUrl).thenAnswer {
+      _ => Url.parse(server.baseUrl())
+    }
+
+    when(mockAppConfig.commmonTransitConventionTradersUrl).thenAnswer {
+      _ => Url.parse("https://ctc.hmrc.gov.uk/")
+    }
+
+    when(mockAppConfig.upscanMaximumFileSize).thenReturn(2000)
   }
 
   lazy val sut = new UpscanConnectorImpl(mockAppConfig, httpClientV2, new TestMetrics)
 
   "POST /upscan/v2/initiate" - {
-    "when making a successful call to upscan initiate, must return upscan upload url" in {
-      server.stubFor(
-        post(
-          urlEqualTo("/upscan/v2/initiate")
-        ).willReturn(
-          aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(upscanResponse)))
+    "when making a successful call to upscan initiate with client ID query strings turned on, must return upscan upload url" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementType],
+      arbitrary[MovementId],
+      arbitrary[MessageId],
+      arbitrary[ClientId]
+    ) {
+      (eoriNumber, movementType, movementId, messageId, clientId) =>
+        when(mockAppConfig.forwardClientIdToUpscan).thenReturn(true)
+        server.stubFor(
+          post(
+            urlEqualTo("/upscan/v2/initiate")
+          )
+            .withRequestBody(
+              equalToJson(s"""{
+                  |    "callbackUrl": "https://ctc.hmrc.gov.uk/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}?clientId=${clientId.value}",
+                  |    "maximumFileSize": 2000
+                  |}
+                  |""".stripMargin)
+            )
+            .willReturn(
+              aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(upscanResponse)))
+            )
         )
-      )
-      implicit val hc = HeaderCarrier()
-      val result      = sut.upscanInitiate(eoriNumber, movementType, movementId, messageId)
+        implicit val hc: HeaderCarrier = HeaderCarrier(otherHeaders = Seq("X-Client-Id" -> clientId.value))
+        val result                     = sut.upscanInitiate(eoriNumber, movementType, movementId, messageId)
 
-      whenReady(result) {
-        _ mustBe upscanResponse
-      }
+        whenReady(result) {
+          _ mustBe upscanResponse
+        }
+
+    }
+
+    "when making a successful call to upscan initiate with client ID query strings turned off, must return upscan upload url" in forAll(
+      arbitrary[EORINumber],
+      arbitrary[MovementType],
+      arbitrary[MovementId],
+      arbitrary[MessageId],
+      arbitrary[ClientId]
+    ) {
+      (eoriNumber, movementType, movementId, messageId, clientId) =>
+        when(mockAppConfig.forwardClientIdToUpscan).thenReturn(false)
+        server.stubFor(
+          post(
+            urlEqualTo("/upscan/v2/initiate")
+          )
+            .withRequestBody(
+              equalToJson(s"""{
+                   |    "callbackUrl": "https://ctc.hmrc.gov.uk/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}",
+                   |    "maximumFileSize": 2000
+                   |}
+                   |""".stripMargin)
+            )
+            .willReturn(
+              aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(upscanResponse)))
+            )
+        )
+        implicit val hc: HeaderCarrier = HeaderCarrier(otherHeaders = Seq("X-Client-Id" -> clientId.value))
+        val result                     = sut.upscanInitiate(eoriNumber, movementType, movementId, messageId)
+
+        whenReady(result) {
+          _ mustBe upscanResponse
+        }
 
     }
 
@@ -98,7 +166,7 @@ class UpscanConnectorSpec
           urlEqualTo("/upscan/v2/initiate")
         ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
       )
-      implicit val hc = HeaderCarrier()
+      implicit val hc: HeaderCarrier = HeaderCarrier()
       val result = sut
         .upscanInitiate(eoriNumber, movementType, movementId, messageId)
         .map(
@@ -126,8 +194,8 @@ class UpscanConnectorSpec
           aResponse().withStatus(OK).withBody(expectedResponse)
         )
       )
-      implicit val hc = HeaderCarrier()
-      val result      = sut.upscanGetFile(DownloadUrl(Url.parse(server.baseUrl()).toString()))
+      implicit val hc: HeaderCarrier = HeaderCarrier()
+      val result                     = sut.upscanGetFile(DownloadUrl(Url.parse(server.baseUrl()).toString()))
 
       whenReady(result) {
         _.reduce(_ ++ _)
@@ -146,7 +214,7 @@ class UpscanConnectorSpec
           urlEqualTo("/") // encode only path part of URL
         ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
       )
-      implicit val hc = HeaderCarrier()
+      implicit val hc: HeaderCarrier = HeaderCarrier()
       val result = sut
         .upscanGetFile(DownloadUrl(Url.parse(server.baseUrl()).toString()))
         .map(
@@ -162,13 +230,13 @@ class UpscanConnectorSpec
     }
   }
 
-  private def upscanResponse =
+  private val upscanResponse =
     UpscanInitiateResponse(
       UpscanReference("b72d9aea-fdb9-40f1-800c-3612154baf07"),
       UpscanFormTemplate(
         "http://localhost:9570/upscan/upload-proxy",
         Map(
-          "x-amz-meta-callback-url"             -> "https://myservice.com/callback",
+          "x-amz-meta-callback-url"             -> s"https://myservice.com/callback",
           "x-amz-date"                          -> "20230118T135545Z",
           "success_action_redirect"             -> "https://myservice.com/nextPage?key=b72d9aea-fdb9-40f1-800c-3612154baf07",
           "x-amz-credential"                    -> "ASIAxxxxxxxxx/20180202/eu-west-2/s3/aws4_request",

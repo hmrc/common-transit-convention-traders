@@ -53,7 +53,6 @@ import scala.annotation.nowarn
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-@nowarn("msg=dead code following this construct")
 class UpscanServiceSpec
     extends AnyFreeSpec
     with Matchers
