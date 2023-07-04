@@ -4068,269 +4068,381 @@ class V2MovementsControllerSpec
       val movementId             = arbitraryMovementId.arbitrary.sample.value
       val messageId              = arbitraryMessageId.arbitrary.sample.value
       val xml                    = "<test>ABC</test>"
+      val json                   = Json.obj("test" -> "ABC")
       val smallMessageSummaryXml = arbitraryMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = Some(XmlPayload(xml)), uri = None)
       val largeMessageSummaryXml =
         arbitraryMessageSummaryXml.arbitrary.sample.value
           .copy(id = messageId, body = None, uri = Some(ObjectStoreURI("common-transit-convention-traders/movements/123.xml")))
-
-      val headers =
-        FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML))
-      val request =
-        FakeRequest(
-          "GET",
-          v2.controllers.routes.V2MovementsController.getMessageBody(movementType, movementId, messageId).url,
-          headers,
-          Source.empty[ByteString]
-        )
-
-      "for a small message - accept header set to application/vnd.hmrc.2.0+xml" - {
-
-        "when the message is found" in {
-          val ControllerAndMocks(
-            sut,
-            _,
-            mockPersistenceService,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-          ) = createControllerAndMocks()
-          when(
-            mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
-              any[HeaderCarrier],
-              any[ExecutionContext]
+      val smallMessageSummaryJson = smallMessageSummaryXml.copy(body = Some(JsonPayload("""{"test": "ABC"}""")), uri = None)
+      val smallMessageSummaryInObjectStore =
+        smallMessageSummaryXml.copy(body = None, uri = Some(ObjectStoreURI("common-transit-convention-traders/movements/123.xml")))
+      Seq(
+        VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
+        VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML
+      ).foreach {
+        acceptHeaderValue =>
+          val headers =
+            FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
+          val request =
+            FakeRequest(
+              "GET",
+              v2.controllers.routes.V2MovementsController.getMessageBody(movementType, movementId, messageId).url,
+              headers,
+              Source.empty[ByteString]
             )
-          )
-            .thenAnswer(
-              _ => EitherT.rightT(smallMessageSummaryXml)
-            )
+          s"for a small message, when the accept header equals $acceptHeaderValue" - {
 
-          val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+            "when the message is stored in mongo and is found" in {
+              val ControllerAndMocks(
+                sut,
+                _,
+                mockPersistenceService,
+                _,
+                _,
+                mockConversionService,
+                _,
+                _,
+                _,
+                _,
+                _
+              ) = createControllerAndMocks()
+              when(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenAnswer(
+                  _ => EitherT.rightT(smallMessageSummaryXml)
+                )
+              if (acceptHeaderValue == VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) {
+                when(
+                  mockConversionService.xmlToJson(eqTo(smallMessageSummaryXml.messageType.get), any())(any(), any(), any())
+                ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
+              }
+              val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
-          status(result) mustBe OK
-          contentType(result).get mustBe MimeTypes.XML
-          contentAsString(result) mustBe xml
-        }
+              status(result) mustBe OK
+              acceptHeaderValue match {
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
+                  contentAsJson(result) mustBe Json.toJson(json)
+                  contentType(result).get mustBe MimeTypes.JSON
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML =>
+                  contentAsString(result) mustBe xml
+                  contentType(result).get mustBe MimeTypes.XML
+              }
 
-        "when no message is found" in {
-          val ControllerAndMocks(
-            sut,
-            _,
-            mockPersistenceService,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-          ) = createControllerAndMocks()
-          when(
-            mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
-              any[HeaderCarrier],
-              any[ExecutionContext]
-            )
-          )
-            .thenAnswer(
-              _ => EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))
-            )
+            }
 
-          val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+            "when the message is stored in object store and is found" in {
+              val ControllerAndMocks(
+                sut,
+                _,
+                mockPersistenceService,
+                _,
+                _,
+                mockConversionService,
+                _,
+                _,
+                _,
+                _,
+                _
+              ) = createControllerAndMocks()
+              when(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenAnswer(
+                  _ => EitherT.rightT(smallMessageSummaryInObjectStore)
+                )
 
-          status(result) mustBe NOT_FOUND
-          contentType(result).get mustBe MimeTypes.JSON
-          contentAsJson(result) mustBe Json.obj(
-            "code"    -> "NOT_FOUND",
-            "message" -> s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
-          )
-        }
+              when(
+                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                  any(),
+                  any(),
+                  any()
+                )
+              )
+                .thenAnswer(
+                  _ => EitherT.rightT(Source.single(ByteString(xml)))
+                )
 
-        "when formatter service fails" in {
-          val ControllerAndMocks(
-            sut,
-            _,
-            mockPersistenceService,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-          ) = createControllerAndMocks()
-          when(
-            mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
-              any[HeaderCarrier],
-              any[ExecutionContext]
-            )
-          )
-            .thenAnswer(
-              _ => EitherT.rightT(smallMessageSummaryXml)
-            )
+              if (acceptHeaderValue == VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) {
+                when(
+                  mockConversionService.xmlToJson(eqTo(smallMessageSummaryXml.messageType.get), any())(any(), any(), any())
+                ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
+              }
 
-          val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+              val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
-          status(result) mustBe OK
-          contentType(result).get mustBe MimeTypes.XML
-          contentAsString(result) mustBe xml
-        }
+              status(result) mustBe OK
+              acceptHeaderValue match {
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
+                  contentAsJson(result) mustBe Json.toJson(json)
+                  contentType(result).get mustBe MimeTypes.JSON
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML =>
+                  contentAsString(result) mustBe xml
+                  contentType(result).get mustBe MimeTypes.XML
+                case _ => fail("This should not be reached")
+              }
 
-        "when an unknown error occurs" in {
-          val ControllerAndMocks(
-            sut,
-            _,
-            mockPersistenceService,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-          ) = createControllerAndMocks()
-          when(
-            mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
-              any[HeaderCarrier],
-              any[ExecutionContext]
-            )
-          )
-            .thenAnswer(
-              _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
-            )
+            }
 
-          val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+            "when no message is found" in {
+              val ControllerAndMocks(
+                sut,
+                _,
+                mockPersistenceService,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _
+              ) = createControllerAndMocks()
+              when(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenAnswer(
+                  _ => EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))
+                )
 
-          status(result) mustBe INTERNAL_SERVER_ERROR
-          contentType(result).get mustBe MimeTypes.JSON
-          contentAsJson(result) mustBe Json.obj(
-            "code"    -> "INTERNAL_SERVER_ERROR",
-            "message" -> "Internal server error"
-          )
-        }
+              val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+
+              status(result) mustBe NOT_FOUND
+              contentType(result).get mustBe MimeTypes.JSON
+              contentAsJson(result) mustBe Json.obj(
+                "code"    -> "NOT_FOUND",
+                "message" -> s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
+              )
+            }
+
+            "when an unknown error occurs" in {
+              val ControllerAndMocks(
+                sut,
+                _,
+                mockPersistenceService,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _
+              ) = createControllerAndMocks()
+              when(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenAnswer(
+                  _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
+                )
+
+              val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+
+              status(result) mustBe INTERNAL_SERVER_ERROR
+              contentType(result).get mustBe MimeTypes.JSON
+              contentAsJson(result) mustBe Json.obj(
+                "code"    -> "INTERNAL_SERVER_ERROR",
+                "message" -> "Internal server error"
+              )
+            }
+          }
+
+          s"for a large message,when the accept header equals $acceptHeaderValue" - {
+
+            "when the message is found but greater than small message limit" in {
+              val ControllerAndMocks(
+                sut,
+                _,
+                mockPersistenceService,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                mockAppConfig
+              ) = createControllerAndMocks()
+              when(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenAnswer(
+                  _ => EitherT.rightT(largeMessageSummaryXml)
+                )
+              when(mockAppConfig.smallMessageSizeLimit).thenReturn(1)
+              when(
+                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                  any(),
+                  any(),
+                  any()
+                )
+              )
+                .thenAnswer(
+                  _ => EitherT.rightT(Source.single(ByteString(xml)))
+                )
+
+              val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+
+              acceptHeaderValue match {
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
+                  status(result) mustBe NOT_ACCEPTABLE
+                  contentType(result).get mustBe MimeTypes.JSON
+                  contentAsJson(result) mustBe Json.obj(
+                    "code"    -> "NOT_ACCEPTABLE",
+                    "message" -> "Messages larger than 1 bytes cannot be retrieved in JSON"
+                  )
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML =>
+                  status(result) mustBe OK
+                  contentType(result).get mustBe MimeTypes.XML
+                  contentAsString(result) mustBe xml
+                case _ => fail("This should not be reached")
+              }
+
+            }
+
+            "when the message is found and within the small message limit " in {
+              val ControllerAndMocks(
+                sut,
+                _,
+                mockPersistenceService,
+                _,
+                _,
+                mockConversionService,
+                _,
+                _,
+                _,
+                _,
+                mockAppConfig
+              ) = createControllerAndMocks()
+              when(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenAnswer(
+                  _ => EitherT.rightT(largeMessageSummaryXml)
+                )
+              when(mockAppConfig.smallMessageSizeLimit).thenReturn(50000)
+              when(
+                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                  any(),
+                  any(),
+                  any()
+                )
+              )
+                .thenAnswer(
+                  _ => EitherT.rightT(Source.single(ByteString(xml)))
+                )
+
+              if (acceptHeaderValue == VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) {
+                when(
+                  mockConversionService.xmlToJson(eqTo(largeMessageSummaryXml.messageType.get), any())(any(), any(), any())
+                ).thenReturn(EitherT.rightT(Source.single(ByteString(Json.stringify(json)))))
+              }
+
+              val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+
+              status(result) mustBe OK
+
+              acceptHeaderValue match {
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
+                  contentType(result).get mustBe MimeTypes.JSON
+                  contentAsJson(result) mustBe Json.toJson(json)
+                case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML =>
+                  contentType(result).get mustBe MimeTypes.XML
+                  contentAsString(result) mustBe xml
+                case _ => fail("This should not be reached")
+              }
+
+            }
+
+            "when no message is found in database" in {
+              val ControllerAndMocks(
+                sut,
+                _,
+                mockPersistenceService,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _
+              ) = createControllerAndMocks()
+              when(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenAnswer(
+                  _ => EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))
+                )
+
+              val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+
+              status(result) mustBe NOT_FOUND
+              contentType(result).get mustBe MimeTypes.JSON
+              contentAsJson(result) mustBe Json.obj(
+                "code"    -> "NOT_FOUND",
+                "message" -> s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
+              )
+            }
+
+            "when an unknown error occurs due to service failure" in {
+              val ControllerAndMocks(
+                sut,
+                _,
+                mockPersistenceService,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _
+              ) = createControllerAndMocks()
+              when(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+              )
+                .thenAnswer(
+                  _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
+                )
+
+              val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+
+              status(result) mustBe INTERNAL_SERVER_ERROR
+              contentType(result).get mustBe MimeTypes.JSON
+              contentAsJson(result) mustBe Json.obj(
+                "code"    -> "INTERNAL_SERVER_ERROR",
+                "message" -> "Internal server error"
+              )
+            }
+          }
       }
 
-      "for a large message - accept header set to application/vnd.hmrc.2.0+xml" - {
-
-        "when the message is found" in {
-          val ControllerAndMocks(
-            sut,
-            _,
-            mockPersistenceService,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-          ) = createControllerAndMocks()
-          when(
-            mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
-              any[HeaderCarrier],
-              any[ExecutionContext]
-            )
-          )
-            .thenAnswer(
-              _ => EitherT.rightT(largeMessageSummaryXml)
-            )
-
-          when(
-            mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
-              any(),
-              any(),
-              any()
-            )
-          )
-            .thenAnswer(
-              _ => EitherT.rightT(Source.single(ByteString(xml)))
-            )
-
-          val result = sut.getMessageBody(movementType, movementId, messageId)(request)
-
-          status(result) mustBe OK
-          contentType(result).get mustBe MimeTypes.XML
-          contentAsString(result) mustBe xml
-        }
-
-        "when no message is found" in {
-          val ControllerAndMocks(
-            sut,
-            _,
-            mockPersistenceService,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-          ) = createControllerAndMocks()
-          when(
-            mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
-              any[HeaderCarrier],
-              any[ExecutionContext]
-            )
-          )
-            .thenAnswer(
-              _ => EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))
-            )
-
-          val result = sut.getMessageBody(movementType, movementId, messageId)(request)
-
-          status(result) mustBe NOT_FOUND
-          contentType(result).get mustBe MimeTypes.JSON
-          contentAsJson(result) mustBe Json.obj(
-            "code"    -> "NOT_FOUND",
-            "message" -> s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
-          )
-        }
-
-        "when an unknown error occurs" in {
-          val ControllerAndMocks(
-            sut,
-            _,
-            mockPersistenceService,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-          ) = createControllerAndMocks()
-          when(
-            mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
-              any[HeaderCarrier],
-              any[ExecutionContext]
-            )
-          )
-            .thenAnswer(
-              _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
-            )
-
-          val result = sut.getMessageBody(movementType, movementId, messageId)(request)
-
-          status(result) mustBe INTERNAL_SERVER_ERROR
-          contentType(result).get mustBe MimeTypes.JSON
-          contentAsJson(result) mustBe Json.obj(
-            "code"    -> "INTERNAL_SERVER_ERROR",
-            "message" -> "Internal server error"
-          )
-        }
-
-      }
-
-      "must return NOT_ACCEPTABLE when the accept type is invalid" in forAll(
+      "must return NOT_ACCEPTABLE when the accept header is invalid apart from xml or json" in forAll(
         arbitraryMovementId.arbitrary
       ) {
         movementId =>
@@ -4360,6 +4472,7 @@ class V2MovementsControllerSpec
           status(result) mustBe NOT_ACCEPTABLE
           contentType(result).get mustBe MimeTypes.JSON
       }
+
     }
 
     s"GET /movements/${movementType.movementType}" - {

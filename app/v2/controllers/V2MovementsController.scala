@@ -124,7 +124,11 @@ class V2MovementsControllerImpl @Inject() (
   private lazy val fCounter: Counter = counter(s"failure-counter")
 
   private lazy val jsonOnlyAcceptHeader = Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)
-  private lazy val xmlOnlyAcceptHeader  = Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML)
+
+  private lazy val jsonAndXmlAcceptHeaders = Seq(
+    VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
+    VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML
+  )
 
   private lazy val jsonAndJsonWrappedXmlAcceptHeaders = Seq(
     VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
@@ -314,6 +318,37 @@ class V2MovementsControllerImpl @Inject() (
         }
     }
 
+  private def formatMessageBody(
+    messageSummary: MessageSummary,
+    acceptHeader: String,
+    bodyAndSizeMaybe: Option[BodyAndSize]
+  )(implicit
+    hc: HeaderCarrier
+  ): EitherT[Future, PresentationError, BodyAndContentType] = {
+    def bodyExists(bodyAndSize: BodyAndSize): EitherT[Future, PresentationError, BodyAndContentType] =
+      acceptHeader match {
+        case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON if bodyAndSize.size > config.smallMessageSizeLimit =>
+          EitherT.leftT[Future, BodyAndContentType](
+            PresentationError.notAcceptableError(s"Messages larger than ${config.smallMessageSizeLimit} bytes cannot be retrieved in JSON")
+          )
+        case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
+          for {
+            jsonStream <- conversionService.xmlToJson(messageSummary.messageType.get, bodyAndSize.body).asPresentation
+            bodyWithContentType = BodyAndContentType(MimeTypes.JSON, jsonStream)
+          } yield bodyWithContentType
+        case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML =>
+          EitherT.rightT[Future, PresentationError](
+            BodyAndContentType(MimeTypes.XML, bodyAndSize.body)
+          )
+      }
+
+    bodyAndSizeMaybe match {
+      case Some(value) => bodyExists(value)
+      case None =>
+        EitherT.leftT[Future, BodyAndContentType](PresentationError.notFoundError(s"Body for message id ${messageSummary.id.value} does not exist"))
+    }
+  }
+
   private def mergeMessageSummaryAndBody(
     movementId: MovementId,
     messageSummary: MessageSummary,
@@ -361,20 +396,17 @@ class V2MovementsControllerImpl @Inject() (
   }
 
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(xmlOnlyAcceptHeader)).async {
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonAndXmlAcceptHeaders)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
           messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
-          body <- messageSummary match {
-            case MessageSummary(_, _, _, Some(body), _, _) => stringToByteStringStream(body.value)
-            case MessageSummary(_, _, _, _, _, Some(_)) =>
-              persistenceService.getMessageBody(request.eoriNumber, movementType, movementId, messageId).asPresentation
-            case _ => EitherT.leftT[Future, Source[ByteString, _]](PresentationError.notFoundError(s"Body for message id ${messageId.value} does not exist"))
-          }
+          acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
+          messageBody <- getBody(request.eoriNumber, movementType, movementId, messageId, messageSummary.body)
+          body        <- formatMessageBody(messageSummary, acceptHeader, messageBody)
         } yield body).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          response => Ok.chunked(response, Some(MimeTypes.XML))
+          response => Ok.chunked(response.body, Some(response.contentType))
         )
     }
 
@@ -631,7 +663,7 @@ class V2MovementsControllerImpl @Inject() (
                   source =>
                     val allowedTypes =
                       if (movementType == MovementType.Arrival) MessageType.messageTypesSentByArrivalTrader else MessageType.messageTypesSentByDepartureTrader
-                    (for {
+                    for {
                       // Extract type
                       messageType <- xmlParsingService.extractMessageType(source, allowedTypes).asPresentation
                       // Audit as soon as we can
@@ -642,7 +674,7 @@ class V2MovementsControllerImpl @Inject() (
                       _ <- persistenceService.updateMessageBody(messageType, eori, movementType, movementId, messageId, source).asPresentation
                       // Send message to router to be sent
                       submissionResult <- routerService.send(messageType, eori, movementId, messageId, source).asPresentation
-                    } yield submissionResult)
+                    } yield submissionResult
                 }
               }
               .map {
