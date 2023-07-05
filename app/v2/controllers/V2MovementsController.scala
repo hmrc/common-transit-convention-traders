@@ -38,6 +38,7 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.mvc._
 import routing.VersionedRouting
+import uk.gov.hmrc.http
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
@@ -90,7 +91,14 @@ trait V2MovementsController {
   ): Action[AnyContent]
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]]
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent]
-  def attachMessageFromUpscan(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[UpscanResponse]
+
+  def attachMessageFromUpscan(
+    eori: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    clientId: Option[ClientId]
+  ): Action[UpscanResponse]
 }
 
 @Singleton
@@ -605,10 +613,28 @@ class V2MovementsControllerImpl @Inject() (
     }
   }
 
-  def attachMessageFromUpscan(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[UpscanResponse] =
+  def attachMessageFromUpscan(
+    eori: EORINumber,
+    movementType: MovementType,
+    movementId: MovementId,
+    messageId: MessageId,
+    clientId: Option[ClientId]
+  ): Action[UpscanResponse] =
     Action.async(parse.json[UpscanResponse](UpscanResponse.upscanResponseReads)) {
       implicit request =>
-        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+        val originalHc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+        // If the client ID is provided, ensure we add it to the headers.
+        val clientIdHeader = clientId
+          .map[Seq[(String, String)]](
+            id => Seq(XClientIdHeader -> id.value)
+          )
+          .getOrElse(Seq.empty)
+
+        // We add it to otherHeaders as hc.headers(...) doesn't check extraHeaders, and mirrors what would happen via
+        // a direct call to the API Gateway.
+        implicit val hc: http.HeaderCarrier = originalHc.copy(otherHeaders = clientIdHeader ++ originalHc.otherHeaders)
+
         request.body match {
           case UpscanFailedResponse(reference, failureDetails) =>
             val auditReq = Json.toJson(

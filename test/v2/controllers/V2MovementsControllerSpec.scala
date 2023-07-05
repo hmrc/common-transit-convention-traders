@@ -70,6 +70,7 @@ import play.api.test.Helpers.status
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.TestMetrics
+import v2.base.HeaderCarrierMatcher
 import v2.base.SourceMatcher
 import v2.base.TestActorSystem
 import v2.base.TestCommonGenerators
@@ -6177,7 +6178,7 @@ class V2MovementsControllerSpec
             .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
           val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
-          val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
+          val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId, None)(request)
 
           whenReady(response) {
             _ =>
@@ -6286,7 +6287,7 @@ class V2MovementsControllerSpec
               .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
             val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
-            val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
+            val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId, None)(request)
 
             whenReady(response) {
               _ =>
@@ -6408,7 +6409,7 @@ class V2MovementsControllerSpec
               .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
             val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
-            val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
+            val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId, None)(request)
 
             whenReady(response) {
               _ =>
@@ -6537,7 +6538,7 @@ class V2MovementsControllerSpec
               .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
             val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
-            val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
+            val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId, None)(request)
 
             whenReady(response) {
               _ =>
@@ -6681,7 +6682,7 @@ class V2MovementsControllerSpec
                 .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
               val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
-              val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
+              val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId, None)(request)
 
               whenReady(response) {
                 _ =>
@@ -6763,9 +6764,10 @@ class V2MovementsControllerSpec
             arbitrary[EORINumber],
             arbitrary[MovementType],
             arbitrary[MovementId],
-            arbitrary[MessageId]
+            arbitrary[MessageId],
+            arbitrary[ClientId]
           ) {
-            (eori, movementType, movementId, messageId) =>
+            (eori, movementType, movementId, messageId, clientId) =>
               val ControllerAndMocks(
                 sut,
                 mockValidationService,
@@ -6839,7 +6841,7 @@ class V2MovementsControllerSpec
                 .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
               val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
-              val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
+              val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId, Some(clientId))(request)
 
               whenReady(response) {
                 _ =>
@@ -6847,16 +6849,23 @@ class V2MovementsControllerSpec
 
                   // common
                   verify(mockUpscanService, times(1))
-                    .upscanGetFile(DownloadUrl(eqTo(upscanDownloadUrl.value)))(any[HeaderCarrier], any[ExecutionContext], any[Materializer])
+                    .upscanGetFile(DownloadUrl(eqTo(upscanDownloadUrl.value)))(
+                      argThat(HeaderCarrierMatcher.clientId(clientId)),
+                      any[ExecutionContext],
+                      any[Materializer]
+                    )
                   verify(mockXmlParsingService, times(1))
-                    .extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any[HeaderCarrier], any[ExecutionContext])
+                    .extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(
+                      argThat(HeaderCarrierMatcher.clientId(clientId)),
+                      any[ExecutionContext]
+                    )
                   verify(mockAuditService, times(1)).audit(
                     eqTo(messageType.auditType),
                     any[Source[ByteString, _]],
                     anyString(),
                     eqTo(upscanSuccess.uploadDetails.size)
                   )(
-                    any[HeaderCarrier],
+                    argThat(HeaderCarrierMatcher.clientId(clientId)),
                     any[ExecutionContext]
                   )
                   verify(mockPersistenceService, times(1)).updateMessageBody(
@@ -6866,8 +6875,10 @@ class V2MovementsControllerSpec
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     any[Source[ByteString, _]]
-                  )(any[HeaderCarrier], any[ExecutionContext])
-                  verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any[Source[ByteString, _]])(any(), any())
+                  )(argThat(HeaderCarrierMatcher.clientId(clientId)), any[ExecutionContext])
+
+                  verify(mockValidationService, times(1))
+                    .validateXml(eqTo(messageType), any[Source[ByteString, _]])(argThat(HeaderCarrierMatcher.clientId(clientId)), any())
 
                   verify(mockPersistenceService, times(0)).getMessage(
                     EORINumber(eqTo(eori.value)),
@@ -6883,7 +6894,7 @@ class V2MovementsControllerSpec
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     any[Source[ByteString, _]]
-                  )(any[ExecutionContext], any[HeaderCarrier])
+                  )(any[ExecutionContext], argThat(HeaderCarrierMatcher.clientId(clientId)))
 
                   // success status
                   verify(mockPersistenceService, times(1)).updateMessage(
@@ -6892,14 +6903,14 @@ class V2MovementsControllerSpec
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     eqTo(MessageUpdate(MessageStatus.Success, None, None))
-                  )(any[HeaderCarrier], any[ExecutionContext])
+                  )(argThat(HeaderCarrierMatcher.clientId(clientId)), any[ExecutionContext])
 
                   verify(mockPushNotificationService, times(1)).postPpnsNotification(
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     eqTo(ppnsMessage)
                   )(
-                    any[HeaderCarrier],
+                    argThat(HeaderCarrierMatcher.clientId(clientId)),
                     any[ExecutionContext]
                   )
 
@@ -6988,7 +6999,7 @@ class V2MovementsControllerSpec
                 .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
               val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
-              val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId)(request)
+              val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId, None)(request)
 
               whenReady(response) {
                 _ =>
@@ -7104,12 +7115,12 @@ class V2MovementsControllerSpec
 
         val request = FakeRequest(
           POST,
-          v2.controllers.routes.V2MovementsController.attachMessageFromUpscan(eoriNumber, movementType, movementId, messageId).url,
+          v2.controllers.routes.V2MovementsController.attachMessageFromUpscan(eoriNumber, movementType, movementId, messageId, None).url,
           headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)),
           upscanFailed
         )
 
-        val result: Future[Result] = sut.attachMessageFromUpscan(eoriNumber, movementType, movementId, messageId)(request)
+        val result: Future[Result] = sut.attachMessageFromUpscan(eoriNumber, movementType, movementId, messageId, None)(request)
 
         status(result) mustBe OK
 
