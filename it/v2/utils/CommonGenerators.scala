@@ -174,4 +174,8 @@ trait CommonGenerators {
     Gen.oneOf(MovementType.values)
   }
 
+  implicit lazy val arbitraryClientId: Arbitrary[ClientId] = Arbitrary {
+    Gen.stringOfN(24, Gen.alphaNumChar).map(ClientId.apply)
+  }
+
 }

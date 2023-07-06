@@ -30,6 +30,7 @@ import play.api.mvc.ControllerComponents
 import play.api.test.Helpers.stubControllerComponents
 import v2.controllers.V2MovementsController
 import v2.controllers.stream.StreamingParsers
+import v2.models.ClientId
 import v2.models.EORINumber
 import v2.models.LocalReferenceNumber
 import v2.models.MessageId
@@ -100,7 +101,8 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
     eoriNumber: EORINumber,
     movementType: MovementType,
     movementId: MovementId,
-    messageId: MessageId
+    messageId: MessageId,
+    clientId: Option[ClientId]
   ): Action[UpscanResponse] =
     Action(parse.json[UpscanResponse]) {
       _ =>
