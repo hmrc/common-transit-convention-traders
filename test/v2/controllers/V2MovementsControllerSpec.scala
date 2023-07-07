@@ -5384,6 +5384,33 @@ class V2MovementsControllerSpec
           )
         }
 
+        "must return Bad Request when unable to find a IE141 message type " in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            val ControllerAndMocks(
+              sut,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _,
+              _
+            ) = setup(extractMessageTypeJson = EitherT.leftT(MessageTypeNotFound("IE141")))
+
+            val request = fakeJsonAttachRequest(contentJson)
+            val result  = sut.attachMessage(movementType, movementId)(request)
+            status(result) mustBe BAD_REQUEST
+            contentAsJson(result) mustBe Json.obj(
+              "code"    -> "BAD_REQUEST",
+              "message" -> "IE141 is not a valid message type"
+            )
+        }
+
         "must return Bad Request when body is not an JSON document" in forAll(
           arbitraryMovementId.arbitrary
         ) {
