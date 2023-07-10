@@ -21,6 +21,7 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import v2.models.AuditType
 import v2.models.BoxId
+import v2.models.ClientId
 import v2.models.EORINumber
 import v2.models.ItemCount
 import v2.models.LocalReferenceNumber
@@ -232,6 +233,10 @@ trait TestCommonGenerators {
       uri         <- Gen.alphaNumStr
       messageType <- Gen.oneOf(MessageType.values)
     } yield MessageUpdate(status, Some(ObjectStoreURI(uri)), Some(messageType))
+  }
+
+  implicit val arbitraryClientId: Arbitrary[ClientId] = Arbitrary {
+    Gen.stringOfN(24, Gen.alphaNumChar).map(ClientId.apply)
   }
 
 }

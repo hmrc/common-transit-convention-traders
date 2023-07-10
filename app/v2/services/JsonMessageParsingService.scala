@@ -23,6 +23,7 @@ import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
@@ -35,7 +36,13 @@ import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import akka.stream.alpakka.json.scaladsl.JsonReader
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import v2.models.errors.ExtractionError.MessageTypeNotFound
+
+import scala.concurrent.duration.DurationInt
+import scala.util.Using
 
 @ImplementedBy(classOf[JsonMessageParsingServiceImpl])
 trait JsonMessageParsingService {
@@ -50,30 +57,25 @@ trait JsonMessageParsingService {
 @Singleton
 class JsonMessageParsingServiceImpl @Inject() (implicit materializer: Materializer) extends JsonMessageParsingService {
 
+  private val mapper = new ObjectMapper().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+
   override def extractMessageType(
     source: Source[ByteString, _],
     messageTypeList: Seq[MessageType]
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, ExtractionError, MessageType] =
     EitherT(
-      source
-        .viaMat(JsonReader.select("$.*.messageType"))(Keep.right)
-        .via(Flow.fromFunction(_.utf8String))
-        .withAttributes(
-          Attributes.logLevels(
-            onFinish = LogLevels.Off // prevents exceptions when traders send malformed XML
-          )
-        )
-        .runWith(Sink.head)
-        .map {
-          mt =>
-            val root = mt.replace("\"", "")
-            messageTypeList.find(_.rootNode == root) match {
-              case Some(messageType) => Right(messageType)
-              case None              => Left(MessageTypeNotFound(root))
-            }
-        }
-        .recover {
-          case _ => Left(ExtractionError.MalformedInput)
-        }
+      Future.fromTry(Using(source.runWith(StreamConverters.asInputStream(20.seconds))) {
+        jsonInput =>
+          val jsonNode: JsonNode      = mapper.readTree(jsonInput)
+          val rootNode                = jsonNode.fields().next().getKey
+          val messageTypeFromRootNode = rootNode.split(":")(1)
+          messageTypeList.find(_.rootNode == messageTypeFromRootNode) match {
+            case Some(messageType) => Right(messageType)
+            case None              => Left(MessageTypeNotFound(messageTypeFromRootNode))
+          }
+      }.recover {
+        case _ => Left(ExtractionError.MalformedInput)
+      })
     )
+
 }

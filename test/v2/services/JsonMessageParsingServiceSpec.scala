@@ -57,9 +57,9 @@ class JsonMessageParsingServiceSpec
         )
     )
 
-  val withNoMessageTypeEntry: JsObject =
+  val withInvalidRootNodeEntry: JsObject =
     Json.obj(
-      "n1:CC013C" ->
+      "n1CC013C" ->
         Json.obj(
           "HolderOfTheTransitProcedure" ->
             Json.obj("identificationNumber" -> "GB1234")
@@ -95,9 +95,9 @@ class JsonMessageParsingServiceSpec
       }
     }
 
-    "if it doesn't have a message type entry, return ExtractionError.MalformedInput" in {
+    "if the root node is invalid, return ExtractionError.MalformedInput" in {
       val jsonParsingService = new JsonMessageParsingServiceImpl()
-      val payload            = createStream(withNoMessageTypeEntry)
+      val payload            = createStream(withInvalidRootNodeEntry)
       val response =
         jsonParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByDepartureTrader)
 

@@ -23,6 +23,8 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.kenshoo.play.metrics.Metrics
 import config.AppConfig
+import config.Constants
+import io.lemonlabs.uri.QueryString
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.http.HeaderNames
@@ -65,8 +67,22 @@ class UpscanConnectorImpl @Inject() (appConfig: AppConfig, httpClientV2: HttpCli
   ): Future[UpscanInitiateResponse] =
     withMetricsTimerAsync(MetricsKeys.UpscanInitiateBackend.Post) {
       _ =>
+        val queryString =
+          if (appConfig.forwardClientIdToUpscan) {
+            hc
+              .headers(Seq(Constants.XClientIdHeader))
+              .headOption
+              .map(
+                pair => QueryString.fromPairs("clientId" -> pair._2)
+              )
+              .getOrElse(QueryString.empty)
+          } else QueryString.empty
+
         val callbackUrl =
-          appConfig.commmonTransitConventionTradersUrl.withPath(attachLargeMessageRoute(eoriNumber, movementType, movementId, messageId)).toString()
+          appConfig.commmonTransitConventionTradersUrl
+            .withPath(attachLargeMessageRoute(eoriNumber, movementType, movementId, messageId))
+            .withQueryString(queryString)
+            .toString()
 
         val upscanInitiate =
           UpscanInitiate(callbackUrl, Some(appConfig.upscanMaximumFileSize))

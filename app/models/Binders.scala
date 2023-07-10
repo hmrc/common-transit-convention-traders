@@ -23,12 +23,22 @@ import v2.models.EORINumber
 
 object Binders {
 
+  // The QueryStringBindable will pick up the exception, hence we throw one here (against normal Scala norms)
+  private def ensurePositiveYear(offsetDateTime: OffsetDateTime): OffsetDateTime =
+    if (offsetDateTime.getYear < 1) throw new IllegalArgumentException("negative year")
+    else offsetDateTime
+
   implicit val offsetDateTimeQueryStringBindable: QueryStringBindable[OffsetDateTime] = {
     val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
     new QueryStringBindable.Parsing[OffsetDateTime](
-      OffsetDateTime.parse(_),
+      str => ensurePositiveYear(OffsetDateTime.parse(str)),
       dt => formatter.format(dt),
-      (param, _) => s"Cannot parse parameter $param as a valid ISO 8601 timestamp, e.g. 2015-09-08T01:55:28+00:00"
+      (param, exception) =>
+        exception match {
+          case x: IllegalArgumentException if x.getMessage == "negative year" => "Year cannot be negative"
+          case _ =>
+            s"Cannot parse parameter $param as a valid ISO 8601 timestamp, e.g. 2015-09-08T01:55:28+00:00"
+        }
     )
   }
 
