@@ -53,7 +53,7 @@ trait PushNotificationsConnector {
     ec: ExecutionContext
   ): Future[BoxResponse]
 
-  def postPpnsNotification(movementId: MovementId, messageId: MessageId, body: JsValue)(implicit
+  def postPpnsSubmissionNotification(movementId: MovementId, messageId: MessageId, body: JsValue)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit]
@@ -92,7 +92,7 @@ class PushNotificationsConnectorImpl @Inject() (httpClientV2: HttpClientV2, val 
           .execute[BoxResponse]
     }
 
-  override def postPpnsNotification(movementId: MovementId, messageId: MessageId, body: JsValue)(implicit
+  override def postPpnsSubmissionNotification(movementId: MovementId, messageId: MessageId, body: JsValue)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit] = {

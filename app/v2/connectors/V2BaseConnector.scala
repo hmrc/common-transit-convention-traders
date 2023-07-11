@@ -98,7 +98,7 @@ trait V2BaseConnector extends HttpErrorFunctions {
     UrlPath.parse(s"$pushNotificationsBaseRoute/traders/movements/${movementId.value}/box")
 
   def pushPpnsNotifications(movementId: MovementId, messageId: MessageId): UrlPath =
-    UrlPath.parse(s"$pushNotificationsBaseRoute/traders/movements/${movementId.value}/messages/${messageId.value}")
+    UrlPath.parse(s"$pushNotificationsBaseRoute/traders/movements/${movementId.value}/messages/${messageId.value}/submissionNotification")
 
   lazy val upscanInitiateRoute: UrlPath = UrlPath.parse("/upscan/v2/initiate")
 

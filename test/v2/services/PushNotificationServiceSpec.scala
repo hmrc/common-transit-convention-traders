@@ -249,7 +249,8 @@ class PushNotificationServiceSpec
     "should return Right(()) if push notifications are disabled" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
       (movementId, messageId) =>
         when(mockAppConfig.pushNotificationsEnabled).thenReturn(false)
-        when(mockConnector.postPpnsNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any())).thenReturn(Future.successful(()))
+        when(mockConnector.postPpnsSubmissionNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
+          .thenReturn(Future.successful(()))
 
         val jsonPayload = jsonPayloadGen.sample.get
 
@@ -261,7 +262,8 @@ class PushNotificationServiceSpec
     "should return Right(()) if the push notification was successfully sent" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
       (movementId, messageId) =>
         when(mockAppConfig.pushNotificationsEnabled) thenReturn true
-        when(mockConnector.postPpnsNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any())).thenReturn(Future.successful(()))
+        when(mockConnector.postPpnsSubmissionNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
+          .thenReturn(Future.successful(()))
 
         val jsonPayload = jsonPayloadGen.sample.get
         val result      = sut.postPpnsNotification(movementId, messageId, jsonPayload).value.futureValue
@@ -274,7 +276,7 @@ class PushNotificationServiceSpec
       (movementId, messageId) =>
         val expectedException = new Exception()
         when(mockAppConfig.pushNotificationsEnabled) thenReturn true
-        when(mockConnector.postPpnsNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
+        when(mockConnector.postPpnsSubmissionNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
           .thenReturn(Future.failed(UpstreamErrorResponse("Box not found", NOT_FOUND)))
         val jsonPayload = jsonPayloadGen.sample.get
 
@@ -287,7 +289,7 @@ class PushNotificationServiceSpec
     "should return Left(UnexpectedError) if an unexpected error occurs" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
       (movementId, messageId) =>
         when(mockAppConfig.pushNotificationsEnabled) thenReturn true
-        when(mockConnector.postPpnsNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
+        when(mockConnector.postPpnsSubmissionNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
           .thenReturn(Future.failed(new RuntimeException("Something went wrong")))
         val jsonPayload = jsonPayloadGen.sample.get
 

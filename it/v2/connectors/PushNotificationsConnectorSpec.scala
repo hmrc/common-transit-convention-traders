@@ -203,7 +203,7 @@ class PushNotificationsConnectorSpec
 
   }
 
-  "postPpnsNotification" - {
+  "postPpnsSubmissionNotification" - {
     implicit val jsValueArbitrary: Arbitrary[JsValue] = Arbitrary(Gen.const(Json.obj()))
 
     implicit val upstreamErrorArbitrary: Arbitrary[UpstreamErrorResponse] = Arbitrary(
@@ -219,7 +219,7 @@ class PushNotificationsConnectorSpec
       arbitrary[JsValue]
     ) {
       (movementId, messageId, body) =>
-        val expectedUrl = s"/transit-movements-push-notifications/traders/movements/${movementId.value}/messages/${messageId.value}"
+        val expectedUrl = s"/transit-movements-push-notifications/traders/movements/${movementId.value}/messages/${messageId.value}/submissionNotification"
         val jsonRequest = Json.stringify(body)
 
         server.stubFor(
@@ -234,7 +234,7 @@ class PushNotificationsConnectorSpec
         )
 
         implicit val hc = HeaderCarrier()
-        val response    = sut.postPpnsNotification(movementId, messageId, body)
+        val response    = sut.postPpnsSubmissionNotification(movementId, messageId, body)
         whenReady(response) {
           result =>
             result mustBe (())
@@ -248,7 +248,7 @@ class PushNotificationsConnectorSpec
       arbitrary[UpstreamErrorResponse]
     ) {
       (movementId, messageId, body, upstreamError) =>
-        val expectedUrl = s"/transit-movements-push-notifications/traders/movements/${movementId.value}/messages/${messageId.value}"
+        val expectedUrl = s"/transit-movements-push-notifications/traders/movements/${movementId.value}/messages/${messageId.value}/submissionNotification"
         val jsonRequest = Json.stringify(body)
 
         server.stubFor(
@@ -263,7 +263,7 @@ class PushNotificationsConnectorSpec
         )
 
         implicit val hc = HeaderCarrier()
-        val response    = sut.postPpnsNotification(movementId, messageId, body)
+        val response    = sut.postPpnsSubmissionNotification(movementId, messageId, body)
 
         whenReady(response.recover {
           case UpstreamErrorResponse(_, statusCode, _, _) => ()

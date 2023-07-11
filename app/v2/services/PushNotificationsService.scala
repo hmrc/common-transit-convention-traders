@@ -110,7 +110,7 @@ class PushNotificationsServiceImpl @Inject() (
     else
       EitherT {
         pushNotificationsConnector
-          .postPpnsNotification(movementId, messageId, body)
+          .postPpnsSubmissionNotification(movementId, messageId, body)
           .map(Right(_))
           .recover {
             case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.BoxNotFound)
