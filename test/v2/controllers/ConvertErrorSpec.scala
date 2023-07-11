@@ -253,6 +253,14 @@ class ConvertErrorSpec
 
       routerErrorConverter.convert(input) mustBe output
     }
+
+    "a Duplicate LRN Error returns conflict error" in {
+      val lrn    = LocalReferenceNumber("1234")
+      val input  = RouterError.DuplicateLRN(lrn)
+      val output = PresentationError.conflictError(s"LRN ${lrn.value} has previously been used and cannot be reused")
+
+      routerErrorConverter.convert(input) mustBe output
+    }
   }
 
   "Conversion Error" - {

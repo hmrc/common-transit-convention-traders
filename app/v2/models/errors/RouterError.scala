@@ -16,9 +16,12 @@
 
 package v2.models.errors
 
+import v2.models.LocalReferenceNumber
+
 sealed trait RouterError
 
 object RouterError {
   case class UnrecognisedOffice(office: String, field: String) extends RouterError
   case class UnexpectedError(thr: Option[Throwable] = None)    extends RouterError
+  case class DuplicateLRN(lrn: LocalReferenceNumber)           extends RouterError
 }

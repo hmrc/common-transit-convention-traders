@@ -33,6 +33,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.Status.BAD_REQUEST
+import play.api.http.Status.CONFLICT
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
@@ -40,6 +41,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.base.TestCommonGenerators
 import v2.connectors.RouterConnector
 import v2.models.EORINumber
+import v2.models.LocalReferenceNumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.SubmissionRoute
@@ -64,6 +66,17 @@ class RouterServiceSpec
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
+
+  val lrnDuplicateErrorResponse: Throwable = UpstreamErrorResponse(
+    Json.stringify(
+      Json.obj(
+        "code"    -> "CONFLICT",
+        "message" -> "LRN 1234 was previously used",
+        "lrn"     -> "1234"
+      )
+    ),
+    CONFLICT
+  )
 
   val mockConnector: RouterConnector = mock[RouterConnector]
 
@@ -169,6 +182,28 @@ class RouterServiceSpec
         )
       val result                              = sut.send(MessageType.DeclarationData, EORINumber("1"), MovementId("1"), MessageId("1"), unrecognisedOfficeRequest)
       val expected: Either[RouterError, Unit] = Left(RouterError.UnrecognisedOffice("AB012345", "CustomsOfficeOfDeparture"))
+      whenReady(result.value) {
+        _ mustBe expected
+      }
+    }
+
+    "on a failed submission with Duplicate lrn error, should return a Left with an DuplicateLRN" in {
+
+      when(
+        mockConnector.post(
+          any[MessageType],
+          any[String].asInstanceOf[EORINumber],
+          any[String].asInstanceOf[MovementId],
+          any[String].asInstanceOf[MessageId],
+          eqTo(invalidRequest)
+        )(
+          any[ExecutionContext],
+          any[HeaderCarrier]
+        )
+      )
+        .thenReturn(Future.failed(lrnDuplicateErrorResponse))
+      val result                              = sut.send(MessageType.DeclarationData, EORINumber("1"), MovementId("1"), MessageId("1"), invalidRequest)
+      val expected: Either[RouterError, Unit] = Left(RouterError.DuplicateLRN(LocalReferenceNumber("1234")))
       whenReady(result.value) {
         _ mustBe expected
       }

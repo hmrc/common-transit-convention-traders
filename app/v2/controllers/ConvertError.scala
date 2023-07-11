@@ -96,6 +96,7 @@ trait ConvertError extends Logging {
         PresentationError.badRequestError(
           s"The customs office specified for $field must be a customs office located in the United Kingdom ($office was specified)"
         )
+      case DuplicateLRN(lrn) => PresentationError.conflictError(s"LRN ${lrn.value} has previously been used and cannot be reused")
     }
   }
 
