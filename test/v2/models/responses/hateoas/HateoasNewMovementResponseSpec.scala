@@ -43,7 +43,8 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
               "messages" -> Json.obj(
                 "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages"
               )
-            )
+            ),
+            s"${movementType.movementType}Id" -> movementId.value
           )
 
           actual mustBe expected
