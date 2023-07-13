@@ -25,6 +25,11 @@ import v2.models.responses.UpscanInitiateResponse
 
 object HateoasNewMovementResponse extends HateoasResponse {
 
+  private def box(response: BoxResponse) = Json.obj("boxId" -> response.boxId.value)
+
+  private def upscan(response: UpscanInitiateResponse) =
+    Json.obj("uploadRequest" -> Json.obj("href" -> response.uploadRequest.href, "fields" -> response.uploadRequest.fields))
+
   def apply(
     movementId: MovementId,
     boxResponse: Option[BoxResponse],
@@ -36,17 +41,14 @@ object HateoasNewMovementResponse extends HateoasResponse {
       "messages" -> Json.obj("href" -> getMessagesUri(movementId, None, movementType))
     )
 
-    Json.obj("_links" -> jsObject) ++
-      boxResponse
-        .map(
-          r => Json.obj("boxId" -> r.boxId.value)
-        )
-        .getOrElse(Json.obj()) ++
-      upscanInitiateResponse
-        .map(
-          r => Json.obj("uploadRequest" -> Json.obj("href" -> r.uploadRequest.href, "fields" -> r.uploadRequest.fields))
-        )
-        .getOrElse(Json.obj())
+    Json.obj("_links" -> jsObject) ++ {
+      (boxResponse, upscanInitiateResponse) match {
+        case (None, None)           => Json.obj(getMovementId(movementType) -> movementId.value)
+        case (Some(response), None) => box(response)
+        case (None, Some(response)) => upscan(response)
+        case (Some(br), Some(ur))   => box(br) ++ upscan(ur)
+      }
+    }
 
   }
 

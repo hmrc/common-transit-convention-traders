@@ -86,4 +86,6 @@ trait HateoasResponse {
           .getDeparturesForEori(updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
           .urlWithContext
     }
+
+  def getMovementId(movementType: MovementType) = if (movementType == MovementType.Departure) "departureId" else "arrivalId"
 }

@@ -35,5 +35,10 @@ object HateoasMovementUpdateResponse extends HateoasResponse {
       .map(
         r => Json.obj("uploadRequest" -> Json.obj("href" -> r.uploadRequest.href, "fields" -> r.uploadRequest.fields))
       )
-      .getOrElse(Json.obj())
+      .getOrElse(
+        Json.obj(
+          getMovementId(movementType) -> movementId.value,
+          "messageId"                 -> messageId.value
+        )
+      )
 }
