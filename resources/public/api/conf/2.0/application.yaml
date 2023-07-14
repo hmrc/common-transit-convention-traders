@@ -71,6 +71,7 @@ paths:
                     href: /customs/transits/movements/departures/62fb8f33d233578e
                   messages:
                     href: /customs/transits/movements/departures/62fb8f33d233578e/messages
+                departureId: 62fb8f33d233578e
                 boxId: b54c2424-955b-496c-bbce-dfb9f57cd797
         '400':
           description: Bad Request
