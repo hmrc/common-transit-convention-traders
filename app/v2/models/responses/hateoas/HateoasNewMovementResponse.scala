@@ -41,14 +41,15 @@ object HateoasNewMovementResponse extends HateoasResponse {
       "messages" -> Json.obj("href" -> getMessagesUri(movementId, None, movementType))
     )
 
-    Json.obj("_links" -> jsObject) ++ {
-      (boxResponse, upscanInitiateResponse) match {
-        case (None, None)                       => Json.obj(getMovementId(movementType) -> movementId.value)
-        case (Some(response), None)             => box(response)
-        case (None, Some(response))             => upscan(response)
-        case (Some(bResponse), Some(uResponse)) => box(bResponse) ++ upscan(uResponse)
+    Json.obj("_links"                      -> jsObject) ++
+      Json.obj(getMovementId(movementType) -> movementId.value) ++ {
+        (boxResponse, upscanInitiateResponse) match {
+          case (Some(response), None)             => box(response)
+          case (None, Some(response))             => upscan(response)
+          case (Some(bResponse), Some(uResponse)) => box(bResponse) ++ upscan(uResponse)
+          case _                                  => Json.obj()
+        }
       }
-    }
 
   }
 

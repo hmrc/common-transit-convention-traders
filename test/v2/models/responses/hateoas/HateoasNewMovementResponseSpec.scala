@@ -66,7 +66,8 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
                 "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse.movementId.value}/messages"
               )
             ),
-            "boxId" -> s"${boxResponse.boxId.value}"
+            s"${movementType.movementType}Id" -> movementResponse.movementId.value,
+            "boxId"                           -> s"${boxResponse.boxId.value}"
           )
 
           actual mustBe expected
@@ -89,7 +90,8 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
                 "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages"
               )
             ),
-            "boxId" -> s"${boxResponse.boxId.value}",
+            s"${movementType.movementType}Id" -> movementId.value,
+            "boxId"                           -> s"${boxResponse.boxId.value}",
             "uploadRequest" -> Json.obj(
               "href"   -> upscanResponse.uploadRequest.href,
               "fields" -> upscanResponse.uploadRequest.fields
@@ -98,6 +100,7 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
 
           actual mustBe expected
       }
+
     }
 
 }
