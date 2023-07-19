@@ -461,6 +461,7 @@ paths:
         If you use this endpoint to send a large message (up to 5MB - this limit will later increase to 8MB), a successful response will include:
         
         - a URL and additional metadata that you must use when uploading your file
+        - a departure ID, specifying the departure to return
         - a message ID that allows you track the status of that specific message
 
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
@@ -748,6 +749,7 @@ paths:
 
         If you use this endpoint to send a large message (up to 5MB - this limit will later increase to 8MB), a successful response will include:
         - a URL and additional metadata that you must use when uploading your file
+        - will contain the arrival ID specifying the arrival returned
         - a message ID that allows you track the status of that specific message
 
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
@@ -1135,6 +1137,7 @@ paths:
         If you use this endpoint to send a large message (up to 5MB - this limit will later increase to 8MB), a successful response will include:
         
         - a URL and additional metadata that you must use when uploading your file
+        - an arrival ID, specifying the arrival to return
         - a message ID that allows you track the status of that specific message
 
         **Note:** If an Economic Operators Registration and Identification (EORI) number has not been assigned to you, an HTTP 403 Forbidden error is returned.
