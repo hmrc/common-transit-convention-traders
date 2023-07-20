@@ -42,7 +42,9 @@ class HateoasMovementUpdateResponseSpec extends AnyFreeSpec with Matchers with O
             "self" -> Json.obj(
               "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
             )
-          )
+          ),
+          s"${movementType.movementType}Id" -> movementId.value,
+          "messageId"                       -> messageId.value
         )
 
         actual mustBe expected
@@ -64,6 +66,8 @@ class HateoasMovementUpdateResponseSpec extends AnyFreeSpec with Matchers with O
               "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
             )
           ),
+          s"${movementType.movementType}Id" -> movementId.value,
+          "messageId"                       -> messageId.value,
           "uploadRequest" -> Json.obj(
             "href"   -> upscanIniateResponse.uploadRequest.href,
             "fields" -> upscanIniateResponse.uploadRequest.fields

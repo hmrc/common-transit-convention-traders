@@ -31,9 +31,15 @@ object HateoasMovementUpdateResponse extends HateoasResponse {
         "self"                    -> Json.obj("href" -> getMessageUri(movementId, messageId, movementType)),
         movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
       )
-    ) ++ upscanInitiateResponse
-      .map(
-        r => Json.obj("uploadRequest" -> Json.obj("href" -> r.uploadRequest.href, "fields" -> r.uploadRequest.fields))
-      )
-      .getOrElse(Json.obj())
+    ) ++
+      Json.obj(
+        getMovementId(movementType) -> movementId.value,
+        "messageId"                 -> messageId.value
+      ) ++ upscanInitiateResponse
+        .map(
+          r => Json.obj("uploadRequest" -> Json.obj("href" -> r.uploadRequest.href, "fields" -> r.uploadRequest.fields))
+        )
+        .getOrElse(
+          Json.obj()
+        )
 }
