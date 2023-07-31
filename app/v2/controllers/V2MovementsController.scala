@@ -151,6 +151,15 @@ class V2MovementsControllerImpl @Inject() (
     }
   }
 
+  private def convertedSizeIsLessThanLimit(size: Long): EitherT[Future, PresentationError, Unit] = EitherT {
+    if (size <= config.smallMessageSizeLimit) Future.successful(Right(()))
+    else {
+      Future.successful(
+        Left(PresentationError.entityTooLargeError(s"Your JSON converted XML message size $size must be less than ${config.smallMessageSizeLimit} bytes"))
+      )
+    }
+  }
+
   def createMovement(movementType: MovementType): Action[Source[ByteString, _]] =
     movementType match {
       case MovementType.Arrival =>
@@ -584,9 +593,10 @@ class V2MovementsControllerImpl @Inject() (
       hc: HeaderCarrier,
       request: AuthenticatedRequest[Source[ByteString, _]]
     ): EitherT[Future, PresentationError, UpdateMovementResponse] =
-      withReusableSource(src) {
-        source =>
+      withReusableSourceAndSize(src) {
+        (source, size) =>
           for {
+            _              <- convertedSizeIsLessThanLimit(size)
             _              <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
             updateResponse <- updateAndSendToEIS(movementId, movementType, messageType, source)
           } yield updateResponse
@@ -755,9 +765,10 @@ class V2MovementsControllerImpl @Inject() (
     movementType: MovementType,
     messageType: MessageType
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
-    withReusableSource(src) {
-      source =>
+    withReusableSourceAndSize(src) {
+      (source, size) =>
         for {
+          _      <- convertedSizeIsLessThanLimit(size)
           _      <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
           result <- persistAndSendToEIS(source, movementType, messageType)
         } yield result
