@@ -1060,7 +1060,7 @@ class V2MovementsControllerSpec
           status(result) mustBe REQUEST_ENTITY_TOO_LARGE
           contentAsJson(result) mustBe Json.obj(
             "code"    -> "REQUEST_ENTITY_TOO_LARGE",
-            "message" -> "Your JSON converted XML message size 58 must be less than 40 bytes"
+            "message" -> "Your JSON converted XML message size 58 must be less than or equals to 40 bytes"
           )
           verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
@@ -2612,7 +2612,7 @@ class V2MovementsControllerSpec
 
           contentAsJson(result) mustBe Json.obj(
             "code"    -> "REQUEST_ENTITY_TOO_LARGE",
-            "message" -> "Your JSON converted XML message size 58 must be less than 40 bytes"
+            "message" -> "Your JSON converted XML message size 58 must be less than or equals to 40 bytes"
           )
           verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.ArrivalNotification), any())(any(), any(), any())
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())

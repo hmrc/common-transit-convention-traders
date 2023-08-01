@@ -155,7 +155,11 @@ class V2MovementsControllerImpl @Inject() (
     if (size <= config.smallMessageSizeLimit) Future.successful(Right(()))
     else {
       Future.successful(
-        Left(PresentationError.entityTooLargeError(s"Your JSON converted XML message size $size must be less than ${config.smallMessageSizeLimit} bytes"))
+        Left(
+          PresentationError.entityTooLargeError(
+            s"Your JSON converted XML message size $size must be less than or equals to ${config.smallMessageSizeLimit} bytes"
+          )
+        )
       )
     }
   }
