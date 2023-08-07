@@ -1006,6 +1006,68 @@ class V2MovementsControllerSpec
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
       }
 
+      "must return Payload Too Large when converted JSON in XML is greater in limit" in forAll(
+        arbitraryMovementResponse().arbitrary,
+        arbitraryBoxResponse.arbitrary
+      ) {
+        (movementResponse, boxResponse) =>
+          val ControllerAndMocks(
+            sut,
+            mockValidationService,
+            mockPersistenceService,
+            mockRouterService,
+            mockAuditService,
+            mockConversionService,
+            _,
+            _,
+            mockPushNotificationService,
+            _,
+            mockAppConfig
+          ) = createControllerAndMocks()
+
+          when(
+            mockValidationService
+              .validateXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+          ).thenAnswer {
+            _ =>
+              EitherT.rightT(())
+          }
+
+          when(
+            mockValidationService
+              .validateJson(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+          ).thenAnswer {
+            invocation =>
+              jsonValidationMockAnswer(MovementType.Departure)(invocation)
+          }
+          when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.JSON), any[Long]())(any(), any())).thenReturn(Future.successful(()))
+
+          when(
+            mockConversionService
+              .jsonToXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(
+                any[HeaderCarrier],
+                any[ExecutionContext],
+                any[Materializer]
+              )
+          ).thenReturn {
+            val source = singleUseStringSource(CC015C.mkString)
+            EitherT.rightT[Future, ConversionError](source)
+          }
+          when(mockAppConfig.smallMessageSizeLimit).thenReturn(40)
+
+          val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC015Cjson), MovementType.Departure)
+          val result  = sut.createMovement(MovementType.Departure)(request)
+          status(result) mustBe REQUEST_ENTITY_TOO_LARGE
+          contentAsJson(result) mustBe Json.obj(
+            "code"    -> "REQUEST_ENTITY_TOO_LARGE",
+            "message" -> "Your JSON converted XML message size 58 must be less than or equals to 40 bytes"
+          )
+          verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
+          verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
+          verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.JSON), any[Long]())(any(), any())
+
+      }
+
       "must return Accepted if the Push Notification Service reports an error" in forAll(
         arbitraryMovementResponse().arbitrary
       ) {
@@ -2501,6 +2563,60 @@ class V2MovementsControllerSpec
             any[HeaderCarrier],
             any[ExecutionContext]
           )
+      }
+
+      "must return Payload Too Large when converted JSON in XML is greater in limit" in forAll(
+        arbitraryMovementResponse().arbitrary,
+        arbitraryBoxResponse.arbitrary
+      ) {
+        (movementResponse, boxResponse) =>
+          val ControllerAndMocks(
+            sut,
+            mockValidationService,
+            mockPersistenceService,
+            mockRouterService,
+            mockAuditService,
+            mockConversionService,
+            _,
+            _,
+            mockPushNotificationService,
+            _,
+            mockAppConfig
+          ) = createControllerAndMocks()
+
+          when(
+            mockValidationService
+              .validateJson(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+          ).thenAnswer {
+            invocation =>
+              jsonValidationMockAnswer(MovementType.Arrival)(invocation)
+          }
+          when(mockAuditService.audit(any(), any(), eqTo(MimeTypes.JSON), any[Long]())(any(), any())).thenReturn(Future.successful(()))
+
+          when(
+            mockConversionService
+              .jsonToXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(
+                any[HeaderCarrier],
+                any[ExecutionContext],
+                any[Materializer]
+              )
+          ).thenReturn {
+            val source = singleUseStringSource(CC007C.mkString)
+            EitherT.rightT[Future, ConversionError](source)
+          }
+          when(mockAppConfig.smallMessageSizeLimit).thenReturn(40)
+
+          val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC007Cjson), MovementType.Arrival)
+          val result  = sut.createMovement(MovementType.Arrival)(request)
+          status(result) mustBe REQUEST_ENTITY_TOO_LARGE
+
+          contentAsJson(result) mustBe Json.obj(
+            "code"    -> "REQUEST_ENTITY_TOO_LARGE",
+            "message" -> "Your JSON converted XML message size 58 must be less than or equals to 40 bytes"
+          )
+          verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.ArrivalNotification), any())(any(), any(), any())
+          verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
+          verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.JSON), any[Long]())(any(), any())
       }
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
@@ -5472,6 +5588,28 @@ class V2MovementsControllerSpec
             any[HeaderCarrier],
             any[ExecutionContext]
           )
+        }
+
+        "must return Payload Too Large when JSON converted XML is not in limit" in {
+          val ControllerAndMocks(
+            sut,
+            mockValidationService,
+            mockPersistenceService,
+            mockRouterService,
+            mockAuditService,
+            mockConversionService,
+            _,
+            _,
+            _,
+            _,
+            mockAppConfig
+          ) = setup()
+          when(mockAppConfig.smallMessageSizeLimit).thenReturn(26)
+          val request = fakeJsonAttachRequest(contentJson)
+          val result  = sut.attachMessage(movementType, movementId)(request)
+
+          status(result) mustBe REQUEST_ENTITY_TOO_LARGE
+
         }
 
         "must return Bad Request when unable to find a IE141 message type " in forAll(
