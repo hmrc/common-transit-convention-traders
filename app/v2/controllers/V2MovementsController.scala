@@ -249,7 +249,9 @@ class V2MovementsControllerImpl @Inject() (
           upscanResponse <- upscanService
             .upscanInitiate(request.eoriNumber, movementType, movementResponse.movementId, movementResponse.messageId)
             .asPresentation
-          boxResponseOption <- mapToOptionalResponse(pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers))
+          boxResponseOption <- mapToOptionalResponse(
+            pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers, request.eoriNumber)
+          )
           auditResponse = Json.toJson(
             LargeMessageAuditRequest(
               movementResponse.movementId,
@@ -791,7 +793,7 @@ class V2MovementsControllerImpl @Inject() (
     for {
       movementResponse <- persistenceService.createMovement(request.eoriNumber, movementType, Some(source)).asPresentation
       boxResponseOption <- mapToOptionalResponse[PushNotificationError, BoxResponse](
-        pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers)
+        pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers, request.eoriNumber)
       )
       _ <- routerService
         .send(

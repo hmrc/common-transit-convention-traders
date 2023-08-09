@@ -90,7 +90,8 @@ trait CommonGenerators {
       clientId     <- Gen.alphaNumStr.map(ClientId.apply)
       movementType <- Gen.oneOf(MovementType.values)
       boxId        <- Gen.option(Gen.uuid.map(_.toString).map(BoxId.apply))
-    } yield PushNotificationsAssociation(clientId, movementType, boxId)
+      eori         <- arbitrary[EORINumber]
+    } yield PushNotificationsAssociation(clientId, movementType, boxId, eori)
   }
 
   def alphaNum(maxLen: Int, minLen: Int = 1) = for {

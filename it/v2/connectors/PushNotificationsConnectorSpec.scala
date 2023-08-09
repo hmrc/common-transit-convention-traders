@@ -89,12 +89,13 @@ class PushNotificationsConnectorSpec
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.JSON))
             .withRequestBody(matchingJsonPath(s"$$[?(@.clientId == '${assoc.clientId.value}')]"))
             .withRequestBody(matchingJsonPath(s"$$[?(@.movementType == '${assoc.movementType.movementType}')]"))
+            .withRequestBody(matchingJsonPath(s"$$[?(@.enrollmentEORINumber == '${assoc.enrollmentEORINumber.value}')]"))
             .willReturn(aResponse().withStatus(CREATED))
 
         val boxResponse = arbitraryBoxResponse.arbitrary.sample.get
         // given this endpoint
         server.stubFor(
-          // ifwe have a box, make sure that is in the Json too.
+          // if we have a box, make sure that is in the Json too.
           assoc.boxId
             .map(
               box => mapping.withRequestBody(matchingJsonPath(s"$$[?(@.boxId == '${box.value}')]"))
@@ -266,7 +267,7 @@ class PushNotificationsConnectorSpec
         val response    = sut.postPpnsSubmissionNotification(movementId, messageId, body)
 
         whenReady(response.recover {
-          case UpstreamErrorResponse(_, statusCode, _, _) => ()
+          case UpstreamErrorResponse(_, _, _, _) => ()
         }) {
           result =>
             result mustBe (())

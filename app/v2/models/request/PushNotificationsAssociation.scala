@@ -19,10 +19,11 @@ package v2.models.request
 import play.api.libs.json.Json
 import v2.models.BoxId
 import v2.models.ClientId
+import v2.models.EORINumber
 import v2.models.MovementType
 
 object PushNotificationsAssociation {
   implicit val pushNotificationsAssociationFormat = Json.format[PushNotificationsAssociation]
 }
 
-case class PushNotificationsAssociation(clientId: ClientId, movementType: MovementType, boxId: Option[BoxId])
+case class PushNotificationsAssociation(clientId: ClientId, movementType: MovementType, boxId: Option[BoxId], enrollmentEORINumber: EORINumber)
