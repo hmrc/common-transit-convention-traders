@@ -123,10 +123,10 @@ paths:
                   - $ref: '#/components/schemas/RequestEntityTooLarge'
                   - example:
                       code: REQUEST_ENTITY_TOO_LARGE
-                      message: Your message size must be less than 5000000 bytes
+                      message: Request Entity Too Large
               example:
                 code: REQUEST_ENTITY_TOO_LARGE
-                message: Your message size must be less than 5000000 bytes
+                message: Request Entity Too Large
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -540,10 +540,10 @@ paths:
                   - $ref: '#/components/schemas/RequestEntityTooLarge'
                   - example:
                       code: REQUEST_ENTITY_TOO_LARGE
-                      message: Your message size must be less than 5000000 bytes
+                      message: Request Entity Too Large
               example:
                 code: REQUEST_ENTITY_TOO_LARGE
-                message: Your message size must be less than 5000000 bytes
+                message: Request Entity Too Large
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -808,10 +808,10 @@ paths:
                   - $ref: '#/components/schemas/RequestEntityTooLarge'
                   - example:
                       code: REQUEST_ENTITY_TOO_LARGE
-                      message: Your message size must be less than 5000000 bytes
+                      message: Request Entity Too Large
               example:
                 code: REQUEST_ENTITY_TOO_LARGE
-                message: Your message size must be less than 5000000 bytes
+                message: Request Entity Too Large
       security:
         - userRestricted:
             - common-transit-convention-traders
@@ -1202,7 +1202,7 @@ paths:
                 $ref: '#/components/schemas/RequestEntityTooLarge'
               example:
                 code: REQUEST_ENTITY_TOO_LARGE
-                message: Your message size must be less than 5000000 bytes
+                message: Request Entity Too Large
       security:
         - userRestricted:
             - common-transit-convention-traders

@@ -147,20 +147,7 @@ class V2MovementsControllerImpl @Inject() (
   private def contentSizeIsLessThanLimit(size: Long): EitherT[Future, PresentationError, Unit] = EitherT {
     if (size <= config.smallMessageSizeLimit) Future.successful(Right(()))
     else {
-      Future.successful(Left(PresentationError.entityTooLargeError(s"Your message size must be less than ${config.smallMessageSizeLimit} bytes")))
-    }
-  }
-
-  private def convertedSizeIsLessThanLimit(size: Long): EitherT[Future, PresentationError, Unit] = EitherT {
-    if (size <= config.smallMessageSizeLimit) Future.successful(Right(()))
-    else {
-      Future.successful(
-        Left(
-          PresentationError.entityTooLargeError(
-            s"Your JSON converted XML message size $size must be less than or equals to ${config.smallMessageSizeLimit} bytes"
-          )
-        )
-      )
+      Future.successful(Left(PresentationError.entityTooLargeError("Request Entity Too Large")))
     }
   }
 
@@ -600,7 +587,7 @@ class V2MovementsControllerImpl @Inject() (
       withReusableSourceAndSize(src) {
         (source, size) =>
           for {
-            _              <- convertedSizeIsLessThanLimit(size)
+            _              <- contentSizeIsLessThanLimit(size)
             _              <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
             updateResponse <- updateAndSendToEIS(movementId, movementType, messageType, source)
           } yield updateResponse
@@ -772,7 +759,7 @@ class V2MovementsControllerImpl @Inject() (
     withReusableSourceAndSize(src) {
       (source, size) =>
         for {
-          _      <- convertedSizeIsLessThanLimit(size)
+          _      <- contentSizeIsLessThanLimit(size)
           _      <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
           result <- persistAndSendToEIS(source, movementType, messageType)
         } yield result
