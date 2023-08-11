@@ -29,6 +29,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.PushNotificationsConnector
 import v2.models.BoxId
 import v2.models.ClientId
+import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
@@ -43,7 +44,7 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[PushNotificationsServiceImpl])
 trait PushNotificationsService {
 
-  def associate(movementId: MovementId, movementType: MovementType, headers: Headers)(implicit
+  def associate(movementId: MovementId, movementType: MovementType, headers: Headers, enrollmentEORINumber: EORINumber)(implicit
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
   ): EitherT[Future, PushNotificationError, BoxResponse]
@@ -62,7 +63,7 @@ class PushNotificationsServiceImpl @Inject() (
   appConfig: AppConfig
 ) extends PushNotificationsService {
 
-  override def associate(movementId: MovementId, movementType: MovementType, headers: Headers)(implicit
+  override def associate(movementId: MovementId, movementType: MovementType, headers: Headers, enrollmentEORINumber: EORINumber)(implicit
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
   ): EitherT[Future, PushNotificationError, BoxResponse] =
@@ -76,7 +77,12 @@ class PushNotificationsServiceImpl @Inject() (
               pushNotificationsConnector
                 .postAssociation(
                   movementId,
-                  PushNotificationsAssociation(ClientId(clientId), movementType, headers.get(Constants.XCallbackBoxIdHeader).map(BoxId.apply))
+                  PushNotificationsAssociation(
+                    ClientId(clientId),
+                    movementType,
+                    headers.get(Constants.XCallbackBoxIdHeader).map(BoxId.apply),
+                    enrollmentEORINumber
+                  )
                 )
                 .map(Right(_))
                 .recover {

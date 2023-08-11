@@ -191,7 +191,10 @@ class V2MovementsControllerSpec
     mockAppConfig: AppConfig
   )
 
-  def createControllerAndMocks(acceptHeaderProvider: AcceptHeaderActionProvider = FakeAcceptHeaderActionProvider): ControllerAndMocks = {
+  def createControllerAndMocks(
+    acceptHeaderProvider: AcceptHeaderActionProvider = FakeAcceptHeaderActionProvider,
+    enrollmentEORI: EORINumber = EORINumber("id")
+  ): ControllerAndMocks = {
     val mockValidationService       = mock[ValidationService]
     val mockPersistenceService      = mock[PersistenceService]
     val mockRouterService           = mock[RouterService]
@@ -209,7 +212,7 @@ class V2MovementsControllerSpec
 
     val sut: V2MovementsController = new V2MovementsControllerImpl(
       Helpers.stubControllerComponents(),
-      FakeAuthNewEnrolmentOnlyAction(),
+      FakeAuthNewEnrolmentOnlyAction(enrollmentEORI),
       mockValidationService,
       mockConversionService,
       mockPersistenceService,
@@ -331,9 +334,10 @@ class V2MovementsControllerSpec
 
       "must return Accepted when body length is within limits and is considered valid" in forAll(
         arbitraryMovementResponse().arbitrary,
-        arbitraryBoxResponse.arbitrary
+        arbitraryBoxResponse.arbitrary,
+        arbitraryEORINumber.arbitrary
       ) {
-        (movementResponse, boxResponse) =>
+        (movementResponse, boxResponse, eori) =>
           val ControllerAndMocks(
             sut,
             mockValidationService,
@@ -346,7 +350,7 @@ class V2MovementsControllerSpec
             mockPushNotificationService,
             _,
             _
-          ) = createControllerAndMocks()
+          ) = createControllerAndMocks(enrollmentEORI = eori)
 
           when(mockValidationService.validateXml(any[MessageType], any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
             .thenAnswer(
@@ -366,7 +370,10 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
+          // ensure that we are associating with the correct EORI
+          when(
+            mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(eqTo(eori.value)))(any(), any())
+          )
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -425,7 +432,10 @@ class V2MovementsControllerSpec
             any(),
             any()
           )
-          verify(mockPushNotificationService, times(1)).associate(MovementId(any()), eqTo(MovementType.Departure), any())(any(), any())
+          verify(mockPushNotificationService, times(1)).associate(MovementId(any()), eqTo(MovementType.Departure), any(), EORINumber(eqTo(eori.value)))(
+            any(),
+            any()
+          )
       }
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
@@ -492,7 +502,7 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(())
             }
 
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
+          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
               _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
             )
@@ -520,7 +530,10 @@ class V2MovementsControllerSpec
             any(),
             any()
           )
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
+          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any(), EORINumber(anyString()))(
+            any(),
+            any()
+          )
 
       }
 
@@ -563,7 +576,14 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
-          when(mockPushNotificationService.associate(MovementId(eqTo(movementResponse.movementId.value)), eqTo(MovementType.Departure), any())(any(), any()))
+          when(
+            mockPushNotificationService.associate(
+              MovementId(eqTo(movementResponse.movementId.value)),
+              eqTo(MovementType.Departure),
+              any(),
+              EORINumber(anyString())
+            )(any(), any())
+          )
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -625,7 +645,7 @@ class V2MovementsControllerSpec
             any()
           )
           verify(mockPushNotificationService, times(1))
-            .associate(MovementId(eqTo(movementResponse.movementId.value)), eqTo(MovementType.Departure), any())(any(), any())
+            .associate(MovementId(eqTo(movementResponse.movementId.value)), eqTo(MovementType.Departure), any(), EORINumber(anyString()))(any(), any())
       }
 
       "must return Bad Request when body is an XML document that would fail schema validation" in {
@@ -737,7 +757,7 @@ class V2MovementsControllerSpec
               )
           ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, MovementResponse](movementResponse)))
 
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
+          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -827,7 +847,7 @@ class V2MovementsControllerSpec
               )
           ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, MovementResponse](movementResponse)))
 
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
+          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -948,7 +968,7 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
+          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -1003,7 +1023,10 @@ class V2MovementsControllerSpec
             any[HeaderCarrier],
             any[ExecutionContext]
           )
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
+          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any(), EORINumber(anyString()))(
+            any(),
+            any()
+          )
       }
 
       "must return Payload Too Large when converted JSON in XML is greater in limit" in forAll(
@@ -1155,7 +1178,7 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
-          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any())(any(), any()))
+          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
               _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
             )
@@ -1180,7 +1203,10 @@ class V2MovementsControllerSpec
             any[HeaderCarrier],
             any[ExecutionContext]
           )
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
+          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any(), EORINumber(anyString()))(
+            any(),
+            any()
+          )
       }
 
       "must return error when the persistence service of message status update fails" in forAll(
@@ -1243,7 +1269,14 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
-          when(mockPushNotificationService.associate(MovementId(eqTo(movementResponse.movementId.value)), eqTo(MovementType.Departure), any())(any(), any()))
+          when(
+            mockPushNotificationService.associate(
+              MovementId(eqTo(movementResponse.movementId.value)),
+              eqTo(MovementType.Departure),
+              any(),
+              EORINumber(anyString())
+            )(any(), any())
+          )
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -1297,7 +1330,7 @@ class V2MovementsControllerSpec
             any[ExecutionContext]
           )
           verify(mockPushNotificationService, times(1))
-            .associate(MovementId(eqTo(movementResponse.movementId.value)), eqTo(MovementType.Departure), any())(any(), any())
+            .associate(MovementId(eqTo(movementResponse.movementId.value)), eqTo(MovementType.Departure), any(), EORINumber(anyString()))(any(), any())
       }
 
       "must return Bad Request when body is not an JSON document" in {
@@ -1606,7 +1639,7 @@ class V2MovementsControllerSpec
                 )
             )
 
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
+          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -1718,7 +1751,7 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
-          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any())(any(), any()))
+          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -1736,7 +1769,10 @@ class V2MovementsControllerSpec
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Departure), MovementId(any()), MessageId(any()))(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
+          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any(), EORINumber(anyString()))(
+            any(),
+            any()
+          )
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.LargeMessageSubmissionRequested), any(), eqTo(MimeTypes.JSON), any[Long]())(any(), any())
       }
 
@@ -1780,7 +1816,7 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
-          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any())(any(), any()))
+          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
               _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
             )
@@ -1793,7 +1829,10 @@ class V2MovementsControllerSpec
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Departure), MovementId(any()), MessageId(any()))(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any())(any(), any())
+          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any(), EORINumber(anyString()))(
+            any(),
+            any()
+          )
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
@@ -1984,9 +2023,10 @@ class V2MovementsControllerSpec
 
       "must return Accepted when body length is within limits and is considered valid" in forAll(
         arbitraryMovementResponse().arbitrary,
-        arbitraryBoxResponse.arbitrary
+        arbitraryBoxResponse.arbitrary,
+        arbitraryEORINumber.arbitrary
       ) {
-        (movementResponse, boxResponse) =>
+        (movementResponse, boxResponse, eori) =>
           val ControllerAndMocks(
             sut,
             mockValidationService,
@@ -1999,7 +2039,7 @@ class V2MovementsControllerSpec
             mockPushNotificationService,
             _,
             _
-          ) = createControllerAndMocks()
+          ) = createControllerAndMocks(enrollmentEORI = eori)
           when(
             mockValidationService.validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
           )
@@ -2020,7 +2060,7 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
-          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any())(any(), any()))
+          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(eqTo(eori.value)))(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -2077,7 +2117,10 @@ class V2MovementsControllerSpec
             any[HeaderCarrier],
             any[ExecutionContext]
           )
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
+          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any(), EORINumber(anyString()))(
+            any(),
+            any()
+          )
       }
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
@@ -2146,7 +2189,7 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(())
             }
 
-          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any())(any(), any()))
+          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
               _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
             )
@@ -2174,7 +2217,10 @@ class V2MovementsControllerSpec
             any[HeaderCarrier],
             any[ExecutionContext]
           )
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
+          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any(), EORINumber(anyString()))(
+            any(),
+            any()
+          )
       }
 
       "must return error when the persistence service of message status update fails" in forAll(
@@ -2217,7 +2263,14 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
-          when(mockPushNotificationService.associate(MovementId(eqTo(movementResponse.movementId.value)), eqTo(MovementType.Arrival), any())(any(), any()))
+          when(
+            mockPushNotificationService.associate(
+              MovementId(eqTo(movementResponse.movementId.value)),
+              eqTo(MovementType.Arrival),
+              any(),
+              EORINumber(anyString())
+            )(any(), any())
+          )
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -2279,7 +2332,7 @@ class V2MovementsControllerSpec
             any()
           )
           verify(mockPushNotificationService, times(1))
-            .associate(MovementId(eqTo(movementResponse.movementId.value)), eqTo(MovementType.Arrival), any())(any(), any())
+            .associate(MovementId(eqTo(movementResponse.movementId.value)), eqTo(MovementType.Arrival), any(), EORINumber(anyString()))(any(), any())
       }
 
       "must return Bad Request when body is an XML document that would fail schema validation" in {
@@ -2422,7 +2475,7 @@ class V2MovementsControllerSpec
               )
           ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, MovementResponse](movementResponse)))
 
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
+          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -2541,7 +2594,7 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(())
             }
 
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
+          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -2705,7 +2758,7 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
-          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any())(any(), any()))
+          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
               _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
             )
@@ -3038,7 +3091,7 @@ class V2MovementsControllerSpec
                 )
             )
 
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
+          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -3152,7 +3205,7 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
-          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any())(any(), any()))
+          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -3167,7 +3220,10 @@ class V2MovementsControllerSpec
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Arrival), MovementId(any()), MessageId(any()))(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
+          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any(), EORINumber(anyString()))(
+            any(),
+            any()
+          )
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.LargeMessageSubmissionRequested), any(), eqTo(MimeTypes.JSON), any[Long]())(any(), any())
       }
 
@@ -3211,7 +3267,7 @@ class V2MovementsControllerSpec
               _ => EitherT.rightT(movementResponse)
             }
 
-          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any())(any(), any()))
+          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
               _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
             )
@@ -3226,7 +3282,10 @@ class V2MovementsControllerSpec
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Arrival), MovementId(any()), MessageId(any()))(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any())(any(), any())
+          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any(), EORINumber(anyString()))(
+            any(),
+            any()
+          )
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
@@ -3471,7 +3530,7 @@ class V2MovementsControllerSpec
             _ => EitherT.rightT(())
           }
 
-        when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any())(any(), any()))
+        when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
           .thenAnswer(
             _ => EitherT.rightT(boxResponse)
           )
@@ -5593,11 +5652,11 @@ class V2MovementsControllerSpec
         "must return Payload Too Large when JSON converted XML is not in limit" in {
           val ControllerAndMocks(
             sut,
-            mockValidationService,
-            mockPersistenceService,
-            mockRouterService,
-            mockAuditService,
-            mockConversionService,
+            _,
+            _,
+            _,
+            _,
+            _,
             _,
             _,
             _,

@@ -28,7 +28,6 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.Logging
 import v2.base.TestCommonGenerators
-import v2.models.EORINumber
 import v2.models.LocalReferenceNumber
 import v2.models.MessageId
 import v2.models.MovementId
@@ -195,8 +194,6 @@ class ConvertErrorSpec
     }
 
     "PageNotFound error returns a NOT_FOUND" in {
-      val movementId = arbitrary[MovementId].sample.value
-
       val input  = PersistenceError.PageNotFound
       val output = PresentationError.notFoundError("The requested page does not exist")
 
