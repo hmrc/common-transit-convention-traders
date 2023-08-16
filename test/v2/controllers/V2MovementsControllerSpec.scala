@@ -4940,7 +4940,7 @@ class V2MovementsControllerSpec
         )
       }
 
-      "should return ok with list of movements per page if count is less then max count per page" in {
+      "should return ok with list of movements per page if count is less then or equals to max count per page" in {
         val ControllerAndMocks(
           sut,
           _,
