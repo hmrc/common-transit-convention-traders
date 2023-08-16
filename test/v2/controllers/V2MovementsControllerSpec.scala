@@ -3629,6 +3629,117 @@ class V2MovementsControllerSpec
               )
           }
       }
+      "when movement is found should return list of messages per page when page limit is less then or equals to max per page limit" in forAll(
+        arbitraryMovementId.arbitrary,
+        Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head)
+      ) {
+        (movementId, messageResponse) =>
+          val summaries = PaginationMessageSummary(TotalCount(messageResponse.length), messageResponse)
+
+          val ControllerAndMocks(
+            sut,
+            _,
+            mockPersistenceService,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            mockAppConfig
+          ) = createControllerAndMocks()
+          when(
+            mockPersistenceService.getMessages(
+              EORINumber(any()),
+              any[MovementType],
+              MovementId(any()),
+              any(),
+              any[Option[PageNumber]],
+              any[Option[ItemCount]],
+              any[Option[OffsetDateTime]]
+            )(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.rightT(summaries)
+            )
+
+          when(mockAppConfig.maxItemsPerPage).thenReturn(3)
+          val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+          val result  = sut.getMessageIds(movementType, movementId, None, None, Some(ItemCount(2)), None)(request)
+
+          status(result) mustBe OK
+          contentAsJson(result) mustBe Json.toJson(
+            HateoasMovementMessageIdsResponse(
+              movementId,
+              summaries,
+              None,
+              movementType,
+              None,
+              Some(ItemCount(2)),
+              None
+            )
+          )
+      }
+
+      "when movement is found should return list of max per page messages when page limit greater then max per page limit" in forAll(
+        arbitraryMovementId.arbitrary,
+        Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head)
+      ) {
+        (movementId, messageResponse) =>
+          val summaries = PaginationMessageSummary(TotalCount(messageResponse.length), messageResponse)
+
+          val ControllerAndMocks(
+            sut,
+            _,
+            mockPersistenceService,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            mockAppConfig
+          ) = createControllerAndMocks()
+          when(
+            mockPersistenceService.getMessages(
+              EORINumber(any()),
+              any[MovementType],
+              MovementId(any()),
+              any(),
+              any[Option[PageNumber]],
+              any[Option[ItemCount]],
+              any[Option[OffsetDateTime]]
+            )(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+          )
+            .thenAnswer(
+              _ => EitherT.rightT(summaries)
+            )
+
+          when(mockAppConfig.maxItemsPerPage).thenReturn(3)
+          val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+          val result  = sut.getMessageIds(movementType, movementId, None, None, Some(ItemCount(4)), None)(request)
+
+          status(result) mustBe OK
+          contentAsJson(result) mustBe Json.toJson(
+            HateoasMovementMessageIdsResponse(
+              movementId,
+              summaries,
+              None,
+              movementType,
+              None,
+              Some(ItemCount(4)),
+              None
+            )
+          )
+      }
 
       "when no movement is found and page is 1" in forAll(arbitraryMovementId.arbitrary, arbitraryItemCount.arbitrary) {
         (movementId, itemCount) =>
@@ -4823,6 +4934,154 @@ class V2MovementsControllerSpec
             None,
             None,
             None,
+            None,
+            None
+          )
+        )
+      }
+
+      "should return ok with list of movements per page if count is less then max count per page" in {
+        val ControllerAndMocks(
+          sut,
+          _,
+          mockPersistenceService,
+          _,
+          _,
+          _,
+          _,
+          _,
+          _,
+          _,
+          mockAppConfig
+        ) = createControllerAndMocks()
+
+        val enrolmentEORINumber = arbitrary[EORINumber].sample.value
+        val dateTime            = OffsetDateTime.of(2022, 8, 4, 11, 34, 42, 0, ZoneOffset.UTC)
+
+        val departureResponse1 = MovementSummary(
+          _id = arbitrary[MovementId].sample.value,
+          enrollmentEORINumber = enrolmentEORINumber,
+          movementEORINumber = Some(arbitrary[EORINumber].sample.get),
+          movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
+          localReferenceNumber = Some(arbitrary[LocalReferenceNumber].sample.value),
+          created = dateTime,
+          updated = dateTime.plusHours(1)
+        )
+        val departureResponses        = Seq(departureResponse1)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(departureResponses.length), departureResponses)
+
+        when(mockAppConfig.maxItemsPerPage).thenReturn(2)
+        when(
+          mockPersistenceService.getMovements(
+            EORINumber(any()),
+            any[MovementType],
+            any[Option[OffsetDateTime]],
+            any[Option[EORINumber]],
+            any[Option[MovementReferenceNumber]],
+            any[Option[PageNumber]],
+            any[Option[ItemCount]],
+            any[Option[OffsetDateTime]],
+            any[Option[LocalReferenceNumber]]
+          )(
+            any[HeaderCarrier],
+            any[ExecutionContext]
+          )
+        )
+          .thenAnswer(
+            _ => EitherT.rightT(paginationMovementSummary)
+          )
+        val request = FakeRequest(
+          GET,
+          url,
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
+          AnyContentAsEmpty
+        )
+        val result = sut.getMovements(movementType, None, None, None, None, Some(ItemCount(1)), None, None)(request)
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(
+          HateoasMovementIdsResponse(
+            paginationMovementSummary,
+            movementType,
+            None,
+            None,
+            None,
+            None,
+            Some(ItemCount(1)),
+            None,
+            None
+          )
+        )
+      }
+
+      "should return ok with list of max count per page movements if count is greater then max count" in {
+        val ControllerAndMocks(
+          sut,
+          _,
+          mockPersistenceService,
+          _,
+          _,
+          _,
+          _,
+          _,
+          _,
+          _,
+          mockAppConfig
+        ) = createControllerAndMocks()
+
+        val enrolmentEORINumber = arbitrary[EORINumber].sample.value
+        val dateTime            = OffsetDateTime.of(2022, 8, 4, 11, 34, 42, 0, ZoneOffset.UTC)
+
+        val departureResponse1 = MovementSummary(
+          _id = arbitrary[MovementId].sample.value,
+          enrollmentEORINumber = enrolmentEORINumber,
+          movementEORINumber = Some(arbitrary[EORINumber].sample.get),
+          movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
+          localReferenceNumber = Some(arbitrary[LocalReferenceNumber].sample.value),
+          created = dateTime,
+          updated = dateTime.plusHours(1)
+        )
+        val departureResponses        = Seq(departureResponse1)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(departureResponses.length), departureResponses)
+
+        when(mockAppConfig.maxItemsPerPage).thenReturn(1)
+        when(
+          mockPersistenceService.getMovements(
+            EORINumber(any()),
+            any[MovementType],
+            any[Option[OffsetDateTime]],
+            any[Option[EORINumber]],
+            any[Option[MovementReferenceNumber]],
+            any[Option[PageNumber]],
+            any[Option[ItemCount]],
+            any[Option[OffsetDateTime]],
+            any[Option[LocalReferenceNumber]]
+          )(
+            any[HeaderCarrier],
+            any[ExecutionContext]
+          )
+        )
+          .thenAnswer(
+            _ => EitherT.rightT(paginationMovementSummary)
+          )
+        val request = FakeRequest(
+          GET,
+          url,
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON)),
+          AnyContentAsEmpty
+        )
+        val result = sut.getMovements(movementType, None, None, None, None, Some(ItemCount(3)), None, None)(request)
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(
+          HateoasMovementIdsResponse(
+            paginationMovementSummary,
+            movementType,
+            None,
+            None,
+            None,
+            None,
+            Some(ItemCount(3)),
             None,
             None
           )

@@ -435,8 +435,9 @@ class V2MovementsControllerImpl @Inject() (
         (for {
           _ <- ensurePositive(page.map(_.value), "page")
           _ <- ensurePositive(count.map(_.value), "count")
+          perPageCount = determineMaxPerPageCount(count.map(_.value))
           response <- persistenceService
-            .getMessages(request.eoriNumber, movementType, movementId, receivedSince, page, count, receivedUntil)
+            .getMessages(request.eoriNumber, movementType, movementId, receivedSince, page, perPageCount, receivedUntil)
             .asPresentation
         } yield response).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -467,6 +468,13 @@ class V2MovementsControllerImpl @Inject() (
         EitherT.rightT(())
     }
 
+  def determineMaxPerPageCount(parameter: Option[Long]): Option[ItemCount] =
+    parameter match {
+      case Some(x) if x <= config.maxItemsPerPage => Some(ItemCount(x))
+      case Some(x) if x > config.maxItemsPerPage  => Some(ItemCount(config.maxItemsPerPage))
+      case None                                   => None
+    }
+
   def getMovements(
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
@@ -484,6 +492,7 @@ class V2MovementsControllerImpl @Inject() (
         (for {
           _ <- ensurePositive(page.map(_.value), "page")
           _ <- ensurePositive(count.map(_.value), "count")
+          perPageCount = determineMaxPerPageCount(count.map(_.value))
           response <- persistenceService
             .getMovements(
               request.eoriNumber,
@@ -492,7 +501,7 @@ class V2MovementsControllerImpl @Inject() (
               movementEORI,
               movementReferenceNumber,
               page,
-              count,
+              perPageCount,
               receivedUntil,
               localReferenceNumber
             )
