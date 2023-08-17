@@ -1037,13 +1037,13 @@ class V2MovementsControllerSpec
           val ControllerAndMocks(
             sut,
             mockValidationService,
-            mockPersistenceService,
-            mockRouterService,
+            _,
+            _,
             mockAuditService,
             mockConversionService,
             _,
             _,
-            mockPushNotificationService,
+            _,
             _,
             mockAppConfig
           ) = createControllerAndMocks()
@@ -2626,13 +2626,13 @@ class V2MovementsControllerSpec
           val ControllerAndMocks(
             sut,
             mockValidationService,
-            mockPersistenceService,
-            mockRouterService,
+            _,
+            _,
             mockAuditService,
             mockConversionService,
             _,
             _,
-            mockPushNotificationService,
+            _,
             _,
             mockAppConfig
           ) = createControllerAndMocks()
@@ -3601,7 +3601,7 @@ class V2MovementsControllerSpec
                   MovementId(any()),
                   any(),
                   any[Option[PageNumber]],
-                  any[Option[ItemCount]],
+                  ItemCount(any()),
                   any[Option[OffsetDateTime]]
                 )(
                   any[HeaderCarrier],
@@ -3656,7 +3656,7 @@ class V2MovementsControllerSpec
               MovementId(any()),
               any(),
               any[Option[PageNumber]],
-              any[Option[ItemCount]],
+              ItemCount(any()),
               any[Option[OffsetDateTime]]
             )(
               any[HeaderCarrier],
@@ -3712,7 +3712,7 @@ class V2MovementsControllerSpec
               MovementId(any()),
               any(),
               any[Option[PageNumber]],
-              any[Option[ItemCount]],
+              ItemCount(any()),
               any[Option[OffsetDateTime]]
             )(
               any[HeaderCarrier],
@@ -3765,7 +3765,7 @@ class V2MovementsControllerSpec
               MovementId(any()),
               any(),
               eqTo(page),
-              any[Option[ItemCount]],
+              ItemCount(any()),
               any[Option[OffsetDateTime]]
             )(
               any[HeaderCarrier],
@@ -3817,7 +3817,7 @@ class V2MovementsControllerSpec
               MovementId(any()),
               any(),
               eqTo(Some(page)),
-              any[Option[ItemCount]],
+              ItemCount(any()),
               any[Option[OffsetDateTime]]
             )(
               any[HeaderCarrier],
@@ -3860,7 +3860,7 @@ class V2MovementsControllerSpec
               MovementId(any()),
               any(),
               any[Option[PageNumber]],
-              any[Option[ItemCount]],
+              ItemCount(any()),
               any[Option[OffsetDateTime]]
             )(
               any[HeaderCarrier],
@@ -4905,7 +4905,7 @@ class V2MovementsControllerSpec
             any[Option[EORINumber]],
             any[Option[MovementReferenceNumber]],
             any[Option[PageNumber]],
-            any[Option[ItemCount]],
+            ItemCount(any()),
             any[Option[OffsetDateTime]],
             any[Option[LocalReferenceNumber]]
           )(
@@ -4979,7 +4979,7 @@ class V2MovementsControllerSpec
             any[Option[EORINumber]],
             any[Option[MovementReferenceNumber]],
             any[Option[PageNumber]],
-            any[Option[ItemCount]],
+            ItemCount(any()),
             any[Option[OffsetDateTime]],
             any[Option[LocalReferenceNumber]]
           )(
@@ -5053,7 +5053,7 @@ class V2MovementsControllerSpec
             any[Option[EORINumber]],
             any[Option[MovementReferenceNumber]],
             any[Option[PageNumber]],
-            any[Option[ItemCount]],
+            ItemCount(any()),
             any[Option[OffsetDateTime]],
             any[Option[LocalReferenceNumber]]
           )(
@@ -5116,7 +5116,7 @@ class V2MovementsControllerSpec
             any[Option[EORINumber]],
             any[Option[MovementReferenceNumber]],
             eqTo(page),
-            any[Option[ItemCount]],
+            ItemCount(any()),
             any[Option[OffsetDateTime]],
             any[Option[LocalReferenceNumber]]
           )(
@@ -5178,7 +5178,7 @@ class V2MovementsControllerSpec
             any[Option[EORINumber]],
             any[Option[MovementReferenceNumber]],
             eqTo(page),
-            any[Option[ItemCount]],
+            ItemCount(any()),
             any[Option[OffsetDateTime]],
             any[Option[LocalReferenceNumber]]
           )(
@@ -5229,7 +5229,7 @@ class V2MovementsControllerSpec
             any[Option[EORINumber]],
             any[Option[MovementReferenceNumber]],
             any[Option[PageNumber]],
-            any[Option[ItemCount]],
+            ItemCount(any()),
             any[Option[OffsetDateTime]],
             any[Option[LocalReferenceNumber]]
           )(
@@ -5280,7 +5280,7 @@ class V2MovementsControllerSpec
             any[Option[EORINumber]],
             any[Option[MovementReferenceNumber]],
             any[Option[PageNumber]],
-            any[Option[ItemCount]],
+            ItemCount(any()),
             any[Option[OffsetDateTime]],
             any[Option[LocalReferenceNumber]]
           )(
@@ -5331,7 +5331,7 @@ class V2MovementsControllerSpec
             any[Option[EORINumber]],
             any[Option[MovementReferenceNumber]],
             any[Option[PageNumber]],
-            any[Option[ItemCount]],
+            ItemCount(any()),
             any[Option[OffsetDateTime]],
             any[Option[LocalReferenceNumber]]
           )(
@@ -7807,7 +7807,7 @@ class V2MovementsControllerSpec
               MovementId(any()),
               any(),
               any[Option[PageNumber]],
-              any[Option[ItemCount]],
+              ItemCount(any()),
               any[Option[OffsetDateTime]]
             )(
               any[HeaderCarrier],
@@ -7849,7 +7849,7 @@ class V2MovementsControllerSpec
               MovementId(any()),
               any(),
               any[Option[PageNumber]],
-              any[Option[ItemCount]],
+              ItemCount(any()),
               any[Option[OffsetDateTime]]
             )(
               any[HeaderCarrier],

@@ -468,11 +468,11 @@ class V2MovementsControllerImpl @Inject() (
         EitherT.rightT(())
     }
 
-  def determineMaxPerPageCount(parameter: Option[Long]): Option[ItemCount] =
+  def determineMaxPerPageCount(parameter: Option[Long]): ItemCount =
     parameter match {
-      case Some(x) if x <= config.maxItemsPerPage => Some(ItemCount(x))
-      case Some(x) if x > config.maxItemsPerPage  => Some(ItemCount(config.maxItemsPerPage))
-      case None                                   => None
+      case Some(x) if x <= config.maxItemsPerPage => ItemCount(x)
+      case Some(x) if x > config.maxItemsPerPage  => ItemCount(config.maxItemsPerPage)
+      case None                                   => ItemCount(config.defaultItemsPerPage)
     }
 
   def getMovements(

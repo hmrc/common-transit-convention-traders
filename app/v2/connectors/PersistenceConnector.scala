@@ -79,7 +79,7 @@ trait PersistenceConnector {
     movementId: MovementId,
     receivedSince: Option[OffsetDateTime],
     page: Option[PageNumber] = Some(PageNumber(1)),
-    count: Option[ItemCount] = None,
+    count: ItemCount,
     receivedUntil: Option[OffsetDateTime]
   )(implicit
     hc: HeaderCarrier,
@@ -98,7 +98,7 @@ trait PersistenceConnector {
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
     page: Option[PageNumber] = Some(PageNumber(1)),
-    count: Option[ItemCount] = None,
+    count: ItemCount,
     receivedUntil: Option[OffsetDateTime] = None,
     localReferenceNumber: Option[LocalReferenceNumber]
   )(implicit
@@ -185,7 +185,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metric
     movementId: MovementId,
     receivedSince: Option[OffsetDateTime],
     page: Option[PageNumber] = Some(PageNumber(1)),
-    count: Option[ItemCount] = Some(ItemCount(appConfig.itemsPerPage)),
+    count: ItemCount,
     receivedUntil: Option[OffsetDateTime]
   )(implicit
     hc: HeaderCarrier,
@@ -228,7 +228,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metric
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
     page: Option[PageNumber] = Some(PageNumber(1)),
-    count: Option[ItemCount] = Some(ItemCount(appConfig.itemsPerPage)),
+    count: ItemCount,
     receivedUntil: Option[OffsetDateTime],
     localReferenceNumber: Option[LocalReferenceNumber]
   )(implicit
@@ -285,13 +285,12 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metric
     movementReferenceNumber: Option[MovementReferenceNumber] = None,
     receivedSince: Option[OffsetDateTime] = None,
     page: Option[PageNumber] = Some(PageNumber(1)),
-    count: Option[ItemCount] = None,
+    count: ItemCount,
     receivedUntil: Option[OffsetDateTime] = None,
     localReferenceNumber: Option[LocalReferenceNumber] = None
   ) = {
 
     val pageNumberValid = page.fold(Some(PageNumber(1)))(Some(_)) // not a Zero based index.
-    val itemCountValid  = count.fold(Some(ItemCount(appConfig.itemsPerPage)))(Some(_))
 
     urlPath
       .withConfig(urlPath.config.copy(renderQuery = ExcludeNones))
@@ -306,7 +305,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metric
           time => DateTimeFormatter.ISO_DATE_TIME.format(time)
         ),
         "page"  -> pageNumberValid.map(_.value.toString),
-        "count" -> itemCountValid.map(_.value.toString),
+        "count" -> Some(count.value.toString),
         "receivedUntil" -> receivedUntil.map(
           time => DateTimeFormatter.ISO_DATE_TIME.format(time)
         )

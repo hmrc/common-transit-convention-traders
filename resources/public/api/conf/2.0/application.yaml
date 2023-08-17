@@ -139,7 +139,7 @@ paths:
 
         You can filter for departure declarations updated before and/or after a specific date and time, and optionally filter for departure declarations with a specific EORI.
 
-        For a multi-page query you can filter for a specific page, and optionally the number of items per page.Maximum per page count is configured as 5000.
+        For a multi-page query you can filter for a specific page, and optionally the number of items per page.
 
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
         
@@ -333,7 +333,7 @@ paths:
 
         Movements older than 31 days are archived, so any messages to related to them cannot be returned by the API.
         
-        For a multi-page query you can filter for a specific page, and optionally the number of items per page.Maximum per page count is configured as 5000.
+        For a multi-page query you can filter for a specific page, and optionally the number of items per page.
         
         A successful response will include the total count of the number of messages and Movement Reference Number (MRN) only after it has been allocated to a movement.
         <br/><br/>
@@ -824,7 +824,7 @@ paths:
         
         You can filter for arrival notifications updated before and/or after a specific date and time, and optionally filter for arrival notifications with a specific EORI.
 
-        For a multi-page query you can filter for a specific page and optionally the number of items per page.Maximum per page count is configured as 5000.
+        For a multi-page query you can filter for a specific page and optionally the number of items per page.
         
         Movements older than 31 days and their related messages are archived and cannot be returned by the API.
         <br/><br/>
@@ -1021,7 +1021,7 @@ paths:
         
         You can filter for arrival notifications received before and/or after a specific date and time.
 
-        For a multi-page query you can filter for a specific page, and optionally the number of items per page.Maximum per page count is configured as 5000.
+        For a multi-page query you can filter for a specific page, and optionally the number of items per page.
         
         Movements older than 31 days are archived, so any messages related to them cannot be returned by the API.
         <br/><br/>
