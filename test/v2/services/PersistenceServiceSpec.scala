@@ -188,7 +188,7 @@ class PersistenceServiceSpec
       summaries =>
         val expected = PaginationMessageSummary(TotalCount(summaries.length), summaries)
         when(
-          mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(2))), ItemCount(eqTo(ItemCount(30).value)), any())(
+          mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(2))), ItemCount(eqTo(30L)), any())(
             any(),
             any()
           )
@@ -212,7 +212,7 @@ class PersistenceServiceSpec
     "when a given movement is not found, and the page is 1, should return a MovementNotFound" in {
 
       when(
-        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(1))), ItemCount(eqTo(ItemCount(35).value)), any())(
+        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(1))), ItemCount(eqTo(35L)), any())(
           any(),
           any()
         )
@@ -236,7 +236,7 @@ class PersistenceServiceSpec
     "when a given movement is not found, and the page is greater than 1, should return a MovementNotFound" in {
 
       when(
-        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(9))), ItemCount(eqTo(ItemCount(35).value)), any())(
+        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(9))), ItemCount(eqTo(35L)), any())(
           any(),
           any()
         )
@@ -262,7 +262,7 @@ class PersistenceServiceSpec
       val expected = PaginationMessageSummary(TotalCount(0), Seq.empty[MessageSummary])
 
       when(
-        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(2))), ItemCount(eqTo(ItemCount(35).value)), any())(
+        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(2))), ItemCount(eqTo(35L)), any())(
           any(),
           any()
         )
@@ -286,7 +286,7 @@ class PersistenceServiceSpec
     "on a failed submission, should return a Left with an UnexpectedError" in {
       val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
       when(
-        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(4))), ItemCount(eqTo(ItemCount(40).value)), any())(
+        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(4))), ItemCount(eqTo(40L)), any())(
           any(),
           any()
         )
