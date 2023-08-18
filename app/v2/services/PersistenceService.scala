@@ -30,25 +30,12 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.PersistenceConnector
-import v2.models.EORINumber
-import v2.models.ItemCount
-import v2.models.LocalReferenceNumber
-import v2.models.MessageId
-import v2.models.MovementId
-import v2.models.MovementReferenceNumber
-import v2.models.MovementType
-import v2.models.PageNumber
-import v2.models.TotalCount
+import v2.models._
 import v2.models.errors.LRNError
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
-import v2.models.responses.MessageSummary
-import v2.models.responses.MovementResponse
-import v2.models.responses.MovementSummary
-import v2.models.responses.PaginationMessageSummary
-import v2.models.responses.PaginationMovementSummary
-import v2.models.responses.UpdateMovementResponse
+import v2.models.responses._
 
 import java.time.OffsetDateTime
 import scala.concurrent.ExecutionContext
@@ -74,7 +61,7 @@ trait PersistenceService {
     movementId: MovementId,
     receivedSince: Option[OffsetDateTime],
     page: Option[PageNumber],
-    count: Option[ItemCount],
+    count: ItemCount,
     receivedUntil: Option[OffsetDateTime]
   )(implicit
     hc: HeaderCarrier,
@@ -93,7 +80,7 @@ trait PersistenceService {
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
     page: Option[PageNumber],
-    count: Option[ItemCount],
+    count: ItemCount,
     receivedUntil: Option[OffsetDateTime],
     localReferenceNumber: Option[LocalReferenceNumber]
   )(implicit
@@ -181,7 +168,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
     movementId: MovementId,
     receivedSince: Option[OffsetDateTime],
     page: Option[PageNumber],
-    count: Option[ItemCount],
+    count: ItemCount,
     receivedUntil: Option[OffsetDateTime]
   )(implicit
     hc: HeaderCarrier,
@@ -220,7 +207,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
     page: Option[PageNumber],
-    count: Option[ItemCount],
+    count: ItemCount,
     receivedUntil: Option[OffsetDateTime],
     localReferenceNumber: Option[LocalReferenceNumber]
   )(implicit

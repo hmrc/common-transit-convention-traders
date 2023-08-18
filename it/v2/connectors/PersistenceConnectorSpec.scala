@@ -542,7 +542,7 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getMessages(eori, MovementType.Departure, departureId, None, None, None, None)
+      val result      = persistenceConnector.getMessages(eori, MovementType.Departure, departureId, None, None, ItemCount(25), None)
       whenReady(result) {
         _ mustBe paginationMessageSummary
       }
@@ -573,7 +573,7 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getMessages(eori, MovementType.Departure, departureId, Some(time), None, None, None)
+      val result      = persistenceConnector.getMessages(eori, MovementType.Departure, departureId, Some(time), None, ItemCount(25), None)
       whenReady(result) {
         _ mustBe paginationMessageSummary
       }
@@ -598,7 +598,7 @@ class PersistenceConnectorSpec
 
       implicit val hc = HeaderCarrier()
       val r = persistenceConnector
-        .getMessages(eori, MovementType.Departure, departureId, None, None, None, None)
+        .getMessages(eori, MovementType.Departure, departureId, None, None, ItemCount(25), None)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -640,7 +640,7 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val r = persistenceConnector
-          .getMessages(eori, MovementType.Departure, departureId, None, None, None, None)
+          .getMessages(eori, MovementType.Departure, departureId, None, None, ItemCount(25), None)
           .map(
             _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
           )
@@ -679,7 +679,7 @@ class PersistenceConnectorSpec
 
       implicit val hc = HeaderCarrier()
       val r = persistenceConnector
-        .getMessages(eori, MovementType.Departure, departureId, None, None, None, None)
+        .getMessages(eori, MovementType.Departure, departureId, None, None, ItemCount(25), None)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
@@ -751,7 +751,7 @@ class PersistenceConnectorSpec
         }
 
       whenReady(result) {
-        _ mustBe (())
+        _ mustBe ()
       }
     }
 
@@ -818,7 +818,7 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getMovements(eori, MovementType.Departure, None, None, None, None, None, None, None)
+      val result      = persistenceConnector.getMovements(eori, MovementType.Departure, None, None, None, None, ItemCount(25), None, None)
       whenReady(result) {
         _ mustBe paginationMovementSummary
       }
@@ -860,7 +860,7 @@ class PersistenceConnectorSpec
           Some(movementEORI),
           Some(movementReferenceNumber),
           Some(pageNumber),
-          Some(itemCount),
+          itemCount,
           Some(updatedSince),
           None
         )
@@ -874,10 +874,9 @@ class PersistenceConnectorSpec
       arbitrary[OffsetDateTime],
       None,
       None,
-      None,
       None
     ) {
-      (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount) =>
+      (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber) =>
         val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
 
         server.stubFor(
@@ -903,7 +902,7 @@ class PersistenceConnectorSpec
           movementEORI,
           movementReferenceNumber,
           pageNumber,
-          itemCount,
+          ItemCount(25),
           None,
           None
         )
@@ -917,10 +916,9 @@ class PersistenceConnectorSpec
       None,
       arbitrary[EORINumber],
       arbitrary[MovementReferenceNumber],
-      None,
       None
     ) {
-      (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount) =>
+      (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber) =>
         val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
 
         server.stubFor(
@@ -947,7 +945,7 @@ class PersistenceConnectorSpec
           Some(movementEORI),
           Some(movementReferenceNumber),
           pageNumber,
-          itemCount,
+          ItemCount(25),
           None,
           None
         )
@@ -988,7 +986,7 @@ class PersistenceConnectorSpec
             movementEORI,
             movementReferenceNumber,
             None,
-            None,
+            ItemCount(25),
             None,
             Some(localReferenceNumber)
           )
@@ -1033,7 +1031,7 @@ class PersistenceConnectorSpec
             Some(movementEORI),
             Some(movementReferenceNumber),
             None,
-            None,
+            ItemCount(25),
             None,
             Some(localReferenceNumber)
           )
@@ -1058,7 +1056,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getMovements(eori, MovementType.Departure, None, None, None, None, None, None, None)
+        .getMovements(eori, MovementType.Departure, None, None, None, None, ItemCount(25), None, None)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -1069,7 +1067,7 @@ class PersistenceConnectorSpec
         }
 
       whenReady(result) {
-        _ mustBe (())
+        _ mustBe ()
       }
     }
 
@@ -1094,7 +1092,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getMovements(eori, MovementType.Departure, None, None, None, None, None, None, None)
+        .getMovements(eori, MovementType.Departure, None, None, None, None, ItemCount(25), None, None)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
@@ -1583,10 +1581,9 @@ class PersistenceConnectorSpec
       arbitrary[MovementType],
       arbitrary[MovementId],
       arbitrary[MessageId],
-      arbitrary[MessageUpdate],
-      arbitrary[MessageType]
+      arbitrary[MessageUpdate]
     ) {
-      (eoriNumber, movementType, movementId, messageId, messageUpdate, messageType) =>
+      (eoriNumber, movementType, movementId, messageId, messageUpdate) =>
         server.stubFor(
           patch(
             urlEqualTo(targetUrl(eoriNumber, movementType, movementId, messageId))
@@ -1607,10 +1604,9 @@ class PersistenceConnectorSpec
       arbitrary[EORINumber],
       arbitrary[MovementType],
       arbitrary[MovementId],
-      arbitrary[MessageId],
-      arbitrary[MessageType]
+      arbitrary[MessageId]
     ) {
-      (eoriNumber, movementType, movementId, messageId, messageType) =>
+      (eoriNumber, movementType, movementId, messageId) =>
         server.stubFor(
           patch(
             urlEqualTo(targetUrl(eoriNumber, movementType, movementId, messageId))
@@ -1640,10 +1636,9 @@ class PersistenceConnectorSpec
       arbitrary[EORINumber],
       arbitrary[MovementType],
       arbitrary[MovementId],
-      arbitrary[MessageId],
-      arbitrary[MessageType]
+      arbitrary[MessageId]
     ) {
-      (eoriNumber, movementType, movementId, messageId, messageType) =>
+      (eoriNumber, movementType, movementId, messageId) =>
         server.stubFor(
           patch(
             urlEqualTo(targetUrl(eoriNumber, movementType, movementId, messageId))
@@ -1697,7 +1692,7 @@ class PersistenceConnectorSpec
                 )
             )
         )
-        val result = persistenceConnector.getMessages(eori, MovementType.Arrival, arrivalId, None, None, None, None)
+        val result = persistenceConnector.getMessages(eori, MovementType.Arrival, arrivalId, None, None, ItemCount(25), None)
         whenReady(result) {
           _ mustBe paginationMessageSummary
         }
@@ -1729,7 +1724,7 @@ class PersistenceConnectorSpec
         )
 
         implicit val hc = HeaderCarrier()
-        val result      = persistenceConnector.getMessages(eori, MovementType.Arrival, arrivalId, Some(time), None, None, None)
+        val result      = persistenceConnector.getMessages(eori, MovementType.Arrival, arrivalId, Some(time), None, ItemCount(25), None)
         whenReady(result) {
           _ mustBe paginationMessageSummary
         }
@@ -1753,7 +1748,7 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val r = persistenceConnector
-          .getMessages(eori, MovementType.Arrival, arrivalId, None, None, None, None)
+          .getMessages(eori, MovementType.Arrival, arrivalId, None, None, ItemCount(25), None)
           .map(
             _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
           )
@@ -1795,7 +1790,7 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val r = persistenceConnector
-          .getMessages(eori, MovementType.Arrival, arrivalId, None, None, None, None)
+          .getMessages(eori, MovementType.Arrival, arrivalId, None, None, ItemCount(25), None)
           .map(
             _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
           )
@@ -1832,7 +1827,7 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val r = persistenceConnector
-          .getMessages(eori, MovementType.Arrival, arrivalId, None, None, None, None)
+          .getMessages(eori, MovementType.Arrival, arrivalId, None, None, ItemCount(25), None)
           .map(
             _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
           )
@@ -1862,17 +1857,16 @@ class PersistenceConnectorSpec
         get(
           urlEqualTo(targetUrl(eori) + defaultFilterParams)
         )
-          willReturn (
+          willReturn
             aResponse()
               .withStatus(OK)
               .withBody(
                 Json.toJson(paginationMovementSummary).toString()
               )
-          )
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getMovements(eori, MovementType.Arrival, None, None, None, None, None, None, None)
+      val result      = persistenceConnector.getMovements(eori, MovementType.Arrival, None, None, None, None, ItemCount(25), None, None)
       whenReady(result) {
         _ mustBe paginationMovementSummary
       }
@@ -1916,7 +1910,7 @@ class PersistenceConnectorSpec
           Some(movementEORI),
           Some(movementReferenceNumber),
           Some(pageNumber),
-          Some(itemCount),
+          itemCount,
           Some(updatedSince),
           None
         )
@@ -1959,7 +1953,7 @@ class PersistenceConnectorSpec
           movementEORI,
           movementReferenceNumber,
           Some(pageNumber),
-          Some(itemCount),
+          itemCount,
           Some(updatedSince),
           None
         )
@@ -1973,10 +1967,9 @@ class PersistenceConnectorSpec
       None,
       arbitrary[EORINumber],
       arbitrary[MovementReferenceNumber],
-      None,
       None
     ) {
-      (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount) =>
+      (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber) =>
         val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
 
         server.stubFor(
@@ -2003,7 +1996,7 @@ class PersistenceConnectorSpec
           Some(movementEORI),
           Some(movementReferenceNumber),
           pageNumber,
-          itemCount,
+          ItemCount(25),
           None,
           None
         )
@@ -2038,7 +2031,17 @@ class PersistenceConnectorSpec
 
         implicit val hc = HeaderCarrier()
         val result =
-          persistenceConnector.getMovements(eori, MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount, None, None)
+          persistenceConnector.getMovements(
+            eori,
+            MovementType.Arrival,
+            updatedSince,
+            movementEORI,
+            movementReferenceNumber,
+            pageNumber,
+            ItemCount(25),
+            None,
+            None
+          )
         whenReady(result) {
           _ mustBe paginationMovementSummary
         }
@@ -2076,7 +2079,7 @@ class PersistenceConnectorSpec
             movementEORI,
             movementReferenceNumber,
             None,
-            None,
+            ItemCount(25),
             None,
             Some(localReferenceNumber)
           )
@@ -2120,7 +2123,7 @@ class PersistenceConnectorSpec
           Some(movementEORI),
           Some(movementReferenceNumber),
           None,
-          None,
+          ItemCount(25),
           None,
           Some(localReferenceNumber)
         )
@@ -2145,7 +2148,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getMovements(eori, MovementType.Arrival, None, None, None, None, None, None, None)
+        .getMovements(eori, MovementType.Arrival, None, None, None, None, ItemCount(25), None, None)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -2156,7 +2159,7 @@ class PersistenceConnectorSpec
         }
 
       whenReady(result) {
-        _ mustBe (())
+        _ mustBe ()
       }
     }
 
@@ -2181,7 +2184,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getMovements(eori, MovementType.Arrival, None, None, None, None, None, None, None)
+        .getMovements(eori, MovementType.Arrival, None, None, None, None, ItemCount(25), None, None)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
@@ -2253,7 +2256,7 @@ class PersistenceConnectorSpec
         }
 
       whenReady(result) {
-        _ mustBe (())
+        _ mustBe ()
       }
     }
 

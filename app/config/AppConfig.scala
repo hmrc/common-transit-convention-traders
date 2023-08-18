@@ -56,7 +56,9 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesCon
 
   val logInsufficientEnrolments: Boolean = config.get[Boolean]("logInsufficientEnrolments")
 
-  val itemsPerPage: Int = config.get[Int]("defaultItemsPerPage")
+  val defaultItemsPerPage: Int = config.get[Int]("defaultItemsPerPage")
+
+  val maxItemsPerPage: Int = config.get[Int]("maxItemsPerPage")
 
   val internalAuthToken: String = config.get[String]("internal-auth.token")
 
