@@ -192,7 +192,7 @@ paths:
           name: count
           description: >
             This is an optional query parameter (default value is `25`) that you can use to select the number of items per page in a multi-page query.
-            If used, you must enter a positive number. The maximum value allowed is `5000`.
+            If used, you must enter a positive number. The maximum value allowed is `500`.
           style: form
           schema:
             type: integer
@@ -377,7 +377,7 @@ paths:
           name: count
           description: >
             This is an optional query parameter (default value is `25`) that you can use to select the number of items per page in a multi-page query.
-            If used, you must enter a positive number. The maximum value allowed is `5000`.
+            If used, you must enter a positive number. The maximum value allowed is `500`.
           style: form
           schema:
             type: integer
@@ -875,7 +875,7 @@ paths:
           name: count
           description: >
             This is an optional query parameter (default value is `25`) that you can use to select the number of items per page in a multi-page query.
-            If used, you must enter a positive number. The maximum value allowed is `5000`.
+            If used, you must enter a positive number. The maximum value allowed is `500`.
           style: form
           schema:
             type: integer
@@ -1058,7 +1058,7 @@ paths:
           name: count
           description: >
             This is an optional query parameter (default value is `25`) that you can use to select the number of items per page in a multi-page query.
-            If used, you must enter a positive number. The maximum value allowed is `5000`.
+            If used, you must enter a positive number. The maximum value allowed is `500`.
           style: form
           schema:
             type: integer
