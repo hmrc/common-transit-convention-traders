@@ -47,6 +47,12 @@
 
     <logger name="uk.gov" level="INFO"/>
 
+    <!-- As we don't have the uk.gov package name here, we need to specify specific loggers -->
+    <logger name="services" level="INFO"/>
+    <logger name="connectors" level="INFO"/>
+    <logger name="controllers" level="INFO"/>
+    <logger name="v2" level="INFO"/>
+
     <logger name="application" level="DEBUG"/>
 
     <logger name="connector" level="TRACE">
