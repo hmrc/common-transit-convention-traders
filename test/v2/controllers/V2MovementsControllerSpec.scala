@@ -412,7 +412,7 @@ class V2MovementsControllerSpec
           status(result) mustBe ACCEPTED
 
           contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse.movementId, Some(boxResponse), None, MovementType.Departure)
+            HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, Some(boxResponse), None, MovementType.Departure)
           )
 
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML), any[Long]())(any(), any())
@@ -511,7 +511,9 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Departure)(request)
           status(result) mustBe ACCEPTED
 
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse.movementId, None, None, MovementType.Departure))
+          contentAsJson(result) mustBe Json.toJson(
+            HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, None, None, MovementType.Departure)
+          )
 
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.DeclarationData), any(), eqTo(MimeTypes.XML), any[Long]())(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
@@ -1006,7 +1008,7 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Departure)(request)
           status(result) mustBe ACCEPTED
           contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse.movementId, Some(boxResponse), None, MovementType.Departure)
+            HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, Some(boxResponse), None, MovementType.Departure)
           )
 
           verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
@@ -1187,7 +1189,9 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Departure)(request)
           status(result) mustBe ACCEPTED
 
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse.movementId, None, None, MovementType.Departure))
+          contentAsJson(result) mustBe Json.toJson(
+            HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, None, None, MovementType.Departure)
+          )
 
           verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
@@ -1764,7 +1768,7 @@ class V2MovementsControllerSpec
           status(result) mustBe ACCEPTED
 
           contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse.movementId, Some(boxResponse), Some(upscanResponse), MovementType.Departure)
+            HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, Some(boxResponse), Some(upscanResponse), MovementType.Departure)
           )
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Departure), MovementId(any()), MessageId(any()))(any(), any())
@@ -1825,7 +1829,9 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Departure)(request)
           status(result) mustBe ACCEPTED
 
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse.movementId, None, Some(upscanResponse), MovementType.Departure))
+          contentAsJson(result) mustBe Json.toJson(
+            HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, None, Some(upscanResponse), MovementType.Departure)
+          )
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Departure), MovementId(any()), MessageId(any()))(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
@@ -2098,7 +2104,9 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Arrival)(request)
           status(result) mustBe ACCEPTED
 
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse.movementId, Some(boxResponse), None, MovementType.Arrival))
+          contentAsJson(result) mustBe Json.toJson(
+            HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, Some(boxResponse), None, MovementType.Arrival)
+          )
 
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.XML), any[Long]())(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
@@ -2198,7 +2206,9 @@ class V2MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Arrival)(request)
           status(result) mustBe ACCEPTED
 
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse.movementId, None, None, MovementType.Arrival))
+          contentAsJson(result) mustBe Json.toJson(
+            HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, None, None, MovementType.Arrival)
+          )
 
           verify(mockAuditService, times(1)).audit(eqTo(AuditType.ArrivalNotification), any(), eqTo(MimeTypes.XML), any[Long]())(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
@@ -2604,7 +2614,9 @@ class V2MovementsControllerSpec
 
           status(result) mustBe ACCEPTED
 
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse.movementId, Some(boxResponse), None, MovementType.Arrival))
+          contentAsJson(result) mustBe Json.toJson(
+            HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, Some(boxResponse), None, MovementType.Arrival)
+          )
 
           verify(mockPersistenceService, times(1)).updateMessage(
             EORINumber(any()),
@@ -2768,7 +2780,9 @@ class V2MovementsControllerSpec
 
           status(result) mustBe ACCEPTED
 
-          contentAsJson(result) mustBe Json.toJson(HateoasNewMovementResponse(movementResponse.movementId, None, None, MovementType.Arrival))
+          contentAsJson(result) mustBe Json.toJson(
+            HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, None, None, MovementType.Arrival)
+          )
 
           verify(mockPersistenceService, times(1)).updateMessage(
             EORINumber(any()),
@@ -3215,7 +3229,7 @@ class V2MovementsControllerSpec
           status(result) mustBe ACCEPTED
 
           contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse.movementId, Some(boxResponse), Some(upscanResponse), MovementType.Arrival)
+            HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, Some(boxResponse), Some(upscanResponse), MovementType.Arrival)
           )
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Arrival), MovementId(any()), MessageId(any()))(any(), any())
@@ -3277,7 +3291,7 @@ class V2MovementsControllerSpec
           status(result) mustBe ACCEPTED
 
           contentAsJson(result) mustBe Json.toJson(
-            HateoasNewMovementResponse(movementResponse.movementId, None, Some(upscanResponse), MovementType.Arrival)
+            HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, None, Some(upscanResponse), MovementType.Arrival)
           )
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Arrival), MovementId(any()), MessageId(any()))(any(), any())

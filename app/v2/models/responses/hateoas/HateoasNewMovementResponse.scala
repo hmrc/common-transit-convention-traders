@@ -18,6 +18,7 @@ package v2.models.responses.hateoas
 
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
+import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType
 import v2.models.responses.BoxResponse
@@ -32,17 +33,19 @@ object HateoasNewMovementResponse extends HateoasResponse {
 
   def apply(
     movementId: MovementId,
+    messageId: MessageId,
     boxResponse: Option[BoxResponse],
     upscanInitiateResponse: Option[UpscanInitiateResponse],
     movementType: MovementType
   ): JsObject = {
     val jsObject = Json.obj(
       "self"     -> Json.obj("href" -> getMovementUri(movementId, movementType)),
-      "messages" -> Json.obj("href" -> getMessagesUri(movementId, None, movementType))
+      "messages" -> Json.obj("href" -> getMessagesUri(movementId, None, movementType)),
+      "message"  -> Json.obj("href" -> getMessageUri(movementId, messageId, movementType))
     )
 
     Json.obj("_links"                      -> jsObject) ++
-      Json.obj(getMovementId(movementType) -> movementId.value) ++ {
+      Json.obj(getMovementId(movementType) -> movementId.value) ++ Json.obj("messageId" -> messageId.value) ++ {
         (boxResponse, upscanInitiateResponse) match {
           case (Some(response), None)             => box(response)
           case (None, Some(response))             => upscan(response)

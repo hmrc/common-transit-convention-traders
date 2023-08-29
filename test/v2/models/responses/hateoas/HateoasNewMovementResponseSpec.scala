@@ -29,11 +29,12 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
   for (movementType <- MovementType.values)
     s"${movementType.movementType} create a valid HateoasNewMovementResponse" - {
 
-      "when the movement response does not contain message Id or box Id" in forAll(
-        arbitraryMovementId.arbitrary
+      "when the movement response does not contain box Id" in forAll(
+        arbitraryMovementId.arbitrary,
+        arbitraryMessageId.arbitrary
       ) {
-        movementId =>
-          val actual = HateoasNewMovementResponse(movementId, None, None, movementType)
+        (movementId, messageId) =>
+          val actual = HateoasNewMovementResponse(movementId, messageId, None, None, movementType)
 
           val expected = Json.obj(
             "_links" -> Json.obj(
@@ -42,9 +43,13 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
               ),
               "messages" -> Json.obj(
                 "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages"
+              ),
+              "message" -> Json.obj(
+                "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
               )
             ),
-            s"${movementType.movementType}Id" -> movementId.value
+            s"${movementType.movementType}Id" -> movementId.value,
+            "messageId"                       -> messageId.value
           )
 
           actual mustBe expected
@@ -55,7 +60,7 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
         arbitraryBoxResponse.arbitrary
       ) {
         (movementResponse, boxResponse) =>
-          val actual = HateoasNewMovementResponse(movementResponse.movementId, Some(boxResponse), None, movementType)
+          val actual = HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, Some(boxResponse), None, movementType)
 
           val expected = Json.obj(
             "_links" -> Json.obj(
@@ -64,9 +69,13 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
               ),
               "messages" -> Json.obj(
                 "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse.movementId.value}/messages"
+              ),
+              "message" -> Json.obj(
+                "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementResponse.movementId.value}/messages/${movementResponse.messageId.value}"
               )
             ),
             s"${movementType.movementType}Id" -> movementResponse.movementId.value,
+            "messageId"                       -> movementResponse.messageId.value,
             "boxId"                           -> s"${boxResponse.boxId.value}"
           )
 
@@ -76,10 +85,11 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
       "with a movement response that contains box ID and an Upload response" in forAll(
         arbitraryUpscanInitiateResponse.arbitrary,
         arbitraryMovementId.arbitrary,
+        arbitraryMessageId.arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
-        (upscanResponse, movementId, boxResponse) =>
-          val actual = HateoasNewMovementResponse(movementId, Some(boxResponse), Some(upscanResponse), movementType)
+        (upscanResponse, movementId, messageId, boxResponse) =>
+          val actual = HateoasNewMovementResponse(movementId, messageId, Some(boxResponse), Some(upscanResponse), movementType)
 
           val expected = Json.obj(
             "_links" -> Json.obj(
@@ -88,9 +98,13 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
               ),
               "messages" -> Json.obj(
                 "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages"
+              ),
+              "message" -> Json.obj(
+                "href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
               )
             ),
             s"${movementType.movementType}Id" -> movementId.value,
+            "messageId"                       -> messageId.value,
             "boxId"                           -> s"${boxResponse.boxId.value}",
             "uploadRequest" -> Json.obj(
               "href"   -> upscanResponse.uploadRequest.href,
