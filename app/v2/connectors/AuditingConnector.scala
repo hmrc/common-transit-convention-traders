@@ -32,6 +32,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.AuditType
+import v2.utils.ApplicationLogging
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -50,7 +51,7 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
     extends AuditingConnector
     with V2BaseConnector
     with HasMetrics
-    with Logging {
+    with ApplicationLogging {
 
   def post(auditType: AuditType, source: Source[ByteString, _], contentType: String, contentLength: Long)(implicit
     hc: HeaderCarrier,

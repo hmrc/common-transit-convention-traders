@@ -49,6 +49,7 @@ import v2.models.errors.FailedToValidateError.ParsingError
 import v2.models.errors.FailedToValidateError.UnexpectedError
 import v2.models.errors.FailedToValidateError.XmlSchemaFailedToValidateError
 import v2.models.errors.PersistenceError.DuplicateLRNError
+import v2.utils.ApplicationLogging
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -62,7 +63,7 @@ class ConvertErrorSpec
     with ScalaCheckDrivenPropertyChecks
     with TestCommonGenerators {
 
-  object Harness extends ConvertError with Logging
+  object Harness extends ConvertError with ApplicationLogging
 
   import Harness._
 

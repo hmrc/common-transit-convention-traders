@@ -35,6 +35,7 @@ import v2.models.request.MessageType
 import v2.models.responses.BusinessValidationResponse
 import v2.models.responses.JsonSchemaValidationResponse
 import v2.models.responses.XmlSchemaValidationResponse
+import v2.utils.ApplicationLogging
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -58,7 +59,7 @@ trait ValidationService {
 }
 
 @Singleton
-class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector) extends ValidationService with Logging {
+class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector) extends ValidationService with ApplicationLogging {
 
   override def validateXml(messageType: MessageType, source: Source[ByteString, _])(implicit
     hc: HeaderCarrier,

@@ -59,6 +59,7 @@ import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import play.api.http.Status.CREATED
+import v2.utils.ApplicationLogging
 
 @ImplementedBy(classOf[PersistenceConnectorImpl])
 trait PersistenceConnector {
@@ -147,7 +148,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metric
     extends PersistenceConnector
     with HasMetrics
     with V2BaseConnector
-    with Logging {
+    with ApplicationLogging {
 
   override def postMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,

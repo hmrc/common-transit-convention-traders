@@ -26,6 +26,7 @@ import uk.gov.hmrc.auth.core.EnrolmentIdentifier
 import uk.gov.hmrc.auth.core.authorise.EmptyPredicate
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier
+import v2.utils.ApplicationLogging
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -37,7 +38,7 @@ trait EnrolmentLoggingService {
 
 }
 
-class EnrolmentLoggingServiceImpl @Inject() (authConnector: AuthConnector, appConfig: AppConfig) extends EnrolmentLoggingService with Logging {
+class EnrolmentLoggingServiceImpl @Inject() (authConnector: AuthConnector, appConfig: AppConfig) extends EnrolmentLoggingService with ApplicationLogging {
 
   override def logEnrolments(clientId: Option[String])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     if (appConfig.logInsufficientEnrolments) {

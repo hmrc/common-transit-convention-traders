@@ -19,11 +19,12 @@ package v2.controllers
 import cats.data.EitherT
 import play.api.Logging
 import v2.models.errors._
+import v2.utils.ApplicationLogging
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-trait ConvertError extends Logging {
+trait ConvertError extends ApplicationLogging {
 
   implicit class ErrorConverter[E, A](value: EitherT[Future, E, A]) {
 

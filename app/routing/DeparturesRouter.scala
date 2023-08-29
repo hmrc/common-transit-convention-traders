@@ -39,6 +39,7 @@ import v2.models.MovementType
 import v2.models.PageNumber
 import v2.models.{MessageId => V2MessageId}
 import v2.models.{MovementId => V2DepartureId}
+import v2.utils.ApplicationLogging
 
 import java.time.OffsetDateTime
 import scala.annotation.nowarn
@@ -55,7 +56,7 @@ class DeparturesRouter @Inject() (
 ) extends BaseController
     with StreamingParsers
     with VersionedRouting
-    with Logging {
+    with ApplicationLogging {
 
   def submitDeclaration(): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => v2Departures.createMovement(MovementType.Departure)

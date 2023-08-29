@@ -28,6 +28,7 @@ import v2.models.HeaderType
 import v2.models.HeaderTypes
 import v2.models.errors.ConversionError
 import v2.models.request.MessageType
+import v2.utils.ApplicationLogging
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -59,7 +60,7 @@ trait ConversionService {
 }
 
 @Singleton
-class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector) extends ConversionService with Logging {
+class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector) extends ConversionService with ApplicationLogging {
 
   override def convert(messageType: MessageType, source: Source[ByteString, _], headerType: HeaderType)(implicit
     hc: HeaderCarrier,

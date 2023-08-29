@@ -21,8 +21,9 @@ import play.api.http.Status
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.http.HttpReads
 import uk.gov.hmrc.http.HttpResponse
+import v2.utils.ApplicationLogging
 
-object CustomHttpReader extends HttpReads[HttpResponse] with HttpErrorFunctions with Status with Logging {
+object CustomHttpReader extends HttpReads[HttpResponse] with HttpErrorFunctions with Status with ApplicationLogging {
 
   override def read(method: String, url: String, response: HttpResponse): HttpResponse = {
     logger.debug(s"CustomHttpReader Log\nstatus: ${response.status}\nbody: ${response.body}\nheaders: ${response.headers.map {

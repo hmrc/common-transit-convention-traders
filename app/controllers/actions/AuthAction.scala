@@ -29,6 +29,7 @@ import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.models.errors.PresentationError
+import v2.utils.ApplicationLogging
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -42,7 +43,7 @@ class AuthAction @Inject() (
     extends ActionBuilder[AuthRequest, AnyContent]
     with ActionFunction[Request, AuthRequest]
     with AuthorisedFunctions
-    with Logging {
+    with ApplicationLogging {
 
   def getEnrolmentIdentifier(
     enrolments: Enrolments,

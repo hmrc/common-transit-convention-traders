@@ -25,8 +25,9 @@ import play.api.mvc.Results
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import v2.utils.ApplicationLogging
 
-trait ResponseHelper extends Results with Status with HttpErrorFunctions with Logging {
+trait ResponseHelper extends Results with Status with HttpErrorFunctions with ApplicationLogging {
 
   def handleNon2xx(response: HttpResponse): Result = {
     logger.debug(s"ResponseHelper Log\nstatus: ${response.status}\nbody: ${response.body}\nheaders: ${response.headers.map {

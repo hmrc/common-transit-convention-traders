@@ -39,6 +39,7 @@ import v2.models.{MessageId => V2MessageId}
 import v2.models.{MovementId => V2ArrivalId}
 import models.domain.{ArrivalId => V1ArrivalId}
 import play.api.Logging
+import v2.utils.ApplicationLogging
 
 import java.time.OffsetDateTime
 import scala.annotation.nowarn
@@ -55,7 +56,7 @@ class ArrivalsRouter @Inject() (
 ) extends BaseController
     with StreamingParsers
     with VersionedRouting
-    with Logging {
+    with ApplicationLogging {
 
   def createArrivalNotification(): Action[Source[ByteString, _]] =
     route {

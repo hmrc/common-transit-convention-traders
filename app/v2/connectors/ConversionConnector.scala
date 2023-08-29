@@ -32,6 +32,7 @@ import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.HeaderType
 import v2.models.request.MessageType
+import v2.utils.ApplicationLogging
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -52,7 +53,7 @@ class ConversionConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
     extends ConversionConnector
     with HasMetrics
     with V2BaseConnector
-    with Logging {
+    with ApplicationLogging {
 
   override def post(messageType: MessageType, jsonStream: Source[ByteString, _], headerType: HeaderType)(implicit
     hc: HeaderCarrier,

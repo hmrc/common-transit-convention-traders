@@ -46,6 +46,7 @@ import play.api.test.Helpers.stubControllerComponents
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import v2.base.TestActorSystem
 import v2.controllers.stream.StreamingParsers
+import v2.utils.ApplicationLogging
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.Future
@@ -63,7 +64,7 @@ class VersionedRoutingSpec
       extends BackendController(cc)
       with VersionedRouting
       with StreamingParsers
-      with Logging {
+      with ApplicationLogging {
 
     def testWithContent: Action[Source[ByteString, _]] = route {
       case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => contentActionTwo

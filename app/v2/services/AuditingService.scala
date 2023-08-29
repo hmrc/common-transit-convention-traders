@@ -24,6 +24,7 @@ import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.connectors.AuditingConnector
 import v2.models.AuditType
+import v2.utils.ApplicationLogging
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -39,7 +40,7 @@ trait AuditingService {
 
 }
 
-class AuditingServiceImpl @Inject() (auditingConnector: AuditingConnector) extends AuditingService with Logging {
+class AuditingServiceImpl @Inject() (auditingConnector: AuditingConnector) extends AuditingService with ApplicationLogging {
 
   override def audit(auditType: AuditType, source: Source[ByteString, _], contentType: String, contentLength: Long)(implicit
     hc: HeaderCarrier,

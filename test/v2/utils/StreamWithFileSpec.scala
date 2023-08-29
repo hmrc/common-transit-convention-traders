@@ -58,7 +58,7 @@ class StreamWithFileSpec
   }
 
   "withReusableSource" - {
-    object Harness extends StreamWithFile with Logging
+    object Harness extends StreamWithFile with ApplicationLogging
 
     "using a reusable source on a single use source should create a file when streamed once" in {
 
@@ -118,7 +118,7 @@ class StreamWithFileSpec
   }
 
   "withReusableSourceAndSize" - {
-    object Harness extends StreamWithFile with Logging
+    object Harness extends StreamWithFile with ApplicationLogging
 
     "using a reusable source on a single use source should create a file when streamed once" in {
 

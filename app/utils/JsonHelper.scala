@@ -20,6 +20,7 @@ import org.json.XML
 import play.api.Logging
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
+import v2.utils.ApplicationLogging
 
 import javax.inject.Inject
 import scala.util.Failure
@@ -27,7 +28,7 @@ import scala.util.Success
 import scala.util.Try
 import scala.xml.NodeSeq
 
-class JsonHelper @Inject() (messageTranslation: MessageTranslation) extends Logging {
+class JsonHelper @Inject() (messageTranslation: MessageTranslation) extends ApplicationLogging {
 
   def convertXmlToJson(xml: NodeSeq): JsObject =
     Try(translateMessage(xml.toString)) match {

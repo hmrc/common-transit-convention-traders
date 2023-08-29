@@ -39,6 +39,7 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import v2.models.request.MessageType
 import v2.models.responses.JsonValidationErrorResponse
 import v2.models.responses.XmlValidationErrorResponse
+import v2.utils.ApplicationLogging
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -63,7 +64,7 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
     extends ValidationConnector
     with HasMetrics
     with V2BaseConnector
-    with Logging {
+    with ApplicationLogging {
 
   override def postXml(messageType: MessageType, stream: Source[ByteString, _])(implicit
     hc: HeaderCarrier,

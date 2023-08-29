@@ -38,6 +38,7 @@ import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.responses.UpscanResponse
+import v2.utils.ApplicationLogging
 
 import java.time.OffsetDateTime
 
@@ -45,7 +46,7 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
     extends BaseController
     with V2MovementsController
     with StreamingParsers
-    with Logging {
+    with ApplicationLogging {
 
   override val controllerComponents: ControllerComponents = stubControllerComponents()
 

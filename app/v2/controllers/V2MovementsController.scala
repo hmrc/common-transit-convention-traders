@@ -54,6 +54,7 @@ import v2.models.request.MessageUpdate
 import v2.models.responses._
 import v2.models.responses.hateoas._
 import v2.services._
+import v2.utils.ApplicationLogging
 import v2.utils.StreamWithFile
 
 import java.nio.charset.StandardCharsets
@@ -120,7 +121,7 @@ class V2MovementsControllerImpl @Inject() (
 )(implicit val materializer: Materializer, val temporaryFileCreator: TemporaryFileCreator)
     extends BaseController
     with V2MovementsController
-    with Logging
+    with ApplicationLogging
     with StreamingParsers
     with StreamWithFile
     with VersionedRouting

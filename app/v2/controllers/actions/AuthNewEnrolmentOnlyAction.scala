@@ -30,6 +30,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.models.EORINumber
 import v2.models.errors.PresentationError
+import v2.utils.ApplicationLogging
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -42,7 +43,7 @@ class AuthNewEnrolmentOnlyActionImpl @Inject() (override val authConnector: Auth
   val executionContext: ExecutionContext
 ) extends AuthNewEnrolmentOnlyAction
     with AuthorisedFunctions
-    with Logging {
+    with ApplicationLogging {
 
   def getEnrolmentIdentifier(enrolments: Enrolments, enrolmentKey: String, enrolmentIdKey: String): Option[String] =
     for {

@@ -27,6 +27,7 @@ import models.ParseHandling
 import models.TransformInstructionSet
 import play.api.Logging
 import utils.guaranteeParsing._
+import v2.utils.ApplicationLogging
 
 import scala.util.control.NonFatal
 import scala.xml.Elem
@@ -42,7 +43,7 @@ class EnsureGuaranteeService @Inject() (
   xmlBuilder: XmlBuilder,
   val metrics: Metrics
 ) extends ParseHandling
-    with Logging
+    with ApplicationLogging
     with HasMetrics {
 
   import MetricsKeys.Guarantee._

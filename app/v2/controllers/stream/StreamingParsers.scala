@@ -31,6 +31,7 @@ import play.api.libs.streams.Accumulator
 import play.api.mvc._
 import v2.controllers.request.BodyReplaceableRequest
 import v2.models.errors.PresentationError
+import v2.utils.ApplicationLogging
 
 import java.nio.file.Files
 import java.util.concurrent.Executors
@@ -40,7 +41,7 @@ import scala.util.Try
 import scala.util.control.NonFatal
 
 trait StreamingParsers {
-  self: BaseControllerHelpers with Logging =>
+  self: BaseControllerHelpers with ApplicationLogging =>
 
   implicit val materializer: Materializer
 

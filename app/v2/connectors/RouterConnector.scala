@@ -40,6 +40,7 @@ import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.SubmissionRoute
 import v2.models.request.MessageType
+import v2.utils.ApplicationLogging
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -58,7 +59,7 @@ class RouterConnectorImpl @Inject() (val metrics: Metrics, httpClientV2: HttpCli
     extends RouterConnector
     with V2BaseConnector
     with HasMetrics
-    with Logging {
+    with ApplicationLogging {
 
   override def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
     ec: ExecutionContext,

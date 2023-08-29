@@ -35,7 +35,7 @@ import scala.util.control.NonFatal
 import scala.util.Try
 
 trait StreamWithFile {
-  self: Logging =>
+  self: ApplicationLogging =>
 
   def withReusableSource[R](
     src: Source[ByteString, _]

@@ -54,6 +54,7 @@ import play.api.test.Helpers.stubControllerComponents
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
 import v2.controllers.request.BodyReplaceableRequest
+import v2.utils.ApplicationLogging
 
 import java.nio.charset.StandardCharsets
 import scala.annotation.tailrec
@@ -85,7 +86,7 @@ class StreamingParsersSpec
     override def parser: BodyParser[AnyContent] = stubControllerComponents().parsers.defaultBodyParser
   }
 
-  object Harness extends BaseController with StreamingParsers with Logging {
+  object Harness extends BaseController with StreamingParsers with ApplicationLogging {
 
     override val controllerComponents: ControllerComponents                     = stubControllerComponents()
     implicit val temporaryFileCreator: Files.SingletonTemporaryFileCreator.type = SingletonTemporaryFileCreator
