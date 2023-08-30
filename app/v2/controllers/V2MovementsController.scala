@@ -267,10 +267,11 @@ class V2MovementsControllerImpl @Inject() (
             MimeTypes.JSON,
             0L
           )
-        } yield HateoasNewMovementResponse(movementResponse.movementId, boxResponseOption, Some(upscanResponse), movementType)).fold[Result](
-          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          response => Accepted(response)
-        )
+        } yield HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, boxResponseOption, Some(upscanResponse), movementType))
+          .fold[Result](
+            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+            response => Accepted(response)
+          )
     }
 
   def getMessage(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =
@@ -831,7 +832,7 @@ class V2MovementsControllerImpl @Inject() (
         movementResponse.messageId,
         MessageStatus.Success
       ).asPresentation
-    } yield HateoasNewMovementResponse(movementResponse.movementId, boxResponseOption, None, movementType)
+    } yield HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, boxResponseOption, None, movementType)
 
   private def mapToOptionalResponse[E, R](
     eitherT: EitherT[Future, E, R]

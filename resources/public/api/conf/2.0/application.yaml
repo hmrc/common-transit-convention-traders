@@ -63,7 +63,10 @@ paths:
                           href: /customs/transits/movements/departures/62fb8f33d233578e
                         messages:
                           href: /customs/transits/movements/departures/62fb8f33d233578e/messages
+                        message:
+                          href: /customs/transits/movements/departures/62fb8f33d233578e/messages/64e760870c18a87a
                       departureId: 62fb8f33d233578e
+                      messageId: 64e760870c18a87a
                       boxId: b54c2424-955b-496c-bbce-dfb9f57cd797
               example:
                 _links:
@@ -71,7 +74,10 @@ paths:
                     href: /customs/transits/movements/departures/62fb8f33d233578e
                   messages:
                     href: /customs/transits/movements/departures/62fb8f33d233578e/messages
+                  message:
+                    href: /customs/transits/movements/departures/62fb8f33d233578e/messages/64e760870c18a87a
                 departureId: 62fb8f33d233578e
+                messageId: 64e760870c18a87a
                 boxId: b54c2424-955b-496c-bbce-dfb9f57cd797
         '400':
           description: Bad Request
@@ -770,7 +776,10 @@ paths:
                     href: /customs/transits/movements/arrivals/62fb8f33d233578e
                   messages:
                     href: /customs/transits/movements/arrivals/62fb8f33d233578e/messages
+                  message:
+                    href: /customs/transits/movements/arrivals/62fb8f33d233578e/messages/64e760870c18a87a
                 arrivalId: 62fb8f33d233578e
+                messageId: 64e760870c18a87a
                 boxId: b54c2424-955b-496c-bbce-dfb9f57cd797
         '400':
           description: Schema Validation
