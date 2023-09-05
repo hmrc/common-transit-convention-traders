@@ -155,15 +155,15 @@ class V2MovementsControllerImpl @Inject() (
     movementType match {
       case MovementType.Arrival =>
         contentTypeRoute {
-          case Some(MimeTypes.XML)  => submitArrivalNotificationXML()
-          case Some(MimeTypes.JSON) => submitArrivalNotificationJSON()
-          case None                 => submitLargeMessageXML(MovementType.Arrival)
+          case ContentTypeRouting.ContentType.XML  => submitArrivalNotificationXML()
+          case ContentTypeRouting.ContentType.JSON => submitArrivalNotificationJSON()
+          case ContentTypeRouting.ContentType.None => submitLargeMessageXML(MovementType.Arrival)
         }
       case MovementType.Departure =>
         contentTypeRoute {
-          case Some(MimeTypes.XML)  => submitDepartureDeclarationXML()
-          case Some(MimeTypes.JSON) => submitDepartureDeclarationJSON()
-          case None                 => submitLargeMessageXML(MovementType.Departure)
+          case ContentTypeRouting.ContentType.XML  => submitDepartureDeclarationXML()
+          case ContentTypeRouting.ContentType.JSON => submitDepartureDeclarationJSON()
+          case ContentTypeRouting.ContentType.None => submitLargeMessageXML(MovementType.Departure)
         }
     }
 
@@ -530,9 +530,9 @@ class V2MovementsControllerImpl @Inject() (
 
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]] =
     contentTypeRoute {
-      case Some(MimeTypes.XML)  => attachMessageXML(movementId, movementType)
-      case Some(MimeTypes.JSON) => attachMessageJSON(movementId, movementType)
-      case None                 => initiateLargeMessage(movementId, movementType)
+      case ContentTypeRouting.ContentType.XML  => attachMessageXML(movementId, movementType)
+      case ContentTypeRouting.ContentType.JSON => attachMessageJSON(movementId, movementType)
+      case ContentTypeRouting.ContentType.None => initiateLargeMessage(movementId, movementType)
     }
 
   private def initiateLargeMessage(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, _]] =
