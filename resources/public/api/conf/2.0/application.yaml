@@ -1526,7 +1526,7 @@ components:
         - _links
         - arrivalId
         - messageId
-        - uploadDetails
+        - uploadRequest
       type: object
       properties:
         _links:
@@ -1535,8 +1535,8 @@ components:
           type: string
         messageId:
           type: string
-        uploadDetails:
-          $ref: '#/components/schemas/UploadDetails'
+        uploadRequest:
+          $ref: '#/components/schemas/UploadRequest'
       example:
         _links:
           self:
@@ -1545,7 +1545,7 @@ components:
             href: /customs/transits/movements/arrivals/6365135ba5e821ee
         arrivalId: 6365135ba5e821ee
         messageId: 634982098f02f00a
-        uploadDetails:
+        uploadRequest:
           href: 'https://hmrc.gov.uk/upscan/upscan-proxy'
           fields:
             field_a: 'value a'
@@ -1619,7 +1619,7 @@ components:
         - _links
         - arrivalId
         - messageId
-        - uploadDetails
+        - uploadRequest
       type: object
       properties:
         _links:
@@ -1630,8 +1630,8 @@ components:
           type: string
         boxId:
           type: string
-        upoloadDetails:
-          $ref: '#/components/schemas/UploadDetails'
+        uploadRequest:
+          $ref: '#/components/schemas/UploadRequest'
       example:
         _links:
           self:
@@ -1643,7 +1643,7 @@ components:
         arrivalId: 62fb8f33d233578e
         messageId: 64e760870c18a87a
         boxId: b54c2424-955b-496c-bbce-dfb9f57cd797
-        uploadDetails:
+        uploadRequest:
           href: 'https://hmrc.gov.uk/upscan/upscan-proxy'
           fields:
             field_a: 'value a'
@@ -1791,7 +1791,7 @@ components:
         - _links
         - departureId
         - messageId
-        - uploadDetails
+        - uploadRequest
       type: object
       properties:
         _links:
@@ -1800,8 +1800,8 @@ components:
           type: string
         messageId:
           type: string
-        uploadDetails:
-          $ref: '#/components/schemas/UploadDetails'
+        uploadRequest:
+          $ref: '#/components/schemas/UploadRequest'
       example:
         _links:
           self:
@@ -1810,7 +1810,7 @@ components:
             href: /customs/transits/movements/departures/6365135ba5e821ee
         departureId: 6365135ba5e821ee
         messageId: 634982098f02f00a
-        uploadDetails:
+        uploadRequest:
           href: "https://hmrc.gov.uk/upload/upload-proxy"
           fields:
             field_a: 'value a'
@@ -1888,7 +1888,7 @@ components:
         departureId: 62fb8f33d233578e
         messageId: 64fed8accac1fdc4
         boxId: b54c2424-955b-496c-bbce-dfb9f57cd797
-    UploadDetails:
+    UploadRequest:
       title: Upload Details
       required: [href, fields]
       type: object
@@ -1910,7 +1910,7 @@ components:
         - _links
         - departureId
         - messageId
-        - uploadDetails
+        - uploadRequest
       type: object
       properties:
         _links:
@@ -1922,7 +1922,7 @@ components:
         boxId:
           type: string
         uploadRequest:
-          $ref: '#/components/schemas/UploadDetails'
+          $ref: '#/components/schemas/UploadRequest'
       example:
         _links:
           self:
@@ -1934,7 +1934,7 @@ components:
         boxId: b54c2424-955b-496c-bbce-dfb9f57cd797
         departureId: 62fb8f33d233578e
         messageId: 64fed8accac1fdc4
-        uploadDetails:
+        uploadRequest:
           href: 'https://hmrc.gov.uk/upscan/upload-proxy'
           fields:
             field_a: 'value a'
