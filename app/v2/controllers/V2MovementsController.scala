@@ -280,7 +280,7 @@ class V2MovementsControllerImpl @Inject() (
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
           messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
-          acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
+          acceptHeader = request.headers.get(HeaderNames.ACCEPT).get.toLowerCase
           messageBody <- getBody(request.eoriNumber, movementType, movementId, messageId, messageSummary.body)
           body        <- mergeMessageSummaryAndBody(movementId, messageSummary, movementType, acceptHeader, messageBody)
         } yield body).fold(
@@ -412,7 +412,7 @@ class V2MovementsControllerImpl @Inject() (
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
           messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
-          acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
+          acceptHeader = request.headers.get(HeaderNames.ACCEPT).get.toLowerCase
           messageBody <- getBody(request.eoriNumber, movementType, movementId, messageId, messageSummary.body)
           body        <- formatMessageBody(messageSummary, acceptHeader, messageBody)
         } yield body).fold(
