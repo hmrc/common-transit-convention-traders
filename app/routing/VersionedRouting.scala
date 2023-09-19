@@ -34,11 +34,11 @@ import scala.concurrent.Future
 
 object VersionedRouting {
 
-  val VERSION_2_ACCEPT_HEADER_VALUE_XML             = "application/vnd.hmrc.2.0+xml"      // returns XML only
-  val VERSION_2_ACCEPT_HEADER_VALUE_JSON            = "application/vnd.hmrc.2.0+json"     // returns JSON only
-  val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML        = "application/vnd.hmrc.2.0+json+xml" // returns JSON wrapped XML
-  val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN = "application/vnd.hmrc.2.0+json-xml" // returns JSON wrapped XML
-  val VERSION_2_ACCEPT_HEADER_PATTERN               = """^application\/vnd\.hmrc\.2\.0\+.+$""".r
+  val VERSION_2_ACCEPT_HEADER_VALUE_XML             = "application/vnd.hmrc.2.0+xml"                 // returns XML only
+  val VERSION_2_ACCEPT_HEADER_VALUE_JSON            = "application/vnd.hmrc.2.0+json"                // returns JSON only
+  val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML        = "application/vnd.hmrc.2.0+json+xml"            // returns JSON wrapped XML
+  val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN = "application/vnd.hmrc.2.0+json-xml"            // returns JSON wrapped XML
+  val VERSION_2_ACCEPT_HEADER_PATTERN               = """(?i)^application\/vnd\.hmrc\.2\.0\+.+$""".r // (?i) - case insensitive-mode
 
 }
 
