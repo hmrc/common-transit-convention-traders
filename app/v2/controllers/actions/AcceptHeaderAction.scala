@@ -50,7 +50,7 @@ class AcceptHeaderActionImpl[R[_] <: Request[_]] @Inject() (acceptedHeaders: Seq
     }
 
   private def checkAcceptHeader[A](acceptHeaderValue: String, request: R[A]): Either[Result, R[A]] =
-    if (acceptedHeaders.contains(acceptHeaderValue.toLowerCase())) Right(request)
+    if (acceptedHeaders.contains(acceptHeaderValue.toLowerCase)) Right(request)
     else Left(NotAcceptable(Json.toJson(PresentationError.notAcceptableError("The Accept header is missing or invalid."))))
 
 }
