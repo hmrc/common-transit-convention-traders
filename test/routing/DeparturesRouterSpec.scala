@@ -17,6 +17,8 @@
 package routing
 
 import akka.util.Timeout
+import config.AppConfig
+import org.mockito.Mockito.when
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -24,9 +26,10 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
-import play.api.http.Status.OK
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.BAD_REQUEST
+import play.api.http.Status.GONE
+import play.api.http.Status.OK
 import play.api.libs.json.Json
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
@@ -45,11 +48,14 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
   implicit private val timeout: Timeout = 5.seconds
 
+  val mockAppConfig = mock[AppConfig]
+
   val sut = new DeparturesRouter(
     stubControllerComponents(),
     new FakeV1DeparturesController,
     new FakeV1DepartureMessagesController,
-    new FakeV2MovementsController
+    new FakeV2MovementsController,
+    mockAppConfig
   )
 
   "when submitting a departure" - {
@@ -91,11 +97,24 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
           "must route to the v1 controller and return Accepted when successful" in {
 
+            when(mockAppConfig.enablePhase5).thenReturn(false)
+
             val request = FakeRequest(method = "POST", uri = routes.DeparturesRouter.submitDeclaration().url, body = <test></test>, headers = departureHeaders)
             val result  = call(sut.submitDeclaration(), request)
 
             status(result) mustBe ACCEPTED
             contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
+          }
+
+          "must route to the v1 controller and return Gone when phase5 feature is enabled" in {
+
+            when(mockAppConfig.enablePhase5).thenReturn(true)
+
+            val request = FakeRequest(method = "POST", uri = routes.DeparturesRouter.submitDeclaration().url, body = <test></test>, headers = departureHeaders)
+            val result  = call(sut.submitDeclaration(), request)
+
+            status(result) mustBe GONE
+            contentAsJson(result) mustBe Json.obj("message" -> "Please use version 2 to create Departure Declaration")
           }
         }
 

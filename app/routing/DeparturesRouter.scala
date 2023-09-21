@@ -17,14 +17,17 @@
 package routing
 
 import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.google.inject.Inject
+import config.AppConfig
 import controllers.V1DepartureMessagesController
 import controllers.V1DeparturesController
 import models.domain.{DepartureId => V1DepartureId}
 import models.domain.{MessageId => V1MessageId}
 import play.api.Logging
+import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
@@ -49,7 +52,8 @@ class DeparturesRouter @Inject() (
   val controllerComponents: ControllerComponents,
   v1Departures: V1DeparturesController,
   v1DepartureMessages: V1DepartureMessagesController,
-  v2Departures: V2MovementsController
+  v2Departures: V2MovementsController,
+  config: AppConfig
 )(implicit
   val materializer: Materializer
 ) extends BaseController
@@ -59,8 +63,17 @@ class DeparturesRouter @Inject() (
 
   def submitDeclaration(): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => v2Departures.createMovement(MovementType.Departure)
-    case _                                                        => v1Departures.submitDeclaration()
+    case _ =>
+      if (config.enablePhase5) handlePhase5()
+      else v1Departures.submitDeclaration()
   }
+
+  private def handlePhase5() =
+    Action(streamFromMemory) {
+      request =>
+        request.body.runWith(Sink.ignore)
+        Gone(Json.obj("message" -> "Please use version 2 to create Departure Declaration"))
+    }
 
   def getMessage(departureId: String, messageId: String): Action[Source[ByteString, _]] =
     route {

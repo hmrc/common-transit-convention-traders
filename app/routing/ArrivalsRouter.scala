@@ -17,9 +17,11 @@
 package routing
 
 import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.google.inject.Inject
+import config.AppConfig
 import controllers.V1ArrivalMessagesController
 import controllers.V1ArrivalMovementController
 import play.api.mvc.Action
@@ -39,6 +41,7 @@ import v2.models.{MessageId => V2MessageId}
 import v2.models.{MovementId => V2ArrivalId}
 import models.domain.{ArrivalId => V1ArrivalId}
 import play.api.Logging
+import play.api.libs.json.Json
 
 import java.time.OffsetDateTime
 import scala.annotation.nowarn
@@ -49,7 +52,8 @@ class ArrivalsRouter @Inject() (
   val controllerComponents: ControllerComponents,
   v1Arrivals: V1ArrivalMovementController,
   v2Arrivals: V2MovementsController,
-  v1ArrivalMessages: V1ArrivalMessagesController
+  v1ArrivalMessages: V1ArrivalMessagesController,
+  config: AppConfig
 )(implicit
   val materializer: Materializer
 ) extends BaseController
@@ -60,7 +64,16 @@ class ArrivalsRouter @Inject() (
   def createArrivalNotification(): Action[Source[ByteString, _]] =
     route {
       case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => v2Arrivals.createMovement(MovementType.Arrival)
-      case _                                                        => v1Arrivals.createArrivalNotification()
+      case _ =>
+        if (config.enablePhase5) handlePhase5()
+        else v1Arrivals.createArrivalNotification()
+    }
+
+  private def handlePhase5() =
+    Action(streamFromMemory) {
+      request =>
+        request.body.runWith(Sink.ignore)
+        Gone(Json.obj("message" -> "Please use version 2 to create Arrival Notification"))
     }
 
   def getArrival(arrivalId: String): Action[Source[ByteString, _]] =
