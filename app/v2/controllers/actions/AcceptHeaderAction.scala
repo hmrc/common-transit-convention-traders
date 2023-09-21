@@ -23,6 +23,7 @@ import play.api.mvc.ActionRefiner
 import play.api.mvc.Request
 import play.api.mvc.Result
 import play.api.mvc.Results.NotAcceptable
+import routing.VersionedRouting
 import v2.models.errors.PresentationError
 
 import scala.concurrent.ExecutionContext
@@ -50,7 +51,7 @@ class AcceptHeaderActionImpl[R[_] <: Request[_]] @Inject() (acceptedHeaders: Seq
     }
 
   private def checkAcceptHeader[A](acceptHeaderValue: String, request: R[A]): Either[Result, R[A]] =
-    if (acceptedHeaders.contains(acceptHeaderValue.toLowerCase)) Right(request)
+    if (acceptedHeaders.contains(VersionedRouting.formatAccept(acceptHeaderValue))) Right(request)
     else Left(NotAcceptable(Json.toJson(PresentationError.notAcceptableError("The Accept header is missing or invalid."))))
 
 }
