@@ -280,7 +280,7 @@ class V2MovementsControllerImpl @Inject() (
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
           messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
-          acceptHeader = request.headers.get(HeaderNames.ACCEPT).get.toLowerCase
+          acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
           messageBody <- getBody(request.eoriNumber, movementType, movementId, messageId, messageSummary.body)
           body        <- mergeMessageSummaryAndBody(movementId, messageSummary, movementType, acceptHeader, messageBody)
         } yield body).fold(
@@ -337,7 +337,7 @@ class V2MovementsControllerImpl @Inject() (
     hc: HeaderCarrier
   ): EitherT[Future, PresentationError, BodyAndContentType] = {
     def bodyExists(bodyAndSize: BodyAndSize): EitherT[Future, PresentationError, BodyAndContentType] =
-      acceptHeader match {
+      VersionedRouting.formatAccept(acceptHeader) match {
         case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON if bodyAndSize.size > config.smallMessageSizeLimit =>
           EitherT.leftT[Future, BodyAndContentType](
             PresentationError.notAcceptableError(s"Messages larger than ${config.smallMessageSizeLimit} bytes cannot be retrieved in JSON")
@@ -352,7 +352,6 @@ class V2MovementsControllerImpl @Inject() (
             BodyAndContentType(MimeTypes.XML, bodyAndSize.body)
           )
       }
-
     bodyAndSizeMaybe match {
       case Some(value) => bodyExists(value)
       case None =>
@@ -370,7 +369,7 @@ class V2MovementsControllerImpl @Inject() (
     hc: HeaderCarrier
   ): EitherT[Future, PresentationError, Source[ByteString, _]] = {
     def bodyExists(bodyAndSize: BodyAndSize): EitherT[Future, PresentationError, Source[ByteString, _]] =
-      acceptHeader match {
+      VersionedRouting.formatAccept(acceptHeader) match {
         case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON if bodyAndSize.size > config.smallMessageSizeLimit =>
           EitherT.leftT[Future, Source[ByteString, _]](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
         case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
@@ -412,7 +411,7 @@ class V2MovementsControllerImpl @Inject() (
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
           messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
-          acceptHeader = request.headers.get(HeaderNames.ACCEPT).get.toLowerCase
+          acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
           messageBody <- getBody(request.eoriNumber, movementType, movementId, messageId, messageSummary.body)
           body        <- formatMessageBody(messageSummary, acceptHeader, messageBody)
         } yield body).fold(
