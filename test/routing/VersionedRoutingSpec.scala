@@ -303,13 +303,13 @@ class VersionedRoutingSpec
     }
   }
 
-  "with case-insensitive version 2 accept header" - {
+  "with mixed case valid version 2 accept header" - {
     val headers =
       Seq(
-        Some("appliCation/vnd.hmrc.2.0+xMl"),
-        Some("application/vNd.hmrc.2.0+jsOn"),
-        Some("application/vnd.hMrc.2.0+json+xmL"),
-        Some("APPLICATION/VND.HMRC.2.0+JSON-XML")
+        Some("application/vnd.hmrc.2.0+xMl"),
+        Some("application/vnd.hmrc.2.0+jsOn"),
+        Some("application/vnd.hmrc.2.0+json+xmL"),
+        Some("application/vnd.hmrc.2.0+JSON-XML")
       )
 
     headers.foreach {
