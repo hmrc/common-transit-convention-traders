@@ -75,7 +75,7 @@ class ArrivalsRouter @Inject() (
       request =>
         request.body.runWith(Sink.ignore)
         val presentationError = PresentationError.goneError("Please use CTC Traders API v2.0 to create an Arrival Notification")
-        Status(presentationError.code.statusCode)(Json.obj("message" -> presentationError.message))
+        Status(presentationError.code.statusCode)(Json.toJson(presentationError))
     }
 
   def getArrival(arrivalId: String): Action[Source[ByteString, _]] =
