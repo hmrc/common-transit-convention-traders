@@ -43,7 +43,6 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.Configuration
 import play.api.http.HeaderNames
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -58,7 +57,6 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.utils.CallOps._
 import utils.TestMetrics
 
-import java.io.File
 import scala.concurrent.Future
 
 class ArrivalMovementControllerSpec
@@ -74,15 +72,15 @@ class ArrivalMovementControllerSpec
 
   val mockClock = mock[Clock]
 
-  val configuration = ConfigFactory.load(ConfigFactory.parseFile(new File("conf/test-application.conf")))
-
   override lazy val app = GuiceApplicationBuilder()
     .overrides(
       bind[Metrics].toInstance(new TestMetrics),
       bind[AuthAction].to[FakeAuthAction],
       bind[ArrivalConnector].toInstance(mockArrivalConnector),
-      bind[Clock].toInstance(mockClock),
-      bind[Configuration].toInstance(Configuration(configuration))
+      bind[Clock].toInstance(mockClock)
+    )
+    .configure(
+      "disable-phase-4" -> false
     )
     .build()
 

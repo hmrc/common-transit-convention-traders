@@ -97,7 +97,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
           "must route to the v1 controller and return Accepted when successful" in {
 
-            when(mockAppConfig.enablePhase5).thenReturn(false)
+            when(mockAppConfig.disablePhase4).thenReturn(false)
 
             val request = FakeRequest(method = "POST", uri = routes.DeparturesRouter.submitDeclaration().url, body = <test></test>, headers = departureHeaders)
             val result  = call(sut.submitDeclaration(), request)
@@ -108,13 +108,13 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
           "must route to the v1 controller and return Gone when phase5 feature is enabled" in {
 
-            when(mockAppConfig.enablePhase5).thenReturn(true)
+            when(mockAppConfig.disablePhase4).thenReturn(true)
 
             val request = FakeRequest(method = "POST", uri = routes.DeparturesRouter.submitDeclaration().url, body = <test></test>, headers = departureHeaders)
             val result  = call(sut.submitDeclaration(), request)
 
             status(result) mustBe GONE
-            contentAsJson(result) mustBe Json.obj("message" -> "Please use version 2 to create Departure Declaration")
+            contentAsJson(result) mustBe Json.obj("message" -> "Please use CTC Traders API v2.0 to create a Departure Declaration")
           }
         }
 

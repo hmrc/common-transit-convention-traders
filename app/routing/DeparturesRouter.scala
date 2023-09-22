@@ -40,6 +40,7 @@ import v2.models.LocalReferenceNumber
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.PageNumber
+import v2.models.errors.PresentationError
 import v2.models.{MessageId => V2MessageId}
 import v2.models.{MovementId => V2DepartureId}
 
@@ -64,15 +65,16 @@ class DeparturesRouter @Inject() (
   def submitDeclaration(): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => v2Departures.createMovement(MovementType.Departure)
     case _ =>
-      if (config.enablePhase5) handlePhase5()
+      if (config.disablePhase4) handleDisablingPhase4()
       else v1Departures.submitDeclaration()
   }
 
-  private def handlePhase5() =
+  private def handleDisablingPhase4() =
     Action(streamFromMemory) {
       request =>
         request.body.runWith(Sink.ignore)
-        Gone(Json.obj("message" -> "Please use version 2 to create Departure Declaration"))
+        val presentationError = PresentationError.goneError("Please use CTC Traders API v2.0 to create a Departure Declaration")
+        Status(presentationError.code.statusCode)(Json.obj("message" -> presentationError.message))
     }
 
   def getMessage(departureId: String, messageId: String): Action[Source[ByteString, _]] =

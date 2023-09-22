@@ -63,6 +63,9 @@ object PresentationError extends CommonFormats {
   def conflictError(message: String): PresentationError =
     StandardError(message, ErrorCode.Conflict)
 
+  def goneError(message: String): PresentationError =
+    StandardError(message, ErrorCode.Gone)
+
   def xmlSchemaValidationError(
     message: String = "Request failed schema validation",
     validationErrors: NonEmptyList[XmlValidationError]

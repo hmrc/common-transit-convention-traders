@@ -81,8 +81,6 @@ class DeparturesControllerSpec
   private val mockAuditService: AuditService               = mock[AuditService]
   val mockClock                                            = mock[Clock]
 
-  val configuration = ConfigFactory.load(ConfigFactory.parseFile(new File("conf/test-application.conf")))
-
   when(mockGuaranteeService.ensureGuarantee(any())).thenReturn(Right(CC015B))
 
   override lazy val app = GuiceApplicationBuilder()
@@ -93,8 +91,10 @@ class DeparturesControllerSpec
       bind[DeparturesConnector].toInstance(mockDepartureConnector),
       bind[EnsureGuaranteeService].toInstance(mockGuaranteeService),
       bind[AuditService].toInstance(mockAuditService),
-      bind[Clock].toInstance(mockClock),
-      bind[Configuration].toInstance(Configuration(configuration))
+      bind[Clock].toInstance(mockClock)
+    )
+    .configure(
+      "disable-phase-4" -> false
     )
     .build()
 

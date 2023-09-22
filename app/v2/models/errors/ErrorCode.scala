@@ -39,6 +39,7 @@ object ErrorCode {
   case object Unauthorized         extends ErrorCode("UNAUTHORIZED", UNAUTHORIZED)
   case object NotAcceptable        extends ErrorCode("NOT_ACCEPTABLE", NOT_ACCEPTABLE)
   case object Conflict             extends ErrorCode("CONFLICT", CONFLICT)
+  case object Gone                 extends ErrorCode("GONE", GONE)
 
   lazy val errorCodes: Seq[ErrorCode] = Seq(
     BadRequest,
@@ -53,7 +54,8 @@ object ErrorCode {
     UnsupportedMediaType,
     Unauthorized,
     NotAcceptable,
-    Conflict
+    Conflict,
+    Gone
   )
 
   implicit val errorCodeWrites: Writes[ErrorCode] = Writes {

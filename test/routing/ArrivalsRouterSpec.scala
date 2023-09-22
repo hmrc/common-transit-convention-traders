@@ -108,7 +108,7 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
   }
 
   "route to the version 1 controller" - {
-    def executeTest(callValue: Call, sutValue: => Action[Source[ByteString, _]], expectedStatus: Int, fieldName: String) =
+    def executeTest(callValue: Call, sutValue: => Action[Source[ByteString, _]], expectedStatus: Int, isVersion: Boolean) =
       Seq(None, Some("application/vnd.hmrc.1.0+json"), Some("text/html"), Some("application/vnd.hmrc.1.0+xml"), Some("text/javascript")).foreach {
         acceptHeaderValue =>
           val arrivalsHeaders = FakeHeaders(
@@ -116,9 +116,9 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
           )
 
           s"when the accept header equals ${acceptHeaderValue.getOrElse("nothing")}, it returns status code $expectedStatus" in {
-            fieldName match {
-              case "message" => when(mockAppConfig.enablePhase5).thenReturn(true)
-              case _         => when(mockAppConfig.enablePhase5).thenReturn(false)
+            isVersion match {
+              case true  => when(mockAppConfig.disablePhase4).thenReturn(false)
+              case false => when(mockAppConfig.disablePhase4).thenReturn(true)
             }
             val request =
               FakeRequest(
@@ -130,9 +130,9 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
             val result = call(sutValue, request)
 
             status(result) mustBe expectedStatus
-            fieldName match {
-              case "message" => contentAsJson(result) mustBe Json.obj(fieldName -> "Please use version 2 to create Arrival Notification")
-              case _         => contentAsJson(result) mustBe Json.obj(fieldName -> 1) // ensure we get the unique value to verify we called the fake action
+            isVersion match {
+              case true  => contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
+              case false => contentAsJson(result) mustBe Json.obj("message" -> "Please use CTC Traders API v2.0 to create an Arrival Notification")
             }
           }
       }
@@ -141,33 +141,33 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
       routes.ArrivalsRouter.createArrivalNotification(),
       sut.createArrivalNotification(),
       ACCEPTED,
-      "version"
+      true
     )
     "when creating an arrival notification return Gone when phase5 feature is enabled" - executeTest(
       routes.ArrivalsRouter.createArrivalNotification(),
       sut.createArrivalNotification(),
       GONE,
-      "message"
+      false
     )
 
-    "when getting an arrival" - executeTest(routes.ArrivalsRouter.getArrival("123"), sut.getArrival("123"), OK, "version")
+    "when getting an arrival" - executeTest(routes.ArrivalsRouter.getArrival("123"), sut.getArrival("123"), OK, true)
 
-    "when getting arrivals for a given enrolment EORI" - executeTest(routes.ArrivalsRouter.getArrivalsForEori(), sut.getArrivalsForEori(), OK, "version")
+    "when getting arrivals for a given enrolment EORI" - executeTest(routes.ArrivalsRouter.getArrivalsForEori(), sut.getArrivalsForEori(), OK, true)
 
-    "when getting a list of arrival messages with given arrivalId" - executeTest(routes.ArrivalsRouter.getArrival("123"), sut.getArrival("123"), OK, "version")
+    "when getting a list of arrival messages with given arrivalId" - executeTest(routes.ArrivalsRouter.getArrival("123"), sut.getArrival("123"), OK, true)
 
     "when getting a single arrival message" - executeTest(
       routes.ArrivalsRouter.getArrivalMessage("123", "456"),
       sut.getArrivalMessage("123", "456"),
       OK,
-      "version"
+      true
     )
 
     "when submitting a new message for an existing arrival" - executeTest(
       routes.ArrivalsRouter.attachMessage("123"),
       sut.attachMessage("123"),
       ACCEPTED,
-      "version"
+      true
     )
   }
 

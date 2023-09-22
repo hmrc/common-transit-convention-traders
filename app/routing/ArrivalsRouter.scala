@@ -42,6 +42,7 @@ import v2.models.{MovementId => V2ArrivalId}
 import models.domain.{ArrivalId => V1ArrivalId}
 import play.api.Logging
 import play.api.libs.json.Json
+import v2.models.errors.PresentationError
 
 import java.time.OffsetDateTime
 import scala.annotation.nowarn
@@ -65,15 +66,16 @@ class ArrivalsRouter @Inject() (
     route {
       case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => v2Arrivals.createMovement(MovementType.Arrival)
       case _ =>
-        if (config.enablePhase5) handlePhase5()
+        if (config.disablePhase4) handleDisablingPhase4()
         else v1Arrivals.createArrivalNotification()
     }
 
-  private def handlePhase5() =
+  private def handleDisablingPhase4() =
     Action(streamFromMemory) {
       request =>
         request.body.runWith(Sink.ignore)
-        Gone(Json.obj("message" -> "Please use version 2 to create Arrival Notification"))
+        val presentationError = PresentationError.goneError("Please use CTC Traders API v2.0 to create an Arrival Notification")
+        Status(presentationError.code.statusCode)(Json.obj("message" -> presentationError.message))
     }
 
   def getArrival(arrivalId: String): Action[Source[ByteString, _]] =
