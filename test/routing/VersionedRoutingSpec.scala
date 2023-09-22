@@ -303,6 +303,44 @@ class VersionedRoutingSpec
     }
   }
 
+  "with mixed case valid version 2 accept header" - {
+    val headers =
+      Seq(
+        Some("application/vnd.hmrc.2.0+xMl"),
+        Some("application/vnd.hmrc.2.0+jsOn"),
+        Some("application/vnd.hmrc.2.0+json+xmL"),
+        Some("application/vnd.hmrc.2.0+JSON-XML")
+      )
+
+    headers.foreach {
+      acceptHeaderValue =>
+        val acceptHeader = acceptHeaderValue
+          .map(
+            header => Seq(HeaderNames.ACCEPT -> header)
+          )
+          .getOrElse(Seq.empty)
+
+        val departureHeaders = FakeHeaders(acceptHeader ++ Seq(HeaderNames.CONTENT_TYPE -> "application/xml"))
+        val withString = acceptHeaderValue
+          .getOrElse("nothing")
+
+        s"with accept header set to $withString" - {
+
+          "must call correct action" in {
+
+            val cc  = stubControllerComponents()
+            val sut = new Harness(cc)
+
+            val request = FakeRequest(HttpVerbs.POST, "/", departureHeaders, generateSource("<test>test</test>"))
+
+            val result = sut.testWithContent()(request)
+            contentAsString(result) mustBe "Two"
+
+          }
+        }
+    }
+  }
+
   "Binding Failure Error Action" - {
     "when a failure is requested, return an appropriate BAD_REQUEST" in {
 

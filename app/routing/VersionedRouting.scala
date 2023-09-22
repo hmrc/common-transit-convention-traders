@@ -40,6 +40,12 @@ object VersionedRouting {
   val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN = "application/vnd.hmrc.2.0+json-xml" // returns JSON wrapped XML
   val VERSION_2_ACCEPT_HEADER_PATTERN               = """^application\/vnd\.hmrc\.2\.0\+.+$""".r
 
+  def formatAccept(header: String): String = {
+    val splitHeader                         = """^(application\/vnd\.hmrc\.2\.0\+)(.+)""".r
+    val splitHeader(frameworkPath, ctcPath) = header
+    frameworkPath + ctcPath.toLowerCase // ctc part can be mixed case.
+  }
+
 }
 
 trait VersionedRouting {

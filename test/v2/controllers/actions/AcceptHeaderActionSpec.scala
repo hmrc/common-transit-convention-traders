@@ -84,6 +84,26 @@ class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures
         status(result) mustEqual OK
       }
 
+    lazy val mixedCaseAcceptHeaders = Seq(
+      "application/vnd.hmrc.2.0+jSon",
+      "application/vnd.hmrc.2.0+jSOn+xml",
+      "application/vnd.hmrc.2.0+Xml"
+    )
+
+    for (acceptHeader <- mixedCaseAcceptHeaders)
+      s"must allow valid case-insensitive headers if present in the list passed to the action ($acceptHeader)" in {
+        val controller = new Harness(acceptHeaderAction(acceptedHeaders), cc)
+        val req: FakeRequest[AnyContent] = FakeRequest(
+          method = HttpVerbs.GET,
+          uri = "",
+          headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeader)),
+          AnyContent.apply()
+        )
+        val result = controller.post()(req)
+
+        status(result) mustEqual OK
+      }
+
     "must not allow an accept headers that is not present in the list passed to the action" in {
       val controller = new Harness(acceptHeaderAction(acceptedHeaders), cc)
       val req: FakeRequest[AnyContent] = FakeRequest(
@@ -97,5 +117,6 @@ class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures
       status(result) mustEqual NOT_ACCEPTABLE
 
     }
+
   }
 }
