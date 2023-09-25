@@ -133,7 +133,10 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
             isVersion match {
               case true => contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
               case false =>
-                contentAsJson(result) mustBe Json.obj("message" -> "Please use CTC Traders API v2.0 to create an Arrival Notification", "code" -> "GONE")
+                contentAsJson(result) mustBe Json.obj(
+                  "message" -> "New NCTS4 Arrival Notifications can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Arrival Notifications.",
+                  "code"    -> "GONE"
+                )
             }
           }
       }

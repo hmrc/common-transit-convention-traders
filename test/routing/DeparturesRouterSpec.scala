@@ -114,7 +114,10 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             val result  = call(sut.submitDeclaration(), request)
 
             status(result) mustBe GONE
-            contentAsJson(result) mustBe Json.obj("message" -> "Please use CTC Traders API v2.0 to create a Departure Declaration", "code" -> "GONE")
+            contentAsJson(result) mustBe Json.obj(
+              "message" -> "New NCTS4 Departure Declarations can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Departure Declarations.",
+              "code"    -> "GONE"
+            )
           }
         }
 

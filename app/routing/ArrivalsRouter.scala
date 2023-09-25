@@ -74,7 +74,9 @@ class ArrivalsRouter @Inject() (
     Action(streamFromMemory) {
       request =>
         request.body.runWith(Sink.ignore)
-        val presentationError = PresentationError.goneError("Please use CTC Traders API v2.0 to create an Arrival Notification")
+        val presentationError = PresentationError.goneError(
+          "New NCTS4 Arrival Notifications can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Arrival Notifications."
+        )
         Status(presentationError.code.statusCode)(Json.toJson(presentationError))
     }
 
