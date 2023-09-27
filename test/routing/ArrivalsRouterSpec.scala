@@ -19,6 +19,8 @@ package routing
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import akka.util.Timeout
+import config.AppConfig
+import org.mockito.Mockito.when
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -28,6 +30,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status.ACCEPTED
+import play.api.http.Status.GONE
 import play.api.http.Status.OK
 import play.api.libs.json.Json
 import play.api.mvc.Action
@@ -50,11 +53,14 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
 
   implicit private val timeout: Timeout = 5.seconds
 
+  val mockAppConfig = mock[AppConfig]
+
   val sut = new ArrivalsRouter(
     stubControllerComponents(),
     new FakeV1ArrivalsController(),
     new FakeV2MovementsController(),
-    new FakeV1ArrivalMessagesController()
+    new FakeV1ArrivalMessagesController(),
+    mockAppConfig
   )
 
   val id = Gen.long
@@ -102,7 +108,7 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
   }
 
   "route to the version 1 controller" - {
-    def executeTest(callValue: Call, sutValue: => Action[Source[ByteString, _]], expectedStatus: Int) =
+    def executeTest(callValue: Call, sutValue: => Action[Source[ByteString, _]], expectedStatus: Int, isVersion: Boolean) =
       Seq(None, Some("application/vnd.hmrc.1.0+json"), Some("text/html"), Some("application/vnd.hmrc.1.0+xml"), Some("text/javascript")).foreach {
         acceptHeaderValue =>
           val arrivalsHeaders = FakeHeaders(
@@ -110,6 +116,10 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
           )
 
           s"when the accept header equals ${acceptHeaderValue.getOrElse("nothing")}, it returns status code $expectedStatus" in {
+            isVersion match {
+              case true  => when(mockAppConfig.disablePhase4).thenReturn(false)
+              case false => when(mockAppConfig.disablePhase4).thenReturn(true)
+            }
             val request =
               FakeRequest(
                 method = callValue.method,
@@ -120,21 +130,49 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
             val result = call(sutValue, request)
 
             status(result) mustBe expectedStatus
-            contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
+            isVersion match {
+              case true => contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
+              case false =>
+                contentAsJson(result) mustBe Json.obj(
+                  "message" -> "New NCTS4 Arrival Notifications can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Arrival Notifications.",
+                  "code"    -> "GONE"
+                )
+            }
           }
       }
 
-    "when creating an arrival notification" - executeTest(routes.ArrivalsRouter.createArrivalNotification(), sut.createArrivalNotification(), ACCEPTED)
+    "when creating an arrival notification" - executeTest(
+      routes.ArrivalsRouter.createArrivalNotification(),
+      sut.createArrivalNotification(),
+      ACCEPTED,
+      true
+    )
+    "when creating an arrival notification return Gone when phase5 feature is enabled" - executeTest(
+      routes.ArrivalsRouter.createArrivalNotification(),
+      sut.createArrivalNotification(),
+      GONE,
+      false
+    )
 
-    "when getting an arrival" - executeTest(routes.ArrivalsRouter.getArrival("123"), sut.getArrival("123"), OK)
+    "when getting an arrival" - executeTest(routes.ArrivalsRouter.getArrival("123"), sut.getArrival("123"), OK, true)
 
-    "when getting arrivals for a given enrolment EORI" - executeTest(routes.ArrivalsRouter.getArrivalsForEori(), sut.getArrivalsForEori(), OK)
+    "when getting arrivals for a given enrolment EORI" - executeTest(routes.ArrivalsRouter.getArrivalsForEori(), sut.getArrivalsForEori(), OK, true)
 
-    "when getting a list of arrival messages with given arrivalId" - executeTest(routes.ArrivalsRouter.getArrival("123"), sut.getArrival("123"), OK)
+    "when getting a list of arrival messages with given arrivalId" - executeTest(routes.ArrivalsRouter.getArrival("123"), sut.getArrival("123"), OK, true)
 
-    "when getting a single arrival message" - executeTest(routes.ArrivalsRouter.getArrivalMessage("123", "456"), sut.getArrivalMessage("123", "456"), OK)
+    "when getting a single arrival message" - executeTest(
+      routes.ArrivalsRouter.getArrivalMessage("123", "456"),
+      sut.getArrivalMessage("123", "456"),
+      OK,
+      true
+    )
 
-    "when submitting a new message for an existing arrival" - executeTest(routes.ArrivalsRouter.attachMessage("123"), sut.attachMessage("123"), ACCEPTED)
+    "when submitting a new message for an existing arrival" - executeTest(
+      routes.ArrivalsRouter.attachMessage("123"),
+      sut.attachMessage("123"),
+      ACCEPTED,
+      true
+    )
   }
 
 }

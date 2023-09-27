@@ -18,6 +18,7 @@ package controllers
 
 import audit.AuditService
 import com.kenshoo.play.metrics.Metrics
+import com.typesafe.config.ConfigFactory
 import connectors.DeparturesConnector
 import connectors.ResponseHeaders
 import controllers.actions.AuthAction
@@ -40,6 +41,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.Configuration
 import play.api.http.HeaderNames
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -58,6 +60,7 @@ import utils.TestMetrics
 import v2.controllers.V2MovementsController
 import v2.fakes.controllers.FakeV2MovementsController
 
+import java.io.File
 import java.time.Clock
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -89,6 +92,9 @@ class DeparturesControllerSpec
       bind[EnsureGuaranteeService].toInstance(mockGuaranteeService),
       bind[AuditService].toInstance(mockAuditService),
       bind[Clock].toInstance(mockClock)
+    )
+    .configure(
+      "disable-phase-4" -> false
     )
     .build()
 

@@ -17,14 +17,17 @@
 package routing
 
 import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.google.inject.Inject
+import config.AppConfig
 import controllers.V1DepartureMessagesController
 import controllers.V1DeparturesController
 import models.domain.{DepartureId => V1DepartureId}
 import models.domain.{MessageId => V1MessageId}
 import play.api.Logging
+import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
@@ -37,6 +40,7 @@ import v2.models.LocalReferenceNumber
 import v2.models.MovementReferenceNumber
 import v2.models.MovementType
 import v2.models.PageNumber
+import v2.models.errors.PresentationError
 import v2.models.{MessageId => V2MessageId}
 import v2.models.{MovementId => V2DepartureId}
 
@@ -49,7 +53,8 @@ class DeparturesRouter @Inject() (
   val controllerComponents: ControllerComponents,
   v1Departures: V1DeparturesController,
   v1DepartureMessages: V1DepartureMessagesController,
-  v2Departures: V2MovementsController
+  v2Departures: V2MovementsController,
+  config: AppConfig
 )(implicit
   val materializer: Materializer
 ) extends BaseController
@@ -59,8 +64,20 @@ class DeparturesRouter @Inject() (
 
   def submitDeclaration(): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => v2Departures.createMovement(MovementType.Departure)
-    case _                                                        => v1Departures.submitDeclaration()
+    case _ =>
+      if (config.disablePhase4) handleDisablingPhase4()
+      else v1Departures.submitDeclaration()
   }
+
+  private def handleDisablingPhase4() =
+    Action(streamFromMemory) {
+      request =>
+        request.body.runWith(Sink.ignore)
+        val presentationError = PresentationError.goneError(
+          "New NCTS4 Departure Declarations can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Departure Declarations."
+        )
+        Status(presentationError.code.statusCode)(Json.toJson(presentationError))
+    }
 
   def getMessage(departureId: String, messageId: String): Action[Source[ByteString, _]] =
     route {

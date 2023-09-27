@@ -62,4 +62,6 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesCon
 
   val internalAuthToken: String = config.get[String]("internal-auth.token")
 
+  val disablePhase4: Boolean = config.get[Boolean]("disable-phase-4")
+
 }

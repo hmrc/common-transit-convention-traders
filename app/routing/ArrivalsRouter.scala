@@ -17,9 +17,11 @@
 package routing
 
 import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.google.inject.Inject
+import config.AppConfig
 import controllers.V1ArrivalMessagesController
 import controllers.V1ArrivalMovementController
 import play.api.mvc.Action
@@ -39,6 +41,8 @@ import v2.models.{MessageId => V2MessageId}
 import v2.models.{MovementId => V2ArrivalId}
 import models.domain.{ArrivalId => V1ArrivalId}
 import play.api.Logging
+import play.api.libs.json.Json
+import v2.models.errors.PresentationError
 
 import java.time.OffsetDateTime
 import scala.annotation.nowarn
@@ -49,7 +53,8 @@ class ArrivalsRouter @Inject() (
   val controllerComponents: ControllerComponents,
   v1Arrivals: V1ArrivalMovementController,
   v2Arrivals: V2MovementsController,
-  v1ArrivalMessages: V1ArrivalMessagesController
+  v1ArrivalMessages: V1ArrivalMessagesController,
+  config: AppConfig
 )(implicit
   val materializer: Materializer
 ) extends BaseController
@@ -60,7 +65,19 @@ class ArrivalsRouter @Inject() (
   def createArrivalNotification(): Action[Source[ByteString, _]] =
     route {
       case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => v2Arrivals.createMovement(MovementType.Arrival)
-      case _                                                        => v1Arrivals.createArrivalNotification()
+      case _ =>
+        if (config.disablePhase4) handleDisablingPhase4()
+        else v1Arrivals.createArrivalNotification()
+    }
+
+  private def handleDisablingPhase4() =
+    Action(streamFromMemory) {
+      request =>
+        request.body.runWith(Sink.ignore)
+        val presentationError = PresentationError.goneError(
+          "New NCTS4 Arrival Notifications can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Arrival Notifications."
+        )
+        Status(presentationError.code.statusCode)(Json.toJson(presentationError))
     }
 
   def getArrival(arrivalId: String): Action[Source[ByteString, _]] =

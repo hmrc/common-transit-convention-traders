@@ -22,6 +22,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import akka.util.ByteString
 import com.kenshoo.play.metrics.Metrics
+import com.typesafe.config.ConfigFactory
 import connectors.ArrivalConnector
 import connectors.ResponseHeaders
 import controllers.actions.AuthAction
@@ -77,6 +78,9 @@ class ArrivalMovementControllerSpec
       bind[AuthAction].to[FakeAuthAction],
       bind[ArrivalConnector].toInstance(mockArrivalConnector),
       bind[Clock].toInstance(mockClock)
+    )
+    .configure(
+      "disable-phase-4" -> false
     )
     .build()
 
