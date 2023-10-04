@@ -35,6 +35,18 @@ object Constants {
 
   val XContentLengthHeader = "X-ContentLength"
 
+  val XMovementIdHeader = "X-Audit-Meta-Movement-Id"
+
+  val XMessageIdHeader = "X-Audit-Meta-Message-Id"
+
+  val XEoriHeader = "X-Audit-Meta-EORI"
+
+  val XMovementTypeHeader = "X-Audit-Meta-Movement-Type"
+
+  val XURIPathHeader = "X-Audit-Meta-Path"
+
+  val XAuditSourceHeader = "X-Audit-Source"
+
   val ChannelHeader = "channel"
 
   val LegacyEnrolmentKey: String   = "HMCE-NCTS-ORG"
