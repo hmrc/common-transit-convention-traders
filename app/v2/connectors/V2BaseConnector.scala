@@ -27,18 +27,13 @@ import play.api.http.HeaderNames
 import play.api.http.Status.OK
 import play.api.libs.json.JsResult
 import play.api.libs.json.Reads
-import uk.gov.hmrc.http.Authorization
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.client.RequestBuilder
-import v2.models.AuditType
-import v2.models.EORINumber
-import v2.models.MessageId
-import v2.models.MovementId
-import v2.models.MovementType
+import v2.models._
 import v2.models.request.MessageType
 
 import scala.concurrent.ExecutionContext
@@ -144,6 +139,31 @@ trait V2BaseConnector extends HttpErrorFunctions {
         case Some(header) => requestBuilder.setHeader(header)
         case None         => requestBuilder
       }
+
+    def withMovementId(movementId: Option[MovementId]): RequestBuilder =
+      if (movementId.isDefined)
+        requestBuilder.setHeader("X-Audit-Meta-Movement-Id" -> movementId.get.value)
+      else requestBuilder
+
+    def withEoriNumber(eoriNumber: Option[EORINumber]): RequestBuilder =
+      if (eoriNumber.isDefined)
+        requestBuilder.setHeader("X-Audit-Meta-EORI" -> eoriNumber.get.value)
+      else requestBuilder
+
+    def withMovementType(movementType: Option[MovementType]): RequestBuilder =
+      if (movementType.isDefined)
+        requestBuilder.setHeader("X-Audit-Meta-Movement-Type" -> movementType.get.movementType)
+      else requestBuilder
+
+    def withMessageType(messageType: Option[MessageType]): RequestBuilder =
+      if (messageType.isDefined)
+        requestBuilder.setHeader("X-Audit-Meta-Message-Type" -> messageType.get.code)
+      else requestBuilder
+
+    def withMessageId(messageId: Option[MessageId]): RequestBuilder =
+      if (messageId.isDefined)
+        requestBuilder.setHeader("X-Audit-Meta-Message-Id" -> messageId.get.value)
+      else requestBuilder
 
     def executeAndDeserialise[T](implicit ec: ExecutionContext, reads: Reads[T]): Future[T] =
       requestBuilder

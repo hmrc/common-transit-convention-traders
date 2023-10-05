@@ -116,16 +116,16 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
       httpClient
         .post(url"$url")
         .withInternalAuthToken
+        .withMovementId(movementId)
+        .withMessageId(messageId)
+        .withEoriNumber(enrolmentEORI)
+        .withMovementType(movementType)
+        .withMessageType(messageType)
         .setHeader(
           HeaderNames.CONTENT_TYPE       -> contentType,
           Constants.XContentLengthHeader -> contentLength.toString,
-          Constants.XMovementIdHeader    -> movementId.map(_.value).getOrElse(None).toString,
-          Constants.XMessageIdHeader     -> messageId.map(_.value).getOrElse(None).toString,
-          Constants.XEoriHeader          -> enrolmentEORI.map(_.value).getOrElse(None).toString,
-          Constants.XMovementTypeHeader  -> movementType.map(_.movementType).getOrElse(None).toString,
-          Constants.XMessageTypeHeader   -> messageType.map(_.code).getOrElse(None).toString,
-          Constants.XURIPathHeader       -> path,
-          Constants.XAuditSourceHeader   -> "common-transit-convention-traders"
+          "X-Audit-Meta-Path"            -> path,
+          "X-Audit-Source"               -> "common-transit-convention-traders"
         )
         .withBody(payload)
         .executeAndExpect(ACCEPTED)

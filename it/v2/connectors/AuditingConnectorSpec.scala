@@ -148,12 +148,12 @@ class AuditingConnectorSpec
     "when sending an audit message" - Seq(MimeTypes.XML, MimeTypes.JSON).foreach {
       contentType =>
         s"when the content-type equals $contentType" - {
-          "return a successful future if the audit message was accepted" in forAll(
-            Gen.option(arbitrary[EORINumber]),
-            Gen.option(arbitrary[MovementId]),
-            Gen.option(arbitrary[MessageId]),
-            Gen.option(arbitrary[MessageType]),
-            Gen.option(arbitrary[MovementType])
+          "return a successful future if the audit message was accepted with all headers" in forAll(
+            arbitrary[EORINumber],
+            arbitrary[MovementId],
+            arbitrary[MessageId],
+            arbitrary[MessageType],
+            arbitrary[MovementType]
           ) {
             (eori, movementId, messageId, messageType, movementType) =>
               server.stubFor(
@@ -163,13 +163,13 @@ class AuditingConnectorSpec
                   .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
                   .withHeader(HeaderNames.CONTENT_TYPE, equalTo(contentType))
                   .withHeader(Constants.XContentLengthHeader, equalTo(contentSize.toString))
-                  .withHeader(Constants.XMovementIdHeader, equalTo(movementId.map(_.value).getOrElse(None).toString))
-                  .withHeader(Constants.XMessageIdHeader, equalTo(messageId.map(_.value).getOrElse(None).toString))
-                  .withHeader(Constants.XEoriHeader, equalTo(eori.map(_.value).getOrElse(None).toString))
-                  .withHeader(Constants.XURIPathHeader, equalTo("/customs/transits/movements"))
-                  .withHeader(Constants.XMessageTypeHeader, equalTo(messageType.map(_.code).getOrElse(None).toString))
-                  .withHeader(Constants.XMovementTypeHeader, equalTo(movementType.map(_.movementType).getOrElse(None).toString))
-                  .withHeader(Constants.XAuditSourceHeader, equalTo("common-transit-convention-traders"))
+                  .withHeader("X-Audit-Meta-Movement-Id", equalTo(movementId.value))
+                  .withHeader("X-Audit-Meta-Message-Id", equalTo(messageId.value))
+                  .withHeader("X-Audit-Meta-EORI", equalTo(eori.value))
+                  .withHeader("X-Audit-Meta-Path", equalTo("/customs/transits/movements"))
+                  .withHeader("X-Audit-Meta-Message-Type", equalTo(messageType.code))
+                  .withHeader("X-Audit-Meta-Movement-Type", equalTo(movementType.movementType))
+                  .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
                   .willReturn(aResponse().withStatus(ACCEPTED))
               )
 
@@ -180,11 +180,11 @@ class AuditingConnectorSpec
                 contentType,
                 contentSize,
                 Source.empty,
-                movementId,
-                messageId,
-                eori,
-                movementType,
-                messageType
+                Some(movementId),
+                Some(messageId),
+                Some(eori),
+                Some(movementType),
+                Some(messageType)
               )
 
               // then the future should be ready
@@ -193,14 +193,127 @@ class AuditingConnectorSpec
               }
           }
 
+          "return a successful future if the audit message was accepted with movementId, messageId & eoriNumber Optional header value" in forAll(
+            arbitrary[EORINumber],
+            arbitrary[MovementId],
+            arbitrary[MessageId]
+          ) {
+            (eori, movementId, messageId) =>
+              server.stubFor(
+                post(
+                  urlEqualTo(targetUrl(AuditType.DeclarationData))
+                )
+                  .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+                  .withHeader(HeaderNames.CONTENT_TYPE, equalTo(contentType))
+                  .withHeader(Constants.XContentLengthHeader, equalTo(contentSize.toString))
+                  .withHeader("X-Audit-Meta-Movement-Id", equalTo(movementId.value))
+                  .withHeader("X-Audit-Meta-Message-Id", equalTo(messageId.value))
+                  .withHeader("X-Audit-Meta-EORI", equalTo(eori.value))
+                  .withHeader("X-Audit-Meta-Path", equalTo("/customs/transits/movements"))
+                  .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
+                  .willReturn(aResponse().withStatus(ACCEPTED))
+              )
+
+              implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements"))
+              // when we call the audit service
+              val future = sut.post(
+                AuditType.DeclarationData,
+                contentType,
+                contentSize,
+                Source.empty,
+                Some(movementId),
+                Some(messageId),
+                Some(eori),
+                None,
+                None
+              )
+
+              // then the future should be ready
+              whenReady(future) {
+                _ =>
+              }
+          }
+
+          "return a successful future if the audit message was accepted with movementType & messageType Optional header value" in forAll(
+            arbitrary[MessageType],
+            arbitrary[MovementType]
+          ) {
+            (messageType, movementType) =>
+              server.stubFor(
+                post(
+                  urlEqualTo(targetUrl(AuditType.DeclarationData))
+                )
+                  .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+                  .withHeader(HeaderNames.CONTENT_TYPE, equalTo(contentType))
+                  .withHeader(Constants.XContentLengthHeader, equalTo(contentSize.toString))
+                  .withHeader("X-Audit-Meta-Message-Type", equalTo(messageType.code))
+                  .withHeader("X-Audit-Meta-Movement-Type", equalTo(movementType.movementType))
+                  .withHeader("X-Audit-Meta-Path", equalTo("/customs/transits/movements"))
+                  .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
+                  .willReturn(aResponse().withStatus(ACCEPTED))
+              )
+
+              implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements"))
+              // when we call the audit service
+              val future = sut.post(
+                AuditType.DeclarationData,
+                contentType,
+                contentSize,
+                Source.empty,
+                None,
+                None,
+                None,
+                Some(movementType),
+                Some(messageType)
+              )
+
+              // then the future should be ready
+              whenReady(future) {
+                _ =>
+              }
+          }
+
+          "return a successful future if the audit message was accepted without any Optional header value" in {
+            server.stubFor(
+              post(
+                urlEqualTo(targetUrl(AuditType.DeclarationData))
+              )
+                .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+                .withHeader(HeaderNames.CONTENT_TYPE, equalTo(contentType))
+                .withHeader(Constants.XContentLengthHeader, equalTo(contentSize.toString))
+                .withHeader("X-Audit-Meta-Path", equalTo("/customs/transits/movements"))
+                .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
+                .willReturn(aResponse().withStatus(ACCEPTED))
+            )
+
+            implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements"))
+            // when we call the audit service
+            val future = sut.post(
+              AuditType.DeclarationData,
+              contentType,
+              contentSize,
+              Source.empty,
+              None,
+              None,
+              None,
+              None,
+              None
+            )
+
+            // then the future should be ready
+            whenReady(future) {
+              _ =>
+            }
+          }
+
           "return a failed future if the audit message was not accepted" - Seq(BAD_REQUEST, INTERNAL_SERVER_ERROR).foreach {
             statusCode =>
               s"when a $statusCode is returned" in forAll(
-                Gen.option(arbitrary[EORINumber]),
-                Gen.option(arbitrary[MovementId]),
-                Gen.option(arbitrary[MessageId]),
-                Gen.option(arbitrary[MessageType]),
-                Gen.option(arbitrary[MovementType])
+                arbitrary[EORINumber],
+                arbitrary[MovementId],
+                arbitrary[MessageId],
+                arbitrary[MessageType],
+                arbitrary[MovementType]
               ) {
                 (eori, movementId, messageId, messageType, movementType) =>
                   server.stubFor(
@@ -210,13 +323,13 @@ class AuditingConnectorSpec
                       .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
                       .withHeader(HeaderNames.CONTENT_TYPE, equalTo(contentType))
                       .withHeader(Constants.XContentLengthHeader, equalTo(contentSize.toString))
-                      .withHeader(Constants.XMovementIdHeader, equalTo(movementId.map(_.value).getOrElse(None).toString))
-                      .withHeader(Constants.XMessageIdHeader, equalTo(messageId.map(_.value).getOrElse(None).toString))
-                      .withHeader(Constants.XEoriHeader, equalTo(eori.map(_.value).getOrElse(None).toString))
-                      .withHeader(Constants.XURIPathHeader, equalTo("/customs/transits/movements"))
-                      .withHeader(Constants.XMessageTypeHeader, equalTo(messageType.map(_.code).getOrElse(None).toString))
-                      .withHeader(Constants.XMovementTypeHeader, equalTo(movementType.map(_.movementType).getOrElse(None).toString))
-                      .withHeader(Constants.XAuditSourceHeader, equalTo("common-transit-convention-traders"))
+                      .withHeader("X-Audit-Meta-Movement-Id", equalTo(movementId.value))
+                      .withHeader("X-Audit-Meta-Message-Id", equalTo(messageId.value))
+                      .withHeader("X-Audit-Meta-EORI", equalTo(eori.value))
+                      .withHeader("X-Audit-Meta-Path", equalTo("/customs/transits/movements"))
+                      .withHeader("X-Audit-Meta-Message-Type", equalTo(messageType.code))
+                      .withHeader("X-Audit-Meta-Movement-Type", equalTo(movementType.movementType))
+                      .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
                       .willReturn(aResponse().withStatus(statusCode))
                   )
 
@@ -227,11 +340,11 @@ class AuditingConnectorSpec
                     contentType,
                     contentSize,
                     Source.empty,
-                    movementId,
-                    messageId,
-                    eori,
-                    movementType,
-                    messageType
+                    Some(movementId),
+                    Some(messageId),
+                    Some(eori),
+                    Some(movementType),
+                    Some(messageType)
                   )
 
                   val result = future
