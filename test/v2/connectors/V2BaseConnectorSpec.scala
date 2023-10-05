@@ -300,6 +300,102 @@ class V2BaseConnectorSpec
         verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq((HeaderNames.AUTHORIZATION -> token))): _*)
     }
 
+    "withMovementId adds the audit movement Id header for movement value" in forAll(arbitrary[MovementId]) {
+      movementId =>
+        val sut = mock[RequestBuilder]
+        // any here, verify later
+        when(sut.setHeader(any())).thenReturn(sut)
+
+        sut.withMovementId(Some(movementId))
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Movement-Id" -> movementId.value))): _*)
+    }
+
+    "withMovementId ignore the audit movement Id header for None value" in {
+      val sut = mock[RequestBuilder]
+      // any here, verify later
+      when(sut.setHeader(any())).thenReturn(sut)
+
+      sut.withMovementId(None)
+      verify(sut, times(0)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Movement-Id" -> "None"))): _*)
+    }
+
+    "withMovementType adds the audit movement type header for movement type value" in forAll(arbitrary[MovementType]) {
+      movementType =>
+        val sut = mock[RequestBuilder]
+        // any here, verify later
+        when(sut.setHeader(any())).thenReturn(sut)
+
+        sut.withMovementType(Some(movementType))
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Movement-Type" -> movementType.movementType))): _*)
+    }
+
+    "withMovementType ignore the audit movement type header for None value" in {
+      val sut = mock[RequestBuilder]
+      // any here, verify later
+      when(sut.setHeader(any())).thenReturn(sut)
+
+      sut.withMovementType(None)
+      verify(sut, times(0)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Movement-Type" -> "None"))): _*)
+    }
+
+    "withEoriNumber adds the audit Eori number header for eori number value" in forAll(arbitrary[EORINumber]) {
+      eoriNumber =>
+        val sut = mock[RequestBuilder]
+        // any here, verify later
+        when(sut.setHeader(any())).thenReturn(sut)
+
+        sut.withEoriNumber(Some(eoriNumber))
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-EORI" -> eoriNumber.value))): _*)
+    }
+
+    "withEoriNumber ignore the audit Eori number header for None value" in {
+      val sut = mock[RequestBuilder]
+      // any here, verify later
+      when(sut.setHeader(any())).thenReturn(sut)
+
+      sut.withEoriNumber(None)
+      verify(sut, times(0)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-EORI" -> "None"))): _*)
+    }
+
+    "withMessageId adds the audit message Id header for message Id value" in forAll(arbitrary[MessageId]) {
+      messageId =>
+        val sut = mock[RequestBuilder]
+        // any here, verify later
+        when(sut.setHeader(any())).thenReturn(sut)
+
+        sut.withMessageId(Some(messageId))
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Message-Id" -> messageId.value))): _*)
+    }
+
+    "withMessageId ignore the audit message Id header None value" in {
+      val sut = mock[RequestBuilder]
+      // any here, verify later
+      when(sut.setHeader(any())).thenReturn(sut)
+
+      sut.withMessageId(None)
+      verify(sut, times(0)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Message-Id" -> "None"))): _*)
+    }
+
+    "withMessageType adds the audit message type header for message type value" in forAll(arbitrary[MessageType]) {
+      messageType =>
+        val sut = mock[RequestBuilder]
+        // any here, verify later
+        when(sut.setHeader(any())).thenReturn(sut)
+
+        sut.withMessageType(Some(messageType))
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Message-Type" -> messageType.code))): _*)
+    }
+
+    "withMessageType ignore the audit message type header for None value" in forAll(arbitrary[MessageType]) {
+      messageType =>
+        val sut = mock[RequestBuilder]
+        // any here, verify later
+        when(sut.setHeader(any())).thenReturn(sut)
+
+        sut.withMessageType(None)
+        verify(sut, times(0)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Message-Type" -> "None"))): _*)
+    }
+
     "executeAndExpect returns a unit when the expected response is returned" in forAll(
       Gen.oneOf(Seq(ACCEPTED, CREATED, OK, NO_CONTENT))
     ) {
