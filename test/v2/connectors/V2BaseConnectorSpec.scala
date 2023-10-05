@@ -316,7 +316,7 @@ class V2BaseConnectorSpec
       when(sut.setHeader(any())).thenReturn(sut)
 
       sut.withMovementId(None)
-      verify(sut, times(0)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Movement-Id" -> "None"))): _*)
+      verify(sut, times(0)).setHeader(Seq(any()): _*)
     }
 
     "withMovementType adds the audit movement type header for movement type value" in forAll(arbitrary[MovementType]) {
@@ -335,7 +335,7 @@ class V2BaseConnectorSpec
       when(sut.setHeader(any())).thenReturn(sut)
 
       sut.withMovementType(None)
-      verify(sut, times(0)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Movement-Type" -> "None"))): _*)
+      verify(sut, times(0)).setHeader(Seq(any()): _*)
     }
 
     "withEoriNumber adds the audit Eori number header for eori number value" in forAll(arbitrary[EORINumber]) {
@@ -354,7 +354,7 @@ class V2BaseConnectorSpec
       when(sut.setHeader(any())).thenReturn(sut)
 
       sut.withEoriNumber(None)
-      verify(sut, times(0)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-EORI" -> "None"))): _*)
+      verify(sut, times(0)).setHeader(Seq(any()): _*)
     }
 
     "withMessageId adds the audit message Id header for message Id value" in forAll(arbitrary[MessageId]) {
@@ -373,7 +373,7 @@ class V2BaseConnectorSpec
       when(sut.setHeader(any())).thenReturn(sut)
 
       sut.withMessageId(None)
-      verify(sut, times(0)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Message-Id" -> "None"))): _*)
+      verify(sut, times(0)).setHeader(Seq(any()): _*)
     }
 
     "withMessageType adds the audit message type header for message type value" in forAll(arbitrary[MessageType]) {
@@ -393,7 +393,7 @@ class V2BaseConnectorSpec
         when(sut.setHeader(any())).thenReturn(sut)
 
         sut.withMessageType(None)
-        verify(sut, times(0)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Message-Type" -> "None"))): _*)
+        verify(sut, times(0)).setHeader(Seq(any()): _*)
     }
 
     "executeAndExpect returns a unit when the expected response is returned" in forAll(
