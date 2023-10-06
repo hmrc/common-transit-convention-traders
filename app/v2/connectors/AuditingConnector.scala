@@ -31,7 +31,12 @@ import play.api.http.Status.ACCEPTED
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
+import v2.models.request.MessageType
 import v2.models.AuditType
+import v2.models.EORINumber
+import v2.models.MessageId
+import v2.models.MovementId
+import v2.models.MovementType
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -39,7 +44,23 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[AuditingConnectorImpl])
 trait AuditingConnector {
 
+  //Remove this method post successful integration of below method
   def post(auditType: AuditType, source: Source[ByteString, _], contentType: String, contentLength: Long)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit]
+
+  def post(
+    auditType: AuditType,
+    contentType: String,
+    contentLength: Long,
+    payload: Source[ByteString, _],
+    movementId: Option[MovementId],
+    messageId: Option[MessageId],
+    enrolmentEORI: Option[EORINumber],
+    movementType: Option[MovementType],
+    messageType: Option[MessageType]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit]
@@ -70,5 +91,44 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
           .withBody(source)
           .executeAndExpect(ACCEPTED)
     }
+
+  def post(
+    auditType: AuditType,
+    contentType: String,
+    contentLength: Long,
+    payload: Source[ByteString, _],
+    movementId: Option[MovementId] = None,
+    messageId: Option[MessageId] = None,
+    enrolmentEORI: Option[EORINumber] = None,
+    movementType: Option[MovementType] = None,
+    messageType: Option[MessageType] = None
+  )(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] = withMetricsTimerAsync(MetricsKeys.AuditingBackend.Post) {
+    _ =>
+      val url = appConfig.auditingUrl.withPath(auditingRoute(auditType))
+      val path = hc.otherHeaders
+        .collectFirst {
+          case ("path", value) => value
+        }
+        .getOrElse("-")
+      httpClient
+        .post(url"$url")
+        .withInternalAuthToken
+        .withMovementId(movementId)
+        .withMessageId(messageId)
+        .withEoriNumber(enrolmentEORI)
+        .withMovementType(movementType)
+        .withMessageType(messageType)
+        .setHeader(
+          HeaderNames.CONTENT_TYPE       -> contentType,
+          Constants.XContentLengthHeader -> contentLength.toString,
+          "X-Audit-Meta-Path"            -> path,
+          "X-Audit-Source"               -> "common-transit-convention-traders"
+        )
+        .withBody(payload)
+        .executeAndExpect(ACCEPTED)
+  }
 
 }

@@ -23,7 +23,12 @@ import com.google.inject.Inject
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.connectors.AuditingConnector
+import v2.models.request.MessageType
 import v2.models.AuditType
+import v2.models.EORINumber
+import v2.models.MessageId
+import v2.models.MovementId
+import v2.models.MovementType
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -32,7 +37,23 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[AuditingServiceImpl])
 trait AuditingService {
 
+  //Remove this method post successful integration of below method
   def audit(auditType: AuditType, source: Source[ByteString, _], contentType: String, contentLength: Long)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit]
+
+  def auditMessageEvent(
+    auditType: AuditType,
+    contentType: String,
+    contentLength: Long,
+    payload: Source[ByteString, _],
+    movementId: Option[MovementId],
+    messageId: Option[MessageId],
+    enrolmentEORI: Option[EORINumber],
+    movementType: Option[MovementType],
+    messageType: Option[MessageType]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit]
@@ -50,4 +71,22 @@ class AuditingServiceImpl @Inject() (auditingConnector: AuditingConnector) exten
         logger.warn("Unable to audit payload due to an exception", e)
     }
 
+  override def auditMessageEvent(
+    auditType: AuditType,
+    contentType: String,
+    contentLength: Long,
+    payload: Source[ByteString, _],
+    movementId: Option[MovementId],
+    messageId: Option[MessageId],
+    enrolmentEORI: Option[EORINumber],
+    movementType: Option[MovementType],
+    messageType: Option[MessageType]
+  )(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] =
+    auditingConnector.post(auditType, contentType, contentLength, payload, movementId, messageId, enrolmentEORI, movementType, messageType).recover {
+      case NonFatal(e) =>
+        logger.warn("Unable to audit payload due to an exception", e)
+    }
 }

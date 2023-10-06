@@ -19,37 +19,54 @@ package v2.services
 import akka.stream.scaladsl.Source
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}
+import org.mockito.Mockito.reset
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.Logger
 import play.api.http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
+import v2.base.TestCommonGenerators
 import v2.connectors.AuditingConnector
-import v2.models.AuditType
 import v2.models.AuditType.DeclarationData
+import v2.models._
+import v2.models.request.MessageType
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class AuditingServiceSpec extends AnyFreeSpec with Matchers with ScalaFutures with MockitoSugar {
+class AuditingServiceSpec
+    extends AnyFreeSpec
+    with Matchers
+    with ScalaFutures
+    with MockitoSugar
+    with ScalaCheckDrivenPropertyChecks
+    with TestCommonGenerators
+    with BeforeAndAfterEach {
 
-  implicit val hc      = HeaderCarrier()
-  val smallMessageSize = 49999
+  val mockConnector: AuditingConnector = mock[AuditingConnector]
+  val sut                              = new AuditingServiceImpl(mockConnector)
+  implicit val hc                      = HeaderCarrier()
+  val smallMessageSize                 = 49999
+
+  override def beforeEach(): Unit =
+    reset(mockConnector)
+
   "For a small message" - {
     "Posting an audit message" - Seq(MimeTypes.XML, MimeTypes.JSON).foreach {
       contentType =>
         s"when contentType equals $contentType" - {
           "on success, return the successful future" in {
-            val mockConnector = mock[AuditingConnector]
             when(mockConnector.post(eqTo(DeclarationData), any(), eqTo(contentType), eqTo[Long](smallMessageSize))(any(), any()))
               .thenReturn(Future.successful(()))
-
-            val sut = new AuditingServiceImpl(mockConnector)
 
             whenReady(sut.audit(AuditType.DeclarationData, Source.empty, contentType, smallMessageSize)) {
               _ =>
@@ -58,8 +75,7 @@ class AuditingServiceSpec extends AnyFreeSpec with Matchers with ScalaFutures wi
           }
 
           "on failure, will log a message" in {
-            val mockConnector = mock[AuditingConnector]
-            val exception     = new IllegalStateException("failed")
+            val exception = new IllegalStateException("failed")
             when(mockConnector.post(eqTo(DeclarationData), any(), eqTo(contentType), any())(any(), any())).thenReturn(Future.failed(exception))
 
             object Harness extends AuditingServiceImpl(mockConnector) {
@@ -76,6 +92,125 @@ class AuditingServiceSpec extends AnyFreeSpec with Matchers with ScalaFutures wi
 
           }
         }
+    }
+  }
+
+  "For auditing message and status type event" - {
+    "Posting any audit type event" - Seq(MimeTypes.XML, MimeTypes.JSON).foreach {
+      contentType =>
+        s"when contentType equals $contentType" - {
+          "on success audit, return the successful future" in forAll(
+            Gen.option(arbitrary[EORINumber]),
+            Gen.option(arbitrary[MovementType]),
+            Gen.option(arbitrary[MovementId]),
+            Gen.option(arbitrary[MessageId]),
+            Gen.option(arbitrary[MessageType])
+          ) {
+            (eoriNumber, movementType, movementId, messageId, messageType) =>
+              when(
+                mockConnector.post(
+                  eqTo(DeclarationData),
+                  eqTo(contentType),
+                  eqTo[Long](smallMessageSize),
+                  any(),
+                  eqTo(movementId),
+                  eqTo(messageId),
+                  eqTo(eoriNumber),
+                  eqTo(movementType),
+                  eqTo(messageType)
+                )(any(), any())
+              )
+                .thenReturn(Future.successful(()))
+
+              whenReady(
+                sut.auditMessageEvent(
+                  AuditType.DeclarationData,
+                  contentType,
+                  smallMessageSize,
+                  Source.empty,
+                  movementId,
+                  messageId,
+                  eoriNumber,
+                  movementType,
+                  messageType
+                )
+              ) {
+                _ =>
+                  verify(mockConnector, times(1)).post(
+                    eqTo(DeclarationData),
+                    eqTo(contentType),
+                    eqTo[Long](smallMessageSize),
+                    any(),
+                    eqTo(movementId),
+                    eqTo(messageId),
+                    eqTo(eoriNumber),
+                    eqTo(movementType),
+                    eqTo(messageType)
+                  )(any(), any())
+              }
+          }
+
+          "on failure audit, will log a message" in forAll(
+            Gen.option(arbitrary[EORINumber]),
+            Gen.option(arbitrary[MovementType]),
+            Gen.option(arbitrary[MovementId]),
+            Gen.option(arbitrary[MessageId]),
+            Gen.option(arbitrary[MessageType])
+          ) {
+            (eoriNumber, movementType, movementId, messageId, messageType) =>
+              val exception = new IllegalStateException("failed")
+              when(
+                mockConnector.post(
+                  eqTo(DeclarationData),
+                  eqTo(contentType),
+                  any(),
+                  any(),
+                  eqTo(movementId),
+                  eqTo(messageId),
+                  eqTo(eoriNumber),
+                  eqTo(movementType),
+                  eqTo(messageType)
+                )(any(), any())
+              ).thenReturn(Future.failed(exception))
+
+              object Harness extends AuditingServiceImpl(mockConnector) {
+                val logger0 = mock[org.slf4j.Logger]
+                when(logger0.isWarnEnabled()).thenReturn(true)
+                override val logger: Logger = new Logger(logger0)
+              }
+
+              whenReady(
+                Harness.auditMessageEvent(
+                  AuditType.DeclarationData,
+                  contentType,
+                  0L,
+                  Source.empty,
+                  movementId,
+                  messageId,
+                  eoriNumber,
+                  movementType,
+                  messageType
+                )
+              ) {
+                _ =>
+                  verify(mockConnector, times(1)).post(
+                    eqTo(DeclarationData),
+                    eqTo(contentType),
+                    any(),
+                    any(),
+                    eqTo(movementId),
+                    eqTo(messageId),
+                    eqTo(eoriNumber),
+                    eqTo(movementType),
+                    eqTo(messageType)
+                  )(any(), any())
+                  verify(Harness.logger0, times(1)).warn(eqTo("Unable to audit payload due to an exception"), eqTo(exception))
+              }
+
+          }
+
+        }
+
     }
   }
 
