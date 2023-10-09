@@ -25,30 +25,29 @@ import config.AppConfig
 import config.Constants
 import io.lemonlabs.uri.Url
 import org.mockito.Mockito.when
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalacheck.Arbitrary.arbitrary
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.HeaderNames
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
 import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.TestMetrics
 import utils.WiremockSuite
-import v2.models.AuditType
-import v2.models.EORINumber
-import v2.models.MessageId
-import v2.models.MovementId
-import v2.models.MovementType
+import v2.models._
 import v2.models.request.MessageType
 import v2.utils.CommonGenerators
 
@@ -144,7 +143,7 @@ class AuditingConnectorSpec
     }
   }
 
-  "For auditing message Type or Status" - {
+  "For auditing message Type event" - {
     "when sending an audit message" - Seq(MimeTypes.XML, MimeTypes.JSON).foreach {
       contentType =>
         s"when the content-type equals $contentType" - {
@@ -175,7 +174,7 @@ class AuditingConnectorSpec
 
               implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements"))
               // when we call the audit service
-              val future = sut.post(
+              val future = sut.postMessageType(
                 AuditType.DeclarationData,
                 contentType,
                 contentSize,
@@ -216,7 +215,7 @@ class AuditingConnectorSpec
 
               implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements"))
               // when we call the audit service
-              val future = sut.post(
+              val future = sut.postMessageType(
                 AuditType.DeclarationData,
                 contentType,
                 contentSize,
@@ -255,7 +254,7 @@ class AuditingConnectorSpec
 
               implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements"))
               // when we call the audit service
-              val future = sut.post(
+              val future = sut.postMessageType(
                 AuditType.DeclarationData,
                 contentType,
                 contentSize,
@@ -288,7 +287,7 @@ class AuditingConnectorSpec
 
             implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements"))
             // when we call the audit service
-            val future = sut.post(
+            val future = sut.postMessageType(
               AuditType.DeclarationData,
               contentType,
               contentSize,
@@ -335,7 +334,7 @@ class AuditingConnectorSpec
 
                   implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements"))
                   // when we call the audit service
-                  val future = sut.post(
+                  val future = sut.postMessageType(
                     AuditType.DeclarationData,
                     contentType,
                     contentSize,
@@ -367,6 +366,100 @@ class AuditingConnectorSpec
 
         }
     }
+  }
+
+  "For auditing status Type event" - {
+    implicit val jsValueArbitrary: Arbitrary[JsValue] = Arbitrary(Gen.const(Json.obj("code" -> "BUSINESS_VALIDATION_ERROR", "message" -> "Expected NTA.GB")))
+    "when sending an audit message return a successful future if the audit message was accepted" in forAll(
+      Gen.option(arbitrary[EORINumber]),
+      Gen.option(arbitrary[MovementId]),
+      Gen.option(arbitrary[MessageId]),
+      Gen.option(arbitrary[MessageType]),
+      Gen.option(arbitrary[MovementType]),
+      Gen.option(arbitrary[JsValue])
+    ) {
+      (eori, movementId, messageId, messageType, movementType, payload) =>
+        server.stubFor(
+          post(
+            urlEqualTo(targetUrl(AuditType.DeclarationData))
+          )
+            .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(HeaderNames.CONTENT_TYPE, equalTo("application/json"))
+            .withHeader("X-Audit-Meta-Path", equalTo("/customs/transits/movements"))
+            .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
+            .willReturn(aResponse().withStatus(ACCEPTED))
+        )
+
+        implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements"))
+        // when we call the audit service
+        val future = sut.postStatus(
+          AuditType.DeclarationData,
+          payload,
+          movementId,
+          messageId,
+          eori,
+          movementType,
+          messageType
+        )
+
+        // then the future should be ready
+        whenReady(future) {
+          _ =>
+        }
+    }
+
+    "return a failed future if the audit message was not accepted" - Seq(BAD_REQUEST, INTERNAL_SERVER_ERROR).foreach {
+      statusCode =>
+        s"when a $statusCode is returned" in forAll(
+          Gen.option(arbitrary[EORINumber]),
+          Gen.option(arbitrary[MovementId]),
+          Gen.option(arbitrary[MessageId]),
+          Gen.option(arbitrary[MessageType]),
+          Gen.option(arbitrary[MovementType]),
+          Gen.option(arbitrary[JsValue])
+        ) {
+          (eori, movementId, messageId, messageType, movementType, payload) =>
+            server.stubFor(
+              post(
+                urlEqualTo(targetUrl(AuditType.DeclarationData))
+              )
+                .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+                .withHeader(HeaderNames.CONTENT_TYPE, equalTo("application/json"))
+                .withHeader("X-Audit-Meta-Path", equalTo("/customs/transits/movements"))
+                .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
+                .willReturn(aResponse().withStatus(statusCode))
+            )
+
+            implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements"))
+            // when we call the audit service
+            val future = sut.postStatus(
+              AuditType.DeclarationData,
+              payload,
+              movementId,
+              messageId,
+              eori,
+              movementType,
+              messageType
+            )
+
+            val result = future
+              .map(
+                _ => fail("A success was registered when it should have been a failure.")
+              )
+              .recover {
+                // backticks for stable identifier
+                case UpstreamErrorResponse(_, `statusCode`, _, _) => ()
+                case x: TestFailedException                       => x
+                case x                                            => fail(s"An unexpected exception was thrown: ${x.getClass.getSimpleName}, ${x.getMessage}")
+              }
+
+            // then the future should be ready
+            whenReady(result) {
+              _ =>
+            }
+        }
+    }
+
   }
 
 }
