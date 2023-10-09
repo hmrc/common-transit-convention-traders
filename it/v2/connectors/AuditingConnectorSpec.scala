@@ -19,6 +19,7 @@ package v2.connectors
 import akka.stream.scaladsl.Source
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
+import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
@@ -39,6 +40,7 @@ import play.api.http.HeaderNames
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.libs.json.JsObject
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.mvc.Http.MimeTypes
@@ -48,7 +50,9 @@ import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.TestMetrics
 import utils.WiremockSuite
 import v2.models._
+import v2.models.request.Details
 import v2.models.request.MessageType
+import v2.models.request.Metadata
 import v2.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -385,8 +389,16 @@ class AuditingConnectorSpec
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo("application/json"))
-            .withHeader("X-Audit-Meta-Path", equalTo("/customs/transits/movements"))
             .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
+            .withRequestBody(
+              equalToJson(
+                Json.stringify(
+                  Json.toJson(
+                    Details(Metadata("/customs/transits/movements", movementId, messageId, eori, movementType, messageType), payload.map(_.as[JsObject]))
+                  )
+                )
+              )
+            )
             .willReturn(aResponse().withStatus(ACCEPTED))
         )
 
@@ -425,8 +437,16 @@ class AuditingConnectorSpec
               )
                 .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
                 .withHeader(HeaderNames.CONTENT_TYPE, equalTo("application/json"))
-                .withHeader("X-Audit-Meta-Path", equalTo("/customs/transits/movements"))
                 .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
+                .withRequestBody(
+                  equalToJson(
+                    Json.stringify(
+                      Json.toJson(
+                        Details(Metadata("/customs/transits/movements", movementId, messageId, eori, movementType, messageType), payload.map(_.as[JsObject]))
+                      )
+                    )
+                  )
+                )
                 .willReturn(aResponse().withStatus(statusCode))
             )
 

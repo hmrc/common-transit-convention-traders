@@ -148,11 +148,11 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
   override def postStatus(
     auditType: AuditType,
     payload: Option[JsValue],
-    movementId: Option[MovementId] = None,
-    messageId: Option[MessageId] = None,
-    enrolmentEORI: Option[EORINumber] = None,
-    movementType: Option[MovementType] = None,
-    messageType: Option[MessageType] = None
+    movementId: Option[MovementId],
+    messageId: Option[MessageId],
+    enrolmentEORI: Option[EORINumber],
+    movementType: Option[MovementType],
+    messageType: Option[MessageType]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -165,7 +165,6 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
         .post(url"$url")
         .withInternalAuthToken
         .setHeader(
-          "X-Audit-Meta-Path"      -> path,
           "X-Audit-Source"         -> "common-transit-convention-traders",
           HeaderNames.CONTENT_TYPE -> MimeTypes.JSON
         )
