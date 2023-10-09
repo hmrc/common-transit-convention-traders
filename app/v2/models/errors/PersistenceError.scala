@@ -27,6 +27,5 @@ object PersistenceError {
   case class MessageNotFound(movementId: MovementId, messageId: MessageId)        extends PersistenceError
   case class MovementNotFound(movementId: MovementId, movementType: MovementType) extends PersistenceError
   case class UnexpectedError(thr: Option[Throwable] = None)                       extends PersistenceError
-  case class DuplicateLRNError(lrn: LocalReferenceNumber)                         extends PersistenceError
   case object PageNotFound                                                        extends PersistenceError
 }
