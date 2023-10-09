@@ -48,7 +48,6 @@ import v2.models.errors.FailedToValidateError.JsonSchemaFailedToValidateError
 import v2.models.errors.FailedToValidateError.ParsingError
 import v2.models.errors.FailedToValidateError.UnexpectedError
 import v2.models.errors.FailedToValidateError.XmlSchemaFailedToValidateError
-import v2.models.errors.PersistenceError.DuplicateLRNError
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -211,14 +210,6 @@ class ConvertErrorSpec
       val exception = new IllegalStateException()
       val input     = PersistenceError.UnexpectedError(Some(exception))
       val output    = PresentationError.internalServiceError(cause = Some(exception))
-
-      persistenceErrorConverter.convert(input) mustBe output
-    }
-
-    "Departure - LRN + MessageSender already exists returns a conflict error with no exception" in {
-      val lrn    = LocalReferenceNumber("1234")
-      val input  = DuplicateLRNError(lrn)
-      val output = PresentationError.conflictError(s"LRN ${lrn.value} has previously been used and cannot be reused")
 
       persistenceErrorConverter.convert(input) mustBe output
     }

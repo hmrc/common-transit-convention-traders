@@ -104,23 +104,6 @@ class PersistenceServiceSpec
         _ mustBe expected
       }
     }
-
-    "on a failed submission, should return a Left with a DuplicateLRNError" in {
-      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(invalidRequest)))(any[HeaderCarrier], any[ExecutionContext]))
-        .thenReturn(
-          Future.failed(
-            upstreamLRNErrorResponse
-          )
-        )
-      val result   = sut.createMovement(EORINumber("1"), MovementType.Departure, Some(invalidRequest))
-      val lrnError = LRNError(message = "LRN 4CnsTh79I7vtOW54 has previously been used and cannot be reused", code = "CONFLICT", lrn = "4CnsTh79I7vtOW54")
-      val expected: Either[PersistenceError, MovementResponse] =
-        Left(PersistenceError.DuplicateLRNError(LocalReferenceNumber(lrnError.lrn)))
-      whenReady(result.value) {
-        _ mustBe expected
-      }
-    }
-
   }
 
   "Submitting a Departure Declaration for Large Messages" - {
@@ -136,34 +119,6 @@ class PersistenceServiceSpec
       whenReady(result.value) {
         _ mustBe expected
       }
-    }
-
-    "on a failed submission due to a conflict (duplicate LRN), should return a Left with a DuplicateLRNError" in forAll(Gen.alphaNumStr) {
-      lrn =>
-        implicit val hc: HeaderCarrier  = HeaderCarrier()
-        val conflictResponse: Throwable = UpstreamErrorResponse(s"""{ "message": "Duplicate LRN", "code": "CONFLICT", "lrn": "$lrn" }""", CONFLICT)
-        when(mockConnector.postMovement(EORINumber(any[String]), any(), any())(eqTo(hc), any[ExecutionContext]))
-          .thenReturn(Future.failed(conflictResponse))
-        val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, None)
-        val expected: Either[PersistenceError, MovementResponse] = Left(PersistenceError.DuplicateLRNError(LocalReferenceNumber(lrn)))
-        whenReady(result.value) {
-          _ mustBe expected
-        }
-    }
-
-    "on a failed submission due to a conflict (duplicate LRN), but with a mangled payload, should return a Left with an UnexpectedError" in forAll(
-      Gen.alphaNumStr
-    ) {
-      lrn =>
-        implicit val hc: HeaderCarrier  = HeaderCarrier()
-        val conflictResponse: Throwable = UpstreamErrorResponse(s"""{ "message": "Duplicate LRN", "code": "CONFLICT", "nope": "$lrn" }""", CONFLICT)
-        when(mockConnector.postMovement(EORINumber(any[String]), any(), any())(eqTo(hc), any[ExecutionContext]))
-          .thenReturn(Future.failed(conflictResponse))
-        val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, None)
-        val expected: Either[PersistenceError, MovementResponse] = Left(PersistenceError.UnexpectedError())
-        whenReady(result.value) {
-          _ mustBe expected
-        }
     }
 
     "on a failed submission, should return a Left with an UnexpectedError" in {
