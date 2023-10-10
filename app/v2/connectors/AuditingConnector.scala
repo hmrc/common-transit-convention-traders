@@ -27,11 +27,17 @@ import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
 import play.api.http.HeaderNames
+import play.api.http.MimeTypes
 import play.api.http.Status.ACCEPTED
+import play.api.libs.json.JsObject
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
+import v2.models.request.Details
 import v2.models.request.MessageType
+import v2.models.request.Metadata
 import v2.models.AuditType
 import v2.models.EORINumber
 import v2.models.MessageId
@@ -50,11 +56,24 @@ trait AuditingConnector {
     ec: ExecutionContext
   ): Future[Unit]
 
-  def post(
+  def postMessageType(
     auditType: AuditType,
     contentType: String,
     contentLength: Long,
     payload: Source[ByteString, _],
+    movementId: Option[MovementId],
+    messageId: Option[MessageId],
+    enrolmentEORI: Option[EORINumber],
+    movementType: Option[MovementType],
+    messageType: Option[MessageType]
+  )(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit]
+
+  def postStatus(
+    auditType: AuditType,
+    payload: Option[JsValue],
     movementId: Option[MovementId],
     messageId: Option[MessageId],
     enrolmentEORI: Option[EORINumber],
@@ -73,7 +92,7 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
     with HasMetrics
     with Logging {
 
-  def post(auditType: AuditType, source: Source[ByteString, _], contentType: String, contentLength: Long)(implicit
+  override def post(auditType: AuditType, source: Source[ByteString, _], contentType: String, contentLength: Long)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit] =
@@ -92,7 +111,7 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
           .executeAndExpect(ACCEPTED)
     }
 
-  def post(
+  override def postMessageType(
     auditType: AuditType,
     contentType: String,
     contentLength: Long,
@@ -107,12 +126,7 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
     ec: ExecutionContext
   ): Future[Unit] = withMetricsTimerAsync(MetricsKeys.AuditingBackend.Post) {
     _ =>
-      val url = appConfig.auditingUrl.withPath(auditingRoute(auditType))
-      val path = hc.otherHeaders
-        .collectFirst {
-          case ("path", value) => value
-        }
-        .getOrElse("-")
+      val (url: appConfig.auditingUrl.Self, path: String) = getUrlAndPath(auditType, hc)
       httpClient
         .post(url"$url")
         .withInternalAuthToken
@@ -129,6 +143,43 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
         )
         .withBody(payload)
         .executeAndExpect(ACCEPTED)
+  }
+
+  override def postStatus(
+    auditType: AuditType,
+    payload: Option[JsValue],
+    movementId: Option[MovementId],
+    messageId: Option[MessageId],
+    enrolmentEORI: Option[EORINumber],
+    movementType: Option[MovementType],
+    messageType: Option[MessageType]
+  )(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] = withMetricsTimerAsync(MetricsKeys.AuditingBackend.Post) {
+    _ =>
+      val (url: appConfig.auditingUrl.Self, path: String) = getUrlAndPath(auditType, hc)
+      val metadata                                        = Metadata(path, movementId, messageId, enrolmentEORI, movementType, messageType)
+      val details                                         = Details(metadata, payload.map(_.as[JsObject]))
+      httpClient
+        .post(url"$url")
+        .withInternalAuthToken
+        .setHeader(
+          "X-Audit-Source"         -> "common-transit-convention-traders",
+          HeaderNames.CONTENT_TYPE -> MimeTypes.JSON
+        )
+        .withBody(Json.toJson(details))
+        .executeAndExpect(ACCEPTED)
+  }
+
+  private def getUrlAndPath(auditType: AuditType, hc: HeaderCarrier) = {
+    val url = appConfig.auditingUrl.withPath(auditingRoute(auditType))
+    val path = hc.otherHeaders
+      .collectFirst {
+        case ("path", value) => value
+      }
+      .getOrElse("-")
+    (url, path)
   }
 
 }

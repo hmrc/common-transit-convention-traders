@@ -21,6 +21,7 @@ import akka.util.ByteString
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import play.api.Logging
+import play.api.libs.json.JsValue
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.connectors.AuditingConnector
 import v2.models.request.MessageType
@@ -39,6 +40,19 @@ trait AuditingService {
 
   //Remove this method post successful integration of below method
   def audit(auditType: AuditType, source: Source[ByteString, _], contentType: String, contentLength: Long)(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit]
+
+  def auditStatusEvent(
+    auditType: AuditType,
+    payload: Option[JsValue],
+    movementId: Option[MovementId],
+    messageId: Option[MessageId],
+    enrolmentEORI: Option[EORINumber],
+    movementType: Option[MovementType],
+    messageType: Option[MessageType]
+  )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit]
@@ -85,8 +99,26 @@ class AuditingServiceImpl @Inject() (auditingConnector: AuditingConnector) exten
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit] =
-    auditingConnector.post(auditType, contentType, contentLength, payload, movementId, messageId, enrolmentEORI, movementType, messageType).recover {
+    auditingConnector.postMessageType(auditType, contentType, contentLength, payload, movementId, messageId, enrolmentEORI, movementType, messageType).recover {
       case NonFatal(e) =>
         logger.warn("Unable to audit payload due to an exception", e)
+    }
+
+  def auditStatusEvent(
+    auditType: AuditType,
+    payload: Option[JsValue],
+    movementId: Option[MovementId],
+    messageId: Option[MessageId],
+    enrolmentEORI: Option[EORINumber],
+    movementType: Option[MovementType],
+    messageType: Option[MessageType]
+  )(implicit
+    hc: HeaderCarrier,
+    ec: ExecutionContext
+  ): Future[Unit] =
+    auditingConnector.postStatus(auditType, payload, movementId, messageId, enrolmentEORI, movementType, messageType).recover {
+      case NonFatal(e) =>
+        logger.warn("Unable to audit payload due to an exception", e)
+
     }
 }

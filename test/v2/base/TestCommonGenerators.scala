@@ -36,6 +36,7 @@ import v2.models.TotalCount
 import v2.models.XmlPayload
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
+import v2.models.request.Metadata
 import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.UpscanResponse.Reference
 import v2.models.responses.BoxResponse
@@ -237,6 +238,17 @@ trait TestCommonGenerators {
 
   implicit val arbitraryClientId: Arbitrary[ClientId] = Arbitrary {
     Gen.stringOfN(24, Gen.alphaNumChar).map(ClientId.apply)
+  }
+
+  implicit val arbitraryMetadata: Arbitrary[Metadata] = Arbitrary {
+    for {
+      path          <- Gen.alphaNumStr
+      movementId    <- arbitrary[MovementId]
+      messageId     <- arbitrary[MessageId]
+      enrolmentEORI <- arbitrary[EORINumber]
+      movementType  <- arbitrary[MovementType]
+      messageType   <- arbitrary[MessageType]
+    } yield Metadata(path, Some(movementId), Some(messageId), Some(enrolmentEORI), Some(movementType), Some(messageType))
   }
 
 }
