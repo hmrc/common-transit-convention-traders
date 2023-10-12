@@ -50,12 +50,6 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[AuditingConnectorImpl])
 trait AuditingConnector {
 
-  //Remove this method post successful integration of below method
-  def post(auditType: AuditType, source: Source[ByteString, _], contentType: String, contentLength: Long)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[Unit]
-
   def postMessageType(
     auditType: AuditType,
     contentType: String,
@@ -91,25 +85,6 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
     with V2BaseConnector
     with HasMetrics
     with Logging {
-
-  override def post(auditType: AuditType, source: Source[ByteString, _], contentType: String, contentLength: Long)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[Unit] =
-    withMetricsTimerAsync(MetricsKeys.AuditingBackend.Post) {
-      _ =>
-        val url = appConfig.auditingUrl.withPath(auditingRoute(auditType))
-
-        httpClient
-          .post(url"$url")
-          .withInternalAuthToken
-          .setHeader(
-            HeaderNames.CONTENT_TYPE       -> contentType,
-            Constants.XContentLengthHeader -> contentLength.toString
-          )
-          .withBody(source)
-          .executeAndExpect(ACCEPTED)
-    }
 
   override def postMessageType(
     auditType: AuditType,

@@ -63,41 +63,6 @@ class AuditingServiceSpec
   override def beforeEach(): Unit =
     reset(mockConnector)
 
-  "For a small message" - {
-    "Posting an audit message" - Seq(MimeTypes.XML, MimeTypes.JSON).foreach {
-      contentType =>
-        s"when contentType equals $contentType" - {
-          "on success, return the successful future" in {
-            when(mockConnector.post(eqTo(DeclarationData), any(), eqTo(contentType), eqTo[Long](smallMessageSize))(any(), any()))
-              .thenReturn(Future.successful(()))
-
-            whenReady(sut.audit(AuditType.DeclarationData, Source.empty, contentType, smallMessageSize)) {
-              _ =>
-                verify(mockConnector, times(1)).post(eqTo(DeclarationData), any(), eqTo(contentType), eqTo[Long](smallMessageSize))(any(), any())
-            }
-          }
-
-          "on failure, will log a message" in {
-            val exception = new IllegalStateException("failed")
-            when(mockConnector.post(eqTo(DeclarationData), any(), eqTo(contentType), any())(any(), any())).thenReturn(Future.failed(exception))
-
-            object Harness extends AuditingServiceImpl(mockConnector) {
-              val logger0 = mock[org.slf4j.Logger]
-              when(logger0.isWarnEnabled()).thenReturn(true)
-              override val logger: Logger = new Logger(logger0)
-            }
-
-            whenReady(Harness.audit(AuditType.DeclarationData, Source.empty, contentType, 0L)) {
-              _ =>
-                verify(mockConnector, times(1)).post(eqTo(DeclarationData), any(), eqTo(contentType), any())(any(), any())
-                verify(Harness.logger0, times(1)).warn(eqTo("Unable to audit payload due to an exception"), eqTo(exception))
-            }
-
-          }
-        }
-    }
-  }
-
   "For auditing message type event" - {
     "Posting any audit type event" - Seq(MimeTypes.XML, MimeTypes.JSON).foreach {
       contentType =>
