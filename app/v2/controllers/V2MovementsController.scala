@@ -586,7 +586,7 @@ class V2MovementsControllerImpl @Inject() (
           for {
             _              <- contentSizeIsLessThanLimit(size)
             _              <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
-            updateResponse <- updateAndSendToEIS(movementId, movementType, messageType, source, size, MimeTypes.JSON)
+            updateResponse <- updateAndSendToEIS(movementId, movementType, messageType, source, size, MimeTypes.XML)
           } yield updateResponse
       }
 
@@ -780,7 +780,7 @@ class V2MovementsControllerImpl @Inject() (
         for {
           _      <- contentSizeIsLessThanLimit(size)
           _      <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
-          result <- persistAndSendToEIS(source, movementType, messageType, size, MimeTypes.JSON)
+          result <- persistAndSendToEIS(source, movementType, messageType, size, MimeTypes.XML)
         } yield result
     }
 

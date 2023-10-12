@@ -1077,7 +1077,7 @@ class V2MovementsControllerSpec
           when(
             mockAuditService.auditMessageEvent(
               eqTo(DeclarationData),
-              eqTo(MimeTypes.JSON),
+              eqTo(MimeTypes.XML),
               any(),
               any(),
               eqTo(Some(movementResponse.movementId)),
@@ -1134,7 +1134,7 @@ class V2MovementsControllerSpec
           verify(mockConversionService).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
           verify(mockAuditService, times(1)).auditMessageEvent(
             eqTo(AuditType.DeclarationData),
-            eqTo(MimeTypes.JSON),
+            eqTo(MimeTypes.XML),
             any(),
             any(),
             eqTo(Some(movementResponse.movementId)),
@@ -1308,7 +1308,7 @@ class V2MovementsControllerSpec
           when(
             mockAuditService.auditMessageEvent(
               eqTo(DeclarationData),
-              eqTo(MimeTypes.JSON),
+              eqTo(MimeTypes.XML),
               any(),
               any(),
               eqTo(Some(movementResponse.movementId)),
@@ -1337,7 +1337,7 @@ class V2MovementsControllerSpec
           verify(mockConversionService).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
           verify(mockAuditService, times(1)).auditMessageEvent(
             eqTo(AuditType.DeclarationData),
-            eqTo(MimeTypes.JSON),
+            eqTo(MimeTypes.XML),
             any(),
             any(),
             eqTo(Some(movementResponse.movementId)),
@@ -1423,7 +1423,7 @@ class V2MovementsControllerSpec
           when(
             mockAuditService.auditMessageEvent(
               eqTo(DeclarationData),
-              eqTo(MimeTypes.JSON),
+              eqTo(MimeTypes.XML),
               any(),
               any(),
               eqTo(Some(movementResponse.movementId)),
@@ -1485,7 +1485,7 @@ class V2MovementsControllerSpec
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
           verify(mockAuditService, times(1)).auditMessageEvent(
             eqTo(AuditType.DeclarationData),
-            eqTo(MimeTypes.JSON),
+            eqTo(MimeTypes.XML),
             any(),
             any(),
             eqTo(Some(movementResponse.movementId)),
@@ -1818,7 +1818,7 @@ class V2MovementsControllerSpec
           when(
             mockAuditService.auditMessageEvent(
               eqTo(DeclarationData),
-              eqTo(MimeTypes.JSON),
+              eqTo(MimeTypes.XML),
               any(),
               any(),
               eqTo(Some(movementResponse.movementId)),
@@ -1891,7 +1891,7 @@ class V2MovementsControllerSpec
           )
           verify(mockAuditService, times(1)).auditMessageEvent(
             eqTo(AuditType.DeclarationData),
-            eqTo(MimeTypes.JSON),
+            eqTo(MimeTypes.XML),
             any(),
             any(),
             eqTo(Some(movementResponse.movementId)),
@@ -2927,7 +2927,7 @@ class V2MovementsControllerSpec
           when(
             mockAuditService.auditMessageEvent(
               eqTo(DeclarationData),
-              eqTo(MimeTypes.JSON),
+              eqTo(MimeTypes.XML),
               any(),
               any(),
               eqTo(Some(movementResponse.movementId)),
@@ -2970,7 +2970,7 @@ class V2MovementsControllerSpec
           )
           verify(mockAuditService, times(1)).auditMessageEvent(
             eqTo(ArrivalNotification),
-            eqTo(MimeTypes.JSON),
+            eqTo(MimeTypes.XML),
             any(),
             any(),
             eqTo(Some(movementResponse.movementId)),
@@ -3131,7 +3131,7 @@ class V2MovementsControllerSpec
           when(
             mockAuditService.auditMessageEvent(
               eqTo(ArrivalNotification),
-              eqTo(MimeTypes.JSON),
+              eqTo(MimeTypes.XML),
               any(),
               any(),
               eqTo(Some(movementResponse.movementId)),
@@ -3156,7 +3156,7 @@ class V2MovementsControllerSpec
           )
           verify(mockAuditService, times(1)).auditMessageEvent(
             eqTo(ArrivalNotification),
-            eqTo(MimeTypes.JSON),
+            eqTo(MimeTypes.XML),
             any(),
             any(),
             eqTo(Some(movementResponse.movementId)),
@@ -3488,7 +3488,7 @@ class V2MovementsControllerSpec
           when(
             mockAuditService.auditMessageEvent(
               eqTo(ArrivalNotification),
-              eqTo(MimeTypes.JSON),
+              eqTo(MimeTypes.XML),
               any(),
               any(),
               eqTo(Some(movementResponse.movementId)),
@@ -3541,7 +3541,7 @@ class V2MovementsControllerSpec
 
           verify(mockAuditService, times(1)).auditMessageEvent(
             eqTo(ArrivalNotification),
-            eqTo(MimeTypes.JSON),
+            eqTo(MimeTypes.XML),
             any(),
             any(),
             eqTo(Some(movementResponse.movementId)),
@@ -6318,7 +6318,7 @@ class V2MovementsControllerSpec
           when(
             mockAuditService.auditMessageEvent(
               eqTo(messageType.auditType),
-              eqTo(MimeTypes.JSON),
+              eqTo(MimeTypes.XML),
               any(),
               any(),
               eqTo(Some(movementId)),
@@ -6392,7 +6392,7 @@ class V2MovementsControllerSpec
           verify(mockValidationService, times(1)).validateJson(any(), any())(any(), any())
           verify(mockAuditService, times(1)).auditMessageEvent(
             eqTo(messageType.auditType),
-            eqTo(MimeTypes.JSON),
+            eqTo(MimeTypes.XML),
             any(),
             any(),
             eqTo(Some(movementId)),
