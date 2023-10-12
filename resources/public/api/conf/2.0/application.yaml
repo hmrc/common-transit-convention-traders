@@ -9,7 +9,7 @@ info:
     and to get messages sent from customs offices of departure and destination.
     <br/><br/>
     You can use this version of the API to send both small messages (up to 5MB in size) and large messages 
-    (up to 5MB in size - this limit will later increase to 8MB). The large messages capability applies only to POST endpoints. 
+    (up to 8MB in size). The large messages capability applies only to POST endpoints. 
     Although you can use the large messages functionality of the API to send both large and small messages, 
     you cannot use the small messages functionality of the API to send large messages.
     <br/><br/>
@@ -38,7 +38,7 @@ paths:
         - will contain the departure ID specifying the departure returned
         - can also include an optional box ID, which you can use to match this movement to any messages received from the Push Pull Notifications API
         
-        If you use this endpoint to send a large message (up to 5MB - this limit will later increase to 8MB), a successful response will include:
+        If you use this endpoint to send a large message (up to 8MB), a successful response will include:
         
         - a URL and additional metadata that you must use when uploading your file
         - a message ID that allows you track the status of that specific message
@@ -84,20 +84,6 @@ paths:
               example:
                 code: NOT_ACCEPTABLE
                 message: The Accept header is missing or invalid.
-        '409':
-          description: Conflict
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/Conflict'
-                  - description: LRN has previously been used and cannot be reused.
-                    example:
-                      code: CONFLICT
-                      message: LRN has previously been used and cannot be reused.
-              example:
-                code: CONFLICT
-                message: LRN has previously been used and cannot be reused.
         '413':
           description: Payload Too Large
           content:
@@ -442,7 +428,7 @@ paths:
         <br/><br/>
         If you use this endpoint to send a small message (up to 5MB), a successful response will contain a URI, a departure ID, and a message ID related to the departure that you can use to get the message status.
         <br/><br/>
-        If you use this endpoint to send a large message (up to 5MB - this limit will later increase to 8MB), a successful response will include:
+        If you use this endpoint to send a large message (up to 8MB), a successful response will include:
         
         - a URL and additional metadata that you must use when uploading your file
         - a departure ID, specifying the departure to return
@@ -725,7 +711,7 @@ paths:
         - will contain the arrival ID specifying the arrival returned
         - can also include an optional box ID, which you can use to match this movement to any messages received from the Push Pull Notifications API
 
-        If you use this endpoint to send a large message (up to 5MB - this limit will later increase to 8MB), a successful response will include:
+        If you use this endpoint to send a large message (up to 8MB), a successful response will include:
         - a URL and additional metadata that you must use when uploading your file
         - will contain the arrival ID specifying the arrival returned
         - a message ID that allows you track the status of that specific message
@@ -1106,7 +1092,7 @@ paths:
         <br/><br/>
         If you use this endpoint to send a small message (up to 5MB), a successful response will contain a URI, an arrival ID, and a message ID related to the arrival, which you can use to get the message status.
         <br/><br/>
-        If you use this endpoint to send a large message (up to 5MB - this limit will later increase to 8MB), a successful response will include:
+        If you use this endpoint to send a large message (up to 8MB), a successful response will include:
         
         - a URL and additional metadata that you must use when uploading your file
         - an arrival ID, specifying the arrival to return
@@ -1384,21 +1370,6 @@ components:
         code:
           enum:
             - REQUEST_ENTITY_TOO_LARGE
-          type: string
-        message:
-          type: string
-          description: The description of the error.
-    Conflict:
-      title: Conflict
-      description: LRN has previously been used and cannot be reused.
-      required:
-        - code
-        - message
-      type: object
-      properties:
-        code:
-          enum:
-            - CONFLICT
           type: string
         message:
           type: string
