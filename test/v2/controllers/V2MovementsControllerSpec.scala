@@ -907,6 +907,17 @@ class V2MovementsControllerSpec
           ).thenAnswer(
             _ => EitherT.leftT(RouterError.UnexpectedError(None))
           )
+          when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              eqTo(Some(eori)),
+              eqTo(Some(MovementType.Departure)),
+              eqTo(Some(MessageType.DeclarationData))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
 
           when(
             mockPersistenceService
@@ -956,6 +967,16 @@ class V2MovementsControllerSpec
             eqTo(Some(MovementType.Departure)),
             eqTo(Some(MessageType.DeclarationData))
           )(any(), any())
+
+          verify(mockAuditService, times(0)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Departure)),
+            eqTo(Some(MessageType.DeclarationData))
+          )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "must return Conflict Error if the router service reports a duplicate lrn error" in forAll(
@@ -1021,6 +1042,17 @@ class V2MovementsControllerSpec
           ).thenAnswer(
             _ => EitherT.leftT(RouterError.DuplicateLRN(LocalReferenceNumber("1234")))
           )
+          when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              eqTo(Some(eori)),
+              eqTo(Some(MovementType.Departure)),
+              eqTo(Some(MessageType.DeclarationData))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
 
           when(
             mockPersistenceService
@@ -1070,6 +1102,17 @@ class V2MovementsControllerSpec
             eqTo(Some(MovementType.Departure)),
             eqTo(Some(MessageType.DeclarationData))
           )(any(), any())
+
+          verify(mockAuditService, times(0)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Departure)),
+            eqTo(Some(MessageType.DeclarationData))
+          )(any[HeaderCarrier], any[ExecutionContext])
+
       }
     }
 
@@ -1974,6 +2017,17 @@ class V2MovementsControllerSpec
               _ =>
                 EitherT.leftT(RouterError.UnexpectedError(None))
             }
+          when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              eqTo(Some(eori)),
+              eqTo(Some(MovementType.Departure)),
+              eqTo(Some(MessageType.DeclarationData))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
 
           when(
             mockPersistenceService
@@ -2027,6 +2081,15 @@ class V2MovementsControllerSpec
             eqTo(Some(MovementType.Departure)),
             eqTo(Some(MessageType.DeclarationData))
           )(any(), any())
+          verify(mockAuditService, times(0)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Departure)),
+            eqTo(Some(MessageType.DeclarationData))
+          )(any[HeaderCarrier], any[ExecutionContext])
 
       }
 
@@ -2963,7 +3026,17 @@ class V2MovementsControllerSpec
           ).thenAnswer(
             _ => EitherT.leftT(RouterError.UnexpectedError(None))
           )
-
+          when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              any(),
+              eqTo(Some(MovementType.Arrival)),
+              eqTo(Some(MessageType.ArrivalNotification))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
           when(
             mockPersistenceService
               .updateMessage(
@@ -3038,6 +3111,15 @@ class V2MovementsControllerSpec
             any[HeaderCarrier],
             any[ExecutionContext]
           )
+          verify(mockAuditService, times(0)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            any(),
+            eqTo(Some(MovementType.Arrival)),
+            eqTo(Some(MessageType.ArrivalNotification))
+          )(any[HeaderCarrier], any[ExecutionContext])
       }
     }
 
@@ -3749,6 +3831,17 @@ class V2MovementsControllerSpec
               _ =>
                 EitherT.leftT(RouterError.UnexpectedError(None))
             }
+          when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              any(),
+              eqTo(Some(MovementType.Arrival)),
+              eqTo(Some(MessageType.ArrivalNotification))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
 
           when(
             mockPersistenceService
@@ -3804,6 +3897,15 @@ class V2MovementsControllerSpec
             any[HeaderCarrier],
             any[ExecutionContext]
           )
+          verify(mockAuditService, times(0)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            any(),
+            eqTo(Some(MovementType.Arrival)),
+            eqTo(Some(MessageType.ArrivalNotification))
+          )(any[HeaderCarrier], any[ExecutionContext])
       }
 
     }
@@ -4204,7 +4306,17 @@ class V2MovementsControllerSpec
         ).thenAnswer(
           _ => EitherT.leftT(RouterError.UnexpectedError(None))
         )
-
+        when(
+          mockAuditService.auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            any(),
+            eqTo(Some(MovementType.Arrival)),
+            eqTo(Some(MessageType.ArrivalNotification))
+          )(any[HeaderCarrier], any[ExecutionContext])
+        ).thenReturn(Future.successful(()))
         when(
           mockPersistenceService
             .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, _]]]())(
@@ -4253,7 +4365,15 @@ class V2MovementsControllerSpec
           any[HeaderCarrier],
           any[ExecutionContext]
         )
-
+        verify(mockAuditService, times(0)).auditStatusEvent(
+          eqTo(TraderToNCTSSubmissionSuccessful),
+          eqTo(None),
+          eqTo(Some(movementResponse.movementId)),
+          eqTo(Some(movementResponse.messageId)),
+          any(),
+          eqTo(Some(MovementType.Arrival)),
+          eqTo(Some(MessageType.ArrivalNotification))
+        )(any[HeaderCarrier], any[ExecutionContext])
     }
   }
 
@@ -8078,6 +8198,17 @@ class V2MovementsControllerSpec
                 )(any[ExecutionContext], any[HeaderCarrier])
               )
                 .thenReturn(EitherT.leftT(RouterError.UnrecognisedOffice("office", "office")))
+              when(
+                mockAuditService.auditStatusEvent(
+                  eqTo(TraderToNCTSSubmissionSuccessful),
+                  eqTo(None),
+                  eqTo(Some(movementId)),
+                  eqTo(Some(messageId)),
+                  any(),
+                  eqTo(Some(movementType)),
+                  eqTo(Some(messageType))
+                )(any[HeaderCarrier], any[ExecutionContext])
+              ).thenReturn(Future.successful(()))
 
               when(
                 mockPushNotificationService.postPpnsNotification(
@@ -8131,6 +8262,15 @@ class V2MovementsControllerSpec
                     any[Source[ByteString, _]]
                   )(any[ExecutionContext], any[HeaderCarrier])
 
+                  verify(mockAuditService, times(0)).auditStatusEvent(
+                    eqTo(TraderToNCTSSubmissionSuccessful),
+                    eqTo(None),
+                    eqTo(Some(movementId)),
+                    eqTo(Some(messageId)),
+                    any(),
+                    eqTo(Some(movementType)),
+                    eqTo(Some(messageType))
+                  )(any[HeaderCarrier], any[ExecutionContext])
                   // success status
                   verify(mockPersistenceService, times(0)).updateMessage(
                     EORINumber(eqTo(eori.value)),
