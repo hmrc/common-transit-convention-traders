@@ -45,6 +45,7 @@ import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.AcceptHeaderActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
+import v2.models.AuditType.TraderToNCTSSubmissionSuccessful
 import v2.models._
 import v2.models.errors.PersistenceError
 import v2.models.errors.PresentationError
@@ -702,6 +703,15 @@ class V2MovementsControllerImpl @Inject() (
 
                       // Send message to router to be sent
                       submissionResult <- routerService.send(messageType, eori, movementId, messageId, source).asPresentation
+                      _ = auditService.auditStatusEvent(
+                        TraderToNCTSSubmissionSuccessful,
+                        None,
+                        Some(movementId),
+                        Some(messageId),
+                        Some(eori),
+                        Some(movementType),
+                        Some(messageType)
+                      )
                     } yield submissionResult
                 }
               }
@@ -761,6 +771,15 @@ class V2MovementsControllerImpl @Inject() (
             )
             err
         }
+      _ = auditService.auditStatusEvent(
+        TraderToNCTSSubmissionSuccessful,
+        None,
+        Some(movementId),
+        Some(updateMovementResponse.messageId),
+        Some(request.eoriNumber),
+        Some(movementType),
+        Some(messageType)
+      )
       _ <- updateSmallMessageStatus(
         request.eoriNumber,
         movementType,
@@ -845,6 +864,15 @@ class V2MovementsControllerImpl @Inject() (
             )
             err
         }
+      _ = auditService.auditStatusEvent(
+        TraderToNCTSSubmissionSuccessful,
+        None,
+        Some(movementResponse.movementId),
+        Some(movementResponse.messageId),
+        Some(request.eoriNumber),
+        Some(movementType),
+        Some(messageType)
+      )
       _ <- updateSmallMessageStatus(
         request.eoriNumber,
         movementType,
@@ -852,6 +880,7 @@ class V2MovementsControllerImpl @Inject() (
         movementResponse.messageId,
         MessageStatus.Success
       ).asPresentation
+
     } yield HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, boxResponseOption, None, movementType)
 
   private def mapToOptionalResponse[E, R](

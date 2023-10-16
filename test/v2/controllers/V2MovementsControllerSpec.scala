@@ -80,6 +80,7 @@ import v2.models.AuditType.ArrivalNotification
 import v2.models.AuditType.DeclarationData
 import v2.models.AuditType.LargeMessageSubmissionRequested
 import v2.models.AuditType.TraderFailedUploadEvent
+import v2.models.AuditType.TraderToNCTSSubmissionSuccessful
 import v2.models._
 import v2.models.errors.ExtractionError.MessageTypeNotFound
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
@@ -406,7 +407,17 @@ class V2MovementsControllerSpec
             .thenAnswer {
               _ => EitherT.rightT(())
             }
-
+          when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              eqTo(Some(eori)),
+              eqTo(Some(MovementType.Departure)),
+              eqTo(Some(MessageType.DeclarationData))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
           val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC015C.mkString), MovementType.Departure)
           val result  = sut.createMovement(MovementType.Departure)(request)
           status(result) mustBe ACCEPTED
@@ -442,6 +453,16 @@ class V2MovementsControllerSpec
             any(),
             any()
           )
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Departure)),
+            eqTo(Some(MessageType.DeclarationData))
+          )(any[HeaderCarrier], any[ExecutionContext])
+
           verify(mockPushNotificationService, times(1)).associate(MovementId(any()), eqTo(MovementType.Departure), any(), EORINumber(eqTo(eori.value)))(
             any(),
             any()
@@ -530,6 +551,18 @@ class V2MovementsControllerSpec
               _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
             )
 
+          when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              eqTo(Some(eori)),
+              eqTo(Some(MovementType.Departure)),
+              eqTo(Some(MessageType.DeclarationData))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
+
           val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC015C.mkString), MovementType.Departure)
           val result  = sut.createMovement(MovementType.Departure)(request)
           status(result) mustBe ACCEPTED
@@ -569,6 +602,15 @@ class V2MovementsControllerSpec
             any(),
             any()
           )
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Departure)),
+            eqTo(Some(MessageType.DeclarationData))
+          )(any[HeaderCarrier], any[ExecutionContext])
 
       }
 
@@ -647,6 +689,17 @@ class V2MovementsControllerSpec
           ).thenAnswer(
             _ => EitherT.rightT(SubmissionRoute.ViaEIS)
           )
+          when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              eqTo(Some(eori)),
+              eqTo(Some(MovementType.Departure)),
+              eqTo(Some(MessageType.DeclarationData))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
 
           when(
             mockPersistenceService
@@ -692,6 +745,16 @@ class V2MovementsControllerSpec
             any(),
             any()
           )
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Departure)),
+            eqTo(Some(MessageType.DeclarationData))
+          )(any[HeaderCarrier], any[ExecutionContext])
+
           verify(mockPersistenceService, times(1)).updateMessage(
             EORINumber(any()),
             eqTo(MovementType.Departure),
@@ -1106,6 +1169,18 @@ class V2MovementsControllerSpec
           )
 
           when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              eqTo(Some(eori)),
+              eqTo(Some(MovementType.Departure)),
+              eqTo(Some(MessageType.DeclarationData))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
+
+          when(
             mockPersistenceService
               .updateMessage(
                 EORINumber(any()),
@@ -1143,6 +1218,16 @@ class V2MovementsControllerSpec
             eqTo(Some(MovementType.Departure)),
             eqTo(Some(MessageType.DeclarationData))
           )(any(), any())
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Departure)),
+            eqTo(Some(MessageType.DeclarationData))
+          )(any[HeaderCarrier], any[ExecutionContext])
+
           verify(mockPersistenceService, times(1)).updateMessage(
             EORINumber(any()),
             eqTo(MovementType.Departure),
@@ -1276,6 +1361,17 @@ class V2MovementsControllerSpec
           ).thenAnswer(
             _ => EitherT.rightT(SubmissionRoute.ViaEIS)
           )
+          when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              eqTo(Some(eori)),
+              eqTo(Some(MovementType.Departure)),
+              eqTo(Some(MessageType.DeclarationData))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
 
           when(
             mockPersistenceService
@@ -1360,6 +1456,15 @@ class V2MovementsControllerSpec
             any(),
             any()
           )
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Departure)),
+            eqTo(Some(MessageType.DeclarationData))
+          )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "must return error when the persistence service of message status update fails" in forAll(
@@ -1459,6 +1564,18 @@ class V2MovementsControllerSpec
           )
 
           when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              eqTo(Some(eori)),
+              eqTo(Some(MovementType.Departure)),
+              eqTo(Some(MessageType.DeclarationData))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
+
+          when(
             mockPersistenceService
               .updateMessage(
                 EORINumber(any()),
@@ -1507,6 +1624,16 @@ class V2MovementsControllerSpec
           )
           verify(mockPushNotificationService, times(1))
             .associate(MovementId(eqTo(movementResponse.movementId.value)), eqTo(MovementType.Departure), any(), EORINumber(anyString()))(any(), any())
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Departure)),
+            eqTo(Some(MessageType.DeclarationData))
+          )(any[HeaderCarrier], any[ExecutionContext])
+
       }
 
       "must return Bad Request when body is not an JSON document" in {
@@ -2342,6 +2469,17 @@ class V2MovementsControllerSpec
           ).thenAnswer(
             _ => EitherT.rightT(SubmissionRoute.ViaEIS)
           )
+          when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              eqTo(Some(eori)),
+              eqTo(Some(MovementType.Arrival)),
+              eqTo(Some(MessageType.ArrivalNotification))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
 
           when(
             mockPersistenceService
@@ -2400,6 +2538,16 @@ class V2MovementsControllerSpec
             any(),
             any()
           )
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Arrival)),
+            eqTo(Some(MessageType.ArrivalNotification))
+          )(any[HeaderCarrier], any[ExecutionContext])
+
       }
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
@@ -2462,6 +2610,17 @@ class V2MovementsControllerSpec
           ).thenAnswer(
             _ => EitherT.rightT(SubmissionRoute.ViaEIS)
           )
+          when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              any(),
+              eqTo(Some(MovementType.Arrival)),
+              eqTo(Some(MessageType.ArrivalNotification))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
 
           when(
             mockPersistenceService
@@ -2511,6 +2670,17 @@ class V2MovementsControllerSpec
             any(),
             any()
           )
+
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            any(),
+            eqTo(Some(MovementType.Arrival)),
+            eqTo(Some(MessageType.ArrivalNotification))
+          )(any[HeaderCarrier], any[ExecutionContext])
+
           verify(mockPersistenceService, times(1)).updateMessage(
             EORINumber(any()),
             eqTo(MovementType.Arrival),
@@ -2601,6 +2771,17 @@ class V2MovementsControllerSpec
           ).thenAnswer(
             _ => EitherT.rightT(SubmissionRoute.ViaEIS)
           )
+          when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              any(),
+              eqTo(Some(MovementType.Arrival)),
+              eqTo(Some(MessageType.ArrivalNotification))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
 
           when(
             mockPersistenceService
@@ -2647,6 +2828,15 @@ class V2MovementsControllerSpec
             any(),
             any()
           )
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            any(),
+            eqTo(Some(MovementType.Arrival)),
+            eqTo(Some(MessageType.ArrivalNotification))
+          )(any[HeaderCarrier], any[ExecutionContext])
           verify(mockPersistenceService, times(1)).updateMessage(
             EORINumber(any()),
             eqTo(MovementType.Arrival),
@@ -2913,6 +3103,17 @@ class V2MovementsControllerSpec
           ).thenAnswer(
             _ => EitherT.rightT(SubmissionRoute.ViaEIS)
           )
+          when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              any(),
+              eqTo(Some(MovementType.Arrival)),
+              eqTo(Some(MessageType.ArrivalNotification))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
 
           when(
             mockPersistenceService
@@ -2990,6 +3191,16 @@ class V2MovementsControllerSpec
             any[HeaderCarrier],
             any[ExecutionContext]
           )
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            any(),
+            eqTo(Some(MovementType.Arrival)),
+            eqTo(Some(MessageType.ArrivalNotification))
+          )(any[HeaderCarrier], any[ExecutionContext])
+
       }
 
       "must return Payload Too Large when converted JSON in XML is greater in limit" in forAll(
@@ -3102,6 +3313,18 @@ class V2MovementsControllerSpec
           )
 
           when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              any(),
+              eqTo(Some(MovementType.Arrival)),
+              eqTo(Some(MessageType.ArrivalNotification))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
+
+          when(
             mockPersistenceService
               .updateMessage(
                 EORINumber(any()),
@@ -3175,6 +3398,16 @@ class V2MovementsControllerSpec
             any[HeaderCarrier],
             any[ExecutionContext]
           )
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            any(),
+            eqTo(Some(MovementType.Arrival)),
+            eqTo(Some(MessageType.ArrivalNotification))
+          )(any[HeaderCarrier], any[ExecutionContext])
+
       }
 
       "must return Bad Request when body is not an JSON document" in {
@@ -6143,6 +6376,18 @@ class V2MovementsControllerSpec
               )(any(), any())
             ).thenReturn(Future.successful(()))
 
+            when(
+              mockAuditService.auditStatusEvent(
+                eqTo(TraderToNCTSSubmissionSuccessful),
+                eqTo(None),
+                eqTo(Some(movementId)),
+                eqTo(Some(updateMovementResponse.messageId)),
+                any(),
+                eqTo(Some(movementType)),
+                eqTo(Some(messageType))
+              )(any[HeaderCarrier], any[ExecutionContext])
+            ).thenReturn(Future.successful(()))
+
             val request = fakeAttachMessageRequest("POST", standardHeaders, singleUseStringSource(contentXml.mkString), movementType)
             val result  = sut.attachMessage(movementType, movementId)(request)
 
@@ -6178,6 +6423,15 @@ class V2MovementsControllerSpec
               any[HeaderCarrier],
               any[ExecutionContext]
             )
+            verify(mockAuditService, times(1)).auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementId)),
+              eqTo(Some(updateMovementResponse.messageId)),
+              any(),
+              eqTo(Some(movementType)),
+              eqTo(Some(messageType))
+            )(any[HeaderCarrier], any[ExecutionContext])
         }
 
         "must return Bad Request when body is not an XML document" in forAll(
@@ -6328,6 +6582,17 @@ class V2MovementsControllerSpec
               eqTo(Some(messageType))
             )(any(), any())
           ).thenReturn(Future.successful(()))
+          when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementId)),
+              eqTo(Some(messageId)),
+              any(),
+              eqTo(Some(movementType)),
+              eqTo(Some(messageType))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
 
           when(
             mockRouterService.send(
@@ -6409,6 +6674,16 @@ class V2MovementsControllerSpec
             any(),
             any()
           )
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementId)),
+            eqTo(Some(messageId)),
+            any(),
+            eqTo(Some(movementType)),
+            eqTo(Some(messageType))
+          )(any[HeaderCarrier], any[ExecutionContext])
+
           verify(mockPersistenceService, times(1)).updateMessage(
             EORINumber(any()),
             eqTo(movementType),
@@ -7965,6 +8240,18 @@ class V2MovementsControllerSpec
                 )(any(), any())
               ).thenReturn(Future.successful(()))
 
+              when(
+                mockAuditService.auditStatusEvent(
+                  eqTo(TraderToNCTSSubmissionSuccessful),
+                  eqTo(None),
+                  eqTo(Some(movementId)),
+                  eqTo(Some(messageId)),
+                  any(),
+                  eqTo(Some(movementType)),
+                  eqTo(Some(messageType))
+                )(any[HeaderCarrier], any[ExecutionContext])
+              ).thenReturn(Future.successful(()))
+
               when(mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, _]])(any(), any()))
                 .thenReturn(EitherT.rightT((): Unit))
 
@@ -8040,6 +8327,16 @@ class V2MovementsControllerSpec
                     MessageId(eqTo(messageId.value)),
                     any[Source[ByteString, _]]
                   )(any[ExecutionContext], argThat(HeaderCarrierMatcher.clientId(clientId)))
+
+                  verify(mockAuditService, times(1)).auditStatusEvent(
+                    eqTo(TraderToNCTSSubmissionSuccessful),
+                    eqTo(None),
+                    eqTo(Some(movementId)),
+                    eqTo(Some(messageId)),
+                    any(),
+                    eqTo(Some(movementType)),
+                    eqTo(Some(messageType))
+                  )(any[HeaderCarrier], any[ExecutionContext])
 
                   // success status
                   verify(mockPersistenceService, times(1)).updateMessage(
@@ -8145,6 +8442,18 @@ class V2MovementsControllerSpec
               when(mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, _]])(any(), any()))
                 .thenReturn(EitherT.rightT((): Unit))
 
+              when(
+                mockAuditService.auditStatusEvent(
+                  eqTo(TraderToNCTSSubmissionSuccessful),
+                  eqTo(None),
+                  eqTo(Some(movementId)),
+                  eqTo(Some(messageId)),
+                  any(),
+                  eqTo(Some(movementType)),
+                  eqTo(Some(messageType))
+                )(any[HeaderCarrier], any[ExecutionContext])
+              ).thenReturn(Future.successful(()))
+
               // large message
               when(mockAppConfig.smallMessageSizeLimit).thenReturn(Int.MaxValue)
               when(
@@ -8194,6 +8503,16 @@ class V2MovementsControllerSpec
                     eqTo(Some(movementType)),
                     eqTo(Some(messageType))
                   )(any(), any())
+
+                  verify(mockAuditService, times(1)).auditStatusEvent(
+                    eqTo(TraderToNCTSSubmissionSuccessful),
+                    eqTo(None),
+                    eqTo(Some(movementId)),
+                    eqTo(Some(messageId)),
+                    any(),
+                    eqTo(Some(movementType)),
+                    eqTo(Some(messageType))
+                  )(any[HeaderCarrier], any[ExecutionContext])
 
                   verify(mockPersistenceService, times(1)).updateMessageBody(
                     eqTo(messageType),
