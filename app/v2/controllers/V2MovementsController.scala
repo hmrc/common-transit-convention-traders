@@ -45,6 +45,12 @@ import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.AcceptHeaderActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
+import v2.models.AuditType.CreateMovementDBFailed
+import v2.models.AuditType.PushNotificationFailed
+import v2.models.AuditType.PushNotificationUpdateFailed
+import v2.models.AuditType.SubmitArrivalNotificationFailed
+import v2.models.AuditType.SubmitDeclarationFailed
+import v2.models.AuditType.ValidationFailed
 import v2.models._
 import v2.models.errors.PersistenceError
 import v2.models.errors.PresentationError
@@ -172,8 +178,20 @@ class V2MovementsControllerImpl @Inject() (
       implicit request => size =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
-          _               <- contentSizeIsLessThanLimit(size)
-          _               <- validationService.validateXml(MessageType.DeclarationData, request.body).asPresentation
+          _ <- contentSizeIsLessThanLimit(size)
+          _ <- validationService.validateXml(MessageType.DeclarationData, request.body).asPresentation.leftMap {
+            err =>
+              auditService.auditStatusEvent(
+                ValidationFailed,
+                Some(Json.obj("message" -> err.message)),
+                None,
+                None,
+                Some(request.eoriNumber),
+                Some(MovementType.Departure),
+                Some(MessageType.DeclarationData)
+              )
+              err
+          }
           hateoasResponse <- persistAndSendToEIS(request.body, MovementType.Departure, MessageType.DeclarationData, size, MimeTypes.XML)
         } yield hateoasResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -208,8 +226,20 @@ class V2MovementsControllerImpl @Inject() (
       implicit request => size =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
-          _               <- contentSizeIsLessThanLimit(size)
-          _               <- validationService.validateXml(MessageType.ArrivalNotification, request.body).asPresentation
+          _ <- contentSizeIsLessThanLimit(size)
+          _ <- validationService.validateXml(MessageType.ArrivalNotification, request.body).asPresentation.leftMap {
+            err =>
+              auditService.auditStatusEvent(
+                ValidationFailed,
+                Some(Json.obj("message" -> err.message)),
+                None,
+                None,
+                Some(request.eoriNumber),
+                Some(MovementType.Arrival),
+                Some(MessageType.ArrivalNotification)
+              )
+              err
+          }
           hateoasResponse <- persistAndSendToEIS(request.body, MovementType.Arrival, MessageType.ArrivalNotification, size, MimeTypes.XML)
         } yield hateoasResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -241,13 +271,37 @@ class V2MovementsControllerImpl @Inject() (
         request.body.runWith(Sink.ignore)
 
         (for {
-          movementResponse <- persistenceService.createMovement(request.eoriNumber, movementType, None).asPresentation
+          movementResponse <- persistenceService.createMovement(request.eoriNumber, movementType, None).asPresentation.leftMap {
+            err =>
+              auditService.auditStatusEvent(
+                CreateMovementDBFailed,
+                Some(Json.obj("message" -> err.message)),
+                None,
+                None,
+                Some(request.eoriNumber),
+                Some(movementType),
+                None
+              )
+              err
+          }
           upscanResponse <- upscanService
             .upscanInitiate(request.eoriNumber, movementType, movementResponse.movementId, movementResponse.messageId)
             .asPresentation
           boxResponseOption <- mapToOptionalResponse(
             pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers, request.eoriNumber)
-          )
+          ).leftMap {
+            err =>
+              auditService.auditStatusEvent(
+                PushNotificationFailed,
+                None,
+                Some(movementResponse.movementId),
+                Some(movementResponse.messageId),
+                Some(request.eoriNumber),
+                Some(movementType),
+                None
+              )
+              err
+          }
 
           _ = auditService.auditStatusEvent(
             AuditType.LargeMessageSubmissionRequested,
@@ -564,9 +618,21 @@ class V2MovementsControllerImpl @Inject() (
           if (movementType == MovementType.Arrival) MessageType.updateMessageTypesSentByArrivalTrader else MessageType.updateMessageTypesSentByDepartureTrader
 
         (for {
-          _                      <- contentSizeIsLessThanLimit(size)
-          messageType            <- xmlParsingService.extractMessageType(request.body, messageTypeList).asPresentation
-          _                      <- validationService.validateXml(messageType, request.body).asPresentation
+          _           <- contentSizeIsLessThanLimit(size)
+          messageType <- xmlParsingService.extractMessageType(request.body, messageTypeList).asPresentation
+          _ <- validationService.validateXml(messageType, request.body).asPresentation.leftMap {
+            err =>
+              auditService.auditStatusEvent(
+                ValidationFailed,
+                Some(Json.obj("message" -> err.message)),
+                None,
+                None,
+                Some(request.eoriNumber),
+                Some(messageType.movementType),
+                Some(messageType)
+              )
+              err
+          }
           updateMovementResponse <- updateAndSendToEIS(movementId, movementType, messageType, request.body, size, MimeTypes.XML)
         } yield updateMovementResponse).fold[Result](
           // update status to fail
@@ -584,8 +650,20 @@ class V2MovementsControllerImpl @Inject() (
       withReusableSourceAndSize(src) {
         (source, size) =>
           for {
-            _              <- contentSizeIsLessThanLimit(size)
-            _              <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
+            _ <- contentSizeIsLessThanLimit(size)
+            _ <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext).leftMap {
+              err =>
+                auditService.auditStatusEvent(
+                  ValidationFailed,
+                  Some(Json.obj("message" -> err.message)),
+                  Some(movementId),
+                  None,
+                  Some(request.eoriNumber),
+                  Some(messageType.movementType),
+                  Some(messageType)
+                )
+                err
+            }
             updateResponse <- updateAndSendToEIS(movementId, movementType, messageType, source, size, MimeTypes.XML)
           } yield updateResponse
       }
@@ -685,7 +763,19 @@ class V2MovementsControllerImpl @Inject() (
                       // Extract type
                       messageType <- xmlParsingService.extractMessageType(source, allowedTypes).asPresentation
                       // Validate file
-                      _ <- validationService.validateXml(messageType, source).asPresentation
+                      _ <- validationService.validateXml(messageType, source).asPresentation.leftMap {
+                        err =>
+                          auditService.auditStatusEvent(
+                            ValidationFailed,
+                            Some(Json.obj("message" -> err.message)),
+                            Some(movementId),
+                            Some(messageId),
+                            Some(eori),
+                            Some(movementType),
+                            Some(messageType)
+                          )
+                          err
+                      }
                       // Save file (this will check the size and put it in the right place.
                       _ <- persistenceService.updateMessageBody(messageType, eori, movementType, movementId, messageId, source).asPresentation
                       _ = auditService.auditMessageEvent(
@@ -746,7 +836,19 @@ class V2MovementsControllerImpl @Inject() (
         Some(movementType),
         Some(messageType)
       )
-      _ = pushNotificationsService.update(movementId)
+      _ = pushNotificationsService.update(movementId).leftMap {
+        err =>
+          auditService.auditStatusEvent(
+            PushNotificationUpdateFailed,
+            None,
+            Some(movementId),
+            Some(updateMovementResponse.messageId),
+            Some(request.eoriNumber),
+            Some(movementType),
+            None
+          )
+          err
+      }
       _ <- routerService
         .send(messageType, request.eoriNumber, movementId, updateMovementResponse.messageId, source)
         .asPresentation
@@ -778,8 +880,20 @@ class V2MovementsControllerImpl @Inject() (
     withReusableSourceAndSize(src) {
       (source, size) =>
         for {
-          _      <- contentSizeIsLessThanLimit(size)
-          _      <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
+          _ <- contentSizeIsLessThanLimit(size)
+          _ <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext).leftMap {
+            err =>
+              auditService.auditStatusEvent(
+                ValidationFailed,
+                Some(Json.obj("message" -> err.message)),
+                None,
+                None,
+                Some(request.eoriNumber),
+                Some(movementType),
+                Some(messageType)
+              )
+              err
+          }
           result <- persistAndSendToEIS(source, movementType, messageType, size, MimeTypes.XML)
         } yield result
     }
@@ -810,7 +924,19 @@ class V2MovementsControllerImpl @Inject() (
     contentType: String
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
     for {
-      movementResponse <- persistenceService.createMovement(request.eoriNumber, movementType, Some(source)).asPresentation
+      movementResponse <- persistenceService.createMovement(request.eoriNumber, movementType, Some(source)).asPresentation.leftMap {
+        err =>
+          auditService.auditStatusEvent(
+            CreateMovementDBFailed,
+            Some(Json.obj("message" -> err.message)),
+            None,
+            None,
+            Some(request.eoriNumber),
+            Some(movementType),
+            Some(messageType)
+          )
+          err
+      }
       _ = auditService.auditMessageEvent(
         messageType.auditType,
         contentType,
@@ -823,7 +949,19 @@ class V2MovementsControllerImpl @Inject() (
         Some(messageType)
       )
       boxResponseOption <- mapToOptionalResponse[PushNotificationError, BoxResponse](
-        pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers, request.eoriNumber)
+        pushNotificationsService.associate(movementResponse.movementId, movementType, request.headers, request.eoriNumber).leftMap {
+          err =>
+            auditService.auditStatusEvent(
+              PushNotificationFailed,
+              None,
+              Some(movementResponse.movementId),
+              Some(movementResponse.messageId),
+              Some(request.eoriNumber),
+              Some(movementType),
+              None
+            )
+            err
+        }
       )
       _ <- routerService
         .send(
@@ -842,6 +980,15 @@ class V2MovementsControllerImpl @Inject() (
               movementResponse.movementId,
               movementResponse.messageId,
               MessageStatus.Failed
+            )
+            auditService.auditStatusEvent(
+              if (movementType.movementType.equals("departure")) SubmitDeclarationFailed else SubmitArrivalNotificationFailed,
+              Some(Json.obj("message" -> err.message)),
+              Some(movementResponse.movementId),
+              Some(movementResponse.messageId),
+              Some(request.eoriNumber),
+              Some(movementType),
+              Some(messageType)
             )
             err
         }
