@@ -45,10 +45,16 @@ import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.AcceptHeaderActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
+import v2.models.AuditType.AddMessageDBFailed
 import v2.models.AuditType.CreateMovementDBFailed
+import v2.models.AuditType.GetMovementDBFailed
+import v2.models.AuditType.GetMovementMessageDBFailed
+import v2.models.AuditType.GetMovementMessagesDBFailed
+import v2.models.AuditType.GetMovementsDBFailed
 import v2.models.AuditType.PushNotificationFailed
 import v2.models.AuditType.PushNotificationUpdateFailed
 import v2.models.AuditType.SubmitArrivalNotificationFailed
+import v2.models.AuditType.SubmitAttachMessageFailed
 import v2.models.AuditType.SubmitDeclarationFailed
 import v2.models.AuditType.ValidationFailed
 import v2.models._
@@ -324,7 +330,19 @@ class V2MovementsControllerImpl @Inject() (
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
-          messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
+          messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation.leftMap {
+            err =>
+              auditService.auditStatusEvent(
+                GetMovementMessageDBFailed,
+                Some(Json.toJson(err)),
+                Some(movementId),
+                Some(messageId),
+                Some(request.eoriNumber),
+                Some(movementType),
+                None
+              )
+              err
+          }
           acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
           messageBody <- getBody(request.eoriNumber, movementType, movementId, messageId, messageSummary.body)
           body        <- mergeMessageSummaryAndBody(movementId, messageSummary, movementType, acceptHeader, messageBody)
@@ -484,6 +502,19 @@ class V2MovementsControllerImpl @Inject() (
           response <- persistenceService
             .getMessages(request.eoriNumber, movementType, movementId, receivedSince, page, perPageCount, receivedUntil)
             .asPresentation
+            .leftMap {
+              err =>
+                auditService.auditStatusEvent(
+                  GetMovementMessagesDBFailed,
+                  Some(Json.toJson(err)),
+                  Some(movementId),
+                  None,
+                  Some(request.eoriNumber),
+                  Some(movementType),
+                  None
+                )
+                err
+            }
         } yield response).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Ok(Json.toJson(HateoasMovementMessageIdsResponse(movementId, response, receivedSince, movementType, page, count, receivedUntil)))
@@ -498,6 +529,19 @@ class V2MovementsControllerImpl @Inject() (
         persistenceService
           .getMovement(request.eoriNumber, movementType, movementId)
           .asPresentation
+          .leftMap {
+            err =>
+              auditService.auditStatusEvent(
+                GetMovementDBFailed,
+                Some(Json.toJson(err)),
+                Some(movementId),
+                None,
+                Some(request.eoriNumber),
+                Some(movementType),
+                None
+              )
+              err
+          }
           .fold(
             presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
             response => Ok(Json.toJson(HateoasMovementResponse(movementId, response, movementType)))
@@ -551,6 +595,19 @@ class V2MovementsControllerImpl @Inject() (
               localReferenceNumber
             )
             .asPresentation
+            .leftMap {
+              err =>
+                auditService.auditStatusEvent(
+                  GetMovementsDBFailed,
+                  Some(Json.toJson(err)),
+                  None,
+                  None,
+                  Some(request.eoriNumber),
+                  Some(movementType),
+                  None
+                )
+                err
+            }
         } yield response).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response =>
@@ -587,8 +644,20 @@ class V2MovementsControllerImpl @Inject() (
         request.body.runWith(Sink.ignore)
 
         (for {
-          _                      <- persistenceService.getMovement(request.eoriNumber, movementType, movementId).asPresentation
-          updateMovementResponse <- persistenceService.addMessage(movementId, movementType, None, None).asPresentation
+          _ <- persistenceService.getMovement(request.eoriNumber, movementType, movementId).asPresentation
+          updateMovementResponse <- persistenceService.addMessage(movementId, movementType, None, None).asPresentation.leftMap {
+            err =>
+              auditService.auditStatusEvent(
+                AddMessageDBFailed,
+                Some(Json.toJson(err)),
+                Some(movementId),
+                None,
+                Some(request.eoriNumber),
+                Some(movementType),
+                None
+              )
+              err
+          }
 
           _ = auditService.auditStatusEvent(
             AuditType.LargeMessageSubmissionRequested,
@@ -791,7 +860,19 @@ class V2MovementsControllerImpl @Inject() (
                       )
 
                       // Send message to router to be sent
-                      submissionResult <- routerService.send(messageType, eori, movementId, messageId, source).asPresentation
+                      submissionResult <- routerService.send(messageType, eori, movementId, messageId, source).asPresentation.leftMap {
+                        err =>
+                          auditService.auditStatusEvent(
+                            SubmitAttachMessageFailed,
+                            Some(Json.toJson(err)),
+                            Some(movementId),
+                            Some(messageId),
+                            Some(eori),
+                            Some(movementType),
+                            Some(messageType)
+                          )
+                          err
+                      }
                     } yield submissionResult
                 }
               }
@@ -824,7 +905,19 @@ class V2MovementsControllerImpl @Inject() (
     request: AuthenticatedRequest[_]
   ) =
     for {
-      updateMovementResponse <- persistenceService.addMessage(movementId, movementType, Some(messageType), Some(source)).asPresentation
+      updateMovementResponse <- persistenceService.addMessage(movementId, movementType, Some(messageType), Some(source)).asPresentation.leftMap {
+        err =>
+          auditService.auditStatusEvent(
+            AddMessageDBFailed,
+            Some(Json.toJson(err)),
+            Some(movementId),
+            None,
+            Some(request.eoriNumber),
+            Some(movementType),
+            None
+          )
+          err
+      }
       _ = auditService.auditMessageEvent(
         messageType.auditType,
         contentType,
@@ -861,6 +954,16 @@ class V2MovementsControllerImpl @Inject() (
               updateMovementResponse.messageId,
               MessageStatus.Failed
             )
+            auditService.auditStatusEvent(
+              SubmitAttachMessageFailed,
+              Some(Json.toJson(err)),
+              Some(movementId),
+              None,
+              Some(request.eoriNumber),
+              Some(movementType),
+              Some(messageType)
+            )
+
             err
         }
       _ <- updateSmallMessageStatus(

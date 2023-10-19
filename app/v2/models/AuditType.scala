@@ -54,6 +54,13 @@ object AuditType {
   final case object CreateMovementDBFailed                             extends AuditType("CreateMovementDBFailed")
   final case object PushNotificationFailed                             extends AuditType("PushNotificationFailed")
   final case object PushNotificationUpdateFailed                       extends AuditType("PushNotificationUpdateFailed")
+  final case object PushPullNotificationGetBoxFailed                   extends AuditType("PushPullNotificationGetBoxFailed")
+  final case object AddMessageDBFailed                                 extends AuditType("AddMessageDBFailed")
+  final case object SubmitAttachMessageFailed                          extends AuditType("SubmitAttachMessageFailed")
+  final case object GetMovementsDBFailed                               extends AuditType("GetMovementsDBFailed")
+  final case object GetMovementDBFailed                                extends AuditType("GetMovementDBFailed")
+  final case object GetMovementMessagesDBFailed                        extends AuditType("GetMovementMessagesDBFailed")
+  final case object GetMovementMessageDBFailed                         extends AuditType("GetMovementMessageDBFailed")
 
   val values: Seq[AuditType] = Seq(
     AmendmentAcceptance,
@@ -89,7 +96,13 @@ object AuditType {
     SubmitDeclarationFailed,
     CreateMovementDBFailed,
     PushNotificationFailed,
-    PushNotificationUpdateFailed
+    PushNotificationUpdateFailed,
+    PushPullNotificationGetBoxFailed,
+    AddMessageDBFailed,
+    SubmitAttachMessageFailed,
+    GetMovementsDBFailed,
+    GetMovementMessagesDBFailed,
+    GetMovementMessageDBFailed
   )
 
   def find(code: String): Option[AuditType] =

@@ -18,6 +18,7 @@ package controllers
 
 import config.Constants
 import connectors.PushPullNotificationConnector
+
 import javax.inject.Inject
 import models.response.JsonClientErrorResponse
 import models.response.JsonSystemErrorResponse
@@ -29,11 +30,17 @@ import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import utils.ResponseHelper
 import models.response.HateoasResponseBox
+import v2.models.AuditType.PushPullNotificationGetBoxFailed
+import v2.services.AuditingService
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class PushPullNotificationController @Inject() (cc: ControllerComponents, pushPullNotificationConnector: PushPullNotificationConnector)(implicit
+class PushPullNotificationController @Inject() (
+  cc: ControllerComponents,
+  pushPullNotificationConnector: PushPullNotificationConnector,
+  auditService: AuditingService
+)(implicit
   ec: ExecutionContext
 ) extends BackendController(cc)
     with HttpErrorFunctions
@@ -45,8 +52,13 @@ class PushPullNotificationController @Inject() (cc: ControllerComponents, pushPu
         case Some(clientId) =>
           pushPullNotificationConnector.getBox(clientId).map {
             case Left(error) if error.statusCode == NOT_FOUND =>
-              NotFound(Json.toJson(JsonClientErrorResponse(NOT_FOUND, "No box found for your client id")))
-            case Left(_)    => InternalServerError(Json.toJson(JsonSystemErrorResponse(INTERNAL_SERVER_ERROR, "Unexpected Error")))
+              val errorMessage = Json.toJson(JsonClientErrorResponse(NOT_FOUND, "No box found for your client id"))
+              auditService.auditStatusEvent(PushPullNotificationGetBoxFailed, Some(errorMessage), None, None, None, None, None)
+              NotFound(errorMessage)
+            case Left(_) =>
+              val errorMessage = Json.toJson(JsonSystemErrorResponse(INTERNAL_SERVER_ERROR, "Unexpected Error"))
+              auditService.auditStatusEvent(PushPullNotificationGetBoxFailed, Some(errorMessage), None, None, None, None, None)
+              InternalServerError(errorMessage)
             case Right(box) => Ok(Json.toJson(HateoasResponseBox(box)))
           }
         case None => Future.successful(BadRequest(Json.toJson(JsonClientErrorResponse(BAD_REQUEST, "Client Id Required"))))
