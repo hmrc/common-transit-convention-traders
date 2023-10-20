@@ -752,21 +752,18 @@ class V2MovementsControllerSpec
         val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(<test></test>.mkString), MovementType.Departure)
         val result  = sut.createMovement(MovementType.Departure)(request)
         status(result) mustBe BAD_REQUEST
-        contentAsJson(result) mustBe Json.obj(
-          "code"    -> "SCHEMA_VALIDATION",
-          "message" -> "Request failed schema validation",
-          "validationErrors" -> Seq(
-            Json.obj(
-              "lineNumber"   -> 1,
-              "columnNumber" -> 1,
-              "message"      -> "an error"
-            )
-          )
+
+        val validationPayload = Json.obj(
+          "message"          -> "Request failed schema validation",
+          "code"             -> "SCHEMA_VALIDATION",
+          "validationErrors" -> Json.arr(Json.obj("lineNumber" -> 1, "columnNumber" -> 1, "message" -> "an error"))
         )
+
+        contentAsJson(result) mustBe validationPayload
 
         verify(mockAuditService, times(1)).auditStatusEvent(
           eqTo(ValidationFailed),
-          eqTo(Some(Json.obj("message" -> "Request failed schema validation"))),
+          eqTo(Some(validationPayload)),
           eqTo(None),
           eqTo(None),
           eqTo(Some(eori)),
@@ -817,7 +814,7 @@ class V2MovementsControllerSpec
 
         verify(mockAuditService, times(1)).auditStatusEvent(
           eqTo(CreateMovementDBFailed),
-          eqTo(Some(Json.obj("message" -> "Internal server error"))),
+          eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
           eqTo(None),
           eqTo(None),
           eqTo(Some(eori)),
@@ -941,7 +938,7 @@ class V2MovementsControllerSpec
 
           verify(mockAuditService, times(1)).auditStatusEvent(
             eqTo(SubmitDeclarationFailed),
-            eqTo(Some(Json.obj("message" -> "Internal server error"))),
+            eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
             eqTo(Some(movementResponse.movementId)),
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
@@ -1756,7 +1753,7 @@ class V2MovementsControllerSpec
         verify(mockValidationService).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
         verify(mockAuditService, times(1)).auditStatusEvent(
           eqTo(ValidationFailed),
-          eqTo(Some(Json.obj("message" -> "Internal server error"))),
+          eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
           eqTo(None),
           eqTo(None),
           eqTo(Some(eori)),
@@ -1831,7 +1828,7 @@ class V2MovementsControllerSpec
 
         verify(mockAuditService, times(1)).auditStatusEvent(
           eqTo(CreateMovementDBFailed),
-          eqTo(Some(Json.obj("message" -> "Internal server error"))),
+          eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
           eqTo(None),
           eqTo(None),
           eqTo(Some(eori)),
@@ -1970,7 +1967,7 @@ class V2MovementsControllerSpec
 
           verify(mockAuditService, times(1)).auditStatusEvent(
             eqTo(SubmitDeclarationFailed),
-            eqTo(Some(Json.obj("message" -> "Internal server error"))),
+            eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
             eqTo(Some(movementResponse.movementId)),
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
@@ -2211,7 +2208,7 @@ class V2MovementsControllerSpec
 
         verify(mockAuditService, times(1)).auditStatusEvent(
           eqTo(CreateMovementDBFailed),
-          eqTo(Some(Json.obj("message" -> "Internal server error"))),
+          eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
           eqTo(None),
           eqTo(None),
           eqTo(Some(eori)),
@@ -2807,20 +2804,18 @@ class V2MovementsControllerSpec
           fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(<test></test>.mkString), MovementType.Arrival)
         val result = sut.createMovement(MovementType.Arrival)(request)
         status(result) mustBe BAD_REQUEST
-        contentAsJson(result) mustBe Json.obj(
-          "code"    -> "SCHEMA_VALIDATION",
-          "message" -> "Request failed schema validation",
-          "validationErrors" -> Seq(
-            Json.obj(
-              "lineNumber"   -> 1,
-              "columnNumber" -> 1,
-              "message"      -> "an error"
-            )
-          )
+
+        val validationPayload = Json.obj(
+          "message"          -> "Request failed schema validation",
+          "code"             -> "SCHEMA_VALIDATION",
+          "validationErrors" -> Json.arr(Json.obj("lineNumber" -> 1, "columnNumber" -> 1, "message" -> "an error"))
         )
+
+        contentAsJson(result) mustBe validationPayload
+
         verify(mockAuditService, times(1)).auditStatusEvent(
           eqTo(ValidationFailed),
-          eqTo(Some(Json.obj("message" -> "Request failed schema validation"))),
+          eqTo(Some(validationPayload)),
           eqTo(None),
           eqTo(None),
           eqTo(Some(eori)),
@@ -2869,7 +2864,7 @@ class V2MovementsControllerSpec
         )
         verify(mockAuditService, times(1)).auditStatusEvent(
           eqTo(CreateMovementDBFailed),
-          eqTo(Some(Json.obj("message" -> "Internal server error"))),
+          eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
           eqTo(None),
           eqTo(None),
           eqTo(Some(eori)),
@@ -2983,7 +2978,7 @@ class V2MovementsControllerSpec
 
           verify(mockAuditService, times(1)).auditStatusEvent(
             eqTo(SubmitArrivalNotificationFailed),
-            eqTo(Some(Json.obj("message" -> "Internal server error"))),
+            eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
             eqTo(Some(movementResponse.movementId)),
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
@@ -3525,7 +3520,7 @@ class V2MovementsControllerSpec
         verify(mockValidationService).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
         verify(mockAuditService, times(1)).auditStatusEvent(
           eqTo(ValidationFailed),
-          eqTo(Some(Json.obj("message" -> "Internal server error"))),
+          eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
           eqTo(None),
           eqTo(None),
           eqTo(Some(eori)),
@@ -3600,7 +3595,7 @@ class V2MovementsControllerSpec
         verify(mockPersistenceService).createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any(), any())
         verify(mockAuditService, times(1)).auditStatusEvent(
           eqTo(CreateMovementDBFailed),
-          eqTo(Some(Json.obj("message" -> "Internal server error"))),
+          eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
           eqTo(None),
           eqTo(None),
           eqTo(Some(eori)),
@@ -3751,7 +3746,7 @@ class V2MovementsControllerSpec
 
           verify(mockAuditService, times(1)).auditStatusEvent(
             eqTo(SubmitArrivalNotificationFailed),
-            eqTo(Some(Json.obj("message" -> "Internal server error"))),
+            eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
             eqTo(Some(movementResponse.movementId)),
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
@@ -3977,7 +3972,7 @@ class V2MovementsControllerSpec
 
         verify(mockAuditService, times(1)).auditStatusEvent(
           eqTo(CreateMovementDBFailed),
-          eqTo(Some(Json.obj("message" -> "Internal server error"))),
+          eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
           eqTo(None),
           eqTo(None),
           eqTo(Some(eori)),

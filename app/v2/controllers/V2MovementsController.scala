@@ -189,7 +189,7 @@ class V2MovementsControllerImpl @Inject() (
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
-                Some(Json.obj("message" -> err.message)),
+                Some(Json.toJson(err)),
                 None,
                 None,
                 Some(request.eoriNumber),
@@ -237,7 +237,7 @@ class V2MovementsControllerImpl @Inject() (
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
-                Some(Json.obj("message" -> err.message)),
+                Some(Json.toJson(err)),
                 None,
                 None,
                 Some(request.eoriNumber),
@@ -281,7 +281,7 @@ class V2MovementsControllerImpl @Inject() (
             err =>
               auditService.auditStatusEvent(
                 CreateMovementDBFailed,
-                Some(Json.obj("message" -> err.message)),
+                Some(Json.toJson(err)),
                 None,
                 None,
                 Some(request.eoriNumber),
@@ -693,7 +693,7 @@ class V2MovementsControllerImpl @Inject() (
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
-                Some(Json.obj("message" -> err.message)),
+                Some(Json.toJson(err)),
                 None,
                 None,
                 Some(request.eoriNumber),
@@ -724,7 +724,7 @@ class V2MovementsControllerImpl @Inject() (
               err =>
                 auditService.auditStatusEvent(
                   ValidationFailed,
-                  Some(Json.obj("message" -> err.message)),
+                  Some(Json.toJson(err)),
                   Some(movementId),
                   None,
                   Some(request.eoriNumber),
@@ -836,7 +836,7 @@ class V2MovementsControllerImpl @Inject() (
                         err =>
                           auditService.auditStatusEvent(
                             ValidationFailed,
-                            Some(Json.obj("message" -> err.message)),
+                            Some(Json.toJson(err)),
                             Some(movementId),
                             Some(messageId),
                             Some(eori),
@@ -988,7 +988,7 @@ class V2MovementsControllerImpl @Inject() (
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
-                Some(Json.obj("message" -> err.message)),
+                Some(Json.toJson(err)),
                 None,
                 None,
                 Some(request.eoriNumber),
@@ -1031,7 +1031,7 @@ class V2MovementsControllerImpl @Inject() (
         err =>
           auditService.auditStatusEvent(
             CreateMovementDBFailed,
-            Some(Json.obj("message" -> err.message)),
+            Some(Json.toJson(err)),
             None,
             None,
             Some(request.eoriNumber),
@@ -1086,7 +1086,7 @@ class V2MovementsControllerImpl @Inject() (
             )
             auditService.auditStatusEvent(
               if (movementType.movementType.equals("departure")) SubmitDeclarationFailed else SubmitArrivalNotificationFailed,
-              Some(Json.obj("message" -> err.message)),
+              Some(Json.toJson(err)),
               Some(movementResponse.movementId),
               Some(movementResponse.messageId),
               Some(request.eoriNumber),
