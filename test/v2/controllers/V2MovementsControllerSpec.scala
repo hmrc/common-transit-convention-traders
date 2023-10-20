@@ -77,6 +77,7 @@ import v2.controllers.actions.providers.AcceptHeaderActionProviderImpl
 import v2.fakes.controllers.actions.FakeAcceptHeaderActionProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import v2.models.AuditType.ArrivalNotification
+import v2.models.AuditType.CustomerRequestedMissingMovement
 import v2.models.AuditType.DeclarationData
 import v2.models.AuditType.LargeMessageSubmissionRequested
 import v2.models.AuditType.TraderFailedUploadEvent
@@ -6467,6 +6468,18 @@ class V2MovementsControllerSpec
             ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, UpdateMovementResponse](updateMovementResponse)))
 
             when(
+              mockAuditService.auditStatusEvent(
+                eqTo(CustomerRequestedMissingMovement),
+                any(),
+                eqTo(Some(movementId)),
+                eqTo(None),
+                any(),
+                eqTo(Some(movementType)),
+                eqTo(Some(messageType))
+              )(any[HeaderCarrier], any[ExecutionContext])
+            ).thenReturn(Future.successful(()))
+
+            when(
               mockPersistenceService
                 .updateMessage(
                   EORINumber(any()),
@@ -6552,6 +6565,17 @@ class V2MovementsControllerSpec
               eqTo(Some(movementType)),
               eqTo(Some(messageType))
             )(any[HeaderCarrier], any[ExecutionContext])
+
+            verify(mockAuditService, times(0)).auditStatusEvent(
+              eqTo(CustomerRequestedMissingMovement),
+              any(),
+              eqTo(Some(movementId)),
+              eqTo(None),
+              any(),
+              eqTo(Some(movementType)),
+              eqTo(Some(messageType))
+            )(any[HeaderCarrier], any[ExecutionContext])
+
         }
 
         "must return Bad Request when body is not an XML document" in forAll(
@@ -6594,7 +6618,7 @@ class V2MovementsControllerSpec
               mockValidationService,
               mockPersistenceService,
               _,
-              _,
+              mockAuditService,
               _,
               mockXmlParsingService,
               _,
@@ -6617,6 +6641,17 @@ class V2MovementsControllerSpec
                   any[ExecutionContext]
                 )
             ).thenReturn(EitherT.fromEither[Future](Left[PersistenceError, UpdateMovementResponse](PersistenceError.UnexpectedError(None))))
+            when(
+              mockAuditService.auditStatusEvent(
+                eqTo(CustomerRequestedMissingMovement),
+                any(),
+                eqTo(Some(movementId)),
+                eqTo(None),
+                any(),
+                eqTo(Some(movementType)),
+                eqTo(Some(messageType))
+              )(any[HeaderCarrier], any[ExecutionContext])
+            ).thenReturn(Future.successful(()))
 
             val request =
               fakeAttachMessageRequest("POST", standardHeaders, Source.single(ByteString(contentXml.mkString, StandardCharsets.UTF_8)), movementType)
@@ -6627,6 +6662,81 @@ class V2MovementsControllerSpec
               "code"    -> "INTERNAL_SERVER_ERROR",
               "message" -> "Internal server error"
             )
+            verify(mockAuditService, times(0)).auditStatusEvent(
+              eqTo(CustomerRequestedMissingMovement),
+              any(),
+              eqTo(Some(movementId)),
+              eqTo(None),
+              any(),
+              eqTo(Some(movementType)),
+              eqTo(Some(messageType))
+            )(any[HeaderCarrier], any[ExecutionContext])
+        }
+
+        "must return Not Found if movement is not found in db" in forAll(
+          arbitraryMovementId.arbitrary
+        ) {
+          movementId =>
+            val ControllerAndMocks(
+              sut,
+              mockValidationService,
+              mockPersistenceService,
+              _,
+              mockAuditService,
+              _,
+              mockXmlParsingService,
+              _,
+              _,
+              _,
+              _
+            ) = createControllerAndMocks()
+            when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any()))
+              .thenReturn(messageDataEither)
+            when(
+              mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            )
+              .thenAnswer(
+                _ => EitherT.rightT(())
+              )
+            when(
+              mockPersistenceService
+                .addMessage(any[String].asInstanceOf[MovementId], any[MovementType], any[Option[MessageType]], any[Option[Source[ByteString, _]]])(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            ).thenReturn(
+              EitherT.fromEither[Future](Left[PersistenceError, UpdateMovementResponse](PersistenceError.MovementNotFound(movementId, movementType)))
+            )
+            when(
+              mockAuditService.auditStatusEvent(
+                eqTo(CustomerRequestedMissingMovement),
+                any(),
+                eqTo(Some(movementId)),
+                eqTo(None),
+                any(),
+                eqTo(Some(movementType)),
+                eqTo(Some(messageType))
+              )(any[HeaderCarrier], any[ExecutionContext])
+            ).thenReturn(Future.successful(()))
+
+            val request =
+              fakeAttachMessageRequest("POST", standardHeaders, Source.single(ByteString(contentXml.mkString, StandardCharsets.UTF_8)), movementType)
+            val response = sut.attachMessage(movementType, movementId)(request)
+
+            status(response) mustBe NOT_FOUND
+            contentAsJson(response) mustBe Json.obj(
+              "code"    -> "NOT_FOUND",
+              "message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found"
+            )
+            verify(mockAuditService, times(1)).auditStatusEvent(
+              eqTo(CustomerRequestedMissingMovement),
+              any(),
+              eqTo(Some(movementId)),
+              eqTo(None),
+              any(),
+              eqTo(Some(movementType)),
+              eqTo(Some(messageType))
+            )(any[HeaderCarrier], any[ExecutionContext])
         }
 
       }
@@ -6689,6 +6799,19 @@ class V2MovementsControllerSpec
                 any[ExecutionContext]
               )
           ).thenReturn(persistence)
+
+          when(
+            mockAuditService.auditStatusEvent(
+              eqTo(CustomerRequestedMissingMovement),
+              any(),
+              eqTo(Some(movementId)),
+              eqTo(None),
+              any(),
+              eqTo(Some(movementType)),
+              eqTo(Some(messageType))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
+
           when(
             mockAuditService.auditMessageEvent(
               eqTo(messageType.auditType),
@@ -6814,6 +6937,15 @@ class V2MovementsControllerSpec
             any[HeaderCarrier],
             any[ExecutionContext]
           )
+          verify(mockAuditService, times(0)).auditStatusEvent(
+            eqTo(CustomerRequestedMissingMovement),
+            any(),
+            eqTo(Some(movementId)),
+            eqTo(None),
+            any(),
+            eqTo(Some(movementType)),
+            eqTo(Some(messageType))
+          )(any[HeaderCarrier], any[ExecutionContext])
         }
 
         "must return Payload Too Large when JSON converted XML is not in limit" in {
@@ -7103,7 +7235,7 @@ class V2MovementsControllerSpec
               _,
               _,
               _,
-              _,
+              mockAuditService,
               _,
               _,
               _,
@@ -7111,11 +7243,31 @@ class V2MovementsControllerSpec
               _,
               _
             ) = setup(persistence = EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType)))
+            when(
+              mockAuditService.auditStatusEvent(
+                eqTo(CustomerRequestedMissingMovement),
+                any(),
+                eqTo(Some(movementId)),
+                eqTo(None),
+                any(),
+                eqTo(Some(movementType)),
+                eqTo(Some(messageType))
+              )(any[HeaderCarrier], any[ExecutionContext])
+            ).thenReturn(Future.successful(()))
 
             val request = fakeJsonAttachRequest(contentJson)
             val result  = sut.attachMessage(movementType, movementId)(request)
 
             status(result) mustBe NOT_FOUND
+            verify(mockAuditService, times(1)).auditStatusEvent(
+              eqTo(CustomerRequestedMissingMovement),
+              any(),
+              eqTo(Some(movementId)),
+              eqTo(None),
+              any(),
+              eqTo(Some(movementType)),
+              eqTo(Some(messageType))
+            )(any[HeaderCarrier], any[ExecutionContext])
         }
 
         "must return InternalServerError when Persistence return Unexpected Error" in forAll(
@@ -7127,7 +7279,7 @@ class V2MovementsControllerSpec
               _,
               _,
               _,
-              _,
+              mockAuditService,
               _,
               _,
               _,
@@ -7135,11 +7287,31 @@ class V2MovementsControllerSpec
               _,
               _
             ) = setup(persistence = EitherT.leftT(PersistenceError.UnexpectedError(None)))
+            when(
+              mockAuditService.auditStatusEvent(
+                eqTo(CustomerRequestedMissingMovement),
+                any(),
+                eqTo(Some(movementId)),
+                eqTo(None),
+                any(),
+                eqTo(Some(movementType)),
+                eqTo(Some(messageType))
+              )(any[HeaderCarrier], any[ExecutionContext])
+            ).thenReturn(Future.successful(()))
 
             val request = fakeJsonAttachRequest(contentJson)
             val result  = sut.attachMessage(movementType, movementId)(request)
 
             status(result) mustBe INTERNAL_SERVER_ERROR
+            verify(mockAuditService, times(0)).auditStatusEvent(
+              eqTo(CustomerRequestedMissingMovement),
+              any(),
+              eqTo(Some(movementId)),
+              eqTo(None),
+              any(),
+              eqTo(Some(movementType)),
+              eqTo(Some(messageType))
+            )(any[HeaderCarrier], any[ExecutionContext])
         }
 
         "must return InternalServerError when router throws unexpected error" in {
@@ -7266,6 +7438,17 @@ class V2MovementsControllerSpec
                   any[ExecutionContext]
                 )
             ).thenReturn(EitherT.rightT(UpdateMovementResponse(messageId)))
+            when(
+              mockAuditService.auditStatusEvent(
+                eqTo(CustomerRequestedMissingMovement),
+                any(),
+                eqTo(Some(movementId)),
+                eqTo(None),
+                any(),
+                eqTo(Some(movementType)),
+                eqTo(None)
+              )(any[HeaderCarrier], any[ExecutionContext])
+            ).thenReturn(Future.successful(()))
 
             when(
               mockUpscanService
@@ -7299,6 +7482,16 @@ class V2MovementsControllerSpec
 
             status(result) mustBe ACCEPTED
             contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, messageId, movementType, Some(upscanInitiateResponse)))
+
+            verify(mockAuditService, times(0)).auditStatusEvent(
+              eqTo(CustomerRequestedMissingMovement),
+              any(),
+              eqTo(Some(movementId)),
+              eqTo(None),
+              any(),
+              eqTo(Some(movementType)),
+              eqTo(None)
+            )(any[HeaderCarrier], any[ExecutionContext])
         }
 
         "must return NotFound when movement not found by Persistence" in forAll(
@@ -7310,7 +7503,7 @@ class V2MovementsControllerSpec
               _,
               mockPersistenceService,
               _,
-              _,
+              mockAuditService,
               _,
               _,
               _,
@@ -7329,7 +7522,6 @@ class V2MovementsControllerSpec
               createdTime,
               createdTime
             )
-
             when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
               .thenAnswer(
                 _ => EitherT.rightT(movementResponse)
@@ -7355,6 +7547,7 @@ class V2MovementsControllerSpec
               "message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found",
               "code"    -> "NOT_FOUND"
             )
+
         }
 
         "must return InternalServerError when Persistence return Unexpected Error" in forAll(
@@ -7366,7 +7559,7 @@ class V2MovementsControllerSpec
               _,
               mockPersistenceService,
               _,
-              _,
+              mockAuditService,
               _,
               _,
               _,
@@ -7401,6 +7594,17 @@ class V2MovementsControllerSpec
                   any[ExecutionContext]
                 )
             ).thenReturn(EitherT.leftT(PersistenceError.UnexpectedError(None)))
+            when(
+              mockAuditService.auditStatusEvent(
+                eqTo(CustomerRequestedMissingMovement),
+                any(),
+                eqTo(Some(movementId)),
+                eqTo(None),
+                any(),
+                eqTo(Some(movementType)),
+                eqTo(None)
+              )(any[HeaderCarrier], any[ExecutionContext])
+            ).thenReturn(Future.successful(()))
 
             val result = sut.attachMessage(movementType, movementId)(request)
 
@@ -7409,6 +7613,15 @@ class V2MovementsControllerSpec
               "message" -> "Internal server error",
               "code"    -> "INTERNAL_SERVER_ERROR"
             )
+            verify(mockAuditService, times(0)).auditStatusEvent(
+              eqTo(CustomerRequestedMissingMovement),
+              any(),
+              eqTo(Some(movementId)),
+              eqTo(None),
+              any(),
+              eqTo(Some(movementType)),
+              eqTo(None)
+            )(any[HeaderCarrier], any[ExecutionContext])
         }
 
         "must return InternalServerError when Upscan return Unexpected Error" in forAll(
@@ -7504,7 +7717,7 @@ class V2MovementsControllerSpec
               _,
               mockPersistenceService,
               _,
-              _,
+              mockAuditService,
               _,
               _,
               _,
@@ -7517,7 +7730,17 @@ class V2MovementsControllerSpec
               .thenAnswer(
                 _ => EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType))
               )
-
+            when(
+              mockAuditService.auditStatusEvent(
+                eqTo(CustomerRequestedMissingMovement),
+                any(),
+                eqTo(Some(movementId)),
+                eqTo(None),
+                any(),
+                eqTo(Some(movementType)),
+                eqTo(None)
+              )(any[HeaderCarrier], any[ExecutionContext])
+            ).thenReturn(Future.successful(()))
             val result = sut.attachMessage(movementType, movementId)(request)
 
             status(result) mustBe NOT_FOUND
@@ -7525,6 +7748,15 @@ class V2MovementsControllerSpec
               "message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found",
               "code"    -> "NOT_FOUND"
             )
+            verify(mockAuditService, times(1)).auditStatusEvent(
+              eqTo(CustomerRequestedMissingMovement),
+              any(),
+              eqTo(Some(movementId)),
+              eqTo(None),
+              any(),
+              eqTo(Some(movementType)),
+              eqTo(None)
+            )(any[HeaderCarrier], any[ExecutionContext])
         }
 
       }

@@ -45,6 +45,7 @@ import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.AcceptHeaderActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
+import v2.models.AuditType.CustomerRequestedMissingMovement
 import v2.models.AuditType.TraderToNCTSSubmissionSuccessful
 import v2.models._
 import v2.models.errors.PersistenceError
@@ -534,7 +535,20 @@ class V2MovementsControllerImpl @Inject() (
         request.body.runWith(Sink.ignore)
 
         (for {
-          _                      <- persistenceService.getMovement(request.eoriNumber, movementType, movementId).asPresentation
+          _ <- persistenceService.getMovement(request.eoriNumber, movementType, movementId).asPresentation.leftMap {
+            err =>
+              if (err.code.statusCode == NOT_FOUND)
+                auditService.auditStatusEvent(
+                  CustomerRequestedMissingMovement,
+                  Some(Json.toJson(err)),
+                  Some(movementId),
+                  None,
+                  Some(request.eoriNumber),
+                  Some(movementType),
+                  None
+                )
+              err
+          }
           updateMovementResponse <- persistenceService.addMessage(movementId, movementType, None, None).asPresentation
 
           _ = auditService.auditStatusEvent(
@@ -744,7 +758,20 @@ class V2MovementsControllerImpl @Inject() (
     request: AuthenticatedRequest[_]
   ) =
     for {
-      updateMovementResponse <- persistenceService.addMessage(movementId, movementType, Some(messageType), Some(source)).asPresentation
+      updateMovementResponse <- persistenceService.addMessage(movementId, movementType, Some(messageType), Some(source)).asPresentation.leftMap {
+        err =>
+          if (err.code.statusCode == NOT_FOUND)
+            auditService.auditStatusEvent(
+              CustomerRequestedMissingMovement,
+              Some(Json.toJson(err)),
+              Some(movementId),
+              None,
+              Some(request.eoriNumber),
+              Some(movementType),
+              Some(messageType)
+            )
+          err
+      }
       _ = auditService.auditMessageEvent(
         messageType.auditType,
         contentType,
