@@ -27,10 +27,7 @@ import models.Box
 import models.BoxId
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.reset
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
-import org.mockito.ArgumentMatchers.{eq => eqTo}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -46,14 +43,10 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.test.Helpers._
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import utils.TestMetrics
-import v2.models.AuditType.PushPullNotificationGetBoxFailed
-import v2.services.AuditingService
 
 import java.time.Clock
-import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 class PushPullNotificationControllerSpec
@@ -68,21 +61,19 @@ class PushPullNotificationControllerSpec
 
   val mockPushPullNotificationConnector = mock[PushPullNotificationConnector]
   val mockClock                         = mock[Clock]
-  val mockAuditService                  = mock[AuditingService]
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(
       bind[Metrics].toInstance(new TestMetrics),
       bind[AuthAction].to[FakeAuthAction],
       bind[PushPullNotificationConnector].toInstance(mockPushPullNotificationConnector),
-      bind[Clock].toInstance(mockClock),
-      bind[AuditingService].toInstance(mockAuditService)
+      bind[Clock].toInstance(mockClock)
     )
     .build()
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    reset(mockPushPullNotificationConnector, mockAuditService)
+    reset(mockPushPullNotificationConnector)
   }
 
   def fakeRequestMessages[A](method: String, headers: FakeHeaders = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> "application/xml")), uri: String, body: A) =
@@ -123,17 +114,6 @@ class PushPullNotificationControllerSpec
       val result = route(app, request).value
 
       status(result) mustBe NOT_FOUND
-
-      verify(mockAuditService, times(1)).auditStatusEvent(
-        eqTo(PushPullNotificationGetBoxFailed),
-        eqTo(Some(Json.obj("statusCode" -> 404, "message" -> "No box found for your client id", "code" -> "CLIENT_ERROR"))),
-        eqTo(None),
-        eqTo(None),
-        eqTo(None),
-        eqTo(None),
-        eqTo(None)
-      )(any[HeaderCarrier], any[ExecutionContext])
-
     }
 
     "returns InternalServerError if unexpected error received from PushPullNotificationService" in {
@@ -150,16 +130,6 @@ class PushPullNotificationControllerSpec
       val result = route(app, request).value
 
       status(result) mustBe INTERNAL_SERVER_ERROR
-
-      verify(mockAuditService, times(1)).auditStatusEvent(
-        eqTo(PushPullNotificationGetBoxFailed),
-        eqTo(Some(Json.obj("statusCode" -> 500, "message" -> "Unexpected Error"))),
-        eqTo(None),
-        eqTo(None),
-        eqTo(None),
-        eqTo(None),
-        eqTo(None)
-      )(any[HeaderCarrier], any[ExecutionContext])
     }
 
     "returns BadRequest if ClientId not found" in {
