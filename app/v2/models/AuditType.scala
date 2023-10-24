@@ -47,14 +47,15 @@ object AuditType {
   final case object ArrivalNotification                                extends AuditType("ArrivalNotification")
   final case object ForwardedIncidentNotificationToED                  extends AuditType("ForwardedIncidentNotificationToED")
   final case object LargeMessageSubmissionRequested                    extends AuditType("LargeMessageSubmissionRequested")
-  final case object TraderFailedUploadEvent                            extends AuditType("TraderFailedUploadEvent")
+  final case object TraderFailedUpload                                 extends AuditType("TraderFailedUpload")
+  final case object TraderToNCTSSubmissionSuccessful                   extends AuditType("TraderToNCTSSubmissionSuccessful")
+  final case object CustomerRequestedMissingMovement                   extends AuditType("CustomerRequestedMissingMovement")
   final case object ValidationFailed                                   extends AuditType("ValidationFailed")
   final case object SubmitArrivalNotificationFailed                    extends AuditType("SubmitArrivalNotificationFailed")
   final case object SubmitDeclarationFailed                            extends AuditType("SubmitDeclarationFailed")
   final case object CreateMovementDBFailed                             extends AuditType("CreateMovementDBFailed")
   final case object PushNotificationFailed                             extends AuditType("PushNotificationFailed")
   final case object PushNotificationUpdateFailed                       extends AuditType("PushNotificationUpdateFailed")
-  final case object PushPullNotificationGetBoxFailed                   extends AuditType("PushPullNotificationGetBoxFailed")
   final case object AddMessageDBFailed                                 extends AuditType("AddMessageDBFailed")
   final case object SubmitAttachMessageFailed                          extends AuditType("SubmitAttachMessageFailed")
   final case object GetMovementsDBFailed                               extends AuditType("GetMovementsDBFailed")
@@ -90,14 +91,15 @@ object AuditType {
     InformationAboutNonArrivedMovement,
     ForwardedIncidentNotificationToED,
     LargeMessageSubmissionRequested,
-    TraderFailedUploadEvent,
+    TraderFailedUpload,
+    TraderToNCTSSubmissionSuccessful,
+    CustomerRequestedMissingMovement,
     ValidationFailed,
     SubmitArrivalNotificationFailed,
     SubmitDeclarationFailed,
     CreateMovementDBFailed,
     PushNotificationFailed,
     PushNotificationUpdateFailed,
-    PushPullNotificationGetBoxFailed,
     AddMessageDBFailed,
     SubmitAttachMessageFailed,
     GetMovementsDBFailed,

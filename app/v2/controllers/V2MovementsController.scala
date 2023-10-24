@@ -45,6 +45,8 @@ import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.AcceptHeaderActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
+import v2.models.AuditType.CustomerRequestedMissingMovement
+import v2.models.AuditType.TraderToNCTSSubmissionSuccessful
 import v2.models.AuditType.AddMessageDBFailed
 import v2.models.AuditType.CreateMovementDBFailed
 import v2.models.AuditType.GetMovementDBFailed
@@ -644,7 +646,20 @@ class V2MovementsControllerImpl @Inject() (
         request.body.runWith(Sink.ignore)
 
         (for {
-          _ <- persistenceService.getMovement(request.eoriNumber, movementType, movementId).asPresentation
+          _ <- persistenceService.getMovement(request.eoriNumber, movementType, movementId).asPresentation.leftMap {
+            err =>
+              if (err.code.statusCode == NOT_FOUND)
+                auditService.auditStatusEvent(
+                  CustomerRequestedMissingMovement,
+                  Some(Json.toJson(err)),
+                  Some(movementId),
+                  None,
+                  Some(request.eoriNumber),
+                  Some(movementType),
+                  None
+                )
+              err
+          }
           updateMovementResponse <- persistenceService.addMessage(movementId, movementType, None, None).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
@@ -782,7 +797,7 @@ class V2MovementsControllerImpl @Inject() (
         request.body match {
           case UpscanFailedResponse(reference, failureDetails) =>
             auditService.auditStatusEvent(
-              AuditType.TraderFailedUploadEvent,
+              AuditType.TraderFailedUpload,
               Some(Json.toJson(failureDetails)),
               Some(movementId),
               Some(messageId),
@@ -873,6 +888,15 @@ class V2MovementsControllerImpl @Inject() (
                           )
                           err
                       }
+                      _ = auditService.auditStatusEvent(
+                        TraderToNCTSSubmissionSuccessful,
+                        None,
+                        Some(movementId),
+                        Some(messageId),
+                        Some(eori),
+                        Some(movementType),
+                        Some(messageType)
+                      )
                     } yield submissionResult
                 }
               }
@@ -907,14 +931,15 @@ class V2MovementsControllerImpl @Inject() (
     for {
       updateMovementResponse <- persistenceService.addMessage(movementId, movementType, Some(messageType), Some(source)).asPresentation.leftMap {
         err =>
+          val auditType = if (err.code.statusCode == NOT_FOUND) CustomerRequestedMissingMovement else AddMessageDBFailed
           auditService.auditStatusEvent(
-            AddMessageDBFailed,
+            auditType,
             Some(Json.toJson(err)),
             Some(movementId),
             None,
             Some(request.eoriNumber),
             Some(movementType),
-            None
+            Some(messageType)
           )
           err
       }
@@ -966,6 +991,15 @@ class V2MovementsControllerImpl @Inject() (
 
             err
         }
+      _ = auditService.auditStatusEvent(
+        TraderToNCTSSubmissionSuccessful,
+        None,
+        Some(movementId),
+        Some(updateMovementResponse.messageId),
+        Some(request.eoriNumber),
+        Some(movementType),
+        Some(messageType)
+      )
       _ <- updateSmallMessageStatus(
         request.eoriNumber,
         movementType,
@@ -1095,6 +1129,15 @@ class V2MovementsControllerImpl @Inject() (
             )
             err
         }
+      _ = auditService.auditStatusEvent(
+        TraderToNCTSSubmissionSuccessful,
+        None,
+        Some(movementResponse.movementId),
+        Some(movementResponse.messageId),
+        Some(request.eoriNumber),
+        Some(movementType),
+        Some(messageType)
+      )
       _ <- updateSmallMessageStatus(
         request.eoriNumber,
         movementType,
@@ -1102,6 +1145,7 @@ class V2MovementsControllerImpl @Inject() (
         movementResponse.messageId,
         MessageStatus.Success
       ).asPresentation
+
     } yield HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, boxResponseOption, None, movementType)
 
   private def mapToOptionalResponse[E, R](
