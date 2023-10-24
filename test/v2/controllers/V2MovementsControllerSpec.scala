@@ -628,7 +628,7 @@ class V2MovementsControllerSpec
 
           verify(mockAuditService, times(1)).auditStatusEvent(
             eqTo(PushNotificationFailed),
-            eqTo(None),
+            eqTo(Some(Json.obj("message" -> "UnexpectedError(None)"))),
             eqTo(Some(movementResponse.movementId)),
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
@@ -1542,7 +1542,7 @@ class V2MovementsControllerSpec
 
           verify(mockAuditService, times(1)).auditStatusEvent(
             eqTo(PushNotificationFailed),
-            eqTo(None),
+            eqTo(Some(Json.obj("message" -> "UnexpectedError(None)"))),
             eqTo(Some(movementResponse.movementId)),
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
@@ -2839,7 +2839,7 @@ class V2MovementsControllerSpec
 
           verify(mockAuditService, times(1)).auditStatusEvent(
             eqTo(PushNotificationFailed),
-            eqTo(None),
+            eqTo(Some(Json.obj("message" -> "UnexpectedError(None)"))),
             eqTo(Some(movementResponse.movementId)),
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
@@ -3623,7 +3623,7 @@ class V2MovementsControllerSpec
 
           verify(mockAuditService, times(1)).auditStatusEvent(
             eqTo(PushNotificationFailed),
-            eqTo(None),
+            eqTo(Some(Json.obj("message" -> "UnexpectedError(None)"))),
             eqTo(Some(movementResponse.movementId)),
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
@@ -3654,19 +3654,20 @@ class V2MovementsControllerSpec
       }
 
       "must return Bad Request when body is not an JSON document" in {
+        val eori = arbitraryEORINumber.arbitrary.sample.get
         val ControllerAndMocks(
           sut,
           mockValidationService,
           _,
           _,
-          _,
+          mockAuditService,
           _,
           _,
           _,
           _,
           _,
           _
-        ) = createControllerAndMocks()
+        ) = createControllerAndMocks(enrollmentEORI = eori)
         when(
           mockValidationService
             .validateJson(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
@@ -3679,7 +3680,7 @@ class V2MovementsControllerSpec
 
         val result = sut.createMovement(MovementType.Arrival)(request)
         status(result) mustBe BAD_REQUEST
-        contentAsJson(result) mustBe Json.obj(
+        val validationPayload = Json.obj(
           "code"    -> "SCHEMA_VALIDATION",
           "message" -> "Request failed schema validation",
           "validationErrors" -> Seq(
@@ -3689,8 +3690,19 @@ class V2MovementsControllerSpec
             )
           )
         )
+        contentAsJson(result) mustBe validationPayload
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
+
+        verify(mockAuditService, times(1)).auditStatusEvent(
+          eqTo(ValidationFailed),
+          eqTo(Some(validationPayload)),
+          eqTo(None),
+          eqTo(None),
+          eqTo(Some(eori)),
+          eqTo(Some(MovementType.Arrival)),
+          eqTo(Some(MessageType.ArrivalNotification))
+        )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "must return Bad Request when body is an JSON document that would fail schema validation" in {
@@ -7870,6 +7882,8 @@ class V2MovementsControllerSpec
         }
 
         "must return BadRequest when router returns BadRequest" in {
+          val messageType = if (movementType == MovementType.Departure) MessageType.DeclarationAmendment else MessageType.UnloadingRemarks
+
           val ControllerAndMocks(
             sut,
             _,
@@ -7905,10 +7919,10 @@ class V2MovementsControllerSpec
               )
             ),
             eqTo(Some(movementId)),
-            eqTo(None),
+            eqTo(Some(messageId)),
             eqTo(Some(EORINumber("id"))),
             eqTo(Some(movementType)),
-            any()
+            eqTo(Some(messageType))
           )(any[HeaderCarrier], any[ExecutionContext])
         }
 
