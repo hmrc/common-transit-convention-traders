@@ -650,7 +650,7 @@ class V2MovementsControllerImpl @Inject() (
         request.body match {
           case UpscanFailedResponse(reference, failureDetails) =>
             auditService.auditStatusEvent(
-              AuditType.TraderFailedUploadEvent,
+              AuditType.TraderFailedUpload,
               Some(Json.toJson(failureDetails)),
               Some(movementId),
               Some(messageId),

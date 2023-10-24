@@ -47,7 +47,7 @@ object AuditType {
   final case object ArrivalNotification                                extends AuditType("ArrivalNotification")
   final case object ForwardedIncidentNotificationToED                  extends AuditType("ForwardedIncidentNotificationToED")
   final case object LargeMessageSubmissionRequested                    extends AuditType("LargeMessageSubmissionRequested")
-  final case object TraderFailedUploadEvent                            extends AuditType("TraderFailedUploadEvent")
+  final case object TraderFailedUpload                                 extends AuditType("TraderFailedUpload")
   final case object TraderToNCTSSubmissionSuccessful                   extends AuditType("TraderToNCTSSubmissionSuccessful")
 
   final case object CustomerRequestedMissingMovement extends AuditType("CustomerRequestedMissingMovement")
@@ -80,7 +80,7 @@ object AuditType {
     InformationAboutNonArrivedMovement,
     ForwardedIncidentNotificationToED,
     LargeMessageSubmissionRequested,
-    TraderFailedUploadEvent,
+    TraderFailedUpload,
     TraderToNCTSSubmissionSuccessful,
     CustomerRequestedMissingMovement
   )
