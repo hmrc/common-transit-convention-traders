@@ -45,6 +45,8 @@ import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.AcceptHeaderActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
+import v2.models.AuditType.CustomerRequestedMissingMovement
+import v2.models.AuditType.TraderToNCTSSubmissionSuccessful
 import v2.models._
 import v2.models.errors.PersistenceError
 import v2.models.errors.PresentationError
@@ -533,7 +535,20 @@ class V2MovementsControllerImpl @Inject() (
         request.body.runWith(Sink.ignore)
 
         (for {
-          _                      <- persistenceService.getMovement(request.eoriNumber, movementType, movementId).asPresentation
+          _ <- persistenceService.getMovement(request.eoriNumber, movementType, movementId).asPresentation.leftMap {
+            err =>
+              if (err.code.statusCode == NOT_FOUND)
+                auditService.auditStatusEvent(
+                  CustomerRequestedMissingMovement,
+                  Some(Json.toJson(err)),
+                  Some(movementId),
+                  None,
+                  Some(request.eoriNumber),
+                  Some(movementType),
+                  None
+                )
+              err
+          }
           updateMovementResponse <- persistenceService.addMessage(movementId, movementType, None, None).asPresentation
 
           _ = auditService.auditStatusEvent(
@@ -702,6 +717,15 @@ class V2MovementsControllerImpl @Inject() (
 
                       // Send message to router to be sent
                       submissionResult <- routerService.send(messageType, eori, movementId, messageId, source).asPresentation
+                      _ = auditService.auditStatusEvent(
+                        TraderToNCTSSubmissionSuccessful,
+                        None,
+                        Some(movementId),
+                        Some(messageId),
+                        Some(eori),
+                        Some(movementType),
+                        Some(messageType)
+                      )
                     } yield submissionResult
                 }
               }
@@ -734,7 +758,20 @@ class V2MovementsControllerImpl @Inject() (
     request: AuthenticatedRequest[_]
   ) =
     for {
-      updateMovementResponse <- persistenceService.addMessage(movementId, movementType, Some(messageType), Some(source)).asPresentation
+      updateMovementResponse <- persistenceService.addMessage(movementId, movementType, Some(messageType), Some(source)).asPresentation.leftMap {
+        err =>
+          if (err.code.statusCode == NOT_FOUND)
+            auditService.auditStatusEvent(
+              CustomerRequestedMissingMovement,
+              Some(Json.toJson(err)),
+              Some(movementId),
+              None,
+              Some(request.eoriNumber),
+              Some(movementType),
+              Some(messageType)
+            )
+          err
+      }
       _ = auditService.auditMessageEvent(
         messageType.auditType,
         contentType,
@@ -761,6 +798,15 @@ class V2MovementsControllerImpl @Inject() (
             )
             err
         }
+      _ = auditService.auditStatusEvent(
+        TraderToNCTSSubmissionSuccessful,
+        None,
+        Some(movementId),
+        Some(updateMovementResponse.messageId),
+        Some(request.eoriNumber),
+        Some(movementType),
+        Some(messageType)
+      )
       _ <- updateSmallMessageStatus(
         request.eoriNumber,
         movementType,
@@ -845,6 +891,15 @@ class V2MovementsControllerImpl @Inject() (
             )
             err
         }
+      _ = auditService.auditStatusEvent(
+        TraderToNCTSSubmissionSuccessful,
+        None,
+        Some(movementResponse.movementId),
+        Some(movementResponse.messageId),
+        Some(request.eoriNumber),
+        Some(movementType),
+        Some(messageType)
+      )
       _ <- updateSmallMessageStatus(
         request.eoriNumber,
         movementType,
@@ -852,6 +907,7 @@ class V2MovementsControllerImpl @Inject() (
         movementResponse.messageId,
         MessageStatus.Success
       ).asPresentation
+
     } yield HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, boxResponseOption, None, movementType)
 
   private def mapToOptionalResponse[E, R](
