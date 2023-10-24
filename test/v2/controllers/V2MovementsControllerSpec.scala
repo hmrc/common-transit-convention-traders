@@ -80,7 +80,7 @@ import v2.models.AuditType.ArrivalNotification
 import v2.models.AuditType.CustomerRequestedMissingMovement
 import v2.models.AuditType.DeclarationData
 import v2.models.AuditType.LargeMessageSubmissionRequested
-import v2.models.AuditType.TraderFailedUploadEvent
+import v2.models.AuditType.TraderFailedUpload
 import v2.models.AuditType.TraderToNCTSSubmissionSuccessful
 import v2.models._
 import v2.models.errors.ExtractionError.MessageTypeNotFound
@@ -8970,7 +8970,7 @@ class V2MovementsControllerSpec
 
         when(
           mockAuditService.auditStatusEvent(
-            eqTo(TraderFailedUploadEvent),
+            eqTo(TraderFailedUpload),
             eqTo(
               Some(
                 Json.toJson(
@@ -9013,7 +9013,7 @@ class V2MovementsControllerSpec
         status(result) mustBe OK
 
         verify(mockAuditService, times(1)).auditStatusEvent(
-          eqTo(TraderFailedUploadEvent),
+          eqTo(TraderFailedUpload),
           eqTo(
             Some(
               Json.toJson(
