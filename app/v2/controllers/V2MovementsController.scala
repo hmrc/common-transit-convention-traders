@@ -996,12 +996,12 @@ class V2MovementsControllerImpl @Inject() (
         err =>
           auditService.auditStatusEvent(
             PushNotificationUpdateFailed,
-            None,
+            Some(Json.obj("message" -> err.toString)),
             Some(movementId),
             Some(updateMovementResponse.messageId),
             Some(request.eoriNumber),
             Some(movementType),
-            None
+            Some(messageType)
           )
           err
       }

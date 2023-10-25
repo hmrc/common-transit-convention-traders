@@ -7081,12 +7081,12 @@ class V2MovementsControllerSpec
 
             verify(mockAuditService, times(1)).auditStatusEvent(
               eqTo(PushNotificationUpdateFailed),
-              eqTo(None),
+              eqTo(Some(Json.obj("message" -> "UnexpectedError(None)"))),
               eqTo(Some(movementId)),
               eqTo(Some(updateMovementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(movementType)),
-              eqTo(None)
+              eqTo(Some(messageType))
             )(any[HeaderCarrier], any[ExecutionContext])
 
             verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any())(any(), any())
