@@ -45,19 +45,20 @@ import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.AcceptHeaderActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
-import v2.models.AuditType.CustomerRequestedMissingMovement
-import v2.models.AuditType.TraderToNCTSSubmissionSuccessful
 import v2.models.AuditType.AddMessageDBFailed
 import v2.models.AuditType.CreateMovementDBFailed
+import v2.models.AuditType.CustomerRequestedMissingMovement
 import v2.models.AuditType.GetMovementDBFailed
 import v2.models.AuditType.GetMovementMessageDBFailed
 import v2.models.AuditType.GetMovementMessagesDBFailed
 import v2.models.AuditType.GetMovementsDBFailed
 import v2.models.AuditType.PushNotificationFailed
 import v2.models.AuditType.PushNotificationUpdateFailed
+import v2.models.AuditType.PushPullNotificationGetBoxFailed
 import v2.models.AuditType.SubmitArrivalNotificationFailed
 import v2.models.AuditType.SubmitAttachMessageFailed
 import v2.models.AuditType.SubmitDeclarationFailed
+import v2.models.AuditType.TraderToNCTSSubmissionSuccessful
 import v2.models.AuditType.ValidationFailed
 import v2.models._
 import v2.models.errors.PersistenceError
@@ -1128,8 +1129,9 @@ class V2MovementsControllerImpl @Inject() (
           .associate(movementResponse.movementId, movementType, request.headers, request.eoriNumber)
           .leftMap {
             err =>
+              val auditType = if (err == PushNotificationError.BoxNotFound) PushPullNotificationGetBoxFailed else PushNotificationFailed
               auditService.auditStatusEvent(
-                PushNotificationFailed,
+                auditType,
                 Some(Json.obj("message" -> err.toString)),
                 Some(movementResponse.movementId),
                 Some(movementResponse.messageId),
@@ -1159,7 +1161,7 @@ class V2MovementsControllerImpl @Inject() (
               MessageStatus.Failed
             )
             auditService.auditStatusEvent(
-              if (movementType.movementType == "departure") SubmitDeclarationFailed else SubmitArrivalNotificationFailed,
+              if (movementType == MovementType.Departure) SubmitDeclarationFailed else SubmitArrivalNotificationFailed,
               Some(Json.toJson(err)),
               Some(movementResponse.movementId),
               Some(movementResponse.messageId),

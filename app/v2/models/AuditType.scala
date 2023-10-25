@@ -56,6 +56,7 @@ object AuditType {
   final case object CreateMovementDBFailed                             extends AuditType("CreateMovementDBFailed")
   final case object PushNotificationFailed                             extends AuditType("PushNotificationFailed")
   final case object PushNotificationUpdateFailed                       extends AuditType("PushNotificationUpdateFailed")
+  final case object PushPullNotificationGetBoxFailed                   extends AuditType("PushPullNotificationGetBoxFailed")
   final case object AddMessageDBFailed                                 extends AuditType("AddMessageDBFailed")
   final case object SubmitAttachMessageFailed                          extends AuditType("SubmitAttachMessageFailed")
   final case object GetMovementsDBFailed                               extends AuditType("GetMovementsDBFailed")
@@ -100,6 +101,7 @@ object AuditType {
     CreateMovementDBFailed,
     PushNotificationFailed,
     PushNotificationUpdateFailed,
+    PushPullNotificationGetBoxFailed,
     AddMessageDBFailed,
     SubmitAttachMessageFailed,
     GetMovementsDBFailed,

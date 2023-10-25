@@ -79,21 +79,22 @@ import v2.fakes.controllers.actions.FakeAcceptHeaderActionProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import v2.models.AuditType.AddMessageDBFailed
 import v2.models.AuditType.ArrivalNotification
-import v2.models.AuditType.CustomerRequestedMissingMovement
 import v2.models.AuditType.CreateMovementDBFailed
+import v2.models.AuditType.CustomerRequestedMissingMovement
 import v2.models.AuditType.DeclarationData
 import v2.models.AuditType.GetMovementDBFailed
 import v2.models.AuditType.GetMovementMessageDBFailed
 import v2.models.AuditType.GetMovementMessagesDBFailed
 import v2.models.AuditType.GetMovementsDBFailed
 import v2.models.AuditType.LargeMessageSubmissionRequested
-import v2.models.AuditType.TraderFailedUpload
-import v2.models.AuditType.TraderToNCTSSubmissionSuccessful
 import v2.models.AuditType.PushNotificationFailed
 import v2.models.AuditType.PushNotificationUpdateFailed
+import v2.models.AuditType.PushPullNotificationGetBoxFailed
 import v2.models.AuditType.SubmitArrivalNotificationFailed
 import v2.models.AuditType.SubmitAttachMessageFailed
 import v2.models.AuditType.SubmitDeclarationFailed
+import v2.models.AuditType.TraderFailedUpload
+import v2.models.AuditType.TraderToNCTSSubmissionSuccessful
 import v2.models.AuditType.ValidationFailed
 import v2.models._
 import v2.models.errors.ExtractionError.MessageTypeNotFound
@@ -562,7 +563,7 @@ class V2MovementsControllerSpec
 
           when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
-              _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
+              _ => EitherT.leftT(PushNotificationError.BoxNotFound)
             )
 
           when(
@@ -627,8 +628,8 @@ class V2MovementsControllerSpec
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockAuditService, times(1)).auditStatusEvent(
-            eqTo(PushNotificationFailed),
-            eqTo(Some(Json.obj("message" -> "UnexpectedError(None)"))),
+            eqTo(PushPullNotificationGetBoxFailed),
+            eqTo(Some(Json.obj("message" -> "BoxNotFound"))),
             eqTo(Some(movementResponse.movementId)),
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
