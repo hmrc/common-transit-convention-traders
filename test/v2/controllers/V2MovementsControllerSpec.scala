@@ -2338,7 +2338,7 @@ class V2MovementsControllerSpec
 
           when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
-              _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
+              _ => EitherT.leftT(PushNotificationError.BoxNotFound)
             )
 
           val request = fakeCreateMovementRequest("POST", standardHeaders, Source.empty[ByteString], MovementType.Departure)
@@ -2364,6 +2364,16 @@ class V2MovementsControllerSpec
             any(),
             any()
           )
+
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(PushPullNotificationGetBoxFailed),
+            eqTo(Some(Json.obj("message" -> "BoxNotFound"))),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Departure)),
+            eqTo(None)
+          )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {

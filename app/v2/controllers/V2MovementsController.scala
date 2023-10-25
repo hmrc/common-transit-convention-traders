@@ -325,8 +325,9 @@ class V2MovementsControllerImpl @Inject() (
               .associate(movementResponse.movementId, movementType, request.headers, request.eoriNumber)
               .leftMap {
                 err =>
+                  val auditType = if (err == PushNotificationError.BoxNotFound) PushPullNotificationGetBoxFailed else PushNotificationFailed
                   auditService.auditStatusEvent(
-                    PushNotificationFailed,
+                    auditType,
                     Some(Json.obj("message" -> err.toString)),
                     Some(movementResponse.movementId),
                     Some(movementResponse.messageId),
