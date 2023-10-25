@@ -49,8 +49,20 @@ object AuditType {
   final case object LargeMessageSubmissionRequested                    extends AuditType("LargeMessageSubmissionRequested")
   final case object TraderFailedUpload                                 extends AuditType("TraderFailedUpload")
   final case object TraderToNCTSSubmissionSuccessful                   extends AuditType("TraderToNCTSSubmissionSuccessful")
-
-  final case object CustomerRequestedMissingMovement extends AuditType("CustomerRequestedMissingMovement")
+  final case object CustomerRequestedMissingMovement                   extends AuditType("CustomerRequestedMissingMovement")
+  final case object ValidationFailed                                   extends AuditType("ValidationFailed")
+  final case object SubmitArrivalNotificationFailed                    extends AuditType("SubmitArrivalNotificationFailed")
+  final case object SubmitDeclarationFailed                            extends AuditType("SubmitDeclarationFailed")
+  final case object CreateMovementDBFailed                             extends AuditType("CreateMovementDBFailed")
+  final case object PushNotificationFailed                             extends AuditType("PushNotificationFailed")
+  final case object PushNotificationUpdateFailed                       extends AuditType("PushNotificationUpdateFailed")
+  final case object PushPullNotificationGetBoxFailed                   extends AuditType("PushPullNotificationGetBoxFailed")
+  final case object AddMessageDBFailed                                 extends AuditType("AddMessageDBFailed")
+  final case object SubmitAttachMessageFailed                          extends AuditType("SubmitAttachMessageFailed")
+  final case object GetMovementsDBFailed                               extends AuditType("GetMovementsDBFailed")
+  final case object GetMovementDBFailed                                extends AuditType("GetMovementDBFailed")
+  final case object GetMovementMessagesDBFailed                        extends AuditType("GetMovementMessagesDBFailed")
+  final case object GetMovementMessageDBFailed                         extends AuditType("GetMovementMessageDBFailed")
 
   val values: Seq[AuditType] = Seq(
     AmendmentAcceptance,
@@ -82,7 +94,19 @@ object AuditType {
     LargeMessageSubmissionRequested,
     TraderFailedUpload,
     TraderToNCTSSubmissionSuccessful,
-    CustomerRequestedMissingMovement
+    CustomerRequestedMissingMovement,
+    ValidationFailed,
+    SubmitArrivalNotificationFailed,
+    SubmitDeclarationFailed,
+    CreateMovementDBFailed,
+    PushNotificationFailed,
+    PushNotificationUpdateFailed,
+    PushPullNotificationGetBoxFailed,
+    AddMessageDBFailed,
+    SubmitAttachMessageFailed,
+    GetMovementsDBFailed,
+    GetMovementMessagesDBFailed,
+    GetMovementMessageDBFailed
   )
 
   def find(code: String): Option[AuditType] =

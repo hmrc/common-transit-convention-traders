@@ -32,6 +32,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.ArgumentMatchers.argThat
 import org.mockito.ArgumentMatchers.{eq => eqTo}
+import org.mockito.Mockito.atLeastOnce
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
@@ -76,12 +77,25 @@ import v2.controllers.actions.providers.AcceptHeaderActionProvider
 import v2.controllers.actions.providers.AcceptHeaderActionProviderImpl
 import v2.fakes.controllers.actions.FakeAcceptHeaderActionProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
+import v2.models.AuditType.AddMessageDBFailed
 import v2.models.AuditType.ArrivalNotification
+import v2.models.AuditType.CreateMovementDBFailed
 import v2.models.AuditType.CustomerRequestedMissingMovement
 import v2.models.AuditType.DeclarationData
+import v2.models.AuditType.GetMovementDBFailed
+import v2.models.AuditType.GetMovementMessageDBFailed
+import v2.models.AuditType.GetMovementMessagesDBFailed
+import v2.models.AuditType.GetMovementsDBFailed
 import v2.models.AuditType.LargeMessageSubmissionRequested
+import v2.models.AuditType.PushNotificationFailed
+import v2.models.AuditType.PushNotificationUpdateFailed
+import v2.models.AuditType.PushPullNotificationGetBoxFailed
+import v2.models.AuditType.SubmitArrivalNotificationFailed
+import v2.models.AuditType.SubmitAttachMessageFailed
+import v2.models.AuditType.SubmitDeclarationFailed
 import v2.models.AuditType.TraderFailedUpload
 import v2.models.AuditType.TraderToNCTSSubmissionSuccessful
+import v2.models.AuditType.ValidationFailed
 import v2.models._
 import v2.models.errors.ExtractionError.MessageTypeNotFound
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
@@ -549,7 +563,7 @@ class V2MovementsControllerSpec
 
           when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
-              _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
+              _ => EitherT.leftT(PushNotificationError.BoxNotFound)
             )
 
           when(
@@ -611,6 +625,16 @@ class V2MovementsControllerSpec
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
             eqTo(Some(MessageType.DeclarationData))
+          )(any[HeaderCarrier], any[ExecutionContext])
+
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(PushPullNotificationGetBoxFailed),
+            eqTo(Some(Json.obj("message" -> "BoxNotFound"))),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Departure)),
+            eqTo(None)
           )(any[HeaderCarrier], any[ExecutionContext])
 
       }
@@ -771,19 +795,20 @@ class V2MovementsControllerSpec
       }
 
       "must return Bad Request when body is an XML document that would fail schema validation" in {
+        val eori = arbitraryEORINumber.arbitrary.sample.get
         val ControllerAndMocks(
           sut,
           mockValidationService,
           _,
           _,
-          _,
+          mockAuditService,
           _,
           _,
           _,
           _,
           _,
           _
-        ) = createControllerAndMocks()
+        ) = createControllerAndMocks(enrollmentEORI = eori)
         when(mockValidationService.validateXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
             _ => EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList(XmlValidationError(1, 1, "an error"), Nil)))
@@ -792,33 +817,41 @@ class V2MovementsControllerSpec
         val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(<test></test>.mkString), MovementType.Departure)
         val result  = sut.createMovement(MovementType.Departure)(request)
         status(result) mustBe BAD_REQUEST
-        contentAsJson(result) mustBe Json.obj(
-          "code"    -> "SCHEMA_VALIDATION",
-          "message" -> "Request failed schema validation",
-          "validationErrors" -> Seq(
-            Json.obj(
-              "lineNumber"   -> 1,
-              "columnNumber" -> 1,
-              "message"      -> "an error"
-            )
-          )
+
+        val validationPayload = Json.obj(
+          "message"          -> "Request failed schema validation",
+          "code"             -> "SCHEMA_VALIDATION",
+          "validationErrors" -> Json.arr(Json.obj("lineNumber" -> 1, "columnNumber" -> 1, "message" -> "an error"))
         )
+
+        contentAsJson(result) mustBe validationPayload
+
+        verify(mockAuditService, times(1)).auditStatusEvent(
+          eqTo(ValidationFailed),
+          eqTo(Some(validationPayload)),
+          eqTo(None),
+          eqTo(None),
+          eqTo(Some(eori)),
+          eqTo(Some(MovementType.Departure)),
+          eqTo(Some(MessageType.DeclarationData))
+        )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
+        val eori = arbitraryEORINumber.arbitrary.sample.get
         val ControllerAndMocks(
           sut,
           mockValidationService,
           mockPersistenceService,
           _,
-          _,
+          mockAuditService,
           _,
           _,
           _,
           _,
           _,
           _
-        ) = createControllerAndMocks()
+        ) = createControllerAndMocks(enrollmentEORI = eori)
         when(mockValidationService.validateXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
             _ => EitherT.rightT(())
@@ -843,6 +876,16 @@ class V2MovementsControllerSpec
           "code"    -> "INTERNAL_SERVER_ERROR",
           "message" -> "Internal server error"
         )
+
+        verify(mockAuditService, times(1)).auditStatusEvent(
+          eqTo(CreateMovementDBFailed),
+          eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
+          eqTo(None),
+          eqTo(None),
+          eqTo(Some(eori)),
+          eqTo(Some(MovementType.Departure)),
+          eqTo(Some(MessageType.DeclarationData))
+        )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "must return Internal Service Error if the router service reports an error" in forAll(
@@ -978,6 +1021,17 @@ class V2MovementsControllerSpec
             eqTo(Some(MovementType.Departure)),
             eqTo(Some(MessageType.DeclarationData))
           )(any[HeaderCarrier], any[ExecutionContext])
+
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(SubmitDeclarationFailed),
+            eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Departure)),
+            eqTo(Some(MessageType.DeclarationData))
+          )(any[HeaderCarrier], any[ExecutionContext])
+
       }
 
       "must return Conflict Error if the router service reports a duplicate lrn error" in forAll(
@@ -1486,6 +1540,17 @@ class V2MovementsControllerSpec
             eqTo(Some(MovementType.Departure)),
             eqTo(Some(MessageType.DeclarationData))
           )(any(), any())
+
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(PushNotificationFailed),
+            eqTo(Some(Json.obj("message" -> "UnexpectedError(None)"))),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Departure)),
+            eqTo(None)
+          )(any[HeaderCarrier], any[ExecutionContext])
+
           verify(mockPersistenceService, times(1)).updateMessage(
             EORINumber(any()),
             eqTo(MovementType.Departure),
@@ -1802,19 +1867,20 @@ class V2MovementsControllerSpec
       }
 
       "must return Internal Service Error after JSON to XML conversion if the XML validation service reports an error" in {
+        val eori = arbitraryEORINumber.arbitrary.sample.get
         val ControllerAndMocks(
           sut,
           mockValidationService,
           _,
           _,
-          _,
+          mockAuditService,
           mockConversionService,
           _,
           _,
           _,
           _,
           _
-        ) = createControllerAndMocks()
+        ) = createControllerAndMocks(enrollmentEORI = eori)
         when(
           mockValidationService
             .validateXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
@@ -1857,22 +1923,32 @@ class V2MovementsControllerSpec
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
         verify(mockConversionService).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
         verify(mockValidationService).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
+        verify(mockAuditService, times(1)).auditStatusEvent(
+          eqTo(ValidationFailed),
+          eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
+          eqTo(None),
+          eqTo(None),
+          eqTo(Some(eori)),
+          eqTo(Some(MovementType.Departure)),
+          eqTo(Some(MessageType.DeclarationData))
+        )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
+        val eori = arbitraryEORINumber.arbitrary.sample.get
         val ControllerAndMocks(
           sut,
           mockValidationService,
           mockPersistenceService,
           _,
-          _,
+          mockAuditService,
           mockConversionService,
           _,
           _,
           _,
           _,
           _
-        ) = createControllerAndMocks()
+        ) = createControllerAndMocks(enrollmentEORI = eori)
         when(
           mockValidationService
             .validateXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
@@ -1921,6 +1997,16 @@ class V2MovementsControllerSpec
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
         verify(mockConversionService).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
         verify(mockPersistenceService).createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any(), any())
+
+        verify(mockAuditService, times(1)).auditStatusEvent(
+          eqTo(CreateMovementDBFailed),
+          eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
+          eqTo(None),
+          eqTo(None),
+          eqTo(Some(eori)),
+          eqTo(Some(MovementType.Departure)),
+          eqTo(Some(MessageType.DeclarationData))
+        )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "must return Internal Service Error if the router service reports an error" in forAll(
@@ -2061,6 +2147,17 @@ class V2MovementsControllerSpec
             any[String].asInstanceOf[MessageId],
             any[Source[ByteString, _]]
           )(any[ExecutionContext], any[HeaderCarrier])
+
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(SubmitDeclarationFailed),
+            eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Departure)),
+            eqTo(Some(MessageType.DeclarationData))
+          )(any[HeaderCarrier], any[ExecutionContext])
+
           verify(mockPersistenceService, times(1)).updateMessage(
             EORINumber(any()),
             eqTo(MovementType.Departure),
@@ -2189,9 +2286,10 @@ class V2MovementsControllerSpec
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
         arbitraryUpscanInitiateResponse.arbitrary,
-        arbitraryMovementResponse().arbitrary
+        arbitraryMovementResponse().arbitrary,
+        arbitraryEORINumber.arbitrary
       ) {
-        (upscanResponse, movementResponse) =>
+        (upscanResponse, movementResponse, eori) =>
           val ControllerAndMocks(
             sut,
             _,
@@ -2204,7 +2302,7 @@ class V2MovementsControllerSpec
             mockPushNotificationService,
             mockUpscanService,
             _
-          ) = createControllerAndMocks()
+          ) = createControllerAndMocks(enrollmentEORI = eori)
 
           when(
             mockUpscanService
@@ -2240,7 +2338,7 @@ class V2MovementsControllerSpec
 
           when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()))(any(), any()))
             .thenAnswer(
-              _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
+              _ => EitherT.leftT(PushNotificationError.BoxNotFound)
             )
 
           val request = fakeCreateMovementRequest("POST", standardHeaders, Source.empty[ByteString], MovementType.Departure)
@@ -2255,10 +2353,10 @@ class V2MovementsControllerSpec
             eqTo(None),
             eqTo(Some(movementResponse.movementId)),
             eqTo(Some(movementResponse.messageId)),
-            any(),
+            eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
             eqTo(None)
-          )(any(), any())
+          )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Departure), MovementId(any()), MessageId(any()))(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
@@ -2266,22 +2364,33 @@ class V2MovementsControllerSpec
             any(),
             any()
           )
+
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(PushPullNotificationGetBoxFailed),
+            eqTo(Some(Json.obj("message" -> "BoxNotFound"))),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Departure)),
+            eqTo(None)
+          )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
+        val eori = arbitraryEORINumber.arbitrary.sample.get
         val ControllerAndMocks(
           sut,
           _,
           mockPersistenceService,
           _,
-          _,
+          mockAuditService,
           _,
           _,
           _,
           _,
           _,
           _
-        ) = createControllerAndMocks()
+        ) = createControllerAndMocks(enrollmentEORI = eori)
         when(
           mockPersistenceService
             .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
@@ -2298,6 +2407,16 @@ class V2MovementsControllerSpec
           "code"    -> "INTERNAL_SERVER_ERROR",
           "message" -> "Internal server error"
         )
+
+        verify(mockAuditService, times(1)).auditStatusEvent(
+          eqTo(CreateMovementDBFailed),
+          eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
+          eqTo(None),
+          eqTo(None),
+          eqTo(Some(eori)),
+          eqTo(Some(MovementType.Departure)),
+          eqTo(None)
+        )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "must return Internal Service Error if the upscan service reports an error" in forAll(
@@ -2615,9 +2734,10 @@ class V2MovementsControllerSpec
       }
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
-        arbitraryMovementResponse().arbitrary
+        arbitraryMovementResponse().arbitrary,
+        arbitraryEORINumber.arbitrary
       ) {
-        movementResponse =>
+        (movementResponse, eori) =>
           val ControllerAndMocks(
             sut,
             mockValidationService,
@@ -2630,7 +2750,7 @@ class V2MovementsControllerSpec
             mockPushNotificationService,
             _,
             _
-          ) = createControllerAndMocks()
+          ) = createControllerAndMocks(enrollmentEORI = eori)
 
           when(
             mockValidationService.validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
@@ -2727,6 +2847,16 @@ class V2MovementsControllerSpec
             eqTo(Some(MovementType.Arrival)),
             eqTo(Some(MessageType.ArrivalNotification))
           )(any(), any())
+
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(PushNotificationFailed),
+            eqTo(Some(Json.obj("message" -> "UnexpectedError(None)"))),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Arrival)),
+            eqTo(None)
+          )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
@@ -2916,19 +3046,20 @@ class V2MovementsControllerSpec
       }
 
       "must return Bad Request when body is an XML document that would fail schema validation" in {
+        val eori = arbitraryEORINumber.arbitrary.sample.get
         val ControllerAndMocks(
           sut,
           mockValidationService,
           _,
           _,
-          _,
+          mockAuditService,
           _,
           _,
           _,
           _,
           _,
           _
-        ) = createControllerAndMocks()
+        ) = createControllerAndMocks(enrollmentEORI = eori)
         when(mockValidationService.validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
             _ => EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList(XmlValidationError(1, 1, "an error"), Nil)))
@@ -2938,33 +3069,41 @@ class V2MovementsControllerSpec
           fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(<test></test>.mkString), MovementType.Arrival)
         val result = sut.createMovement(MovementType.Arrival)(request)
         status(result) mustBe BAD_REQUEST
-        contentAsJson(result) mustBe Json.obj(
-          "code"    -> "SCHEMA_VALIDATION",
-          "message" -> "Request failed schema validation",
-          "validationErrors" -> Seq(
-            Json.obj(
-              "lineNumber"   -> 1,
-              "columnNumber" -> 1,
-              "message"      -> "an error"
-            )
-          )
+
+        val validationPayload = Json.obj(
+          "message"          -> "Request failed schema validation",
+          "code"             -> "SCHEMA_VALIDATION",
+          "validationErrors" -> Json.arr(Json.obj("lineNumber" -> 1, "columnNumber" -> 1, "message" -> "an error"))
         )
+
+        contentAsJson(result) mustBe validationPayload
+
+        verify(mockAuditService, times(1)).auditStatusEvent(
+          eqTo(ValidationFailed),
+          eqTo(Some(validationPayload)),
+          eqTo(None),
+          eqTo(None),
+          eqTo(Some(eori)),
+          eqTo(Some(MovementType.Arrival)),
+          eqTo(Some(MessageType.ArrivalNotification))
+        )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
+        val eori = arbitraryEORINumber.arbitrary.sample.get
         val ControllerAndMocks(
           sut,
           mockValidationService,
           mockPersistenceService,
           _,
-          _,
+          mockAuditService,
           _,
           _,
           _,
           _,
           _,
           _
-        ) = createControllerAndMocks()
+        ) = createControllerAndMocks(enrollmentEORI = eori)
         when(mockValidationService.validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(
             _ => EitherT.rightT(())
@@ -2988,6 +3127,15 @@ class V2MovementsControllerSpec
           "code"    -> "INTERNAL_SERVER_ERROR",
           "message" -> "Internal server error"
         )
+        verify(mockAuditService, times(1)).auditStatusEvent(
+          eqTo(CreateMovementDBFailed),
+          eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
+          eqTo(None),
+          eqTo(None),
+          eqTo(Some(eori)),
+          eqTo(Some(MovementType.Arrival)),
+          eqTo(Some(MessageType.ArrivalNotification))
+        )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "must return Internal Service Error if the router service reports an error" in forAll(
@@ -2995,6 +3143,7 @@ class V2MovementsControllerSpec
         arbitraryBoxResponse.arbitrary
       ) {
         (movementResponse, boxResponse) =>
+          val eori = arbitraryEORINumber.arbitrary.sample.get
           val ControllerAndMocks(
             sut,
             mockValidationService,
@@ -3007,7 +3156,7 @@ class V2MovementsControllerSpec
             mockPushNotificationService,
             _,
             _
-          ) = createControllerAndMocks()
+          ) = createControllerAndMocks(enrollmentEORI = eori)
 
           when(
             mockValidationService.validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
@@ -3101,6 +3250,16 @@ class V2MovementsControllerSpec
             eqTo(Some(MovementType.Arrival)),
             eqTo(Some(MessageType.ArrivalNotification))
           )(any(), any())
+
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(SubmitArrivalNotificationFailed),
+            eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Arrival)),
+            eqTo(Some(MessageType.ArrivalNotification))
+          )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockPersistenceService, times(1)).updateMessage(
             EORINumber(any()),
@@ -3339,9 +3498,10 @@ class V2MovementsControllerSpec
       }
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
-        arbitraryMovementResponse().arbitrary
+        arbitraryMovementResponse().arbitrary,
+        arbitraryEORINumber.arbitrary
       ) {
-        movementResponse =>
+        (movementResponse, eori) =>
           val ControllerAndMocks(
             sut,
             mockValidationService,
@@ -3354,7 +3514,7 @@ class V2MovementsControllerSpec
             mockPushNotificationService,
             _,
             _
-          ) = createControllerAndMocks()
+          ) = createControllerAndMocks(enrollmentEORI = eori)
           when(
             mockValidationService
               .validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
@@ -3471,6 +3631,17 @@ class V2MovementsControllerSpec
             eqTo(Some(MovementType.Arrival)),
             eqTo(Some(MessageType.ArrivalNotification))
           )(any(), any())
+
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(PushNotificationFailed),
+            eqTo(Some(Json.obj("message" -> "UnexpectedError(None)"))),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Arrival)),
+            eqTo(None)
+          )(any[HeaderCarrier], any[ExecutionContext])
+
           verify(mockPersistenceService, times(1)).updateMessage(
             EORINumber(any()),
             eqTo(MovementType.Arrival),
@@ -3494,19 +3665,20 @@ class V2MovementsControllerSpec
       }
 
       "must return Bad Request when body is not an JSON document" in {
+        val eori = arbitraryEORINumber.arbitrary.sample.get
         val ControllerAndMocks(
           sut,
           mockValidationService,
           _,
           _,
-          _,
+          mockAuditService,
           _,
           _,
           _,
           _,
           _,
           _
-        ) = createControllerAndMocks()
+        ) = createControllerAndMocks(enrollmentEORI = eori)
         when(
           mockValidationService
             .validateJson(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
@@ -3519,7 +3691,7 @@ class V2MovementsControllerSpec
 
         val result = sut.createMovement(MovementType.Arrival)(request)
         status(result) mustBe BAD_REQUEST
-        contentAsJson(result) mustBe Json.obj(
+        val validationPayload = Json.obj(
           "code"    -> "SCHEMA_VALIDATION",
           "message" -> "Request failed schema validation",
           "validationErrors" -> Seq(
@@ -3529,8 +3701,19 @@ class V2MovementsControllerSpec
             )
           )
         )
+        contentAsJson(result) mustBe validationPayload
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
+
+        verify(mockAuditService, times(1)).auditStatusEvent(
+          eqTo(ValidationFailed),
+          eqTo(Some(validationPayload)),
+          eqTo(None),
+          eqTo(None),
+          eqTo(Some(eori)),
+          eqTo(Some(MovementType.Arrival)),
+          eqTo(Some(MessageType.ArrivalNotification))
+        )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "must return Bad Request when body is an JSON document that would fail schema validation" in {
@@ -3618,19 +3801,20 @@ class V2MovementsControllerSpec
       }
 
       "must return Internal Service Error after JSON to XML conversion if the XML validation service reports an error" in {
+        val eori = arbitraryEORINumber.arbitrary.sample.get
         val ControllerAndMocks(
           sut,
           mockValidationService,
           _,
           _,
-          _,
+          mockAuditService,
           mockConversionService,
           _,
           _,
           _,
           _,
           _
-        ) = createControllerAndMocks()
+        ) = createControllerAndMocks(enrollmentEORI = eori)
         when(
           mockValidationService
             .validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
@@ -3673,22 +3857,32 @@ class V2MovementsControllerSpec
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
         verify(mockConversionService).jsonToXml(eqTo(MessageType.ArrivalNotification), any())(any(), any(), any())
         verify(mockValidationService).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
+        verify(mockAuditService, times(1)).auditStatusEvent(
+          eqTo(ValidationFailed),
+          eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
+          eqTo(None),
+          eqTo(None),
+          eqTo(Some(eori)),
+          eqTo(Some(MovementType.Arrival)),
+          eqTo(Some(MessageType.ArrivalNotification))
+        )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
+        val eori = arbitraryEORINumber.arbitrary.sample.get
         val ControllerAndMocks(
           sut,
           mockValidationService,
           mockPersistenceService,
           _,
-          _,
+          mockAuditService,
           mockConversionService,
           _,
           _,
           _,
           _,
           _
-        ) = createControllerAndMocks()
+        ) = createControllerAndMocks(enrollmentEORI = eori)
         when(
           mockValidationService
             .validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
@@ -3738,13 +3932,24 @@ class V2MovementsControllerSpec
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
         verify(mockConversionService).jsonToXml(eqTo(MessageType.ArrivalNotification), any())(any(), any(), any())
         verify(mockPersistenceService).createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any(), any())
+        verify(mockAuditService, times(1)).auditStatusEvent(
+          eqTo(CreateMovementDBFailed),
+          eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
+          eqTo(None),
+          eqTo(None),
+          eqTo(Some(eori)),
+          eqTo(Some(MovementType.Arrival)),
+          eqTo(Some(MessageType.ArrivalNotification))
+        )(any[HeaderCarrier], any[ExecutionContext])
+
       }
 
       "must return Internal Service Error if the router service reports an error" in forAll(
         arbitraryMovementResponse().arbitrary,
-        arbitraryBoxResponse.arbitrary
+        arbitraryBoxResponse.arbitrary,
+        arbitraryEORINumber.arbitrary
       ) {
-        (movementResponse, boxResponse) =>
+        (movementResponse, boxResponse, eori) =>
           val ControllerAndMocks(
             sut,
             mockValidationService,
@@ -3757,7 +3962,7 @@ class V2MovementsControllerSpec
             mockPushNotificationService,
             _,
             _
-          ) = createControllerAndMocks()
+          ) = createControllerAndMocks(enrollmentEORI = eori)
           when(
             mockValidationService
               .validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
@@ -3888,6 +4093,17 @@ class V2MovementsControllerSpec
             any[String].asInstanceOf[MessageId],
             any[Source[ByteString, _]]
           )(any[ExecutionContext], any[HeaderCarrier])
+
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(SubmitArrivalNotificationFailed),
+            eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Arrival)),
+            eqTo(Some(MessageType.ArrivalNotification))
+          )(any[HeaderCarrier], any[ExecutionContext])
+
           verify(mockPersistenceService, times(1)).updateMessage(
             EORINumber(any()),
             eqTo(MovementType.Arrival),
@@ -4001,9 +4217,10 @@ class V2MovementsControllerSpec
 
       "must return Accepted if the Push Notification Service reports an error" in forAll(
         arbitraryUpscanInitiateResponse.arbitrary,
-        arbitraryMovementResponse().arbitrary
+        arbitraryMovementResponse().arbitrary,
+        arbitraryEORINumber.arbitrary
       ) {
-        (upscanResponse, movementResponse) =>
+        (upscanResponse, movementResponse, eori) =>
           val ControllerAndMocks(
             sut,
             _,
@@ -4016,7 +4233,7 @@ class V2MovementsControllerSpec
             mockPushNotificationService,
             mockUpscanService,
             _
-          ) = createControllerAndMocks()
+          ) = createControllerAndMocks(enrollmentEORI = eori)
 
           when(
             mockUpscanService
@@ -4067,10 +4284,10 @@ class V2MovementsControllerSpec
             eqTo(None),
             eqTo(Some(movementResponse.movementId)),
             eqTo(Some(movementResponse.messageId)),
-            any(),
+            eqTo(Some(eori)),
             eqTo(Some(MovementType.Arrival)),
             eqTo(None)
-          )(any(), any())
+          )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Arrival), MovementId(any()), MessageId(any()))(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
@@ -4081,19 +4298,20 @@ class V2MovementsControllerSpec
       }
 
       "must return Internal Service Error if the persistence service reports an error" in {
+        val eori = arbitraryEORINumber.arbitrary.sample.get
         val ControllerAndMocks(
           sut,
           _,
           mockPersistenceService,
           _,
-          _,
+          mockAuditService,
           _,
           _,
           _,
           _,
           _,
           _
-        ) = createControllerAndMocks()
+        ) = createControllerAndMocks(enrollmentEORI = eori)
         when(
           mockPersistenceService
             .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
@@ -4110,6 +4328,16 @@ class V2MovementsControllerSpec
           "code"    -> "INTERNAL_SERVER_ERROR",
           "message" -> "Internal server error"
         )
+
+        verify(mockAuditService, times(1)).auditStatusEvent(
+          eqTo(CreateMovementDBFailed),
+          eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
+          eqTo(None),
+          eqTo(None),
+          eqTo(Some(eori)),
+          eqTo(Some(MovementType.Departure)),
+          eqTo(None)
+        )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "must return Internal Service Error if the upscan service reports an error" in forAll(
@@ -4562,8 +4790,8 @@ class V2MovementsControllerSpec
           )
       }
 
-      "when no movement is found and page is 1" in forAll(arbitraryMovementId.arbitrary, arbitraryItemCount.arbitrary) {
-        (movementId, itemCount) =>
+      "when no movement is found and page is 1" in forAll(arbitraryMovementId.arbitrary, arbitraryItemCount.arbitrary, arbitraryEORINumber.arbitrary) {
+        (movementId, itemCount, eori) =>
           val page = Some(PageNumber(1))
 
           val ControllerAndMocks(
@@ -4571,14 +4799,14 @@ class V2MovementsControllerSpec
             _,
             mockPersistenceService,
             _,
-            _,
+            mockAuditService,
             _,
             _,
             _,
             _,
             _,
             _
-          ) = createControllerAndMocks()
+          ) = createControllerAndMocks(enrollmentEORI = eori)
           when(
             mockPersistenceService.getMessages(
               EORINumber(any()),
@@ -4601,18 +4829,36 @@ class V2MovementsControllerSpec
           val result  = sut.getMessageIds(movementType, movementId, None, page, Some(itemCount), None)(request)
 
           status(result) mustBe NOT_FOUND
+          val message = s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found"
           contentAsJson(result) mustBe Json.obj(
             "code"    -> "NOT_FOUND",
-            "message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found"
+            "message" -> message
           )
+          verify(mockAuditService, atLeastOnce).auditStatusEvent(
+            eqTo(GetMovementMessagesDBFailed),
+            eqTo(
+              Some(
+                Json.obj(
+                  "message" -> message,
+                  "code"    -> "NOT_FOUND"
+                )
+              )
+            ),
+            eqTo(Some(movementId)),
+            eqTo(None),
+            eqTo(Some(eori)),
+            eqTo(Some(movementType)),
+            eqTo(None)
+          )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "when no movement is found and page is greater than 1" in forAll(
         arbitraryMovementId.arbitrary,
         arbitraryItemCount.arbitrary,
-        arbitraryPageNumber.arbitrary
+        arbitraryPageNumber.arbitrary,
+        arbitraryEORINumber.arbitrary
       ) {
-        (movementId, itemCount, pageNumber) =>
+        (movementId, itemCount, pageNumber, eori) =>
           // ensure it's not page 1
           val page = if (pageNumber == PageNumber(1)) PageNumber(2) else pageNumber
 
@@ -4621,14 +4867,14 @@ class V2MovementsControllerSpec
             _,
             mockPersistenceService,
             _,
-            _,
+            mockAuditService,
             _,
             _,
             _,
             _,
             _,
             _
-          ) = createControllerAndMocks()
+          ) = createControllerAndMocks(enrollmentEORI = eori)
 
           // We request page 2 which has no messages and therefore should get a page not found.
           when(
@@ -4657,6 +4903,23 @@ class V2MovementsControllerSpec
             "message" -> "The requested page does not exist",
             "code"    -> "NOT_FOUND"
           )
+
+          verify(mockAuditService, atLeastOnce).auditStatusEvent(
+            eqTo(GetMovementMessagesDBFailed),
+            eqTo(
+              Some(
+                Json.obj(
+                  "message" -> "The requested page does not exist",
+                  "code"    -> "NOT_FOUND"
+                )
+              )
+            ),
+            eqTo(Some(movementId)),
+            eqTo(None),
+            eqTo(Some(eori)),
+            eqTo(Some(movementType)),
+            eqTo(None)
+          )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "when an unknown error occurs" in forAll(arbitraryMovementId.arbitrary, arbitraryPageNumber.arbitrary, arbitraryItemCount.arbitrary) {
@@ -5024,19 +5287,20 @@ class V2MovementsControllerSpec
             }
 
             "when no message is found" in {
+              val eori = arbitraryEORINumber.arbitrary.sample.get
               val ControllerAndMocks(
                 sut,
                 _,
                 mockPersistenceService,
                 _,
-                _,
+                mockAuditService,
                 _,
                 _,
                 _,
                 _,
                 _,
                 _
-              ) = createControllerAndMocks()
+              ) = createControllerAndMocks(enrollmentEORI = eori)
               when(
                 mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
                   any[HeaderCarrier],
@@ -5051,26 +5315,44 @@ class V2MovementsControllerSpec
 
               status(result) mustBe NOT_FOUND
               contentType(result).get mustBe MimeTypes.JSON
+              val message = s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
               contentAsJson(result) mustBe Json.obj(
                 "code"    -> "NOT_FOUND",
-                "message" -> s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
+                "message" -> message
               )
+              verify(mockAuditService, atLeastOnce).auditStatusEvent(
+                eqTo(GetMovementMessageDBFailed),
+                eqTo(
+                  Some(
+                    Json.obj(
+                      "message" -> message,
+                      "code"    -> "NOT_FOUND"
+                    )
+                  )
+                ),
+                eqTo(Some(movementId)),
+                eqTo(Some(messageId)),
+                eqTo(Some(eori)),
+                eqTo(Some(movementType)),
+                eqTo(None)
+              )(any[HeaderCarrier], any[ExecutionContext])
             }
 
             "when an unknown error occurs" in {
+              val eori = arbitraryEORINumber.arbitrary.sample.get
               val ControllerAndMocks(
                 sut,
                 _,
                 mockPersistenceService,
                 _,
-                _,
+                mockAuditService,
                 _,
                 _,
                 _,
                 _,
                 _,
                 _
-              ) = createControllerAndMocks()
+              ) = createControllerAndMocks(enrollmentEORI = eori)
               when(
                 mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
                   any[HeaderCarrier],
@@ -5089,6 +5371,22 @@ class V2MovementsControllerSpec
                 "code"    -> "INTERNAL_SERVER_ERROR",
                 "message" -> "Internal server error"
               )
+              verify(mockAuditService, atLeastOnce).auditStatusEvent(
+                eqTo(GetMovementMessageDBFailed),
+                eqTo(
+                  Some(
+                    Json.obj(
+                      "message" -> "Internal server error",
+                      "code"    -> "INTERNAL_SERVER_ERROR"
+                    )
+                  )
+                ),
+                eqTo(Some(movementId)),
+                eqTo(Some(messageId)),
+                eqTo(Some(eori)),
+                eqTo(Some(movementType)),
+                eqTo(None)
+              )(any[HeaderCarrier], any[ExecutionContext])
             }
 
           }
@@ -5159,19 +5457,20 @@ class V2MovementsControllerSpec
             }
 
             "when no message is found" in {
+              val eori = arbitraryEORINumber.arbitrary.sample.get
               val ControllerAndMocks(
                 sut,
                 _,
                 mockPersistenceService,
                 _,
-                _,
+                mockAuditService,
                 _,
                 _,
                 _,
                 _,
                 _,
                 _
-              ) = createControllerAndMocks()
+              ) = createControllerAndMocks(enrollmentEORI = eori)
               when(
                 mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
                   any[HeaderCarrier],
@@ -5186,26 +5485,45 @@ class V2MovementsControllerSpec
 
               status(result) mustBe NOT_FOUND
               contentType(result).get mustBe MimeTypes.JSON
+              val message = s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
               contentAsJson(result) mustBe Json.obj(
                 "code"    -> "NOT_FOUND",
-                "message" -> s"Message with ID ${messageId.value} for movement ${movementId.value} was not found"
+                "message" -> message
               )
+
+              verify(mockAuditService, atLeastOnce).auditStatusEvent(
+                eqTo(GetMovementMessageDBFailed),
+                eqTo(
+                  Some(
+                    Json.obj(
+                      "message" -> message,
+                      "code"    -> "NOT_FOUND"
+                    )
+                  )
+                ),
+                eqTo(Some(movementId)),
+                eqTo(Some(messageId)),
+                eqTo(Some(eori)),
+                eqTo(Some(movementType)),
+                eqTo(None)
+              )(any[HeaderCarrier], any[ExecutionContext])
             }
 
             "when an unknown error occurs" in {
+              val eori = arbitraryEORINumber.arbitrary.sample.get
               val ControllerAndMocks(
                 sut,
                 _,
                 mockPersistenceService,
                 _,
-                _,
+                mockAuditService,
                 _,
                 _,
                 _,
                 _,
                 _,
                 _
-              ) = createControllerAndMocks()
+              ) = createControllerAndMocks(enrollmentEORI = eori)
               when(
                 mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
                   any[HeaderCarrier],
@@ -5224,6 +5542,23 @@ class V2MovementsControllerSpec
                 "code"    -> "INTERNAL_SERVER_ERROR",
                 "message" -> "Internal server error"
               )
+
+              verify(mockAuditService, atLeastOnce).auditStatusEvent(
+                eqTo(GetMovementMessageDBFailed),
+                eqTo(
+                  Some(
+                    Json.obj(
+                      "message" -> "Internal server error",
+                      "code"    -> "INTERNAL_SERVER_ERROR"
+                    )
+                  )
+                ),
+                eqTo(Some(movementId)),
+                eqTo(Some(messageId)),
+                eqTo(Some(eori)),
+                eqTo(Some(movementType)),
+                eqTo(None)
+              )(any[HeaderCarrier], any[ExecutionContext])
             }
 
           }
@@ -5974,19 +6309,20 @@ class V2MovementsControllerSpec
       }
 
       "should return not found if the persistence service returns an empty list for a page number other than 1" in {
+        val eori = arbitraryEORINumber.arbitrary.sample.get
         val ControllerAndMocks(
           sut,
           _,
           mockPersistenceService,
           _,
-          _,
+          mockAuditService,
           _,
           _,
           _,
           _,
           _,
           _
-        ) = createControllerAndMocks()
+        ) = createControllerAndMocks(enrollmentEORI = eori)
 
         // We request page 2 which has no movements
         val page = Some(PageNumber(2))
@@ -6026,22 +6362,40 @@ class V2MovementsControllerSpec
           "message" -> "The requested page does not exist",
           "code"    -> "NOT_FOUND"
         )
+
+        verify(mockAuditService, times(1)).auditStatusEvent(
+          eqTo(GetMovementsDBFailed),
+          eqTo(
+            Some(
+              Json.obj(
+                "message" -> "The requested page does not exist",
+                "code"    -> "NOT_FOUND"
+              )
+            )
+          ),
+          eqTo(None),
+          eqTo(None),
+          eqTo(Some(eori)),
+          eqTo(Some(movementType)),
+          eqTo(None)
+        )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "should return unexpected error for all other errors" in {
+        val eori = arbitraryEORINumber.arbitrary.sample.get
         val ControllerAndMocks(
           sut,
           _,
           mockPersistenceService,
           _,
-          _,
+          mockAuditService,
           _,
           _,
           _,
           _,
           _,
           _
-        ) = createControllerAndMocks()
+        ) = createControllerAndMocks(enrollmentEORI = eori)
         when(
           mockPersistenceService.getMovements(
             EORINumber(any()),
@@ -6075,6 +6429,23 @@ class V2MovementsControllerSpec
           "code"    -> "INTERNAL_SERVER_ERROR",
           "message" -> "Internal server error"
         )
+
+        verify(mockAuditService, times(1)).auditStatusEvent(
+          eqTo(GetMovementsDBFailed),
+          eqTo(
+            Some(
+              Json.obj(
+                "message" -> "Internal server error",
+                "code"    -> "INTERNAL_SERVER_ERROR"
+              )
+            )
+          ),
+          eqTo(None),
+          eqTo(None),
+          eqTo(Some(eori)),
+          eqTo(Some(movementType)),
+          eqTo(None)
+        )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       s"must return NOT_ACCEPTABLE when the accept type is ${VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN}" in {
@@ -6250,21 +6621,21 @@ class V2MovementsControllerSpec
           )
       }
 
-      "should return movement not found if persistence service returns 404" in forAll(arbitraryMovementId.arbitrary) {
-        movementId =>
+      "should return movement not found if persistence service returns 404" in forAll(arbitraryMovementId.arbitrary, arbitraryEORINumber.arbitrary) {
+        (movementId, eori) =>
           val ControllerAndMocks(
             sut,
             _,
             mockPersistenceService,
             _,
-            _,
+            mockAuditService,
             _,
             _,
             _,
             _,
             _,
             _
-          ) = createControllerAndMocks()
+          ) = createControllerAndMocks(enrollmentEORI = eori)
           when(
             mockPersistenceService
               .getMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[String].asInstanceOf[MovementId])(any(), any())
@@ -6287,23 +6658,40 @@ class V2MovementsControllerSpec
           val result = sut.getMovement(movementType, movementId)(request)
 
           status(result) mustBe NOT_FOUND
+
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(GetMovementDBFailed),
+            eqTo(
+              Some(
+                Json.obj(
+                  "message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found",
+                  "code"    -> "NOT_FOUND"
+                )
+              )
+            ),
+            eqTo(Some(movementId)),
+            eqTo(None),
+            eqTo(Some(eori)),
+            eqTo(Some(movementType)),
+            eqTo(None)
+          )(any[HeaderCarrier], any[ExecutionContext])
       }
 
-      "should return unexpected error for all other errors" in forAll(arbitraryMovementId.arbitrary) {
-        movementId =>
+      "should return unexpected error for all other errors" in forAll(arbitraryMovementId.arbitrary, arbitraryEORINumber.arbitrary) {
+        (movementId, eori) =>
           val ControllerAndMocks(
             sut,
             _,
             mockPersistenceService,
             _,
-            _,
+            mockAuditService,
             _,
             _,
             _,
             _,
             _,
             _
-          ) = createControllerAndMocks()
+          ) = createControllerAndMocks(enrollmentEORI = eori)
           when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
             .thenAnswer {
               _ =>
@@ -6323,6 +6711,23 @@ class V2MovementsControllerSpec
           val result = sut.getMovement(movementType, movementId)(request)
 
           status(result) mustBe INTERNAL_SERVER_ERROR
+
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(GetMovementDBFailed),
+            eqTo(
+              Some(
+                Json.obj(
+                  "message" -> "Internal server error",
+                  "code"    -> "INTERNAL_SERVER_ERROR"
+                )
+              )
+            ),
+            eqTo(Some(movementId)),
+            eqTo(None),
+            eqTo(Some(eori)),
+            eqTo(Some(movementType)),
+            eqTo(None)
+          )(any[HeaderCarrier], any[ExecutionContext])
       }
 
       "must return NOT_ACCEPTABLE when the accept type is invalid" in forAll(arbitraryMovementId.arbitrary) {
@@ -6521,6 +6926,11 @@ class V2MovementsControllerSpec
               )(any[HeaderCarrier], any[ExecutionContext])
             ).thenReturn(Future.successful(()))
 
+            when(mockPushNotificationService.update(any[String].asInstanceOf[MovementId])(any(), any()))
+              .thenAnswer(
+                _ => EitherT.rightT()
+              )
+
             val request = fakeAttachMessageRequest("POST", standardHeaders, singleUseStringSource(contentXml.mkString), movementType)
             val result  = sut.attachMessage(movementType, movementId)(request)
 
@@ -6578,6 +6988,137 @@ class V2MovementsControllerSpec
 
         }
 
+        "must still return Accepted when PushNotificationService update fails" in forAll(
+          arbitraryUpdateMovementResponse.arbitrary,
+          arbitraryEORINumber.arbitrary
+        ) {
+          (updateMovementResponse, eori) =>
+            val ControllerAndMocks(
+              sut,
+              mockValidationService,
+              mockPersistenceService,
+              mockRouterService,
+              mockAuditService,
+              _,
+              mockXmlParsingService,
+              _,
+              mockPushNotificationService,
+              _,
+              _
+            ) = createControllerAndMocks(enrollmentEORI = eori)
+
+            when(mockPushNotificationService.update(any[String].asInstanceOf[MovementId])(any(), any()))
+              .thenAnswer(
+                _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
+              )
+
+            when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any()))
+              .thenReturn(messageDataEither)
+
+            when(
+              mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, _]]())(any[HeaderCarrier], any[ExecutionContext])
+            )
+              .thenAnswer(
+                _ => EitherT.rightT(())
+              )
+
+            when(
+              mockRouterService.send(
+                any[String].asInstanceOf[MessageType],
+                any[String].asInstanceOf[EORINumber],
+                any[String].asInstanceOf[MovementId],
+                any[String].asInstanceOf[MessageId],
+                any[Source[ByteString, _]]
+              )(any[ExecutionContext], any[HeaderCarrier])
+            ).thenAnswer(
+              _ => EitherT.rightT(SubmissionRoute.ViaEIS)
+            )
+
+            when(
+              mockPersistenceService
+                .addMessage(any[String].asInstanceOf[MovementId], any[MovementType], any[Option[MessageType]], any[Option[Source[ByteString, _]]]())(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, UpdateMovementResponse](updateMovementResponse)))
+
+            when(
+              mockPersistenceService
+                .updateMessage(
+                  EORINumber(any()),
+                  eqTo(movementType),
+                  MovementId(eqTo(movementId.value)),
+                  MessageId(eqTo(updateMovementResponse.messageId.value)),
+                  eqTo(messageUpdateSuccess)
+                )(
+                  any[HeaderCarrier],
+                  any[ExecutionContext]
+                )
+            )
+              .thenAnswer {
+                _ => EitherT.rightT(())
+              }
+            when(
+              mockAuditService.auditMessageEvent(
+                eqTo(messageType.auditType),
+                eqTo(MimeTypes.XML),
+                any(),
+                any(),
+                eqTo(Some(movementId)),
+                eqTo(Some(updateMovementResponse.messageId)),
+                any(),
+                eqTo(Some(movementType)),
+                eqTo(Some(messageType))
+              )(any(), any())
+            ).thenReturn(Future.successful(()))
+
+            val request = fakeAttachMessageRequest("POST", standardHeaders, singleUseStringSource(contentXml.mkString), movementType)
+            val result  = sut.attachMessage(movementType, movementId)(request)
+
+            status(result) mustBe ACCEPTED
+            contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, updateMovementResponse.messageId, movementType, None))
+
+            verify(mockAuditService, times(1)).auditMessageEvent(
+              eqTo(messageType.auditType),
+              eqTo(MimeTypes.XML),
+              any(),
+              any(),
+              eqTo(Some(movementId)),
+              eqTo(Some(updateMovementResponse.messageId)),
+              any(),
+              eqTo(Some(movementType)),
+              eqTo(Some(messageType))
+            )(any(), any())
+
+            verify(mockAuditService, times(1)).auditStatusEvent(
+              eqTo(PushNotificationUpdateFailed),
+              eqTo(Some(Json.obj("message" -> "UnexpectedError(None)"))),
+              eqTo(Some(movementId)),
+              eqTo(Some(updateMovementResponse.messageId)),
+              eqTo(Some(eori)),
+              eqTo(Some(movementType)),
+              eqTo(Some(messageType))
+            )(any[HeaderCarrier], any[ExecutionContext])
+
+            verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any())(any(), any())
+            verify(mockPersistenceService, times(1)).addMessage(MovementId(any()), any(), any(), any())(any(), any())
+            verify(mockRouterService, times(1)).send(eqTo(messageType), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
+              any(),
+              any()
+            )
+            verify(mockPushNotificationService, times(1)).update(MovementId(eqTo(movementId.value)))(any(), any())
+            verify(mockPersistenceService, times(1)).updateMessage(
+              EORINumber(any()),
+              eqTo(movementType),
+              MovementId(eqTo(movementId.value)),
+              MessageId(eqTo(updateMovementResponse.messageId.value)),
+              eqTo(messageUpdateSuccess)
+            )(
+              any[HeaderCarrier],
+              any[ExecutionContext]
+            )
+        }
+
         "must return Bad Request when body is not an XML document" in forAll(
           arbitraryMovementId.arbitrary
         ) {
@@ -6610,9 +7151,10 @@ class V2MovementsControllerSpec
         }
 
         "must return Internal Service Error if the persistence service reports an error" in forAll(
-          arbitraryMovementId.arbitrary
+          arbitraryMovementId.arbitrary,
+          arbitraryEORINumber.arbitrary
         ) {
-          movementId =>
+          (movementId, eori) =>
             val ControllerAndMocks(
               sut,
               mockValidationService,
@@ -6625,7 +7167,7 @@ class V2MovementsControllerSpec
               _,
               _,
               _
-            ) = createControllerAndMocks()
+            ) = createControllerAndMocks(enrollmentEORI = eori)
             when(mockXmlParsingService.extractMessageType(any[Source[ByteString, _]], any[Seq[MessageType]])(any(), any()))
               .thenReturn(messageDataEither)
             when(
@@ -6668,6 +7210,16 @@ class V2MovementsControllerSpec
               eqTo(Some(movementId)),
               eqTo(None),
               any(),
+              eqTo(Some(movementType)),
+              eqTo(Some(messageType))
+            )(any[HeaderCarrier], any[ExecutionContext])
+
+            verify(mockAuditService, times(1)).auditStatusEvent(
+              eqTo(AddMessageDBFailed),
+              eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
+              eqTo(Some(movementId)),
+              eqTo(None),
+              eqTo(Some(eori)),
               eqTo(Some(movementType)),
               eqTo(Some(messageType))
             )(any[HeaderCarrier], any[ExecutionContext])
@@ -6885,10 +7437,15 @@ class V2MovementsControllerSpec
             mockConversionService,
             _,
             _,
-            _,
+            mockPushNotificationService,
             _,
             _
           ) = setup()
+
+          when(mockPushNotificationService.update(any[String].asInstanceOf[MovementId])(any(), any()))
+            .thenAnswer(
+              _ => EitherT.rightT()
+            )
 
           val request = fakeJsonAttachRequest(contentJson)
           val result  = sut.attachMessage(movementType, movementId)(request)
@@ -7336,24 +7893,48 @@ class V2MovementsControllerSpec
         }
 
         "must return BadRequest when router returns BadRequest" in {
+          val messageType = if (movementType == MovementType.Departure) MessageType.DeclarationAmendment else MessageType.UnloadingRemarks
+
           val ControllerAndMocks(
             sut,
             _,
             _,
             _,
+            mockAuditService,
             _,
             _,
             _,
-            _,
-            _,
+            mockPushNotificationService,
             _,
             _
           ) = setup(router = EitherT.leftT(RouterError.UnrecognisedOffice("AB012345", "field")))
+
+          when(mockPushNotificationService.update(any[String].asInstanceOf[MovementId])(any(), any()))
+            .thenAnswer(
+              _ => EitherT.rightT()
+            )
 
           val request = fakeJsonAttachRequest(contentJson)
           val result  = sut.attachMessage(movementType, movementId)(request)
 
           status(result) mustBe BAD_REQUEST
+
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(SubmitAttachMessageFailed),
+            eqTo(
+              Some(
+                Json.obj(
+                  "message" -> "The customs office specified for field must be a customs office located in the United Kingdom (AB012345 was specified)",
+                  "code"    -> "BAD_REQUEST"
+                )
+              )
+            ),
+            eqTo(Some(movementId)),
+            eqTo(Some(messageId)),
+            eqTo(Some(EORINumber("id"))),
+            eqTo(Some(movementType)),
+            eqTo(Some(messageType))
+          )(any[HeaderCarrier], any[ExecutionContext])
         }
 
         // TODO: Fix the intention of this test... or the code behind it
@@ -7495,9 +8076,10 @@ class V2MovementsControllerSpec
         }
 
         "must return NotFound when movement not found by Persistence" in forAll(
-          arbitraryMovementId.arbitrary
+          arbitraryMovementId.arbitrary,
+          arbitraryEORINumber.arbitrary
         ) {
-          movementId =>
+          (movementId, eori) =>
             val ControllerAndMocks(
               sut,
               _,
@@ -7510,7 +8092,7 @@ class V2MovementsControllerSpec
               _,
               _,
               _
-            ) = createControllerAndMocks()
+            ) = createControllerAndMocks(enrollmentEORI = eori)
 
             val createdTime = OffsetDateTime.now()
             val movementResponse = MovementSummary(
@@ -7543,17 +8125,28 @@ class V2MovementsControllerSpec
             val result = sut.attachMessage(movementType, movementId)(request)
 
             status(result) mustBe NOT_FOUND
+            val message = s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found"
             contentAsJson(result) mustBe Json.obj(
-              "message" -> s"${movementType.movementType.capitalize} movement with ID ${movementId.value} was not found",
+              "message" -> message,
               "code"    -> "NOT_FOUND"
             )
 
+            verify(mockAuditService, times(1)).auditStatusEvent(
+              eqTo(AddMessageDBFailed),
+              eqTo(Some(Json.obj("message" -> message, "code" -> "NOT_FOUND"))),
+              eqTo(Some(movementId)),
+              eqTo(None),
+              eqTo(Some(eori)),
+              eqTo(Some(movementType)),
+              eqTo(None)
+            )(any[HeaderCarrier], any[ExecutionContext])
         }
 
         "must return InternalServerError when Persistence return Unexpected Error" in forAll(
-          arbitraryMovementId.arbitrary
+          arbitraryMovementId.arbitrary,
+          arbitraryEORINumber.arbitrary
         ) {
-          movementId =>
+          (movementId, eori) =>
             val ControllerAndMocks(
               sut,
               _,
@@ -7566,7 +8159,7 @@ class V2MovementsControllerSpec
               _,
               _,
               _
-            )               = createControllerAndMocks()
+            )               = createControllerAndMocks(enrollmentEORI = eori)
             val createdTime = OffsetDateTime.now()
             val movementResponse = MovementSummary(
               movementId,
@@ -7619,6 +8212,16 @@ class V2MovementsControllerSpec
               eqTo(Some(movementId)),
               eqTo(None),
               any(),
+              eqTo(Some(movementType)),
+              eqTo(None)
+            )(any[HeaderCarrier], any[ExecutionContext])
+
+            verify(mockAuditService, times(1)).auditStatusEvent(
+              eqTo(AddMessageDBFailed),
+              eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
+              eqTo(Some(movementId)),
+              eqTo(None),
+              eqTo(Some(eori)),
               eqTo(Some(movementType)),
               eqTo(None)
             )(any[HeaderCarrier], any[ExecutionContext])
@@ -8541,6 +9144,23 @@ class V2MovementsControllerSpec
                     eqTo(Some(movementType)),
                     eqTo(Some(messageType))
                   )(any(), any())
+
+                  verify(mockAuditService, times(1)).auditStatusEvent(
+                    eqTo(SubmitAttachMessageFailed),
+                    eqTo(
+                      Some(
+                        Json.obj(
+                          "message" -> "The customs office specified for office must be a customs office located in the United Kingdom (office was specified)",
+                          "code"    -> "BAD_REQUEST"
+                        )
+                      )
+                    ),
+                    eqTo(Some(movementId)),
+                    eqTo(Some(messageId)),
+                    eqTo(Some(eori)),
+                    eqTo(Some(movementType)),
+                    eqTo(Some(messageType))
+                  )(any[HeaderCarrier], any[ExecutionContext])
               }
 
           }
