@@ -64,7 +64,9 @@ class ArrivalsRouter @Inject() (
 
   def createArrivalNotification(): Action[Source[ByteString, _]] =
     route {
-      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => v2Arrivals.createMovement(MovementType.Arrival)
+      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
+        if (config.enablePhase5) v2Arrivals.createMovement(MovementType.Arrival)
+        else handleEnablingPhase5()
       case _ =>
         if (config.disablePhase4) handleDisablingPhase4()
         else v1Arrivals.createArrivalNotification()
@@ -83,11 +85,9 @@ class ArrivalsRouter @Inject() (
   def getArrival(arrivalId: String): Action[Source[ByteString, _]] =
     route {
       case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-        runIfBound[V2ArrivalId](
-          "arrivalId",
-          arrivalId,
-          v2Arrivals.getMovement(MovementType.Arrival, _)
-        )
+        if (config.enablePhase5)
+          runIfBound[V2ArrivalId]("arrivalId", arrivalId, v2Arrivals.getMovement(MovementType.Arrival, _))
+        else handleEnablingPhase5()
       case _ =>
         runIfBound[V1ArrivalId](
           "arrivalId",
@@ -104,11 +104,9 @@ class ArrivalsRouter @Inject() (
     receivedUntil: Option[OffsetDateTime] = None
   ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      runIfBound[V2ArrivalId](
-        "arrivalId",
-        arrivalId,
-        v2Arrivals.getMessageIds(MovementType.Arrival, _, receivedSince, page, count, receivedUntil)
-      )
+      if (config.enablePhase5)
+        runIfBound[V2ArrivalId]("arrivalId", arrivalId, v2Arrivals.getMessageIds(MovementType.Arrival, _, receivedSince, page, count, receivedUntil))
+      else handleEnablingPhase5()
     case _ =>
       runIfBound[V1ArrivalId](
         "arrivalId",
@@ -119,16 +117,18 @@ class ArrivalsRouter @Inject() (
 
   def getArrivalMessage(arrivalId: String, messageId: String): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      runIfBound[V2ArrivalId](
-        "arrivalId",
-        arrivalId,
-        boundArrivalId =>
-          runIfBound[V2MessageId](
-            "messageId",
-            messageId,
-            v2Arrivals.getMessage(MovementType.Arrival, boundArrivalId, _)
-          )
-      )
+      if (config.enablePhase5)
+        runIfBound[V2ArrivalId](
+          "arrivalId",
+          arrivalId,
+          boundArrivalId =>
+            runIfBound[V2MessageId](
+              "messageId",
+              messageId,
+              v2Arrivals.getMessage(MovementType.Arrival, boundArrivalId, _)
+            )
+        )
+      else handleEnablingPhase5()
     case _ =>
       runIfBound[V1ArrivalId](
         "arrivalId",
@@ -147,17 +147,16 @@ class ArrivalsRouter @Inject() (
     localReferenceNumber: Option[LocalReferenceNumber] = None
   ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      v2Arrivals.getMovements(MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
+      if (config.enablePhase5)
+        v2Arrivals.getMovements(MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
+      else handleEnablingPhase5()
     case _ => v1Arrivals.getArrivalsForEori(updatedSince)
   }
 
   def attachMessage(arrivalId: String): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      runIfBound[V2ArrivalId](
-        "arrivalId",
-        arrivalId,
-        v2Arrivals.attachMessage(MovementType.Arrival, _)
-      )
+      if (config.enablePhase5) runIfBound[V2ArrivalId]("arrivalId", arrivalId, v2Arrivals.attachMessage(MovementType.Arrival, _))
+      else handleEnablingPhase5()
     case _ =>
       runIfBound[V1ArrivalId](
         "arrivalId",

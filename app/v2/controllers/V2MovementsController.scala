@@ -445,6 +445,7 @@ class V2MovementsControllerImpl @Inject() (
             BodyAndContentType(MimeTypes.XML, bodyAndSize.body)
           )
       }
+
     bodyAndSizeMaybe match {
       case Some(value) => bodyExists(value)
       case None =>
@@ -501,16 +502,23 @@ class V2MovementsControllerImpl @Inject() (
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonAndXmlAcceptHeaders)).async {
       implicit request =>
-        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        (for {
-          messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
-          acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
-          messageBody <- getBody(request.eoriNumber, movementType, movementId, messageId, messageSummary.body)
-          body        <- formatMessageBody(messageSummary, acceptHeader, messageBody)
-        } yield body).fold(
-          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          response => Ok.chunked(response.body, Some(response.contentType))
-        )
+        if (config.enablePhase5) {
+          implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+          (for {
+            messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
+            acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
+            messageBody <- getBody(request.eoriNumber, movementType, movementId, messageId, messageSummary.body)
+            body        <- formatMessageBody(messageSummary, acceptHeader, messageBody)
+          } yield body).fold(
+            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+            response => Ok.chunked(response.body, Some(response.contentType))
+          )
+        } else {
+          val presentationError = PresentationError.notAcceptableError(
+            "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages."
+          )
+          Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
+        }
     }
 
   def getMessageIds(
@@ -821,139 +829,147 @@ class V2MovementsControllerImpl @Inject() (
   ): Action[UpscanResponse] =
     Action.async(parse.json[UpscanResponse](UpscanResponse.upscanResponseReads)) {
       implicit request =>
-        val originalHc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+        if (config.enablePhase5) {
 
-        // If the client ID is provided, ensure we add it to the headers.
-        val clientIdHeader = clientId
-          .map[Seq[(String, String)]](
-            id => Seq(XClientIdHeader -> id.value)
-          )
-          .getOrElse(Seq.empty)
+          val originalHc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-        // We add it to otherHeaders as hc.headers(...) doesn't check extraHeaders, and mirrors what would happen via
-        // a direct call to the API Gateway.
-        implicit val hc: http.HeaderCarrier = originalHc.copy(otherHeaders = clientIdHeader ++ originalHc.otherHeaders)
-
-        request.body match {
-          case UpscanFailedResponse(reference, failureDetails) =>
-            auditService.auditStatusEvent(
-              AuditType.TraderFailedUpload,
-              Some(Json.toJson(failureDetails)),
-              Some(movementId),
-              Some(messageId),
-              Some(eori),
-              Some(movementType),
-              None
+          // If the client ID is provided, ensure we add it to the headers.
+          val clientIdHeader = clientId
+            .map[Seq[(String, String)]](
+              id => Seq(XClientIdHeader -> id.value)
             )
+            .getOrElse(Seq.empty)
 
-            logger.warn(s"""Upscan failed to process trader-uploaded file
-                 |
-                 |Movement ID: ${movementId.value}
-                 |Message ID: ${messageId.value}
-                 |
-                 |Upscan Reference: ${reference.value}
-                 |Reason: ${failureDetails.failureReason}
-                 |Message: ${failureDetails.message}""".stripMargin)
-            persistenceService.updateMessage(eori, movementType, movementId, messageId, MessageUpdate(MessageStatus.Failed, None, None))
-            pushNotificationsService
-              .postPpnsNotification(movementId, messageId, Json.toJson(PresentationError.badRequestError("Uploaded file not accepted.")))
-            Future.successful(Ok)
-          case UpscanSuccessResponse(_, downloadUrl, uploadDetails) =>
-            def completeSmallMessage(): EitherT[Future, PushNotificationError, Unit] = {
-              persistenceService.updateMessage(eori, movementType, movementId, messageId, MessageUpdate(MessageStatus.Success, None, None))
-              pushNotificationsService.postPpnsNotification(
-                movementId,
-                messageId,
-                Json.toJson(
-                  Json.obj(
-                    "code" -> "SUCCESS",
-                    "message" ->
-                      s"The message ${messageId.value} for movement ${movementId.value} was successfully processed"
+          // We add it to otherHeaders as hc.headers(...) doesn't check extraHeaders, and mirrors what would happen via
+          // a direct call to the API Gateway.
+          implicit val hc: http.HeaderCarrier = originalHc.copy(otherHeaders = clientIdHeader ++ originalHc.otherHeaders)
+
+          request.body match {
+            case UpscanFailedResponse(reference, failureDetails) =>
+              auditService.auditStatusEvent(
+                AuditType.TraderFailedUpload,
+                Some(Json.toJson(failureDetails)),
+                Some(movementId),
+                Some(messageId),
+                Some(eori),
+                Some(movementType),
+                None
+              )
+
+              logger.warn(s"""Upscan failed to process trader-uploaded file
+                   |
+                   |Movement ID: ${movementId.value}
+                   |Message ID: ${messageId.value}
+                   |
+                   |Upscan Reference: ${reference.value}
+                   |Reason: ${failureDetails.failureReason}
+                   |Message: ${failureDetails.message}""".stripMargin)
+              persistenceService.updateMessage(eori, movementType, movementId, messageId, MessageUpdate(MessageStatus.Failed, None, None))
+              pushNotificationsService
+                .postPpnsNotification(movementId, messageId, Json.toJson(PresentationError.badRequestError("Uploaded file not accepted.")))
+              Future.successful(Ok)
+            case UpscanSuccessResponse(_, downloadUrl, uploadDetails) =>
+              def completeSmallMessage(): EitherT[Future, PushNotificationError, Unit] = {
+                persistenceService.updateMessage(eori, movementType, movementId, messageId, MessageUpdate(MessageStatus.Success, None, None))
+                pushNotificationsService.postPpnsNotification(
+                  movementId,
+                  messageId,
+                  Json.toJson(
+                    Json.obj(
+                      "code" -> "SUCCESS",
+                      "message" ->
+                        s"The message ${messageId.value} for movement ${movementId.value} was successfully processed"
+                    )
                   )
                 )
-              )
-            }
+              }
 
-            // Download file to stream
-            upscanService
-              .upscanGetFile(downloadUrl) // TODO: If this fails, maybe consider returning 400 to upscan?
-              .asPresentation
-              .flatMap {
-                withReusableSource[SubmissionRoute](_) {
-                  source =>
-                    val allowedTypes =
-                      if (movementType == MovementType.Arrival) MessageType.messageTypesSentByArrivalTrader else MessageType.messageTypesSentByDepartureTrader
-                    for {
-                      // Extract type
-                      messageType <- xmlParsingService.extractMessageType(source, allowedTypes).asPresentation
-                      // Validate file
-                      _ <- validationService.validateXml(messageType, source).asPresentation.leftMap {
-                        err =>
-                          auditService.auditStatusEvent(
-                            ValidationFailed,
-                            Some(Json.toJson(err)),
-                            Some(movementId),
-                            Some(messageId),
-                            Some(eori),
-                            Some(movementType),
-                            Some(messageType)
-                          )
-                          err
-                      }
-                      // Save file (this will check the size and put it in the right place.
-                      _ <- persistenceService.updateMessageBody(messageType, eori, movementType, movementId, messageId, source).asPresentation
-                      _ = auditService.auditMessageEvent(
-                        messageType.auditType,
-                        MimeTypes.XML,
-                        uploadDetails.size,
-                        source,
-                        Some(movementId),
-                        Some(messageId),
-                        Some(eori),
-                        Some(movementType),
-                        Some(messageType)
-                      )
+              // Download file to stream
+              upscanService
+                .upscanGetFile(downloadUrl) // TODO: If this fails, maybe consider returning 400 to upscan?
+                .asPresentation
+                .flatMap {
+                  withReusableSource[SubmissionRoute](_) {
+                    source =>
+                      val allowedTypes =
+                        if (movementType == MovementType.Arrival) MessageType.messageTypesSentByArrivalTrader else MessageType.messageTypesSentByDepartureTrader
+                      for {
+                        // Extract type
+                        messageType <- xmlParsingService.extractMessageType(source, allowedTypes).asPresentation
+                        // Validate file
+                        _ <- validationService.validateXml(messageType, source).asPresentation.leftMap {
+                          err =>
+                            auditService.auditStatusEvent(
+                              ValidationFailed,
+                              Some(Json.toJson(err)),
+                              Some(movementId),
+                              Some(messageId),
+                              Some(eori),
+                              Some(movementType),
+                              Some(messageType)
+                            )
+                            err
+                        }
+                        // Save file (this will check the size and put it in the right place.
+                        _ <- persistenceService.updateMessageBody(messageType, eori, movementType, movementId, messageId, source).asPresentation
+                        _ = auditService.auditMessageEvent(
+                          messageType.auditType,
+                          MimeTypes.XML,
+                          uploadDetails.size,
+                          source,
+                          Some(movementId),
+                          Some(messageId),
+                          Some(eori),
+                          Some(movementType),
+                          Some(messageType)
+                        )
 
-                      // Send message to router to be sent
-                      submissionResult <- routerService.send(messageType, eori, movementId, messageId, source).asPresentation.leftMap {
-                        err =>
-                          auditService.auditStatusEvent(
-                            SubmitAttachMessageFailed,
-                            Some(Json.toJson(err)),
-                            Some(movementId),
-                            Some(messageId),
-                            Some(eori),
-                            Some(movementType),
-                            Some(messageType)
-                          )
-                          err
-                      }
-                      _ = auditService.auditStatusEvent(
-                        TraderToNCTSSubmissionSuccessful,
-                        None,
-                        Some(movementId),
-                        Some(messageId),
-                        Some(eori),
-                        Some(movementType),
-                        Some(messageType)
-                      )
-                    } yield submissionResult
+                        // Send message to router to be sent
+                        submissionResult <- routerService.send(messageType, eori, movementId, messageId, source).asPresentation.leftMap {
+                          err =>
+                            auditService.auditStatusEvent(
+                              SubmitAttachMessageFailed,
+                              Some(Json.toJson(err)),
+                              Some(movementId),
+                              Some(messageId),
+                              Some(eori),
+                              Some(movementType),
+                              Some(messageType)
+                            )
+                            err
+                        }
+                        _ = auditService.auditStatusEvent(
+                          TraderToNCTSSubmissionSuccessful,
+                          None,
+                          Some(movementId),
+                          Some(messageId),
+                          Some(eori),
+                          Some(movementType),
+                          Some(messageType)
+                        )
+                      } yield submissionResult
+                  }
                 }
-              }
-              .map {
-                case SubmissionRoute.ViaEIS =>
-                  completeSmallMessage()
-                  Ok
-                case SubmissionRoute.ViaSDES =>
-                  Ok
-              }
-              .valueOr {
-                presentationError =>
-                  // we failed, so mark message as failure (but we can do that async)
-                  persistenceService.updateMessage(eori, movementType, movementId, messageId, MessageUpdate(MessageStatus.Failed, None, None))
-                  pushNotificationsService.postPpnsNotification(movementId, messageId, Json.toJson(presentationError))
-                  Ok
-              }
+                .map {
+                  case SubmissionRoute.ViaEIS =>
+                    completeSmallMessage()
+                    Ok
+                  case SubmissionRoute.ViaSDES =>
+                    Ok
+                }
+                .valueOr {
+                  presentationError =>
+                    // we failed, so mark message as failure (but we can do that async)
+                    persistenceService.updateMessage(eori, movementType, movementId, messageId, MessageUpdate(MessageStatus.Failed, None, None))
+                    pushNotificationsService.postPpnsNotification(movementId, messageId, Json.toJson(presentationError))
+                    Ok
+                }
+          }
+        } else {
+          val presentationError = PresentationError.notAcceptableError(
+            "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages."
+          )
+          Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
         }
     }
 

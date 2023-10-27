@@ -63,7 +63,9 @@ class DeparturesRouter @Inject() (
     with Logging {
 
   def submitDeclaration(): Action[Source[ByteString, _]] = route {
-    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => v2Departures.createMovement(MovementType.Departure)
+    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
+      if (config.enablePhase5) v2Departures.createMovement(MovementType.Departure)
+      else handleEnablingPhase5()
     case _ =>
       if (config.disablePhase4) handleDisablingPhase4()
       else v1Departures.submitDeclaration()
@@ -82,16 +84,19 @@ class DeparturesRouter @Inject() (
   def getMessage(departureId: String, messageId: String): Action[Source[ByteString, _]] =
     route {
       case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-        runIfBound[V2DepartureId](
-          "departureId",
-          departureId,
-          boundDepartureId =>
-            runIfBound[V2MessageId](
-              "messageId",
-              messageId,
-              v2Departures.getMessage(MovementType.Departure, boundDepartureId, _)
-            )
-        )
+        if (config.enablePhase5)
+          runIfBound[V2DepartureId](
+            "departureId",
+            departureId,
+            boundDepartureId =>
+              runIfBound[V2MessageId](
+                "messageId",
+                messageId,
+                v2Departures.getMessage(MovementType.Departure, boundDepartureId, _)
+              )
+          )
+        else handleEnablingPhase5()
+
       case _ =>
         runIfBound[V1DepartureId](
           "departureId",
@@ -108,11 +113,10 @@ class DeparturesRouter @Inject() (
     receivedUntil: Option[OffsetDateTime]
   ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      runIfBound[V2DepartureId](
-        "departureId",
-        departureId,
-        v2Departures.getMessageIds(MovementType.Departure, _, receivedSince, page, count, receivedUntil)
-      )
+      if (config.enablePhase5)
+        runIfBound[V2DepartureId]("departureId", departureId, v2Departures.getMessageIds(MovementType.Departure, _, receivedSince, page, count, receivedUntil))
+      else handleEnablingPhase5()
+
     case _ =>
       runIfBound[V1DepartureId](
         "departureId",
@@ -123,11 +127,13 @@ class DeparturesRouter @Inject() (
 
   def getDeparture(departureId: String): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      runIfBound[V2DepartureId](
-        "departureId",
-        departureId,
-        v2Departures.getMovement(MovementType.Departure, _)
-      )
+      if (config.enablePhase5)
+        runIfBound[V2DepartureId](
+          "departureId",
+          departureId,
+          v2Departures.getMovement(MovementType.Departure, _)
+        )
+      else handleEnablingPhase5()
     case _ =>
       runIfBound[V1DepartureId](
         "departureId",
@@ -146,17 +152,16 @@ class DeparturesRouter @Inject() (
     localReferenceNumber: Option[LocalReferenceNumber] = None
   ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      v2Departures.getMovements(MovementType.Departure, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
+      if (config.enablePhase5)
+        v2Departures.getMovements(MovementType.Departure, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
+      else handleEnablingPhase5()
     case _ => v1Departures.getDeparturesForEori(updatedSince)
   }
 
   def attachMessage(departureId: String): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      runIfBound[V2DepartureId](
-        "departureId",
-        departureId,
-        v2Departures.attachMessage(MovementType.Departure, _)
-      )
+      if (config.enablePhase5) runIfBound[V2DepartureId]("departureId", departureId, v2Departures.attachMessage(MovementType.Departure, _))
+      else handleEnablingPhase5()
     case _ =>
       runIfBound[V1DepartureId](
         "departureId",
