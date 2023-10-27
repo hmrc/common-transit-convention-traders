@@ -5799,7 +5799,7 @@ class V2MovementsControllerSpec
               )
             }
 
-            "if phase5 disabled return NOT_ACCEPTABLE" in {
+            "if phase5 is disabled return NOT_ACCEPTABLE" in {
               val ControllerAndMocks(
                 sut,
                 _,
