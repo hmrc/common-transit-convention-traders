@@ -8552,7 +8552,7 @@ class V2MovementsControllerSpec
             _,
             mockPushNotificationService,
             mockUpscanService,
-            mockAppConfig
+            _
           ) = createControllerAndMocks(
             new AcceptHeaderActionProviderImpl()
           )
@@ -8571,8 +8571,6 @@ class V2MovementsControllerSpec
             )
           )
             .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
-
-          when(mockAppConfig.enablePhase5).thenReturn(true)
 
           val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
           val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId, None)(request)
@@ -8667,7 +8665,7 @@ class V2MovementsControllerSpec
               _,
               mockPushNotificationService,
               mockUpscanService,
-              mockAppConfig
+              _
             ) = createControllerAndMocks(
               new AcceptHeaderActionProviderImpl()
             )
@@ -8690,8 +8688,6 @@ class V2MovementsControllerSpec
               )
             )
               .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
-
-            when(mockAppConfig.enablePhase5).thenReturn(true)
 
             val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
             val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId, None)(request)
@@ -8784,7 +8780,7 @@ class V2MovementsControllerSpec
               _,
               mockPushNotificationService,
               mockUpscanService,
-              mockAppConfig
+              _
             ) = createControllerAndMocks(
               new AcceptHeaderActionProviderImpl()
             )
@@ -8823,8 +8819,6 @@ class V2MovementsControllerSpec
               )
             )
               .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
-
-            when(mockAppConfig.enablePhase5).thenReturn(true)
 
             val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
             val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId, None)(request)
@@ -8918,7 +8912,7 @@ class V2MovementsControllerSpec
               _,
               mockPushNotificationService,
               mockUpscanService,
-              mockAppConfig
+              _
             ) = createControllerAndMocks(
               new AcceptHeaderActionProviderImpl()
             )
@@ -8957,8 +8951,6 @@ class V2MovementsControllerSpec
               )
             )
               .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
-
-            when(mockAppConfig.enablePhase5).thenReturn(true)
 
             val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
             val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId, None)(request)
@@ -9133,8 +9125,6 @@ class V2MovementsControllerSpec
                 )
               )
                 .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
-
-              when(mockAppConfig.enablePhase5).thenReturn(true)
 
               val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
               val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId, None)(request)
@@ -9351,8 +9341,6 @@ class V2MovementsControllerSpec
               )
                 .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
-              when(mockAppConfig.enablePhase5).thenReturn(true)
-
               val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
               val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId, Some(clientId))(request)
 
@@ -9552,8 +9540,6 @@ class V2MovementsControllerSpec
               )
                 .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
-              when(mockAppConfig.enablePhase5).thenReturn(true)
-
               val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
               val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId, None)(request)
 
@@ -9650,46 +9636,6 @@ class V2MovementsControllerSpec
       }
     }
 
-    "if phase5 is not enabled, return NOT_ACCEPTABLE" in forAll(
-      arbitrary[EORINumber],
-      arbitrary[MovementType],
-      arbitrary[MovementId],
-      arbitrary[MessageId]
-    ) {
-      (eori, movementType, movementId, messageId) =>
-        val ControllerAndMocks(
-          sut,
-          _,
-          _,
-          _,
-          _,
-          _,
-          _,
-          _,
-          _,
-          _,
-          mockAppConfig
-        ) = createControllerAndMocks(
-          new AcceptHeaderActionProviderImpl()
-        )
-
-        when(mockAppConfig.enablePhase5).thenReturn(false)
-
-        val request                  = FakeRequest[UpscanResponse]("POST", "/", FakeHeaders(), upscanSuccess)
-        val response: Future[Result] = sut.attachMessageFromUpscan(eori, movementType, movementId, messageId, None)(request)
-
-        whenReady(response) {
-          _ =>
-            status(response) mustBe NOT_ACCEPTABLE
-            contentAsJson(response) mustBe Json.obj(
-              "message" -> "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages.",
-              "code"    -> "NOT_ACCEPTABLE"
-            )
-
-        }
-
-    }
-
     "should return Ok when a failure response is received from upscan" in forAll(
       arbitraryEORINumber.arbitrary,
       arbitraryMovementType.arbitrary,
@@ -9743,8 +9689,6 @@ class V2MovementsControllerSpec
           )
         )
           .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
-
-        when(mockAppConfig.enablePhase5).thenReturn(true)
 
         val request = FakeRequest(
           POST,
