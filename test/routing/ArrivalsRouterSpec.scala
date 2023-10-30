@@ -85,10 +85,7 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
           )
 
           s"when the accept header equals ${acceptHeaderValue.getOrElse("nothing")}, it returns status code $expectedStatus" in {
-            isVersion match {
-              case true  => when(mockAppConfig.enablePhase5).thenReturn(true)
-              case false => when(mockAppConfig.enablePhase5).thenReturn(false)
-            }
+            when(mockAppConfig.enablePhase5).thenReturn(isVersion)
 
             val request =
               FakeRequest(method = callValue.method, uri = callValue.url, body = <test></test>, headers = arrivalsHeaders)
@@ -96,13 +93,13 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
 
             status(result) mustBe expectedStatus
 
-            isVersion match {
-              case true => contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
-              case false =>
-                contentAsJson(result) mustBe Json.obj(
-                  "message" -> "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages.",
-                  "code"    -> "NOT_ACCEPTABLE"
-                )
+            if (isVersion) {
+              contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
+            } else {
+              contentAsJson(result) mustBe Json.obj(
+                "message" -> "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages.",
+                "code"    -> "NOT_ACCEPTABLE"
+              )
             }
           }
       }
@@ -173,10 +170,7 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
           )
 
           s"when the accept header equals ${acceptHeaderValue.getOrElse("nothing")}, it returns status code $expectedStatus" in {
-            isVersion match {
-              case true  => when(mockAppConfig.disablePhase4).thenReturn(false)
-              case false => when(mockAppConfig.disablePhase4).thenReturn(true)
-            }
+            when(mockAppConfig.disablePhase4).thenReturn(!isVersion)
             val request =
               FakeRequest(
                 method = callValue.method,
@@ -187,13 +181,13 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
             val result = call(sutValue, request)
 
             status(result) mustBe expectedStatus
-            isVersion match {
-              case true => contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
-              case false =>
-                contentAsJson(result) mustBe Json.obj(
-                  "message" -> "New NCTS4 Arrival Notifications can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Arrival Notifications.",
-                  "code"    -> "GONE"
-                )
+            if (isVersion) {
+              contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
+            } else {
+              contentAsJson(result) mustBe Json.obj(
+                "message" -> "New NCTS4 Arrival Notifications can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Arrival Notifications.",
+                "code"    -> "GONE"
+              )
             }
           }
       }
