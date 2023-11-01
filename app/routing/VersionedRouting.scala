@@ -97,4 +97,13 @@ trait VersionedRouting {
   def runIfBound[A](key: String, value: String, action: A => Action[_])(implicit binding: PathBindable[A]): Action[_] =
     binding.bind(key, value).fold(bindingFailureAction(_), action)
 
+  def handleEnablingPhase5() =
+    Action(streamFromMemory) {
+      request =>
+        request.body.runWith(Sink.ignore)
+        val presentationError = PresentationError.notAcceptableError(
+          "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages."
+        )
+        Status(presentationError.code.statusCode)(Json.toJson(presentationError))
+    }
 }

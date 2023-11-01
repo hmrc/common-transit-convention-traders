@@ -31,6 +31,7 @@ import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.GONE
+import play.api.http.Status.NOT_ACCEPTABLE
 import play.api.http.Status.OK
 import play.api.libs.json.Json
 import play.api.mvc.Action
@@ -72,7 +73,7 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
     .get
 
   "route to the version 2 controller" - {
-    def executeTest(callValue: Call, sutValue: => Action[Source[ByteString, _]], expectedStatus: Int) =
+    def executeTest(callValue: Call, sutValue: => Action[Source[ByteString, _]], expectedStatus: Int, isVersion: Boolean) =
       Seq(
         Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON),
         Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML),
@@ -84,27 +85,80 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
           )
 
           s"when the accept header equals ${acceptHeaderValue.getOrElse("nothing")}, it returns status code $expectedStatus" in {
+            when(mockAppConfig.enablePhase5).thenReturn(isVersion)
 
             val request =
               FakeRequest(method = callValue.method, uri = callValue.url, body = <test></test>, headers = arrivalsHeaders)
             val result = call(sutValue, request)
 
             status(result) mustBe expectedStatus
-            contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
+
+            if (isVersion) {
+              contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
+            } else {
+              contentAsJson(result) mustBe Json.obj(
+                "message" -> "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages.",
+                "code"    -> "NOT_ACCEPTABLE"
+              )
+            }
           }
       }
 
-    "when creating an arrival notification" - executeTest(routes.ArrivalsRouter.createArrivalNotification(), sut.createArrivalNotification(), ACCEPTED)
+    "when creating an arrival notification" - executeTest(routes.ArrivalsRouter.createArrivalNotification(), sut.createArrivalNotification(), ACCEPTED, true)
 
-    "when getting an arrival" - executeTest(routes.ArrivalsRouter.getArrival(id), sut.getArrival(id), OK)
+    "when creating an arrival notification return NOT_ACCEPTABLE when phase5 feature is disabled" - executeTest(
+      routes.ArrivalsRouter.createArrivalNotification(),
+      sut.createArrivalNotification(),
+      NOT_ACCEPTABLE,
+      false
+    )
 
-    "when getting arrivals for a given enrolment EORI" - executeTest(routes.ArrivalsRouter.getArrivalsForEori(), sut.getArrivalsForEori(), OK)
+    "when getting an arrival" - executeTest(routes.ArrivalsRouter.getArrival(id), sut.getArrival(id), OK, true)
 
-    "when getting a list of arrival messages with given arrivalId" - executeTest(routes.ArrivalsRouter.getArrival(id), sut.getArrival(id), OK)
+    "when getting an arrival return NOT_ACCEPTABLE when phase5 feature is disabled" - executeTest(
+      routes.ArrivalsRouter.getArrival(id),
+      sut.getArrival(id),
+      NOT_ACCEPTABLE,
+      false
+    )
 
-    "when getting a single arrival message" - executeTest(routes.ArrivalsRouter.getArrivalMessage(id, id), sut.getArrivalMessage(id, id), OK)
+    "when getting arrivals for a given enrolment EORI" - executeTest(routes.ArrivalsRouter.getArrivalsForEori(), sut.getArrivalsForEori(), OK, true)
 
-    "when submitting a new message for an existing arrival" - executeTest(routes.ArrivalsRouter.attachMessage(id), sut.attachMessage(id), ACCEPTED)
+    "when getting arrivals for a given enrolment EORI return NOT_ACCEPTABLE when phase5 feature is disabled" - executeTest(
+      routes.ArrivalsRouter.getArrivalsForEori(),
+      sut.getArrivalsForEori(),
+      NOT_ACCEPTABLE,
+      false
+    )
+
+    "when getting a list of arrival messages with given arrivalId" - executeTest(routes.ArrivalsRouter.getArrival(id), sut.getArrival(id), OK, true)
+
+    "when getting a single arrival message" - executeTest(routes.ArrivalsRouter.getArrivalMessage(id, id), sut.getArrivalMessage(id, id), OK, true)
+
+    "when getting a single arrival message return NOT_ACCEPTABLE when phase5 feature is disabled" - executeTest(
+      routes.ArrivalsRouter.getArrivalMessage(id, id),
+      sut.getArrivalMessage(id, id),
+      NOT_ACCEPTABLE,
+      false
+    )
+
+    "when submitting a new message for an existing arrival" - executeTest(routes.ArrivalsRouter.attachMessage(id), sut.attachMessage(id), ACCEPTED, true)
+
+    "when submitting a new message for an existing arrival return NOT_ACCEPTABLE when phase5 feature is disabled" - executeTest(
+      routes.ArrivalsRouter.attachMessage(id),
+      sut.attachMessage(id),
+      NOT_ACCEPTABLE,
+      false
+    )
+
+    "when getting messages for an existing arrival" - executeTest(routes.ArrivalsRouter.getArrivalMessageIds(id), sut.attachMessage(id), ACCEPTED, true)
+
+    "when getting messages for an existing arrival return NOT_ACCEPTABLE when phase5 feature is disabled" - executeTest(
+      routes.ArrivalsRouter.getArrivalMessageIds(id),
+      sut.attachMessage(id),
+      NOT_ACCEPTABLE,
+      false
+    )
   }
 
   "route to the version 1 controller" - {
@@ -116,10 +170,7 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
           )
 
           s"when the accept header equals ${acceptHeaderValue.getOrElse("nothing")}, it returns status code $expectedStatus" in {
-            isVersion match {
-              case true  => when(mockAppConfig.disablePhase4).thenReturn(false)
-              case false => when(mockAppConfig.disablePhase4).thenReturn(true)
-            }
+            when(mockAppConfig.disablePhase4).thenReturn(!isVersion)
             val request =
               FakeRequest(
                 method = callValue.method,
@@ -130,13 +181,13 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
             val result = call(sutValue, request)
 
             status(result) mustBe expectedStatus
-            isVersion match {
-              case true => contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
-              case false =>
-                contentAsJson(result) mustBe Json.obj(
-                  "message" -> "New NCTS4 Arrival Notifications can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Arrival Notifications.",
-                  "code"    -> "GONE"
-                )
+            if (isVersion) {
+              contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
+            } else {
+              contentAsJson(result) mustBe Json.obj(
+                "message" -> "New NCTS4 Arrival Notifications can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Arrival Notifications.",
+                "code"    -> "GONE"
+              )
             }
           }
       }

@@ -5637,7 +5637,7 @@ class V2MovementsControllerSpec
                 _,
                 _,
                 _,
-                _
+                mockAppConfig
               ) = createControllerAndMocks()
               when(
                 mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
@@ -5653,6 +5653,8 @@ class V2MovementsControllerSpec
                   mockConversionService.xmlToJson(eqTo(smallMessageSummaryXml.messageType.get), any())(any(), any(), any())
                 ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
               }
+              when(mockAppConfig.enablePhase5).thenReturn(true)
+
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
               status(result) mustBe OK
@@ -5679,7 +5681,7 @@ class V2MovementsControllerSpec
                 _,
                 _,
                 _,
-                _
+                mockAppConfig
               ) = createControllerAndMocks()
               when(
                 mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
@@ -5708,6 +5710,8 @@ class V2MovementsControllerSpec
                 ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
               }
 
+              when(mockAppConfig.enablePhase5).thenReturn(true)
+
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
               status(result) mustBe OK
@@ -5735,7 +5739,7 @@ class V2MovementsControllerSpec
                 _,
                 _,
                 _,
-                _
+                mockAppConfig
               ) = createControllerAndMocks()
               when(
                 mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
@@ -5746,6 +5750,8 @@ class V2MovementsControllerSpec
                 .thenAnswer(
                   _ => EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))
                 )
+
+              when(mockAppConfig.enablePhase5).thenReturn(true)
 
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
@@ -5769,7 +5775,7 @@ class V2MovementsControllerSpec
                 _,
                 _,
                 _,
-                _
+                mockAppConfig
               ) = createControllerAndMocks()
               when(
                 mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
@@ -5781,6 +5787,8 @@ class V2MovementsControllerSpec
                   _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
                 )
 
+              when(mockAppConfig.enablePhase5).thenReturn(true)
+
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
               status(result) mustBe INTERNAL_SERVER_ERROR
@@ -5790,6 +5798,33 @@ class V2MovementsControllerSpec
                 "message" -> "Internal server error"
               )
             }
+
+            "if phase5 is disabled return NOT_ACCEPTABLE" in {
+              val ControllerAndMocks(
+                sut,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                mockAppConfig
+              ) = createControllerAndMocks()
+
+              when(mockAppConfig.enablePhase5).thenReturn(false)
+
+              val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+
+              status(result) mustBe NOT_ACCEPTABLE
+              contentAsJson(result) mustBe Json.obj(
+                "message" -> "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages.",
+                "code"    -> "NOT_ACCEPTABLE"
+              )
+            }
+
           }
 
           s"for a large message,when the accept header equals $acceptHeaderValue" - {
@@ -5828,6 +5863,8 @@ class V2MovementsControllerSpec
                 .thenAnswer(
                   _ => EitherT.rightT(Source.single(ByteString(xml)))
                 )
+
+              when(mockAppConfig.enablePhase5).thenReturn(true)
 
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
@@ -5883,6 +5920,8 @@ class V2MovementsControllerSpec
                   _ => EitherT.rightT(Source.single(ByteString(xml)))
                 )
 
+              when(mockAppConfig.enablePhase5).thenReturn(true)
+
               if (acceptHeaderValue == VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON) {
                 when(
                   mockConversionService.xmlToJson(eqTo(largeMessageSummaryXml.messageType.get), any())(any(), any(), any())
@@ -5917,7 +5956,7 @@ class V2MovementsControllerSpec
                 _,
                 _,
                 _,
-                _
+                mockAppConfig
               ) = createControllerAndMocks()
               when(
                 mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
@@ -5928,6 +5967,8 @@ class V2MovementsControllerSpec
                 .thenAnswer(
                   _ => EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))
                 )
+
+              when(mockAppConfig.enablePhase5).thenReturn(true)
 
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
@@ -5951,7 +5992,7 @@ class V2MovementsControllerSpec
                 _,
                 _,
                 _,
-                _
+                mockAppConfig
               ) = createControllerAndMocks()
               when(
                 mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
@@ -5963,6 +6004,8 @@ class V2MovementsControllerSpec
                   _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
                 )
 
+              when(mockAppConfig.enablePhase5).thenReturn(true)
+
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
               status(result) mustBe INTERNAL_SERVER_ERROR
@@ -5970,6 +6013,32 @@ class V2MovementsControllerSpec
               contentAsJson(result) mustBe Json.obj(
                 "code"    -> "INTERNAL_SERVER_ERROR",
                 "message" -> "Internal server error"
+              )
+            }
+
+            "if phase5 disabled return NOT_ACCEPTABLE" in {
+              val ControllerAndMocks(
+                sut,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                _,
+                mockAppConfig
+              ) = createControllerAndMocks()
+
+              when(mockAppConfig.enablePhase5).thenReturn(false)
+
+              val result = sut.getMessageBody(movementType, movementId, messageId)(request)
+
+              status(result) mustBe NOT_ACCEPTABLE
+              contentAsJson(result) mustBe Json.obj(
+                "message" -> "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages.",
+                "code"    -> "NOT_ACCEPTABLE"
               )
             }
           }
@@ -9585,7 +9654,7 @@ class V2MovementsControllerSpec
           _,
           mockPushNotificationService,
           _,
-          _
+          mockAppConfig
         ) = createControllerAndMocks()
 
         when(

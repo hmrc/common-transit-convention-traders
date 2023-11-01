@@ -501,16 +501,23 @@ class V2MovementsControllerImpl @Inject() (
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonAndXmlAcceptHeaders)).async {
       implicit request =>
-        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        (for {
-          messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
-          acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
-          messageBody <- getBody(request.eoriNumber, movementType, movementId, messageId, messageSummary.body)
-          body        <- formatMessageBody(messageSummary, acceptHeader, messageBody)
-        } yield body).fold(
-          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-          response => Ok.chunked(response.body, Some(response.contentType))
-        )
+        if (config.enablePhase5) {
+          implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+          (for {
+            messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
+            acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
+            messageBody <- getBody(request.eoriNumber, movementType, movementId, messageId, messageSummary.body)
+            body        <- formatMessageBody(messageSummary, acceptHeader, messageBody)
+          } yield body).fold(
+            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+            response => Ok.chunked(response.body, Some(response.contentType))
+          )
+        } else {
+          val presentationError = PresentationError.notAcceptableError(
+            "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages."
+          )
+          Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
+        }
     }
 
   def getMessageIds(
