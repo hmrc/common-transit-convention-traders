@@ -55,7 +55,6 @@ object MessageType {
   case object UnloadingRemarks                  extends ArrivalMessageType("IE044", "CC044C", AuditType.UnloadingRemarks)
   case object WriteOffNotification              extends DepartureMessageType("IE045", "CC045C", AuditType.WriteOffNotification)
   case object NoReleaseForTransit               extends DepartureMessageType("IE051", "CC051C", AuditType.NoReleaseForTransit)
-  case object RequestOfRelease                  extends DepartureMessageType("IE054", "CC054C", AuditType.RequestOfRelease)
   case object GuaranteeNotValid                 extends DepartureMessageType("IE055", "CC055C", AuditType.GuaranteeNotValid)
   case object RejectionFromOfficeOfDeparture    extends DepartureMessageType("IE056", "CC056C", AuditType.RejectionFromOfficeOfDeparture)
   case object RejectionFromOfficeOfDestination  extends ArrivalMessageType("IE057", "CC057C", AuditType.RejectionFromOfficeOfDestination)
@@ -70,7 +69,6 @@ object MessageType {
   val updateMessageTypesSentByDepartureTrader: Seq[MessageType] = Seq(
     DeclarationAmendment,
     DeclarationInvalidationRequest,
-    RequestOfRelease,
     PresentationNotificationForThePreLodgedDeclaration
   )
 

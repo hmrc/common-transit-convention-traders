@@ -34,7 +34,6 @@ object AuditType {
   final case object UnloadingRemarks                                   extends AuditType("UnloadingRemarks")
   final case object WriteOffNotification                               extends AuditType("WriteOffNotification")
   final case object NoReleaseForTransit                                extends AuditType("NoReleaseForTransit")
-  final case object RequestOfRelease                                   extends AuditType("RequestOfRelease")
   final case object GuaranteeNotValid                                  extends AuditType("GuaranteeNotValid")
   final case object RejectionFromOfficeOfDeparture                     extends AuditType("RejectionFromOfficeOfDeparture")
   final case object RejectionFromOfficeOfDestination                   extends AuditType("RejectionFromOfficeOfDestination")
@@ -77,7 +76,6 @@ object AuditType {
     WriteOffNotification,
     NoReleaseForTransit,
     UnloadingPermission,
-    RequestOfRelease,
     GuaranteeNotValid,
     RejectionFromOfficeOfDeparture,
     RejectionFromOfficeOfDestination,
