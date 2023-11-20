@@ -8,7 +8,7 @@ info:
     Use the CTC Traders API to send departure and arrival movements to the New Computerised Transit System (NCTS)
     and to get messages sent from customs offices of departure and destination.<br /><br />
     You can use this version of the API to send messages up to 4.9MB in size. Larger messages will be rejected with
-    a HTTP 413 (Request Entity Too Large) status code.<br /><br />
+    an HTTP 413 (Request Entity Too Large) status code.<br /><br />
     For a detailed overview of v1.0 of the API, see [CTC Traders API phase 4 service guide](/guides/ctc-traders-phase4-service-guide/).
 servers:
   - url: https://test-api.service.hmrc.gov.uk
