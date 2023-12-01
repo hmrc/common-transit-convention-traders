@@ -110,6 +110,7 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
         .withEoriNumber(enrolmentEORI)
         .withMovementType(movementType)
         .withMessageType(messageType)
+        .withClientId
         .setHeader(
           HeaderNames.CONTENT_TYPE       -> contentType,
           Constants.XContentLengthHeader -> contentLength.toString,
@@ -143,6 +144,7 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
           "X-Audit-Source"         -> "common-transit-convention-traders",
           HeaderNames.CONTENT_TYPE -> MimeTypes.JSON
         )
+        .withClientId
         .withBody(Json.toJson(details))
         .executeAndExpect(ACCEPTED)
   }
