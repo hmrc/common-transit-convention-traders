@@ -89,9 +89,10 @@ class AuditingConnectorSpec
             arbitrary[MovementId],
             arbitrary[MessageId],
             arbitrary[MessageType],
-            arbitrary[MovementType]
+            arbitrary[MovementType],
+            Gen.stringOfN(15, Gen.alphaNumChar)
           ) {
-            (eori, movementId, messageId, messageType, movementType) =>
+            (eori, movementId, messageId, messageType, movementType, clientId) =>
               server.stubFor(
                 post(
                   urlEqualTo(targetUrl(AuditType.DeclarationData))
@@ -106,10 +107,11 @@ class AuditingConnectorSpec
                   .withHeader("X-Audit-Meta-Message-Type", equalTo(messageType.code))
                   .withHeader("X-Audit-Meta-Movement-Type", equalTo(movementType.movementType))
                   .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
+                  .withHeader(Constants.XClientIdHeader, equalTo(clientId))
                   .willReturn(aResponse().withStatus(ACCEPTED))
               )
 
-              implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements"))
+              implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements", Constants.XClientIdHeader -> clientId))
               // when we call the audit service
               val future = sut.postMessageType(
                 AuditType.DeclarationData,
@@ -316,6 +318,7 @@ class AuditingConnectorSpec
       Gen.option(arbitrary[JsValue])
     ) {
       (eori, movementId, messageId, messageType, movementType, payload) =>
+        val clientId = Gen.stringOfN(15, Gen.alphaNumChar).sample.get
         server.stubFor(
           post(
             urlEqualTo(targetUrl(AuditType.DeclarationData))
@@ -323,6 +326,7 @@ class AuditingConnectorSpec
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo("application/json"))
             .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .withRequestBody(
               equalToJson(
                 Json.stringify(
@@ -335,7 +339,7 @@ class AuditingConnectorSpec
             .willReturn(aResponse().withStatus(ACCEPTED))
         )
 
-        implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements"))
+        implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements", Constants.XClientIdHeader -> clientId))
         // when we call the audit service
         val future = sut.postStatus(
           AuditType.DeclarationData,
