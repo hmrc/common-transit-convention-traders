@@ -19,4 +19,4 @@ package controllers.actions
 import play.api.mvc.Request
 import play.api.mvc.WrappedRequest
 
-case class AuthRequest[A](request: Request[A], eori: String) extends WrappedRequest[A](request)
+case class AuthRequest[A](request: Request[A], eori: String, hasNewEnrolment: Boolean) extends WrappedRequest[A](request)

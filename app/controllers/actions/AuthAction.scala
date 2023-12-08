@@ -77,7 +77,7 @@ class AuthAction @Inject() (
           .orElse(legacyEnrolmentId)
           .map {
             eoriNumber =>
-              block(AuthRequest(request, eoriNumber))
+              block(AuthRequest(request, eoriNumber, newEnrolmentId.isDefined))
           }
           .getOrElse {
             Future.failed(InsufficientEnrolments(s"Unable to retrieve enrolment for either $NewEnrolmentKey or $LegacyEnrolmentKey"))

@@ -41,6 +41,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import v2.utils.CallOps._
 import utils.ResponseHelper
 import utils.Utils
+import utils.AuthRequestOps._
 
 import java.time.OffsetDateTime
 import javax.inject.Inject
@@ -94,7 +95,8 @@ class ArrivalMovementController @Inject() (
                             response.responseData
                           )
                         )
-                      ).withHeaders(LOCATION -> routing.routes.ArrivalsRouter.getArrival(arrivalId.toString).urlWithContext)
+                      ).withHeaders(LOCATION -> routing.routes.ArrivalsRouter.getArrival(arrivalId.toString).urlWithContext,
+                      "X-Missing-ECC-Enrolment" -> "User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system")
                     case None =>
                       InternalServerError
                   }
