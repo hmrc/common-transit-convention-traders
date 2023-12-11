@@ -19,9 +19,13 @@ package controllers
 import com.google.inject.ImplementedBy
 import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
+import config.AppConfig
+import config.Constants.MissingECCEnrolmentMessage
+import config.Constants.XMissingECCEnrolment
 import connectors.ArrivalMessageConnector
 import controllers.actions.AnalyseMessageActionProvider
 import controllers.actions.AuthAction
+import controllers.actions.AuthRequest
 import controllers.actions.ValidateAcceptJsonHeaderAction
 import controllers.actions.ValidateArrivalMessageAction
 import metrics.HasActionMetrics
@@ -59,10 +63,11 @@ class ArrivalMessagesController @Inject() (
   cc: ControllerComponents,
   authAction: AuthAction,
   messageConnector: ArrivalMessageConnector,
-  validateMessageAction: ValidateArrivalMessageAction,
-  validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction,
+  validateMessageAction: ValidateArrivalMessageAction[AuthRequest],
+  validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction[AuthRequest],
   messageAnalyser: AnalyseMessageActionProvider,
-  val metrics: Metrics
+  val metrics: Metrics,
+  config: AppConfig
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with HasActionMetrics
@@ -87,16 +92,18 @@ class ArrivalMessagesController @Inject() (
                       MessageType.getMessageType(request.body) match {
                         case Some(messageType: MessageType) =>
                           val messageId = MessageId(Utils.lastFragment(locationValue).toInt)
-                          Accepted(
-                            Json.toJson(
-                              HateoasArrivalMessagesPostResponseMessage(
-                                arrivalId,
-                                messageId,
-                                messageType.code,
-                                request.body
-                              )
+                          if (config.phase4EnrolmentHeader && !request.hasNewEnrolment) {
+                            Accepted(
+                              Json.toJson(HateoasArrivalMessagesPostResponseMessage(arrivalId, messageId, messageType.code, request.body))
+                            ).withHeaders(
+                              LOCATION             -> routing.routes.ArrivalsRouter.getArrivalMessage(arrivalId.toString, messageId.toString).urlWithContext,
+                              XMissingECCEnrolment -> MissingECCEnrolmentMessage
                             )
-                          ).withHeaders(LOCATION -> routing.routes.ArrivalsRouter.getArrivalMessage(arrivalId.toString, messageId.toString).urlWithContext)
+                          } else {
+                            Accepted(
+                              Json.toJson(HateoasArrivalMessagesPostResponseMessage(arrivalId, messageId, messageType.code, request.body))
+                            ).withHeaders(LOCATION -> routing.routes.ArrivalsRouter.getArrivalMessage(arrivalId.toString, messageId.toString).urlWithContext)
+                          }
                         case None =>
                           InternalServerError
                       }
@@ -115,7 +122,12 @@ class ArrivalMessagesController @Inject() (
         implicit request =>
           messageConnector.get(arrivalId, messageId).map {
             case Right(m) =>
-              Ok(Json.toJson(HateoasArrivalResponseMessage(arrivalId, messageId, m)))
+              if (config.phase4EnrolmentHeader && !request.hasNewEnrolment) {
+                Ok(Json.toJson(HateoasArrivalResponseMessage(arrivalId, messageId, m)))
+                  .withHeaders(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
+              } else {
+                Ok(Json.toJson(HateoasArrivalResponseMessage(arrivalId, messageId, m)))
+              }
             case Left(response) =>
               handleNon2xx(response)
           }
@@ -129,7 +141,12 @@ class ArrivalMessagesController @Inject() (
           messageConnector.getMessages(arrivalId, receivedSince).map {
             case Right(a) =>
               messagesCount.update(a.messages.length)
-              Ok(Json.toJson(HateoasResponseArrivalWithMessages(a)))
+              if (config.phase4EnrolmentHeader && !request.hasNewEnrolment) {
+                Ok(Json.toJson(HateoasResponseArrivalWithMessages(a)))
+                  .withHeaders(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
+              } else {
+                Ok(Json.toJson(HateoasResponseArrivalWithMessages(a)))
+              }
             case Left(response) =>
               handleNon2xx(response)
           }

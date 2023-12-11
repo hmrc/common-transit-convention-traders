@@ -22,7 +22,9 @@ import com.google.inject.Singleton
 import java.time.OffsetDateTime
 import com.kenshoo.play.metrics.Metrics
 import connectors.DepartureMessageConnector
+import controllers.actions.AnalyseMessageActionProvider
 import controllers.actions.AuthAction
+import controllers.actions.AuthRequest
 import controllers.actions.ValidateAcceptJsonHeaderAction
 import controllers.actions.ValidateDepartureMessageAction
 
@@ -47,7 +49,6 @@ import utils.Utils
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
-import controllers.actions.AnalyseMessageActionProvider
 
 @ImplementedBy(classOf[DepartureMessagesController])
 trait V1DepartureMessagesController {
@@ -66,7 +67,7 @@ class DepartureMessagesController @Inject() (
   authAction: AuthAction,
   messageConnector: DepartureMessageConnector,
   validateMessageAction: ValidateDepartureMessageAction,
-  validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction,
+  validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction[AuthRequest],
   messageAnalyser: AnalyseMessageActionProvider,
   val metrics: Metrics
 )(implicit ec: ExecutionContext)

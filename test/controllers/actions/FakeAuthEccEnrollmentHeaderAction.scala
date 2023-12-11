@@ -25,7 +25,7 @@ import uk.gov.hmrc.auth.core._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-case class FakeAuthAction @Inject() (
+case class FakeAuthEccEnrollmentHeaderAction @Inject() (
   override val authConnector: AuthConnector,
   config: AppConfig,
   override val parser: BodyParsers.Default
@@ -33,5 +33,5 @@ case class FakeAuthAction @Inject() (
     extends AuthAction(authConnector, parser, new FakeEnrolmentLoggingService()) {
 
   override def invokeBlock[A](request: Request[A], block: AuthRequest[A] => Future[Result]): Future[Result] =
-    block(AuthRequest(request, "id", true))
+    block(AuthRequest(request, "id", false))
 }
