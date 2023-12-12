@@ -63,7 +63,7 @@ class DeparturesController @Inject() (
   authAction: AuthAction,
   departuresConnector: DeparturesConnector,
   validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction[AuthRequest],
-  validateDepartureDeclarationAction: ValidateDepartureDeclarationAction,
+  validateDepartureDeclarationAction: ValidateDepartureDeclarationAction[AuthRequest],
   ensureGuaranteeAction: EnsureGuaranteeAction,
   auditService: AuditService,
   messageAnalyser: AnalyseMessageActionProvider,
