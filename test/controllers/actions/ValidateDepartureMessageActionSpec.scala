@@ -33,6 +33,7 @@ import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import play.api.mvc.DefaultActionBuilder
+import play.api.mvc.Request
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -63,7 +64,7 @@ class ValidateDepartureMessageActionSpec
   override def beforeEach(): Unit =
     super.beforeEach()
 
-  class Harness(validateMessage: ValidateDepartureMessageAction, cc: ControllerComponents) extends BackendController(cc) {
+  class Harness(validateMessage: ValidateDepartureMessageAction[Request], cc: ControllerComponents) extends BackendController(cc) {
 
     def post: Action[NodeSeq] = (DefaultActionBuilder.apply(cc.parsers.anyContent) andThen validateMessage).async(cc.parsers.xml) {
       _ =>
@@ -79,7 +80,7 @@ class ValidateDepartureMessageActionSpec
 
   "ValidateDepartureMessageAction" - {
     "must execute the block when passed in a valid IE014 xml request" in {
-      val validateMessage = app.injector.instanceOf[ValidateDepartureMessageAction]
+      val validateMessage = app.injector.instanceOf[ValidateDepartureMessageAction[Request]]
       val cc              = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateMessage, cc)
@@ -92,7 +93,7 @@ class ValidateDepartureMessageActionSpec
     }
 
     "must return BadRequest when passed in an invalid IE014  xml request " in {
-      val validateMessage = app.injector.instanceOf[ValidateDepartureMessageAction]
+      val validateMessage = app.injector.instanceOf[ValidateDepartureMessageAction[Request]]
       val cc              = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateMessage, cc)
@@ -110,7 +111,7 @@ class ValidateDepartureMessageActionSpec
     }
 
     "must return BadRequest when passed in an empty request" in {
-      val validateMessage = app.injector.instanceOf[ValidateDepartureMessageAction]
+      val validateMessage = app.injector.instanceOf[ValidateDepartureMessageAction[Request]]
       val cc              = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateMessage, cc)
@@ -125,7 +126,7 @@ class ValidateDepartureMessageActionSpec
     }
 
     "must return BadRequest when passed in incorrect request body" in {
-      val validateMessage = app.injector.instanceOf[ValidateDepartureMessageAction]
+      val validateMessage = app.injector.instanceOf[ValidateDepartureMessageAction[Request]]
       val cc              = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateMessage, cc)
@@ -147,7 +148,7 @@ class ValidateDepartureMessageActionSpec
     }
 
     "must return NotImplemented when passed in an incorrect XML request" in {
-      val validateMessage = app.injector.instanceOf[ValidateDepartureMessageAction]
+      val validateMessage = app.injector.instanceOf[ValidateDepartureMessageAction[Request]]
       val cc              = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateMessage, cc)

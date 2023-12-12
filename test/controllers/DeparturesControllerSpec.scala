@@ -19,10 +19,13 @@ package controllers
 import audit.AuditService
 import com.kenshoo.play.metrics.Metrics
 import com.typesafe.config.ConfigFactory
+import config.Constants.MissingECCEnrolmentMessage
+import config.Constants.XMissingECCEnrolment
 import connectors.DeparturesConnector
 import connectors.ResponseHeaders
 import controllers.actions.AuthAction
 import controllers.actions.FakeAuthAction
+import controllers.actions.FakeAuthEccEnrollmentHeaderAction
 import data.TestXml
 import models.Box
 import models.domain.Departure
@@ -95,6 +98,22 @@ class DeparturesControllerSpec
     )
     .configure(
       "disable-phase-4" -> false
+    )
+    .build()
+
+  val appWithEnrollmentHeader = GuiceApplicationBuilder()
+    .overrides(
+      bind[Metrics].toInstance(new TestMetrics),
+      bind[AuthAction].to[FakeAuthEccEnrollmentHeaderAction],
+      bind[V2MovementsController].to[FakeV2MovementsController],
+      bind[DeparturesConnector].toInstance(mockDepartureConnector),
+      bind[EnsureGuaranteeService].toInstance(mockGuaranteeService),
+      bind[AuditService].toInstance(mockAuditService),
+      bind[Clock].toInstance(mockClock)
+    )
+    .configure(
+      "disable-phase-4"          -> false,
+      "phase-4-enrolment-header" -> true
     )
     .build()
 
@@ -389,6 +408,23 @@ class DeparturesControllerSpec
       contentAsString(result) mustEqual expectedDepartureResult.toString()
     }
 
+    "return 200 with json body of departure has XMissingECCEnrolment header in response" in {
+      when(mockDepartureConnector.get(DepartureId(any()))(any(), any()))
+        .thenReturn(Future.successful(Right(sourceDeparture)))
+
+      val request = FakeRequest(
+        "GET",
+        routing.routes.DeparturesRouter.getDeparture(DepartureId(123).toString).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
+      val result = route(appWithEnrollmentHeader, request).value
+
+      status(result) mustBe OK
+      contentAsString(result) mustEqual expectedDepartureResult.toString()
+      headers(result) must contain(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
+    }
+
     "return 404 if downstream return 404" in {
       when(mockDepartureConnector.get(DepartureId(any()))(any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(404, ""))))
@@ -436,6 +472,23 @@ class DeparturesControllerSpec
 
       status(result) mustBe OK
       contentAsString(result) mustEqual expectedDeparture.toString()
+    }
+
+    "return 200 with json body of a sequence of departures has XMissingECCEnrolment header in response" in {
+      when(mockDepartureConnector.getForEori(any())(any(), any()))
+        .thenReturn(Future.successful(Right(Departures(Seq(sourceDeparture, sourceDeparture, sourceDeparture), 3, 3))))
+
+      val request = FakeRequest(
+        "GET",
+        routing.routes.DeparturesRouter.getDeparturesForEori(None).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
+      val result = route(appWithEnrollmentHeader, request).value
+
+      status(result) mustBe OK
+      contentAsString(result) mustEqual expectedDeparture.toString()
+      headers(result) must contain(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
     }
 
     "return 200 with empty list if that is provided" in {

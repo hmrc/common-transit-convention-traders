@@ -22,6 +22,9 @@ import audit.AuditType
 import com.google.inject.ImplementedBy
 import com.google.inject.Singleton
 import com.kenshoo.play.metrics.Metrics
+import config.AppConfig
+import config.Constants.MissingECCEnrolmentMessage
+import config.Constants.XMissingECCEnrolment
 import connectors.DeparturesConnector
 import controllers.actions._
 import metrics.HasActionMetrics
@@ -64,7 +67,8 @@ class DeparturesController @Inject() (
   ensureGuaranteeAction: EnsureGuaranteeAction,
   auditService: AuditService,
   messageAnalyser: AnalyseMessageActionProvider,
-  val metrics: Metrics
+  val metrics: Metrics,
+  config: AppConfig
 )(implicit ec: ExecutionContext, val materializer: Materializer)
     extends BackendController(cc)
     with HasActionMetrics
@@ -117,7 +121,12 @@ class DeparturesController @Inject() (
         implicit request =>
           departuresConnector.get(departureId).map {
             case Right(departure) =>
-              Ok(Json.toJson(HateoasResponseDeparture(departure)))
+              if (config.phase4EnrolmentHeader && !request.hasNewEnrolment) {
+                Ok(Json.toJson(HateoasResponseDeparture(departure)))
+                  .withHeaders(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
+              } else {
+                Ok(Json.toJson(HateoasResponseDeparture(departure)))
+              }
             case Left(invalidResponse) =>
               handleNon2xx(invalidResponse)
           }
@@ -131,7 +140,12 @@ class DeparturesController @Inject() (
           departuresConnector.getForEori(updatedSince).map {
             case Right(departures) =>
               departuresCount.update(departures.departures.length)
-              Ok(Json.toJson(HateoasResponseDepartures(departures)))
+              if (config.phase4EnrolmentHeader && !request.hasNewEnrolment) {
+                Ok(Json.toJson(HateoasResponseDepartures(departures)))
+                  .withHeaders(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
+              } else {
+                Ok(Json.toJson(HateoasResponseDepartures(departures)))
+              }
             case Left(invalidResponse) =>
               handleNon2xx(invalidResponse)
           }
