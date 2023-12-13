@@ -94,16 +94,16 @@ class DeparturesController @Inject() (
                   MessageType.getMessageType(request.body) match {
                     case Some(messageType: MessageType) =>
                       val departureId = DepartureId(Utils.lastFragment(locationValue).toInt)
-                      Accepted(
-                        Json.toJson(
-                          HateoasDeparturePostResponseMessage(
-                            departureId,
-                            messageType.code,
-                            request.body,
-                            response.responseData
+                      if (config.phase4EnrolmentHeader && !request.request.hasNewEnrolment) {
+                        Accepted(Json.toJson(HateoasDeparturePostResponseMessage(departureId, messageType.code, request.body, response.responseData)))
+                          .withHeaders(
+                            LOCATION             -> routing.routes.DeparturesRouter.getDeparture(departureId.toString).urlWithContext,
+                            XMissingECCEnrolment -> MissingECCEnrolmentMessage
                           )
-                        )
-                      ).withHeaders(LOCATION -> routing.routes.DeparturesRouter.getDeparture(departureId.toString).urlWithContext)
+                      } else {
+                        Accepted(Json.toJson(HateoasDeparturePostResponseMessage(departureId, messageType.code, request.body, response.responseData)))
+                          .withHeaders(LOCATION -> routing.routes.DeparturesRouter.getDeparture(departureId.toString).urlWithContext)
+                      }
                     case None =>
                       InternalServerError
                   }

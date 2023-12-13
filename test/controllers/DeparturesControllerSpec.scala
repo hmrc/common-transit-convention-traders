@@ -259,6 +259,33 @@ class DeparturesControllerSpec
               verify(mockAuditService, times(1)).auditEvent(any(), any())(any())
             }
 
+            "and create an audit event if the guarantee was changed and  has XMissingECCEnrolment header in response" in {
+              when(mockDepartureConnector.post(any())(any(), any()))
+                .thenReturn(Future.successful(Right(responseHeaders("/transits-movements-trader-at-departure/movements/departures/123"))))
+
+              val request = fakeRequestDepartures(method = "POST", body = CC015BRequiringDefaultGuarantee, headers = departureHeaders)
+              val result  = route(appWithEnrollmentHeader, request).value
+
+              val expectedJson = Json.parse("""
+                  |{
+                  |  "_links": {
+                  |    "self": {
+                  |      "href": "/customs/transits/movements/departures/123"
+                  |    }
+                  |  },
+                  |  "departureId": "123",
+                  |  "messageType": "IE015",
+                  |  "body": "<CC015B>\n    <SynIdeMES1>UNOC</SynIdeMES1>\n    <SynVerNumMES2>3</SynVerNumMES2>\n    <MesRecMES6>NCTS</MesRecMES6>\n    <DatOfPreMES9>20201217</DatOfPreMES9>\n    <TimOfPreMES10>1340</TimOfPreMES10>\n    <IntConRefMES11>17712576475433</IntConRefMES11>\n    <AppRefMES14>NCTS</AppRefMES14>\n    <MesIdeMES19>1</MesIdeMES19>\n    <MesTypMES20>GB015B</MesTypMES20>\n    <HEAHEA>\n      <RefNumHEA4>GUATEST1201217134032</RefNumHEA4>\n      <TypOfDecHEA24>T1</TypOfDecHEA24>\n      <CouOfDesCodHEA30>IT</CouOfDesCodHEA30>\n      <AutLocOfGooCodHEA41>954131533-GB60DEP</AutLocOfGooCodHEA41>\n      <CouOfDisCodHEA55>GB</CouOfDisCodHEA55>\n      <IdeOfMeaOfTraAtDHEA78>NC15 REG</IdeOfMeaOfTraAtDHEA78>\n      <NatOfMeaOfTraAtDHEA80>GB</NatOfMeaOfTraAtDHEA80>\n      <ConIndHEA96>0</ConIndHEA96>\n      <NCTSAccDocHEA601LNG>EN</NCTSAccDocHEA601LNG>\n      <TotNumOfIteHEA305>1</TotNumOfIteHEA305>\n      <TotNumOfPacHEA306>10</TotNumOfPacHEA306>\n      <TotGroMasHEA307>1000</TotGroMasHEA307>\n      <DecDatHEA383>20201217</DecDatHEA383>\n      <DecPlaHEA394>Dover</DecPlaHEA394>\n    </HEAHEA>\n    <TRAPRIPC1>\n      <NamPC17>NCTS UK TEST LAB HMCE</NamPC17>\n      <StrAndNumPC122>11TH FLOOR, ALEX HOUSE, VICTORIA AV</StrAndNumPC122>\n      <PosCodPC123>SS99 1AA</PosCodPC123>\n      <CitPC124>SOUTHEND-ON-SEA, ESSEX</CitPC124>\n      <CouPC125>GB</CouPC125>\n      <TINPC159>GB954131533000</TINPC159>\n    </TRAPRIPC1>\n    <TRACONCO1>\n      <NamCO17>NCTS UK TEST LAB HMCE</NamCO17>\n      <StrAndNumCO122>11TH FLOOR, ALEX HOUSE, VICTORIA AV</StrAndNumCO122>\n      <PosCodCO123>SS99 1AA</PosCodCO123>\n      <CitCO124>SOUTHEND-ON-SEA, ESSEX</CitCO124>\n      <CouCO125>GB</CouCO125>\n      <TINCO159>GB954131533000</TINCO159>\n    </TRACONCO1>\n    <TRACONCE1>\n      <NamCE17>NCTS UK TEST LAB HMCE</NamCE17>\n      <StrAndNumCE122>ITALIAN OFFICE</StrAndNumCE122>\n      <PosCodCE123>IT99 1IT</PosCodCE123>\n      <CitCE124>MILAN</CitCE124>\n      <CouCE125>IT</CouCE125>\n      <TINCE159>IT11ITALIANC11</TINCE159>\n    </TRACONCE1>\n    <CUSOFFDEPEPT>\n      <RefNumEPT1>GB000060</RefNumEPT1>\n    </CUSOFFDEPEPT>\n    <CUSOFFTRARNS>\n      <RefNumRNS1>FR001260</RefNumRNS1>\n      <ArrTimTRACUS085>202012191340</ArrTimTRACUS085>\n    </CUSOFFTRARNS>\n    <CUSOFFDESEST>\n      <RefNumEST1>IT018100</RefNumEST1>\n    </CUSOFFDESEST>\n    <CONRESERS>\n      <ConResCodERS16>A3</ConResCodERS16>\n      <DatLimERS69>20201225</DatLimERS69>\n    </CONRESERS>\n    <SEAINFSLI>\n      <SeaNumSLI2>1</SeaNumSLI2>\n      <SEAIDSID>\n        <SeaIdeSID1>NCTS001</SeaIdeSID1>\n      </SEAIDSID>\n    </SEAINFSLI>\n    <GUAGUA>\n      <GuaTypGUA1>0</GuaTypGUA1>\n      <GUAREFREF>\n        <GuaRefNumGRNREF1>20GB0000010000H72</GuaRefNumGRNREF1>\n        <AccCodREF6>AC01</AccCodREF6>\n      </GUAREFREF>\n    </GUAGUA>\n    <GOOITEGDS>\n      <IteNumGDS7>1</IteNumGDS7>\n      <GooDesGDS23>Wheat</GooDesGDS23>\n      <GooDesGDS23LNG>EN</GooDesGDS23LNG>\n      <GroMasGDS46>1000</GroMasGDS46>\n      <NetMasGDS48>950</NetMasGDS48>\n      <SPEMENMT2>\n        <AddInfMT21>20GB0000010000H72</AddInfMT21>\n        <AddInfCodMT23>CAL</AddInfCodMT23>\n      </SPEMENMT2>\n      <PACGS2>\n        <MarNumOfPacGS21>AB234</MarNumOfPacGS21>\n        <KinOfPacGS23>BX</KinOfPacGS23>\n        <NumOfPacGS24>10</NumOfPacGS24>\n      </PACGS2>\n    </GOOITEGDS>\n  </CC015B>"
+                  |}""".stripMargin)
+
+              status(result) mustBe ACCEPTED
+              contentAsJson(result) mustBe expectedJson
+              headers(result) must contain(LOCATION -> routing.routes.DeparturesRouter.getDeparture(DepartureId(123).toString).urlWithContext)
+              headers(result) must contain(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
+
+              verify(mockAuditService, times(1)).auditEvent(any(), any())(any())
+            }
+
             "and not create an audit event when the guarantee was not changed" in {
               when(mockDepartureConnector.post(any())(any(), any()))
                 .thenReturn(
