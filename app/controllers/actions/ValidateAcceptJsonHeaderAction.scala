@@ -29,9 +29,9 @@ import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class ValidateAcceptJsonHeaderAction @Inject() ()(implicit val executionContext: ExecutionContext) extends ActionRefiner[Request, Request] {
+class ValidateAcceptJsonHeaderAction[R[_] <: Request[_]] @Inject() ()(implicit val executionContext: ExecutionContext) extends ActionRefiner[R, R] {
 
-  override protected def refine[A](request: Request[A]): Future[Either[Result, Request[A]]] =
+  override protected def refine[A](request: R[A]): Future[Either[Result, R[A]]] =
     request.headers.get("Accept") match {
       case Some(value) =>
         value match {

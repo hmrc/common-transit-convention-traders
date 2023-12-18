@@ -22,9 +22,12 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import akka.util.ByteString
 import com.kenshoo.play.metrics.Metrics
+import config.Constants.MissingECCEnrolmentMessage
+import config.Constants.XMissingECCEnrolment
 import connectors.ArrivalMessageConnector
 import controllers.actions.AuthAction
 import controllers.actions.FakeAuthAction
+import controllers.actions.FakeAuthEccEnrollmentHeaderAction
 import data.TestXml
 import models.domain.ArrivalId
 import models.domain.ArrivalWithMessages
@@ -78,6 +81,21 @@ class ArrivalMessagesControllerSpec
       bind[AuthAction].to[FakeAuthAction],
       bind[ArrivalMessageConnector].toInstance(mockMessageConnector),
       bind[Clock].toInstance(mockClock)
+    )
+    .configure(
+      "phase-4-enrolment-header" -> false
+    )
+    .build()
+
+  val appWithEnrollmentHeader = GuiceApplicationBuilder()
+    .overrides(
+      bind[Metrics].toInstance(new TestMetrics),
+      bind[AuthAction].to[FakeAuthEccEnrollmentHeaderAction],
+      bind[ArrivalMessageConnector].toInstance(mockMessageConnector),
+      bind[Clock].toInstance(mockClock)
+    )
+    .configure(
+      "phase-4-enrolment-header" -> true
     )
     .build()
 
@@ -201,6 +219,23 @@ class ArrivalMessagesControllerSpec
       contentAsString(result) mustEqual expectedMessageResult.toString()
     }
 
+    "return 200 and Message which has XMissingECCEnrolment header in response" in {
+      when(mockMessageConnector.get(ArrivalId(any()), MessageId(any()))(any(), any()))
+        .thenReturn(Future.successful(Right(sourceMovement)))
+
+      val request = FakeRequest(
+        "GET",
+        routing.routes.ArrivalsRouter.getArrivalMessage("123", "4").url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
+      val result = route(appWithEnrollmentHeader, request).value
+
+      status(result) mustBe OK
+      contentAsString(result) mustEqual expectedMessageResult.toString()
+      headers(result) must contain(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
+    }
+
     "return 400 if the downstream returns 400" in {
       when(mockMessageConnector.get(ArrivalId(any()), MessageId(any()))(any(), any()))
         .thenReturn(Future.successful(Left(HttpResponse(400, ""))))
@@ -308,6 +343,44 @@ class ArrivalMessagesControllerSpec
       status(result) mustBe ACCEPTED
       contentAsString(result) mustEqual expectedJson.toString()
       headers(result) must contain(LOCATION -> routing.routes.ArrivalsRouter.getArrivalMessage("123", "1").urlWithContext)
+    }
+
+    "must return Accepted when successful has XMissingECCEnrolment header in response" in {
+      when(mockMessageConnector.post(any(), ArrivalId(any()))(any(), any()))
+        .thenReturn(
+          Future.successful(
+            HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transit-movements-trader-at-destination/movements/arrivals/123/messages/1")))
+          )
+        )
+
+      val request = fakeRequestMessages(method = "POST", uri = routing.routes.ArrivalsRouter.attachMessage("123").url, body = CC044A)
+      val result  = route(appWithEnrollmentHeader, request).value
+
+      val expectedJson = Json.parse("""
+          |{
+          |  "_links": {
+          |    "self": {
+          |      "href": "/customs/transits/movements/arrivals/123/messages/1"
+          |    },
+          |    "arrival": {
+          |      "href": "/customs/transits/movements/arrivals/123"
+          |    }
+          |  },
+          |  "arrivalId": "123",
+          |  "messageId": "1",
+          |  "messageType": "IE044",
+          |  "body": "<CC044A>\n      <SynIdeMES1>tval</SynIdeMES1>\n      <SynVerNumMES2>1</SynVerNumMES2>\n      \n      <SenIdeCodQuaMES4>1111</SenIdeCodQuaMES4>\n      <MesRecMES6>111111</MesRecMES6>\n      \n      <RecIdeCodQuaMES7>1111</RecIdeCodQuaMES7>\n      <DatOfPreMES9>20001001</DatOfPreMES9>\n      <TimOfPreMES10>1111</TimOfPreMES10>\n      <IntConRefMES11>111111</IntConRefMES11>\n      \n      <RecRefMES12>111111</RecRefMES12>\n      \n      <RecRefQuaMES13>to</RecRefQuaMES13>\n      \n      <AppRefMES14>token</AppRefMES14>\n      \n      <PriMES15>t</PriMES15>\n      \n      <AckReqMES16>1</AckReqMES16>\n      \n      <ComAgrIdMES17>token</ComAgrIdMES17>\n      \n      <TesIndMES18>1</TesIndMES18>\n      <MesIdeMES19>token</MesIdeMES19>\n      <MesTypMES20>CC044A</MesTypMES20>\n      \n      <ComAccRefMES21>token</ComAccRefMES21>\n      \n      <MesSeqNumMES22>11</MesSeqNumMES22>\n      \n      <FirAndLasTraMES23>t</FirAndLasTraMES23>\n      <HEAHEA>\n        <DocNumHEA5>token</DocNumHEA5>\n        \n        <IdeOfMeaOfTraAtDHEA78>token</IdeOfMeaOfTraAtDHEA78>\n        \n        <IdeOfMeaOfTraAtDHEA78LNG>to</IdeOfMeaOfTraAtDHEA78LNG>\n        \n        <NatOfMeaOfTraAtDHEA80>to</NatOfMeaOfTraAtDHEA80>\n        <TotNumOfIteHEA305>11</TotNumOfIteHEA305>\n        \n        <TotNumOfPacHEA306>11</TotNumOfPacHEA306>\n        <TotGroMasHEA307>1.0</TotGroMasHEA307>\n      </HEAHEA>\n      <TRADESTRD>\n        \n        <NamTRD7>token</NamTRD7>\n        \n        <StrAndNumTRD22>token</StrAndNumTRD22>\n        \n        <PosCodTRD23>token</PosCodTRD23>\n        \n        <CitTRD24>token</CitTRD24>\n        \n        <CouTRD25>to</CouTRD25>\n        \n        <NADLNGRD>to</NADLNGRD>\n        \n        <TINTRD59>token</TINTRD59>\n      </TRADESTRD>\n      <CUSOFFPREOFFRES>\n        <RefNumRES1>tokenval</RefNumRES1>\n      </CUSOFFPREOFFRES>\n      <UNLREMREM>\n        \n        <StaOfTheSeaOKREM19>1</StaOfTheSeaOKREM19>\n        \n        <UnlRemREM53>token</UnlRemREM53>\n        \n        <UnlRemREM53LNG>to</UnlRemREM53LNG>\n        <ConREM65>1</ConREM65>\n        <UnlComREM66>1</UnlComREM66>\n        <UnlDatREM67>11010110</UnlDatREM67>\n      </UNLREMREM>\n      \n      <RESOFCON534>\n        \n        <DesTOC2>token</DesTOC2>\n        \n        <DesTOC2LNG>to</DesTOC2LNG>\n        <ConInd424>to</ConInd424>\n        \n        <PoiToTheAttTOC5>token</PoiToTheAttTOC5>\n        \n        <CorValTOC4>token</CorValTOC4>\n      </RESOFCON534>\n      \n      <SEAINFSLI>\n        <SeaNumSLI2>tval</SeaNumSLI2>\n        \n        <SEAIDSID>\n          <SeaIdeSID1>token</SeaIdeSID1>\n          \n          <SeaIdeSID1LNG>to</SeaIdeSID1LNG>\n        </SEAIDSID>\n      </SEAINFSLI>\n      \n      <GOOITEGDS>\n        <IteNumGDS7>1</IteNumGDS7>\n        \n        <ComCodTarCodGDS10>token</ComCodTarCodGDS10>\n        \n        <GooDesGDS23>token</GooDesGDS23>\n        \n        <GooDesGDS23LNG>to</GooDesGDS23LNG>\n        \n        <GroMasGDS46>1.0</GroMasGDS46>\n        \n        <NetMasGDS48>1.0</NetMasGDS48>\n        \n        <PRODOCDC2>\n          <DocTypDC21>tval</DocTypDC21>\n          \n          <DocRefDC23>token</DocRefDC23>\n          \n          <DocRefDCLNG>to</DocRefDCLNG>\n          \n          <ComOfInfDC25>token</ComOfInfDC25>\n          \n          <ComOfInfDC25LNG>to</ComOfInfDC25LNG>\n        </PRODOCDC2>\n        \n        <RESOFCONROC>\n          \n          <DesROC2>token</DesROC2>\n          \n          <DesROC2LNG>to</DesROC2LNG>\n          <ConIndROC1>to</ConIndROC1>\n          \n          <PoiToTheAttROC51>token</PoiToTheAttROC51>\n        </RESOFCONROC>\n        \n        <CONNR2>\n          <ConNumNR21>token</ConNumNR21>\n        </CONNR2>\n        \n        <PACGS2>\n          \n          <MarNumOfPacGS21>token</MarNumOfPacGS21>\n          \n          <MarNumOfPacGS21LNG>to</MarNumOfPacGS21LNG>\n          <KinOfPacGS23>val</KinOfPacGS23>\n          \n          <NumOfPacGS24>token</NumOfPacGS24>\n          \n          <NumOfPieGS25>token</NumOfPieGS25>\n        </PACGS2>\n        \n        <SGICODSD2>\n          \n          <SenGooCodSD22>1</SenGooCodSD22>\n          \n          <SenQuaSD23>1.0</SenQuaSD23>\n        </SGICODSD2>\n      </GOOITEGDS>\n    </CC044A>",
+          |  "_embedded": {
+          |    "notifications": {
+          |      "requestId": "/customs/transits/movements/arrivals/123"
+          |    }
+          |  }
+          |}""".stripMargin)
+
+      status(result) mustBe ACCEPTED
+      contentAsString(result) mustEqual expectedJson.toString()
+      headers(result) must contain(LOCATION -> routing.routes.ArrivalsRouter.getArrivalMessage("123", "1").urlWithContext)
+      headers(result) must contain(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
     }
 
     "must return BadRequest when xml includes MesSenMES3" in {
@@ -457,6 +530,24 @@ class ArrivalMessagesControllerSpec
 
       status(result) mustBe OK
       contentAsString(result) mustEqual expectedArrivalResult.toString()
+    }
+
+    "return 200 with body of arrival and messages has XMissingECCEnrolment header in response" in {
+      when(mockMessageConnector.getMessages(ArrivalId(any()), any())(any(), any()))
+        .thenReturn(Future.successful(Right(sourceArrival)))
+
+      val request = FakeRequest(
+        "GET",
+        routing.routes.ArrivalsRouter.getArrivalMessageIds("123").url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
+
+      val result = route(appWithEnrollmentHeader, request).value
+
+      status(result) mustBe OK
+      contentAsString(result) mustEqual expectedArrivalResult.toString()
+      headers(result) must contain(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
     }
 
     "pass receivedSince parameter on to connector" in {

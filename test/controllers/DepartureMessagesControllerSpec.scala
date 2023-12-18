@@ -22,9 +22,12 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import akka.util.ByteString
 import com.kenshoo.play.metrics.Metrics
+import config.Constants.MissingECCEnrolmentMessage
+import config.Constants.XMissingECCEnrolment
 import connectors.DepartureMessageConnector
 import controllers.actions.AuthAction
 import controllers.actions.FakeAuthAction
+import controllers.actions.FakeAuthEccEnrollmentHeaderAction
 import data.TestXml
 import models.domain.DepartureId
 import models.domain.DepartureWithMessages
@@ -78,6 +81,21 @@ class DepartureMessagesControllerSpec
       bind[AuthAction].to[FakeAuthAction],
       bind[DepartureMessageConnector].toInstance(mockMessageConnector),
       bind[Clock].toInstance(mockClock)
+    )
+    .configure(
+      "phase-4-enrolment-header" -> false
+    )
+    .build()
+
+  val appWithEnrollmentHeader = GuiceApplicationBuilder()
+    .overrides(
+      bind[Metrics].toInstance(new TestMetrics),
+      bind[AuthAction].to[FakeAuthEccEnrollmentHeaderAction],
+      bind[DepartureMessageConnector].toInstance(mockMessageConnector),
+      bind[Clock].toInstance(mockClock)
+    )
+    .configure(
+      "phase-4-enrolment-header" -> true
     )
     .build()
 
@@ -200,6 +218,23 @@ class DepartureMessagesControllerSpec
       contentAsString(result) mustEqual expectedDepartureResult.toString()
     }
 
+    "return 200 with body of departure and messages has XMissingECCEnrolment header in response" in {
+      when(mockMessageConnector.getMessages(DepartureId(any()), any())(any(), any()))
+        .thenReturn(Future.successful(Right(sourceDeparture)))
+
+      val request = FakeRequest(
+        "GET",
+        routing.routes.DeparturesRouter.getMessageIds("123").url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
+      val result = route(appWithEnrollmentHeader, request).value
+
+      status(result) mustBe OK
+      contentAsString(result) mustEqual expectedDepartureResult.toString()
+      headers(result) must contain(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
+    }
+
     "pass receivedSince parameter on to connector" in {
       val argCaptor = ArgumentCaptor.forClass(classOf[Option[OffsetDateTime]])
       val dateTime  = Some(OffsetDateTime.of(2021, 6, 23, 12, 1, 24, 0, ZoneOffset.UTC))
@@ -284,6 +319,23 @@ class DepartureMessagesControllerSpec
 
       status(result) mustBe OK
       contentAsString(result) mustEqual expectedMessageResult.toString()
+    }
+
+    "return 200 and Message has XMissingECCEnrolment header in response" in {
+      when(mockMessageConnector.get(DepartureId(any()), MessageId(any()))(any(), any()))
+        .thenReturn(Future.successful(Right(sourceMovement)))
+
+      val request = FakeRequest(
+        "GET",
+        routing.routes.DeparturesRouter.getMessage(DepartureId(123).toString, MessageId(4).toString).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
+      val result = route(appWithEnrollmentHeader, request).value
+
+      status(result) mustBe OK
+      contentAsString(result) mustEqual expectedMessageResult.toString()
+      headers(result) must contain(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
     }
 
     "return 400 if the downstream returns 400" in {
@@ -393,6 +445,23 @@ class DepartureMessagesControllerSpec
       status(result) mustBe ACCEPTED
       contentAsString(result) mustEqual expectedJson.toString()
       headers(result) must contain(LOCATION -> routing.routes.DeparturesRouter.getMessage(DepartureId(123).toString, MessageId(1).toString).urlWithContext)
+    }
+
+    "must return Accepted when successful has XMissingECCEnrolment header in response" in {
+      when(mockMessageConnector.post(any(), DepartureId(any()))(any(), any()))
+        .thenReturn(
+          Future.successful(
+            HttpResponse(NO_CONTENT, JsNull, Map(LOCATION -> Seq("/transits-movements-trader-at-departure/movements/departures/123/messages/1")))
+          )
+        )
+
+      val request = fakeRequestMessages(method = "POST", uri = routing.routes.DeparturesRouter.attachMessage("123").url, body = CC014A)
+      val result  = route(appWithEnrollmentHeader, request).value
+
+      status(result) mustBe ACCEPTED
+      contentAsString(result) mustEqual expectedJson.toString()
+      headers(result) must contain(LOCATION -> routing.routes.DeparturesRouter.getMessage(DepartureId(123).toString, MessageId(1).toString).urlWithContext)
+      headers(result) must contain(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
     }
 
     "must return InternalServerError when unsuccessful" in {

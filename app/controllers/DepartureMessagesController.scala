@@ -21,8 +21,13 @@ import com.google.inject.Singleton
 
 import java.time.OffsetDateTime
 import com.kenshoo.play.metrics.Metrics
+import config.AppConfig
+import config.Constants.MissingECCEnrolmentMessage
+import config.Constants.XMissingECCEnrolment
 import connectors.DepartureMessageConnector
+import controllers.actions.AnalyseMessageActionProvider
 import controllers.actions.AuthAction
+import controllers.actions.AuthRequest
 import controllers.actions.ValidateAcceptJsonHeaderAction
 import controllers.actions.ValidateDepartureMessageAction
 
@@ -47,7 +52,6 @@ import utils.Utils
 
 import scala.concurrent.ExecutionContext
 import scala.xml.NodeSeq
-import controllers.actions.AnalyseMessageActionProvider
 
 @ImplementedBy(classOf[DepartureMessagesController])
 trait V1DepartureMessagesController {
@@ -65,10 +69,11 @@ class DepartureMessagesController @Inject() (
   cc: ControllerComponents,
   authAction: AuthAction,
   messageConnector: DepartureMessageConnector,
-  validateMessageAction: ValidateDepartureMessageAction,
-  validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction,
+  validateMessageAction: ValidateDepartureMessageAction[AuthRequest],
+  validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction[AuthRequest],
   messageAnalyser: AnalyseMessageActionProvider,
-  val metrics: Metrics
+  val metrics: Metrics,
+  config: AppConfig
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)
     with HasActionMetrics
@@ -93,16 +98,18 @@ class DepartureMessagesController @Inject() (
                       MessageType.getMessageType(request.body) match {
                         case Some(messageType: MessageType) =>
                           val messageId = MessageId(Utils.lastFragment(locationValue).toInt)
-                          Accepted(
-                            Json.toJson(
-                              HateoasDepartureMessagesPostResponseMessage(
-                                departureId,
-                                messageId,
-                                messageType.code,
-                                request.body
-                              )
+                          if (config.phase4EnrolmentHeader && !request.hasNewEnrolment) {
+                            Accepted(
+                              Json.toJson(HateoasDepartureMessagesPostResponseMessage(departureId, messageId, messageType.code, request.body))
+                            ).withHeaders(
+                              LOCATION             -> routing.routes.DeparturesRouter.getMessage(departureId.toString, messageId.toString).urlWithContext,
+                              XMissingECCEnrolment -> MissingECCEnrolmentMessage
                             )
-                          ).withHeaders(LOCATION -> routing.routes.DeparturesRouter.getMessage(departureId.toString, messageId.toString).urlWithContext)
+                          } else {
+                            Accepted(
+                              Json.toJson(HateoasDepartureMessagesPostResponseMessage(departureId, messageId, messageType.code, request.body))
+                            ).withHeaders(LOCATION -> routing.routes.DeparturesRouter.getMessage(departureId.toString, messageId.toString).urlWithContext)
+                          }
                         case None =>
                           InternalServerError
                       }
@@ -122,7 +129,12 @@ class DepartureMessagesController @Inject() (
           messageConnector.getMessages(departureId, receivedSince).map {
             case Right(d) =>
               messagesCount.update(d.messages.length)
-              Ok(Json.toJson(HateoasResponseDepartureWithMessages(d)))
+              if (config.phase4EnrolmentHeader && !request.hasNewEnrolment) {
+                Ok(Json.toJson(HateoasResponseDepartureWithMessages(d)))
+                  .withHeaders(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
+              } else {
+                Ok(Json.toJson(HateoasResponseDepartureWithMessages(d)))
+              }
             case Left(response) =>
               handleNon2xx(response)
           }
@@ -135,7 +147,12 @@ class DepartureMessagesController @Inject() (
         implicit request =>
           messageConnector.get(departureId, messageId).map {
             case Right(m) =>
-              Ok(Json.toJson(HateoasDepartureResponseMessage(departureId, messageId, m)))
+              if (config.phase4EnrolmentHeader && !request.hasNewEnrolment) {
+                Ok(Json.toJson(HateoasDepartureResponseMessage(departureId, messageId, m)))
+                  .withHeaders(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
+              } else {
+                Ok(Json.toJson(HateoasDepartureResponseMessage(departureId, messageId, m)))
+              }
             case Left(response) =>
               handleNon2xx(response)
           }

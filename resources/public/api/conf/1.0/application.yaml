@@ -68,6 +68,11 @@ paths:
                     boxId: 1234-5678-abcd-def
                     requestId: /customs/transits/movements/arrivals/1
                     boxName: customs/transits##1.0##notificationUrl
+          headers:
+            X-Missing-ECC-Enrolment:
+              schema:
+                type: string
+              description: 'User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system'
         '400':
           description: Bad Request
           content:
@@ -179,6 +184,11 @@ paths:
                         href: /customs/transits/movements/arrivals/2/messages
                   retrievedArrivals: 2
                   totalArrivals: 2
+          headers:
+            X-Missing-ECC-Enrolment:
+              schema:
+                type: string
+              description: 'User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system'
         '406':
           description: Not Acceptable
           content:
@@ -255,6 +265,11 @@ paths:
                     boxId: 1234-5678-abcd-def
                     requestId: /customs/transits/movements/arrivals/1
                     boxName: customs/transits##1.0##notificationUrl
+          headers:
+            X-Missing-ECC-Enrolment:
+              schema:
+                type: string
+              description: 'User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system'
         '404':
           description: Not Found
           content:
@@ -348,6 +363,11 @@ paths:
                     href: /customs/transits/movements/arrivals/1
                   messages:
                     href: /customs/transits/movements/arrivals/1/messages
+          headers:
+            X-Missing-ECC-Enrolment:
+              schema:
+                type: string
+              description: 'User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system'
         '406':
           description: Not Acceptable
           content:
@@ -458,6 +478,11 @@ paths:
                 _embedded:
                   notifications:
                     requestId: /customs/transits/movements/arrivals/1
+          headers:
+            X-Missing-ECC-Enrolment:
+              schema:
+                type: string
+              description: 'User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system'
         '400':
           description: Bad Request
           content:
@@ -591,6 +616,11 @@ paths:
                         href: /customs/transits/movements/arrivals/1
                       messages:
                         href: /customs/transits/movements/arrivals/1/messages
+          headers:
+            X-Missing-ECC-Enrolment:
+              schema:
+                type: string
+              description: 'User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system'
         '406':
           description: Not Acceptable
           content:
@@ -701,6 +731,11 @@ paths:
                 received: 2020-10-10T10:10:10
                 messageType: IE007
                 body: <CC007A>...</CC007A>
+          headers:
+            X-Missing-ECC-Enrolment:
+              schema:
+                type: string
+              description: 'User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system'
         '406':
           description: Not Acceptable
           content:
@@ -803,6 +838,11 @@ paths:
                     boxId: 1234-5678-abcd-def
                     requestId: /customs/transits/movements/departures/1
                     boxName: customs/transits##1.0##notificationUrl
+          headers:
+            X-Missing-ECC-Enrolment:
+              schema:
+                type: string
+              description: 'User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system'
         '400':
           description: Bad Request
           content:
@@ -917,6 +957,11 @@ paths:
                         href: /customs/transits/movements/departures/2/messages
                   retrievedDepartures: 2
                   totalDepartures: 2
+          headers:
+            X-Missing-ECC-Enrolment:
+              schema:
+                type: string
+              description: 'User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system'
         '406':
           description: Not Acceptable
           content:
@@ -988,6 +1033,11 @@ paths:
                     href: /customs/transits/movements/departures/1
                   messages:
                     href: /customs/transits/movements/departures/1/messages
+          headers:
+            X-Missing-ECC-Enrolment:
+              schema:
+                type: string
+              description: 'User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system'
         '406':
           description: Not Acceptable
           content:
@@ -1097,6 +1147,11 @@ paths:
                 _embedded:
                   notifications:
                     requestId: /customs/transits/movements/departures/1
+          headers:
+            X-Missing-ECC-Enrolment:
+              schema:
+                type: string
+              description: 'User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system'
         '404':
           description: Not Found
           content:
@@ -1235,6 +1290,11 @@ paths:
                         href: /customs/transits/movements/departures/1
                       messages:
                         href: /customs/transits/movements/departures/1/messages
+          headers:
+            X-Missing-ECC-Enrolment:
+              schema:
+                type: string
+              description: 'User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system'
         '406':
           description: Not Acceptable
           content:
@@ -1347,6 +1407,11 @@ paths:
                 received: 2020-10-10T10:10:10
                 messageType: IE015
                 body: <CC015B>...</CC015B>
+          headers:
+            X-Missing-ECC-Enrolment:
+              schema:
+                type: string
+              description: 'User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system'
         '406':
           description: Not Acceptable
           content:

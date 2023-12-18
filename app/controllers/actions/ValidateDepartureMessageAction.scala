@@ -30,10 +30,10 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.xml.NodeSeq
 
-class ValidateDepartureMessageAction @Inject() (xmlValidationService: XmlValidationService)(implicit val executionContext: ExecutionContext)
-    extends ActionRefiner[Request, Request] {
+class ValidateDepartureMessageAction[R[_] <: Request[_]] @Inject() (xmlValidationService: XmlValidationService)(implicit val executionContext: ExecutionContext)
+    extends ActionRefiner[R, R] {
 
-  override protected def refine[A](request: Request[A]): Future[Either[Result, Request[A]]] =
+  override protected def refine[A](request: R[A]): Future[Either[Result, R[A]]] =
     request.body match {
       case body: NodeSeq =>
         if (body.nonEmpty) {

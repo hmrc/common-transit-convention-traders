@@ -18,10 +18,9 @@ package controllers.actions
 
 import com.google.inject.Inject
 import models.request.GuaranteedRequest
-import play.api.mvc.Results.BadRequest
 import play.api.mvc.ActionRefiner
-import play.api.mvc.Request
 import play.api.mvc.Result
+import play.api.mvc.Results.BadRequest
 import services.EnsureGuaranteeService
 
 import scala.concurrent.ExecutionContext
@@ -29,9 +28,9 @@ import scala.concurrent.Future
 import scala.xml.NodeSeq
 
 class EnsureGuaranteeAction @Inject() (ensureGuaranteeService: EnsureGuaranteeService)(implicit val executionContext: ExecutionContext)
-    extends ActionRefiner[Request, GuaranteedRequest] {
+    extends ActionRefiner[AuthRequest, GuaranteedRequest] {
 
-  override protected def refine[A](request: Request[A]): Future[Either[Result, GuaranteedRequest[A]]] =
+  override protected def refine[A](request: AuthRequest[A]): Future[Either[Result, GuaranteedRequest[A]]] =
     request.body match {
       case body: NodeSeq if body.nonEmpty =>
         ensureGuaranteeService.ensureGuarantee(body) match {

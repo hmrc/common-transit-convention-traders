@@ -23,10 +23,13 @@ import java.time.ZoneOffset
 import akka.util.ByteString
 import com.kenshoo.play.metrics.Metrics
 import com.typesafe.config.ConfigFactory
+import config.Constants.MissingECCEnrolmentMessage
+import config.Constants.XMissingECCEnrolment
 import connectors.ArrivalConnector
 import connectors.ResponseHeaders
 import controllers.actions.AuthAction
 import controllers.actions.FakeAuthAction
+import controllers.actions.FakeAuthEccEnrollmentHeaderAction
 import data.TestXml
 import models.Box
 import models.domain.Arrival
@@ -80,7 +83,21 @@ class ArrivalMovementControllerSpec
       bind[Clock].toInstance(mockClock)
     )
     .configure(
-      "disable-phase-4" -> false
+      "disable-phase-4"          -> false,
+      "phase-4-enrolment-header" -> false
+    )
+    .build()
+
+  val appWithEnrollmentHeader = GuiceApplicationBuilder()
+    .overrides(
+      bind[Metrics].toInstance(new TestMetrics),
+      bind[AuthAction].to[FakeAuthEccEnrollmentHeaderAction],
+      bind[ArrivalConnector].toInstance(mockArrivalConnector),
+      bind[Clock].toInstance(mockClock)
+    )
+    .configure(
+      "disable-phase-4"          -> false,
+      "phase-4-enrolment-header" -> true
     )
     .build()
 
@@ -149,6 +166,19 @@ class ArrivalMovementControllerSpec
       status(result) mustBe ACCEPTED
       contentAsJson(result) mustBe expectedJson
       headers(result) must contain(LOCATION -> routing.routes.ArrivalsRouter.getArrival("123").urlWithContext)
+    }
+
+    "must return Accepted when successful has XMissingECCEnrolment header in response" in {
+      when(mockArrivalConnector.post(any())(any(), any()))
+        .thenReturn(Future.successful(Right(responseHeaders("/transit-movements-trader-at-destination/movements/arrivals/123"))))
+
+      val request = fakeRequestArrivals(method = "POST", body = CC007A)
+      val result  = route(appWithEnrollmentHeader, request).value
+
+      status(result) mustBe ACCEPTED
+      contentAsJson(result) mustBe expectedJson
+      headers(result) must contain(LOCATION -> routing.routes.ArrivalsRouter.getArrival("123").urlWithContext)
+      headers(result) must contain(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
     }
 
     "must return BadRequest when containing MesSenMES3" in {
@@ -266,6 +296,18 @@ class ArrivalMovementControllerSpec
       headers(result) must contain(LOCATION -> routing.routes.ArrivalsRouter.getArrival("123").urlWithContext)
     }
 
+    "must return Accepted when successful has XMissingECCEnrolment header in response" in {
+      when(mockArrivalConnector.put(any(), ArrivalId(any()))(any(), any()))
+        .thenReturn(Future.successful(Right(responseHeaders("/transit-movements-trader-at-destination/movements/arrivals/123"))))
+
+      val result = route(appWithEnrollmentHeader, request).value
+
+      status(result) mustBe ACCEPTED
+      contentAsJson(result) mustBe expectedJson
+      headers(result) must contain(LOCATION -> routing.routes.ArrivalsRouter.getArrival("123").urlWithContext)
+      headers(result) must contain(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
+    }
+
     "must return InternalServerError when unsuccessful" in {
       val errorResponse = UpstreamErrorResponse("test error message", INTERNAL_SERVER_ERROR)
       when(mockArrivalConnector.put(any(), ArrivalId(any()))(any(), any()))
@@ -369,6 +411,23 @@ class ArrivalMovementControllerSpec
 
       status(result) mustBe OK
       contentAsString(result) mustEqual expectedArrivalResult.toString()
+    }
+
+    "return 200 with json body of arrival has XMissingECCEnrolment header in response" in {
+      when(mockArrivalConnector.get(ArrivalId(any()))(any(), any()))
+        .thenReturn(Future.successful(Right(sourceArrival)))
+
+      val request = FakeRequest(
+        "GET",
+        routing.routes.ArrivalsRouter.getArrival("123").url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
+      val result = route(appWithEnrollmentHeader, request).value
+
+      status(result) mustBe OK
+      contentAsString(result) mustEqual expectedArrivalResult.toString()
+      headers(result) must contain(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
     }
 
     "return 404 if downstream return 404" in {
@@ -506,6 +565,37 @@ class ArrivalMovementControllerSpec
 
       status(result) mustBe OK
       contentAsString(result) mustEqual expectedJson.toString()
+    }
+
+    "return 200 with json body of arrivals has XMissingECCEnrolment header in response" in {
+      when(mockArrivalConnector.getForEori(any())(any(), any()))
+        .thenReturn(Future.successful(Right(Arrivals(Nil, 0, 0))))
+
+      val request = FakeRequest(
+        "GET",
+        routing.routes.ArrivalsRouter.getArrivalsForEori(None).url,
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json")),
+        AnyContentAsEmpty
+      )
+      val result = route(appWithEnrollmentHeader, request).value
+
+      val expectedJson = Json.parse("""
+          |{
+          |  "_links": {
+          |    "self": {
+          |      "href": "/customs/transits/movements/arrivals"
+          |    }
+          |  },
+          |  "_embedded": {
+          |    "arrivals": [],
+          |    "retrievedArrivals": 0,
+          |    "totalArrivals": 0
+          |  }
+          |}""".stripMargin)
+
+      status(result) mustBe OK
+      contentAsString(result) mustEqual expectedJson.toString()
+      headers(result) must contain(XMissingECCEnrolment -> MissingECCEnrolmentMessage)
     }
 
     "pass updatedSince parameter on to connector" in {

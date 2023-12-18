@@ -42,4 +42,9 @@ object Constants {
 
   val NewEnrolmentKey: String   = "HMRC-CTC-ORG"
   val NewEnrolmentIdKey: String = "EORINumber"
+
+  val XMissingECCEnrolment = "X-Missing-ECC-Enrolment"
+
+  val MissingECCEnrolmentMessage =
+    "User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system"
 }

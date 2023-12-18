@@ -59,7 +59,7 @@ class ValidateAcceptJsonHeaderActionSpec
   override def beforeEach(): Unit =
     super.beforeEach()
 
-  class Harness(validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction, cc: ControllerComponents) extends BackendController(cc) {
+  class Harness(validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction[Request], cc: ControllerComponents) extends BackendController(cc) {
 
     def post: Action[AnyContent] = (DefaultActionBuilder.apply(cc.parsers.anyContent) andThen validateAcceptJsonHeaderAction).async(cc.parsers.anyContent) {
       _ =>
@@ -69,7 +69,7 @@ class ValidateAcceptJsonHeaderActionSpec
 
   "ValidateAcceptJsonHeaderAction" - {
     "must execute the block when correct Accept header is passed in" in {
-      val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
+      val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction[Request]]
       val cc                             = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateAcceptJsonHeaderAction, cc)
@@ -83,7 +83,7 @@ class ValidateAcceptJsonHeaderActionSpec
     }
 
     "must return NotAcceptable if Accept header with invalid version is passed in" in {
-      val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
+      val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction[Request]]
       val cc                             = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateAcceptJsonHeaderAction, cc)
@@ -98,7 +98,7 @@ class ValidateAcceptJsonHeaderActionSpec
     }
 
     "must return NotAcceptable if Accept header is missing" in {
-      val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
+      val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction[Request]]
       val cc                             = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateAcceptJsonHeaderAction, cc)
@@ -112,7 +112,7 @@ class ValidateAcceptJsonHeaderActionSpec
     }
 
     "must return NotAcceptable if Accept header is empty" in {
-      val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
+      val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction[Request]]
       val cc                             = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateAcceptJsonHeaderAction, cc)
@@ -126,7 +126,7 @@ class ValidateAcceptJsonHeaderActionSpec
     }
 
     "must return NotAcceptable if Accept header is */*" in {
-      val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
+      val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction[Request]]
       val cc                             = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateAcceptJsonHeaderAction, cc)
@@ -140,7 +140,7 @@ class ValidateAcceptJsonHeaderActionSpec
     }
 
     "must return NotAcceptable if Accept header is application/xml" in {
-      val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
+      val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction[Request]]
       val cc                             = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateAcceptJsonHeaderAction, cc)
@@ -155,7 +155,7 @@ class ValidateAcceptJsonHeaderActionSpec
     }
 
     "must return NotAcceptable if Accept header is text/html" in {
-      val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction]
+      val validateAcceptJsonHeaderAction = app.injector.instanceOf[ValidateAcceptJsonHeaderAction[Request]]
       val cc                             = app.injector.instanceOf[ControllerComponents]
 
       val controller = new Harness(validateAcceptJsonHeaderAction, cc)
