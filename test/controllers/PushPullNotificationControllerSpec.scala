@@ -16,7 +16,6 @@
 
 package controllers
 
-import com.codahale.metrics.MetricRegistry
 import config.Constants
 import connectors.PushPullNotificationConnector
 import controllers.actions.AuthAction
@@ -63,7 +62,6 @@ class PushPullNotificationControllerSpec
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(
-      bind[MetricRegistry].toInstance(new MetricRegistry),
       bind[AuthAction].to[FakeAuthAction],
       bind[PushPullNotificationConnector].toInstance(mockPushPullNotificationConnector),
       bind[Clock].toInstance(mockClock)

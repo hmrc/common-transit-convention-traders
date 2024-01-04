@@ -55,7 +55,7 @@ lazy val scalacSettings = Def.settings(
       opts.filterNot(Set("-Wdead-code"))
   },
   // Disable warnings arising from generated routing code
-  scalacOptions += "-Wconf:cat=unused-imports&src=routes/.*:s"
+  scalacOptions += "-Wconf:src=routes/.*:s"
 )
 
 // Scoverage exclusions and minimums

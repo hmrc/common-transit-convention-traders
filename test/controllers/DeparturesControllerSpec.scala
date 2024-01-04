@@ -17,7 +17,6 @@
 package controllers
 
 import audit.AuditService
-import com.codahale.metrics.MetricRegistry
 import config.Constants.MissingECCEnrolmentMessage
 import config.Constants.XMissingECCEnrolment
 import connectors.DeparturesConnector
@@ -83,7 +82,6 @@ class DeparturesControllerSpec
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(
-      bind[MetricRegistry].toInstance(new MetricRegistry),
       bind[AuthAction].to[FakeAuthAction],
       bind[V2MovementsController].to[FakeV2MovementsController],
       bind[DeparturesConnector].toInstance(mockDepartureConnector),
@@ -99,7 +97,6 @@ class DeparturesControllerSpec
 
   val appWithEnrollmentHeader = GuiceApplicationBuilder()
     .overrides(
-      bind[MetricRegistry].toInstance(new MetricRegistry),
       bind[AuthAction].to[FakeAuthEccEnrollmentHeaderAction],
       bind[V2MovementsController].to[FakeV2MovementsController],
       bind[DeparturesConnector].toInstance(mockDepartureConnector),

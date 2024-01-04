@@ -76,7 +76,6 @@ class ArrivalMessagesControllerSpec
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(
-      bind[MetricRegistry].toInstance(new MetricRegistry),
       bind[AuthAction].to[FakeAuthAction],
       bind[ArrivalMessageConnector].toInstance(mockMessageConnector),
       bind[Clock].toInstance(mockClock)
@@ -89,7 +88,6 @@ class ArrivalMessagesControllerSpec
 
   val appWithEnrollmentHeader = GuiceApplicationBuilder()
     .overrides(
-      bind[MetricRegistry].toInstance(new MetricRegistry),
       bind[AuthAction].to[FakeAuthEccEnrollmentHeaderAction],
       bind[ArrivalMessageConnector].toInstance(mockMessageConnector),
       bind[Clock].toInstance(mockClock)
