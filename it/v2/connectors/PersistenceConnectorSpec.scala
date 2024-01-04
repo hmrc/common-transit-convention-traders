@@ -16,9 +16,10 @@
 
 package v2.connectors
 
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import com.codahale.metrics.MetricRegistry
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import com.fasterxml.jackson.core.JsonParseException
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
@@ -45,7 +46,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.GuiceWiremockSuite
-import utils.TestMetrics
 import v2.models.EORINumber
 import v2.models.ItemCount
 import v2.models.LocalReferenceNumber
@@ -98,7 +98,7 @@ class PersistenceConnectorSpec
 
   implicit lazy val appConfig: AppConfig                  = app.injector.instanceOf[AppConfig]
   lazy val messageType                                    = MessageType.DeclarationAmendment
-  lazy val persistenceConnector: PersistenceConnectorImpl = new PersistenceConnectorImpl(httpClientV2, new TestMetrics())
+  lazy val persistenceConnector: PersistenceConnectorImpl = new PersistenceConnectorImpl(httpClientV2, new MetricRegistry)
   implicit lazy val ec: ExecutionContext                  = app.materializer.executionContext
 
   val defaultFilterParams = "?page=1&count=25"

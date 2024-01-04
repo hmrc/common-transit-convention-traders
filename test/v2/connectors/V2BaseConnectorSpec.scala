@@ -16,8 +16,8 @@
 
 package v2.connectors
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import config.AppConfig
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any

@@ -16,7 +16,7 @@
 
 package connectors
 
-import com.kenshoo.play.metrics.Metrics
+import com.codahale.metrics.MetricRegistry
 import config.AppConfig
 import connectors.util.CustomHttpReader
 import metrics.HasMetrics
@@ -36,7 +36,7 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class ArrivalConnector @Inject() (http: HttpClient, appConfig: AppConfig, val metrics: Metrics) extends BaseConnector with HasMetrics {
+class ArrivalConnector @Inject() (http: HttpClient, appConfig: AppConfig, val metrics: MetricRegistry) extends BaseConnector with HasMetrics {
 
   import MetricsKeys.ArrivalBackend._
 

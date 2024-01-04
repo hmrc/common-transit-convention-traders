@@ -16,13 +16,6 @@
 
 package controllers
 
-import java.time.Clock
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
-import akka.util.ByteString
-import com.kenshoo.play.metrics.Metrics
-import com.typesafe.config.ConfigFactory
 import config.Constants.MissingECCEnrolmentMessage
 import config.Constants.XMissingECCEnrolment
 import connectors.ArrivalConnector
@@ -35,6 +28,7 @@ import models.Box
 import models.domain.Arrival
 import models.domain.ArrivalId
 import models.domain.Arrivals
+import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.reset
@@ -53,13 +47,15 @@ import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
-import play.api.test.Helpers.headers
 import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.utils.CallOps._
-import utils.TestMetrics
 
+import java.time.Clock
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import scala.concurrent.Future
 
 class ArrivalMovementControllerSpec
@@ -77,27 +73,27 @@ class ArrivalMovementControllerSpec
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(
-      bind[Metrics].toInstance(new TestMetrics),
       bind[AuthAction].to[FakeAuthAction],
       bind[ArrivalConnector].toInstance(mockArrivalConnector),
       bind[Clock].toInstance(mockClock)
     )
     .configure(
       "disable-phase-4"          -> false,
-      "phase-4-enrolment-header" -> false
+      "phase-4-enrolment-header" -> false,
+      "metrics.jvm"              -> false
     )
     .build()
 
   val appWithEnrollmentHeader = GuiceApplicationBuilder()
     .overrides(
-      bind[Metrics].toInstance(new TestMetrics),
       bind[AuthAction].to[FakeAuthEccEnrollmentHeaderAction],
       bind[ArrivalConnector].toInstance(mockArrivalConnector),
       bind[Clock].toInstance(mockClock)
     )
     .configure(
       "disable-phase-4"          -> false,
-      "phase-4-enrolment-header" -> true
+      "phase-4-enrolment-header" -> true,
+      "metrics.jvm"              -> false
     )
     .build()
 

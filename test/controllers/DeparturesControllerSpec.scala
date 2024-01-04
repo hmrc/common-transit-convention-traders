@@ -17,8 +17,7 @@
 package controllers
 
 import audit.AuditService
-import com.kenshoo.play.metrics.Metrics
-import com.typesafe.config.ConfigFactory
+import com.codahale.metrics.MetricRegistry
 import config.Constants.MissingECCEnrolmentMessage
 import config.Constants.XMissingECCEnrolment
 import connectors.DeparturesConnector
@@ -44,7 +43,6 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.Configuration
 import play.api.http.HeaderNames
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -54,16 +52,13 @@ import play.api.mvc.Request
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.api.test.Helpers.headers
 import services.EnsureGuaranteeService
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
-import v2.utils.CallOps._
-import utils.TestMetrics
 import v2.controllers.V2MovementsController
 import v2.fakes.controllers.FakeV2MovementsController
+import v2.utils.CallOps._
 
-import java.io.File
 import java.time.Clock
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -88,7 +83,7 @@ class DeparturesControllerSpec
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(
-      bind[Metrics].toInstance(new TestMetrics),
+      bind[MetricRegistry].toInstance(new MetricRegistry),
       bind[AuthAction].to[FakeAuthAction],
       bind[V2MovementsController].to[FakeV2MovementsController],
       bind[DeparturesConnector].toInstance(mockDepartureConnector),
@@ -97,13 +92,14 @@ class DeparturesControllerSpec
       bind[Clock].toInstance(mockClock)
     )
     .configure(
-      "disable-phase-4" -> false
+      "disable-phase-4" -> false,
+      "metrics.jvm"     -> false
     )
     .build()
 
   val appWithEnrollmentHeader = GuiceApplicationBuilder()
     .overrides(
-      bind[Metrics].toInstance(new TestMetrics),
+      bind[MetricRegistry].toInstance(new MetricRegistry),
       bind[AuthAction].to[FakeAuthEccEnrollmentHeaderAction],
       bind[V2MovementsController].to[FakeV2MovementsController],
       bind[DeparturesConnector].toInstance(mockDepartureConnector),

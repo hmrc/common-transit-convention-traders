@@ -16,11 +16,11 @@
 
 package v2.connectors
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
-import com.kenshoo.play.metrics.Metrics
+import com.codahale.metrics.MetricRegistry
 import config.AppConfig
 import config.Constants
 import metrics.HasMetrics
@@ -80,7 +80,7 @@ trait AuditingConnector {
 
 }
 
-class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Metrics)(implicit appConfig: AppConfig)
+class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: MetricRegistry)(implicit appConfig: AppConfig)
     extends AuditingConnector
     with V2BaseConnector
     with HasMetrics

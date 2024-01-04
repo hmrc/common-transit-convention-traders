@@ -16,7 +16,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(scalacSettings)
   .settings(
     majorVersion := 0,
-    scalaVersion := "2.13.8",
+    scalaVersion := "2.13.12",
     resolvers += Resolver.jcenterRepo,
     PlayKeys.playDefaultPort := 9487,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
@@ -55,7 +55,7 @@ lazy val scalacSettings = Def.settings(
       opts.filterNot(Set("-Wdead-code"))
   },
   // Disable warnings arising from generated routing code
-  scalacOptions += "-Wconf:src=routes/.*:s"
+  scalacOptions += "-Wconf:cat=unused-imports&src=routes/.*:s"
 )
 
 // Scoverage exclusions and minimums

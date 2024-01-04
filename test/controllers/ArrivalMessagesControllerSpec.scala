@@ -16,12 +16,7 @@
 
 package controllers
 
-import java.time.Clock
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
-import akka.util.ByteString
-import com.kenshoo.play.metrics.Metrics
+import com.codahale.metrics.MetricRegistry
 import config.Constants.MissingECCEnrolmentMessage
 import config.Constants.XMissingECCEnrolment
 import connectors.ArrivalMessageConnector
@@ -33,15 +28,17 @@ import models.domain.ArrivalId
 import models.domain.ArrivalWithMessages
 import models.domain.MessageId
 import models.domain.MovementMessage
+import models.response.JsonClientErrorResponse
+import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.when
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.http.HeaderNames
@@ -51,16 +48,17 @@ import play.api.libs.json.JsNull
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.Headers
-import play.api.test.Helpers.headers
-import play.api.test.Helpers._
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import uk.gov.hmrc.http.HttpResponse
 import v2.utils.CallOps._
-import utils.TestMetrics
 
+import java.time.Clock
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import scala.concurrent.Future
-import models.response.JsonClientErrorResponse
 
 class ArrivalMessagesControllerSpec
     extends AnyFreeSpec
@@ -77,25 +75,27 @@ class ArrivalMessagesControllerSpec
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(
-      bind[Metrics].toInstance(new TestMetrics),
+      bind[MetricRegistry].toInstance(new MetricRegistry),
       bind[AuthAction].to[FakeAuthAction],
       bind[ArrivalMessageConnector].toInstance(mockMessageConnector),
       bind[Clock].toInstance(mockClock)
     )
     .configure(
-      "phase-4-enrolment-header" -> false
+      "phase-4-enrolment-header" -> false,
+      "metrics.jvm"              -> false
     )
     .build()
 
   val appWithEnrollmentHeader = GuiceApplicationBuilder()
     .overrides(
-      bind[Metrics].toInstance(new TestMetrics),
+      bind[MetricRegistry].toInstance(new MetricRegistry),
       bind[AuthAction].to[FakeAuthEccEnrollmentHeaderAction],
       bind[ArrivalMessageConnector].toInstance(mockMessageConnector),
       bind[Clock].toInstance(mockClock)
     )
     .configure(
-      "phase-4-enrolment-header" -> true
+      "phase-4-enrolment-header" -> true,
+      "metrics.jvm"              -> false
     )
     .build()
 

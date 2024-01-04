@@ -16,6 +16,9 @@
 
 package v2.services
 
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.when
@@ -24,9 +27,13 @@ import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.time.Millis
+import org.scalatest.time.Seconds
+import org.scalatest.time.Span
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import uk.gov.hmrc.http.HeaderCarrier
+import v2.base.TestActorSystem
 import v2.base.TestCommonGenerators
 import v2.connectors.UpscanConnector
 import v2.models.EORINumber
@@ -37,20 +44,11 @@ import v2.models.errors.UpscanError
 import v2.models.responses.UpscanFormTemplate
 import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.UpscanReference
+import v2.models.responses.UpscanResponse.DownloadUrl
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
-import v2.base.TestActorSystem
-import v2.models.responses.UpscanResponse.DownloadUrl
-import org.scalatest.time.Millis
-import org.scalatest.time.Seconds
-import org.scalatest.time.Span
-
-import scala.annotation.nowarn
 import scala.concurrent.Await
+import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
 class UpscanServiceSpec

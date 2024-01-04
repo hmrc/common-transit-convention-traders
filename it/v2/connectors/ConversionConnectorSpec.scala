@@ -16,9 +16,10 @@
 
 package v2.connectors
 
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import com.codahale.metrics.MetricRegistry
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import org.scalatest.concurrent._
@@ -51,7 +52,7 @@ class ConversionConnectorSpec
   lazy val messageType           = MessageType.DeclarationData
   lazy val jsonStream            = Source.single(ByteString("{}", StandardCharsets.UTF_8))
 
-  lazy val sut: ConversionConnectorImpl = new ConversionConnectorImpl(httpClientV2, appConfig, new TestMetrics)
+  lazy val sut: ConversionConnectorImpl = new ConversionConnectorImpl(httpClientV2, appConfig, new MetricRegistry)
 
   "POST /messages/:messageType " - {
     "when making a successful submission, must return successful" in {

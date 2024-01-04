@@ -16,31 +16,24 @@
 
 package v2.services
 
-import akka.stream.Attributes
-import akka.stream.Attributes.LogLevels
-import akka.stream.Materializer
-import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Keep
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.stream.scaladsl.StreamConverters
-import akka.util.ByteString
 import cats.data.EitherT
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.inject.ImplementedBy
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.stream.scaladsl.StreamConverters
+import org.apache.pekko.util.ByteString
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.models.errors.ExtractionError
+import v2.models.errors.ExtractionError.MessageTypeNotFound
 import v2.models.request.MessageType
 
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import akka.stream.alpakka.json.scaladsl.JsonReader
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import v2.models.errors.ExtractionError.MessageTypeNotFound
-
 import scala.concurrent.duration.DurationInt
 import scala.util.Using
 

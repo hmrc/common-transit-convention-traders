@@ -20,8 +20,8 @@ import java.time.Clock
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
-import akka.util.ByteString
-import com.kenshoo.play.metrics.Metrics
+import org.apache.pekko.util.ByteString
+import com.codahale.metrics.MetricRegistry
 import config.Constants.MissingECCEnrolmentMessage
 import config.Constants.XMissingECCEnrolment
 import connectors.DepartureMessageConnector
@@ -57,7 +57,6 @@ import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HttpResponse
 import v2.utils.CallOps._
-import utils.TestMetrics
 
 import scala.concurrent.Future
 import models.response.JsonClientErrorResponse
@@ -77,25 +76,25 @@ class DepartureMessagesControllerSpec
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(
-      bind[Metrics].toInstance(new TestMetrics),
       bind[AuthAction].to[FakeAuthAction],
       bind[DepartureMessageConnector].toInstance(mockMessageConnector),
       bind[Clock].toInstance(mockClock)
     )
     .configure(
-      "phase-4-enrolment-header" -> false
+      "phase-4-enrolment-header" -> false,
+      "metrics.jvm"              -> false
     )
     .build()
 
   val appWithEnrollmentHeader = GuiceApplicationBuilder()
     .overrides(
-      bind[Metrics].toInstance(new TestMetrics),
       bind[AuthAction].to[FakeAuthEccEnrollmentHeaderAction],
       bind[DepartureMessageConnector].toInstance(mockMessageConnector),
       bind[Clock].toInstance(mockClock)
     )
     .configure(
-      "phase-4-enrolment-header" -> true
+      "phase-4-enrolment-header" -> true,
+      "metrics.jvm"              -> false
     )
     .build()
 

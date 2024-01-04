@@ -16,10 +16,10 @@
 
 package v2.services
 
-import akka.NotUsed
-import akka.stream.alpakka.xml.ParseEvent
-import akka.stream.alpakka.xml.StartElement
-import akka.stream.scaladsl.Flow
+import org.apache.pekko.NotUsed
+import org.apache.pekko.stream.connectors.xml.ParseEvent
+import org.apache.pekko.stream.connectors.xml.StartElement
+import org.apache.pekko.stream.scaladsl.Flow
 import v2.models.errors.ExtractionError
 import v2.models.request.MessageType
 
