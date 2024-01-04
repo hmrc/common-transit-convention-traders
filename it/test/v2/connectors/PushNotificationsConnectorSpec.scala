@@ -65,8 +65,8 @@ class PushNotificationsConnectorSpec
     with MockitoSugar
     with CommonGenerators {
 
-  val token                  = Gen.alphaNumStr.sample.get
-  implicit val mockAppConfig = mock[AppConfig]
+  val token                             = Gen.alphaNumStr.sample.get
+  implicit val mockAppConfig: AppConfig = mock[AppConfig]
   when(mockAppConfig.internalAuthToken).thenReturn(token)
   when(mockAppConfig.pushNotificationsUrl).thenAnswer {
     _ => Url.parse(server.baseUrl())

@@ -22,5 +22,7 @@ object AppDependencies {
     "org.scalacheck"    %% "scalacheck"             % "1.15.4",
     "org.typelevel"     %% "discipline-scalatest"   % "2.1.5",
     "uk.gov.hmrc"       %% "bootstrap-test-play-30" % bootstrapPlayVersion
-  ).map(_ % "test, it")
+  ).map(_ % Test)
+
+  val integration = Seq.empty[ModuleID]
 }

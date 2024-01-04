@@ -525,7 +525,7 @@ class PersistenceConnectorSpec
         id => arbitraryMessageSummary.arbitrary.sample.get.copy(id = id)
       )
 
-      val paginationMessageSummary = PaginationMessageSummary(TotalCount(messageSummaryList.length), messageSummaryList)
+      val paginationMessageSummary = PaginationMessageSummary(TotalCount(messageSummaryList.length.longValue), messageSummaryList)
 
       server.stubFor(
         get(
@@ -556,7 +556,7 @@ class PersistenceConnectorSpec
         id => arbitraryMessageSummary.arbitrary.sample.get.copy(id = id)
       )
 
-      val paginationMessageSummary = PaginationMessageSummary(TotalCount(messageSummaryList.length), messageSummaryList)
+      val paginationMessageSummary = PaginationMessageSummary(TotalCount(messageSummaryList.length.longValue), messageSummaryList)
 
       server.stubFor(
         get(
@@ -801,7 +801,7 @@ class PersistenceConnectorSpec
     "on success with no date time filter, return a list of departure IDs" in {
       lazy val movementSummaryList = Gen.listOfN(3, arbitraryMovementSummary.arbitrary).sample.get
 
-      val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+      val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length.longValue), movementSummaryList)
 
       server.stubFor(
         get(
@@ -833,7 +833,7 @@ class PersistenceConnectorSpec
       arbitrary[ItemCount]
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount) =>
-        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length.longValue), movementSummaryList)
         server.stubFor(
           get(
             urlPathEqualTo(targetUrl(eori))
@@ -877,7 +877,7 @@ class PersistenceConnectorSpec
       None
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber) =>
-        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length.longValue), movementSummaryList)
 
         server.stubFor(
           get(
@@ -919,7 +919,7 @@ class PersistenceConnectorSpec
       None
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber) =>
-        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length.longValue), movementSummaryList)
 
         server.stubFor(
           get(
@@ -962,7 +962,7 @@ class PersistenceConnectorSpec
       arbitrary[LocalReferenceNumber]
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) =>
-        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length.longValue), movementSummaryList)
 
         server.stubFor(
           get(
@@ -1003,7 +1003,7 @@ class PersistenceConnectorSpec
       arbitrary[LocalReferenceNumber]
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) =>
-        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length.longValue), movementSummaryList)
 
         server.stubFor(
           get(
@@ -1678,7 +1678,7 @@ class PersistenceConnectorSpec
       Gen.nonEmptyListOf(arbitrary[MessageSummary])
     ) {
       (eori, arrivalId, messageSummary) =>
-        val paginationMessageSummary = PaginationMessageSummary(TotalCount(messageSummary.length), messageSummary)
+        val paginationMessageSummary = PaginationMessageSummary(TotalCount(messageSummary.length.longValue), messageSummary)
         server.stubFor(
           get(
             urlEqualTo(targetUrl(eori, arrivalId) + defaultFilterParams)
@@ -1705,7 +1705,7 @@ class PersistenceConnectorSpec
       Gen.nonEmptyListOf(arbitrary[MessageSummary])
     ) {
       (eori, arrivalId, time, messageSummary) =>
-        val paginationMessageSummary = PaginationMessageSummary(TotalCount(messageSummary.length), messageSummary)
+        val paginationMessageSummary = PaginationMessageSummary(TotalCount(messageSummary.length.longValue), messageSummary)
 
         server.stubFor(
           get(
@@ -1851,7 +1851,7 @@ class PersistenceConnectorSpec
 
     "on success, return a list of arrivals" in {
       lazy val movementSummaryList  = Gen.listOfN(3, arbitraryMovementSummary.arbitrary).sample.get
-      val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+      val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length.longValue), movementSummaryList)
 
       server.stubFor(
         get(
@@ -1881,7 +1881,7 @@ class PersistenceConnectorSpec
       arbitrary[ItemCount]
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount) =>
-        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length.longValue), movementSummaryList)
 
         server.stubFor(
           get(
@@ -1928,7 +1928,7 @@ class PersistenceConnectorSpec
       arbitrary[ItemCount]
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount) =>
-        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length.longValue), movementSummaryList)
 
         server.stubFor(
           get(
@@ -1970,7 +1970,7 @@ class PersistenceConnectorSpec
       None
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber) =>
-        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length.longValue), movementSummaryList)
 
         server.stubFor(
           get(
@@ -2014,7 +2014,7 @@ class PersistenceConnectorSpec
       None
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, pageNumber, itemCount) =>
-        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length.longValue), movementSummaryList)
 
         server.stubFor(
           get(
@@ -2055,7 +2055,7 @@ class PersistenceConnectorSpec
       arbitrary[LocalReferenceNumber]
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) =>
-        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length.longValue), movementSummaryList)
 
         server.stubFor(
           get(
@@ -2096,7 +2096,7 @@ class PersistenceConnectorSpec
       arbitrary[LocalReferenceNumber]
     ) {
       (movementSummaryList, updatedSince, movementEORI, movementReferenceNumber, localReferenceNumber) =>
-        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length), movementSummaryList)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(movementSummaryList.length.longValue), movementSummaryList)
 
         server.stubFor(
           get(

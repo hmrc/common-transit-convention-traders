@@ -68,8 +68,8 @@ class AuditingConnectorSpec
     with ScalaCheckDrivenPropertyChecks
     with CommonGenerators {
 
-  val token                  = Gen.alphaNumStr.sample.get
-  implicit val mockAppConfig = mock[AppConfig]
+  val token                             = Gen.alphaNumStr.sample.get
+  implicit val mockAppConfig: AppConfig = mock[AppConfig]
   when(mockAppConfig.internalAuthToken).thenReturn(token)
   when(mockAppConfig.auditingUrl).thenAnswer(
     _ => Url.parse(server.baseUrl())
