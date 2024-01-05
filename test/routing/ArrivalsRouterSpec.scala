@@ -16,9 +16,9 @@
 
 package routing
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
-import akka.util.Timeout
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
+import org.apache.pekko.util.Timeout
 import config.AppConfig
 import org.mockito.Mockito.when
 import org.scalacheck.Gen

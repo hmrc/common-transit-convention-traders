@@ -16,7 +16,8 @@
 
 package v2.connectors
 
-import akka.stream.scaladsl.Sink
+import com.codahale.metrics.MetricRegistry
+import org.apache.pekko.stream.scaladsl.Sink
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
 import com.github.tomakehurst.wiremock.client.WireMock.get
@@ -40,7 +41,6 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
-import utils.TestMetrics
 import utils.WiremockSuite
 import v2.base.TestActorSystem
 import v2.models.ClientId
@@ -91,7 +91,7 @@ class UpscanConnectorSpec
     when(mockAppConfig.upscanMaximumFileSize).thenReturn(2000)
   }
 
-  lazy val sut = new UpscanConnectorImpl(mockAppConfig, httpClientV2, new TestMetrics)
+  lazy val sut = new UpscanConnectorImpl(mockAppConfig, httpClientV2, new MetricRegistry)
 
   "POST /upscan/v2/initiate" - {
     "when making a successful call to upscan initiate with client ID query strings turned on, must return upscan upload url" in forAll(

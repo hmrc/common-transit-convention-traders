@@ -16,13 +16,13 @@
 
 package v2.connectors
 
-import akka.stream.Materializer
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
-import com.kenshoo.play.metrics.Metrics
+import com.codahale.metrics.MetricRegistry
 import config.AppConfig
 import config.Constants
 import io.lemonlabs.uri.Url
@@ -143,7 +143,7 @@ trait PersistenceConnector {
 }
 
 @Singleton
-class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metrics: Metrics)(implicit appConfig: AppConfig)
+class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metrics: MetricRegistry)(implicit appConfig: AppConfig)
     extends PersistenceConnector
     with HasMetrics
     with V2BaseConnector

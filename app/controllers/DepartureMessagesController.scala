@@ -20,7 +20,7 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Singleton
 
 import java.time.OffsetDateTime
-import com.kenshoo.play.metrics.Metrics
+import com.codahale.metrics.MetricRegistry
 import config.AppConfig
 import config.Constants.MissingECCEnrolmentMessage
 import config.Constants.XMissingECCEnrolment
@@ -72,7 +72,7 @@ class DepartureMessagesController @Inject() (
   validateMessageAction: ValidateDepartureMessageAction[AuthRequest],
   validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction[AuthRequest],
   messageAnalyser: AnalyseMessageActionProvider,
-  val metrics: Metrics,
+  val metrics: MetricRegistry,
   config: AppConfig
 )(implicit ec: ExecutionContext)
     extends BackendController(cc)

@@ -17,7 +17,7 @@
 package services
 
 import com.google.inject.Inject
-import com.kenshoo.play.metrics.Metrics
+import com.codahale.metrics.MetricRegistry
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import models.AddSpecialMentionInstruction
@@ -40,7 +40,7 @@ class EnsureGuaranteeService @Inject() (
   instructionBuilder: InstructionBuilder,
   routeChecker: RouteChecker,
   xmlBuilder: XmlBuilder,
-  val metrics: Metrics
+  val metrics: MetricRegistry
 ) extends ParseHandling
     with Logging
     with HasMetrics {

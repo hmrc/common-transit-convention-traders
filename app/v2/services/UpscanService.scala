@@ -32,9 +32,9 @@ import v2.models.responses.UpscanInitiateResponse
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
-import akka.stream.Materializer
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import v2.models.responses.UpscanResponse.DownloadUrl
 
 @ImplementedBy(classOf[UpscanServiceImpl])

@@ -16,11 +16,13 @@
 
 package v2.connectors
 
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import com.codahale.metrics.MetricRegistry
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
+import org.apache.pekko.stream.Materializer
 import org.scalatest.concurrent._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -34,6 +36,7 @@ import v2.models.HeaderTypes.jsonToXml
 import v2.models.request.MessageType
 
 import java.nio.charset.StandardCharsets
+import scala.concurrent.ExecutionContextExecutor
 
 class ConversionConnectorSpec
     extends AnyFreeSpec
@@ -44,14 +47,14 @@ class ConversionConnectorSpec
     with GuiceOneAppPerSuite
     with GuiceWiremockSuite {
 
-  lazy val appConfig: AppConfig  = app.injector.instanceOf[AppConfig]
-  implicit lazy val materializer = app.materializer
-  implicit lazy val ec           = materializer.executionContext
-  implicit lazy val hc           = HeaderCarrier()
-  lazy val messageType           = MessageType.DeclarationData
-  lazy val jsonStream            = Source.single(ByteString("{}", StandardCharsets.UTF_8))
+  lazy val appConfig: AppConfig                  = app.injector.instanceOf[AppConfig]
+  implicit lazy val materializer: Materializer   = app.materializer
+  implicit lazy val ec: ExecutionContextExecutor = materializer.executionContext
+  implicit lazy val hc: HeaderCarrier            = HeaderCarrier()
+  lazy val messageType                           = MessageType.DeclarationData
+  lazy val jsonStream                            = Source.single(ByteString("{}", StandardCharsets.UTF_8))
 
-  lazy val sut: ConversionConnectorImpl = new ConversionConnectorImpl(httpClientV2, appConfig, new TestMetrics)
+  lazy val sut: ConversionConnectorImpl = new ConversionConnectorImpl(httpClientV2, appConfig, new MetricRegistry)
 
   "POST /messages/:messageType " - {
     "when making a successful submission, must return successful" in {

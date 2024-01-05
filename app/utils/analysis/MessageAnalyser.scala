@@ -18,7 +18,7 @@ package utils.analysis
 
 import scala.xml.NodeSeq
 import java.nio.charset.StandardCharsets
-import com.kenshoo.play.metrics.Metrics
+import com.codahale.metrics.MetricRegistry
 import metrics.MetricsKeys.Messages._
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -27,7 +27,7 @@ import models.MessageType
 import models.MessageType._
 
 @Singleton
-class MessageAnalyser @Inject() (val metrics: Metrics) extends HasMetrics {
+class MessageAnalyser @Inject() (val metrics: MetricRegistry) extends HasMetrics {
   lazy val messageSize             = histo(MessageSize)
   lazy val numberOfGoods           = histo(NumberOfGoods)
   lazy val numberOfDocuments       = histo(NumberOfDocuments)

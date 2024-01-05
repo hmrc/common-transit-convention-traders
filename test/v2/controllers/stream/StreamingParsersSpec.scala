@@ -16,12 +16,11 @@
 
 package v2.controllers.stream
 
-import akka.NotUsed
-import akka.stream.Materializer
-import akka.stream.scaladsl.Keep
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.NotUsed
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -30,23 +29,12 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.Logging
 import play.api.http.HeaderNames
-import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.OK
 import play.api.libs.Files
 import play.api.libs.Files.SingletonTemporaryFileCreator
-import play.api.libs.json.Json
-import play.api.mvc.Action
-import play.api.mvc.ActionBuilder
-import play.api.mvc.ActionRefiner
-import play.api.mvc.AnyContent
-import play.api.mvc.BaseController
-import play.api.mvc.BodyParser
-import play.api.mvc.ControllerComponents
-import play.api.mvc.Request
-import play.api.mvc.Result
+import play.api.mvc._
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
-import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.defaultAwaitTimeout
 import play.api.test.Helpers.status

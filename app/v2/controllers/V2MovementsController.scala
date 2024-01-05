@@ -16,17 +16,17 @@
 
 package v2.controllers
 
-import akka.stream.Materializer
-import akka.stream.scaladsl.FileIO
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.FileIO
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import cats.data.EitherT
 import com.codahale.metrics.Counter
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
-import com.kenshoo.play.metrics.Metrics
+import com.codahale.metrics.MetricRegistry
 import config.AppConfig
 import config.Constants.XClientIdHeader
 import metrics.HasActionMetrics
@@ -127,7 +127,7 @@ class V2MovementsControllerImpl @Inject() (
   auditService: AuditingService,
   pushNotificationsService: PushNotificationsService,
   acceptHeaderActionProvider: AcceptHeaderActionProvider,
-  val metrics: Metrics,
+  val metrics: MetricRegistry,
   xmlParsingService: XmlMessageParsingService,
   jsonParsingService: JsonMessageParsingService,
   upscanService: UpscanService,

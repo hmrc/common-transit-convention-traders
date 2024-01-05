@@ -20,8 +20,8 @@ import java.time.Clock
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
-import akka.util.ByteString
-import com.kenshoo.play.metrics.Metrics
+import org.apache.pekko.util.ByteString
+import com.codahale.metrics.MetricRegistry
 import config.Constants.MissingECCEnrolmentMessage
 import config.Constants.XMissingECCEnrolment
 import connectors.DepartureMessageConnector
@@ -48,6 +48,7 @@ import play.api.http.HeaderNames
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.JsNull
+import play.api.libs.json.JsString
 import play.api.libs.json.Json
 import play.api.mvc.AnyContentAsEmpty
 import play.api.mvc.Headers
@@ -57,7 +58,6 @@ import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
 import uk.gov.hmrc.http.HttpResponse
 import v2.utils.CallOps._
-import utils.TestMetrics
 
 import scala.concurrent.Future
 import models.response.JsonClientErrorResponse
@@ -77,25 +77,25 @@ class DepartureMessagesControllerSpec
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(
-      bind[Metrics].toInstance(new TestMetrics),
       bind[AuthAction].to[FakeAuthAction],
       bind[DepartureMessageConnector].toInstance(mockMessageConnector),
       bind[Clock].toInstance(mockClock)
     )
     .configure(
-      "phase-4-enrolment-header" -> false
+      "phase-4-enrolment-header" -> false,
+      "metrics.jvm"              -> false
     )
     .build()
 
   val appWithEnrollmentHeader = GuiceApplicationBuilder()
     .overrides(
-      bind[Metrics].toInstance(new TestMetrics),
       bind[AuthAction].to[FakeAuthEccEnrollmentHeaderAction],
       bind[DepartureMessageConnector].toInstance(mockMessageConnector),
       bind[Clock].toInstance(mockClock)
     )
     .configure(
-      "phase-4-enrolment-header" -> true
+      "phase-4-enrolment-header" -> true,
+      "metrics.jvm"              -> false
     )
     .build()
 
@@ -410,7 +410,7 @@ class DepartureMessagesControllerSpec
   }
 
   "POST /movements/departures/:departureId/messages" - {
-    val expectedJson = Json.parse("""
+    val expectedJson = Json.parse(s"""
         |{
         |  "_links": {
         |    "self": {
@@ -423,7 +423,7 @@ class DepartureMessagesControllerSpec
         |  "departureId": "123",
         |  "messageId": "1",
         |  "messageType": "IE014",
-        |  "body": "<CC014A>\n    <SynIdeMES1>tval</SynIdeMES1>\n    <SynVerNumMES2>1</SynVerNumMES2>\n    \n    <SenIdeCodQuaMES4>1111</SenIdeCodQuaMES4>\n    <MesRecMES6>111111</MesRecMES6>\n    \n    <RecIdeCodQuaMES7>1111</RecIdeCodQuaMES7>\n    <DatOfPreMES9>20001001</DatOfPreMES9>\n    <TimOfPreMES10>1111</TimOfPreMES10>\n    <IntConRefMES11>111111</IntConRefMES11>\n    \n    <RecRefMES12>111111</RecRefMES12>\n    \n    <RecRefQuaMES13>to</RecRefQuaMES13>\n    \n    <AppRefMES14>token</AppRefMES14>\n    \n    <PriMES15>t</PriMES15>\n    \n    <AckReqMES16>1</AckReqMES16>\n    \n    <ComAgrIdMES17>token</ComAgrIdMES17>\n    \n    <TesIndMES18>1</TesIndMES18>\n    <MesIdeMES19>token</MesIdeMES19>\n    <MesTypMES20>CC014A</MesTypMES20>\n    \n    <ComAccRefMES21>token</ComAccRefMES21>\n    \n    <MesSeqNumMES22>11</MesSeqNumMES22>\n    \n    <FirAndLasTraMES23>t</FirAndLasTraMES23>\n    <HEAHEA>\n      <DocNumHEA5>default</DocNumHEA5>\n      <DatOfCanReqHEA147>20001001</DatOfCanReqHEA147>\n      <CanReaHEA250>default</CanReaHEA250>\n      <CanReaHEA250LNG>ab</CanReaHEA250LNG>\n    </HEAHEA>\n    <TRAPRIPC1>\n    </TRAPRIPC1>\n    <CUSOFFDEPEPT>\n      <RefNumEPT1>default1</RefNumEPT1>\n    </CUSOFFDEPEPT>\n  </CC014A>",
+        |  "body": ${JsString(CC014A.toString)},
         |  "_embedded": {
         |    "notifications": {
         |      "requestId":  "/customs/transits/movements/departures/123"

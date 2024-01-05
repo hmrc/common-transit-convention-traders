@@ -60,6 +60,9 @@ class ValidateDepartureDeclarationActionSpec
 
   override lazy val app = GuiceApplicationBuilder()
     .overrides(bind[AuthAction].to[FakeAuthAction], bind[Clock].toInstance(mockClock))
+    .configure(
+      "metrics.jvm" -> false
+    )
     .build()
 
   override def beforeEach(): Unit =

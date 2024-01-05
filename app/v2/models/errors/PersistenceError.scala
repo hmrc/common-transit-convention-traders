@@ -16,7 +16,6 @@
 
 package v2.models.errors
 
-import v2.models.LocalReferenceNumber
 import v2.models.MessageId
 import v2.models.MovementId
 import v2.models.MovementType

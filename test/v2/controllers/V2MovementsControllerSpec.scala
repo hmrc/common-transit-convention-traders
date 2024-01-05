@@ -16,18 +16,19 @@
 
 package v2.controllers
 
-import akka.stream.Materializer
-import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Keep
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
-import akka.util.Timeout
 import cats.data.EitherT
 import cats.data.NonEmptyList
 import cats.implicits.catsStdInstancesForFuture
 import cats.implicits.toBifunctorOps
+import com.codahale.metrics.MetricRegistry
 import config.AppConfig
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Flow
+import org.apache.pekko.stream.scaladsl.Keep
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
+import org.apache.pekko.util.Timeout
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.ArgumentMatchers.argThat
@@ -68,7 +69,6 @@ import play.api.test.Helpers.contentType
 import play.api.test.Helpers.status
 import routing.VersionedRouting
 import uk.gov.hmrc.http.HeaderCarrier
-import utils.TestMetrics
 import v2.base.HeaderCarrierMatcher
 import v2.base.TestActorSystem
 import v2.base.TestCommonGenerators
@@ -77,25 +77,7 @@ import v2.controllers.actions.providers.AcceptHeaderActionProvider
 import v2.controllers.actions.providers.AcceptHeaderActionProviderImpl
 import v2.fakes.controllers.actions.FakeAcceptHeaderActionProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
-import v2.models.AuditType.AddMessageDBFailed
-import v2.models.AuditType.ArrivalNotification
-import v2.models.AuditType.CreateMovementDBFailed
-import v2.models.AuditType.CustomerRequestedMissingMovement
-import v2.models.AuditType.DeclarationData
-import v2.models.AuditType.GetMovementDBFailed
-import v2.models.AuditType.GetMovementMessageDBFailed
-import v2.models.AuditType.GetMovementMessagesDBFailed
-import v2.models.AuditType.GetMovementsDBFailed
-import v2.models.AuditType.LargeMessageSubmissionRequested
-import v2.models.AuditType.PushNotificationFailed
-import v2.models.AuditType.PushNotificationUpdateFailed
-import v2.models.AuditType.PushPullNotificationGetBoxFailed
-import v2.models.AuditType.SubmitArrivalNotificationFailed
-import v2.models.AuditType.SubmitAttachMessageFailed
-import v2.models.AuditType.SubmitDeclarationFailed
-import v2.models.AuditType.TraderFailedUpload
-import v2.models.AuditType.TraderToNCTSSubmissionSuccessful
-import v2.models.AuditType.ValidationFailed
+import v2.models.AuditType._
 import v2.models._
 import v2.models.errors.ExtractionError.MessageTypeNotFound
 import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
@@ -224,7 +206,7 @@ class V2MovementsControllerSpec
       mockAuditService,
       mockPushNotificationService,
       acceptHeaderProvider,
-      new TestMetrics(),
+      new MetricRegistry,
       mockXmlParsingService,
       mockJsonParsingService,
       mockUpscanService,

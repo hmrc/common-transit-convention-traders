@@ -18,7 +18,7 @@ package v2.connectors
 
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
-import com.kenshoo.play.metrics.Metrics
+import com.codahale.metrics.MetricRegistry
 import config.AppConfig
 import metrics.HasMetrics
 import metrics.MetricsKeys
@@ -60,7 +60,7 @@ trait PushNotificationsConnector {
 
 }
 
-class PushNotificationsConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metrics: Metrics)(implicit appConfig: AppConfig)
+class PushNotificationsConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metrics: MetricRegistry)(implicit appConfig: AppConfig)
     extends PushNotificationsConnector
     with V2BaseConnector
     with HasMetrics {

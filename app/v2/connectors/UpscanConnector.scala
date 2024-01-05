@@ -16,12 +16,12 @@
 
 package v2.connectors
 
-import akka.stream.Materializer
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
-import com.kenshoo.play.metrics.Metrics
+import com.codahale.metrics.MetricRegistry
 import config.AppConfig
 import config.Constants
 import io.lemonlabs.uri.QueryString
@@ -56,7 +56,7 @@ trait UpscanConnector {
 
 }
 
-class UpscanConnectorImpl @Inject() (appConfig: AppConfig, httpClientV2: HttpClientV2, val metrics: Metrics)
+class UpscanConnectorImpl @Inject() (appConfig: AppConfig, httpClientV2: HttpClientV2, val metrics: MetricRegistry)
     extends UpscanConnector
     with V2BaseConnector
     with HasMetrics {

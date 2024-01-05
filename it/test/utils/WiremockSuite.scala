@@ -18,7 +18,6 @@ package utils
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
-import com.kenshoo.play.metrics.Metrics
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.Suite
@@ -80,7 +79,6 @@ trait GuiceWiremockSuite extends WiremockSuite with GuiceFakeApplicationFactory 
   protected lazy val injector: Injector = fakeApplication.injector
 
   protected def bindings: Seq[GuiceableModule] = Seq(
-    bind[Metrics].toInstance(new TestMetrics),
     bind[Clock].toInstance(Clock.systemUTC())
   )
 

@@ -16,9 +16,10 @@
 
 package v2.connectors
 
-import akka.stream.Materializer
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import com.codahale.metrics.MetricRegistry
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
 import config.Constants
@@ -41,7 +42,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.GuiceWiremockSuite
-import utils.TestMetrics
 import v2.models.EORINumber
 import v2.models.MessageId
 import v2.models.MovementId
@@ -78,12 +78,12 @@ class RouterConnectorSpec
 
   implicit lazy val materializer: Materializer = app.materializer
   implicit lazy val ec: ExecutionContext       = app.materializer.executionContext
-  lazy val routerConnector: RouterConnector    = new RouterConnectorImpl(new TestMetrics(), httpClientV2)
+  lazy val routerConnector: RouterConnector    = new RouterConnectorImpl(new MetricRegistry, httpClientV2)
 
   def targetUrl(eoriNumber: EORINumber, messageType: MessageType, movementId: MovementId, messageId: MessageId) =
     s"/transit-movements-router/traders/${eoriNumber.value}/movements/${messageType.movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
 
-  implicit val hc = HeaderCarrier()
+  implicit val hc: HeaderCarrier = HeaderCarrier()
 
   "POST /traders/:eori/message/:movementType/:messageId/movements/:movementId" - {
 

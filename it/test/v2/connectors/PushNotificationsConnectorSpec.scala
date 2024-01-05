@@ -16,6 +16,7 @@
 
 package v2.connectors
 
+import com.codahale.metrics.MetricRegistry
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath
@@ -46,7 +47,6 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
-import utils.TestMetrics
 import utils.WiremockSuite
 import v2.models.MessageId
 import v2.models.MovementId
@@ -65,15 +65,15 @@ class PushNotificationsConnectorSpec
     with MockitoSugar
     with CommonGenerators {
 
-  val token                  = Gen.alphaNumStr.sample.get
-  implicit val mockAppConfig = mock[AppConfig]
+  val token                             = Gen.alphaNumStr.sample.get
+  implicit val mockAppConfig: AppConfig = mock[AppConfig]
   when(mockAppConfig.internalAuthToken).thenReturn(token)
   when(mockAppConfig.pushNotificationsUrl).thenAnswer {
     _ => Url.parse(server.baseUrl())
   }
   // using thenAnswer for lazy semantics
 
-  lazy val sut = new PushNotificationsConnectorImpl(httpClientV2, new TestMetrics)
+  lazy val sut = new PushNotificationsConnectorImpl(httpClientV2, new MetricRegistry)
 
   "associate" - {
 

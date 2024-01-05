@@ -16,15 +16,13 @@
 
 package metrics
 
-import java.util.concurrent.atomic.AtomicBoolean
-
 import com.codahale.metrics.MetricRegistry
-import com.kenshoo.play.metrics.Metrics
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.Result
 import uk.gov.hmrc.http.HttpResponse
 
+import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
@@ -48,20 +46,18 @@ trait HasActionMetrics extends HasMetrics {
 }
 
 trait HasMetrics {
-  def metrics: Metrics
-
-  lazy val registry: MetricRegistry = metrics.defaultRegistry
+  def metrics: MetricRegistry
 
   def histo(metricKey: String) =
-    registry.histogram(metricKey)
+    metrics.histogram(metricKey)
 
   def counter(metricsKey: String) =
-    registry.counter(metricsKey)
+    metrics.counter(metricsKey)
 
   class MetricsTimer(metricKey: String) {
-    val timerContext   = registry.timer(s"$metricKey-timer").time()
-    val successCounter = registry.counter(s"$metricKey-success-counter")
-    val failureCounter = registry.counter(s"$metricKey-failed-counter")
+    val timerContext   = metrics.timer(s"$metricKey-timer").time()
+    val successCounter = metrics.counter(s"$metricKey-success-counter")
+    val failureCounter = metrics.counter(s"$metricKey-failed-counter")
     val timerRunning   = new AtomicBoolean(true)
 
     def completeWithSuccess(): Unit =

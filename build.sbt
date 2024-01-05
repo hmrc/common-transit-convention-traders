@@ -4,19 +4,17 @@ import uk.gov.hmrc.DefaultBuildSettings
 
 val appName = "common-transit-convention-traders"
 
+ThisBuild / majorVersion := 0
+ThisBuild / scalaVersion := "2.13.12"
+
 lazy val microservice = Project(appName, file("."))
-  .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin)
+  .enablePlugins(PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
-  .configs(IntegrationTest)
-  .settings(DefaultBuildSettings.integrationTestSettings())
-  .settings(inConfig(IntegrationTest)(itSettings))
-  .settings(inConfig(IntegrationTest)(ScalafmtPlugin.scalafmtConfigSettings))
+  .settings(inConfig(Test)(ScalafmtPlugin.scalafmtConfigSettings))
   .settings(inThisBuild(buildSettings))
   .settings(scoverageSettings)
   .settings(scalacSettings)
   .settings(
-    majorVersion := 0,
-    scalaVersion := "2.13.8",
     resolvers += Resolver.jcenterRepo,
     PlayKeys.playDefaultPort := 9487,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
@@ -35,6 +33,23 @@ lazy val microservice = Project(appName, file("."))
       "-Djdk.xml.maxOccurLimit=10000"
     )
   )
+
+lazy val it = project
+  .enablePlugins(PlayScala)
+  .dependsOn(microservice % "test->test") // the "test->test" allows reusing test code and test dependencies
+  .settings(DefaultBuildSettings.itSettings())
+  .settings(
+    libraryDependencies ++= AppDependencies.test,
+    Test / fork := true,
+    Test / unmanagedResourceDirectories += baseDirectory.value / "it" / "test" / "resources",
+    javaOptions ++= Seq(
+      "-Djdk.xml.maxOccurLimit=10000",
+      "-Dlogger.resource=it.logback.xml"
+    )
+  )
+  .settings(scalacSettings)
+  .settings(scoverageSettings)
+  .settings(inConfig(Test)(ScalafmtPlugin.scalafmtConfigSettings))
 
 // Settings for the whole build
 lazy val buildSettings = Def.settings(
@@ -81,13 +96,4 @@ lazy val scoverageSettings = Def.settings(
     ".*GuiceInjector",
     ".*Test.*"
   ).mkString(";")
-)
-
-lazy val itSettings = Seq(
-  // Must fork so that config system properties are set
-  fork := true,
-  unmanagedResourceDirectories += (baseDirectory.value / "it" / "resources"),
-  javaOptions ++= Seq(
-    "-Dlogger.resource=it.logback.xml"
-  )
 )

@@ -16,6 +16,7 @@
 
 package connectors
 
+import com.codahale.metrics.SharedMetricRegistries
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.Constants
 import models.Box
@@ -43,6 +44,7 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with GuiceWiremockSu
       val testClientId = "X5ZasuQLH0xqKooV_IEw6yjQNfEa"
 
       "should return a Right[Box] when the pushPullNotification API returns 200 and valid JSON" in {
+        SharedMetricRegistries.clear()
         server.stubFor {
           get(urlPathEqualTo("/box")).willReturn(
             aResponse()
@@ -76,6 +78,7 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with GuiceWiremockSu
       }
 
       "should return Left when the pushPullNotification API returns 404" in {
+        SharedMetricRegistries.clear()
         server.stubFor {
           get(urlPathEqualTo("/box")).willReturn(
             aResponse()
@@ -96,6 +99,7 @@ class PushPullNotificationConnectorSpec extends AnyFreeSpec with GuiceWiremockSu
       }
 
       "should return Left when the pushPullNotification API returns 500" in {
+        SharedMetricRegistries.clear()
         server.stubFor {
           get(urlPathEqualTo("/box")).willReturn(
             aResponse()

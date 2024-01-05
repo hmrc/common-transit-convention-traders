@@ -16,9 +16,10 @@
 
 package v2.connectors
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import cats.data.NonEmptyList
+import com.codahale.metrics.MetricRegistry
 import com.fasterxml.jackson.core.JsonParseException
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
@@ -41,7 +42,6 @@ import uk.gov.hmrc.http
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
-import utils.TestMetrics
 import v2.models.errors.JsonValidationError
 import v2.models.errors.PresentationError
 import v2.models.errors.XmlValidationError
@@ -65,7 +65,7 @@ class ValidationConnectorSpec
 
   lazy val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
-  lazy val validationConnector: ValidationConnectorImpl = new ValidationConnectorImpl(httpClientV2, appConfig, new TestMetrics())
+  lazy val validationConnector: ValidationConnectorImpl = new ValidationConnectorImpl(httpClientV2, appConfig, new MetricRegistry)
   implicit lazy val ec: ExecutionContext                = app.materializer.executionContext
 
   "POST /message/:messageType/validation" - {

@@ -20,7 +20,6 @@ import com.codahale.metrics.Counter
 import com.codahale.metrics.Histogram
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
-import com.kenshoo.play.metrics.Metrics
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito
 import org.mockito.Mockito._
@@ -41,17 +40,17 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
 
   trait MockHasMetrics {
     self: HasMetrics =>
-    val timerContext                           = mock[Timer.Context]
-    val timer                                  = mock[Timer]
-    val successCounter                         = mock[Counter]
-    val failureCounter                         = mock[Counter]
-    val histogram                              = mock[Histogram]
-    val metrics                                = mock[Metrics]
-    override lazy val registry: MetricRegistry = mock[MetricRegistry]
-    when(registry.timer(anyString())) thenReturn timer
-    when(registry.counter(endsWith("success-counter"))) thenReturn successCounter
-    when(registry.counter(endsWith("failed-counter"))) thenReturn failureCounter
-    when(registry.histogram(anyString())) thenReturn histogram
+    val timerContext   = mock[Timer.Context]
+    val timer          = mock[Timer]
+    val successCounter = mock[Counter]
+    val failureCounter = mock[Counter]
+    val histogram      = mock[Histogram]
+    val metrics        = mock[MetricRegistry]
+
+    when(metrics.timer(anyString())) thenReturn timer
+    when(metrics.counter(endsWith("success-counter"))) thenReturn successCounter
+    when(metrics.counter(endsWith("failed-counter"))) thenReturn failureCounter
+    when(metrics.histogram(anyString())) thenReturn histogram
     when(timer.time()) thenReturn timerContext
     when(timerContext.stop()) thenReturn 0L
   }

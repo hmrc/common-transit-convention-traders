@@ -16,11 +16,11 @@
 
 package v2.connectors
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
-import com.kenshoo.play.metrics.Metrics
+import com.codahale.metrics.MetricRegistry
 import config.AppConfig
 import config.Constants
 import metrics.HasMetrics
@@ -54,7 +54,7 @@ trait RouterConnector {
 
 }
 
-class RouterConnectorImpl @Inject() (val metrics: Metrics, httpClientV2: HttpClientV2)(implicit appConfig: AppConfig)
+class RouterConnectorImpl @Inject() (val metrics: MetricRegistry, httpClientV2: HttpClientV2)(implicit appConfig: AppConfig)
     extends RouterConnector
     with V2BaseConnector
     with HasMetrics

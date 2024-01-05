@@ -16,7 +16,7 @@
 
 package routing
 
-import akka.util.Timeout
+import org.apache.pekko.util.Timeout
 import config.AppConfig
 import org.mockito.Mockito.when
 import org.scalatest.OptionValues

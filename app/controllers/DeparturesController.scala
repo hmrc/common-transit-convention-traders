@@ -16,12 +16,12 @@
 
 package controllers
 
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import audit.AuditService
 import audit.AuditType
 import com.google.inject.ImplementedBy
 import com.google.inject.Singleton
-import com.kenshoo.play.metrics.Metrics
+import com.codahale.metrics.MetricRegistry
 import config.AppConfig
 import config.Constants.MissingECCEnrolmentMessage
 import config.Constants.XMissingECCEnrolment
@@ -67,7 +67,7 @@ class DeparturesController @Inject() (
   ensureGuaranteeAction: EnsureGuaranteeAction,
   auditService: AuditService,
   messageAnalyser: AnalyseMessageActionProvider,
-  val metrics: Metrics,
+  val metrics: MetricRegistry,
   config: AppConfig
 )(implicit ec: ExecutionContext, val materializer: Materializer)
     extends BackendController(cc)

@@ -16,13 +16,13 @@
 
 package v2.connectors
 
-import akka.stream.Materializer
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
-import com.kenshoo.play.metrics.Metrics
+import com.codahale.metrics.MetricRegistry
 import config.AppConfig
 import metrics.HasMetrics
 import metrics.MetricsKeys
@@ -48,7 +48,7 @@ trait ConversionConnector {
 }
 
 @Singleton
-class ConversionConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig, val metrics: Metrics)
+class ConversionConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: AppConfig, val metrics: MetricRegistry)
     extends ConversionConnector
     with HasMetrics
     with V2BaseConnector
