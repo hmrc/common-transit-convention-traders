@@ -23,6 +23,4 @@ object AppDependencies {
     "org.typelevel"     %% "discipline-scalatest"   % "2.1.5",
     "uk.gov.hmrc"       %% "bootstrap-test-play-30" % bootstrapPlayVersion
   ).map(_ % Test)
-
-  val integration = Seq.empty[ModuleID]
 }
