@@ -21,6 +21,7 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import config.AppConfig
 import config.Constants
+import play.api.Logging
 import play.api.http.Status.NOT_FOUND
 import play.api.libs.json.JsValue
 import play.api.mvc.Headers
@@ -61,7 +62,8 @@ trait PushNotificationsService {
 class PushNotificationsServiceImpl @Inject() (
   pushNotificationsConnector: PushNotificationsConnector,
   appConfig: AppConfig
-) extends PushNotificationsService {
+) extends PushNotificationsService
+    with Logging {
 
   override def associate(movementId: MovementId, movementType: MovementType, headers: Headers, enrollmentEORINumber: EORINumber)(implicit
     headerCarrier: HeaderCarrier,
@@ -87,7 +89,9 @@ class PushNotificationsServiceImpl @Inject() (
                 .map(Right(_))
                 .recover {
                   case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.BoxNotFound)
-                  case NonFatal(thr)                             => Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
+                  case NonFatal(thr) =>
+                    logger.error(s"Unable to associate notification due to an exception ${thr.getMessage}", thr)
+                    Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
                 }
           }
           .getOrElse(Future.successful(Left(PushNotificationError.MissingClientId)))
@@ -104,7 +108,9 @@ class PushNotificationsServiceImpl @Inject() (
           .map(Right(_))
           .recover {
             case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.AssociationNotFound)
-            case NonFatal(thr)                             => Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
+            case NonFatal(thr) =>
+              logger.error(s"Unable to update notification due to an exception ${thr.getMessage}", thr)
+              Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
           }
       }
 
@@ -120,7 +126,9 @@ class PushNotificationsServiceImpl @Inject() (
           .map(Right(_))
           .recover {
             case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.BoxNotFound)
-            case NonFatal(thr)                             => Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
+            case NonFatal(thr) =>
+              logger.error(s"Unable to post notification due to an exception ${thr.getMessage}", thr)
+              Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
           }
       }
 

@@ -16,18 +16,14 @@
 
 package controllers
 
+import com.codahale.metrics.MetricRegistry
 import com.google.inject.ImplementedBy
 import com.google.inject.Singleton
-import com.codahale.metrics.MetricRegistry
 import config.AppConfig
 import config.Constants.MissingECCEnrolmentMessage
 import config.Constants.XMissingECCEnrolment
 import connectors.ArrivalMessageConnector
-import controllers.actions.AnalyseMessageActionProvider
-import controllers.actions.AuthAction
-import controllers.actions.AuthRequest
-import controllers.actions.ValidateAcceptJsonHeaderAction
-import controllers.actions.ValidateArrivalMessageAction
+import controllers.actions._
 import metrics.HasActionMetrics
 import metrics.MetricsKeys
 import models.MessageType
@@ -105,9 +101,11 @@ class ArrivalMessagesController @Inject() (
                             ).withHeaders(LOCATION -> routing.routes.ArrivalsRouter.getArrivalMessage(arrivalId.toString, messageId.toString).urlWithContext)
                           }
                         case None =>
+                          logger.error("No valid matching message type found for Arrival")
                           InternalServerError
                       }
                     case _ =>
+                      logger.error("Location header is not available with the response for Arrival")
                       InternalServerError
                   }
                 case _ => handleNon2xx(response)
