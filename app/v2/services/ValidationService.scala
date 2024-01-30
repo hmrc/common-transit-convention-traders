@@ -106,7 +106,7 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
       }
     case upstreamError: UpstreamErrorResponse => Left(FailedToValidateError.UnexpectedError(Some(upstreamError)))
     case NonFatal(e) =>
-      logger.error(s"Exception occurred while validating request ${e.getMessage}", e)
+      logger.error(s"Exception occurred while validating request: ${e.getMessage}", e)
       Left(FailedToValidateError.UnexpectedError(Some(e)))
   }
 

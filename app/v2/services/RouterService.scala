@@ -71,7 +71,7 @@ class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends Rou
           case UpstreamErrorResponse(message, BAD_REQUEST, _, _) => Left(determineError(message))
           case UpstreamErrorResponse(message, CONFLICT, _, _)    => Left(onConflict(message))
           case NonFatal(e) =>
-            logger.error(s"Unable to send to EIS due to an exception ${e.getMessage}", e)
+            logger.error(s"Unable to send to EIS : ${e.getMessage}", e)
             Left(RouterError.UnexpectedError(thr = Some(e)))
         }
     )

@@ -72,7 +72,7 @@ class UpscanServiceImpl @Inject() (
         .map(Right(_))
         .recover {
           case NonFatal(thr) =>
-            logger.error(s"Unable to initiate upscan due to an exception ${thr.getMessage}", thr)
+            logger.error(s"Unable to initiate upscan : ${thr.getMessage}", thr)
             Left(UpscanError.UnexpectedError(thr = Some(thr)))
         }
     }
@@ -90,7 +90,7 @@ class UpscanServiceImpl @Inject() (
         .map(Right(_))
         .recover {
           case NonFatal(thr) =>
-            logger.error(s"Unable to get upscan file due to an exception ${thr.getMessage}", thr)
+            logger.error(s"Unable to get upscan file : ${thr.getMessage}", thr)
             Left(UpscanError.UnexpectedError(thr = Some(thr)))
 
         }

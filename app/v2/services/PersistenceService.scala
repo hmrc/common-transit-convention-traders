@@ -140,7 +140,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         }
         .recover {
           case NonFatal(thr) =>
-            logger.error(s"Unable to create movement due to an exception ${thr.getMessage}", thr)
+            logger.error(s"Unable to create movement : ${thr.getMessage}", thr)
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
@@ -156,7 +156,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
           case NonFatal(thr) =>
-            logger.error(s"Unable to get message due to an exception ${thr.getMessage}", thr)
+            logger.error(s"Unable to get message : ${thr.getMessage}", thr)
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
@@ -182,7 +182,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
           case NonFatal(thr) =>
-            logger.error(s"Unable to get messages due to an exception ${thr.getMessage}", thr)
+            logger.error(s"Unable to get messages : ${thr.getMessage}", thr)
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
@@ -198,7 +198,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
           case NonFatal(thr) =>
-            logger.error(s"Unable to get movement due to an exception ${thr.getMessage}", thr)
+            logger.error(s"Unable to get movement : ${thr.getMessage}", thr)
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
@@ -224,7 +224,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
       }
       .recover {
         case NonFatal(thr) =>
-          logger.error(s"Unable to get movements due to an exception ${thr.getMessage}", thr)
+          logger.error(s"Unable to get movements : ${thr.getMessage}", thr)
           Left(PersistenceError.UnexpectedError(Some(thr)))
       }
   }
@@ -259,7 +259,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
           case NonFatal(thr) =>
-            logger.error(s"Unable to add message due to an exception ${thr.getMessage}", thr)
+            logger.error(s"Unable to add message : ${thr.getMessage}", thr)
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
@@ -281,7 +281,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
           case NonFatal(thr) =>
-            logger.error(s"Unable to update message due to an exception ${thr.getMessage}", thr)
+            logger.error(s"Unable to update message : ${thr.getMessage}", thr)
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
@@ -303,7 +303,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         .map(Right(_))
         .recover {
           case NonFatal(thr) =>
-            logger.error(s"Unable to update message body due to an exception ${thr.getMessage}", thr)
+            logger.error(s"Unable to update message body : ${thr.getMessage}", thr)
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
@@ -320,7 +320,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
           case NonFatal(thr) =>
-            logger.error(s"Unable to get message body due to an exception ${thr.getMessage}", thr)
+            logger.error(s"Unable to get message body : ${thr.getMessage}", thr)
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )

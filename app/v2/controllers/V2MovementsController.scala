@@ -418,7 +418,7 @@ class V2MovementsControllerImpl @Inject() (
         }
         .recover {
           case NonFatal(ex) =>
-            logger.error(s"Json to Byte String got failed: ${ex.getMessage}", ex)
+            logger.error(s"get file failed: ${ex.getMessage}", ex)
             Left(PresentationError.internalServiceError(cause = Some(ex)))
         }
     }

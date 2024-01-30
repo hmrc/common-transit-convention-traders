@@ -154,7 +154,7 @@ trait StreamingParsers {
         )
         .recover {
           case NonFatal(e) =>
-            logger.error(s"Merge Stream got failed: ${e.getMessage}", e)
+            logger.error(s"Merge Stream failed: ${e.getMessage}", e)
             Left(PresentationError.internalServiceError(cause = Some(e)))
         }
     }
@@ -175,7 +175,7 @@ trait StreamingParsers {
         )
         .recover {
           case NonFatal(e) =>
-            logger.error(s"Json to Byte String got failed: ${e.getMessage}", e)
+            logger.error(s"Json to ByteString failed: ${e.getMessage}", e)
             Left(PresentationError.internalServiceError(cause = Some(e)))
         }
     }
@@ -188,7 +188,7 @@ trait StreamingParsers {
         }))
         .recover {
           case NonFatal(e) =>
-            logger.error(s"String to Byte String got failed: ${e.getMessage}", e)
+            logger.error(s"String to ByteString failed: ${e.getMessage}", e)
             Left(PresentationError.internalServiceError(cause = Some(e)))
         }
     }

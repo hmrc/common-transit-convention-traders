@@ -37,7 +37,7 @@ trait ResponseHelper extends Results with Status with HttpErrorFunctions with Lo
       case s if is4xx(s) =>
         if (response.body != null) Status(response.status)(Json.toJson(JsonClientErrorResponse(response.status, response.body))) else Status(response.status)
       case _ =>
-        if (response.body != null) logger.error(s"Internal server error occurred ${response.body}")
+        if (response.body != null) logger.error(s"Internal server error occurred : ${response.body}")
         Status(response.status)
     }
   }

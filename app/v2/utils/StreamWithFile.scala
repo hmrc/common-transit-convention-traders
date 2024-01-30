@@ -72,7 +72,7 @@ trait StreamWithFile {
           .map(Right.apply)
           .recover {
             case NonFatal(e) =>
-              logger.error(s"Exception occurred while calculating size of payload ${e.getMessage}", e)
+              logger.error(s"Exception occurred while calculating size of payload : ${e.getMessage}", e)
               Left(PresentationError.internalServiceError(cause = Some(e)))
           }
       )

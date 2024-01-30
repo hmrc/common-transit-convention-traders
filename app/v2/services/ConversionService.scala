@@ -74,7 +74,7 @@ class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector)
         }
         .recover {
           case NonFatal(e) =>
-            logger.error(s"Unable to convert payload due to an exception ${e.getMessage}", e)
+            logger.error(s"Unable to convert payload : ${e.getMessage}", e)
             Left(ConversionError.UnexpectedError(thr = Some(e)))
         }
     )
