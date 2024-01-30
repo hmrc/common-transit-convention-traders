@@ -35,6 +35,7 @@ import scala.util.control.NonFatal
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
+import play.api.Logging
 import v2.models.responses.UpscanResponse.DownloadUrl
 
 @ImplementedBy(classOf[UpscanServiceImpl])
@@ -58,7 +59,8 @@ trait UpscanService {
 class UpscanServiceImpl @Inject() (
   upscanConnector: UpscanConnector
 ) extends UpscanService
-    with V2BaseConnector {
+    with V2BaseConnector
+    with Logging {
 
   override def upscanInitiate(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
     headerCarrier: HeaderCarrier,
@@ -69,7 +71,9 @@ class UpscanServiceImpl @Inject() (
         .upscanInitiate(eoriNumber, movementType, movementId, messageId)
         .map(Right(_))
         .recover {
-          case NonFatal(thr) => Left(UpscanError.UnexpectedError(thr = Some(thr)))
+          case NonFatal(thr) =>
+            logger.error(s"Unable to initiate upscan : ${thr.getMessage}", thr)
+            Left(UpscanError.UnexpectedError(thr = Some(thr)))
         }
     }
 
@@ -85,7 +89,10 @@ class UpscanServiceImpl @Inject() (
         .upscanGetFile(downloadUrl)
         .map(Right(_))
         .recover {
-          case NonFatal(thr) => Left(UpscanError.UnexpectedError(thr = Some(thr)))
+          case NonFatal(thr) =>
+            logger.error(s"Unable to get upscan file : ${thr.getMessage}", thr)
+            Left(UpscanError.UnexpectedError(thr = Some(thr)))
+
         }
     }
 }

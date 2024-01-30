@@ -103,9 +103,11 @@ class ArrivalMovementController @Inject() (
                         ).withHeaders(LOCATION -> routing.routes.ArrivalsRouter.getArrival(arrivalId.toString).urlWithContext)
                       }
                     case None =>
+                      logger.error("No valid matching message type found for Arrival")
                       InternalServerError
                   }
                 case _ =>
+                  logger.error("Location header is not available with the response for Arrival")
                   InternalServerError
               }
             case Left(response) => handleNon2xx(response)
@@ -137,9 +139,11 @@ class ArrivalMovementController @Inject() (
                         ).withHeaders(LOCATION -> routing.routes.ArrivalsRouter.getArrival(arrivalId.toString).urlWithContext)
                       }
                     case None =>
+                      logger.error("No valid matching message type found for Arrival")
                       InternalServerError
                   }
                 case _ =>
+                  logger.error("Location header is not available with the response for Arrival")
                   InternalServerError
               }
             case Left(response) =>

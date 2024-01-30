@@ -23,6 +23,7 @@ import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
+import play.api.Logging
 import play.api.http.Status.NOT_FOUND
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
@@ -125,7 +126,7 @@ trait PersistenceService {
 }
 
 @Singleton
-class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnector) extends PersistenceService {
+class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnector) extends PersistenceService with Logging {
 
   override def createMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, _]])(implicit
     hc: HeaderCarrier,
@@ -139,6 +140,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         }
         .recover {
           case NonFatal(thr) =>
+            logger.error(s"Unable to create movement : ${thr.getMessage}", thr)
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
@@ -153,7 +155,9 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
-          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+          case NonFatal(thr) =>
+            logger.error(s"Unable to get message : ${thr.getMessage}", thr)
+            Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
 
@@ -177,7 +181,9 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         }
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
-          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+          case NonFatal(thr) =>
+            logger.error(s"Unable to get messages : ${thr.getMessage}", thr)
+            Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
 
@@ -191,7 +197,9 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
-          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+          case NonFatal(thr) =>
+            logger.error(s"Unable to get movement : ${thr.getMessage}", thr)
+            Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
 
@@ -215,7 +223,9 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         summary => movements(page, summary)
       }
       .recover {
-        case NonFatal(thr) => Left(PersistenceError.UnexpectedError(Some(thr)))
+        case NonFatal(thr) =>
+          logger.error(s"Unable to get movements : ${thr.getMessage}", thr)
+          Left(PersistenceError.UnexpectedError(Some(thr)))
       }
   }
 
@@ -248,7 +258,9 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
-          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+          case NonFatal(thr) =>
+            logger.error(s"Unable to add message : ${thr.getMessage}", thr)
+            Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
 
@@ -268,7 +280,9 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
-          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+          case NonFatal(thr) =>
+            logger.error(s"Unable to update message : ${thr.getMessage}", thr)
+            Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
 
@@ -289,6 +303,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         .map(Right(_))
         .recover {
           case NonFatal(thr) =>
+            logger.error(s"Unable to update message body : ${thr.getMessage}", thr)
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
@@ -304,7 +319,9 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
-          case NonFatal(thr)                             => Left(PersistenceError.UnexpectedError(Some(thr)))
+          case NonFatal(thr) =>
+            logger.error(s"Unable to get message body : ${thr.getMessage}", thr)
+            Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
 

@@ -111,9 +111,11 @@ class DepartureMessagesController @Inject() (
                             ).withHeaders(LOCATION -> routing.routes.DeparturesRouter.getMessage(departureId.toString, messageId.toString).urlWithContext)
                           }
                         case None =>
+                          logger.error("No valid matching message type found for Departure")
                           InternalServerError
                       }
                     case _ =>
+                      logger.error("Location header is not available with the response for Departure")
                       InternalServerError
                   }
                 case _ => handleNon2xx(response)

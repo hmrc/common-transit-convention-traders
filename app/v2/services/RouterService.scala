@@ -21,6 +21,7 @@ import org.apache.pekko.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
+import play.api.Logging
 import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.CONFLICT
 import play.api.libs.json.JsError
@@ -54,7 +55,7 @@ trait RouterService {
 
 }
 
-class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends RouterService {
+class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends RouterService with Logging {
 
   def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
     ec: ExecutionContext,
@@ -70,6 +71,7 @@ class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends Rou
           case UpstreamErrorResponse(message, BAD_REQUEST, _, _) => Left(determineError(message))
           case UpstreamErrorResponse(message, CONFLICT, _, _)    => Left(onConflict(message))
           case NonFatal(e) =>
+            logger.error(s"Unable to send to EIS : ${e.getMessage}", e)
             Left(RouterError.UnexpectedError(thr = Some(e)))
         }
     )
