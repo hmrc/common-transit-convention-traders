@@ -61,6 +61,7 @@ trait V1DeparturesController {
 class DeparturesController @Inject() (
   cc: ControllerComponents,
   authAction: AuthAction,
+  newAuthAction: AuthNewEnrolmentAction,
   departuresConnector: DeparturesConnector,
   validateAcceptJsonHeaderAction: ValidateAcceptJsonHeaderAction[AuthRequest],
   validateDepartureDeclarationAction: ValidateDepartureDeclarationAction[AuthRequest],
@@ -82,7 +83,7 @@ class DeparturesController @Inject() (
 
   override def submitDeclaration(): Action[NodeSeq] =
     withMetricsTimerAction(SubmitDepartureDeclaration) {
-      (authAction andThen validateDepartureDeclarationAction andThen messageAnalyser() andThen ensureGuaranteeAction).async(parse.xml) {
+      (newAuthAction andThen validateDepartureDeclarationAction andThen messageAnalyser() andThen ensureGuaranteeAction).async(parse.xml) {
         implicit request =>
           departuresConnector.post(request.newXml.toString).map {
             case Right(response) =>
