@@ -217,7 +217,9 @@ class AuthNewEnrolmentActionSpec extends AnyFreeSpec with Matchers with MockitoS
       status(result) mustEqual FORBIDDEN
 
       val json: JsValue = Json.parse(contentAsString(result))
-      (json \ "message").get mustBe JsString("Current user doesn't have a valid EORI enrolment.")
+      (json \ "message").get mustBe JsString(
+        "Legacy enrollment is no longer supported. Please upgrade to the new ECC enrollment to submit declarations. Guidance for new ECC enrollment: https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system"
+      )
       (json \ "code").get mustBe JsString("FORBIDDEN")
 
     }
@@ -236,7 +238,9 @@ class AuthNewEnrolmentActionSpec extends AnyFreeSpec with Matchers with MockitoS
       status(result) mustEqual FORBIDDEN
 
       val json: JsValue = Json.parse(contentAsString(result))
-      (json \ "message").get mustBe JsString("Current user doesn't have a valid EORI enrolment.")
+      (json \ "message").get mustBe JsString(
+        "Legacy enrollment is no longer supported. Please upgrade to the new ECC enrollment to submit declarations. Guidance for new ECC enrollment: https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system"
+      )
       (json \ "code").get mustBe JsString("FORBIDDEN")
     }
 
@@ -254,7 +258,9 @@ class AuthNewEnrolmentActionSpec extends AnyFreeSpec with Matchers with MockitoS
       status(result) mustEqual FORBIDDEN
 
       val json: JsValue = Json.parse(contentAsString(result))
-      (json \ "message").get mustBe JsString("Current user doesn't have a valid EORI enrolment.")
+      (json \ "message").get mustBe JsString(
+        "Legacy enrollment is no longer supported. Please upgrade to the new ECC enrollment to submit declarations. Guidance for new ECC enrollment: https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system"
+      )
       (json \ "code").get mustBe JsString("FORBIDDEN")
     }
 
@@ -272,7 +278,9 @@ class AuthNewEnrolmentActionSpec extends AnyFreeSpec with Matchers with MockitoS
       status(result) mustEqual FORBIDDEN
 
       val json: JsValue = Json.parse(contentAsString(result))
-      (json \ "message").get mustBe JsString("Current user doesn't have a valid EORI enrolment.")
+      (json \ "message").get mustBe JsString(
+        "Legacy enrollment is no longer supported. Please upgrade to the new ECC enrollment to submit declarations. Guidance for new ECC enrollment: https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system"
+      )
       (json \ "code").get mustBe JsString("FORBIDDEN")
     }
   }

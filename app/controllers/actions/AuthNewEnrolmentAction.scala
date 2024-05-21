@@ -72,7 +72,13 @@ class AuthNewEnrolmentAction @Inject() (
   } recover {
     case e: InsufficientEnrolments =>
       logger.warn("Failed to authorise due to insufficient enrolments", e)
-      Forbidden(Json.toJson(PresentationError.forbiddenError("Current user doesn't have a valid EORI enrolment.")))
+      Forbidden(
+        Json.toJson(
+          PresentationError.forbiddenError(
+            "Legacy enrollment is no longer supported. Please upgrade to the new ECC enrollment to submit declarations. Guidance for new ECC enrollment: https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system"
+          )
+        )
+      )
     case e: AuthorisationException =>
       logger.warn(s"Failed to authorise", e)
       Unauthorized(Json.toJson(PresentationError.unauthorized(s"Failed to authorise user: ${e.reason}")))
