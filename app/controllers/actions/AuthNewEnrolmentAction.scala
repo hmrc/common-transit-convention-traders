@@ -17,8 +17,7 @@
 package controllers.actions
 
 import com.google.inject.Inject
-import config.Constants.NewEnrolmentIdKey
-import config.Constants.NewEnrolmentKey
+import config.Constants.{NewEnrolmentIdKey, NewEnrolmentKey}
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.Results._
@@ -29,8 +28,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.models.errors.PresentationError
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 class AuthNewEnrolmentAction @Inject() (
@@ -75,7 +73,7 @@ class AuthNewEnrolmentAction @Inject() (
       Forbidden(
         Json.toJson(
           PresentationError.forbiddenError(
-            "Legacy enrollment is no longer supported. Please upgrade to the new ECC enrollment to submit declarations. Guidance for new ECC enrollment: https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system"
+            "Legacy enrolment is no longer supported. Please upgrade to the new ECC enrolment to submit declarations. Guidance for new ECC enrolment: https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system"
           )
         )
       )
