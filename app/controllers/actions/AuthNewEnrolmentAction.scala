@@ -17,8 +17,7 @@
 package controllers.actions
 
 import com.google.inject.Inject
-import config.Constants.NewEnrolmentIdKey
-import config.Constants.NewEnrolmentKey
+import config.Constants.{NewEnrolmentIdKey, NewEnrolmentKey}
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.Results._
@@ -29,8 +28,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.models.errors.PresentationError
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 class AuthNewEnrolmentAction @Inject() (
@@ -72,7 +70,13 @@ class AuthNewEnrolmentAction @Inject() (
   } recover {
     case e: InsufficientEnrolments =>
       logger.warn("Failed to authorise due to insufficient enrolments", e)
-      Forbidden(Json.toJson(PresentationError.forbiddenError("Current user doesn't have a valid EORI enrolment.")))
+      Forbidden(
+        Json.toJson(
+          PresentationError.forbiddenError(
+            "Legacy enrolment is no longer supported. Please upgrade to the new ECC enrolment to submit declarations. Guidance for new ECC enrolment: https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system"
+          )
+        )
+      )
     case e: AuthorisationException =>
       logger.warn(s"Failed to authorise", e)
       Unauthorized(Json.toJson(PresentationError.unauthorized(s"Failed to authorise user: ${e.reason}")))
