@@ -9664,7 +9664,9 @@ class V2MovementsControllerSpec
           mockPushNotificationService.postPpnsNotification(
             MovementId(eqTo(movementId.value)),
             MessageId(eqTo(messageId.value)),
-            any[JsValue]
+            eqTo(
+              Json.toJson(PresentationError.badRequestError("e.g. This file has a virus"))
+            )
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -9706,7 +9708,9 @@ class V2MovementsControllerSpec
         verify(mockPushNotificationService, times(1)).postPpnsNotification(
           MovementId(eqTo(movementId.value)),
           MessageId(eqTo(messageId.value)),
-          any[JsValue]
+          eqTo(
+            Json.toJson(PresentationError.badRequestError("e.g. This file has a virus"))
+          )
         )(
           any[HeaderCarrier],
           any[ExecutionContext]
