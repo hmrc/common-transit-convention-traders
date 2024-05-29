@@ -17,7 +17,8 @@
 package controllers.actions
 
 import com.google.inject.Inject
-import config.Constants.{NewEnrolmentIdKey, NewEnrolmentKey}
+import config.Constants.NewEnrolmentIdKey
+import config.Constants.NewEnrolmentKey
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.Results._
@@ -28,7 +29,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.models.errors.PresentationError
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.util.control.NonFatal
 
 class AuthNewEnrolmentAction @Inject() (

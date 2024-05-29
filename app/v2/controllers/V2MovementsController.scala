@@ -864,7 +864,7 @@ class V2MovementsControllerImpl @Inject() (
                  |Message: ${failureDetails.message}""".stripMargin)
             persistenceService.updateMessage(eori, movementType, movementId, messageId, MessageUpdate(MessageStatus.Failed, None, None))
             pushNotificationsService
-              .postPpnsNotification(movementId, messageId, Json.toJson(PresentationError.badRequestError("Uploaded file not accepted.")))
+              .postPpnsNotification(movementId, messageId, Json.toJson(PresentationError.badRequestError(failureDetails.message)))
             Future.successful(Ok)
           case UpscanSuccessResponse(_, downloadUrl, uploadDetails) =>
             def completeSmallMessage(): EitherT[Future, PushNotificationError, Unit] = {
