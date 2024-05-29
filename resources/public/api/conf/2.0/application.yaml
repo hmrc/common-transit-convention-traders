@@ -623,7 +623,7 @@ paths:
         - Departures
       summary: Get the body of a cached message related to a departure and message ID
       description: >
-        Get the body of the message related to a specific departure and message ID that have been received within the past 601 days.
+        Get the body of the message related to a specific departure and message ID that have been received within the past 60 days.
         
         For example, this could include ‘Declaration rejected’ or Movement Reference Number (MRN) allocated messages.
         
