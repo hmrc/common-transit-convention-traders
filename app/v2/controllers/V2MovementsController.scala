@@ -183,12 +183,14 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitDepartureDeclarationXML(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
-      implicit request => size =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
+      implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
-          _ <- contentSizeIsLessThanLimit(size)
-          _ <- validationService.validateXml(MessageType.DeclarationData, request.body).asPresentation.leftMap {
+          source <- reUsableSourceRequest(request)
+          size   <- calculateSize(source.lift(0).get)
+          _      <- contentSizeIsLessThanLimit(size)
+          _ <- validationService.validateXml(MessageType.DeclarationData, source.lift(1).get).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -201,7 +203,7 @@ class V2MovementsControllerImpl @Inject() (
               )
               err
           }
-          hateoasResponse <- persistAndSendToEIS(request.body, MovementType.Departure, MessageType.DeclarationData, size, MimeTypes.XML)
+          hateoasResponse <- persistAndSendToEIS(source.lift(2).get, MovementType.Departure, MessageType.DeclarationData, size, MimeTypes.XML)
         } yield hateoasResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           hateoasResponse => Accepted(hateoasResponse)
@@ -209,13 +211,15 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitDepartureDeclarationJSON(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
-      implicit request => size =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
+      implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         (for {
-          _ <- contentSizeIsLessThanLimit(size)
-          _ <- validationService.validateJson(MessageType.DeclarationData, request.body).asPresentation.leftMap {
+          source <- reUsableSourceRequest(request)
+          size   <- calculateSize(source.lift(0).get)
+          _      <- contentSizeIsLessThanLimit(size)
+          _ <- validationService.validateJson(MessageType.DeclarationData, source.lift(1).get).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -228,7 +232,7 @@ class V2MovementsControllerImpl @Inject() (
               )
               err
           }
-          xmlSource       <- conversionService.jsonToXml(MessageType.DeclarationData, request.body).asPresentation
+          xmlSource       <- conversionService.jsonToXml(MessageType.DeclarationData, source.lift(2).get).asPresentation
           hateoasResponse <- validatePersistAndSendToEIS(xmlSource, MovementType.Departure, MessageType.DeclarationData)
         } yield hateoasResponse).fold[Result](
           presentationError => {
@@ -243,12 +247,14 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitArrivalNotificationXML(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
-      implicit request => size =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
+      implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
-          _ <- contentSizeIsLessThanLimit(size)
-          _ <- validationService.validateXml(MessageType.ArrivalNotification, request.body).asPresentation.leftMap {
+          source <- reUsableSourceRequest(request)
+          size   <- calculateSize(source.lift(0).get)
+          _      <- contentSizeIsLessThanLimit(size)
+          _ <- validationService.validateXml(MessageType.ArrivalNotification, source.lift(1).get).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -261,7 +267,7 @@ class V2MovementsControllerImpl @Inject() (
               )
               err
           }
-          hateoasResponse <- persistAndSendToEIS(request.body, MovementType.Arrival, MessageType.ArrivalNotification, size, MimeTypes.XML)
+          hateoasResponse <- persistAndSendToEIS(source.lift(2).get, MovementType.Arrival, MessageType.ArrivalNotification, size, MimeTypes.XML)
         } yield hateoasResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           hateoasResponse => Accepted(hateoasResponse)
@@ -269,13 +275,15 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def submitArrivalNotificationJSON(): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
-      implicit request => size =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
+      implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         (for {
-          _ <- contentSizeIsLessThanLimit(size)
-          _ <- validationService.validateJson(MessageType.ArrivalNotification, request.body).asPresentation.leftMap {
+          source <- reUsableSourceRequest(request)
+          size   <- calculateSize(source.lift(0).get)
+          _      <- contentSizeIsLessThanLimit(size)
+          _ <- validationService.validateJson(MessageType.ArrivalNotification, source.lift(1).get).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -288,7 +296,7 @@ class V2MovementsControllerImpl @Inject() (
               )
               err
           }
-          xmlSource       <- conversionService.jsonToXml(MessageType.ArrivalNotification, request.body).asPresentation
+          xmlSource       <- conversionService.jsonToXml(MessageType.ArrivalNotification, source.lift(2).get).asPresentation
           hateoasResponse <- validatePersistAndSendToEIS(xmlSource, MovementType.Arrival, MessageType.ArrivalNotification)
         } yield hateoasResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -730,17 +738,19 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def attachMessageXML(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, _]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
-      implicit request => size =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
+      implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         val messageTypeList =
           if (movementType == MovementType.Arrival) MessageType.updateMessageTypesSentByArrivalTrader else MessageType.updateMessageTypesSentByDepartureTrader
 
         (for {
+          source      <- reUsableSourceRequest(request)
+          size        <- calculateSize(source.lift(0).get)
           _           <- contentSizeIsLessThanLimit(size)
-          messageType <- xmlParsingService.extractMessageType(request.body, messageTypeList).asPresentation
-          _ <- validationService.validateXml(messageType, request.body).asPresentation.leftMap {
+          messageType <- xmlParsingService.extractMessageType(source.lift(1).get, messageTypeList).asPresentation
+          _ <- validationService.validateXml(messageType, source.lift(2).get).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -753,7 +763,7 @@ class V2MovementsControllerImpl @Inject() (
               )
               err
           }
-          updateMovementResponse <- updateAndSendToEIS(movementId, movementType, messageType, request.body, size, MimeTypes.XML)
+          updateMovementResponse <- updateAndSendToEIS(movementId, movementType, messageType, source.lift(3).get, size, MimeTypes.XML)
         } yield updateMovementResponse).fold[Result](
           // update status to fail
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -767,38 +777,42 @@ class V2MovementsControllerImpl @Inject() (
       hc: HeaderCarrier,
       request: AuthenticatedRequest[Source[ByteString, _]]
     ): EitherT[Future, PresentationError, UpdateMovementResponse] =
-      withReusableSourceAndSize(src) {
-        (source, size) =>
-          for {
-            _ <- contentSizeIsLessThanLimit(size)
-            _ <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext).leftMap {
-              err =>
-                auditService.auditStatusEvent(
-                  ValidationFailed,
-                  Some(Json.toJson(err)),
-                  Some(movementId),
-                  None,
-                  Some(request.eoriNumber),
-                  Some(messageType.movementType),
-                  Some(messageType)
-                )
-                err
-            }
-            updateResponse <- updateAndSendToEIS(movementId, movementType, messageType, source, size, MimeTypes.XML)
-          } yield updateResponse
-      }
+      for {
+        source <- reUsableSource(src)
+        size   <- calculateSize(source.lift(0).get)
+        _      <- contentSizeIsLessThanLimit(size)
+        _ <- validationService
+          .validateXml(messageType, source.lift(1).get)
+          .asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
+          .leftMap {
+            err =>
+              auditService.auditStatusEvent(
+                ValidationFailed,
+                Some(Json.toJson(err)),
+                Some(movementId),
+                None,
+                Some(request.eoriNumber),
+                Some(messageType.movementType),
+                Some(messageType)
+              )
+              err
+          }
+        updateResponse <- updateAndSendToEIS(movementId, movementType, messageType, source.lift(2).get, size, MimeTypes.XML)
+      } yield updateResponse
 
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).streamWithSize {
-      implicit request => size =>
+    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
+      implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         val messageTypeList =
           if (movementType == MovementType.Arrival) MessageType.updateMessageTypesSentByArrivalTrader else MessageType.updateMessageTypesSentByDepartureTrader
 
         (for {
+          source      <- reUsableSourceRequest(request)
+          size        <- calculateSize(source.lift(0).get)
           _           <- contentSizeIsLessThanLimit(size)
-          messageType <- jsonParsingService.extractMessageType(request.body, messageTypeList).asPresentation
-          _ <- validationService.validateJson(messageType, request.body).asPresentation.leftMap {
+          messageType <- jsonParsingService.extractMessageType(source.lift(1).get, messageTypeList).asPresentation
+          _ <- validationService.validateJson(messageType, source.lift(2).get).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -811,7 +825,7 @@ class V2MovementsControllerImpl @Inject() (
               )
               err
           }
-          converted      <- conversionService.jsonToXml(messageType, request.body).asPresentation
+          converted      <- conversionService.jsonToXml(messageType, source.lift(3).get).asPresentation
           updateResponse <- handleXml(id, messageType, converted)
         } yield updateResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -977,7 +991,8 @@ class V2MovementsControllerImpl @Inject() (
     request: AuthenticatedRequest[_]
   ) =
     for {
-      updateMovementResponse <- persistenceService.addMessage(movementId, movementType, Some(messageType), Some(source)).asPresentation.leftMap {
+      sources <- reUsableSource(source)
+      updateMovementResponse <- persistenceService.addMessage(movementId, movementType, Some(messageType), Some(sources.lift(0).get)).asPresentation.leftMap {
         err =>
           val auditType = if (err.code.statusCode == NOT_FOUND) CustomerRequestedMissingMovement else AddMessageDBFailed
           auditService.auditStatusEvent(
@@ -995,7 +1010,7 @@ class V2MovementsControllerImpl @Inject() (
         messageType.auditType,
         contentType,
         size,
-        source,
+        sources.lift(1).get,
         Some(movementId),
         Some(updateMovementResponse.messageId),
         Some(request.eoriNumber),
@@ -1016,7 +1031,7 @@ class V2MovementsControllerImpl @Inject() (
           err
       }
       _ <- routerService
-        .send(messageType, request.eoriNumber, movementId, updateMovementResponse.messageId, source)
+        .send(messageType, request.eoriNumber, movementId, updateMovementResponse.messageId, sources.lift(2).get)
         .asPresentation
         .leftMap {
           err =>
@@ -1062,26 +1077,28 @@ class V2MovementsControllerImpl @Inject() (
     movementType: MovementType,
     messageType: MessageType
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
-    withReusableSourceAndSize(src) {
-      (source, size) =>
-        for {
-          _ <- contentSizeIsLessThanLimit(size)
-          _ <- validationService.validateXml(messageType, source).asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext).leftMap {
-            err =>
-              auditService.auditStatusEvent(
-                ValidationFailed,
-                Some(Json.toJson(err)),
-                None,
-                None,
-                Some(request.eoriNumber),
-                Some(movementType),
-                Some(messageType)
-              )
-              err
-          }
-          result <- persistAndSendToEIS(source, movementType, messageType, size, MimeTypes.XML)
-        } yield result
-    }
+    for {
+      source <- reUsableSource(src)
+      size   <- calculateSize(source.lift(0).get)
+      _      <- contentSizeIsLessThanLimit(size)
+      _ <- validationService
+        .validateXml(messageType, source.lift(1).get)
+        .asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
+        .leftMap {
+          err =>
+            auditService.auditStatusEvent(
+              ValidationFailed,
+              Some(Json.toJson(err)),
+              None,
+              None,
+              Some(request.eoriNumber),
+              Some(movementType),
+              Some(messageType)
+            )
+            err
+        }
+      result <- persistAndSendToEIS(source.lift(2).get, movementType, messageType, size, MimeTypes.XML)
+    } yield result
 
   private def updateSmallMessageStatus(
     eoriNumber: EORINumber,
@@ -1208,5 +1225,42 @@ class V2MovementsControllerImpl @Inject() (
         r => Right(Some(r))
       )
     }
+
+  private def materializeSource(source: Source[ByteString, _]): EitherT[Future, PresentationError, Seq[ByteString]] =
+    EitherT(
+      source
+        .runWith(Sink.seq)
+        .map(Right(_): Either[PresentationError, Seq[ByteString]])
+        .recover {
+          error =>
+            Left(PresentationError.internalServiceError(cause = Some(error)))
+        }
+    )
+
+  // Function to create a new source from the materialized sequence
+  private def createReusableSource(seq: Seq[ByteString]): Source[ByteString, _] = Source(seq.toList)
+
+  private def reUsableSourceRequest(request: Request[Source[ByteString, _]]): EitherT[Future, PresentationError, List[Source[ByteString, _]]] = for {
+    byteStringSeq <- materializeSource(request.body)
+  } yield List.fill(4)(createReusableSource(byteStringSeq))
+
+  private def reUsableSource(source: Source[ByteString, _]): EitherT[Future, PresentationError, List[Source[ByteString, _]]] = for {
+    byteStringSeq <- materializeSource(source)
+  } yield List.fill(4)(createReusableSource(byteStringSeq))
+
+  // Function to calculate the size using EitherT
+  private def calculateSize(source: Source[ByteString, _]): EitherT[Future, PresentationError, Long] = {
+    val sizeFuture: Future[Either[PresentationError, Long]] = source
+      .map(_.size.toLong)
+      .runWith(Sink.fold(0L)(_ + _))
+      .map(
+        size => Right(size): Either[PresentationError, Long]
+      )
+      .recover {
+        case _: Exception => Left(PresentationError.internalServiceError())
+      }
+
+    EitherT(sizeFuture)
+  }
 
 }

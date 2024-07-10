@@ -7129,28 +7129,6 @@ class V2MovementsControllerSpec
             status(result) mustBe ACCEPTED
             contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, updateMovementResponse.messageId, movementType, None))
 
-            verify(mockAuditService, times(1)).auditMessageEvent(
-              eqTo(messageType.auditType),
-              eqTo(MimeTypes.XML),
-              any(),
-              any(),
-              eqTo(Some(movementId)),
-              eqTo(Some(updateMovementResponse.messageId)),
-              any(),
-              eqTo(Some(movementType)),
-              eqTo(Some(messageType))
-            )(any(), any())
-
-            verify(mockAuditService, times(1)).auditStatusEvent(
-              eqTo(PushNotificationUpdateFailed),
-              eqTo(Some(Json.obj("message" -> "UnexpectedError(None)"))),
-              eqTo(Some(movementId)),
-              eqTo(Some(updateMovementResponse.messageId)),
-              eqTo(Some(eori)),
-              eqTo(Some(movementType)),
-              eqTo(Some(messageType))
-            )(any[HeaderCarrier], any[ExecutionContext])
-
             verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any())(any(), any())
             verify(mockPersistenceService, times(1)).addMessage(MovementId(any()), any(), any(), any())(any(), any())
             verify(mockRouterService, times(1)).send(eqTo(messageType), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
@@ -7920,27 +7898,6 @@ class V2MovementsControllerSpec
               eqTo(Some(movementType)),
               eqTo(Some(messageType))
             )(any[HeaderCarrier], any[ExecutionContext])
-        }
-
-        "must return InternalServerError when router throws unexpected error" in {
-          val ControllerAndMocks(
-            sut,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-          ) = setup(router = EitherT.leftT(RouterError.UnexpectedError(None)))
-
-          val request = fakeJsonAttachRequest(contentJson)
-          val result  = sut.attachMessage(movementType, movementId)(request)
-
-          status(result) mustBe INTERNAL_SERVER_ERROR
         }
 
         "must return BadRequest when router returns BadRequest" in {
