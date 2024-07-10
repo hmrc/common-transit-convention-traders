@@ -1126,7 +1126,8 @@ class V2MovementsControllerImpl @Inject() (
     contentType: String
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
     for {
-      movementResponse <- persistenceService.createMovement(request.eoriNumber, movementType, Some(source)).asPresentation.leftMap {
+      sources <- reUsableSource(source)
+      movementResponse <- persistenceService.createMovement(request.eoriNumber, movementType, Some(sources.lift(0).get)).asPresentation.leftMap {
         err =>
           auditService.auditStatusEvent(
             CreateMovementDBFailed,
@@ -1143,7 +1144,7 @@ class V2MovementsControllerImpl @Inject() (
         messageType.auditType,
         contentType,
         size,
-        request.body,
+        sources.lift(1).get,
         Some(movementResponse.movementId),
         Some(movementResponse.messageId),
         Some(request.eoriNumber),
@@ -1174,7 +1175,7 @@ class V2MovementsControllerImpl @Inject() (
           request.eoriNumber,
           movementResponse.movementId,
           movementResponse.messageId,
-          source
+          sources.lift(2).get
         )
         .asPresentation
         .leftMap {
