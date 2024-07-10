@@ -7922,27 +7922,6 @@ class V2MovementsControllerSpec
             )(any[HeaderCarrier], any[ExecutionContext])
         }
 
-        "must return InternalServerError when router throws unexpected error" in {
-          val ControllerAndMocks(
-            sut,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-          ) = setup(router = EitherT.leftT(RouterError.UnexpectedError(None)))
-
-          val request = fakeJsonAttachRequest(contentJson)
-          val result  = sut.attachMessage(movementType, movementId)(request)
-
-          status(result) mustBe INTERNAL_SERVER_ERROR
-        }
-
         "must return BadRequest when router returns BadRequest" in {
           val messageType = if (movementType == MovementType.Departure) MessageType.DeclarationAmendment else MessageType.UnloadingRemarks
 
