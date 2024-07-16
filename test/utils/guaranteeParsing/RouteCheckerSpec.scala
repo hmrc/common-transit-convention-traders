@@ -40,7 +40,7 @@ import scala.xml.NodeSeq
 class RouteCheckerSpec extends AnyFreeSpec with ParseHandling with MockitoSugar with BeforeAndAfterEach with Matchers with ScalaCheckPropertyChecks {
 
   val mockXmlReaders: GuaranteeXmlReaders = mock[GuaranteeXmlReaders]
-  val mockClock: Clock = mock[Clock]
+  val mockClock: Clock                    = mock[Clock]
 
   override def beforeEach(): Unit = {
     super.beforeEach()

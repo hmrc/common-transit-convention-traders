@@ -35,11 +35,11 @@ import scala.util.matching.Regex
 
 object VersionedRouting {
 
-  val VERSION_2_ACCEPT_HEADER_VALUE_XML: String = "application/vnd.hmrc.2.0+xml"      // returns XML only
-  val VERSION_2_ACCEPT_HEADER_VALUE_JSON: String = "application/vnd.hmrc.2.0+json"     // returns JSON only
-  val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML: String = "application/vnd.hmrc.2.0+json+xml" // returns JSON wrapped XML
+  val VERSION_2_ACCEPT_HEADER_VALUE_XML: String             = "application/vnd.hmrc.2.0+xml"      // returns XML only
+  val VERSION_2_ACCEPT_HEADER_VALUE_JSON: String            = "application/vnd.hmrc.2.0+json"     // returns JSON only
+  val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML: String        = "application/vnd.hmrc.2.0+json+xml" // returns JSON wrapped XML
   val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN: String = "application/vnd.hmrc.2.0+json-xml" // returns JSON wrapped XML
-  val VERSION_2_ACCEPT_HEADER_PATTERN: Regex = """^application/vnd\.hmrc\.2\.0\+.+$""".r
+  val VERSION_2_ACCEPT_HEADER_PATTERN: Regex                = """^application/vnd\.hmrc\.2\.0\+.+$""".r
 
   def formatAccept(header: String): String = {
     val splitHeader                         = """^(application/vnd\.hmrc\.2\.0\+)(.+)""".r

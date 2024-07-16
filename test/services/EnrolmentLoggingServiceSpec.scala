@@ -52,7 +52,7 @@ class EnrolmentLoggingServiceSpec
     with ScalaFutures
     with ScalaCheckDrivenPropertyChecks {
 
-  val appConfigMock: AppConfig = mock[AppConfig]
+  val appConfigMock: AppConfig         = mock[AppConfig]
   val authConnectorMock: AuthConnector = mock[AuthConnector]
 
   // Because Mockito doesn't like by-name parameters of the Play logger, we need to test against the underlying
@@ -118,8 +118,8 @@ class EnrolmentLoggingServiceSpec
   "Creating a message" - {
 
     "should produce a string of the expected format for a gaUserId of length 10 " in {
-      val clientId               = Gen.alphaNumStr.sample
-      val gaUserId               = Gen.listOfN(10, Gen.alphaNumChar).map(_.mkString).sample.getOrElse("0123456789")
+      val clientId                              = Gen.alphaNumStr.sample
+      val gaUserId                              = Gen.listOfN(10, Gen.alphaNumChar).map(_.mkString).sample.getOrElse("0123456789")
       implicit val headerCarrier: HeaderCarrier = HeaderCarrier(gaUserId = Some(gaUserId))
 
       val redactedGaUserId = s"***${gaUserId.takeRight(3)}"
@@ -135,8 +135,8 @@ class EnrolmentLoggingServiceSpec
     }
 
     "should produce a string of the expected format for a gaUserId of length 2 " in {
-      val clientId               = Gen.alphaNumStr.sample
-      val gaUserId               = Gen.listOfN(2, Gen.alphaNumChar).map(_.mkString).sample.getOrElse("ga")
+      val clientId                              = Gen.alphaNumStr.sample
+      val gaUserId                              = Gen.listOfN(2, Gen.alphaNumChar).map(_.mkString).sample.getOrElse("ga")
       implicit val headerCarrier: HeaderCarrier = HeaderCarrier(gaUserId = Some(gaUserId))
 
       val message: String = s"""Insufficient enrolments were received for the following request:
@@ -150,7 +150,7 @@ class EnrolmentLoggingServiceSpec
     }
 
     "should produce a string of the expected format where a gaUserId is not provided" in {
-      val clientId               = Gen.alphaNumStr.sample
+      val clientId                              = Gen.alphaNumStr.sample
       implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
       val message: String = s"""Insufficient enrolments were received for the following request:
