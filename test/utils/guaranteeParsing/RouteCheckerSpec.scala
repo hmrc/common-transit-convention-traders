@@ -17,6 +17,7 @@
 package utils.guaranteeParsing
 
 import cats.data.ReaderT
+import cats.implicits.catsSyntaxEitherId
 import models.ParseError.DepartureEmpty
 import models.ParseError.DestinationEmpty
 import models.ParseError.InappropriateDepartureOffice
@@ -38,10 +39,10 @@ import scala.xml.NodeSeq
 
 class RouteCheckerSpec extends AnyFreeSpec with ParseHandling with MockitoSugar with BeforeAndAfterEach with Matchers with ScalaCheckPropertyChecks {
 
-  val mockXmlReaders = mock[GuaranteeXmlReaders]
-  val mockClock      = mock[Clock]
+  val mockXmlReaders: GuaranteeXmlReaders = mock[GuaranteeXmlReaders]
+  val mockClock: Clock = mock[Clock]
 
-  override def beforeEach = {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockXmlReaders)
   }
@@ -125,8 +126,7 @@ class RouteCheckerSpec extends AnyFreeSpec with ParseHandling with MockitoSugar 
         )
 
       val result = sut.gbOnlyCheck(<example></example>)
-      result mustBe a[Right[_, Boolean]]
-      result.right.get mustBe false
+      result mustBe false.asRight
     }
 
     "returns Right(true) if DepartureOffice starts with GB and DestinationOffice starts with GB" in {
@@ -144,8 +144,7 @@ class RouteCheckerSpec extends AnyFreeSpec with ParseHandling with MockitoSugar 
         )
 
       val result = sut.gbOnlyCheck(<example></example>)
-      result mustBe a[Right[_, Boolean]]
-      result.right.get mustBe true
+      result mustBe true.asRight
     }
 
     "returns Right(false) if DepartureOffice starts with XI" in {
@@ -164,7 +163,7 @@ class RouteCheckerSpec extends AnyFreeSpec with ParseHandling with MockitoSugar 
 
       val result = sut.gbOnlyCheck(<example></example>)
       result mustBe a[Right[_, Boolean]]
-      result.right.get mustBe false
+      result mustBe false.asRight
 
     }
   }

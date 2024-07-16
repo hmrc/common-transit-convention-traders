@@ -5103,6 +5103,7 @@ class V2MovementsControllerSpec
                       movementType
                     )
                   )
+                case invalid => fail(s"Invalid accept header: $invalid")
               }
 
             }
@@ -5647,6 +5648,7 @@ class V2MovementsControllerSpec
                 case VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML =>
                   contentAsString(result) mustBe xml
                   contentType(result).get mustBe MimeTypes.XML
+                case invalid => fail(s"Invalid accept header: $invalid")
               }
 
             }
@@ -6979,7 +6981,7 @@ class V2MovementsControllerSpec
 
             when(mockPushNotificationService.update(any[String].asInstanceOf[MovementId])(any(), any()))
               .thenAnswer(
-                _ => EitherT.rightT()
+                _ => EitherT.rightT(())
               )
 
             val request = fakeAttachMessageRequest("POST", standardHeaders, singleUseStringSource(contentXml.mkString), movementType)
@@ -7473,7 +7475,7 @@ class V2MovementsControllerSpec
 
           when(mockPushNotificationService.update(any[String].asInstanceOf[MovementId])(any(), any()))
             .thenAnswer(
-              _ => EitherT.rightT()
+              _ => EitherT.rightT(())
             )
 
           val request = fakeJsonAttachRequest(contentJson)
@@ -7919,7 +7921,7 @@ class V2MovementsControllerSpec
 
           when(mockPushNotificationService.update(any[String].asInstanceOf[MovementId])(any(), any()))
             .thenAnswer(
-              _ => EitherT.rightT()
+              _ => EitherT.rightT(())
             )
 
           val request = fakeJsonAttachRequest(contentJson)

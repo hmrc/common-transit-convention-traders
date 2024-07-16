@@ -16,6 +16,7 @@
 
 package utils.guaranteeParsing
 
+import cats.implicits.catsSyntaxEitherId
 import data.TestXml
 import models.ParseError._
 import models._
@@ -32,16 +33,18 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
     "returns Seq[GOOITEGDSNode] when no parse errors" in {
       val result = sut.gOOITEGDSNode(exampleGOOITEGDSSequence)
       result mustBe a[Right[_, Seq[GOOITEGDSNode]]]
-      val gooBlocks = result.right.get
-      val gooBlock  = gooBlocks.head
-      gooBlock.itemNumber mustBe 1
-      gooBlock.specialMentions.length mustBe 4
-      gooBlock.specialMentions.collect {
-        case sm: SpecialMentionOther => sm
-      }.length mustBe 1
-      gooBlock.specialMentions.collect {
-        case sm: SpecialMentionGuarantee => sm
-      }.length mustBe 3
+      result.map {
+        gooBlocks =>
+          val gooBlock = gooBlocks.head
+          gooBlock.itemNumber mustBe 1
+          gooBlock.specialMentions.length mustBe 4
+          gooBlock.specialMentions.collect {
+            case sm: SpecialMentionOther => sm
+          }.length mustBe 1
+          gooBlock.specialMentions.collect {
+            case sm: SpecialMentionGuarantee => sm
+          }.length mustBe 3
+      }
     }
 
     "returns InvalidItemNumber when itemNumber is not an int" in {
@@ -157,17 +160,17 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
 
       val result = sut.gOOITEGDSNode(exampleGOOITEGDSSequenceInvalidSpecialMention)
       result mustBe a[Right[_, Seq[GOOITEGDSNode]]]
-      val gooBlocks = result.right.get
-      val gooBlock  = gooBlocks.head
-
-      gooBlock.specialMentions.length mustBe 4
-      gooBlock.specialMentions.collect {
-        case sm: SpecialMentionOther => sm
-      }.length mustBe 2
-      gooBlock.specialMentions.collect {
-        case sm: SpecialMentionGuarantee => sm
-      }.length mustBe 2
-
+      result.map {
+        gooBlocks =>
+          val gooBlock = gooBlocks.head
+          gooBlock.specialMentions.length mustBe 4
+          gooBlock.specialMentions.collect {
+            case sm: SpecialMentionOther => sm
+          }.length mustBe 2
+          gooBlock.specialMentions.collect {
+            case sm: SpecialMentionGuarantee => sm
+          }.length mustBe 2
+      }
     }
   }
 
@@ -175,15 +178,17 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
     "returns GOOITEGDSNode when no parse errors" in {
       val result = sut.gOOITEGDSNodeFromNode(exampleGOOITEGDS)
       result mustBe a[Right[_, GOOITEGDSNode]]
-      val gooBlock = result.right.get
-      gooBlock.itemNumber mustBe 1
-      gooBlock.specialMentions.length mustBe 4
-      gooBlock.specialMentions.collect {
-        case sm: SpecialMentionOther => sm
-      }.length mustBe 1
-      gooBlock.specialMentions.collect {
-        case sm: SpecialMentionGuarantee => sm
-      }.length mustBe 3
+      result.map {
+        gooBlock =>
+          gooBlock.itemNumber mustBe 1
+          gooBlock.specialMentions.length mustBe 4
+          gooBlock.specialMentions.collect {
+            case sm: SpecialMentionOther => sm
+          }.length mustBe 1
+          gooBlock.specialMentions.collect {
+            case sm: SpecialMentionGuarantee => sm
+          }.length mustBe 3
+      }
     }
 
     "returns InvalidItemNumber when itemNumber is not an int" in {
@@ -291,14 +296,16 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
 
       val result = sut.gOOITEGDSNodeFromNode(exampleGOOITEGDSSequenceInvalidSpecialMention)
       result mustBe a[Right[_, GOOITEGDSNode]]
-      val gooBlock = result.right.get
-      gooBlock.specialMentions.length mustBe 4
-      gooBlock.specialMentions.collect {
-        case sm: SpecialMentionOther => sm
-      }.length mustBe 2
-      gooBlock.specialMentions.collect {
-        case sm: SpecialMentionGuarantee => sm
-      }.length mustBe 2
+      result.map {
+        gooBlock =>
+          gooBlock.specialMentions.length mustBe 4
+          gooBlock.specialMentions.collect {
+            case sm: SpecialMentionOther => sm
+          }.length mustBe 2
+          gooBlock.specialMentions.collect {
+            case sm: SpecialMentionGuarantee => sm
+          }.length mustBe 2
+      }
     }
   }
 
@@ -328,10 +335,15 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
         gType =>
           val result = sut.guaranteeSet(exampleGuaranteeGuaTypGUA1(gType))
           result mustBe a[Right[_, Seq[Guarantee]]]
-          result.right.get.length mustBe 1
-          val item = result.right.get.head
-          item.gReference mustEqual "07IT00000100000Z3"
-          item.gType mustEqual gType
+          result.map {
+            guarantees =>
+              guarantees.length mustBe 1
+              guarantees.map {
+                item =>
+                  item.gReference mustEqual "07IT00000100000Z3"
+                  item.gType mustEqual gType
+              }
+          }
       }
     }
 
@@ -340,13 +352,16 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
         gType =>
           val result = sut.guaranteeSet(exampleOtherGuaranteeGuaTypGUA1(gType))
           result mustBe a[Right[_, Seq[Guarantee]]]
-          result.right.get.length mustBe 1
-          val item = result.right.get.head
-          item.gReference mustEqual "SomeValue"
-          item.gType mustEqual gType
-
+          result.map {
+            guarantees =>
+              guarantees.length mustBe 1
+              guarantees.map {
+                item =>
+                  item.gReference mustEqual "SomeValue"
+                  item.gType mustEqual gType
+              }
+          }
       }
-
     }
 
     "returns NoOtherGuaranteeField when not given any OthGuaRefREF4 and the guarantee type is not 0,1,2,4,9" in {
@@ -374,11 +389,14 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
       val xml    = exampleMultiGuaranteeGuaTypGUA1(gType, 4)
       val result = sut.guaranteeSet(xml)
       result mustBe a[Right[_, Seq[Guarantee]]]
-      result.right.get.length mustBe 4
-      result.right.get.map {
-        item =>
-          item.gReference mustEqual "07IT00000100000Z3"
-          item.gType mustEqual gType
+      result.map {
+        guarantees =>
+          guarantees.length mustBe 4
+          guarantees.map {
+            item =>
+              item.gReference mustEqual "07IT00000100000Z3"
+              item.gType mustEqual gType
+          }
       }
     }
 
@@ -387,11 +405,14 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
       val xml    = exampleMultiGuaranteeGuaTypGUA1(gType, 4)
       val result = sut.guaranteeSet(xml)
       result mustBe a[Right[_, Seq[Guarantee]]]
-      result.right.get.length mustBe 4
-      result.right.get.map {
-        item =>
-          item.gReference mustEqual "SomeValue"
-          item.gType mustEqual gType
+      result.map {
+        guarantees =>
+          guarantees.length mustBe 4
+          guarantees.map {
+            item =>
+              item.gReference mustEqual "SomeValue"
+              item.gType mustEqual gType
+          }
       }
     }
   }
@@ -400,7 +421,7 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
     "returns Seq[SpecialMention] when no parse errors" in {
       val result = sut.parseSpecialMentions(exampleGOOITEGDS)
       result mustBe a[Right[_, Seq[SpecialMention]]]
-      result.right.get.length mustBe 4
+      result.map(_.length mustBe 4)
     }
   }
 
@@ -424,7 +445,7 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
 
       val result = sut.parseGuarantees(example)
       result mustBe a[Right[_, Seq[Guarantee]]]
-      result.right.get.length mustBe 2
+      result.map(_.length mustBe 2)
     }
 
     "returns ParseError if any guarantees fail to parse" in {
@@ -459,7 +480,7 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
     "returns the DepartureOffice if RefNumEPT1 has a value" in {
       val result = sut.officeOfDeparture(completeSample)
       result mustBe a[Right[_, DepartureOffice]]
-      result.right.get.value mustBe "value"
+      result mustBe DepartureOffice("value").asRight
     }
   }
 
@@ -473,8 +494,7 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
 
     "returns the DestinationOffice if RefNumEPT1 has a value" in {
       val result = sut.officeOfDestination(completeSample)
-      result mustBe a[Right[_, DestinationOffice]]
-      result.right.get.value mustBe "value"
+      result mustBe DestinationOffice("value").asRight
     }
   }
 

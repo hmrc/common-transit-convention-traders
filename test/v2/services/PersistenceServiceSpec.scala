@@ -25,7 +25,6 @@ import org.mockito.Mockito.reset
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
-import org.scalacheck.Gen.const
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -33,7 +32,6 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import play.api.http.Status.CONFLICT
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.http.Status.NOT_FOUND
 import uk.gov.hmrc.http.HeaderCarrier
@@ -42,7 +40,6 @@ import v2.base.TestActorSystem
 import v2.base.TestCommonGenerators
 import v2.connectors.PersistenceConnector
 import v2.models._
-import v2.models.errors.LRNError
 import v2.models.errors.PersistenceError
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
@@ -80,10 +77,6 @@ class PersistenceServiceSpec
     val invalidRequest: Source[ByteString, NotUsed] = Source.single(ByteString(<schemaInvalid></schemaInvalid>.mkString, StandardCharsets.UTF_8))
 
     val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
-    val upstreamLRNErrorResponse = UpstreamErrorResponse(
-      "{\"message\":\"LRN 4CnsTh79I7vtOW54 has previously been used and cannot be reused\",\"code\":\"CONFLICT\",\"lrn\":\"4CnsTh79I7vtOW54\"}",
-      CONFLICT
-    )
 
     "on a successful submission, should return a Right" in {
       when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(validRequest)))(any[HeaderCarrier], any[ExecutionContext]))
@@ -141,7 +134,7 @@ class PersistenceServiceSpec
       Gen.listOfN(3, arbitrary[MessageSummary])
     ) {
       summaries =>
-        val expected = PaginationMessageSummary(TotalCount(summaries.length), summaries)
+        val expected = PaginationMessageSummary(TotalCount(summaries.length.toLong), summaries)
         when(
           mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(2))), ItemCount(eqTo(30L)), any())(
             any(),
@@ -424,7 +417,7 @@ class PersistenceServiceSpec
         val mrn        = referenceNumbers._1.sample.getOrElse(Some(MovementReferenceNumber("3CnsTh79I7vtOW1")))
         val lrn        = referenceNumbers._2.sample.getOrElse(Some(LocalReferenceNumber("3CnsTh79I7vtOW1")))
 
-        val expected = PaginationMovementSummary(TotalCount(movementSummaries.length), movementSummaries)
+        val expected = PaginationMovementSummary(TotalCount(movementSummaries.length.toLong), movementSummaries)
 
         when(
           mockConnector.getMovements(
@@ -709,7 +702,7 @@ class PersistenceServiceSpec
       arbitrary[ItemCount]
     ) {
       (eori, arrivalId, receivedSince, summary, pageNumber, itemCount) =>
-        val expected = PaginationMessageSummary(TotalCount(summary.length), summary)
+        val expected = PaginationMessageSummary(TotalCount(summary.length.toLong), summary)
 
         val page = Some(pageNumber.getOrElse(PageNumber(1)))
 

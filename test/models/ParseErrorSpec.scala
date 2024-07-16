@@ -38,7 +38,7 @@ class ParseErrorSpec extends AnyFreeSpec with Matchers {
     "returns the result sequence when there are no parseErrors" in {
       val result = ParseError.sequenceErrors(goodParse)
       result mustBe a[Right[Seq[String], _]]
-      result.right.get.length mustBe 2
+      result.map(_.length mustBe 2)
     }
   }
 

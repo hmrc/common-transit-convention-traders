@@ -51,8 +51,11 @@ class SpecialMentionGuaranteeSpec extends AnyFreeSpec with MockitoSugar with Mat
       val result = SpecialMentionGuarantee("100.00EURtest", Nil)
         .toDetails("test")
       result mustBe a[Right[_, SpecialMentionGuaranteeDetails]]
-      result.right.get.currencyCode mustBe Some("EUR")
-      result.right.get.guaranteeAmount mustBe Some(BigDecimal(100.00))
+      result.map {
+        value =>
+          value.currencyCode mustBe Some("EUR")
+          value.guaranteeAmount mustBe Some(BigDecimal(100.00))
+      }
     }
   }
 

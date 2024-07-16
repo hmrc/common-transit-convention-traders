@@ -31,17 +31,18 @@ import v2.controllers.stream.StreamingParsers
 import v2.models.errors.PresentationError
 
 import scala.concurrent.Future
+import scala.util.matching.Regex
 
 object VersionedRouting {
 
-  val VERSION_2_ACCEPT_HEADER_VALUE_XML             = "application/vnd.hmrc.2.0+xml"      // returns XML only
-  val VERSION_2_ACCEPT_HEADER_VALUE_JSON            = "application/vnd.hmrc.2.0+json"     // returns JSON only
-  val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML        = "application/vnd.hmrc.2.0+json+xml" // returns JSON wrapped XML
-  val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN = "application/vnd.hmrc.2.0+json-xml" // returns JSON wrapped XML
-  val VERSION_2_ACCEPT_HEADER_PATTERN               = """^application\/vnd\.hmrc\.2\.0\+.+$""".r
+  val VERSION_2_ACCEPT_HEADER_VALUE_XML: String = "application/vnd.hmrc.2.0+xml"      // returns XML only
+  val VERSION_2_ACCEPT_HEADER_VALUE_JSON: String = "application/vnd.hmrc.2.0+json"     // returns JSON only
+  val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML: String = "application/vnd.hmrc.2.0+json+xml" // returns JSON wrapped XML
+  val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN: String = "application/vnd.hmrc.2.0+json-xml" // returns JSON wrapped XML
+  val VERSION_2_ACCEPT_HEADER_PATTERN: Regex = """^application/vnd\.hmrc\.2\.0\+.+$""".r
 
   def formatAccept(header: String): String = {
-    val splitHeader                         = """^(application\/vnd\.hmrc\.2\.0\+)(.+)""".r
+    val splitHeader                         = """^(application/vnd\.hmrc\.2\.0\+)(.+)""".r
     val splitHeader(frameworkPath, ctcPath) = header
     frameworkPath + ctcPath.toLowerCase // ctc part can be mixed case.
   }
@@ -97,7 +98,7 @@ trait VersionedRouting {
   def runIfBound[A](key: String, value: String, action: A => Action[_])(implicit binding: PathBindable[A]): Action[_] =
     binding.bind(key, value).fold(bindingFailureAction(_), action)
 
-  def handleEnablingPhase5() =
+  def handleEnablingPhase5(): Action[Source[ByteString, _]] =
     Action(streamFromMemory) {
       request =>
         request.body.runWith(Sink.ignore)

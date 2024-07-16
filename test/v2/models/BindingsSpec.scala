@@ -16,6 +16,7 @@
 
 package v2.models
 
+import cats.implicits.catsSyntaxEitherId
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -60,8 +61,10 @@ class BindingsSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenProper
     }
 
     "unbind" - {
-      val value = validHexString.sample.getOrElse("1234567890123456")
-      testBinding.unbind("test", value) mustBe value
+      "should correctly unbind the value" in {
+        val value = validHexString.sample.getOrElse("1234567890123456")
+        testBinding.unbind("test", value) mustBe value
+      }
     }
 
   }
@@ -85,7 +88,7 @@ class BindingsSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenProper
     "must return error if MovementType is not valid from a URL" in {
 
       val result = pathBindable.bind("movementType", "invalid")
-      result mustEqual Left("movementType value invalid is not valid. expecting arrivals or departures")
+      result mustEqual "movementType value invalid is not valid. expecting arrivals or departures".asLeft
     }
 
     "must unbind Departure MovementType" in {

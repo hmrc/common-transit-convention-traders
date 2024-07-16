@@ -16,6 +16,7 @@
 
 package v2.services
 
+import cats.implicits.catsSyntaxEitherId
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -26,7 +27,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import v2.base.StreamTestHelpers
 import v2.base.TestActorSystem
 import v2.models.errors.ExtractionError
-import v2.models.errors.ExtractionError.MessageTypeNotFound
 import v2.models.request.MessageType
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -76,9 +76,7 @@ class JsonMessageParsingServiceSpec
         jsonParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByDepartureTrader)
 
       whenReady(response.value) {
-        res =>
-          res mustBe a[Right[_, MessageType]]
-          res.right.get mustBe MessageType.DeclarationAmendment
+        res => res mustBe MessageType.DeclarationAmendment.asRight
       }
     }
 
@@ -90,8 +88,7 @@ class JsonMessageParsingServiceSpec
 
       whenReady(response.value) {
         res =>
-          res mustBe a[Left[MessageTypeNotFound, _]]
-          res.left.get mustBe ExtractionError.MessageTypeNotFound("CC015C")
+          res mustBe ExtractionError.MessageTypeNotFound("CC015C").asLeft
       }
     }
 
@@ -103,8 +100,7 @@ class JsonMessageParsingServiceSpec
 
       whenReady(response.value) {
         res =>
-          res mustBe a[Left[MessageTypeNotFound, _]]
-          res.left.get mustBe ExtractionError.MalformedInput
+          res mustBe ExtractionError.MalformedInput.asLeft
       }
     }
   }

@@ -71,7 +71,7 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
   private val upstreamErrorResponse =
     UpstreamErrorResponse(Json.obj("code" -> "INTERNAL_SERVER_ERROR", "message" -> "Internal Server Error").toString, INTERNAL_SERVER_ERROR)
-  private val internalException = new JsResult.Exception(JsError("arbitrary failure"))
+  private val internalException = JsResult.Exception(JsError("arbitrary failure"))
 
   val fakeValidationConnector: ValidationConnector = new ValidationConnector {
 
@@ -86,6 +86,7 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
         case BadMessageType       => Future.failed(badMessageType(messageType))
         case UpstreamError        => Future.failed(upstreamErrorResponse)
         case InternalServiceError => Future.failed(internalException)
+        case invalidStream        => fail(s"Invalid Stream: $invalidStream")
       }
 
     override def postJson(messageType: MessageType, stream: Source[ByteString, _])(implicit
@@ -101,6 +102,7 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
         case BadMessageType       => Future.failed(badMessageType(messageType))
         case UpstreamError        => Future.failed(upstreamErrorResponse)
         case InternalServiceError => Future.failed(internalException)
+        case invalidStream        => fail(s"Invalid Stream: $invalidStream")
       }
   }
 

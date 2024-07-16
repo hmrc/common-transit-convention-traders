@@ -16,6 +16,7 @@
 
 package utils.guaranteeParsing
 
+import cats.implicits.catsSyntaxEitherId
 import config.DefaultGuaranteeConfig
 import data.TestXml
 import models.ParseError.AmountWithoutCurrency
@@ -35,9 +36,9 @@ import java.time.Clock
 class InstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAndAfterEach with TestXml with Matchers with ScalaCheckPropertyChecks {
 
   val mockGIB: GuaranteeInstructionBuilder = mock[GuaranteeInstructionBuilder]
-  val mockClock                            = mock[Clock]
+  val mockClock: Clock                     = mock[Clock]
 
-  override def beforeEach = {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockGIB)
   }
@@ -63,21 +64,21 @@ class InstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAn
 
     "returns TransformInstructionSet with no instructions if no defaulting guarantees provided" in {
       val result = sut.buildInstructionSet(GOOITEGDSNode(1, Nil), Seq(Guarantee('A', "test")))
-      result.right.get mustBe TransformInstructionSet(GOOITEGDSNode(1, Nil), Nil)
+      result mustBe TransformInstructionSet(GOOITEGDSNode(1, Nil), Nil).asRight
     }
 
     "returns TransformInstructionSet with an AddInstruction if no special mentions but a guarantee" in {
       when(mockGIB.buildInstructionFromGuarantee(any(), any())).thenReturn(Right(AddSpecialMentionInstruction(SpecialMentionGuarantee("test", Nil))))
 
       val result = sut.buildInstructionSet(GOOITEGDSNode(1, Nil), Seq(Guarantee('1', "test")))
-      result.right.get mustBe TransformInstructionSet(GOOITEGDSNode(1, Nil), Seq(AddSpecialMentionInstruction(SpecialMentionGuarantee("test", Nil))))
+      result mustBe TransformInstructionSet(GOOITEGDSNode(1, Nil), Seq(AddSpecialMentionInstruction(SpecialMentionGuarantee("test", Nil)))).asRight
     }
 
     "returns ParseError if the built instruction returns an error" in {
       when(mockGIB.buildInstructionFromGuarantee(any(), any())).thenReturn(Left(AmountWithoutCurrency("test")))
 
       val result = sut.buildInstructionSet(GOOITEGDSNode(1, Nil), Seq(Guarantee('1', "test")))
-      result.left.get mustBe AmountWithoutCurrency("test")
+      result mustBe AmountWithoutCurrency("test").asLeft
     }
 
   }
@@ -100,7 +101,7 @@ class InstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAn
 
 class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with BeforeAndAfterEach with TestXml with Matchers with ScalaCheckPropertyChecks {
 
-  val mockClock = mock[Clock]
+  val mockClock: Clock = mock[Clock]
 
   protected def baseApplicationBuilder: GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
@@ -109,12 +110,12 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
         "metrics.jvm" -> false
       )
 
-  override def beforeEach =
+  override def beforeEach(): Unit =
     super.beforeEach()
 
-  val mockGuaranteeConfig = mock[DefaultGuaranteeConfig]
-  val mockCurrency        = "XYZ"
-  val mockAmount          = 11.00
+  val mockGuaranteeConfig: DefaultGuaranteeConfig = mock[DefaultGuaranteeConfig]
+  val mockCurrency                                = "XYZ"
+  val mockAmount                                  = 11.00
   when(mockGuaranteeConfig.currency).thenReturn(mockCurrency)
   when(mockGuaranteeConfig.amount).thenReturn(mockAmount)
 
@@ -150,8 +151,12 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
       Guarantee.referenceTypes.foreach {
         typeChar =>
           val result = sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), Some(SpecialMentionGuarantee("100.00EURalpha")))
-          result mustBe a[Right[_, NoChangeGuaranteeInstruction]]
-          result.right.get.asInstanceOf[NoChangeGuaranteeInstruction].mention.additionalInfo mustBe "100.00EURalpha"
+
+          result.map {
+            case NoChangeGuaranteeInstruction(mention) =>
+              mention.additionalInfo mustBe "100.00EURalpha"
+            case invalid => fail(s"Invalid transform instruction: $invalid")
+          }
       }
     }
 
@@ -159,11 +164,14 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
       Guarantee.referenceTypes.foreach {
         typeChar =>
           val result = sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), Some(SpecialMentionGuarantee("GBPalpha")))
-          result mustBe a[Right[_, ChangeGuaranteeInstruction]]
-          result.right.get
-            .asInstanceOf[ChangeGuaranteeInstruction]
-            .mention
-            .additionalInfo mustBe s"${BigDecimal(mockGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()}${mockCurrency}alpha"
+          result.map {
+            case ChangeGuaranteeInstruction(mention) =>
+              mention.additionalInfo mustBe
+                s"${BigDecimal(mockGuaranteeConfig.amount)
+                  .setScale(2, BigDecimal.RoundingMode.UNNECESSARY)
+                  .toString()}${mockCurrency}alpha"
+            case invalid => fail(s"Invalid transform instruction: $invalid")
+          }
       }
     }
 
@@ -171,11 +179,14 @@ class GuaranteeInstructionBuilderSpec extends AnyFreeSpec with MockitoSugar with
       Guarantee.referenceTypes.foreach {
         typeChar =>
           val result = sut.buildInstructionFromGuarantee(Guarantee(typeChar, "alpha"), Some(SpecialMentionGuarantee("alpha")))
-          result mustBe a[Right[_, ChangeGuaranteeInstruction]]
-          result.right.get
-            .asInstanceOf[ChangeGuaranteeInstruction]
-            .mention
-            .additionalInfo mustBe s"${BigDecimal(mockGuaranteeConfig.amount).setScale(2, BigDecimal.RoundingMode.UNNECESSARY).toString()}${mockCurrency}alpha"
+          result.map {
+            case ChangeGuaranteeInstruction(mention) =>
+              mention.additionalInfo mustBe
+                s"${BigDecimal(mockGuaranteeConfig.amount)
+                  .setScale(2, BigDecimal.RoundingMode.UNNECESSARY)
+                  .toString()}${mockCurrency}alpha"
+            case invalid => fail(s"Invalid transform instruction: $invalid")
+          }
       }
     }
 

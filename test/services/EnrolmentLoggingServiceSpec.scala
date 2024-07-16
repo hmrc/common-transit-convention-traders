@@ -30,6 +30,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import org.slf4j
 import play.api.Logger
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.auth.core.Enrolment
@@ -51,12 +52,12 @@ class EnrolmentLoggingServiceSpec
     with ScalaFutures
     with ScalaCheckDrivenPropertyChecks {
 
-  val appConfigMock     = mock[AppConfig]
-  val authConnectorMock = mock[AuthConnector]
+  val appConfigMock: AppConfig = mock[AppConfig]
+  val authConnectorMock: AuthConnector = mock[AuthConnector]
 
   // Because Mockito doesn't like by-name parameters of the Play logger, we need to test against the underlying
   // logger (which is Java based, and so isn't by name).
-  val underlyingLogger = mock[org.slf4j.Logger]
+  val underlyingLogger: slf4j.Logger = mock[org.slf4j.Logger]
 
   object Harness extends EnrolmentLoggingServiceImpl(authConnectorMock, appConfigMock) {
     override protected val logger: Logger = new Logger(underlyingLogger)
@@ -69,8 +70,6 @@ class EnrolmentLoggingServiceSpec
     reset(appConfigMock)
     reset(authConnectorMock)
     reset(underlyingLogger)
-    when(underlyingLogger.isInfoEnabled).thenReturn(true)
-    when(underlyingLogger.isWarnEnabled).thenReturn(true)
   }
 
   "Logging Enrolment Identifiers" - {
@@ -121,7 +120,7 @@ class EnrolmentLoggingServiceSpec
     "should produce a string of the expected format for a gaUserId of length 10 " in {
       val clientId               = Gen.alphaNumStr.sample
       val gaUserId               = Gen.listOfN(10, Gen.alphaNumChar).map(_.mkString).sample.getOrElse("0123456789")
-      implicit val headerCarrier = HeaderCarrier(gaUserId = Some(gaUserId))
+      implicit val headerCarrier: HeaderCarrier = HeaderCarrier(gaUserId = Some(gaUserId))
 
       val redactedGaUserId = s"***${gaUserId.takeRight(3)}"
 
@@ -138,7 +137,7 @@ class EnrolmentLoggingServiceSpec
     "should produce a string of the expected format for a gaUserId of length 2 " in {
       val clientId               = Gen.alphaNumStr.sample
       val gaUserId               = Gen.listOfN(2, Gen.alphaNumChar).map(_.mkString).sample.getOrElse("ga")
-      implicit val headerCarrier = HeaderCarrier(gaUserId = Some(gaUserId))
+      implicit val headerCarrier: HeaderCarrier = HeaderCarrier(gaUserId = Some(gaUserId))
 
       val message: String = s"""Insufficient enrolments were received for the following request:
                                |Client ID: ${clientId.getOrElse("Not provided")}
@@ -152,7 +151,7 @@ class EnrolmentLoggingServiceSpec
 
     "should produce a string of the expected format where a gaUserId is not provided" in {
       val clientId               = Gen.alphaNumStr.sample
-      implicit val headerCarrier = HeaderCarrier()
+      implicit val headerCarrier: HeaderCarrier = HeaderCarrier()
 
       val message: String = s"""Insufficient enrolments were received for the following request:
                                |Client ID: ${clientId.getOrElse("Not provided")}
@@ -182,6 +181,8 @@ class EnrolmentLoggingServiceSpec
     "when the flag is enabled will request logging" in forAll(Gen.oneOf(None, Gen.alphaNumStr.sample), Gen.oneOf(None, Gen.alphaNumStr.sample)) {
       (clientId, gaUserId) =>
         beforeEach() // need to reset the mocks
+        when(underlyingLogger.isInfoEnabled).thenReturn(true)
+        when(underlyingLogger.isWarnEnabled).thenReturn(true)
         implicit val hc: HeaderCarrier = HeaderCarrier(gaUserId = gaUserId)
         val enrolments                 = Enrolments(Set(Enrolment("key", Seq(EnrolmentIdentifier("key1", "value1")), "activated")))
 

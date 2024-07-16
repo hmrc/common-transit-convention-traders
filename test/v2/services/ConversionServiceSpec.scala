@@ -16,6 +16,8 @@
 
 package v2.services
 
+import cats.data.EitherT
+import cats.implicits.catsSyntaxEitherId
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
@@ -44,25 +46,31 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
 
   "On converting a message" - {
     "a successful conversion, should return a Right" in new Setup {
-      val result = sut.convert(MessageType.DeclarationData, jsonPayload, jsonToXml)
+      val result: EitherT[Future, ConversionError, Source[ByteString, _]] =
+        sut.convert(MessageType.DeclarationData, jsonPayload, jsonToXml)
+
       whenReady(result.value) {
-        _.right.get
-          .reduce(_ ++ _)
-          .map(_.utf8String)
-          .runWith(Sink.last)
-          .map(
-            _ mustBe "a response from the converter"
-          )
+        _.map(
+          value =>
+            value
+              .reduce(_ ++ _)
+              .map(_.utf8String)
+              .runWith(Sink.last)
+              .map(
+                _ mustBe "a response from the converter"
+              )
+        )
       }
+
       verify(mockConnector, times(1)).post(any(), any(), any())(any(), any(), any())
     }
 
     "a failed conversion, should return a Left" in new Setup {
       when(mockConnector.post(any[MessageType], any[Source[ByteString, _]](), any[HeaderType])(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result = sut.convert(MessageType.DeclarationData, jsonPayload, jsonToXml)
+      val result: EitherT[Future, ConversionError, Source[ByteString, _]] = sut.convert(MessageType.DeclarationData, jsonPayload, jsonToXml)
       whenReady(result.value) {
-        _.left.get mustBe ConversionError.UnexpectedError(Some(upstreamErrorResponse))
+        _ mustBe ConversionError.UnexpectedError(Some(upstreamErrorResponse)).asLeft
       }
       verify(mockConnector, times(1)).post(any(), any(), any())(any(), any(), any())
     }
@@ -76,7 +84,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
     lazy val mockResponse: Source[ByteString, NotUsed] = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
     lazy val jsonPayload: Source[ByteString, NotUsed]  = Source.single(ByteString("{}", StandardCharsets.UTF_8))
 
-    lazy val mockConnector = mock[ConversionConnector]
+    lazy val mockConnector: ConversionConnector = mock[ConversionConnector]
     when(mockConnector.post(any[MessageType], any[Source[ByteString, _]](), any())(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
       .thenReturn(Future(mockResponse))
 
