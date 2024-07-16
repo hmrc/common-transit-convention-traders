@@ -17,11 +17,11 @@
 package models.domain
 
 import java.time.LocalDateTime
-
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 
 object Departure {
-  implicit val format = Json.format[Departure]
+  implicit val format: OFormat[Departure] = Json.format[Departure]
 }
 
 trait BaseDeparture {

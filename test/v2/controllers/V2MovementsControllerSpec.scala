@@ -1328,7 +1328,7 @@ class V2MovementsControllerSpec
         arbitraryMovementResponse().arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
-        (movementResponse, boxResponse) =>
+        (_, _) =>
           val ControllerAndMocks(
             sut,
             mockValidationService,
@@ -3431,7 +3431,7 @@ class V2MovementsControllerSpec
         arbitraryMovementResponse().arbitrary,
         arbitraryBoxResponse.arbitrary
       ) {
-        (movementResponse, boxResponse) =>
+        (_, _) =>
           val ControllerAndMocks(
             sut,
             mockValidationService,
@@ -4610,7 +4610,7 @@ class V2MovementsControllerSpec
             arbitraryItemCount.arbitrary
           ) {
             (movementId, messageResponse, pageNumber, itemCount) =>
-              val summaries = PaginationMessageSummary(TotalCount(messageResponse.length), messageResponse)
+              val summaries = PaginationMessageSummary(TotalCount(messageResponse.length.toLong), messageResponse)
 
               val ControllerAndMocks(
                 sut,
@@ -4665,7 +4665,7 @@ class V2MovementsControllerSpec
         Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head)
       ) {
         (movementId, messageResponse) =>
-          val summaries = PaginationMessageSummary(TotalCount(messageResponse.length), messageResponse)
+          val summaries = PaginationMessageSummary(TotalCount(messageResponse.length.toLong), messageResponse)
 
           val ControllerAndMocks(
             sut,
@@ -4721,7 +4721,7 @@ class V2MovementsControllerSpec
         Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head)
       ) {
         (movementId, messageResponse) =>
-          val summaries = PaginationMessageSummary(TotalCount(messageResponse.length), messageResponse)
+          val summaries = PaginationMessageSummary(TotalCount(messageResponse.length.toLong), messageResponse)
 
           val ControllerAndMocks(
             sut,
@@ -6102,7 +6102,7 @@ class V2MovementsControllerSpec
           updated = dateTime.plusHours(3)
         )
         val departureResponses        = Seq(departureResponse1, departureResponse2)
-        val paginationMovementSummary = PaginationMovementSummary(TotalCount(departureResponses.length), departureResponses)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(departureResponses.length.toLong), departureResponses)
 
         when(
           mockPersistenceService.getMovements(
@@ -6175,7 +6175,7 @@ class V2MovementsControllerSpec
           updated = dateTime.plusHours(1)
         )
         val departureResponses        = Seq(departureResponse1)
-        val paginationMovementSummary = PaginationMovementSummary(TotalCount(departureResponses.length), departureResponses)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(departureResponses.length.toLong), departureResponses)
 
         when(mockAppConfig.maxItemsPerPage).thenReturn(2)
         when(
@@ -6249,7 +6249,7 @@ class V2MovementsControllerSpec
           updated = dateTime.plusHours(1)
         )
         val departureResponses        = Seq(departureResponse1)
-        val paginationMovementSummary = PaginationMovementSummary(TotalCount(departureResponses.length), departureResponses)
+        val paginationMovementSummary = PaginationMovementSummary(TotalCount(departureResponses.length.toLong), departureResponses)
 
         when(mockAppConfig.maxItemsPerPage).thenReturn(1)
         when(
@@ -9593,7 +9593,7 @@ class V2MovementsControllerSpec
           _,
           mockPushNotificationService,
           _,
-          mockAppConfig
+          _
         ) = createControllerAndMocks()
 
         when(
@@ -9735,7 +9735,7 @@ class V2MovementsControllerSpec
         Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head)
       ) {
         (movementType, movementId, messageResponse) =>
-          val summaries = PaginationMessageSummary(TotalCount(messageResponse.length), messageResponse)
+          val summaries = PaginationMessageSummary(TotalCount(messageResponse.length.toLong), messageResponse)
 
           val controllerAndMocks = createControllerAndMocks()
 
@@ -9777,7 +9777,7 @@ class V2MovementsControllerSpec
         Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head)
       ) {
         (movementType, movementId, messageResponse) =>
-          val summaries = PaginationMessageSummary(TotalCount(messageResponse.length), messageResponse)
+          val summaries = PaginationMessageSummary(TotalCount(messageResponse.length.toLong), messageResponse)
 
           val controllerAndMocks = createControllerAndMocks()
 

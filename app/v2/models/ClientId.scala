@@ -16,10 +16,11 @@
 
 package v2.models
 
+import play.api.libs.json.Format
 import play.api.libs.json.Json
 
 object ClientId {
-  implicit val clientIdFormat = Json.valueFormat[ClientId]
+  implicit val clientIdFormat: Format[ClientId] = Json.valueFormat[ClientId]
 }
 
 case class ClientId(value: String) extends AnyVal

@@ -17,9 +17,10 @@
 package models.domain
 
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 
 object Arrivals {
-  implicit val format = Json.format[Arrivals]
+  implicit val format: OFormat[Arrivals] = Json.format[Arrivals]
 }
 
 case class Arrivals(arrivals: Seq[Arrival], retrievedArrivals: Int, totalArrivals: Int)

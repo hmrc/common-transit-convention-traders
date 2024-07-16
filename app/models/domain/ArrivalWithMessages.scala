@@ -17,11 +17,11 @@
 package models.domain
 
 import java.time.LocalDateTime
-
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 
 object ArrivalWithMessages {
-  implicit val format = Json.format[ArrivalWithMessages]
+  implicit val format: OFormat[ArrivalWithMessages] = Json.format[ArrivalWithMessages]
 }
 
 case class ArrivalWithMessages(

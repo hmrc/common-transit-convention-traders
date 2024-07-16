@@ -17,11 +17,12 @@
 package v2.models.request
 
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 import v2.models.MessageStatus
 import v2.models.ObjectStoreURI
 
 case class MessageUpdate(status: MessageStatus, objectStoreURI: Option[ObjectStoreURI], messageType: Option[MessageType])
 
 object MessageUpdate {
-  implicit val format = Json.format[MessageUpdate]
+  implicit val format: OFormat[MessageUpdate] = Json.format[MessageUpdate]
 }

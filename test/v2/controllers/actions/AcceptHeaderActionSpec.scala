@@ -42,11 +42,12 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import v2.base.TestActorSystem
 import v2.controllers.actions.providers.AcceptHeaderActionProviderImpl
 
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
 
 class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures with MockitoSugar with TestXml with TestActorSystem {
 
-  implicit val ec = materializer.executionContext
+  implicit val ec: ExecutionContextExecutor = materializer.executionContext
 
   class Harness(acceptHeaderAction: AcceptHeaderAction[Request], cc: ControllerComponents) extends BackendController(cc) {
 

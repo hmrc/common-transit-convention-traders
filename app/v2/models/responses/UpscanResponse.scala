@@ -26,13 +26,13 @@ import java.time.Instant
 final case class UploadDetails(fileName: String, fileMimeType: String, uploadTimestamp: Instant, checksum: String, size: Long)
 
 object UploadDetails {
-  implicit val format = Json.format[UploadDetails]
+  implicit val format: OFormat[UploadDetails] = Json.format[UploadDetails]
 }
 
 final case class FailureDetails(failureReason: String, message: String)
 
 object FailureDetails {
-  implicit val format = Json.format[FailureDetails]
+  implicit val format: OFormat[FailureDetails] = Json.format[FailureDetails]
 }
 
 object UpscanResponse {
@@ -56,12 +56,9 @@ object UpscanResponse {
 
     case object Failed extends FileStatus
 
-    val values = Seq(Ready, Failed)
+    val values: Seq[FileStatus] = Seq(Ready, Failed)
 
-    implicit val writes = new Writes[FileStatus] {
-
-      def writes(status: FileStatus) = Json.toJson(status.toString())
-    }
+    implicit val writes: Writes[FileStatus] = (status: FileStatus) => Json.toJson(status.toString)
 
     implicit val reads: Reads[FileStatus] = Reads {
       case JsString(x) if x.toLowerCase == "ready"  => JsSuccess(Ready)

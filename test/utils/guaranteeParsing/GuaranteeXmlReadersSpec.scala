@@ -321,8 +321,6 @@ class GuaranteeXmlReadersSpec extends AnyFreeSpec with TestXml with Matchers wit
   }
 
   "guaranteeSet" - {
-    val countGen         = Gen.choose(2, 4)
-    val allTypesGen      = Gen.oneOf(Guarantee.validTypes)
     val referenceTypeGen = Gen.oneOf(Guarantee.referenceTypes)
     val otherTypes       = Gen.oneOf(Guarantee.validTypes.diff(Guarantee.referenceTypes))
     "returns a single Guarantee when given a single GuaRefNumGRNREF1 field and the Guarantee type is 0,1,2,4,9" in {

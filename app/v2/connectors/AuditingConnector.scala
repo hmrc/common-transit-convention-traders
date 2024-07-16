@@ -23,6 +23,7 @@ import com.google.inject.Inject
 import com.codahale.metrics.MetricRegistry
 import config.AppConfig
 import config.Constants
+import io.lemonlabs.uri.Url
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
@@ -101,7 +102,7 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
     ec: ExecutionContext
   ): Future[Unit] = withMetricsTimerAsync(MetricsKeys.AuditingBackend.Post) {
     _ =>
-      val (url: appConfig.auditingUrl.Self, path: String) = getUrlAndPath(auditType, hc)
+      val (url: Url, path: String) = getUrlAndPath(auditType, hc)
       httpClient
         .post(url"$url")
         .withInternalAuthToken
@@ -134,9 +135,9 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
     ec: ExecutionContext
   ): Future[Unit] = withMetricsTimerAsync(MetricsKeys.AuditingBackend.Post) {
     _ =>
-      val (url: appConfig.auditingUrl.Self, path: String) = getUrlAndPath(auditType, hc)
-      val metadata                                        = Metadata(path, movementId, messageId, enrolmentEORI, movementType, messageType)
-      val details                                         = Details(metadata, payload.map(_.as[JsObject]))
+      val (url: Url, path: String) = getUrlAndPath(auditType, hc)
+      val metadata                 = Metadata(path, movementId, messageId, enrolmentEORI, movementType, messageType)
+      val details                  = Details(metadata, payload.map(_.as[JsObject]))
       httpClient
         .post(url"$url")
         .withInternalAuthToken
@@ -149,7 +150,7 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
         .executeAndExpect(ACCEPTED)
   }
 
-  private def getUrlAndPath(auditType: AuditType, hc: HeaderCarrier) = {
+  private def getUrlAndPath(auditType: AuditType, hc: HeaderCarrier): (Url, String) = {
     val url = appConfig.auditingUrl.withPath(auditingRoute(auditType))
     val path = hc.otherHeaders
       .collectFirst {

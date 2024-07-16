@@ -26,6 +26,6 @@ case class DepartureId(value: Int) extends AnyVal {
 
 object DepartureId {
 
-  implicit val departureIdFormat = Json.valueFormat[DepartureId]
+  implicit val departureIdFormat: Format[DepartureId] = Json.valueFormat[DepartureId]
 
 }

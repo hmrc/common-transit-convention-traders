@@ -16,10 +16,11 @@
 
 package v2.models.responses
 
+import play.api.libs.json.Format
 import play.api.libs.json.Json
 
 case class UpscanReference(value: String) extends AnyVal
 
 object UpscanReference {
-  implicit val upscanReferenceFormat = Json.valueFormat[UpscanReference]
+  implicit val upscanReferenceFormat: Format[UpscanReference] = Json.valueFormat[UpscanReference]
 }

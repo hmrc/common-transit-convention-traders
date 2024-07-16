@@ -45,10 +45,7 @@ import play.api.libs.json.Json
 import v2.models.errors.PresentationError
 
 import java.time.OffsetDateTime
-import scala.annotation.nowarn
 
-// This deprecation seems to be a red herring as it triggers on runIfBound
-@nowarn("cat=deprecation&msg=method right in class Either is deprecated \\(since 2.13.0\\):")
 class ArrivalsRouter @Inject() (
   val controllerComponents: ControllerComponents,
   v1Arrivals: V1ArrivalMovementController,

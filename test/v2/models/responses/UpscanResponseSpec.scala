@@ -40,8 +40,8 @@ class UpscanResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDriven
       )
 
       jsonSuccessResponse.validate[UpscanResponse] match {
-        case JsSuccess(x: UpscanSuccessResponse, _) => succeed
-        case _                                      => fail("Expected to be a success response from upscan")
+        case JsSuccess(_, _) => succeed
+        case _               => fail("Expected to be a success response from upscan")
       }
     }
   }

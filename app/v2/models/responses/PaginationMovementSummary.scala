@@ -17,10 +17,11 @@
 package v2.models.responses
 
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 import v2.models.TotalCount
 
 object PaginationMovementSummary {
-  implicit lazy val PaginationMovementSummaryFormat = Json.format[PaginationMovementSummary]
+  implicit lazy val PaginationMovementSummaryFormat: OFormat[PaginationMovementSummary] = Json.format[PaginationMovementSummary]
 }
 
 case class PaginationMovementSummary(totalCount: TotalCount, movementSummary: Seq[MovementSummary])

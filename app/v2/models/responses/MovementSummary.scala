@@ -21,11 +21,12 @@ import v2.models.LocalReferenceNumber
 import v2.models.MovementId
 import v2.models.MovementReferenceNumber
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 
 import java.time.OffsetDateTime
 
 object MovementSummary {
-  implicit lazy val movementSummaryFormat = Json.format[MovementSummary]
+  implicit lazy val movementSummaryFormat: OFormat[MovementSummary] = Json.format[MovementSummary]
 }
 
 case class MovementSummary(

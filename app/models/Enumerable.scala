@@ -47,7 +47,7 @@ object Enumerable {
           JsError(s"Invalid type. Expected a JsString got a ${jsValue.getClass}")
       }
 
-    implicit def writes[A: Enumerable]: Writes[A] =
+    implicit def writes[A]: Writes[A] =
       Writes(
         value => JsString(value.toString)
       )

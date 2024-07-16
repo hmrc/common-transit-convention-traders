@@ -396,7 +396,7 @@ class V2MovementsControllerImpl @Inject() (
     bodyOption match {
       case Some(XmlPayload(value)) =>
         val byteString = ByteString(value, StandardCharsets.UTF_8)
-        EitherT.rightT(Option(BodyAndSize(byteString.size, Source.single(byteString))))
+        EitherT.rightT(Option(BodyAndSize(byteString.size.toLong, Source.single(byteString))))
       case None =>
         persistenceService
           .getMessageBody(eori, movementType, movementId, messageId)
@@ -606,9 +606,9 @@ class V2MovementsControllerImpl @Inject() (
   private def determineMaxPerPageCount(parameter: Option[Long]): ItemCount =
     parameter
       .map(
-        count => ItemCount(Math.min(config.maxItemsPerPage, count))
+        count => ItemCount(Math.min(config.maxItemsPerPage.toLong, count))
       )
-      .getOrElse(ItemCount(config.defaultItemsPerPage))
+      .getOrElse(ItemCount(config.defaultItemsPerPage.toLong))
 
   def getMovements(
     movementType: MovementType,

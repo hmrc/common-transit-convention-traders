@@ -17,9 +17,10 @@
 package v2.models.request
 
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 
 object UpscanInitiate {
-  implicit val upscanInitiateFormat = Json.format[UpscanInitiate]
+  implicit val upscanInitiateFormat: OFormat[UpscanInitiate] = Json.format[UpscanInitiate]
 }
 
 case class UpscanInitiate(

@@ -59,7 +59,7 @@ class HateoasMovementMessageIdsResponseSpec
       ) {
         (departureId, response) =>
           val processingResponse = Seq(response.copy(status = Some(MessageStatus.Processing)))
-          val responses          = PaginationMessageSummary(TotalCount(processingResponse.length), processingResponse)
+          val responses          = PaginationMessageSummary(TotalCount(processingResponse.length.toLong), processingResponse)
 
           val actual = HateoasMovementMessageIdsResponse(departureId, responses, dateTime, MovementType.Departure, None, None, None)
 
@@ -97,7 +97,7 @@ class HateoasMovementMessageIdsResponseSpec
       ) {
         (departureId, response, page, count, receivedUntil) =>
           val pendingResponses = Seq(response.copy(status = Some(MessageStatus.Pending)))
-          val responses        = PaginationMessageSummary(TotalCount(pendingResponses.length), pendingResponses)
+          val responses        = PaginationMessageSummary(TotalCount(pendingResponses.length.toLong), pendingResponses)
 
           val actual = HateoasMovementMessageIdsResponse(departureId, responses, dateTime, MovementType.Departure, page, count, receivedUntil)
 
@@ -150,20 +150,4 @@ class HateoasMovementMessageIdsResponseSpec
     )
 
   }
-
-  private def selfUrl2(
-    departureId: MovementId,
-    dateTime: Option[OffsetDateTime],
-    page: Option[PageNumber],
-    count: Option[ItemCount],
-    receivedUntil: Option[OffsetDateTime]
-  ): JsObject = dateTime match {
-    case Some(odt) =>
-      val time = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(odt)
-      Json.obj(
-        "href" -> s"/customs/transits/movements/departures/${departureId.value}/messages?receivedSince=$time"
-      )
-    case None => Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}/messages")
-  }
-
 }

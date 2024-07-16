@@ -65,7 +65,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
   def withTestActionMetrics[A](test: TestHasActionMetrics => A): A =
     test(new TestHasActionMetrics)
 
-  def verifyCompletedWithSuccess(metricName: String, metrics: MockHasMetrics): Assertion = {
+  def verifyCompletedWithSuccess(metrics: MockHasMetrics): Assertion = {
     val inOrder = Mockito.inOrder(metrics.timer, metrics.timerContext, metrics.successCounter)
     inOrder.verify(metrics.timer, times(1)).time()
     inOrder.verify(metrics.timerContext, times(1)).stop()
@@ -77,7 +77,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
     succeed
   }
 
-  def verifyCompletedWithFailure(metricName: String, metrics: MockHasMetrics): Assertion = {
+  def verifyCompletedWithFailure(metrics: MockHasMetrics): Assertion = {
     val inOrder = Mockito.inOrder(metrics.timer, metrics.timerContext, metrics.failureCounter)
     inOrder.verify(metrics.timer, times(1)).time()
     inOrder.verify(metrics.timerContext, times(1)).stop()
@@ -101,7 +101,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             )
             .map {
               _ =>
-                verifyCompletedWithSuccess(TestMetric, metrics)
+                verifyCompletedWithSuccess(metrics)
             }
       }
 
@@ -114,7 +114,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
                 Future.successful(())
             }
             .map(
-              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+              _ => verifyCompletedWithSuccess(metrics)
             )
       }
 
@@ -126,7 +126,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             )
             .recover {
               case _ =>
-                verifyCompletedWithFailure(TestMetric, metrics)
+                verifyCompletedWithFailure(metrics)
             }
       }
 
@@ -139,7 +139,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
                 Future.successful(())
             }
             .map(
-              _ => verifyCompletedWithFailure(TestMetric, metrics)
+              _ => verifyCompletedWithFailure(metrics)
             )
       }
 
@@ -155,7 +155,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
                 Future.successful(())
             }
             .map(
-              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+              _ => verifyCompletedWithSuccess(metrics)
             )
       }
 
@@ -172,7 +172,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
                 Future.successful(())
             }
             .map(
-              _ => verifyCompletedWithFailure(TestMetric, metrics)
+              _ => verifyCompletedWithFailure(metrics)
             )
       }
 
@@ -184,7 +184,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             )
           }
 
-          Future.successful(verifyCompletedWithFailure(TestMetric, metrics))
+          Future.successful(verifyCompletedWithFailure(metrics))
       }
     }
 
@@ -196,7 +196,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
               Future.successful(Results.Continue)
             }
             .map(
-              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+              _ => verifyCompletedWithSuccess(metrics)
             )
       }
 
@@ -207,7 +207,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
               Future.successful(Results.Ok)
             }
             .map(
-              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+              _ => verifyCompletedWithSuccess(metrics)
             )
       }
 
@@ -218,7 +218,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
               Future.successful(Results.NotModified)
             }
             .map(
-              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+              _ => verifyCompletedWithSuccess(metrics)
             )
       }
 
@@ -229,7 +229,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
               Future.successful(Results.EntityTooLarge)
             }
             .map(
-              _ => verifyCompletedWithFailure(TestMetric, metrics)
+              _ => verifyCompletedWithFailure(metrics)
             )
       }
 
@@ -240,7 +240,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
               Future.successful(Results.BadGateway)
             }
             .map(
-              _ => verifyCompletedWithFailure(TestMetric, metrics)
+              _ => verifyCompletedWithFailure(metrics)
             )
       }
 
@@ -252,7 +252,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             }
             .transformWith {
               case _ =>
-                verifyCompletedWithFailure(TestMetric, metrics)
+                verifyCompletedWithFailure(metrics)
             }
       }
 
@@ -264,7 +264,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             }
           }
 
-          Future.successful(verifyCompletedWithFailure(TestMetric, metrics))
+          Future.successful(verifyCompletedWithFailure(metrics))
       }
     }
 
@@ -279,7 +279,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             }
             .apply(fakeRequest)
             .map(
-              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+              _ => verifyCompletedWithSuccess(metrics)
             )
       }
 
@@ -291,7 +291,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             }
             .apply(fakeRequest)
             .map(
-              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+              _ => verifyCompletedWithSuccess(metrics)
             )
       }
 
@@ -303,7 +303,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             }
             .apply(fakeRequest)
             .map(
-              _ => verifyCompletedWithSuccess(TestMetric, metrics)
+              _ => verifyCompletedWithSuccess(metrics)
             )
       }
 
@@ -315,7 +315,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             }
             .apply(fakeRequest)
             .map(
-              _ => verifyCompletedWithFailure(TestMetric, metrics)
+              _ => verifyCompletedWithFailure(metrics)
             )
       }
 
@@ -327,7 +327,7 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
             }
             .apply(fakeRequest)
             .map(
-              _ => verifyCompletedWithFailure(TestMetric, metrics)
+              _ => verifyCompletedWithFailure(metrics)
             )
       }
     }
