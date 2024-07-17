@@ -17,18 +17,24 @@
 package v2.controllers
 
 import cats.data.EitherT
-import com.codahale.metrics.{Counter, MetricRegistry}
-import com.google.inject.{ImplementedBy, Inject, Singleton}
+import com.codahale.metrics.Counter
+import com.codahale.metrics.MetricRegistry
+import com.google.inject.ImplementedBy
+import com.google.inject.Inject
+import com.google.inject.Singleton
 import config.AppConfig
 import config.Constants.XClientIdHeader
 import metrics.HasActionMetrics
 import org.apache.pekko.stream.Materializer
-import org.apache.pekko.stream.scaladsl.{Sink, Source}
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import play.api.Logging
-import play.api.http.{HeaderNames, MimeTypes}
+import play.api.http.HeaderNames
+import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
 import play.api.mvc._
 import routing.VersionedRouting
 import uk.gov.hmrc.http
@@ -40,8 +46,11 @@ import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
 import v2.models.AuditType._
 import v2.models._
-import v2.models.errors.{PersistenceError, PresentationError, PushNotificationError}
-import v2.models.request.{MessageType, MessageUpdate}
+import v2.models.errors.PersistenceError
+import v2.models.errors.PresentationError
+import v2.models.errors.PushNotificationError
+import v2.models.request.MessageType
+import v2.models.request.MessageUpdate
 import v2.models.responses._
 import v2.models.responses.hateoas._
 import v2.services._
