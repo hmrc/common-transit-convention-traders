@@ -16,20 +16,19 @@
 
 package v2.controllers
 
-import org.apache.pekko.stream.Materializer
-import org.apache.pekko.stream.scaladsl.FileIO
-import org.apache.pekko.stream.scaladsl.Sink
-import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.util.ByteString
 import cats.data.EitherT
 import com.codahale.metrics.Counter
+import com.codahale.metrics.MetricRegistry
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
-import com.codahale.metrics.MetricRegistry
 import config.AppConfig
 import config.Constants.XClientIdHeader
 import metrics.HasActionMetrics
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
@@ -45,21 +44,7 @@ import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.AcceptHeaderActionProvider
 import v2.controllers.request.AuthenticatedRequest
 import v2.controllers.stream.StreamingParsers
-import v2.models.AuditType.AddMessageDBFailed
-import v2.models.AuditType.CreateMovementDBFailed
-import v2.models.AuditType.CustomerRequestedMissingMovement
-import v2.models.AuditType.GetMovementDBFailed
-import v2.models.AuditType.GetMovementMessageDBFailed
-import v2.models.AuditType.GetMovementMessagesDBFailed
-import v2.models.AuditType.GetMovementsDBFailed
-import v2.models.AuditType.PushNotificationFailed
-import v2.models.AuditType.PushNotificationUpdateFailed
-import v2.models.AuditType.PushPullNotificationGetBoxFailed
-import v2.models.AuditType.SubmitArrivalNotificationFailed
-import v2.models.AuditType.SubmitAttachMessageFailed
-import v2.models.AuditType.SubmitDeclarationFailed
-import v2.models.AuditType.TraderToNCTSSubmissionSuccessful
-import v2.models.AuditType.ValidationFailed
+import v2.models.AuditType._
 import v2.models._
 import v2.models.errors.PersistenceError
 import v2.models.errors.PresentationError
@@ -72,11 +57,8 @@ import v2.services._
 import v2.utils.StreamWithFile
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
 import java.time.OffsetDateTime
 import scala.concurrent.Future
-import scala.util.Try
-import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[V2MovementsControllerImpl])
 trait V2MovementsController {
@@ -414,22 +396,10 @@ class V2MovementsControllerImpl @Inject() (
     }
 
   private def getFile(source: Source[ByteString, _]): EitherT[Future, PresentationError, BodyAndSize] =
-    EitherT {
-      Future
-        .fromTry(Try(temporaryFileCreator.create()))
-        .flatMap {
-          file =>
-            for {
-              _    <- source.runWith(FileIO.toPath(file))
-              size <- Future.fromTry(Try(Files.size(file)))
-            } yield Right(BodyAndSize(size, FileIO.fromPath(file)))
-        }
-        .recover {
-          case NonFatal(ex) =>
-            logger.error(s"get file failed: ${ex.getMessage}", ex)
-            Left(PresentationError.internalServiceError(cause = Some(ex)))
-        }
-    }
+    for {
+      sources <- reUsableSource(source, 2)
+      size    <- calculateSize(sources.lift(0).get)
+    } yield BodyAndSize(size, sources.lift(1).get)
 
   private def formatMessageBody(
     messageSummary: MessageSummary,
@@ -1245,9 +1215,9 @@ class V2MovementsControllerImpl @Inject() (
     byteStringSeq <- materializeSource(request.body)
   } yield List.fill(4)(createReusableSource(byteStringSeq))
 
-  private def reUsableSource(source: Source[ByteString, _]): EitherT[Future, PresentationError, List[Source[ByteString, _]]] = for {
+  private def reUsableSource(source: Source[ByteString, _], numberOfSources: Int = 4): EitherT[Future, PresentationError, List[Source[ByteString, _]]] = for {
     byteStringSeq <- materializeSource(source)
-  } yield List.fill(4)(createReusableSource(byteStringSeq))
+  } yield List.fill(numberOfSources)(createReusableSource(byteStringSeq))
 
   // Function to calculate the size using EitherT
   private def calculateSize(source: Source[ByteString, _]): EitherT[Future, PresentationError, Long] = {
