@@ -37,7 +37,10 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers
 import play.api.test.Helpers.defaultAwaitTimeout
 import play.api.test.Helpers.status
-import routing.VersionedRouting
+import routing.VERSION_2_ACCEPT_HEADER_VALUE_JSON
+import routing.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML
+import routing.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
+import routing.VERSION_2_ACCEPT_HEADER_VALUE_XML
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import v2.base.TestActorSystem
 import v2.controllers.actions.providers.AcceptHeaderActionProviderImpl
@@ -66,9 +69,9 @@ class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures
   "AcceptHeaderAction " - {
 
     lazy val acceptedHeaders = Seq(
-      VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON,
-      VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML,
-      VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_XML
+      VERSION_2_ACCEPT_HEADER_VALUE_JSON.value,
+      VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.value,
+      VERSION_2_ACCEPT_HEADER_VALUE_XML.value
     )
 
     for (acceptHeader <- acceptedHeaders)
@@ -110,7 +113,7 @@ class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures
       val req: FakeRequest[AnyContent] = FakeRequest(
         method = HttpVerbs.GET,
         uri = "",
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)),
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)),
         AnyContent.apply()
       )
       val result = controller.post()(req)

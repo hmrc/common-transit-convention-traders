@@ -16,6 +16,7 @@
 
 package routing
 
+import cats.implicits.catsSyntaxEitherId
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
@@ -33,20 +34,50 @@ import v2.models.errors.PresentationError
 import scala.concurrent.Future
 import scala.util.matching.Regex
 
-object VersionedRouting {
+sealed trait VersionedAcceptHeader {
+  val value: String
+}
 
-  val VERSION_2_ACCEPT_HEADER_VALUE_XML: String             = "application/vnd.hmrc.2.0+xml"      // returns XML only
-  val VERSION_2_ACCEPT_HEADER_VALUE_JSON: String            = "application/vnd.hmrc.2.0+json"     // returns JSON only
-  val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML: String        = "application/vnd.hmrc.2.0+json+xml" // returns JSON wrapped XML
-  val VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN: String = "application/vnd.hmrc.2.0+json-xml" // returns JSON wrapped XML
-  val VERSION_2_ACCEPT_HEADER_PATTERN: Regex                = """^application/vnd\.hmrc\.2\.0\+.+$""".r
+object VersionedAcceptHeader {
 
-  def formatAccept(header: String): String = {
-    val splitHeader                         = """^(application/vnd\.hmrc\.2\.0\+)(.+)""".r
-    val splitHeader(frameworkPath, ctcPath) = header
-    frameworkPath + ctcPath.toLowerCase // ctc part can be mixed case.
+  def apply(value: String): Either[PresentationError, VersionedAcceptHeader] = value match {
+    case VERSION_2_ACCEPT_HEADER_VALUE_XML.value             => VERSION_2_ACCEPT_HEADER_VALUE_XML.asRight
+    case VERSION_2_ACCEPT_HEADER_VALUE_JSON.value            => VERSION_2_ACCEPT_HEADER_VALUE_JSON.asRight
+    case VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.value        => VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.asRight
+    case VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value => VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.asRight
+    case invalidAcceptHeader                                 => PresentationError.notAcceptableError(s"Invalid accept header: $invalidAcceptHeader").asLeft
   }
+}
 
+case object VERSION_2_ACCEPT_HEADER_VALUE_XML extends VersionedAcceptHeader {
+  override val value: String = "application/vnd.hmrc.2.0+xml"
+}
+
+case object VERSION_2_ACCEPT_HEADER_VALUE_JSON extends VersionedAcceptHeader {
+  override val value: String = "application/vnd.hmrc.2.0+json"
+}
+
+case object VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML extends VersionedAcceptHeader {
+  override val value: String = "application/vnd.hmrc.2.0+json+xml"
+}
+
+case object VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN extends VersionedAcceptHeader {
+  override val value: String = "application/vnd.hmrc.2.0+json-xml"
+}
+
+object VersionedRouting {
+  val VERSION_2_ACCEPT_HEADER_PATTERN: Regex = """^application/vnd\.hmrc\.2\.0\+.+$""".r
+
+  def formatAccept(header: String): Either[PresentationError, VersionedAcceptHeader] = {
+    val splitHeader = """^(application/vnd\.hmrc\.2\.0\+)(.+)""".r
+
+    header match {
+      case splitHeader(frameworkPath, ctcPath) =>
+        val formattedHeader = frameworkPath + ctcPath.toLowerCase
+        VersionedAcceptHeader(formattedHeader)
+      case invalidHeader => PresentationError.notAcceptableError(s"Invalid accept header: $invalidHeader").asLeft
+    }
+  }
 }
 
 trait VersionedRouting {
