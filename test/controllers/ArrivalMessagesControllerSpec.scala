@@ -16,7 +16,6 @@
 
 package controllers
 
-import com.codahale.metrics.MetricRegistry
 import config.Constants.MissingECCEnrolmentMessage
 import config.Constants.XMissingECCEnrolment
 import connectors.ArrivalMessageConnector

@@ -29,7 +29,7 @@ object Binders {
     else offsetDateTime
 
   implicit val offsetDateTimeQueryStringBindable: QueryStringBindable[OffsetDateTime] = {
-    val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+    val formatter: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
     new QueryStringBindable.Parsing[OffsetDateTime](
       str => ensurePositiveYear(OffsetDateTime.parse(str)),
       dt => formatter.format(dt),

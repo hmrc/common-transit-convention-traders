@@ -18,21 +18,24 @@ package utils.analysis
 
 import scala.xml.NodeSeq
 import java.nio.charset.StandardCharsets
+import com.codahale.metrics.Histogram
 import com.codahale.metrics.MetricRegistry
 import metrics.MetricsKeys.Messages._
+
 import javax.inject.Inject
 import javax.inject.Singleton
 import metrics.HasMetrics
 import models.MessageType
 import models.MessageType._
+import utils.Constants._
 
 @Singleton
 class MessageAnalyser @Inject() (val metrics: MetricRegistry) extends HasMetrics {
-  lazy val messageSize             = histo(MessageSize)
-  lazy val numberOfGoods           = histo(NumberOfGoods)
-  lazy val numberOfDocuments       = histo(NumberOfDocuments)
-  lazy val numberOfSpecialMentions = histo(NumberOfSpecialMentions)
-  lazy val numberOfSeals           = histo(NumberOfSeals)
+  lazy val messageSize: Histogram             = histo(MessageSize)
+  lazy val numberOfGoods: Histogram           = histo(NumberOfGoods)
+  lazy val numberOfDocuments: Histogram       = histo(NumberOfDocuments)
+  lazy val numberOfSpecialMentions: Histogram = histo(NumberOfSpecialMentions)
+  lazy val numberOfSeals: Histogram           = histo(NumberOfSeals)
 
   private def trackMessageSize(xml: NodeSeq): Unit = {
     val size = xml.toString.getBytes(StandardCharsets.UTF_8).length
@@ -40,28 +43,28 @@ class MessageAnalyser @Inject() (val metrics: MetricRegistry) extends HasMetrics
   }
 
   private def trackNumberOfGoods(xml: NodeSeq): Unit = {
-    val count = (xml \ "GOOITEGDS").length
+    val count = (xml \ GOOITEGDS).length
     numberOfGoods.update(count)
   }
 
   private def trackNumberOfDocuments(xml: NodeSeq): Unit =
-    (xml \ "GOOITEGDS")
+    (xml \ GOOITEGDS)
       .foreach {
         node =>
-          val count = (node \ "PRODOCDC2").length // TODO double check code
+          val count = (node \ PRODOCDC2).length
           numberOfDocuments.update(count)
       }
 
   private def trackNumberOfSpecialMentions(xml: NodeSeq): Unit =
-    (xml \ "GOOITEGDS")
+    (xml \ GOOITEGDS)
       .foreach {
         node =>
-          val count = (node \ "SPEMENMT2").length
+          val count = (node \ SPEMENMT2).length
           numberOfSpecialMentions.update(count)
       }
 
   private def trackNumberOfSeals(xml: NodeSeq): Unit = {
-    val count = (xml \ "SEAINFSLI" \ "SEAIDSID").length
+    val count = (xml \ SEAINFSLI \ SEAIDSID).length
     numberOfSeals.update(count)
   }
 
@@ -76,5 +79,3 @@ class MessageAnalyser @Inject() (val metrics: MetricRegistry) extends HasMetrics
       case _ => trackMessageSize(xml)
     }
 }
-
-// TODO put all names in constants file

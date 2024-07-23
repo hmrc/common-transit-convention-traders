@@ -24,7 +24,7 @@ import v2.utils.CallOps._
 object HateoasResponseArrivals {
 
   def apply(arrivals: Arrivals): JsObject = {
-    val arrivalUrl = routing.routes.ArrivalsRouter.getArrivalsForEori().urlWithContext
+    val arrivalUrl: String = routing.routes.ArrivalsRouter.getArrivalsForEori().urlWithContext
 
     Json.obj(
       "_links" -> Json.obj(

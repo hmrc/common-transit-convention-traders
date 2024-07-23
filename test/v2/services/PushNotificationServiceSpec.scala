@@ -287,7 +287,6 @@ class PushNotificationServiceSpec
 
     "should return Left(BoxNotFound) if the box is not found" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
       (movementId, messageId) =>
-        val expectedException = new Exception()
         when(mockAppConfig.pushNotificationsEnabled) thenReturn true
         when(mockConnector.postPpnsSubmissionNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
           .thenReturn(Future.failed(UpstreamErrorResponse("Box not found", NOT_FOUND)))

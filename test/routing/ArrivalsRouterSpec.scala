@@ -75,9 +75,9 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
   "route to the version 2 controller" - {
     def executeTest(callValue: Call, sutValue: => Action[Source[ByteString, _]], expectedStatus: Int, isVersion: Boolean) =
       Seq(
-        Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON),
-        Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML),
-        Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)
+        Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON.value),
+        Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.value),
+        Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)
       ).foreach {
         acceptHeaderValue =>
           val arrivalsHeaders = FakeHeaders(

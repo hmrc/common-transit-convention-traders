@@ -16,6 +16,7 @@
 
 package v2.controllers.actions
 
+import cats.implicits.catsSyntaxEitherId
 import com.google.inject.Inject
 import play.api.http.HeaderNames
 import play.api.libs.json.Json
@@ -51,7 +52,11 @@ class AcceptHeaderActionImpl[R[_] <: Request[_]] @Inject() (acceptedHeaders: Seq
     }
 
   private def checkAcceptHeader[A](acceptHeaderValue: String, request: R[A]): Either[Result, R[A]] =
-    if (acceptedHeaders.contains(VersionedRouting.formatAccept(acceptHeaderValue))) Right(request)
-    else Left(NotAcceptable(Json.toJson(PresentationError.notAcceptableError("The Accept header is missing or invalid."))))
+    VersionedRouting.formatAccept(acceptHeaderValue) match {
+      case Right(validatedAcceptHeader) if acceptedHeaders.contains(validatedAcceptHeader.value) =>
+        request.asRight
+      case _ =>
+        NotAcceptable(Json.toJson(PresentationError.notAcceptableError("The Accept header is missing or invalid."))).asLeft
+    }
 
 }

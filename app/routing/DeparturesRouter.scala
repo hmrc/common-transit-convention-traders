@@ -45,10 +45,7 @@ import v2.models.{MessageId => V2MessageId}
 import v2.models.{MovementId => V2DepartureId}
 
 import java.time.OffsetDateTime
-import scala.annotation.nowarn
 
-// This deprecation seems to be a red herring as it triggers on runIfBound
-@nowarn("cat=deprecation&msg=method right in class Either is deprecated \\(since 2.13.0\\):")
 class DeparturesRouter @Inject() (
   val controllerComponents: ControllerComponents,
   v1Departures: V1DeparturesController,
@@ -75,7 +72,7 @@ class DeparturesRouter @Inject() (
     Action(streamFromMemory) {
       request =>
         request.body.runWith(Sink.ignore)
-        val presentationError = PresentationError.goneError(
+        val presentationError: PresentationError = PresentationError.goneError(
           "New NCTS4 Departure Declarations can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Departure Declarations."
         )
         Status(presentationError.code.statusCode)(Json.toJson(presentationError))

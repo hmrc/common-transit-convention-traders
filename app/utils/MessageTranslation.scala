@@ -41,7 +41,7 @@ class MessageTranslation @Inject() (env: Environment, config: AppConfig) {
   def translate(input: JsObject): JsObject = {
 
     def regex(key: String): Regex = s""""$key" ?:""".r
-    val inputString               = input.toString
+    val inputString: String       = input.toString
 
     val translated = nodes.foldLeft(inputString) {
       (current, node) =>

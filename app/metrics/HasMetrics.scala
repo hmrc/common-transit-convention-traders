@@ -16,7 +16,10 @@
 
 package metrics
 
+import com.codahale.metrics.Counter
+import com.codahale.metrics.Histogram
 import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.Timer
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.Result
@@ -48,17 +51,17 @@ trait HasActionMetrics extends HasMetrics {
 trait HasMetrics {
   def metrics: MetricRegistry
 
-  def histo(metricKey: String) =
+  def histo(metricKey: String): Histogram =
     metrics.histogram(metricKey)
 
-  def counter(metricsKey: String) =
+  def counter(metricsKey: String): Counter =
     metrics.counter(metricsKey)
 
   class MetricsTimer(metricKey: String) {
-    val timerContext   = metrics.timer(s"$metricKey-timer").time()
-    val successCounter = metrics.counter(s"$metricKey-success-counter")
-    val failureCounter = metrics.counter(s"$metricKey-failed-counter")
-    val timerRunning   = new AtomicBoolean(true)
+    val timerContext: Timer.Context = metrics.timer(s"$metricKey-timer").time()
+    val successCounter: Counter     = metrics.counter(s"$metricKey-success-counter")
+    val failureCounter: Counter     = metrics.counter(s"$metricKey-failed-counter")
+    private val timerRunning        = new AtomicBoolean(true)
 
     def completeWithSuccess(): Unit =
       if (timerRunning.compareAndSet(true, false)) {
@@ -76,7 +79,7 @@ trait HasMetrics {
   /** Execute a block of code with a metrics timer.
     * Intended for use in controllers that return HTTP responses.
     *
-    * @param metric The id of the metric to be collected
+    * @param metricKey The id of the metric to be collected
     * @param block The block of code to execute asynchronously
     * @param ec The [[scala.concurrent.ExecutionContext]] on which the block of code should run
     * @return The result of the block of code

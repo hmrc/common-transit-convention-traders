@@ -53,7 +53,7 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
         val movementResponse1 = arbitraryMovementSummary.arbitrary.sample.value
         val movementResponse2 = arbitraryMovementSummary.arbitrary.sample.value
         val responses         = Seq(movementResponse1, movementResponse2)
-        val response          = PaginationMovementSummary(TotalCount(responses.length), responses)
+        val response          = PaginationMovementSummary(TotalCount(responses.length.toLong), responses)
 
         val expected = Json.obj(
           "_links" -> Json.obj(

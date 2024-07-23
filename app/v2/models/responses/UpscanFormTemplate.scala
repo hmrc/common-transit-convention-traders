@@ -17,9 +17,10 @@
 package v2.models.responses
 
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 
 object UpscanFormTemplate {
-  implicit val uploadRequestFormat = Json.format[UpscanFormTemplate]
+  implicit val uploadRequestFormat: OFormat[UpscanFormTemplate] = Json.format[UpscanFormTemplate]
 }
 
 case class UpscanFormTemplate(

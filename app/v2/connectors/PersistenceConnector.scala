@@ -284,9 +284,9 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metric
     movementEORI: Option[EORINumber] = None,
     movementReferenceNumber: Option[MovementReferenceNumber] = None,
     receivedSince: Option[OffsetDateTime] = None,
-    page: Option[PageNumber] = Some(PageNumber(1)),
+    page: Option[PageNumber],
     count: ItemCount,
-    receivedUntil: Option[OffsetDateTime] = None,
+    receivedUntil: Option[OffsetDateTime],
     localReferenceNumber: Option[LocalReferenceNumber] = None
   ) = {
 

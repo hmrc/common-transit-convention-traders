@@ -17,10 +17,11 @@
 package v2.models.responses
 
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 import v2.models.BoxId
 
 case class BoxResponse(boxId: BoxId)
 
 object BoxResponse {
-  implicit val boxResponseFormat = Json.format[BoxResponse]
+  implicit val boxResponseFormat: OFormat[BoxResponse] = Json.format[BoxResponse]
 }

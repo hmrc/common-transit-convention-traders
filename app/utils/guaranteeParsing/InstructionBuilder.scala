@@ -63,11 +63,9 @@ class InstructionBuilder @Inject() (guaranteeInstructionBuilder: GuaranteeInstru
   }
 
   def pair(guarantee: Guarantee, specialMentionGuarantees: Seq[SpecialMentionGuarantee]): (Option[SpecialMentionGuarantee], Guarantee) =
-    specialMentionGuarantees
-      .filter(
-        sm => sm.additionalInfo.endsWith(guarantee.gReference)
-      )
-      .headOption match {
+    specialMentionGuarantees.find(
+      sm => sm.additionalInfo.endsWith(guarantee.gReference)
+    ) match {
       case Some(mention) => (Some(mention), guarantee)
       case None          => (None, guarantee)
     }

@@ -17,10 +17,11 @@
 package v2.models.responses
 
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 import v2.models.TotalCount
 
 object PaginationMessageSummary {
-  implicit lazy val PaginationMessageSummaryFormat = Json.format[PaginationMessageSummary]
+  implicit lazy val PaginationMessageSummaryFormat: OFormat[PaginationMessageSummary] = Json.format[PaginationMessageSummary]
 }
 
 case class PaginationMessageSummary(totalCount: TotalCount, messageSummary: Seq[MessageSummary])

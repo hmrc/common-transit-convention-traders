@@ -23,21 +23,14 @@ sealed trait ParseError {
 }
 
 object ParseError extends ParseHandling {
-  final case class EmptyNodeSeq(message: String)                    extends ParseError
-  final case class NoGuaranteeType(message: String)                 extends ParseError
   final case class GuaranteeTypeInvalid(message: String)            extends ParseError
   final case class GuaranteeTypeTooLong(message: String)            extends ParseError
   final case class NoGuaranteeReferenceNumber(message: String)      extends ParseError
   final case class NoOtherGuaranteeField(message: String)           extends ParseError
-  final case class GuaranteeAmountZero(message: String)             extends ParseError
-  final case class AdditionalInfoMissing(message: String)           extends ParseError
   final case class AdditionalInfoInvalidCharacters(message: String) extends ParseError
-  final case class AdditionalInfoCodeMissing(message: String)       extends ParseError
   final case class CurrencyCodeInvalid(message: String)             extends ParseError
   final case class AmountStringTooLong(message: String)             extends ParseError
   final case class AmountStringInvalid(message: String)             extends ParseError
-  final case class SpecialMentionNotFound(message: String)          extends ParseError
-  final case class GuaranteeNotFound(message: String)               extends ParseError
   final case class MissingItemNumber(message: String)               extends ParseError
   final case class InvalidItemNumber(message: String)               extends ParseError
   final case class AmountWithoutCurrency(message: String)           extends ParseError
@@ -45,7 +38,6 @@ object ParseError extends ParseHandling {
   final case class DestinationEmpty(message: String)                extends ParseError
   final case class DepartureEmpty(message: String)                  extends ParseError
   final case class InappropriateDepartureOffice(message: String)    extends ParseError
-  final case class UnpairedGuarantees(message: String)              extends ParseError
   final case class UnknownTransformationError(message: String)      extends ParseError
 
   def sequenceErrors[A](input: Seq[ParseHandler[A]]): ParseHandler[Seq[A]] =

@@ -32,6 +32,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import org.slf4j
 import play.api.Logger
 import play.api.http.MimeTypes
 import play.api.libs.json.JsValue
@@ -56,8 +57,8 @@ class AuditingServiceSpec
     with BeforeAndAfterEach {
 
   val mockConnector: AuditingConnector = mock[AuditingConnector]
-  val sut                              = new AuditingServiceImpl(mockConnector)
-  implicit val hc                      = HeaderCarrier()
+  val sut: AuditingServiceImpl         = new AuditingServiceImpl(mockConnector)
+  implicit val hc: HeaderCarrier       = HeaderCarrier()
   val smallMessageSize                 = 49999
 
   override def beforeEach(): Unit =
@@ -79,7 +80,7 @@ class AuditingServiceSpec
                 mockConnector.postMessageType(
                   eqTo(DeclarationData),
                   eqTo(contentType),
-                  eqTo[Long](smallMessageSize),
+                  eqTo[Long](smallMessageSize.toLong),
                   any(),
                   eqTo(movementId),
                   eqTo(messageId),
@@ -94,7 +95,7 @@ class AuditingServiceSpec
                 sut.auditMessageEvent(
                   AuditType.DeclarationData,
                   contentType,
-                  smallMessageSize,
+                  smallMessageSize.toLong,
                   Source.empty,
                   movementId,
                   messageId,
@@ -107,7 +108,7 @@ class AuditingServiceSpec
                   verify(mockConnector, times(1)).postMessageType(
                     eqTo(DeclarationData),
                     eqTo(contentType),
-                    eqTo[Long](smallMessageSize),
+                    eqTo[Long](smallMessageSize.toLong),
                     any(),
                     eqTo(movementId),
                     eqTo(messageId),
@@ -142,7 +143,7 @@ class AuditingServiceSpec
               ).thenReturn(Future.failed(exception))
 
               object Harness extends AuditingServiceImpl(mockConnector) {
-                val logger0 = mock[org.slf4j.Logger]
+                val logger0: slf4j.Logger = mock[org.slf4j.Logger]
                 when(logger0.isWarnEnabled()).thenReturn(true)
                 override val logger: Logger = new Logger(logger0)
               }

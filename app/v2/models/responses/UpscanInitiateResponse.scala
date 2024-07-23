@@ -17,6 +17,7 @@
 package v2.models.responses
 
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 
 case class UpscanInitiateResponse(
   reference: UpscanReference,
@@ -24,5 +25,5 @@ case class UpscanInitiateResponse(
 )
 
 object UpscanInitiateResponse {
-  implicit val upscanInitiateResponse = Json.format[UpscanInitiateResponse]
+  implicit val upscanInitiateResponse: OFormat[UpscanInitiateResponse] = Json.format[UpscanInitiateResponse]
 }

@@ -38,8 +38,8 @@ import scala.xml.TopScope
 
 class XmlValidationService @Inject() (appConfig: AppConfig) {
 
-  private val logger     = Logger(getClass)
-  private val schemaLang = javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI
+  private val logger: Logger     = Logger(getClass)
+  private val schemaLang: String = javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI
 
   private def saxParser(schema: Schema): SAXParser = {
     val saxParser: SAXParserFactory = javax.xml.parsers.SAXParserFactory.newInstance()
@@ -106,14 +106,14 @@ sealed trait XmlError {
 
 object XmlError {
 
-  val FailedSchemaValidationMessage =
+  val FailedSchemaValidationMessage: String =
     "The request has failed schema validation. Please review the required message structure as specified by the XSD file '%s'. Detailed error below:\n%s"
 
-  val RequestBodyEmptyMessage = "The request cannot be processed as it does not contain a request body."
+  val RequestBodyEmptyMessage: String = "The request cannot be processed as it does not contain a request body."
 
-  val RequestBodyInvalidTypeMessage = "The request cannot be processed as it does not contain an XML request body."
+  val RequestBodyInvalidTypeMessage: String = "The request cannot be processed as it does not contain an XML request body."
 
-  val RequestBodyRootContainsNamespaceMessage =
+  val RequestBodyRootContainsNamespaceMessage: String =
     "The request cannot be processed as it contains a namespace on the root node. Please remove any \"xmlns\" attributes from all nodes."
 }
 

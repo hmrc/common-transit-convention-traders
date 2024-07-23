@@ -26,11 +26,7 @@ trait Enumerable[A] {
 object Enumerable {
 
   def apply[A](entries: (String, A)*): Enumerable[A] =
-    new Enumerable[A] {
-
-      override def withName(str: String): Option[A] =
-        entries.toMap.get(str)
-    }
+    (str: String) => entries.toMap.get(str)
 
   trait Implicits {
 
@@ -47,7 +43,7 @@ object Enumerable {
           JsError(s"Invalid type. Expected a JsString got a ${jsValue.getClass}")
       }
 
-    implicit def writes[A: Enumerable]: Writes[A] =
+    implicit def writes[A]: Writes[A] =
       Writes(
         value => JsString(value.toString)
       )

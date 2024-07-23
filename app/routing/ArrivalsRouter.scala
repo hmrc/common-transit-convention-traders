@@ -45,10 +45,7 @@ import play.api.libs.json.Json
 import v2.models.errors.PresentationError
 
 import java.time.OffsetDateTime
-import scala.annotation.nowarn
 
-// This deprecation seems to be a red herring as it triggers on runIfBound
-@nowarn("cat=deprecation&msg=method right in class Either is deprecated \\(since 2.13.0\\):")
 class ArrivalsRouter @Inject() (
   val controllerComponents: ControllerComponents,
   v1Arrivals: V1ArrivalMovementController,
@@ -76,7 +73,7 @@ class ArrivalsRouter @Inject() (
     Action(streamFromMemory) {
       request =>
         request.body.runWith(Sink.ignore)
-        val presentationError = PresentationError.goneError(
+        val presentationError: PresentationError = PresentationError.goneError(
           "New NCTS4 Arrival Notifications can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Arrival Notifications."
         )
         Status(presentationError.code.statusCode)(Json.toJson(presentationError))
@@ -92,7 +89,7 @@ class ArrivalsRouter @Inject() (
         runIfBound[V1ArrivalId](
           "arrivalId",
           arrivalId,
-          v1Arrivals.getArrival(_)
+          v1Arrivals.getArrival
         )
     }
 

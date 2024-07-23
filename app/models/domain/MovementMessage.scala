@@ -17,14 +17,14 @@
 package models.domain
 
 import java.time.LocalDateTime
-
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 import utils.NodeSeqFormat
 
 import scala.xml.NodeSeq
 
 object MovementMessage extends NodeSeqFormat {
-  implicit val format = Json.format[MovementMessage]
+  implicit val format: OFormat[MovementMessage] = Json.format[MovementMessage]
 }
 
 case class MovementMessage(location: String, dateTime: LocalDateTime, messageType: String, message: NodeSeq, received: Option[LocalDateTime])

@@ -257,9 +257,9 @@ class VersionedRoutingSpec
   "with accept header set to version two" - {
     val headers =
       Seq(
-        Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON),
-        Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML),
-        Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)
+        Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON.value),
+        Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.value),
+        Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)
       )
 
     headers.foreach {

@@ -17,6 +17,7 @@
 package services
 
 import cats.data.ReaderT
+import cats.implicits.catsSyntaxEitherId
 import data.TestXml
 import models.ParseError.AmountWithoutCurrency
 import models.ParseError.DepartureEmpty
@@ -56,7 +57,7 @@ class EnsureGuaranteeServiceSpec
   private val mockXmlBuilder: XmlBuilder                 = mock[XmlBuilder]
   private val mockClock                                  = mock[Clock]
 
-  override def beforeEach = {
+  override def beforeEach(): Unit = {
     super.beforeEach()
     reset(mockXmlReaders)
     reset(mockInstructionBuilder)
@@ -138,7 +139,7 @@ class EnsureGuaranteeServiceSpec
         <example><GOOITEGDS><IteNumGDS7>1</IteNumGDS7><SPEMENMT2><test></test></SPEMENMT2></GOOITEGDS></example>
       )
       result mustBe a[Right[_, NodeSeq]]
-      result.right.get.toString() mustBe "<example><GOOITEGDS><IteNumGDS7>1</IteNumGDS7><SPEMENMT2><test></test></SPEMENMT2></GOOITEGDS></example>"
+      result.map(_.toString() mustBe "<example><GOOITEGDS><IteNumGDS7>1</IteNumGDS7><SPEMENMT2><test></test></SPEMENMT2></GOOITEGDS></example>")
     }
 
     "returns parseError if gbOnlyCheck returns an error" in {
@@ -158,7 +159,7 @@ class EnsureGuaranteeServiceSpec
         <example><GOOITEGDS><IteNumGDS7>1</IteNumGDS7><SPEMENMT2><test></test></SPEMENMT2></GOOITEGDS></example>
       )
       result mustBe a[Right[_, NodeSeq]]
-      result.right.get.toString() mustBe "<example><GOOITEGDS><IteNumGDS7>1</IteNumGDS7><SPEMENMT2><test></test></SPEMENMT2></GOOITEGDS></example>"
+      result.map(_.toString() mustBe "<example><GOOITEGDS><IteNumGDS7>1</IteNumGDS7><SPEMENMT2><test></test></SPEMENMT2></GOOITEGDS></example>")
     }
   }
 
@@ -220,8 +221,7 @@ class EnsureGuaranteeServiceSpec
         .thenReturn(Right(TransformInstructionSet(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>))), Seq(NoChangeInstruction(<test></test>)))))
 
       val result = sut.parseInstructionSets(<test></test>)
-      result mustBe a[Right[_, TransformInstructionSet]]
-      result.right.get mustBe Seq(TransformInstructionSet(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>))), Seq(NoChangeInstruction(<test></test>))))
+      result mustBe Seq(TransformInstructionSet(GOOITEGDSNode(1, Seq(SpecialMentionOther(<test></test>))), Seq(NoChangeInstruction(<test></test>)))).asRight
 
     }
   }

@@ -18,8 +18,6 @@ package models.response
 
 import play.api.libs.json.OFormat
 import play.api.libs.json.Json
-import models.ParseError
-import services.XmlError
 import play.api.libs.json.OWrites
 import play.api.libs.json.JsString
 
@@ -29,34 +27,23 @@ sealed abstract class JsonErrorResponse {
 }
 
 case class JsonSystemErrorResponse(statusCode: Int, message: String) extends JsonErrorResponse {
-  val code = "SYSTEM"
+  val code: String = "SYSTEM"
 }
 
 case class XmlParseJsonErrorResponse(message: String) extends JsonErrorResponse {
-  val code = "PARSE_ERROR"
+  val code: String = "PARSE_ERROR"
 }
 
 case class JsonClientErrorResponse(statusCode: Int, message: String) {
-  val code = JsonClientErrorResponse.errorCode
-}
-
-object JsonErrorResponse {
-  implicit val jsonErrorResponseFormat: OFormat[JsonErrorResponse] = Json.format[JsonErrorResponse]
+  val code: String = JsonClientErrorResponse.errorCode
 }
 
 object JsonSystemErrorResponse {
   implicit val jsonSystemErrorResponse: OFormat[JsonSystemErrorResponse] = Json.format[JsonSystemErrorResponse]
 }
 
-object XmlParseJsonErrorResponse {
-  implicit val xmlParseJsonErrorResponse: OFormat[XmlParseJsonErrorResponse] = Json.format[XmlParseJsonErrorResponse]
-
-  def fromXmlError(xmlError: XmlError)       = XmlParseJsonErrorResponse(xmlError.reason)
-  def fromParseError(parseError: ParseError) = XmlParseJsonErrorResponse(parseError.message)
-}
-
 object JsonClientErrorResponse {
-  val errorCode = "CLIENT_ERROR"
+  val errorCode: String = "CLIENT_ERROR"
 
   implicit val jsonClientErrorWrites: OWrites[JsonClientErrorResponse] = OWrites.transform(Json.writes[JsonClientErrorResponse]) {
     case (_, jsObject) => jsObject + ("code" -> JsString(errorCode))

@@ -39,7 +39,7 @@ class PushPullNotificationController @Inject() (cc: ControllerComponents, pushPu
     with HttpErrorFunctions
     with ResponseHelper {
 
-  def getBoxInfo(): Action[AnyContent] = Action.async {
+  def getBoxInfo: Action[AnyContent] = Action.async {
     implicit request =>
       request.headers.get(Constants.XClientIdHeader) match {
         case Some(clientId) =>

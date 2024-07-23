@@ -387,7 +387,7 @@ class V2BaseConnectorSpec
     }
 
     "withMessageType ignore the audit message type header for None value" in forAll(arbitrary[MessageType]) {
-      messageType =>
+      _ =>
         val sut = mock[RequestBuilder]
         // any here, verify later
         when(sut.setHeader(any())).thenReturn(sut)

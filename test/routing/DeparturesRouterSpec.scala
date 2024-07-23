@@ -62,9 +62,9 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
   "when submitting a departure" - {
     // Version 2
     Seq(
-      Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON),
-      Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML),
-      Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)
+      Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON.value),
+      Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.value),
+      Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)
     ).foreach {
       acceptHeaderValue =>
         val departureHeaders = FakeHeaders(
@@ -143,7 +143,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
   "when getting a single message" - {
 
-    Seq(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON, VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML).foreach {
+    Seq(VERSION_2_ACCEPT_HEADER_VALUE_JSON.value, VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.value).foreach {
       acceptHeaderValue =>
         s"with accept header set to $acceptHeaderValue (version two)" - {
 
@@ -285,9 +285,9 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
   "when getting a departure/movement" - {
     Seq(
-      Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON),
-      Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML),
-      Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)
+      Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON.value),
+      Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.value),
+      Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)
     ).foreach {
       acceptHeaderValue =>
         val departureHeaders = FakeHeaders(
@@ -368,9 +368,9 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
   "when submitting a new message for an existing departure" - {
     // Version 2
     Seq(
-      Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON),
-      Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML),
-      Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)
+      Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON.value),
+      Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.value),
+      Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)
     ).foreach {
       acceptHeaderValue =>
         val departureHeaders = FakeHeaders(
@@ -432,9 +432,9 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
   "when getting departures for a given enrolment EORI" - {
     // Version 2
     Seq(
-      Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON),
-      Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML),
-      Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)
+      Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON.value),
+      Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.value),
+      Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)
     ).foreach {
       acceptHeaderValue =>
         val departureHeaders = FakeHeaders(
@@ -501,9 +501,9 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
   "when getting departures messages for a given departure" - {
     // Version 2
     Seq(
-      Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON),
-      Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML),
-      Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN)
+      Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON.value),
+      Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.value),
+      Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)
     ).foreach {
       acceptHeaderValue =>
         val departureHeaders = FakeHeaders(

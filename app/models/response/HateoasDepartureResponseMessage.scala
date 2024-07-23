@@ -29,8 +29,8 @@ import java.time.temporal.ChronoUnit
 object HateoasDepartureResponseMessage {
 
   def apply(departureId: DepartureId, messageId: MessageId, m: MovementMessage): JsObject = {
-    val departureUrl = routing.routes.DeparturesRouter.getMessage(departureId.toString, messageId.toString).urlWithContext
-    val messageUrl   = routing.routes.DeparturesRouter.getDeparture(departureId.toString).urlWithContext
+    val departureUrl: String = routing.routes.DeparturesRouter.getMessage(departureId.toString, messageId.toString).urlWithContext
+    val messageUrl: String   = routing.routes.DeparturesRouter.getDeparture(departureId.toString).urlWithContext
 
     val received: LocalDateTime = m.received.getOrElse(m.dateTime).truncatedTo(ChronoUnit.SECONDS)
 

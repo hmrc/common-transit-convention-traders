@@ -16,6 +16,7 @@
 
 package models.response
 
+import models.domain.ArrivalId
 import models.domain.ArrivalWithMessages
 import models.domain.MessageId
 import play.api.libs.json.JsObject
@@ -26,8 +27,8 @@ import utils.Utils
 object HateoasResponseArrivalWithMessages {
 
   def apply(arrivalWithMessages: ArrivalWithMessages): JsObject = {
-    val arrivalId   = arrivalWithMessages.arrivalId
-    val messagesUrl = routing.routes.ArrivalsRouter.getArrivalMessageIds(arrivalId.toString).urlWithContext
+    val arrivalId: ArrivalId = arrivalWithMessages.arrivalId
+    val messagesUrl: String  = routing.routes.ArrivalsRouter.getArrivalMessageIds(arrivalId.toString).urlWithContext
 
     Json.obj(
       "_links" -> Json.obj(

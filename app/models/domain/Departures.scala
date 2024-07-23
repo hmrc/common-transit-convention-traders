@@ -17,9 +17,10 @@
 package models.domain
 
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 
 object Departures {
-  implicit val format = Json.format[Departures]
+  implicit val format: OFormat[Departures] = Json.format[Departures]
 }
 
 case class Departures(departures: Seq[Departure], retrievedDepartures: Int, totalDepartures: Int)

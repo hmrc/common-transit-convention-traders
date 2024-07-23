@@ -26,7 +26,7 @@ object HateoasResponseBox {
 
   def apply(box: Box): JsObject = {
 
-    val boxUrl = routes.PushPullNotificationController.getBoxInfo().urlWithContext
+    val boxUrl: String = routes.PushPullNotificationController.getBoxInfo().urlWithContext
 
     Json
       .obj(

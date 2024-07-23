@@ -339,7 +339,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
         """.stripMargin
   }
 
-  private def buildIE014Xml(withMessageType: String = "GB014"): String =
+  private def buildIE014Xml(withMessageType: String): String =
     s"""
        |<CC014A>
        |    <SynIdeMES1>tval</SynIdeMES1>
@@ -388,7 +388,7 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
        |  </CC014A>
      """.stripMargin
 
-  private def buildIE044Xml(withMessageType: String = "GB044A"): String =
+  private def buildIE044Xml(withMessageType: String): String =
     s"""<CC044A>
        |      <SynIdeMES1>tval</SynIdeMES1>
        |      <SynVerNumMES2>1</SynVerNumMES2>
@@ -601,39 +601,6 @@ class XmlValidationServiceSpec extends AnyFreeSpec with Matchers with ScalaCheck
       | <EndPlaINC10LNG>GB</EndPlaINC10LNG>
       | <EndCouINC12>GB</EndCouINC12>
       |</INCINC>
-      |""".stripMargin
-
-  private val buildContainerTranshipment: String =
-    """
-      |<TRASHP>
-      | <EndDatSHP60>20191110</EndDatSHP60>
-      | <EndAutSHP61>Authority</EndAutSHP61>
-      | <EndAutSHP61LNG>GB</EndAutSHP61LNG>
-      | <EndPlaSHP63>Endorsement place</EndPlaSHP63>
-      | <EndPlaSHP63LNG>GB</EndPlaSHP63LNG>
-      | <EndCouSHP65>GB</EndCouSHP65>
-      | <CONNR3>
-      |   <ConNumNR31>Container id</ConNumNR31>
-      | </CONNR3>
-      |</TRASHP>
-      |""".stripMargin
-
-  private val buildVehicularTranshipment: String =
-    """
-      |<TRASHP>
-      | <NewTraMeaIdeSHP26>Transport identity</NewTraMeaIdeSHP26>
-      | <NewTraMeaIdeSHP26LNG>GB</NewTraMeaIdeSHP26LNG>
-      | <NewTraMeaNatSHP54>GB</NewTraMeaNatSHP54>
-      | <EndDatSHP60>20191110</EndDatSHP60>
-      | <EndAutSHP61>Authority</EndAutSHP61>
-      | <EndAutSHP61LNG>GB</EndAutSHP61LNG>
-      | <EndPlaSHP63>Endorsement place</EndPlaSHP63>
-      | <EndPlaSHP63LNG>GB</EndPlaSHP63LNG>
-      | <EndCouSHP65>GB</EndCouSHP65>
-      | <CONNR3>
-      |   <ConNumNR31>Container id</ConNumNR31>
-      | </CONNR3>
-      |</TRASHP>
       |""".stripMargin
 
   def transhipment(isVehicular: Boolean, hasContainer: Boolean) =
