@@ -26,7 +26,7 @@ import play.api.libs.json.Writes
 sealed trait MessageStatus
 
 object MessageStatus {
-  final private case object Received extends MessageStatus
+  final case object Received extends MessageStatus
 
   final case object Pending extends MessageStatus
 
