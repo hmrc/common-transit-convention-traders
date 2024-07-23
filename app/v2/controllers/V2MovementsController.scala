@@ -192,7 +192,7 @@ class V2MovementsControllerImpl @Inject() (
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
           source <- reUsableSourceRequest(request)
-          size   <- calculateSize(source.lift(0).get)
+          size   <- calculateSize(source.head)
           _      <- contentSizeIsLessThanLimit(size)
           _ <- validationService.validateXml(MessageType.DeclarationData, source.lift(1).get).asPresentation.leftMap {
             err =>
@@ -221,7 +221,7 @@ class V2MovementsControllerImpl @Inject() (
 
         (for {
           source <- reUsableSourceRequest(request)
-          size   <- calculateSize(source.lift(0).get)
+          size   <- calculateSize(source.head)
           _      <- contentSizeIsLessThanLimit(size)
           _ <- validationService.validateJson(MessageType.DeclarationData, source.lift(1).get).asPresentation.leftMap {
             err =>
@@ -256,7 +256,7 @@ class V2MovementsControllerImpl @Inject() (
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
           source <- reUsableSourceRequest(request)
-          size   <- calculateSize(source.lift(0).get)
+          size   <- calculateSize(source.head)
           _      <- contentSizeIsLessThanLimit(size)
           _ <- validationService.validateXml(MessageType.ArrivalNotification, source.lift(1).get).asPresentation.leftMap {
             err =>
@@ -285,7 +285,7 @@ class V2MovementsControllerImpl @Inject() (
 
         (for {
           source <- reUsableSourceRequest(request)
-          size   <- calculateSize(source.lift(0).get)
+          size   <- calculateSize(source.head)
           _      <- contentSizeIsLessThanLimit(size)
           _ <- validationService.validateJson(MessageType.ArrivalNotification, source.lift(1).get).asPresentation.leftMap {
             err =>
@@ -460,10 +460,7 @@ class V2MovementsControllerImpl @Inject() (
               EitherT.rightT[Future, PresentationError](
                 BodyAndContentType(MimeTypes.XML, bodyAndSize.body)
               )
-            //TODO: These two cases were not caught previously should we be handling these?
-            case VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML =>
-              EitherT.leftT(PresentationError.notAcceptableError("Invalid accept header"))
-            case VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
+            case _ =>
               EitherT.leftT(PresentationError.notAcceptableError("Invalid accept header"))
           }
       }
@@ -513,9 +510,7 @@ class V2MovementsControllerImpl @Inject() (
                   "body",
                   bodyAndSize.body
                 )
-            case VERSION_2_ACCEPT_HEADER_VALUE_XML =>
-              //TODO: I don't think this should be handled this way,
-              // needs discussion (previously the match statement wasn't exhaustive and didn't catch this case
+            case _ =>
               EitherT.leftT(PresentationError.notAcceptableError("Invalid accept header"))
           }
       }
@@ -769,7 +764,7 @@ class V2MovementsControllerImpl @Inject() (
 
         (for {
           source      <- reUsableSourceRequest(request)
-          size        <- calculateSize(source.lift(0).get)
+          size        <- calculateSize(source.head)
           _           <- contentSizeIsLessThanLimit(size)
           messageType <- xmlParsingService.extractMessageType(source.lift(1).get, messageTypeList).asPresentation
           _ <- validationService.validateXml(messageType, source.lift(2).get).asPresentation.leftMap {
@@ -801,7 +796,7 @@ class V2MovementsControllerImpl @Inject() (
     ): EitherT[Future, PresentationError, UpdateMovementResponse] =
       for {
         source <- reUsableSource(src)
-        size   <- calculateSize(source.lift(0).get)
+        size   <- calculateSize(source.head)
         _      <- contentSizeIsLessThanLimit(size)
         _ <- validationService
           .validateXml(messageType, source.lift(1).get)
@@ -831,7 +826,7 @@ class V2MovementsControllerImpl @Inject() (
 
         (for {
           source      <- reUsableSourceRequest(request)
-          size        <- calculateSize(source.lift(0).get)
+          size        <- calculateSize(source.head)
           _           <- contentSizeIsLessThanLimit(size)
           messageType <- jsonParsingService.extractMessageType(source.lift(1).get, messageTypeList).asPresentation
           _ <- validationService.validateJson(messageType, source.lift(2).get).asPresentation.leftMap {
@@ -1014,7 +1009,7 @@ class V2MovementsControllerImpl @Inject() (
   ) =
     for {
       sources <- reUsableSource(source)
-      updateMovementResponse <- persistenceService.addMessage(movementId, movementType, Some(messageType), Some(sources.lift(0).get)).asPresentation.leftMap {
+      updateMovementResponse <- persistenceService.addMessage(movementId, movementType, Some(messageType), Some(sources.head)).asPresentation.leftMap {
         err =>
           val auditType = if (err.code.statusCode == NOT_FOUND) CustomerRequestedMissingMovement else AddMessageDBFailed
           auditService.auditStatusEvent(
@@ -1101,7 +1096,7 @@ class V2MovementsControllerImpl @Inject() (
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
     for {
       source <- reUsableSource(src)
-      size   <- calculateSize(source.lift(0).get)
+      size   <- calculateSize(source.head)
       _      <- contentSizeIsLessThanLimit(size)
       _ <- validationService
         .validateXml(messageType, source.lift(1).get)
@@ -1149,7 +1144,7 @@ class V2MovementsControllerImpl @Inject() (
   )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
     for {
       sources <- reUsableSource(source)
-      movementResponse <- persistenceService.createMovement(request.eoriNumber, movementType, Some(sources.lift(0).get)).asPresentation.leftMap {
+      movementResponse <- persistenceService.createMovement(request.eoriNumber, movementType, Some(sources.head)).asPresentation.leftMap {
         err =>
           auditService.auditStatusEvent(
             CreateMovementDBFailed,
