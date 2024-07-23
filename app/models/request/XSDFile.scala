@@ -27,9 +27,9 @@ sealed trait DepartureMessage
 object XSDFile {
 
   object Arrival {
-    val Definitions = Seq(ArrivalNotificationXSD, UnloadingRemarksXSD)
+    private val Definitions = Seq(ArrivalNotificationXSD, UnloadingRemarksXSD)
 
-    val DefinitionsMap = Definitions
+    private val DefinitionsMap = Definitions
       .map(
         xsd => xsd.Label -> xsd
       )
@@ -42,9 +42,9 @@ object XSDFile {
   }
 
   object Departure {
-    val Definitions = Seq(DepartureDeclarationXSD, DeclarationCancellationRequestXSD)
+    private val Definitions = Seq(DepartureDeclarationXSD, DeclarationCancellationRequestXSD)
 
-    val DefinitionsMap = Definitions
+    private val DefinitionsMap = Definitions
       .map(
         xsd => xsd.Label -> xsd
       )
@@ -58,21 +58,21 @@ object XSDFile {
 }
 
 object ArrivalNotificationXSD extends XSDFile {
-  val FilePath = "/xsd/cc007a.xsd"
-  val Label    = "CC007A"
+  val FilePath: String = "/xsd/cc007a.xsd"
+  val Label: String    = "CC007A"
 }
 
 object DepartureDeclarationXSD extends XSDFile {
-  val FilePath = "/xsd/cc015b.xsd"
-  val Label    = "CC015B"
+  val FilePath: String = "/xsd/cc015b.xsd"
+  val Label: String    = "CC015B"
 }
 
 object UnloadingRemarksXSD extends XSDFile with ArrivalMessage {
-  val FilePath = "/xsd/cc044a.xsd"
-  val Label    = "CC044A"
+  val FilePath: String = "/xsd/cc044a.xsd"
+  val Label: String    = "CC044A"
 }
 
 object DeclarationCancellationRequestXSD extends XSDFile with DepartureMessage {
-  val FilePath = "/xsd/cc014a.xsd"
-  val Label    = "CC014A"
+  val FilePath: String = "/xsd/cc014a.xsd"
+  val Label: String    = "CC014A"
 }

@@ -19,6 +19,8 @@ package utils.guaranteeParsing
 import cats.data.ReaderT
 import models.ParseError._
 import models._
+import utils.Constants
+import utils.Constants._
 
 import scala.util.Failure
 import scala.util.Success
@@ -31,7 +33,7 @@ class GuaranteeXmlReaders extends ParseHandling {
   def parseGuarantees(xml: NodeSeq): ParseHandler[Seq[Guarantee]] = {
 
     val guaranteeSequences: Seq[Either[ParseError, Seq[Guarantee]]] =
-      (xml \ "GUAGUA").map {
+      (xml \ GUAGUA).map {
         node =>
           guaranteeSet(node)
       }
@@ -43,7 +45,7 @@ class GuaranteeXmlReaders extends ParseHandling {
   }
 
   def parseSpecialMentions(xml: NodeSeq): ParseHandler[Seq[SpecialMention]] =
-    ParseError.sequenceErrors((xml \ "SPEMENMT2").map {
+    ParseError.sequenceErrors((xml \ SPEMENMT2).map {
       node =>
         specialMention(node)
     })
@@ -51,9 +53,9 @@ class GuaranteeXmlReaders extends ParseHandling {
   val gOOITEGDSNode: ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]] =
     ReaderT[ParseHandler, NodeSeq, Seq[GOOITEGDSNode]] {
       xml =>
-        ParseError.sequenceErrors((xml \ "GOOITEGDS").map {
+        ParseError.sequenceErrors((xml \ GOOITEGDS).map {
           node =>
-            val itemNumberNode = node \ "IteNumGDS7"
+            val itemNumberNode = node \ IteNumGDS7
             if (itemNumberNode.nonEmpty) {
               val itemNumberString = itemNumberNode.text
               if (itemNumberString.nonEmpty) {
@@ -78,7 +80,7 @@ class GuaranteeXmlReaders extends ParseHandling {
   val gOOITEGDSNodeFromNode: ReaderT[ParseHandler, Node, GOOITEGDSNode] =
     ReaderT[ParseHandler, Node, GOOITEGDSNode] {
       node =>
-        val itemNumberNode = node \ "IteNumGDS7"
+        val itemNumberNode = node \ IteNumGDS7
         if (itemNumberNode.nonEmpty) {
           val itemNumberString = itemNumberNode.text
           if (itemNumberString.nonEmpty) {
@@ -101,8 +103,8 @@ class GuaranteeXmlReaders extends ParseHandling {
   val specialMention: ReaderT[ParseHandler, Node, SpecialMention] =
     ReaderT[ParseHandler, Node, SpecialMention] {
       xml =>
-        val AddInfMT21    = xml \ "AddInfMT21"
-        val AddInfCodMT23 = xml \ "AddInfCodMT23"
+        val AddInfMT21    = xml \ Constants.AddInfMT21
+        val AddInfCodMT23 = xml \ Constants.AddInfCodMT23
 
         (AddInfMT21.text.isEmpty, AddInfCodMT23.text.isEmpty) match {
           case (false, false) if AddInfCodMT23.text.equals("CAL") => Right(SpecialMentionGuarantee(AddInfMT21.text, xml))
@@ -115,21 +117,21 @@ class GuaranteeXmlReaders extends ParseHandling {
       xml =>
         def internal(key: String, gChar: Char, error: => ParseError)(reference: Node): ParseHandler[Guarantee] =
           (reference \ key).text match {
-            case g if !g.isEmpty => Right(Guarantee(gChar, g))
+            case g if g.nonEmpty => Right(Guarantee(gChar, g))
             case _               => Left(error)
           }
 
-        (xml \ "GuaTypGUA1").text match {
+        (xml \ GuaTypGUA1).text match {
           case gType if gType.isEmpty                              => Left(GuaranteeTypeInvalid("GuaTypGUA1 was invalid"))
           case gType if gType.length > 1                           => Left(GuaranteeTypeTooLong("GuaTypGUA1 was too long"))
           case gType if !Guarantee.validTypes.contains(gType.head) => Left(GuaranteeTypeInvalid("GuaTypGUA1 was not a valid type"))
           case gType if Guarantee.validTypes.contains(gType.head) =>
             val gChar               = gType.head
-            val guaranteeReferences = (xml \ "GUAREFREF").theSeq.toSeq
+            val guaranteeReferences = (xml \ GUAREFREF).theSeq.toSeq
             val gParse: Seq[ParseHandler[Guarantee]] = if (Guarantee.isOther(gChar)) {
-              guaranteeReferences.map(internal("OthGuaRefREF4", gChar, NoOtherGuaranteeField("OthGuaRefREF4 was empty")))
+              guaranteeReferences.map(internal(OthGuaRefREF4, gChar, NoOtherGuaranteeField("OthGuaRefREF4 was empty")))
             } else {
-              guaranteeReferences.map(internal("GuaRefNumGRNREF1", gChar, NoGuaranteeReferenceNumber("GuaRefNumGRNREF1 was empty")))
+              guaranteeReferences.map(internal(GuaRefNumGRNREF1, gChar, NoGuaranteeReferenceNumber("GuaRefNumGRNREF1 was empty")))
             }
             ParseError.sequenceErrors(gParse)
         }
@@ -138,7 +140,7 @@ class GuaranteeXmlReaders extends ParseHandling {
   val officeOfDeparture: ReaderT[ParseHandler, NodeSeq, DepartureOffice] =
     ReaderT[ParseHandler, NodeSeq, DepartureOffice] {
       xml =>
-        (xml \ "CUSOFFDEPEPT" \ "RefNumEPT1").text match {
+        (xml \ CUSOFFDEPEPT \ RefNumEPT1).text match {
           case departure if departure.isEmpty => Left(DepartureEmpty("Departure Empty"))
           case departure                      => Right(DepartureOffice(departure))
         }
@@ -147,7 +149,7 @@ class GuaranteeXmlReaders extends ParseHandling {
   val officeOfDestination: ReaderT[ParseHandler, NodeSeq, DestinationOffice] =
     ReaderT[ParseHandler, NodeSeq, DestinationOffice] {
       xml =>
-        (xml \ "CUSOFFDESEST" \ "RefNumEST1").text match {
+        (xml \ CUSOFFDESEST \ RefNumEST1).text match {
           case destination if destination.isEmpty => Left(DestinationEmpty("Destination Empty"))
           case destination                        => Right(DestinationOffice(destination))
         }

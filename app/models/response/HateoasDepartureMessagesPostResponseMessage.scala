@@ -27,8 +27,8 @@ import scala.xml.NodeSeq
 object HateoasDepartureMessagesPostResponseMessage {
 
   def apply(departureId: DepartureId, messageId: MessageId, messageType: String, message: NodeSeq): JsObject = {
-    val messageUrl   = routing.routes.DeparturesRouter.getMessage(departureId.toString, messageId.toString).urlWithContext
-    val departureUrl = routing.routes.DeparturesRouter.getDeparture(departureId.toString).urlWithContext
+    val messageUrl: String   = routing.routes.DeparturesRouter.getMessage(departureId.toString, messageId.toString).urlWithContext
+    val departureUrl: String = routing.routes.DeparturesRouter.getDeparture(departureId.toString).urlWithContext
 
     Json.obj(
       "_links" -> Json.obj(

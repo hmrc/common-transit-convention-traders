@@ -25,11 +25,6 @@ import javax.inject.Singleton
 @Singleton
 class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesConfig) {
 
-  val authBaseUrl: String = servicesConfig.baseUrl("auth")
-
-  val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
-  val graphiteHost: String     = config.get[String]("microservice.metrics.graphite.host")
-
   val commmonTransitConventionTradersUrl: Url = Url.parse(servicesConfig.baseUrl("common-transit-convention-traders"))
   val traderAtDestinationUrl: Url             = Url.parse(servicesConfig.baseUrl("transit-movement-trader-at-destination"))
   val traderAtDeparturesUrl: Url              = Url.parse(servicesConfig.baseUrl("transits-movements-trader-at-departure"))

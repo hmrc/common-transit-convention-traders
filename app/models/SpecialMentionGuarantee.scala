@@ -47,9 +47,9 @@ final case class SpecialMentionGuarantee(additionalInfo: String, xml: NodeSeq = 
 
   private def getCurrencyCode(additionalInfo: String, guaranteeReference: String): Either[ParseError, Option[String]] =
     if (additionalInfo.length >= (guaranteeReference.length + 3)) {
-      val currencyStart = additionalInfo.length - guaranteeReference.length - 3
-      val currencyEnd   = currencyStart + 3
-      val currencyCode  = additionalInfo.substring(currencyStart, currencyEnd)
+      val currencyStart: Int   = additionalInfo.length - guaranteeReference.length - 3
+      val currencyEnd: Int     = currencyStart + 3
+      val currencyCode: String = additionalInfo.substring(currencyStart, currencyEnd)
       if (currencyCode.matches("[A-Z]{3}"))
         Right(Some(currencyCode))
       else if (additionalInfo.head.isDigit) {
@@ -58,11 +58,11 @@ final case class SpecialMentionGuarantee(additionalInfo: String, xml: NodeSeq = 
     } else Right(None)
 
   private def getAmount(additionalInfo: String, guaranteeReference: String, currencyOpt: Option[String]): Either[ParseError, Option[BigDecimal]] = {
-    val cutIndex = currencyOpt match {
+    val cutIndex: Int = currencyOpt match {
       case None       => additionalInfo.length - guaranteeReference.length
       case Some(code) => additionalInfo.length - (code.length + guaranteeReference.length)
     }
-    val amountString = additionalInfo.substring(0, cutIndex)
+    val amountString: String = additionalInfo.substring(0, cutIndex)
     if (amountString.isEmpty) {
       Right(None)
     } else if (amountString.length > 18) {

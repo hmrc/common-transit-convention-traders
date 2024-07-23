@@ -32,6 +32,6 @@ class AuditService @Inject() (auditConnector: AuditConnector, jsonHelper: JsonHe
     val json: JsObject = jsonHelper.convertXmlToJson(xmlRequestBody)
 
     val details = AuditDetails(json)
-    auditConnector.sendExplicitAudit(auditType.toString(), Json.toJson(details))
+    auditConnector.sendExplicitAudit(auditType.toString, Json.toJson(details))
   }
 }

@@ -72,7 +72,7 @@ class DeparturesRouter @Inject() (
     Action(streamFromMemory) {
       request =>
         request.body.runWith(Sink.ignore)
-        val presentationError = PresentationError.goneError(
+        val presentationError: PresentationError = PresentationError.goneError(
           "New NCTS4 Departure Declarations can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Departure Declarations."
         )
         Status(presentationError.code.statusCode)(Json.toJson(presentationError))

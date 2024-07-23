@@ -17,13 +17,10 @@
 package utils
 
 import java.net.URI
-import java.net.URLEncoder
 
 object Utils {
 
   def lastFragment(location: String): String =
     URI.create(location).getPath.split("/").last
 
-  def urlEncode(str: String): String =
-    URLEncoder.encode(str, "UTF-8")
 }

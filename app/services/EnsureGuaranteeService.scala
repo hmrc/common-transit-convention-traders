@@ -47,7 +47,7 @@ class EnsureGuaranteeService @Inject() (
 
   import MetricsKeys.Guarantee._
 
-  val specialMentionParents = Seq(
+  private val specialMentionParents = Seq(
     "GooDesGDS23LNG",
     "GroMasGDS46",
     "NetMasGDS48",
@@ -93,7 +93,7 @@ class EnsureGuaranteeService @Inject() (
         }
     }
 
-  def updateXml(originalXml: NodeSeq, instructionSets: Seq[TransformInstructionSet]): ParseHandler[NodeSeq] =
+  private def updateXml(originalXml: NodeSeq, instructionSets: Seq[TransformInstructionSet]): ParseHandler[NodeSeq] =
     withMetricsTimer(EnsureGuaranteeUpdateXml) {
       timer =>
         try {

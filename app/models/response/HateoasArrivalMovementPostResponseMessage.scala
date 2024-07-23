@@ -27,9 +27,9 @@ import scala.xml.NodeSeq
 object HateoasArrivalMovementPostResponseMessage {
 
   def apply(arrivalId: ArrivalId, messageType: String, message: NodeSeq, notificationsBox: Option[Box]): JsObject = {
-    val arrivalUrl = routing.routes.ArrivalsRouter.getArrival(arrivalId.toString).urlWithContext
+    val arrivalUrl: String = routing.routes.ArrivalsRouter.getArrival(arrivalId.toString).urlWithContext
 
-    val embedded = notificationsBox
+    val embedded: JsObject = notificationsBox
       .map {
         box =>
           Json.obj(

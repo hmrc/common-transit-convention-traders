@@ -16,26 +16,26 @@
 
 package config
 
+import scala.util.matching.Regex
+
 object Constants {
-  val AcceptHeaderPattern = "^application/vnd[.]{1}hmrc[.]{1}(.*?)[+]{1}(.*)$".r
+  val AcceptHeaderPattern: Regex = "^application/vnd[.]{1}hmrc[.]{1}(.*?)[+]{1}(.*)$".r
 
-  val AcceptHeaderMissing = "The accept header is missing or invalid"
+  val AcceptHeaderMissing: String = "The accept header is missing or invalid"
 
-  val BoxName = "customs/transits##1.0##notificationUrl"
+  val BoxName: String = "customs/transits##1.0##notificationUrl"
 
-  val Context = "/customs/transits"
+  val Context: String = "/customs/transits"
 
-  val XClientIdHeader = "X-Client-Id"
+  val XClientIdHeader: String = "X-Client-Id"
 
-  val XMessageTypeHeader = "X-Message-Type"
+  val XMessageTypeHeader: String = "X-Message-Type"
 
-  val XObjectStoreUriHeader = "X-Object-Store-Uri"
+  val XCallbackBoxIdHeader: String = "X-Callback-Box-Id"
 
-  val XCallbackBoxIdHeader = "X-Callback-Box-Id"
+  val XContentLengthHeader: String = "X-ContentLength"
 
-  val XContentLengthHeader = "X-ContentLength"
-
-  val ChannelHeader = "channel"
+  val ChannelHeader: String = "channel"
 
   val LegacyEnrolmentKey: String   = "HMCE-NCTS-ORG"
   val LegacyEnrolmentIdKey: String = "VATRegNoTURN"
@@ -43,8 +43,8 @@ object Constants {
   val NewEnrolmentKey: String   = "HMRC-CTC-ORG"
   val NewEnrolmentIdKey: String = "EORINumber"
 
-  val XMissingECCEnrolment = "X-Missing-ECC-Enrolment"
+  val XMissingECCEnrolment: String = "X-Missing-ECC-Enrolment"
 
-  val MissingECCEnrolmentMessage =
+  val MissingECCEnrolmentMessage: String =
     "User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system"
 }
