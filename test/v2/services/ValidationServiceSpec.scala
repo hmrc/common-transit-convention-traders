@@ -34,9 +34,9 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.ValidationConnector
-import v2.models.errors.FailedToValidateError
-import v2.models.errors.JsonValidationError
-import v2.models.errors.XmlValidationError
+import models.common.errors.FailedToValidateError
+import models.common.errors.JsonValidationError
+import models.common.errors.XmlValidationError
 import v2.models.request.MessageType
 import v2.models.responses.BusinessValidationResponse
 import v2.models.responses.JsonSchemaValidationResponse

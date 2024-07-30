@@ -16,6 +16,9 @@
 
 package v2.models
 
+import models.common.MessageId
+import models.common.MovementId
+import models.common.MovementType
 import play.api.mvc.PathBindable
 
 object Bindings {

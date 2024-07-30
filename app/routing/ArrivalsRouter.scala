@@ -24,25 +24,25 @@ import com.google.inject.Inject
 import config.AppConfig
 import controllers.V1ArrivalMessagesController
 import controllers.V1ArrivalMovementController
+import models.common.EORINumber
+import models.common.ItemCount
+import models.common.LocalReferenceNumber
+import models.common.MovementReferenceNumber
+import models.common.MovementType
+import models.common.PageNumber
+import models.common.errors.PresentationError
+import models.common.{MessageId => V2MessageId}
+import models.common.{MovementId => V2ArrivalId}
 import play.api.mvc.Action
 import v2.models.Bindings._
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
 import v2.controllers.V2MovementsController
-import v2.controllers.stream.StreamingParsers
 import models.domain.{MessageId => V1MessageId}
-import v2.models.EORINumber
-import v2.models.ItemCount
-import v2.models.LocalReferenceNumber
-import v2.models.MovementReferenceNumber
-import v2.models.MovementType
-import v2.models.PageNumber
-import v2.models.{MessageId => V2MessageId}
-import v2.models.{MovementId => V2ArrivalId}
 import models.domain.{ArrivalId => V1ArrivalId}
 import play.api.Logging
 import play.api.libs.json.Json
-import v2.models.errors.PresentationError
+import stream.StreamingParsers
 
 import java.time.OffsetDateTime
 

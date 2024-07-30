@@ -24,6 +24,15 @@ import com.google.inject.Inject
 import config.AppConfig
 import controllers.V1DepartureMessagesController
 import controllers.V1DeparturesController
+import models.common.EORINumber
+import models.common.ItemCount
+import models.common.LocalReferenceNumber
+import models.common.MovementReferenceNumber
+import models.common.MovementType
+import models.common.PageNumber
+import models.common.errors.PresentationError
+import models.common.{MessageId => V2MessageId}
+import models.common.{MovementId => V2DepartureId}
 import models.domain.{DepartureId => V1DepartureId}
 import models.domain.{MessageId => V1MessageId}
 import play.api.Logging
@@ -31,18 +40,9 @@ import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
+import stream.StreamingParsers
 import v2.controllers.V2MovementsController
-import v2.controllers.stream.StreamingParsers
 import v2.models.Bindings._
-import v2.models.EORINumber
-import v2.models.ItemCount
-import v2.models.LocalReferenceNumber
-import v2.models.MovementReferenceNumber
-import v2.models.MovementType
-import v2.models.PageNumber
-import v2.models.errors.PresentationError
-import v2.models.{MessageId => V2MessageId}
-import v2.models.{MovementId => V2DepartureId}
 
 import java.time.OffsetDateTime
 
@@ -105,8 +105,8 @@ class DeparturesRouter @Inject() (
   def getMessageIds(
     departureId: String,
     receivedSince: Option[OffsetDateTime] = None,
-    page: Option[v2.models.PageNumber],
-    count: Option[v2.models.ItemCount],
+    page: Option[PageNumber],
+    count: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime]
   ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>

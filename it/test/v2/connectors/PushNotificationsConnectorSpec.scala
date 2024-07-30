@@ -25,6 +25,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
 import io.lemonlabs.uri.Url
+import models.common.{MessageId, MovementId}
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
@@ -48,8 +49,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.WiremockSuite
-import v2.models.MessageId
-import v2.models.MovementId
 import v2.models.request.PushNotificationsAssociation
 import v2.utils.CommonGenerators
 

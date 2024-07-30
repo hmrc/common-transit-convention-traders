@@ -16,9 +16,9 @@
 
 package v2.models.responses
 
+import models.common.MessageId
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import v2.models.MessageId
 
 case class UpdateMovementResponse(messageId: MessageId)
 

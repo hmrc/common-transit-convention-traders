@@ -39,6 +39,7 @@ import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.defaultAwaitTimeout
 import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
+import stream.StreamingParsers
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
 import v2.controllers.request.BodyReplaceableRequest

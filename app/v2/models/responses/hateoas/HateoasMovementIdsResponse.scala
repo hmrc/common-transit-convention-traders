@@ -16,13 +16,13 @@
 
 package v2.models.responses.hateoas
 
+import models.common.EORINumber
+import models.common.ItemCount
+import models.common.LocalReferenceNumber
+import models.common.MovementReferenceNumber
+import models.common.MovementType
+import models.common.PageNumber
 import play.api.libs.json._
-import v2.models.EORINumber
-import v2.models.ItemCount
-import v2.models.LocalReferenceNumber
-import v2.models.MovementReferenceNumber
-import v2.models.MovementType
-import v2.models.PageNumber
 import v2.models.responses.PaginationMovementSummary
 
 import java.time.OffsetDateTime

@@ -23,9 +23,9 @@ import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import cats.data.EitherT
 import cats.syntax.flatMap._
+import models.common.errors.PresentationError
 import play.api.Logging
 import play.api.libs.Files.TemporaryFileCreator
-import v2.models.errors.PresentationError
 
 import java.nio.file.Files
 import java.nio.file.Path

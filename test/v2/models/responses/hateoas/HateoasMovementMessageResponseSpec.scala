@@ -16,6 +16,9 @@
 
 package v2.models.responses.hateoas
 
+import models.common.MessageId
+import models.common.MovementId
+import models.common.MovementType
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
@@ -26,10 +29,7 @@ import play.api.libs.json.JsString
 import play.api.libs.json.Json
 import v2.base.TestCommonGenerators
 import v2.models.JsonPayload
-import v2.models.MessageId
 import v2.models.MessageStatus
-import v2.models.MovementId
-import v2.models.MovementType
 import v2.models.XmlPayload
 import v2.models.request.MessageType
 import v2.models.responses.MessageSummary

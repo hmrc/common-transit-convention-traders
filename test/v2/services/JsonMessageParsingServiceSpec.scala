@@ -26,7 +26,7 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.base.StreamTestHelpers
 import v2.base.TestActorSystem
-import v2.models.errors.ExtractionError
+import models.common.errors.ExtractionError
 import v2.models.request.MessageType
 
 import scala.concurrent.ExecutionContext.Implicits.global

@@ -23,6 +23,7 @@ import org.apache.pekko.util.ByteString
 import com.fasterxml.jackson.core.JsonParseException
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
+import models.common.{MessageId, MovementId, MovementType}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.concurrent.IntegrationPatience
@@ -49,11 +50,8 @@ import utils.GuiceWiremockSuite
 import v2.models.EORINumber
 import v2.models.ItemCount
 import v2.models.LocalReferenceNumber
-import v2.models.MessageId
 import v2.models.MessageStatus
-import v2.models.MovementId
 import v2.models.MovementReferenceNumber
-import v2.models.MovementType
 import v2.models.PageNumber
 import v2.models.TotalCount
 import v2.models.errors.ErrorCode

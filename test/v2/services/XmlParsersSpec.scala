@@ -23,7 +23,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import v2.base.StreamTestHelpers
 import v2.base.TestActorSystem
-import v2.models.errors.ExtractionError
+import models.common.errors.ExtractionError
 import v2.models.request.MessageType
 
 import scala.xml.NodeSeq

@@ -16,12 +16,12 @@
 
 package v2.models.request
 
+import models.common.MessageId
+import models.common.MovementId
+import models.common.MovementType
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import v2.models.EORINumber
-import v2.models.MessageId
-import v2.models.MovementId
-import v2.models.MovementType
+import models.common.EORINumber
 
 object Metadata {
   implicit lazy val metadataFormat: OFormat[Metadata] = Json.format[Metadata]

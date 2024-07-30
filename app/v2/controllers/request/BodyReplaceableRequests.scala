@@ -16,9 +16,9 @@
 
 package v2.controllers.request
 
+import models.common.EORINumber
 import play.api.mvc.Request
 import play.api.mvc.WrappedRequest
-import v2.models.EORINumber
 
 abstract class BodyReplaceableRequest[+R[_], B](request: Request[B]) extends WrappedRequest[B](request) {
   def replaceBody(body: B): R[B]

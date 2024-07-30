@@ -43,9 +43,9 @@ import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
+import stream.StreamingParsers
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import v2.base.TestActorSystem
-import v2.controllers.stream.StreamingParsers
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.Future

@@ -16,16 +16,16 @@
 
 package v2.models.responses
 
+import models.common.MovementId
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
-import v2.models.EORINumber
-import v2.models.LocalReferenceNumber
-import v2.models.MovementId
-import v2.models.MovementReferenceNumber
+import models.common.EORINumber
+import models.common.LocalReferenceNumber
+import models.common.MovementReferenceNumber
 
 import java.time.OffsetDateTime
 import java.time.ZoneOffset

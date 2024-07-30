@@ -16,9 +16,9 @@
 
 package v2.base
 
+import models.common.ClientId
 import org.mockito.ArgumentMatcher
 import uk.gov.hmrc.http.HeaderCarrier
-import v2.models.ClientId
 
 object HeaderCarrierMatcher {
   def apply(comparison: HeaderCarrier => Boolean): ArgumentMatcher[HeaderCarrier] = new HeaderCarrierMatcher(comparison)

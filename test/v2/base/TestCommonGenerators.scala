@@ -16,22 +16,22 @@
 
 package v2.base
 
+import models.common.ClientId
+import models.common.EORINumber
+import models.common.ItemCount
+import models.common.LocalReferenceNumber
+import models.common.MessageId
+import models.common.MovementId
+import models.common.MovementReferenceNumber
+import models.common.MovementType
+import models.common.PageNumber
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import v2.models.AuditType
 import v2.models.BoxId
-import v2.models.ClientId
-import v2.models.EORINumber
-import v2.models.ItemCount
-import v2.models.LocalReferenceNumber
-import v2.models.MessageId
 import v2.models.MessageStatus
-import v2.models.MovementId
-import v2.models.MovementReferenceNumber
-import v2.models.MovementType
 import v2.models.ObjectStoreURI
-import v2.models.PageNumber
 import v2.models.TotalCount
 import v2.models.XmlPayload
 import v2.models.request.MessageType

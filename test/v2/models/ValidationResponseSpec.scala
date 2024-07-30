@@ -22,8 +22,8 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
-import v2.models.errors.JsonValidationError
-import v2.models.errors.XmlValidationError
+import models.common.errors.JsonValidationError
+import models.common.errors.XmlValidationError
 import v2.models.responses.BusinessValidationResponse
 import v2.models.responses.JsonSchemaValidationResponse
 import v2.models.responses.JsonValidationErrorResponse

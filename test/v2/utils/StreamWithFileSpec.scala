@@ -30,7 +30,7 @@ import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.Files.TemporaryFileCreator
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
-import v2.models.errors.PresentationError
+import models.common.errors.PresentationError
 
 import java.nio.file.Path
 import scala.concurrent.ExecutionContext.Implicits.global

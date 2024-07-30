@@ -16,6 +16,7 @@
 
 package v2.controllers
 
+import models.common.errors.PresentationError
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
@@ -27,8 +28,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.Request
-import v2.controllers.stream.StreamingParsers
-import v2.models.errors.PresentationError
+import stream.StreamingParsers
 
 import scala.concurrent.Future
 

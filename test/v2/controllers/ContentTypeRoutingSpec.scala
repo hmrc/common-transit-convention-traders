@@ -41,8 +41,8 @@ import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.defaultAwaitTimeout
 import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
+import stream.StreamingParsers
 import v2.base.TestActorSystem
-import v2.controllers.stream.StreamingParsers
 
 class ContentTypeRoutingSpec extends AnyFreeSpec with Matchers with TestActorSystem with ScalaCheckDrivenPropertyChecks with ScalaFutures {
 

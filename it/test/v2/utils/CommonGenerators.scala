@@ -16,6 +16,7 @@
 
 package v2.utils
 
+import models.common.{ClientId, MessageId, MovementId, MovementType}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen

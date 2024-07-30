@@ -16,6 +16,8 @@
 
 package v2.models.responses.hateoas
 
+import models.common.MovementId
+import models.common.MovementType
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
@@ -25,11 +27,9 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2.base.TestCommonGenerators
-import v2.models.ItemCount
+import models.common.ItemCount
 import v2.models.MessageStatus
-import v2.models.MovementId
-import v2.models.MovementType
-import v2.models.PageNumber
+import models.common.PageNumber
 import v2.models.TotalCount
 import v2.models.responses.MessageSummary
 import v2.models.responses.PaginationMessageSummary

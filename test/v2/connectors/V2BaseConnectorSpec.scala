@@ -19,6 +19,10 @@ package v2.connectors
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import config.AppConfig
+import models.common.EORINumber
+import models.common.MessageId
+import models.common.MovementId
+import models.common.MovementType
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.times
@@ -54,10 +58,6 @@ import uk.gov.hmrc.http.client.RequestBuilder
 import v2.base.TestCommonGenerators
 import v2.base.TestActorSystem
 import v2.models.AuditType
-import v2.models.EORINumber
-import v2.models.MessageId
-import v2.models.MovementId
-import v2.models.MovementType
 import v2.models.request.MessageType
 
 import scala.annotation.nowarn

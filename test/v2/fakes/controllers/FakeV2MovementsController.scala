@@ -21,6 +21,15 @@ import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import com.google.inject.Inject
+import models.common.ClientId
+import models.common.EORINumber
+import models.common.ItemCount
+import models.common.LocalReferenceNumber
+import models.common.MessageId
+import models.common.MovementId
+import models.common.MovementReferenceNumber
+import models.common.MovementType
+import models.common.PageNumber
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.Action
@@ -28,15 +37,8 @@ import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
 import play.api.test.Helpers.stubControllerComponents
+import stream.StreamingParsers
 import v2.controllers.V2MovementsController
-import v2.controllers.stream.StreamingParsers
-import v2.models.ClientId
-import v2.models.EORINumber
-import v2.models.LocalReferenceNumber
-import v2.models.MessageId
-import v2.models.MovementId
-import v2.models.MovementReferenceNumber
-import v2.models.MovementType
 import v2.models.responses.UpscanResponse
 
 import java.time.OffsetDateTime
@@ -64,8 +66,8 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
     movementType: MovementType,
     movementId: MovementId,
     receivedSince: Option[OffsetDateTime],
-    pageNumber: Option[v2.models.PageNumber],
-    itemCount: Option[v2.models.ItemCount],
+    pageNumber: Option[PageNumber],
+    itemCount: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime]
   ): Action[AnyContent] = Action {
     _ =>
@@ -82,8 +84,8 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
-    pageNumber: Option[v2.models.PageNumber],
-    itemCount: Option[v2.models.ItemCount],
+    pageNumber: Option[PageNumber],
+    itemCount: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime],
     localReferenceNumber: Option[LocalReferenceNumber]
   ): Action[AnyContent] = Action {
