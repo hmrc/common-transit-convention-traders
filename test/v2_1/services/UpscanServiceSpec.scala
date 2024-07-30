@@ -17,6 +17,9 @@
 package v2_1.services
 
 import models.common.EORINumber
+import models.common.MessageId
+import models.common.MovementId
+import models.common.MovementType
 import models.common.errors.UpscanError
 import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
@@ -38,9 +41,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import v2_1.base.TestActorSystem
 import v2_1.base.TestCommonGenerators
 import v2_1.connectors.UpscanConnector
-import models.common.MessageId
-import models.common.MovementId
-import models.common.MovementType
 import v2_1.models.responses.UpscanFormTemplate
 import v2_1.models.responses.UpscanInitiateResponse
 import v2_1.models.responses.UpscanReference

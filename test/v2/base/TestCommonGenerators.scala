@@ -16,41 +16,17 @@
 
 package v2.base
 
-import models.common.ClientId
-import models.common.EORINumber
-import models.common.ItemCount
-import models.common.LocalReferenceNumber
-import models.common.MessageId
-import models.common.MovementId
-import models.common.MovementReferenceNumber
-import models.common.MovementType
-import models.common.PageNumber
-import org.scalacheck.Arbitrary
+import models.common._
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
-import v2.models.AuditType
-import v2.models.BoxId
-import v2.models.MessageStatus
-import v2.models.ObjectStoreURI
-import v2.models.TotalCount
-import v2.models.XmlPayload
+import v2.models._
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.request.Metadata
 import v2.models.responses.UpscanResponse.DownloadUrl
 import v2.models.responses.UpscanResponse.Reference
-import v2.models.responses.BoxResponse
-import v2.models.responses.FailureDetails
-import v2.models.responses.MessageSummary
-import v2.models.responses.MovementResponse
-import v2.models.responses.MovementSummary
-import v2.models.responses.UpdateMovementResponse
-import v2.models.responses.UploadDetails
-import v2.models.responses.UpscanFailedResponse
-import v2.models.responses.UpscanFormTemplate
-import v2.models.responses.UpscanInitiateResponse
-import v2.models.responses.UpscanReference
-import v2.models.responses.UpscanSuccessResponse
+import v2.models.responses._
 
 import java.time.Instant
 import java.time.OffsetDateTime

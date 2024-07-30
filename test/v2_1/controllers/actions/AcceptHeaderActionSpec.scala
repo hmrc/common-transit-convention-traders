@@ -27,11 +27,7 @@ import play.api.http.HeaderNames
 import play.api.http.HttpVerbs
 import play.api.http.Status.NOT_ACCEPTABLE
 import play.api.http.Status.OK
-import play.api.mvc.Action
-import play.api.mvc.AnyContent
-import play.api.mvc.ControllerComponents
-import play.api.mvc.DefaultActionBuilder
-import play.api.mvc.Request
+import play.api.mvc._
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
 import play.api.test.Helpers

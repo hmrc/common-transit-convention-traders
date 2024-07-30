@@ -16,8 +16,11 @@
 
 package v2.services
 
+import models.common.EORINumber
+import models.common.LocalReferenceNumber
 import models.common.MessageId
 import models.common.MovementId
+import models.common.errors.RouterError
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
@@ -42,10 +45,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.base.TestCommonGenerators
 import v2.connectors.RouterConnector
-import models.common.EORINumber
-import models.common.LocalReferenceNumber
 import v2.models.SubmissionRoute
-import models.common.errors.RouterError
 import v2.models.request.MessageType
 
 import java.nio.charset.StandardCharsets

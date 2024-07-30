@@ -17,6 +17,8 @@
 package v2_1.models.responses.hateoas
 
 import models.common.ItemCount
+import models.common.MovementId
+import models.common.MovementType
 import models.common.PageNumber
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
@@ -28,8 +30,6 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2_1.base.TestCommonGenerators
 import v2_1.models.MessageStatus
-import models.common.MovementId
-import models.common.MovementType
 import v2_1.models.TotalCount
 import v2_1.models.responses.MessageSummary
 import v2_1.models.responses.PaginationMessageSummary

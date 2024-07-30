@@ -16,10 +16,13 @@
 
 package v2_1.connectors
 
-import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.util.ByteString
 import config.AppConfig
 import models.common.EORINumber
+import models.common.MessageId
+import models.common.MovementId
+import models.common.MovementType
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.times
@@ -35,15 +38,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.HeaderNames
-import play.api.http.Status.ACCEPTED
-import play.api.http.Status.BAD_GATEWAY
-import play.api.http.Status.BAD_REQUEST
-import play.api.http.Status.CREATED
-import play.api.http.Status.INTERNAL_SERVER_ERROR
-import play.api.http.Status.NOT_FOUND
-import play.api.http.Status.NO_CONTENT
-import play.api.http.Status.OK
-import play.api.http.Status.SERVICE_UNAVAILABLE
+import play.api.http.Status._
 import play.api.libs.json.JsResult
 import play.api.libs.json.Json
 import play.api.libs.json.Reads
@@ -52,12 +47,9 @@ import play.api.test.Helpers.defaultAwaitTimeout
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.client.RequestBuilder
-import v2_1.base.TestCommonGenerators
 import v2_1.base.TestActorSystem
+import v2_1.base.TestCommonGenerators
 import v2_1.models.AuditType
-import models.common.MessageId
-import models.common.MovementId
-import models.common.MovementType
 import v2_1.models.request.MessageType
 
 import scala.annotation.nowarn

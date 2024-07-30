@@ -24,6 +24,7 @@ import com.google.inject.Inject
 import config.AppConfig
 import controllers.V1DepartureMessagesController
 import controllers.V1DeparturesController
+import controllers.common.stream.StreamingParsers
 import models.common.EORINumber
 import models.common.ItemCount
 import models.common.LocalReferenceNumber
@@ -40,7 +41,6 @@ import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
-import stream.StreamingParsers
 import v2.controllers.V2MovementsController
 import v2.models.Bindings._
 

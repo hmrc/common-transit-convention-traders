@@ -16,9 +16,9 @@
 
 package v2_1.utils
 
-import org.apache.pekko.stream.scaladsl.Sink
 import cats.data.EitherT
 import models.common.errors.PresentationError
+import org.apache.pekko.stream.scaladsl.Sink
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures

@@ -43,11 +43,11 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.GuiceWiremockSuite
-import v2.models.EORINumber
+import models.common.EORINumber
 import v2.models.SubmissionRoute
-import v2.models.errors.ErrorCode
-import v2.models.errors.PresentationError
-import v2.models.errors.StandardError
+import models.common.errors.ErrorCode
+import models.common.errors.PresentationError
+import models.common.errors.StandardError
 import v2.models.request.MessageType
 import v2.utils.CommonGenerators
 

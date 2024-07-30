@@ -24,6 +24,7 @@ import com.google.inject.Inject
 import config.AppConfig
 import controllers.V1ArrivalMessagesController
 import controllers.V1ArrivalMovementController
+import controllers.common.stream.StreamingParsers
 import models.common.EORINumber
 import models.common.ItemCount
 import models.common.LocalReferenceNumber
@@ -42,7 +43,6 @@ import models.domain.{MessageId => V1MessageId}
 import models.domain.{ArrivalId => V1ArrivalId}
 import play.api.Logging
 import play.api.libs.json.Json
-import stream.StreamingParsers
 
 import java.time.OffsetDateTime
 

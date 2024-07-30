@@ -18,6 +18,7 @@ package v2_1.services
 
 import config.AppConfig
 import config.Constants
+import models.common.ClientId
 import models.common.EORINumber
 import models.common.MessageId
 import models.common.MovementId
@@ -46,8 +47,6 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2_1.base.TestCommonGenerators
 import v2_1.connectors.PushNotificationsConnector
 import v2_1.models.BoxId
-import v2_1.models.ClientId
-import v2_1.models._
 import v2_1.models.request.PushNotificationsAssociation
 import v2_1.models.responses.BoxResponse
 

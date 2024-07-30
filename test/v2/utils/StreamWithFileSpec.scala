@@ -16,8 +16,9 @@
 
 package v2.utils
 
-import org.apache.pekko.stream.scaladsl.Sink
 import cats.data.EitherT
+import models.common.errors.PresentationError
+import org.apache.pekko.stream.scaladsl.Sink
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -30,7 +31,6 @@ import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.Files.TemporaryFileCreator
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
-import models.common.errors.PresentationError
 
 import java.nio.file.Path
 import scala.concurrent.ExecutionContext.Implicits.global

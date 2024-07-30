@@ -16,6 +16,8 @@
 
 package v2_1.controllers.stream
 
+import controllers.common.BodyReplaceableRequest
+import controllers.common.stream.StreamingParsers
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
@@ -39,10 +41,8 @@ import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.defaultAwaitTimeout
 import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
-import stream.StreamingParsers
 import v2_1.base.TestActorSystem
 import v2_1.base.TestSourceProvider
-import v2_1.controllers.request.BodyReplaceableRequest
 
 import java.nio.charset.StandardCharsets
 import scala.annotation.tailrec

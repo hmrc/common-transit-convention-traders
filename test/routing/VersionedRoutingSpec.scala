@@ -16,6 +16,7 @@
 
 package routing
 
+import controllers.common.stream.StreamingParsers
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Source
@@ -43,7 +44,6 @@ import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
-import stream.StreamingParsers
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import v2.base.TestActorSystem
 

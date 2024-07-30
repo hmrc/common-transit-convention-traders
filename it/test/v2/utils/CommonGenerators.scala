@@ -16,7 +16,7 @@
 
 package v2.utils
 
-import models.common.{ClientId, MessageId, MovementId, MovementType}
+import models.common.{ClientId, EORINumber, ItemCount, LocalReferenceNumber, MessageId, MovementId, MovementReferenceNumber, MovementType, PageNumber}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
@@ -25,7 +25,6 @@ import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.request.PushNotificationsAssociation
 import v2.models.responses.BoxResponse
-import v2.models.LocalReferenceNumber
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary

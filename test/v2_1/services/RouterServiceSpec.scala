@@ -18,6 +18,8 @@ package v2_1.services
 
 import models.common.EORINumber
 import models.common.LocalReferenceNumber
+import models.common.MessageId
+import models.common.MovementId
 import models.common.errors.RouterError
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.Source
@@ -43,8 +45,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2_1.base.TestCommonGenerators
 import v2_1.connectors.RouterConnector
-import models.common.MessageId
-import models.common.MovementId
 import v2_1.models.SubmissionRoute
 import v2_1.models.request.MessageType
 

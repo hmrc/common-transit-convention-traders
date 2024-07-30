@@ -18,12 +18,8 @@ package v2.services
 
 import config.AppConfig
 import config.Constants
+import models.common._
 import models.common.errors.PushNotificationError
-import models.common.ClientId
-import models.common.EORINumber
-import models.common.MessageId
-import models.common.MovementId
-import models.common.MovementType
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.ArgumentMatchers.{eq => eqTo}
@@ -47,7 +43,6 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.base.TestCommonGenerators
 import v2.connectors.PushNotificationsConnector
 import v2.models.BoxId
-import v2.models._
 import v2.models.request.PushNotificationsAssociation
 import v2.models.responses.BoxResponse
 

@@ -24,11 +24,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
-import v2_1.models.responses.BusinessValidationResponse
-import v2_1.models.responses.JsonSchemaValidationResponse
-import v2_1.models.responses.JsonValidationErrorResponse
-import v2_1.models.responses.XmlSchemaValidationResponse
-import v2_1.models.responses.XmlValidationErrorResponse
+import v2_1.models.responses._
 
 class ValidationResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 

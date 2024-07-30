@@ -24,7 +24,6 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.base.StreamTestHelpers
 import v2.base.TestActorSystem
-import models.common.errors.ExtractionError
 import v2.models.request.MessageType
 
 import scala.concurrent.ExecutionContext.Implicits.global

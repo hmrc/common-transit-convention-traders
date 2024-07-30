@@ -18,9 +18,12 @@ package v2.controllers
 
 import cats.data.NonEmptyList
 import cats.syntax.all._
+import models.common.LocalReferenceNumber
 import models.common.MessageId
 import models.common.MovementId
 import models.common.MovementType
+import models.common.errors.FailedToValidateError._
+import models.common.errors._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
@@ -31,23 +34,6 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.Logging
 import v2.base.TestCommonGenerators
-import models.common.LocalReferenceNumber
-import models.common.errors.ConversionError
-import models.common.errors.ExtractionError
-import models.common.errors.FailedToValidateError
-import models.common.errors.JsonValidationError
-import models.common.errors.PersistenceError
-import models.common.errors.PresentationError
-import models.common.errors.RouterError
-import models.common.errors.StreamingError
-import models.common.errors.UpscanError
-import models.common.errors.XmlValidationError
-import models.common.errors.FailedToValidateError.BusinessValidationError
-import models.common.errors.FailedToValidateError.InvalidMessageTypeError
-import models.common.errors.FailedToValidateError.JsonSchemaFailedToValidateError
-import models.common.errors.FailedToValidateError.ParsingError
-import models.common.errors.FailedToValidateError.UnexpectedError
-import models.common.errors.FailedToValidateError.XmlSchemaFailedToValidateError
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

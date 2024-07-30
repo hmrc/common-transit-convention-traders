@@ -16,14 +16,14 @@
 
 package v2_1.models.responses
 
+import models.common.MessageId
+import models.common.MovementId
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
-import models.common.MessageId
-import models.common.MovementId
 
 class MovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 

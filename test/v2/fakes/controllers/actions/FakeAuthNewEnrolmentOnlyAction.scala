@@ -23,10 +23,10 @@ import play.api.mvc.Request
 import play.api.mvc.Result
 import play.api.test.Helpers
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
-import v2.controllers.request.AuthenticatedRequest
+import controllers.common.AuthenticatedRequest
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 case class FakeAuthNewEnrolmentOnlyAction(eori: EORINumber = EORINumber("id")) extends AuthNewEnrolmentOnlyAction {

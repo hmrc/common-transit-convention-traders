@@ -21,7 +21,7 @@ import com.google.inject.Inject
 import config.Constants._
 import models.common.EORINumber
 import models.common.errors.PresentationError
-import v2.controllers.request.AuthenticatedRequest
+import controllers.common.AuthenticatedRequest
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.Results._

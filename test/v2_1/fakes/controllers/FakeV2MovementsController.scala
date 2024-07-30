@@ -16,16 +16,13 @@
 
 package v2_1.fakes.controllers
 
+import com.google.inject.Inject
+import controllers.common.stream.StreamingParsers
+import models.common._
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
-import com.google.inject.Inject
-import models.common.EORINumber
-import models.common.ItemCount
-import models.common.LocalReferenceNumber
-import models.common.MovementReferenceNumber
-import models.common.PageNumber
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.Action
@@ -33,12 +30,8 @@ import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
 import play.api.test.Helpers.stubControllerComponents
-import stream.StreamingParsers
 import v2_1.controllers.V2MovementsController
-import v2_1.models.ClientId
-import models.common.MessageId
-import models.common.MovementId
-import models.common.MovementType
+import models.common.ClientId
 import v2_1.models.responses.UpscanResponse
 
 import java.time.OffsetDateTime

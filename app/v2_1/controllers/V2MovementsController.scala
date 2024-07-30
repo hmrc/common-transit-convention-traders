@@ -24,7 +24,11 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import config.AppConfig
 import config.Constants.XClientIdHeader
+import controllers.common.AuthenticatedRequest
+import controllers.common.ContentTypeRouting
+import controllers.common.stream.StreamingParsers
 import metrics.HasActionMetrics
+import models.common.ClientId
 import models.common.EORINumber
 import models.common.ItemCount
 import models.common.LocalReferenceNumber
@@ -52,13 +56,11 @@ import routing.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML
 import routing.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
 import routing.VERSION_2_ACCEPT_HEADER_VALUE_XML
 import routing.VersionedRouting
-import stream.StreamingParsers
 import uk.gov.hmrc.http
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2_1.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2_1.controllers.actions.providers.AcceptHeaderActionProvider
-import v2_1.controllers.request.AuthenticatedRequest
 import v2_1.models.AuditType._
 import v2_1.models._
 import v2_1.models.request.MessageType

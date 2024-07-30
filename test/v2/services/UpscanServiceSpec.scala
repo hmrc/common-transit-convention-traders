@@ -16,9 +16,11 @@
 
 package v2.services
 
+import models.common.EORINumber
 import models.common.MessageId
 import models.common.MovementId
 import models.common.MovementType
+import models.common.errors.UpscanError
 import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
@@ -39,8 +41,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import v2.base.TestActorSystem
 import v2.base.TestCommonGenerators
 import v2.connectors.UpscanConnector
-import models.common.EORINumber
-import models.common.errors.UpscanError
 import v2.models.responses.UpscanFormTemplate
 import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.UpscanReference

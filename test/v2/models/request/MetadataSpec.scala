@@ -16,6 +16,7 @@
 
 package v2.models.request
 
+import models.common.EORINumber
 import models.common.MessageId
 import models.common.MovementId
 import models.common.MovementType
@@ -27,7 +28,6 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
 import v2.base.TestCommonGenerators
-import models.common.EORINumber
 
 class MetadataSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with TestCommonGenerators {
   private val path = Gen.listOfN(10, Gen.alphaChar).map(_.mkString)

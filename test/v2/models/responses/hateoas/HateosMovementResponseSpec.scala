@@ -16,6 +16,9 @@
 
 package v2.models.responses.hateoas
 
+import models.common.EORINumber
+import models.common.LocalReferenceNumber
+import models.common.MovementReferenceNumber
 import models.common.MovementType
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
@@ -23,9 +26,6 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import v2.base.TestCommonGenerators
-import models.common.EORINumber
-import models.common.MovementReferenceNumber
-import models.common.LocalReferenceNumber
 import v2.models.responses.MovementSummary
 
 import java.time.OffsetDateTime

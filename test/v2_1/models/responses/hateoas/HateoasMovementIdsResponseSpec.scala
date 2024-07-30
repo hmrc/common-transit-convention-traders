@@ -16,11 +16,7 @@
 
 package v2_1.models.responses.hateoas
 
-import models.common.EORINumber
-import models.common.ItemCount
-import models.common.LocalReferenceNumber
-import models.common.MovementReferenceNumber
-import models.common.PageNumber
+import models.common._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
@@ -30,9 +26,8 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import v2_1.base.TestCommonGenerators
-import v2_1.models.responses.PaginationMovementSummary
-import models.common.MovementType
 import v2_1.models.TotalCount
+import v2_1.models.responses.PaginationMovementSummary
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter

@@ -16,6 +16,7 @@
 
 package v2.services
 
+import models.common.errors.ExtractionError
 import org.apache.pekko.stream.scaladsl.Sink
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -23,7 +24,6 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import v2.base.StreamTestHelpers
 import v2.base.TestActorSystem
-import models.common.errors.ExtractionError
 import v2.models.request.MessageType
 
 import scala.xml.NodeSeq

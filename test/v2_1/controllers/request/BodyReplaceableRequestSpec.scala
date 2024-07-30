@@ -16,6 +16,7 @@
 
 package v2_1.controllers.request
 
+import controllers.common.AuthenticatedRequest
 import models.common.EORINumber
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec

@@ -26,7 +26,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
 import config.Constants
 import io.lemonlabs.uri.Url
-import models.common.{MessageId, MovementId, MovementType}
+import models.common.{EORINumber, MessageId, MovementId, MovementType}
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary

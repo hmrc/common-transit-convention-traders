@@ -18,6 +18,7 @@ package v2_1.models.responses
 
 import models.common.EORINumber
 import models.common.LocalReferenceNumber
+import models.common.MovementId
 import models.common.MovementReferenceNumber
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
@@ -25,7 +26,6 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Json
-import models.common.MovementId
 
 import java.time.OffsetDateTime
 import java.time.ZoneOffset

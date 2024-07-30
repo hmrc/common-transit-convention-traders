@@ -22,25 +22,12 @@ import cats.implicits.catsStdInstancesForFuture
 import cats.implicits.toBifunctorOps
 import com.codahale.metrics.MetricRegistry
 import config.AppConfig
-import models.common.EORINumber
-import models.common.ItemCount
-import models.common.LocalReferenceNumber
-import models.common.MessageId
-import models.common.MovementId
-import models.common.MovementReferenceNumber
-import models.common.MovementType
-import models.common.PageNumber
-import models.common.errors.ConversionError
-import models.common.errors.ErrorCode
-import models.common.errors.ExtractionError
-import models.common.errors.FailedToValidateError
-import models.common.errors.JsonValidationError
-import models.common.errors.PersistenceError
-import models.common.errors.PresentationError
-import models.common.errors.PushNotificationError
-import models.common.errors.RouterError
-import models.common.errors.UpscanError
-import models.common.errors.XmlValidationError
+import models.common.ClientId
+import models.common._
+import models.common.errors.ExtractionError.MessageTypeNotFound
+import models.common.errors.FailedToValidateError.InvalidMessageTypeError
+import models.common.errors.FailedToValidateError.JsonSchemaFailedToValidateError
+import models.common.errors._
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Flow
 import org.apache.pekko.stream.scaladsl.Keep
@@ -98,10 +85,6 @@ import v2_1.fakes.controllers.actions.FakeAcceptHeaderActionProvider
 import v2_1.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import v2_1.models.AuditType._
 import v2_1.models._
-import models.common.errors.ExtractionError.MessageTypeNotFound
-import models.common.errors.FailedToValidateError.InvalidMessageTypeError
-import models.common.errors.FailedToValidateError.JsonSchemaFailedToValidateError
-import v2_1.models.errors._
 import v2_1.models.request.MessageType
 import v2_1.models.request.MessageUpdate
 import v2_1.models.responses.UpscanResponse.DownloadUrl
@@ -5621,7 +5604,8 @@ class V2MovementsControllerSpec
           val request =
             FakeRequest(
               "GET",
-              v2_1.controllers.routes.V2MovementsController.getMessageBody(movementType, movementId, messageId).url,
+              //TODO: Figure out how to use v2_1 controller
+              v2.controllers.routes.V2MovementsController.getMessageBody(movementType, movementId, messageId).url,
               headers,
               Source.empty[ByteString]
             )
@@ -9652,9 +9636,10 @@ class V2MovementsControllerSpec
         )
           .thenReturn(EitherT.rightT(()): EitherT[Future, PushNotificationError, Unit])
 
+        //TODO: Need to see how to do this using v2_1 controller
         val request = FakeRequest(
           POST,
-          v2_1.controllers.routes.V2MovementsController.attachMessageFromUpscan(eoriNumber, movementType, movementId, messageId, None).url,
+          v2.controllers.routes.V2MovementsController.attachMessageFromUpscan(eoriNumber, movementType, movementId, messageId, None).url,
           headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)),
           upscanFailed
         )

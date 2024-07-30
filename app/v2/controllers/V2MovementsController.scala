@@ -53,13 +53,14 @@ import routing.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML
 import routing.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
 import routing.VERSION_2_ACCEPT_HEADER_VALUE_XML
 import routing.VersionedRouting
-import stream.StreamingParsers
 import uk.gov.hmrc.http
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2.controllers.actions.providers.AcceptHeaderActionProvider
-import v2.controllers.request.AuthenticatedRequest
+import controllers.common.AuthenticatedRequest
+import controllers.common.ContentTypeRouting
+import controllers.common.stream.StreamingParsers
 import v2.models.AuditType
 import v2.models.BodyAndContentType
 import v2.models.BodyAndSize

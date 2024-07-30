@@ -44,7 +44,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.WiremockSuite
 import v2.base.TestActorSystem
-import v2.models.EORINumber
+import models.common.EORINumber
 import v2.models.responses.UpscanFormTemplate
 import v2.models.responses.UpscanInitiateResponse
 import v2.models.responses.UpscanReference
