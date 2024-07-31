@@ -23,6 +23,7 @@ import org.apache.pekko.util.ByteString
 import com.fasterxml.jackson.core.JsonParseException
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
+import config.Constants
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.concurrent.IntegrationPatience
@@ -107,8 +108,12 @@ class PersistenceConnectorSpec
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures"
 
-    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], arbitraryMovementResponse().arbitrary) {
-      (eoriNumber, movementResponse) =>
+    "On successful creation of an element, must return OK" in forAll(
+      arbitrary[EORINumber],
+      arbitraryMovementResponse().arbitrary,
+      Gen.stringOfN(15, Gen.alphaNumChar)
+    ) {
+      (eoriNumber, movementResponse, clientId) =>
         server.resetAll()
 
         server.stubFor(
@@ -117,12 +122,19 @@ class PersistenceConnectorSpec
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .willReturn(
               aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(movementResponse)))
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(
+          extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON),
+          otherHeaders = Seq(
+            Constants.XClientIdHeader ->
+              clientId
+          )
+        )
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
@@ -133,18 +145,20 @@ class PersistenceConnectorSpec
               1,
               postRequestedFor(urlEqualTo(targetUrl(eoriNumber)))
                 .withHeader("Content-Type", equalTo(MimeTypes.XML))
+                .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             );
         }
     }
 
-    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
-      eoriNumber =>
+    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[EORINumber], Gen.stringOfN(15, Gen.alphaNumChar)) {
+      (eoriNumber, clientId) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .willReturn(
               aResponse()
                 .withStatus(INTERNAL_SERVER_ERROR)
@@ -154,7 +168,13 @@ class PersistenceConnectorSpec
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(
+          extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON),
+          otherHeaders = Seq(
+            Constants.XClientIdHeader ->
+              clientId
+          )
+        )
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
@@ -169,14 +189,15 @@ class PersistenceConnectorSpec
         }
     }
 
-    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
-      eoriNumber =>
+    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[EORINumber], Gen.stringOfN(15, Gen.alphaNumChar)) {
+      (eoriNumber, clientId) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .willReturn(
               aResponse()
                 .withStatus(BAD_REQUEST)
@@ -186,7 +207,13 @@ class PersistenceConnectorSpec
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(
+          extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON),
+          otherHeaders = Seq(
+            Constants.XClientIdHeader ->
+              clientId
+          )
+        )
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
@@ -201,14 +228,15 @@ class PersistenceConnectorSpec
         }
     }
 
-    "On an incorrect Json fragment, must return a JsResult.Exception" in forAll(arbitrary[EORINumber]) {
-      eoriNumber =>
+    "On an incorrect Json fragment, must return a JsResult.Exception" in forAll(arbitrary[EORINumber], Gen.stringOfN(15, Gen.alphaNumChar)) {
+      (eoriNumber, clientId) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -218,7 +246,13 @@ class PersistenceConnectorSpec
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(
+          extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON),
+          otherHeaders = Seq(
+            Constants.XClientIdHeader ->
+              clientId
+          )
+        )
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
@@ -243,8 +277,8 @@ class PersistenceConnectorSpec
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/departures"
 
-    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen) {
-      (eoriNumber, okResult) =>
+    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen, Gen.stringOfN(15, Gen.alphaNumChar)) {
+      (eoriNumber, okResult, clientId) =>
         server.resetAll()
 
         server.stubFor(
@@ -252,12 +286,19 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .willReturn(
               aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(okResult)))
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(
+          extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON),
+          otherHeaders = Seq(
+            Constants.XClientIdHeader ->
+              clientId
+          )
+        )
 
         whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Departure, None)) {
           result =>
@@ -270,13 +311,14 @@ class PersistenceConnectorSpec
         }
     }
 
-    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
-      eoriNumber =>
+    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[EORINumber], Gen.stringOfN(15, Gen.alphaNumChar)) {
+      (eoriNumber, clientId) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .willReturn(
               aResponse()
                 .withStatus(INTERNAL_SERVER_ERROR)
@@ -286,7 +328,13 @@ class PersistenceConnectorSpec
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(
+          extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON),
+          otherHeaders = Seq(
+            Constants.XClientIdHeader ->
+              clientId
+          )
+        )
 
         val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, None).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
@@ -299,13 +347,14 @@ class PersistenceConnectorSpec
         }
     }
 
-    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
-      eoriNumber =>
+    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[EORINumber], Gen.stringOfN(15, Gen.alphaNumChar)) {
+      (eoriNumber, clientId) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .willReturn(
               aResponse()
                 .withStatus(BAD_REQUEST)
@@ -315,7 +364,13 @@ class PersistenceConnectorSpec
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(
+          extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON),
+          otherHeaders = Seq(
+            Constants.XClientIdHeader ->
+              clientId
+          )
+        )
 
         val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, None).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
@@ -328,13 +383,14 @@ class PersistenceConnectorSpec
         }
     }
 
-    "On an incorrect Json fragment, must return a JsResult.Exception" in forAll(arbitrary[EORINumber]) {
-      eoriNumber =>
+    "On an incorrect Json fragment, must return a JsResult.Exception" in forAll(arbitrary[EORINumber], Gen.stringOfN(15, Gen.alphaNumChar)) {
+      (eoriNumber, clientId) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -344,7 +400,13 @@ class PersistenceConnectorSpec
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(
+          extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON),
+          otherHeaders = Seq(
+            Constants.XClientIdHeader ->
+              clientId
+          )
+        )
 
         val future = persistenceConnector.postMovement(eoriNumber, MovementType.Departure, None).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
@@ -1331,37 +1393,51 @@ class PersistenceConnectorSpec
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals"
 
-    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen) {
-      (eoriNumber, okResult) =>
+    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen, Gen.stringOfN(15, Gen.alphaNumChar)) {
+      (eoriNumber, okResult, clientId) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .willReturn(
               aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(okResult)))
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(
+          extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON),
+          otherHeaders = Seq(
+            Constants.XClientIdHeader ->
+              clientId
+          )
+        )
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
         whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, Some(source))) {
           result =>
             result mustBe okResult
+            server.verify(
+              1,
+              postRequestedFor(urlEqualTo(targetUrl(eoriNumber)))
+                .withHeader("Content-Type", equalTo(MimeTypes.XML))
+                .withHeader(Constants.XClientIdHeader, equalTo(clientId))
+            );
         }
     }
 
-    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
-      eoriNumber =>
+    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[EORINumber], Gen.stringOfN(15, Gen.alphaNumChar)) {
+      (eoriNumber, clientId) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .willReturn(
               aResponse()
                 .withStatus(INTERNAL_SERVER_ERROR)
@@ -1371,7 +1447,13 @@ class PersistenceConnectorSpec
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(
+          extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON),
+          otherHeaders = Seq(
+            Constants.XClientIdHeader ->
+              clientId
+          )
+        )
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
@@ -1386,14 +1468,15 @@ class PersistenceConnectorSpec
         }
     }
 
-    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
-      eoriNumber =>
+    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[EORINumber], Gen.stringOfN(15, Gen.alphaNumChar)) {
+      (eoriNumber, clientId) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .willReturn(
               aResponse()
                 .withStatus(BAD_REQUEST)
@@ -1403,7 +1486,13 @@ class PersistenceConnectorSpec
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(
+          extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON),
+          otherHeaders = Seq(
+            Constants.XClientIdHeader ->
+              clientId
+          )
+        )
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
@@ -1418,14 +1507,18 @@ class PersistenceConnectorSpec
         }
     }
 
-    "On an incorrect Json fragment from transit-movements, must return a JsonParseException" in forAll(arbitrary[EORINumber]) {
-      eoriNumber =>
+    "On an incorrect Json fragment from transit-movements, must return a JsonParseException" in forAll(
+      arbitrary[EORINumber],
+      Gen.stringOfN(15, Gen.alphaNumChar)
+    ) {
+      (eoriNumber, clientId) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -1435,7 +1528,13 @@ class PersistenceConnectorSpec
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(
+          extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON),
+          otherHeaders = Seq(
+            Constants.XClientIdHeader ->
+              clientId
+          )
+        )
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8))
 
@@ -1460,33 +1559,46 @@ class PersistenceConnectorSpec
 
     def targetUrl(eoriNumber: EORINumber) = s"/transit-movements/traders/${eoriNumber.value}/movements/arrivals"
 
-    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen) {
-      (eoriNumber, okResult) =>
+    "On successful creation of an element, must return OK" in forAll(arbitrary[EORINumber], okResultGen, Gen.stringOfN(15, Gen.alphaNumChar)) {
+      (eoriNumber, okResult, clientId) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .willReturn(
               aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(okResult)))
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(
+          extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON),
+          otherHeaders = Seq(
+            Constants.XClientIdHeader ->
+              clientId
+          )
+        )
 
         whenReady(persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, None)) {
           result =>
             result mustBe okResult
+            server.verify(
+              0,
+              postRequestedFor(urlEqualTo(targetUrl(eoriNumber)))
+                .withHeader("Content-Type", equalTo(MimeTypes.XML))
+            );
         }
     }
 
-    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
-      eoriNumber =>
+    "On an upstream internal server error, get a UpstreamErrorResponse" in forAll(arbitrary[EORINumber], Gen.stringOfN(15, Gen.alphaNumChar)) {
+      (eoriNumber, clientId) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .willReturn(
               aResponse()
                 .withStatus(INTERNAL_SERVER_ERROR)
@@ -1496,7 +1608,13 @@ class PersistenceConnectorSpec
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(
+          extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON),
+          otherHeaders = Seq(
+            Constants.XClientIdHeader ->
+              clientId
+          )
+        )
 
         val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, None).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
@@ -1509,13 +1627,14 @@ class PersistenceConnectorSpec
         }
     }
 
-    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[EORINumber]) {
-      eoriNumber =>
+    "On an upstream bad request, get an UpstreamErrorResponse" in forAll(arbitrary[EORINumber], Gen.stringOfN(15, Gen.alphaNumChar)) {
+      (eoriNumber, clientId) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .willReturn(
               aResponse()
                 .withStatus(BAD_REQUEST)
@@ -1525,7 +1644,13 @@ class PersistenceConnectorSpec
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(
+          extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON),
+          otherHeaders = Seq(
+            Constants.XClientIdHeader ->
+              clientId
+          )
+        )
 
         val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, None).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
@@ -1538,13 +1663,17 @@ class PersistenceConnectorSpec
         }
     }
 
-    "On an incorrect Json fragment from transit-movements, must return a JsonParseException" in forAll(arbitrary[EORINumber]) {
-      eoriNumber =>
+    "On an incorrect Json fragment from transit-movements, must return a JsonParseException" in forAll(
+      arbitrary[EORINumber],
+      Gen.stringOfN(15, Gen.alphaNumChar)
+    ) {
+      (eoriNumber, clientId) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -1554,7 +1683,13 @@ class PersistenceConnectorSpec
             )
         )
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON))
+        implicit val hc: HeaderCarrier = HeaderCarrier(
+          extraHeaders = Seq(HeaderNames.ACCEPT -> ContentTypes.JSON),
+          otherHeaders = Seq(
+            Constants.XClientIdHeader ->
+              clientId
+          )
+        )
 
         val future = persistenceConnector.postMovement(eoriNumber, MovementType.Arrival, None).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
