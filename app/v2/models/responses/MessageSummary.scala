@@ -16,12 +16,12 @@
 
 package v2.models.responses
 
+import models.common.MessageId
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.functional.syntax.unlift
 import play.api.libs.json.JsPath
 import play.api.libs.json.OWrites
 import play.api.libs.json.Reads
-import v2.models.MessageId
 import v2.models.MessageStatus
 import v2.models.ObjectStoreURI
 import v2.models.Payload

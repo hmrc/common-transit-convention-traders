@@ -16,16 +16,16 @@
 
 package v2.models.responses.hateoas
 
+import models.common.EORINumber
+import models.common.LocalReferenceNumber
+import models.common.MovementReferenceNumber
+import models.common.MovementType
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import v2.base.TestCommonGenerators
-import v2.models.EORINumber
-import v2.models.MovementReferenceNumber
-import v2.models.MovementType
-import v2.models.LocalReferenceNumber
 import v2.models.responses.MovementSummary
 
 import java.time.OffsetDateTime

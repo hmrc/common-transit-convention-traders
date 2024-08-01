@@ -23,6 +23,10 @@ import org.apache.pekko.util.ByteString
 import config.AppConfig
 import config.Constants
 import io.lemonlabs.uri.UrlPath
+import models.common.EORINumber
+import models.common.MessageId
+import models.common.MovementId
+import models.common.MovementType
 import play.api.http.HeaderNames
 import play.api.http.Status.OK
 import play.api.libs.json.JsResult
@@ -33,7 +37,7 @@ import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.client.RequestBuilder
-import v2.models._
+import v2.models.AuditType
 import v2.models.request.MessageType
 
 import scala.concurrent.ExecutionContext

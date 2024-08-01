@@ -17,6 +17,8 @@
 package v2.models.responses
 
 import cats.data.NonEmptyList
+import models.common.errors.JsonValidationError
+import models.common.errors.XmlValidationError
 import play.api.libs.functional.syntax.toInvariantFunctorOps
 import play.api.libs.functional.syntax.unlift
 import play.api.libs.json.JsError
@@ -24,8 +26,6 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.OFormat
 import play.api.libs.json.Reads
 import play.api.libs.json.__
-import v2.models.errors.JsonValidationError
-import v2.models.errors.XmlValidationError
 import v2.models.formats.CommonFormats
 
 object XmlValidationErrorResponse {

@@ -19,14 +19,14 @@ package v2.services
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
+import models.common.EORINumber
+import models.common.MessageId
+import models.common.MovementId
+import models.common.MovementType
+import models.common.errors.UpscanError
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.connectors.UpscanConnector
 import v2.connectors.V2BaseConnector
-import v2.models.EORINumber
-import v2.models.MessageId
-import v2.models.MovementId
-import v2.models.MovementType
-import v2.models.errors.UpscanError
 import v2.models.responses.UpscanInitiateResponse
 
 import scala.concurrent.ExecutionContext

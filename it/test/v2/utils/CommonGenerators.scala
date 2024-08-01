@@ -16,6 +16,15 @@
 
 package v2.utils
 
+import models.common.ClientId
+import models.common.EORINumber
+import models.common.ItemCount
+import models.common.LocalReferenceNumber
+import models.common.MessageId
+import models.common.MovementId
+import models.common.MovementReferenceNumber
+import models.common.MovementType
+import models.common.PageNumber
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
@@ -24,7 +33,6 @@ import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.request.PushNotificationsAssociation
 import v2.models.responses.BoxResponse
-import v2.models.LocalReferenceNumber
 import v2.models.responses.MessageSummary
 import v2.models.responses.MovementResponse
 import v2.models.responses.MovementSummary

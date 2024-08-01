@@ -21,6 +21,13 @@ import org.apache.pekko.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
+import models.common.EORINumber
+import models.common.LocalReferenceNumber
+import models.common.MessageId
+import models.common.MovementId
+import models.common.errors.InvalidOfficeError
+import models.common.errors.LRNError
+import models.common.errors.RouterError
 import play.api.Logging
 import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.CONFLICT
@@ -30,14 +37,7 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.RouterConnector
-import v2.models.EORINumber
-import v2.models.LocalReferenceNumber
-import v2.models.MessageId
-import v2.models.MovementId
 import v2.models.SubmissionRoute
-import v2.models.errors.InvalidOfficeError
-import v2.models.errors.LRNError
-import v2.models.errors.RouterError
 import v2.models.request.MessageType
 
 import scala.concurrent.ExecutionContext

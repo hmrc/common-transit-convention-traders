@@ -26,6 +26,10 @@ import config.Constants
 import io.lemonlabs.uri.Url
 import metrics.HasMetrics
 import metrics.MetricsKeys
+import models.common.EORINumber
+import models.common.MessageId
+import models.common.MovementId
+import models.common.MovementType
 import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
@@ -40,10 +44,6 @@ import v2.models.request.Details
 import v2.models.request.MessageType
 import v2.models.request.Metadata
 import v2.models.AuditType
-import v2.models.EORINumber
-import v2.models.MessageId
-import v2.models.MovementId
-import v2.models.MovementType
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future

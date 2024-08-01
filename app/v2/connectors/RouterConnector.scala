@@ -25,6 +25,9 @@ import config.AppConfig
 import config.Constants
 import metrics.HasMetrics
 import metrics.MetricsKeys
+import models.common.EORINumber
+import models.common.MessageId
+import models.common.MovementId
 import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
@@ -35,9 +38,6 @@ import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
-import v2.models.EORINumber
-import v2.models.MessageId
-import v2.models.MovementId
 import v2.models.SubmissionRoute
 import v2.models.request.MessageType
 

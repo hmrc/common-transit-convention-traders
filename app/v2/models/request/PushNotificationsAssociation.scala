@@ -16,12 +16,12 @@
 
 package v2.models.request
 
+import models.common.ClientId
+import models.common.EORINumber
+import models.common.MovementType
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import v2.models.BoxId
-import v2.models.ClientId
-import v2.models.EORINumber
-import v2.models.MovementType
 
 object PushNotificationsAssociation {
   implicit val pushNotificationsAssociationFormat: OFormat[PushNotificationsAssociation] = Json.format[PushNotificationsAssociation]

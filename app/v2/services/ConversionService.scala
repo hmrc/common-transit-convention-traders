@@ -21,12 +21,12 @@ import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
+import models.common.errors.ConversionError
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.connectors.ConversionConnector
 import v2.models.HeaderType
 import v2.models.HeaderTypes
-import v2.models.errors.ConversionError
 import v2.models.request.MessageType
 
 import javax.inject.Inject

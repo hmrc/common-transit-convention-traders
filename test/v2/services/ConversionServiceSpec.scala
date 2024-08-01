@@ -18,6 +18,7 @@ package v2.services
 
 import cats.data.EitherT
 import cats.implicits.catsSyntaxEitherId
+import models.common.errors.ConversionError
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
@@ -36,7 +37,6 @@ import v2.base.TestActorSystem
 import v2.connectors.ConversionConnector
 import v2.models.HeaderType
 import v2.models.HeaderTypes.jsonToXml
-import v2.models.errors.ConversionError
 import v2.models.request.MessageType
 
 import java.nio.charset.StandardCharsets

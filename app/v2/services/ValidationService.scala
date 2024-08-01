@@ -20,6 +20,9 @@ import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
+import models.common.errors.ErrorCode
+import models.common.errors.FailedToValidateError
+import models.common.errors.StandardError
 import play.api.Logging
 import play.api.http.Status.BAD_REQUEST
 import play.api.http.Status.NOT_FOUND
@@ -28,9 +31,6 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.ValidationConnector
-import v2.models.errors.ErrorCode
-import v2.models.errors.FailedToValidateError
-import v2.models.errors.StandardError
 import v2.models.request.MessageType
 import v2.models.responses.BusinessValidationResponse
 import v2.models.responses.JsonSchemaValidationResponse

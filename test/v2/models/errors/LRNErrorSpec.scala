@@ -16,6 +16,7 @@
 
 package v2.models.errors
 
+import models.common.errors.LRNError
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers

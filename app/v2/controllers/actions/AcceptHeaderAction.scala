@@ -18,6 +18,7 @@ package v2.controllers.actions
 
 import cats.implicits.catsSyntaxEitherId
 import com.google.inject.Inject
+import models.common.errors.PresentationError
 import play.api.http.HeaderNames
 import play.api.libs.json.Json
 import play.api.mvc.ActionRefiner
@@ -25,7 +26,6 @@ import play.api.mvc.Request
 import play.api.mvc.Result
 import play.api.mvc.Results.NotAcceptable
 import routing.VersionedRouting
-import v2.models.errors.PresentationError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future

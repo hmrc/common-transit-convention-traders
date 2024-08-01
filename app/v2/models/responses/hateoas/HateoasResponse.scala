@@ -16,7 +16,14 @@
 
 package v2.models.responses.hateoas
 
-import v2.models._
+import models.common.EORINumber
+import models.common.ItemCount
+import models.common.LocalReferenceNumber
+import models.common.MessageId
+import models.common.MovementId
+import models.common.MovementReferenceNumber
+import models.common.MovementType
+import models.common.PageNumber
 import v2.utils.CallOps._
 
 import java.time.OffsetDateTime

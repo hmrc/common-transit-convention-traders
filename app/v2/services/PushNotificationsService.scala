@@ -21,6 +21,12 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import config.AppConfig
 import config.Constants
+import models.common.ClientId
+import models.common.EORINumber
+import models.common.MessageId
+import models.common.MovementId
+import models.common.MovementType
+import models.common.errors.PushNotificationError
 import play.api.Logging
 import play.api.http.Status.NOT_FOUND
 import play.api.libs.json.JsValue
@@ -29,12 +35,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.PushNotificationsConnector
 import v2.models.BoxId
-import v2.models.ClientId
-import v2.models.EORINumber
-import v2.models.MessageId
-import v2.models.MovementId
-import v2.models.MovementType
-import v2.models.errors.PushNotificationError
 import v2.models.request.PushNotificationsAssociation
 import v2.models.responses.BoxResponse
 

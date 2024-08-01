@@ -67,7 +67,7 @@ class AuditServiceSpec extends AnyFreeSpec with ScalaCheckPropertyChecks with Be
           running(application) {
             val auditService = application.injector.instanceOf[AuditService]
             auditService.auditEvent(auditType, requestXml)
-            verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(auditType.toString()), eqTo(requestedXmlToJson))(any(), any(), any())
+            verify(mockAuditConnector, times(1)).sendExplicitAudit(eqTo(auditType.toString()), eqTo(requestedXmlToJson))(any, any, any)
             reset(mockAuditConnector)
           }
       }

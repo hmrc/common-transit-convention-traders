@@ -16,13 +16,13 @@
 
 package v2.models.responses.hateoas
 
+import models.common.MovementType
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.libs.json.Json
 import v2.base.TestCommonGenerators
-import v2.models.MovementType
 
 class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with OptionValues with TestCommonGenerators {
 

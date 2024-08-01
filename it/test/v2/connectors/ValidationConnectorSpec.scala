@@ -42,9 +42,9 @@ import uk.gov.hmrc.http
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
-import v2.models.errors.JsonValidationError
-import v2.models.errors.PresentationError
-import v2.models.errors.XmlValidationError
+import models.common.errors.JsonValidationError
+import models.common.errors.PresentationError
+import models.common.errors.XmlValidationError
 import v2.models.request.MessageType
 import v2.models.responses.BusinessValidationResponse
 import v2.models.responses.JsonSchemaValidationResponse

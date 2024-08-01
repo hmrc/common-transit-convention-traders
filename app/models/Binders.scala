@@ -16,10 +16,11 @@
 
 package models
 
+import models.common.EORINumber
+
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import play.api.mvc.QueryStringBindable
-import v2.models.EORINumber
 
 object Binders {
 

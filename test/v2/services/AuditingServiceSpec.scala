@@ -16,6 +16,10 @@
 
 package v2.services
 
+import models.common.EORINumber
+import models.common.MessageId
+import models.common.MovementId
+import models.common.MovementType
 import org.apache.pekko.stream.scaladsl.Source
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.{eq => eqTo}

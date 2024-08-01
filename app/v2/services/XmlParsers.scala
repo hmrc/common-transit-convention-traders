@@ -16,11 +16,11 @@
 
 package v2.services
 
+import models.common.errors.ExtractionError
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.connectors.xml.ParseEvent
 import org.apache.pekko.stream.connectors.xml.StartElement
 import org.apache.pekko.stream.scaladsl.Flow
-import v2.models.errors.ExtractionError
 import v2.models.request.MessageType
 
 object XmlParsers {
