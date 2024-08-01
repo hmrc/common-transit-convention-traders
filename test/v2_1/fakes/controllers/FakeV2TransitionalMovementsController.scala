@@ -30,12 +30,12 @@ import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
 import play.api.test.Helpers.stubControllerComponents
-import v2_1.controllers.V2MovementsController
-import v2_1.models.responses.UpscanResponse
+import v2.controllers.V2MovementsController
+import v2.models.responses.UpscanResponse
 
 import java.time.OffsetDateTime
 
-class FakeV2MovementsController @Inject() ()(implicit val materializer: Materializer)
+class FakeV2TransitionalMovementsController @Inject() ()(implicit val materializer: Materializer)
     extends BaseController
     with V2MovementsController
     with StreamingParsers
@@ -46,12 +46,12 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
   override def createMovement(movementType: MovementType): Action[Source[ByteString, _]] = Action(streamFromMemory) {
     request =>
       request.body.runWith(Sink.ignore)
-      Accepted(Json.obj("version" -> 2.1))
+      Accepted(Json.obj("version" -> 2))
   }
 
   override def getMessage(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] = Action {
     _ =>
-      Ok(Json.obj("version" -> 2.1))
+      Ok(Json.obj("version" -> 2))
   }
 
   override def getMessageIds(
@@ -63,12 +63,12 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
     receivedUntil: Option[OffsetDateTime]
   ): Action[AnyContent] = Action {
     _ =>
-      Ok(Json.obj("version" -> 2.1))
+      Ok(Json.obj("version" -> 2))
   }
 
   override def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent] = Action {
     _ =>
-      Ok(Json.obj("version" -> 2.1))
+      Ok(Json.obj("version" -> 2))
   }
 
   def getMovements(
@@ -82,13 +82,13 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
     localReferenceNumber: Option[LocalReferenceNumber]
   ): Action[AnyContent] = Action {
     _ =>
-      Ok(Json.obj("version" -> 2.1))
+      Ok(Json.obj("version" -> 2))
   }
 
   override def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]] = Action(streamFromMemory) {
     request =>
       request.body.runWith(Sink.ignore)
-      Accepted(Json.obj("version" -> 2.1))
+      Accepted(Json.obj("version" -> 2))
   }
 
   override def attachMessageFromUpscan(
@@ -100,12 +100,12 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
   ): Action[UpscanResponse] =
     Action(parse.json[UpscanResponse]) {
       _ =>
-        Ok(Json.obj("version" -> 2.1))
+        Ok(Json.obj("version" -> 2))
     }
 
   override def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] = Action {
     _ =>
-      Ok(Json.obj("version" -> 2.1))
+      Ok(Json.obj("version" -> 2))
   }
 
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package v2.connectors
+package v2_1.connectors
 
 import com.codahale.metrics.MetricRegistry
 import org.apache.pekko.stream.scaladsl.Sink
@@ -23,6 +23,7 @@ import org.apache.pekko.util.ByteString
 import com.fasterxml.jackson.core.JsonParseException
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
+import config.Constants
 import models.common.MessageId
 import models.common.MovementId
 import models.common.MovementType
@@ -52,21 +53,21 @@ import utils.GuiceWiremockSuite
 import models.common.EORINumber
 import models.common.ItemCount
 import models.common.LocalReferenceNumber
-import v2.models.MessageStatus
+import v2_1.models.MessageStatus
 import models.common.MovementReferenceNumber
 import models.common.PageNumber
-import v2.models.TotalCount
+import v2_1.models.TotalCount
 import models.common.errors.ErrorCode
 import models.common.errors.PresentationError
 import models.common.errors.StandardError
-import v2.models.request.MessageType
-import v2.models.request.MessageUpdate
-import v2.models.responses.MessageSummary
-import v2.models.responses.MovementResponse
-import v2.models.responses.PaginationMessageSummary
-import v2.models.responses.PaginationMovementSummary
-import v2.models.responses.UpdateMovementResponse
-import v2.utils.CommonGenerators
+import v2_1.models.request.MessageType
+import v2_1.models.request.MessageUpdate
+import v2_1.models.responses.MessageSummary
+import v2_1.models.responses.MovementResponse
+import v2_1.models.responses.PaginationMessageSummary
+import v2_1.models.responses.PaginationMovementSummary
+import v2_1.models.responses.UpdateMovementResponse
+import v2_1.utils.CommonGenerators
 
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
@@ -75,7 +76,7 @@ import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 import play.api.http.Status.CREATED
-import v2.base.TestActorSystem
+import v2_1.base.TestActorSystem
 
 class PersistenceConnectorSpec
     extends AnyFreeSpec
@@ -115,6 +116,7 @@ class PersistenceConnectorSpec
           post(
             urlEqualTo(targetUrl(eoriNumber))
           )
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .willReturn(
@@ -133,6 +135,7 @@ class PersistenceConnectorSpec
               1,
               postRequestedFor(urlEqualTo(targetUrl(eoriNumber)))
                 .withHeader("Content-Type", equalTo(MimeTypes.XML))
+                .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             );
         }
     }
@@ -145,6 +148,7 @@ class PersistenceConnectorSpec
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(INTERNAL_SERVER_ERROR)
@@ -177,6 +181,7 @@ class PersistenceConnectorSpec
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(BAD_REQUEST)
@@ -209,6 +214,7 @@ class PersistenceConnectorSpec
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -252,6 +258,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(okResult)))
             )
@@ -277,6 +284,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(INTERNAL_SERVER_ERROR)
@@ -306,6 +314,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(BAD_REQUEST)
@@ -335,6 +344,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -372,6 +382,7 @@ class PersistenceConnectorSpec
           urlEqualTo(targetUrl(eori, departureId, messageSummary.id))
         )
           .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+          .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -436,6 +447,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eori, departureId, messageId))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(NOT_FOUND)
@@ -476,6 +488,7 @@ class PersistenceConnectorSpec
           urlEqualTo(targetUrl(eori, departureId, messageId))
         )
           .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+          .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
           .willReturn(
             aResponse()
               .withStatus(INTERNAL_SERVER_ERROR)
@@ -532,6 +545,7 @@ class PersistenceConnectorSpec
           urlEqualTo(targetUrl(eori, departureId) + defaultFilterParams)
         )
           .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+          .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -563,6 +577,7 @@ class PersistenceConnectorSpec
           urlEqualTo(targetUrlWithTime(eori, departureId, time) + "&page=1&count=25")
         )
           .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+          .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -624,6 +639,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eori, departureId) + defaultFilterParams)
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(NOT_FOUND)
@@ -663,6 +679,7 @@ class PersistenceConnectorSpec
           urlEqualTo(targetUrl(eori, departureId) + defaultFilterParams)
         )
           .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+          .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
           .willReturn(
             aResponse()
               .withStatus(INTERNAL_SERVER_ERROR)
@@ -709,6 +726,7 @@ class PersistenceConnectorSpec
           urlEqualTo(targetUrl)
         )
           .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+          .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -731,6 +749,7 @@ class PersistenceConnectorSpec
           urlEqualTo(targetUrl)
         )
           .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+          .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -759,7 +778,7 @@ class PersistenceConnectorSpec
       server.stubFor(
         get(
           urlEqualTo(targetUrl)
-        )
+        ).withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
           .willReturn(
             aResponse()
               .withStatus(INTERNAL_SERVER_ERROR)
@@ -808,6 +827,7 @@ class PersistenceConnectorSpec
           urlEqualTo(targetUrl(eori) + defaultFilterParams)
         )
           .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+          .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -843,6 +863,7 @@ class PersistenceConnectorSpec
             .withQueryParam("page", equalTo(pageNumber.value.toString))
             .withQueryParam("count", equalTo(itemCount.value.toString))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -885,6 +906,8 @@ class PersistenceConnectorSpec
           )
             .withQueryParam("updatedSince", equalTo(DateTimeFormatter.ISO_DATE_TIME.format(updatedSince)))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -928,6 +951,7 @@ class PersistenceConnectorSpec
             )
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -1046,6 +1070,7 @@ class PersistenceConnectorSpec
           urlEqualTo(targetUrl(eori) + defaultFilterParams)
         )
           .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+          .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -1077,6 +1102,7 @@ class PersistenceConnectorSpec
           urlEqualTo(targetUrl(eori) + defaultFilterParams)
         )
           .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+          .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
           .willReturn(
             aResponse()
               .withStatus(INTERNAL_SERVER_ERROR)
@@ -1125,6 +1151,7 @@ class PersistenceConnectorSpec
               urlEqualTo(targetUrl(departureId))
             )
               .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+              .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
               .withHeader("X-Message-Type", equalTo(messageType.code))
               .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
               .willReturn(
@@ -1150,6 +1177,7 @@ class PersistenceConnectorSpec
               .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
               .withHeader("X-Message-Type", equalTo(messageType.code))
               .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+              .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
               .willReturn(
                 aResponse()
                   .withStatus(INTERNAL_SERVER_ERROR)
@@ -1183,6 +1211,8 @@ class PersistenceConnectorSpec
               .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
               .withHeader("X-Message-Type", equalTo(messageType.code))
               .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+              .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
+              .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
               .willReturn(
                 aResponse()
                   .withStatus(BAD_REQUEST)
@@ -1216,6 +1246,7 @@ class PersistenceConnectorSpec
               .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
               .withHeader("X-Message-Type", equalTo(messageType.code))
               .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+              .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
               .willReturn(
                 aResponse()
                   .withStatus(OK)
@@ -1339,6 +1370,7 @@ class PersistenceConnectorSpec
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(okResult)))
             )
@@ -1362,6 +1394,7 @@ class PersistenceConnectorSpec
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(INTERNAL_SERVER_ERROR)
@@ -1394,6 +1427,7 @@ class PersistenceConnectorSpec
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(BAD_REQUEST)
@@ -1426,6 +1460,7 @@ class PersistenceConnectorSpec
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -1467,6 +1502,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(okResult)))
             )
@@ -1487,6 +1523,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(INTERNAL_SERVER_ERROR)
@@ -1516,6 +1553,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(BAD_REQUEST)
@@ -1545,6 +1583,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eoriNumber))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -1589,6 +1628,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eoriNumber, movementType, movementId, messageId))
           ).withRequestBody(equalToJson(Json.stringify(Json.toJson(messageUpdate))))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse().withStatus(OK)
             )
@@ -1612,6 +1652,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eoriNumber, movementType, movementId, messageId))
           ).withRequestBody(equalToJson(Json.stringify(Json.toJson(messageUpdate))))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(INTERNAL_SERVER_ERROR)
@@ -1644,6 +1685,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eoriNumber, movementType, movementId, messageId))
           ).withRequestBody(equalToJson(Json.stringify(Json.toJson(messageUpdate))))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(BAD_REQUEST)
@@ -1684,6 +1726,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eori, arrivalId) + defaultFilterParams)
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -1714,6 +1757,7 @@ class PersistenceConnectorSpec
             .withQueryParam("page", equalTo("1"))
             .withQueryParam("count", equalTo("25"))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -1737,6 +1781,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eori, arrivalId) + defaultFilterParams)
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -1774,6 +1819,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eori, arrivalId) + defaultFilterParams)
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(NOT_FOUND)
@@ -1811,6 +1857,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eori, arrivalId) + defaultFilterParams)
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(INTERNAL_SERVER_ERROR)
@@ -1893,6 +1940,7 @@ class PersistenceConnectorSpec
             .withQueryParam("count", equalTo(itemCount.value.toString))
             .withQueryParam("receivedUntil", equalTo(DateTimeFormatter.ISO_DATE_TIME.format(updatedSince)))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -1936,6 +1984,7 @@ class PersistenceConnectorSpec
           )
             .withQueryParam("updatedSince", equalTo(DateTimeFormatter.ISO_DATE_TIME.format(updatedSince)))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -1979,6 +2028,7 @@ class PersistenceConnectorSpec
             )
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -2020,6 +2070,7 @@ class PersistenceConnectorSpec
           get(
             urlEqualTo(targetUrl(eori) + s"?page=${pageNumber.getOrElse(PageNumber(1)).value}&count=${itemCount.getOrElse(ItemCount(25)).value}")
           )
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -2061,6 +2112,7 @@ class PersistenceConnectorSpec
           get(
             urlEqualTo(targetUrl(eori) + s"?localReferenceNumber=${localReferenceNumber.value}&page=1&count=25")
           )
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -2106,6 +2158,7 @@ class PersistenceConnectorSpec
             .withQueryParam("movementEORI", equalTo(movementEORI.value))
             .withQueryParam("movementReferenceNumber", equalTo(movementReferenceNumber.value))
             .withQueryParam("localReferenceNumber", equalTo(localReferenceNumber.value))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -2138,6 +2191,7 @@ class PersistenceConnectorSpec
           urlEqualTo(targetUrl(eori) + defaultFilterParams)
         )
           .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+          .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -2169,6 +2223,7 @@ class PersistenceConnectorSpec
           urlEqualTo(targetUrl(eori) + defaultFilterParams)
         )
           .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+          .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
           .willReturn(
             aResponse()
               .withStatus(INTERNAL_SERVER_ERROR)
@@ -2214,6 +2269,7 @@ class PersistenceConnectorSpec
           urlEqualTo(targetUrl)
         )
           .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+          .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -2236,6 +2292,7 @@ class PersistenceConnectorSpec
           urlEqualTo(targetUrl)
         )
           .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+          .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -2266,6 +2323,7 @@ class PersistenceConnectorSpec
           urlEqualTo(targetUrl)
         )
           .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+          .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
           .willReturn(
             aResponse()
               .withStatus(INTERNAL_SERVER_ERROR)
@@ -2314,6 +2372,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eori, arrivalId, messageId))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -2341,6 +2400,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eori, arrivalId, messageId))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -2379,6 +2439,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eori, arrivalId, messageId))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(NOT_FOUND)
@@ -2420,6 +2481,7 @@ class PersistenceConnectorSpec
             urlEqualTo(targetUrl(eori, arrivalId, messageId))
           )
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(INTERNAL_SERVER_ERROR)
@@ -2471,6 +2533,7 @@ class PersistenceConnectorSpec
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse().withStatus(CREATED)
             )
@@ -2500,6 +2563,7 @@ class PersistenceConnectorSpec
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(INTERNAL_SERVER_ERROR)
@@ -2545,6 +2609,7 @@ class PersistenceConnectorSpec
           )
             .withHeader(HeaderNames.ACCEPT, equalTo(MimeTypes.XML))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse().withStatus(OK).withBody("<test></test>")
             )
@@ -2574,6 +2639,7 @@ class PersistenceConnectorSpec
           )
             .withHeader(HeaderNames.ACCEPT, equalTo(MimeTypes.XML))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(NOT_FOUND)
@@ -2610,6 +2676,7 @@ class PersistenceConnectorSpec
           )
             .withHeader(HeaderNames.ACCEPT, equalTo(MimeTypes.XML))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(INTERNAL_SERVER_ERROR)

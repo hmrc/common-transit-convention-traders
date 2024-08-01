@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package v2.connectors
+package v2_1.connectors
 
 import com.codahale.metrics.MetricRegistry
 import org.apache.pekko.stream.scaladsl.Source
@@ -53,11 +53,11 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.WiremockSuite
-import v2.models._
-import v2.models.request.Details
-import v2.models.request.MessageType
-import v2.models.request.Metadata
-import v2.utils.CommonGenerators
+import v2_1.models._
+import v2_1.models.request.Details
+import v2_1.models.request.MessageType
+import v2_1.models.request.Metadata
+import v2_1.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -111,6 +111,7 @@ class AuditingConnectorSpec
                   .withHeader("X-Audit-Meta-Message-Type", equalTo(messageType.code))
                   .withHeader("X-Audit-Meta-Movement-Type", equalTo(movementType.movementType))
                   .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
+                  .withHeader(Constants.APIVersionHeaderKey, equalTo("final"))
                   .withHeader(Constants.XClientIdHeader, equalTo(clientId))
                   .willReturn(aResponse().withStatus(ACCEPTED))
               )
@@ -153,6 +154,7 @@ class AuditingConnectorSpec
                   .withHeader("X-Audit-Meta-EORI", equalTo(eori.value))
                   .withHeader("X-Audit-Meta-Path", equalTo("/customs/transits/movements"))
                   .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
+                  .withHeader(Constants.APIVersionHeaderKey, equalTo("final"))
                   .willReturn(aResponse().withStatus(ACCEPTED))
               )
 
@@ -192,6 +194,7 @@ class AuditingConnectorSpec
                   .withHeader("X-Audit-Meta-Movement-Type", equalTo(movementType.movementType))
                   .withHeader("X-Audit-Meta-Path", equalTo("/customs/transits/movements"))
                   .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
+                  .withHeader(Constants.APIVersionHeaderKey, equalTo("final"))
                   .willReturn(aResponse().withStatus(ACCEPTED))
               )
 
@@ -225,6 +228,7 @@ class AuditingConnectorSpec
                 .withHeader(Constants.XContentLengthHeader, equalTo(contentSize.toString))
                 .withHeader("X-Audit-Meta-Path", equalTo("/customs/transits/movements"))
                 .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
+                .withHeader(Constants.APIVersionHeaderKey, equalTo("final"))
                 .willReturn(aResponse().withStatus(ACCEPTED))
             )
 
@@ -272,6 +276,7 @@ class AuditingConnectorSpec
                       .withHeader("X-Audit-Meta-Message-Type", equalTo(messageType.code))
                       .withHeader("X-Audit-Meta-Movement-Type", equalTo(movementType.movementType))
                       .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
+                      .withHeader(Constants.APIVersionHeaderKey, equalTo("final"))
                       .willReturn(aResponse().withStatus(statusCode))
                   )
 
@@ -330,6 +335,7 @@ class AuditingConnectorSpec
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo("application/json"))
             .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .withRequestBody(
               equalToJson(
@@ -379,6 +385,7 @@ class AuditingConnectorSpec
                 .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
                 .withHeader(HeaderNames.CONTENT_TYPE, equalTo("application/json"))
                 .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
+                .withHeader(Constants.APIVersionHeaderKey, equalTo("final"))
                 .withRequestBody(
                   equalToJson(
                     Json.stringify(

@@ -92,6 +92,7 @@ class UpscanConnectorImpl @Inject() (appConfig: AppConfig, httpClientV2: HttpCli
         httpClientV2
           .post(url"$url")
           .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
+          .setHeader(Constants.APIVersionHeaderKey -> Constants.APIVersionFinalHeaderValue)
           .withBody(Json.toJson(upscanInitiate))
           .executeAndDeserialise[UpscanInitiateResponse]
     }

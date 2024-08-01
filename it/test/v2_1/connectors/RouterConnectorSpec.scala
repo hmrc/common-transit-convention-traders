@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package v2.connectors
+package v2_1.connectors
 
 import com.codahale.metrics.MetricRegistry
 import org.apache.pekko.stream.Materializer
@@ -45,12 +45,12 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.GuiceWiremockSuite
 import models.common.EORINumber
-import v2.models.SubmissionRoute
+import v2_1.models.SubmissionRoute
 import models.common.errors.ErrorCode
 import models.common.errors.PresentationError
 import models.common.errors.StandardError
-import v2.models.request.MessageType
-import v2.utils.CommonGenerators
+import v2_1.models.request.MessageType
+import v2_1.utils.CommonGenerators
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext
@@ -99,6 +99,7 @@ class RouterConnectorSpec
             urlEqualTo(targetUrl(eoriNumber, messageType, movementId, messageId))
           ).withRequestBody(equalToXml(<test></test>.mkString))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withHeader(Constants.XMessageTypeHeader, equalTo(messageType.code))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .willReturn(aResponse().withStatus(CREATED))
@@ -131,6 +132,7 @@ class RouterConnectorSpec
             urlEqualTo(targetUrl(eoriNumber, messageType, movementId, messageId))
           ).withRequestBody(equalToXml(<test></test>.mkString))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withHeader(Constants.XMessageTypeHeader, equalTo(messageType.code))
             .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
@@ -166,6 +168,7 @@ class RouterConnectorSpec
             urlEqualTo(targetUrl(eoriNumber, messageType, movementId, messageId))
           ).withRequestBody(equalToXml(<test></test>.mkString))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withHeader(Constants.XMessageTypeHeader, equalTo(messageType.code))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .willReturn(

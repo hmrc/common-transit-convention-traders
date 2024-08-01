@@ -115,6 +115,7 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
         .setHeader(
           HeaderNames.CONTENT_TYPE       -> contentType,
           Constants.XContentLengthHeader -> contentLength.toString,
+          Constants.APIVersionHeaderKey  -> Constants.APIVersionFinalHeaderValue,
           "X-Audit-Meta-Path"            -> path,
           "X-Audit-Source"               -> "common-transit-convention-traders"
         )
@@ -142,8 +143,9 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
         .post(url"$url")
         .withInternalAuthToken
         .setHeader(
-          "X-Audit-Source"         -> "common-transit-convention-traders",
-          HeaderNames.CONTENT_TYPE -> MimeTypes.JSON
+          "X-Audit-Source"              -> "common-transit-convention-traders",
+          HeaderNames.CONTENT_TYPE      -> MimeTypes.JSON,
+          Constants.APIVersionHeaderKey -> Constants.APIVersionFinalHeaderValue
         )
         .withClientId
         .withBody(Json.toJson(details))

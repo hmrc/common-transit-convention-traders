@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package v2.connectors
+package v2_1.connectors
 
 import com.codahale.metrics.MetricRegistry
 import org.apache.pekko.stream.scaladsl.Sink
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
+import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
+import config.Constants
 import io.lemonlabs.uri.Url
 import models.common.ClientId
 import models.common.MessageId
@@ -46,13 +48,13 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.WiremockSuite
-import v2.base.TestActorSystem
+import v2_1.base.TestActorSystem
 import models.common.EORINumber
-import v2.models.responses.UpscanFormTemplate
-import v2.models.responses.UpscanInitiateResponse
-import v2.models.responses.UpscanReference
-import v2.models.responses.UpscanResponse.DownloadUrl
-import v2.utils.CommonGenerators
+import v2_1.models.responses.UpscanFormTemplate
+import v2_1.models.responses.UpscanInitiateResponse
+import v2_1.models.responses.UpscanReference
+import v2_1.models.responses.UpscanResponse.DownloadUrl
+import v2_1.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -107,6 +109,7 @@ class UpscanConnectorSpec
           post(
             urlEqualTo("/upscan/v2/initiate")
           )
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withRequestBody(
               equalToJson(s"""{
                   |    "callbackUrl": "https://ctc.hmrc.gov.uk/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}?clientId=${clientId.value}",
@@ -140,6 +143,7 @@ class UpscanConnectorSpec
           post(
             urlEqualTo("/upscan/v2/initiate")
           )
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withRequestBody(
               equalToJson(s"""{
                    |    "callbackUrl": "https://ctc.hmrc.gov.uk/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}",
@@ -164,7 +168,7 @@ class UpscanConnectorSpec
       server.stubFor(
         post(
           urlEqualTo("/upscan/v2/initiate")
-        ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
+        ).withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue)).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
       )
       implicit val hc: HeaderCarrier = HeaderCarrier()
       val result = sut
@@ -190,9 +194,10 @@ class UpscanConnectorSpec
       server.stubFor(
         get(
           urlEqualTo("/") // encode only path part of URL
-        ).willReturn(
-          aResponse().withStatus(OK).withBody(expectedResponse)
         )
+          .willReturn(
+            aResponse().withStatus(OK).withBody(expectedResponse)
+          )
       )
       implicit val hc: HeaderCarrier = HeaderCarrier()
       val result                     = sut.upscanGetFile(DownloadUrl(Url.parse(server.baseUrl()).toString()))
@@ -212,7 +217,7 @@ class UpscanConnectorSpec
       server.stubFor(
         get(
           urlEqualTo("/") // encode only path part of URL
-        ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
+        ).withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue)).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
       )
       implicit val hc: HeaderCarrier = HeaderCarrier()
       val result = sut

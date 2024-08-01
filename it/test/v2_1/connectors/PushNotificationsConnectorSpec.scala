@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package v2.connectors
+package v2_1.connectors
 
 import com.codahale.metrics.MetricRegistry
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
@@ -24,6 +24,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.patch
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
+import config.Constants
 import io.lemonlabs.uri.Url
 import models.common.MessageId
 import models.common.MovementId
@@ -50,8 +51,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.WiremockSuite
-import v2.models.request.PushNotificationsAssociation
-import v2.utils.CommonGenerators
+import v2_1.models.request.PushNotificationsAssociation
+import v2_1.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -101,6 +102,7 @@ class PushNotificationsConnectorSpec
               box => mapping.withRequestBody(matchingJsonPath(s"$$[?(@.boxId == '${box.value}')]"))
             )
             .getOrElse(mapping)
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(CREATED)
@@ -128,6 +130,7 @@ class PushNotificationsConnectorSpec
           post(
             urlEqualTo(targetUrl(movementId))
           )
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.JSON))
             .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
@@ -160,6 +163,7 @@ class PushNotificationsConnectorSpec
           patch(
             urlEqualTo(targetUrl(movementId))
           )
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .willReturn(aResponse().withStatus(NO_CONTENT))
         )
@@ -182,6 +186,7 @@ class PushNotificationsConnectorSpec
           patch(
             urlEqualTo(targetUrl(movementId))
           )
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .willReturn(aResponse().withStatus(statusCode))
         )
@@ -225,6 +230,7 @@ class PushNotificationsConnectorSpec
 
         server.stubFor(
           post(expectedUrl)
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withHeader("Content-Type", equalTo("application/json"))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .withRequestBody(equalTo(jsonRequest))
@@ -254,6 +260,7 @@ class PushNotificationsConnectorSpec
 
         server.stubFor(
           post(expectedUrl)
+            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withHeader("Content-Type", equalTo("application/json"))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .withRequestBody(equalTo(jsonRequest))

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package v2.utils
+package v2_1.utils
 
 import models.common.ClientId
 import models.common.EORINumber
@@ -28,14 +28,14 @@ import models.common.PageNumber
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
-import v2.models._
-import v2.models.request.MessageType
-import v2.models.request.MessageUpdate
-import v2.models.request.PushNotificationsAssociation
-import v2.models.responses.BoxResponse
-import v2.models.responses.MessageSummary
-import v2.models.responses.MovementResponse
-import v2.models.responses.MovementSummary
+import v2_1.models._
+import v2_1.models.request.MessageType
+import v2_1.models.request.MessageUpdate
+import v2_1.models.request.PushNotificationsAssociation
+import v2_1.models.responses.BoxResponse
+import v2_1.models.responses.MessageSummary
+import v2_1.models.responses.MovementResponse
+import v2_1.models.responses.MovementSummary
 
 import java.time.Instant
 import java.time.OffsetDateTime

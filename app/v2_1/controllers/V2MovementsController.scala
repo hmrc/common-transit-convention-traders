@@ -51,6 +51,10 @@ import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.mvc._
+import routing.VERSION_2_1_ACCEPT_HEADER_VALUE_JSON
+import routing.VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML
+import routing.VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
+import routing.VERSION_2_1_ACCEPT_HEADER_VALUE_XML
 import routing.VERSION_2_ACCEPT_HEADER_VALUE_JSON
 import routing.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML
 import routing.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
@@ -145,14 +149,14 @@ class V2MovementsControllerImpl @Inject() (
   private lazy val jsonOnlyAcceptHeader = Seq(VERSION_2_ACCEPT_HEADER_VALUE_JSON.value)
 
   private lazy val jsonAndXmlAcceptHeaders = Seq(
-    VERSION_2_ACCEPT_HEADER_VALUE_JSON.value,
-    VERSION_2_ACCEPT_HEADER_VALUE_XML.value
+    VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value,
+    VERSION_2_1_ACCEPT_HEADER_VALUE_XML.value
   )
 
   private lazy val jsonAndJsonWrappedXmlAcceptHeaders = Seq(
-    VERSION_2_ACCEPT_HEADER_VALUE_JSON.value,
-    VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.value,
-    VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value
+    VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value,
+    VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML.value,
+    VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value
   )
 
   private def contentSizeIsLessThanLimit(size: Long): EitherT[Future, PresentationError, Unit] = EitherT {
