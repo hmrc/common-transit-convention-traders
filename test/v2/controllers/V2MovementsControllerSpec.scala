@@ -22,6 +22,11 @@ import cats.implicits.catsStdInstancesForFuture
 import cats.implicits.toBifunctorOps
 import com.codahale.metrics.MetricRegistry
 import config.AppConfig
+import models.common._
+import models.common.errors.ExtractionError.MessageTypeNotFound
+import models.common.errors.FailedToValidateError.InvalidMessageTypeError
+import models.common.errors.FailedToValidateError.JsonSchemaFailedToValidateError
+import models.common.errors._
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Flow
 import org.apache.pekko.stream.scaladsl.Keep
@@ -79,10 +84,6 @@ import v2.fakes.controllers.actions.FakeAcceptHeaderActionProvider
 import v2.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import v2.models.AuditType._
 import v2.models._
-import v2.models.errors.ExtractionError.MessageTypeNotFound
-import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
-import v2.models.errors.FailedToValidateError.JsonSchemaFailedToValidateError
-import v2.models.errors._
 import v2.models.request.MessageType
 import v2.models.request.MessageUpdate
 import v2.models.responses.UpscanResponse.DownloadUrl

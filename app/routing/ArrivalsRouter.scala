@@ -24,31 +24,33 @@ import com.google.inject.Inject
 import config.AppConfig
 import controllers.V1ArrivalMessagesController
 import controllers.V1ArrivalMovementController
+import controllers.common.stream.StreamingParsers
+import models.common.EORINumber
+import models.common.ItemCount
+import models.common.LocalReferenceNumber
+import models.common.MovementReferenceNumber
+import models.common.MovementType
+import models.common.PageNumber
+import models.common.errors.PresentationError
+import models.common.{MessageId => V2MessageId}
+import models.common.{MovementId => V2ArrivalId}
 import play.api.mvc.Action
 import v2.models.Bindings._
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
-import v2.controllers.V2MovementsController
-import v2.controllers.stream.StreamingParsers
+import v2.controllers.{V2MovementsController => V2TransitionalMovementsController}
+import v2_1.controllers.V2MovementsController
 import models.domain.{MessageId => V1MessageId}
-import v2.models.EORINumber
-import v2.models.ItemCount
-import v2.models.LocalReferenceNumber
-import v2.models.MovementReferenceNumber
-import v2.models.MovementType
-import v2.models.PageNumber
-import v2.models.{MessageId => V2MessageId}
-import v2.models.{MovementId => V2ArrivalId}
 import models.domain.{ArrivalId => V1ArrivalId}
 import play.api.Logging
 import play.api.libs.json.Json
-import v2.models.errors.PresentationError
 
 import java.time.OffsetDateTime
 
 class ArrivalsRouter @Inject() (
   val controllerComponents: ControllerComponents,
   v1Arrivals: V1ArrivalMovementController,
+  v2TransitionalArrivals: V2TransitionalMovementsController,
   v2Arrivals: V2MovementsController,
   v1ArrivalMessages: V1ArrivalMessagesController,
   config: AppConfig
@@ -62,8 +64,10 @@ class ArrivalsRouter @Inject() (
   def createArrivalNotification(): Action[Source[ByteString, _]] =
     route {
       case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-        if (config.enablePhase5) v2Arrivals.createMovement(MovementType.Arrival)
+        if (config.enablePhase5) v2TransitionalArrivals.createMovement(MovementType.Arrival)
         else handleEnablingPhase5()
+      case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+        v2Arrivals.createMovement(MovementType.Arrival)
       case _ =>
         if (config.disablePhase4) handleDisablingPhase4()
         else v1Arrivals.createArrivalNotification()
@@ -83,8 +87,10 @@ class ArrivalsRouter @Inject() (
     route {
       case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
         if (config.enablePhase5)
-          runIfBound[V2ArrivalId]("arrivalId", arrivalId, v2Arrivals.getMovement(MovementType.Arrival, _))
+          runIfBound[V2ArrivalId]("arrivalId", arrivalId, v2TransitionalArrivals.getMovement(MovementType.Arrival, _))
         else handleEnablingPhase5()
+      case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+        runIfBound[V2ArrivalId]("arrivalId", arrivalId, v2Arrivals.getMovement(MovementType.Arrival, _))
       case _ =>
         runIfBound[V1ArrivalId](
           "arrivalId",
@@ -102,8 +108,14 @@ class ArrivalsRouter @Inject() (
   ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
       if (config.enablePhase5)
-        runIfBound[V2ArrivalId]("arrivalId", arrivalId, v2Arrivals.getMessageIds(MovementType.Arrival, _, receivedSince, page, count, receivedUntil))
+        runIfBound[V2ArrivalId](
+          "arrivalId",
+          arrivalId,
+          v2TransitionalArrivals.getMessageIds(MovementType.Arrival, _, receivedSince, page, count, receivedUntil)
+        )
       else handleEnablingPhase5()
+    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+      runIfBound[V2ArrivalId]("arrivalId", arrivalId, v2Arrivals.getMessageIds(MovementType.Arrival, _, receivedSince, page, count, receivedUntil))
     case _ =>
       runIfBound[V1ArrivalId](
         "arrivalId",
@@ -122,10 +134,21 @@ class ArrivalsRouter @Inject() (
             runIfBound[V2MessageId](
               "messageId",
               messageId,
-              v2Arrivals.getMessage(MovementType.Arrival, boundArrivalId, _)
+              v2TransitionalArrivals.getMessage(MovementType.Arrival, boundArrivalId, _)
             )
         )
       else handleEnablingPhase5()
+    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+      runIfBound[V2ArrivalId](
+        "arrivalId",
+        arrivalId,
+        boundArrivalId =>
+          runIfBound[V2MessageId](
+            "messageId",
+            messageId,
+            v2Arrivals.getMessage(MovementType.Arrival, boundArrivalId, _)
+          )
+      )
     case _ =>
       runIfBound[V1ArrivalId](
         "arrivalId",
@@ -145,15 +168,28 @@ class ArrivalsRouter @Inject() (
   ): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
       if (config.enablePhase5)
-        v2Arrivals.getMovements(MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
+        v2TransitionalArrivals.getMovements(
+          MovementType.Arrival,
+          updatedSince,
+          movementEORI,
+          movementReferenceNumber,
+          page,
+          count,
+          receivedUntil,
+          localReferenceNumber
+        )
       else handleEnablingPhase5()
+    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+      v2Arrivals.getMovements(MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
     case _ => v1Arrivals.getArrivalsForEori(updatedSince)
   }
 
   def attachMessage(arrivalId: String): Action[Source[ByteString, _]] = route {
     case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      if (config.enablePhase5) runIfBound[V2ArrivalId]("arrivalId", arrivalId, v2Arrivals.attachMessage(MovementType.Arrival, _))
+      if (config.enablePhase5) runIfBound[V2ArrivalId]("arrivalId", arrivalId, v2TransitionalArrivals.attachMessage(MovementType.Arrival, _))
       else handleEnablingPhase5()
+    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+      runIfBound[V2ArrivalId]("arrivalId", arrivalId, v2Arrivals.attachMessage(MovementType.Arrival, _))
     case _ =>
       runIfBound[V1ArrivalId](
         "arrivalId",

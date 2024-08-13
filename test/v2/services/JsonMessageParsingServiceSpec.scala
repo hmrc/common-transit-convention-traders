@@ -17,6 +17,7 @@
 package v2.services
 
 import cats.implicits.catsSyntaxEitherId
+import models.common.errors.ExtractionError
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -26,7 +27,6 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import v2.base.StreamTestHelpers
 import v2.base.TestActorSystem
-import v2.models.errors.ExtractionError
 import v2.models.request.MessageType
 
 import scala.concurrent.ExecutionContext.Implicits.global

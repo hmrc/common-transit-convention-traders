@@ -18,6 +18,12 @@ package v2.controllers
 
 import cats.data.NonEmptyList
 import cats.syntax.all._
+import models.common.LocalReferenceNumber
+import models.common.MessageId
+import models.common.MovementId
+import models.common.MovementType
+import models.common.errors.FailedToValidateError._
+import models.common.errors._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
@@ -28,26 +34,6 @@ import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.Logging
 import v2.base.TestCommonGenerators
-import v2.models.LocalReferenceNumber
-import v2.models.MessageId
-import v2.models.MovementId
-import v2.models.MovementType
-import v2.models.errors.ConversionError
-import v2.models.errors.ExtractionError
-import v2.models.errors.FailedToValidateError
-import v2.models.errors.JsonValidationError
-import v2.models.errors.PersistenceError
-import v2.models.errors.PresentationError
-import v2.models.errors.RouterError
-import v2.models.errors.StreamingError
-import v2.models.errors.UpscanError
-import v2.models.errors.XmlValidationError
-import v2.models.errors.FailedToValidateError.BusinessValidationError
-import v2.models.errors.FailedToValidateError.InvalidMessageTypeError
-import v2.models.errors.FailedToValidateError.JsonSchemaFailedToValidateError
-import v2.models.errors.FailedToValidateError.ParsingError
-import v2.models.errors.FailedToValidateError.UnexpectedError
-import v2.models.errors.FailedToValidateError.XmlSchemaFailedToValidateError
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

@@ -17,6 +17,8 @@
 package routing
 
 import cats.implicits.catsSyntaxEitherId
+import controllers.common.stream.StreamingParsers
+import models.common.errors.PresentationError
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
@@ -28,8 +30,6 @@ import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.PathBindable
 import play.api.mvc.Request
-import v2.controllers.stream.StreamingParsers
-import v2.models.errors.PresentationError
 
 import scala.concurrent.Future
 import scala.util.matching.Regex
@@ -41,11 +41,15 @@ sealed trait VersionedAcceptHeader {
 object VersionedAcceptHeader {
 
   def apply(value: String): Either[PresentationError, VersionedAcceptHeader] = value match {
-    case VERSION_2_ACCEPT_HEADER_VALUE_XML.value             => VERSION_2_ACCEPT_HEADER_VALUE_XML.asRight
-    case VERSION_2_ACCEPT_HEADER_VALUE_JSON.value            => VERSION_2_ACCEPT_HEADER_VALUE_JSON.asRight
-    case VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.value        => VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.asRight
-    case VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value => VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.asRight
-    case invalidAcceptHeader                                 => PresentationError.notAcceptableError(s"Invalid accept header: $invalidAcceptHeader").asLeft
+    case VERSION_2_ACCEPT_HEADER_VALUE_XML.value               => VERSION_2_ACCEPT_HEADER_VALUE_XML.asRight
+    case VERSION_2_ACCEPT_HEADER_VALUE_JSON.value              => VERSION_2_ACCEPT_HEADER_VALUE_JSON.asRight
+    case VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.value          => VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.asRight
+    case VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value   => VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.asRight
+    case VERSION_2_1_ACCEPT_HEADER_VALUE_XML.value             => VERSION_2_ACCEPT_HEADER_VALUE_XML.asRight
+    case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value            => VERSION_2_ACCEPT_HEADER_VALUE_JSON.asRight
+    case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML.value        => VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.asRight
+    case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value => VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.asRight
+    case invalidAcceptHeader                                   => PresentationError.notAcceptableError(s"Invalid accept header: $invalidAcceptHeader").asLeft
   }
 }
 
@@ -65,14 +69,35 @@ case object VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN extends VersionedAccep
   override val value: String = "application/vnd.hmrc.2.0+json-xml"
 }
 
+case object VERSION_2_1_ACCEPT_HEADER_VALUE_XML extends VersionedAcceptHeader {
+  override val value: String = "application/vnd.hmrc.2.1+xml"
+}
+
+case object VERSION_2_1_ACCEPT_HEADER_VALUE_JSON extends VersionedAcceptHeader {
+  override val value: String = "application/vnd.hmrc.2.1+json"
+}
+
+case object VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML extends VersionedAcceptHeader {
+  override val value: String = "application/vnd.hmrc.2.1+json+xml"
+}
+
+case object VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN extends VersionedAcceptHeader {
+  override val value: String = "application/vnd.hmrc.2.1+json-xml"
+}
+
 object VersionedRouting {
-  val VERSION_2_ACCEPT_HEADER_PATTERN: Regex = """^application/vnd\.hmrc\.2\.0\+.+$""".r
+  val VERSION_2_ACCEPT_HEADER_PATTERN: Regex   = """^application/vnd\.hmrc\.2\.0\+.+$""".r
+  val VERSION_2_1_ACCEPT_HEADER_PATTERN: Regex = """^application/vnd\.hmrc\.2\.1\+.+$""".r
 
   def formatAccept(header: String): Either[PresentationError, VersionedAcceptHeader] = {
-    val splitHeader = """^(application/vnd\.hmrc\.2\.0\+)(.+)""".r
+    val version2SplitHeader   = """^(application/vnd\.hmrc\.2\.0\+)(.+)""".r
+    val version2_1SplitHeader = """^(application/vnd\.hmrc\.2\.1\+)(.+)""".r
 
     header match {
-      case splitHeader(frameworkPath, ctcPath) =>
+      case version2SplitHeader(frameworkPath, ctcPath) =>
+        val formattedHeader = frameworkPath + ctcPath.toLowerCase
+        VersionedAcceptHeader(formattedHeader)
+      case version2_1SplitHeader(frameworkPath, ctcPath) =>
         val formattedHeader = frameworkPath + ctcPath.toLowerCase
         VersionedAcceptHeader(formattedHeader)
       case invalidHeader => PresentationError.notAcceptableError(s"Invalid accept header: $invalidHeader").asLeft

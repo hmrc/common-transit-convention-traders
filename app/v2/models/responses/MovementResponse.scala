@@ -16,10 +16,10 @@
 
 package v2.models.responses
 
+import models.common.MessageId
+import models.common.MovementId
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
-import v2.models.MessageId
-import v2.models.MovementId
 
 object MovementResponse {
   implicit lazy val movementResponseFormat: OFormat[MovementResponse] = Json.format[MovementResponse]

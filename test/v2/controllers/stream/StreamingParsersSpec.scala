@@ -16,6 +16,8 @@
 
 package v2.controllers.stream
 
+import controllers.common.BodyReplaceableRequest
+import controllers.common.stream.StreamingParsers
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
@@ -41,7 +43,6 @@ import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
 import v2.base.TestActorSystem
 import v2.base.TestSourceProvider
-import v2.controllers.request.BodyReplaceableRequest
 
 import java.nio.charset.StandardCharsets
 import scala.annotation.tailrec

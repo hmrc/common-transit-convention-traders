@@ -16,10 +16,13 @@
 
 package v2.services
 
+import cats.data.NonEmptyList
+import models.common.errors.FailedToValidateError
+import models.common.errors.JsonValidationError
+import models.common.errors.XmlValidationError
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
-import cats.data.NonEmptyList
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -34,19 +37,12 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import v2.connectors.ValidationConnector
-import v2.models.errors.FailedToValidateError
-import v2.models.errors.JsonValidationError
-import v2.models.errors.XmlValidationError
 import v2.models.request.MessageType
-import v2.models.responses.BusinessValidationResponse
-import v2.models.responses.JsonSchemaValidationResponse
-import v2.models.responses.JsonValidationErrorResponse
-import v2.models.responses.XmlSchemaValidationResponse
-import v2.models.responses.XmlValidationErrorResponse
+import v2.models.responses._
 
 import java.nio.charset.StandardCharsets
-import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar {

@@ -19,7 +19,9 @@ package v2.controllers.actions
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import config.Constants._
-import v2.controllers.request.AuthenticatedRequest
+import models.common.EORINumber
+import models.common.errors.PresentationError
+import controllers.common.AuthenticatedRequest
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.Results._
@@ -28,8 +30,6 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
-import v2.models.EORINumber
-import v2.models.errors.PresentationError
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future

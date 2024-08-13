@@ -16,13 +16,13 @@
 
 package v2.models.request
 
+import models.common.MovementType
 import play.api.libs.json.JsError
 import play.api.libs.json.JsString
 import play.api.libs.json.JsSuccess
 import play.api.libs.json.Reads
 import play.api.libs.json.Writes
 import v2.models.AuditType
-import v2.models.MovementType
 
 sealed trait MessageType {
   def code: String

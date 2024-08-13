@@ -31,8 +31,8 @@ import org.apache.pekko.util.ByteString
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
+import models.common.errors.ExtractionError
 import uk.gov.hmrc.http.HeaderCarrier
-import v2.models.errors.ExtractionError
 import v2.models.request.MessageType
 
 import javax.inject.Singleton

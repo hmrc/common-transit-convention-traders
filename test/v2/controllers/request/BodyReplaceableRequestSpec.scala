@@ -16,13 +16,14 @@
 
 package v2.controllers.request
 
+import controllers.common.AuthenticatedRequest
+import models.common.EORINumber
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
-import v2.models.EORINumber
 
 class BodyReplaceableRequestSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 

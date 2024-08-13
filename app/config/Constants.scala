@@ -47,4 +47,7 @@ object Constants {
 
   val MissingECCEnrolmentMessage: String =
     "User does not have the ECC enrolment, and will be unable to submit phase 5 declarations. See https://www.gov.uk/guidance/how-to-subscribe-to-the-new-computerised-transit-system"
+
+  val APIVersionHeaderKey        = "APIVersion"
+  val APIVersionFinalHeaderValue = "final"
 }

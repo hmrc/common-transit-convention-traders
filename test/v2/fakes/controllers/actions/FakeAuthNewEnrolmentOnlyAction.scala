@@ -16,17 +16,17 @@
 
 package v2.fakes.controllers.actions
 
+import models.common.EORINumber
 import play.api.mvc.AnyContent
 import play.api.mvc.BodyParser
 import play.api.mvc.Request
 import play.api.mvc.Result
 import play.api.test.Helpers
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
-import v2.controllers.request.AuthenticatedRequest
-import v2.models.EORINumber
+import controllers.common.AuthenticatedRequest
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.global
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 case class FakeAuthNewEnrolmentOnlyAction(eori: EORINumber = EORINumber("id")) extends AuthNewEnrolmentOnlyAction {

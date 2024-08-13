@@ -21,13 +21,13 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.inject.ImplementedBy
+import models.common.errors.ExtractionError
+import models.common.errors.ExtractionError.MessageTypeNotFound
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.stream.scaladsl.StreamConverters
 import org.apache.pekko.util.ByteString
 import uk.gov.hmrc.http.HeaderCarrier
-import v2.models.errors.ExtractionError
-import v2.models.errors.ExtractionError.MessageTypeNotFound
 import v2.models.request.MessageType
 
 import javax.inject.Inject

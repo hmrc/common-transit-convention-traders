@@ -16,6 +16,7 @@
 
 package v2.models
 
+import models.common.MovementReferenceNumber
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers

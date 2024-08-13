@@ -16,13 +16,13 @@
 
 package v2.models.responses.hateoas
 
+import models.common.ItemCount
+import models.common.MovementId
+import models.common.MovementType
+import models.common.PageNumber
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import v2.models.ItemCount
 import v2.models.MessageStatus
-import v2.models.MovementId
-import v2.models.MovementType
-import v2.models.PageNumber
 import v2.models.responses.PaginationMessageSummary
 
 import java.time.OffsetDateTime

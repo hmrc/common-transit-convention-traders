@@ -22,6 +22,8 @@ import com.codahale.metrics.MetricRegistry
 import config.AppConfig
 import metrics.HasMetrics
 import metrics.MetricsKeys
+import models.common.MessageId
+import models.common.MovementId
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status.NO_CONTENT
@@ -29,7 +31,6 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
-import v2.models.MovementId
 import v2.models.request.PushNotificationsAssociation
 import v2.models.responses.BoxResponse
 
@@ -38,7 +39,6 @@ import scala.concurrent.Future
 import play.api.http.Status.ACCEPTED
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import v2.models.MessageId
 
 @ImplementedBy(classOf[PushNotificationsConnectorImpl])
 trait PushNotificationsConnector {

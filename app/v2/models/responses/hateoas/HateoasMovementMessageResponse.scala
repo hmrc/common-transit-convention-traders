@@ -16,12 +16,12 @@
 
 package v2.models.responses.hateoas
 
+import models.common.MessageId
+import models.common.MovementId
+import models.common.MovementType
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import v2.models.MessageId
 import v2.models.MessageStatus
-import v2.models.MovementId
-import v2.models.MovementType
 import v2.models.responses.MessageSummary
 
 object HateoasMovementMessageResponse extends HateoasResponse {
