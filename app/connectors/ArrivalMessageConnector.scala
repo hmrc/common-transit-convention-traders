@@ -26,16 +26,17 @@ import models.domain.ArrivalWithMessages
 import models.domain.MessageId
 import models.domain.MovementMessage
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.http.HttpReads
 import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.StringContextOps
+import uk.gov.hmrc.http.client.HttpClientV2
 
 import java.time.OffsetDateTime
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class ArrivalMessageConnector @Inject() (http: HttpClient, appConfig: AppConfig, val metrics: MetricRegistry) extends BaseConnector with HasMetrics {
+class ArrivalMessageConnector @Inject() (http: HttpClientV2, appConfig: AppConfig, val metrics: MetricRegistry) extends BaseConnector with HasMetrics {
 
   import MetricsKeys.ArrivalBackend._
 
@@ -46,11 +47,16 @@ class ArrivalMessageConnector @Inject() (http: HttpClient, appConfig: AppConfig,
 
         val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathParts(arrivalId.toString, "messages", messageId.toString)
 
-        http.GET[HttpResponse](url.toString, headers = getJsonHeaders).map {
-          response =>
-            if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
-            extractIfSuccessful[MovementMessage](response)
-        }
+        http
+          .get(url"$url")
+          .setHeader(getJsonHeaders: _*)
+          .execute[HttpResponse]
+          .map {
+            response =>
+              if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
+              extractIfSuccessful[MovementMessage](response)
+          }
+
     }
 
   def post(message: String, arrivalId: ArrivalId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
@@ -59,7 +65,11 @@ class ArrivalMessageConnector @Inject() (http: HttpClient, appConfig: AppConfig,
 
       val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathParts(arrivalId.toString, "messages")
 
-      http.POSTString[HttpResponse](url.toString, message, postPutXmlHeaders)
+      http
+        .post(url"$url")
+        .setHeader(postPutXmlHeaders: _*)
+        .withBody(message)
+        .execute[HttpResponse]
     }
 
   def getMessages(arrivalId: ArrivalId, receivedSince: Option[OffsetDateTime])(implicit
@@ -78,11 +88,16 @@ class ArrivalMessageConnector @Inject() (http: HttpClient, appConfig: AppConfig,
           )
           .getOrElse(Seq.empty)
 
-        http.GET[HttpResponse](url.toString, queryParams = query, headers = getJsonHeaders).map {
-          response =>
-            if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
-            extractIfSuccessful[ArrivalWithMessages](response)
-        }
+        http
+          .get(url"$url")
+          .setHeader(getJsonHeaders: _*)
+          .transform(_.withQueryStringParameters(query: _*))
+          .execute[HttpResponse]
+          .map {
+            response =>
+              if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
+              extractIfSuccessful[ArrivalWithMessages](response)
+          }
     }
 
 }

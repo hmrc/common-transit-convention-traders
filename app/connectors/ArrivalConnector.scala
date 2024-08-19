@@ -26,25 +26,32 @@ import models.domain.Arrival
 import models.domain.ArrivalId
 import models.domain.Arrivals
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.http.HttpReads
 import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.client.HttpClientV2
 
 import java.time.OffsetDateTime
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class ArrivalConnector @Inject() (http: HttpClient, appConfig: AppConfig, val metrics: MetricRegistry) extends BaseConnector with HasMetrics {
+class ArrivalConnector @Inject() (http: HttpClientV2, appConfig: AppConfig, val metrics: MetricRegistry) extends BaseConnector with HasMetrics {
 
   import MetricsKeys.ArrivalBackend._
 
   def post(message: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]] =
     withMetricsTimerAsync(Post) {
       _ =>
-        val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute)
-        http.POSTString[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]](url.toString, message, postPutXmlHeaders)
+        val url: appConfig.traderAtDestinationUrl.Self = appConfig.traderAtDestinationUrl.withPath(arrivalRoute)
+
+        http
+          .post(url"$url")
+          .setHeader(postPutXmlHeaders: _*)
+          .withBody(message)
+          .execute[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]]
+
     }
 
   def put(message: String, arrivalId: ArrivalId)(implicit
@@ -54,7 +61,11 @@ class ArrivalConnector @Inject() (http: HttpClient, appConfig: AppConfig, val me
     withMetricsTimerAsync(Put) {
       _ =>
         val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathPart(arrivalId.toString)
-        http.PUTString[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]](url.toString, message, postPutXmlHeaders)
+        http
+          .put(url"$url")
+          .setHeader(postPutXmlHeaders: _*)
+          .withBody(message)
+          .execute[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]]
     }
 
   def get(arrivalId: ArrivalId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrival]] =
@@ -63,12 +74,16 @@ class ArrivalConnector @Inject() (http: HttpClient, appConfig: AppConfig, val me
         implicit val customResponseReads: HttpReads[HttpResponse] = CustomHttpReader
 
         val url = appConfig.traderAtDestinationUrl.withPath(arrivalRoute).addPathPart(arrivalId.toString)
+        http
+          .get(url"$url")
+          .setHeader(getJsonHeaders: _*)
+          .execute[HttpResponse]
+          .map {
+            response =>
+              if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
+              extractIfSuccessful[Arrival](response)
+          }
 
-        http.GET[HttpResponse](url.toString, headers = getJsonHeaders).map {
-          response =>
-            if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
-            extractIfSuccessful[Arrival](response)
-        }
     }
 
   def getForEori(updatedSince: Option[OffsetDateTime])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Arrivals]] =
@@ -84,10 +99,15 @@ class ArrivalConnector @Inject() (http: HttpClient, appConfig: AppConfig, val me
           )
           .getOrElse(Seq.empty)
 
-        http.GET[HttpResponse](url.toString, queryParams = query, headers = getJsonHeaders).map {
-          response =>
-            if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
-            extractIfSuccessful[Arrivals](response)
-        }
+        http
+          .get(url"$url")
+          .setHeader(getJsonHeaders: _*)
+          .transform(_.withQueryStringParameters(query: _*))
+          .execute[HttpResponse]
+          .map {
+            response =>
+              if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
+              extractIfSuccessful[Arrivals](response)
+          }
     }
 }

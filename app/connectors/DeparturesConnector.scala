@@ -26,17 +26,18 @@ import models.domain.Departure
 import models.domain.DepartureId
 import models.domain.Departures
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.http.HttpReads
 import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.client.HttpClientV2
 
 import java.time.OffsetDateTime
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class DeparturesConnector @Inject() (http: HttpClient, appConfig: AppConfig, val metrics: MetricRegistry) extends BaseConnector with HasMetrics {
+class DeparturesConnector @Inject() (http: HttpClientV2, appConfig: AppConfig, val metrics: MetricRegistry) extends BaseConnector with HasMetrics {
 
   import MetricsKeys.DeparturesBackend._
 
@@ -46,7 +47,13 @@ class DeparturesConnector @Inject() (http: HttpClient, appConfig: AppConfig, val
     withMetricsTimerAsync(Post) {
       _ =>
         val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute)
-        http.POSTString[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]](url.toString, message, postPutXmlHeaders)
+
+        http
+          .post(url"$url")
+          .setHeader(postPutXmlHeaders: _*)
+          .withBody(message)
+          .execute[Either[UpstreamErrorResponse, ResponseHeaders[Option[Box]]]]
+
     }
 
   def get(departureId: DepartureId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[HttpResponse, Departure]] =
@@ -56,11 +63,16 @@ class DeparturesConnector @Inject() (http: HttpClient, appConfig: AppConfig, val
 
         val url = appConfig.traderAtDeparturesUrl.withPath(departureRoute).addPathPart(departureId.toString)
 
-        http.GET[HttpResponse](url.toString, headers = getJsonHeaders).map {
-          response =>
-            if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
-            extractIfSuccessful[Departure](response)
-        }
+        http
+          .get(url"$url")
+          .setHeader(getJsonHeaders: _*)
+          .execute[HttpResponse]
+          .map {
+            response =>
+              if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
+              extractIfSuccessful[Departure](response)
+          }
+
     }
 
   def getForEori(
@@ -78,10 +90,16 @@ class DeparturesConnector @Inject() (http: HttpClient, appConfig: AppConfig, val
           )
           .getOrElse(Seq.empty)
 
-        http.GET[HttpResponse](url.toString, queryParams = query, headers = getJsonHeaders).map {
-          response =>
-            if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
-            extractIfSuccessful[Departures](response)
-        }
+        http
+          .get(url"$url")
+          .setHeader(getJsonHeaders: _*)
+          .transform(_.withQueryStringParameters(query: _*))
+          .execute[HttpResponse]
+          .map {
+            response =>
+              if (is2xx(response.status)) timer.completeWithSuccess() else timer.completeWithFailure()
+              extractIfSuccessful[Departures](response)
+          }
+
     }
 }

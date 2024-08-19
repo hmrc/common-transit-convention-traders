@@ -22,13 +22,14 @@ import config.Constants
 import models.Box
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.UpstreamErrorResponse
+import uk.gov.hmrc.http.client.HttpClientV2
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class PushPullNotificationConnector @Inject() (config: AppConfig, http: HttpClient) {
+class PushPullNotificationConnector @Inject() (config: AppConfig, http: HttpClientV2) {
 
   def getBox(clientId: String)(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, Box]] = {
     val url = s"${config.pushPullUrl}/box"
@@ -37,6 +38,10 @@ class PushPullNotificationConnector @Inject() (config: AppConfig, http: HttpClie
       "clientId" -> clientId
     )
 
-    http.GET[Either[UpstreamErrorResponse, Box]](url, queryParams)
+    http
+      .get(url"$url")
+      .transform(_.withQueryStringParameters(queryParams: _*))
+      .execute[Either[UpstreamErrorResponse, Box]]
+
   }
 }
