@@ -146,7 +146,7 @@ class V2MovementsControllerImpl @Inject() (
   private lazy val sCounter: Counter = counter(s"success-counter")
   private lazy val fCounter: Counter = counter(s"failure-counter")
 
-  private lazy val jsonOnlyAcceptHeader = Seq(VERSION_2_ACCEPT_HEADER_VALUE_JSON.value)
+  private lazy val jsonOnlyAcceptHeader = Seq(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value)
 
   private lazy val jsonAndXmlAcceptHeaders = Seq(
     VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value,
