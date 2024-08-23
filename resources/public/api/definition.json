@@ -71,7 +71,7 @@
       {
         "version": "2.1",
         "status": "ALPHA",
-        "endpointsEnabled": false,
+        "endpointsEnabled": true,
         "access": {
           "type": "PUBLIC"
         },
