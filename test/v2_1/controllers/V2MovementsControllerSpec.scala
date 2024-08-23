@@ -5604,7 +5604,6 @@ class V2MovementsControllerSpec
           val request =
             FakeRequest(
               "GET",
-              //TODO: Figure out how to use v2_1 controller
               v2.controllers.routes.V2MovementsController.getMessageBody(movementType, movementId, messageId).url,
               headers,
               Source.empty[ByteString]
