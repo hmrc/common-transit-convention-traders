@@ -33,10 +33,10 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers
 import play.api.test.Helpers.defaultAwaitTimeout
 import play.api.test.Helpers.status
-import routing.VERSION_2_ACCEPT_HEADER_VALUE_JSON
-import routing.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML
-import routing.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
-import routing.VERSION_2_ACCEPT_HEADER_VALUE_XML
+import routing.VERSION_2_1_ACCEPT_HEADER_VALUE_JSON
+import routing.VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML
+import routing.VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
+import routing.VERSION_2_1_ACCEPT_HEADER_VALUE_XML
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import v2_1.base.TestActorSystem
 import v2_1.controllers.actions.providers.AcceptHeaderActionProviderImpl
@@ -65,9 +65,9 @@ class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures
   "AcceptHeaderAction " - {
 
     lazy val acceptedHeaders = Seq(
-      VERSION_2_ACCEPT_HEADER_VALUE_JSON.value,
-      VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.value,
-      VERSION_2_ACCEPT_HEADER_VALUE_XML.value
+      VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value,
+      VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML.value,
+      VERSION_2_1_ACCEPT_HEADER_VALUE_XML.value
     )
 
     for (acceptHeader <- acceptedHeaders)
@@ -85,9 +85,9 @@ class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures
       }
 
     lazy val mixedCaseAcceptHeaders = Seq(
-      "application/vnd.hmrc.2.0+jSon",
-      "application/vnd.hmrc.2.0+jSOn+xml",
-      "application/vnd.hmrc.2.0+Xml"
+      "application/vnd.hmrc.2.1+jSon",
+      "application/vnd.hmrc.2.1+jSOn+xml",
+      "application/vnd.hmrc.2.1+Xml"
     )
 
     for (acceptHeader <- mixedCaseAcceptHeaders)
@@ -109,7 +109,7 @@ class AcceptHeaderActionSpec extends AnyFreeSpec with Matchers with ScalaFutures
       val req: FakeRequest[AnyContent] = FakeRequest(
         method = HttpVerbs.GET,
         uri = "",
-        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)),
+        headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)),
         AnyContent.apply()
       )
       val result = controller.post()(req)

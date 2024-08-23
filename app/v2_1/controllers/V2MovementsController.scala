@@ -55,10 +55,10 @@ import routing.VERSION_2_1_ACCEPT_HEADER_VALUE_JSON
 import routing.VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML
 import routing.VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
 import routing.VERSION_2_1_ACCEPT_HEADER_VALUE_XML
-import routing.VERSION_2_ACCEPT_HEADER_VALUE_JSON
-import routing.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML
-import routing.VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
-import routing.VERSION_2_ACCEPT_HEADER_VALUE_XML
+import routing.VERSION_2_1_ACCEPT_HEADER_VALUE_JSON
+import routing.VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML
+import routing.VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN
+import routing.VERSION_2_1_ACCEPT_HEADER_VALUE_XML
 import routing.VersionedRouting
 import uk.gov.hmrc.http
 import uk.gov.hmrc.http.HeaderCarrier
@@ -431,16 +431,16 @@ class V2MovementsControllerImpl @Inject() (
         case Left(error) => EitherT.leftT(error)
         case Right(value) =>
           value match {
-            case VERSION_2_ACCEPT_HEADER_VALUE_JSON if bodyAndSize.size > config.smallMessageSizeLimit =>
+            case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON if bodyAndSize.size > config.smallMessageSizeLimit =>
               EitherT.leftT[Future, BodyAndContentType](
                 PresentationError.notAcceptableError(s"Messages larger than ${config.smallMessageSizeLimit} bytes cannot be retrieved in JSON")
               )
-            case VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
+            case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON =>
               for {
                 jsonStream <- conversionService.xmlToJson(messageSummary.messageType.get, bodyAndSize.body).asPresentation
                 bodyWithContentType = BodyAndContentType(MimeTypes.JSON, jsonStream)
               } yield bodyWithContentType
-            case VERSION_2_ACCEPT_HEADER_VALUE_XML =>
+            case VERSION_2_1_ACCEPT_HEADER_VALUE_XML =>
               EitherT.rightT[Future, PresentationError](
                 BodyAndContentType(MimeTypes.XML, bodyAndSize.body)
               )
@@ -470,9 +470,9 @@ class V2MovementsControllerImpl @Inject() (
         case Left(error) => EitherT.leftT(error)
         case Right(value) =>
           value match {
-            case VERSION_2_ACCEPT_HEADER_VALUE_JSON if bodyAndSize.size > config.smallMessageSizeLimit =>
+            case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON if bodyAndSize.size > config.smallMessageSizeLimit =>
               EitherT.leftT[Future, Source[ByteString, _]](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
-            case VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
+            case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON =>
               for {
                 jsonStream <- conversionService.xmlToJson(messageSummary.messageType.get, bodyAndSize.body).asPresentation
                 summary = messageSummary.copy(body = None)
@@ -483,7 +483,7 @@ class V2MovementsControllerImpl @Inject() (
                   .as[JsObject]
                 stream <- jsonToByteStringStream(jsonHateoasResponse.fields, "body", jsonStream)
               } yield stream
-            case VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML | VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
+            case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML | VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
               if (messageSummary.body.isDefined)
                 EitherT.rightT[Future, PresentationError](
                   Source.single(ByteString(Json.stringify(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType))))
