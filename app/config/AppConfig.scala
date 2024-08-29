@@ -39,6 +39,8 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesCon
   val forwardClientIdToUpscan: Boolean        = servicesConfig.config("upscan-initiate").get[Boolean]("send-client-id")
   val pushNotificationsEnabled: Boolean       = servicesConfig.config("transit-movements-push-notifications").get[Boolean]("enabled")
 
+  val version21BetaEnabled: Boolean = config.get[Boolean]("version21BetaEnabled")
+
   lazy val enrolmentKey: String = config.get[String]("security.enrolmentKey")
 
   val messageTranslationFile: String = config.get[String]("message-translation-file")

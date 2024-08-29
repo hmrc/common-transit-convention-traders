@@ -67,6 +67,34 @@
             ]
           }
         }]
+      },
+      {
+        "version": "2.1",
+        "status": "BETA",
+        "endpointsEnabled": true,
+        "access": {
+          "type": "PUBLIC"
+        },
+        "fieldDefinitions": [{
+          "name": "notificationUrl",
+          "shortDescription": "Notification URL",
+          "description": "What is your notification web address for us to send push notifications to?",
+          "type": "PPNSField",
+          "hint": "You must only give us a web address that you own. Your application will use this address to listen to notifications from HMRC.",
+          "validation": {
+            "errorMessage": "notificationUrl must be a valid https URL",
+            "rules": [
+              {
+                "UrlValidationRule": {}
+              },
+              {
+                "RegexValidationRule": {
+                  "regex" : "^https.*"
+                }
+              }
+            ]
+          }
+        }]
       }
     ]
   }
