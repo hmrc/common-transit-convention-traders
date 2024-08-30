@@ -19,7 +19,7 @@ GET        /movements/departures/:departureId/messages                          
 
 GET        /movements/departures/:departureId/messages/:messageId                   routing.DeparturesRouter.getMessage(departureId: String, messageId: String)
 
-GET        /movements/:movementType/:movementId/messages/:messageId/body            v2.controllers.V2MovementsController.getMessageBody(movementType: MovementType, movementId: MovementId, messageId: models.common.MessageId)
+GET        /movements/:movementType/:movementId/messages/:messageId/body            routing.GenericRouting.getMessageBody(movementType: MovementType, movementId: MovementId, messageId: models.common.MessageId)
 
 GET        /movements/push-pull-notifications/box                                   controllers.PushPullNotificationController.getBoxInfo()
 
