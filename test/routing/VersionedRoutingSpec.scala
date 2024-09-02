@@ -364,13 +364,13 @@ class VersionedRoutingSpec
       val sut = new Harness(stubControllerComponents())
 
       val request = FakeRequest(HttpVerbs.POST, "/", FakeHeaders(), generateSource("<test>test</test>"))
-      val action  = sut.handleEnablingPhase5()
+      val action  = sut.handleDisabledPhase5Transitional()
       val result  = action(request)
 
       status(result) mustBe NOT_ACCEPTABLE
       contentAsJson(result) mustBe Json.obj(
         "code"    -> "NOT_ACCEPTABLE",
-        "message" -> "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages."
+        "message" -> "CTC Traders API version 2.0 is no longer available. Use CTC Traders API v2.1 to submit transit messages."
       )
     }
 
