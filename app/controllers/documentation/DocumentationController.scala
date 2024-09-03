@@ -29,15 +29,13 @@ import scala.concurrent.Future
 
 class DocumentationController @Inject() (assets: Assets, cc: ControllerComponents, appConfig: AppConfig) extends BackendController(cc) {
 
-  def definition(): Action[AnyContent] = {
+  def definition(): Action[AnyContent] =
     if (appConfig.version21BetaEnabled) {
       assets.at("/public/api", "v2_1-definition.json")
     } else { assets.at("/public/api", "definition.json") }
-  }
 
-  def raml(version: String, file: String): Action[AnyContent] = {
+  def raml(version: String, file: String): Action[AnyContent] =
     if (!appConfig.version21BetaEnabled && version == "2.1") {
       Action.async(Future.successful(NotFound("Resource not found by Assets controller")))
     } else assets.at(s"/public/api/conf/$version", file)
-  }
 }

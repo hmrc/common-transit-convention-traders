@@ -5637,7 +5637,7 @@ class V2MovementsControllerSpec
                   mockConversionService.xmlToJson(eqTo(smallMessageSummaryXml.messageType.get), any())(any(), any(), any())
                 ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
               }
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
 
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
@@ -5695,7 +5695,7 @@ class V2MovementsControllerSpec
                 ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
               }
 
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
 
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
@@ -5736,7 +5736,7 @@ class V2MovementsControllerSpec
                   _ => EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))
                 )
 
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
 
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
@@ -5772,7 +5772,7 @@ class V2MovementsControllerSpec
                   _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
                 )
 
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
 
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
@@ -5799,13 +5799,13 @@ class V2MovementsControllerSpec
                 mockAppConfig
               ) = createControllerAndMocks()
 
-              when(mockAppConfig.enablePhase5).thenReturn(false)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(false)
 
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
               status(result) mustBe NOT_ACCEPTABLE
               contentAsJson(result) mustBe Json.obj(
-                "message" -> "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages.",
+                "message" -> "CTC Traders API version 2.0 is no longer available. Use CTC Traders API v2.1 to submit transit messages.",
                 "code"    -> "NOT_ACCEPTABLE"
               )
             }
@@ -5849,7 +5849,7 @@ class V2MovementsControllerSpec
                   _ => EitherT.rightT(Source.single(ByteString(xml)))
                 )
 
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
 
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
@@ -5905,7 +5905,7 @@ class V2MovementsControllerSpec
                   _ => EitherT.rightT(Source.single(ByteString(xml)))
                 )
 
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
 
               if (acceptHeaderValue == VERSION_2_ACCEPT_HEADER_VALUE_JSON.value) {
                 when(
@@ -5953,7 +5953,7 @@ class V2MovementsControllerSpec
                   _ => EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))
                 )
 
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
 
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
@@ -5989,7 +5989,7 @@ class V2MovementsControllerSpec
                   _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
                 )
 
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
 
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
@@ -6016,13 +6016,13 @@ class V2MovementsControllerSpec
                 mockAppConfig
               ) = createControllerAndMocks()
 
-              when(mockAppConfig.enablePhase5).thenReturn(false)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(false)
 
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
               status(result) mustBe NOT_ACCEPTABLE
               contentAsJson(result) mustBe Json.obj(
-                "message" -> "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages.",
+                "message" -> "CTC Traders API version 2.0 is no longer available. Use CTC Traders API v2.1 to submit transit messages.",
                 "code"    -> "NOT_ACCEPTABLE"
               )
             }

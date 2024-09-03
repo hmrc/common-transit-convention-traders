@@ -87,7 +87,7 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
           )
 
           s"when the accept header equals ${acceptHeaderValue.getOrElse("nothing")}, it returns status code $expectedStatus" in {
-            when(mockAppConfig.enablePhase5).thenReturn(isVersion)
+            when(mockAppConfig.phase5TransitionalEnabled).thenReturn(isVersion)
 
             val request =
               FakeRequest(method = callValue.method, uri = callValue.url, body = <test></test>, headers = arrivalsHeaders)
@@ -99,7 +99,7 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
               contentAsJson(result) mustBe Json.obj("version" -> 2) // ensure we get the unique value to verify we called the fake action
             } else {
               contentAsJson(result) mustBe Json.obj(
-                "message" -> "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages.",
+                "message" -> "CTC Traders API version 2.0 is no longer available. Use CTC Traders API v2.1 to submit transit messages.",
                 "code"    -> "NOT_ACCEPTABLE"
               )
             }
@@ -176,7 +176,7 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
           )
 
           s"when the accept header equals ${acceptHeaderValue.getOrElse("nothing")}, it returns status code $expectedStatus" in {
-            when(mockAppConfig.enablePhase5).thenReturn(isVersion)
+            when(mockAppConfig.phase5FinalEnabled).thenReturn(isVersion)
 
             val request =
               FakeRequest(method = callValue.method, uri = callValue.url, body = <test></test>, headers = arrivalsHeaders)
@@ -188,7 +188,7 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
               contentAsJson(result) mustBe Json.obj("version" -> 2.1) // ensure we get the unique value to verify we called the fake action
             } else {
               contentAsJson(result) mustBe Json.obj(
-                "message" -> "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages.",
+                "message" -> "CTC Traders API version 2.0 is no longer available. Use CTC Traders API v2.1 to submit transit messages.",
                 "code"    -> "NOT_ACCEPTABLE"
               )
             }

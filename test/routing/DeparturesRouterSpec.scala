@@ -295,7 +295,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
             "must route to the v2 controller and return Accepted when successful" in {
 
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
 
               val request =
                 FakeRequest(method = "POST", uri = routes.DeparturesRouter.submitDeclaration().url, body = <test></test>, headers = departureHeaders)
@@ -307,7 +307,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
             "must route to the v2 controller and return NotAcceptable when phase5 feature is disabled" in {
 
-              when(mockAppConfig.enablePhase5).thenReturn(false)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(false)
 
               val request =
                 FakeRequest(method = "POST", uri = routes.DeparturesRouter.submitDeclaration().url, body = <test></test>, headers = departureHeaders)
@@ -315,7 +315,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
               status(result) mustBe NOT_ACCEPTABLE
               contentAsJson(result) mustBe Json.obj(
-                "message" -> "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages.",
+                "message" -> "CTC Traders API version 2.0 is no longer available. Use CTC Traders API v2.1 to submit transit messages.",
                 "code"    -> "NOT_ACCEPTABLE"
               )
             }
@@ -331,7 +331,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
               FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
 
             "must route to the v2 controller and return Ok when successful" in {
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
               val request = FakeRequest(
                 method = "POST",
                 uri = routes.DeparturesRouter.getMessage("1234567890abcdef", "1234567890abcdef").url,
@@ -345,7 +345,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             }
 
             "if the departure ID is not the correct format, return a bad request of the appropriate format" in {
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
               val request = FakeRequest(
                 method = "POST",
                 uri = routes.DeparturesRouter.getMessage("01", "0123456789abcdef").url,
@@ -363,7 +363,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             }
 
             "if the message ID is not the correct format, return a bad request of the appropriate format" in {
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
               val request = FakeRequest(
                 method = "POST",
                 uri = routes.DeparturesRouter.getMessage("0123456789abcdef", "01").url,
@@ -381,7 +381,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             }
 
             "must route to the v2 controller and return NotAcceptable when phase5 feature is disabled" in {
-              when(mockAppConfig.enablePhase5).thenReturn(false)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(false)
               val request = FakeRequest(
                 method = "POST",
                 uri = routes.DeparturesRouter.getMessage("1234567890abcdef", "1234567890abcdef").url,
@@ -392,7 +392,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
               status(result) mustBe NOT_ACCEPTABLE
               contentAsJson(result) mustBe Json.obj(
-                "message" -> "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages.",
+                "message" -> "CTC Traders API version 2.0 is no longer available. Use CTC Traders API v2.1 to submit transit messages.",
                 "code"    -> "NOT_ACCEPTABLE"
               )
             }
@@ -413,7 +413,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
           s"with accept header set to $acceptHeaderValue" - {
 
             "must route to the v2 controller and return Ok when successful" in {
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
               val request = FakeRequest(method = "GET", body = "", uri = routes.DeparturesRouter.getDeparture("").url, headers = departureHeaders)
               val result  = sut.getDeparture("1234567890abcdef")(request)
 
@@ -422,7 +422,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             }
 
             "must route to the v2 controller and return BAD_REQUEST when departureId has invalid format" in {
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
               val request = FakeRequest(method = "GET", body = "", uri = routes.DeparturesRouter.getDeparture("").url, headers = departureHeaders)
               val result  = sut.getDeparture("1234567890abcde")(request)
 
@@ -435,13 +435,13 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             }
 
             "must route to the v2 controller and return NotAcceptable when phase5 feature is disabled" in {
-              when(mockAppConfig.enablePhase5).thenReturn(false)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(false)
               val request = FakeRequest(method = "GET", uri = routes.DeparturesRouter.getDeparture("").url, body = "", headers = departureHeaders)
               val result  = call(sut.getDeparture("1234567890abcdef"), request)
 
               status(result) mustBe NOT_ACCEPTABLE
               contentAsJson(result) mustBe Json.obj(
-                "message" -> "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages.",
+                "message" -> "CTC Traders API version 2.0 is no longer available. Use CTC Traders API v2.1 to submit transit messages.",
                 "code"    -> "NOT_ACCEPTABLE"
               )
             }
@@ -462,7 +462,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
           s"with accept header set to $acceptHeaderValue" - {
 
             "must route to the v2 controller and return Accepted when successful" in {
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
               val request =
                 FakeRequest(method = "POST", uri = routes.DeparturesRouter.attachMessage("").url, body = <test></test>, headers = departureHeaders)
               val result = call(sut.attachMessage("1234567890abcdef"), request)
@@ -472,13 +472,13 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             }
 
             "must route to the v2 controller and return NotAcceptable when phase5 feature is disabled" in {
-              when(mockAppConfig.enablePhase5).thenReturn(false)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(false)
               val request = FakeRequest(method = "POST", uri = routes.DeparturesRouter.attachMessage("").url, body = <test></test>, headers = departureHeaders)
               val result  = call(sut.attachMessage("1234567890abcdef"), request)
 
               status(result) mustBe NOT_ACCEPTABLE
               contentAsJson(result) mustBe Json.obj(
-                "message" -> "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages.",
+                "message" -> "CTC Traders API version 2.0 is no longer available. Use CTC Traders API v2.1 to submit transit messages.",
                 "code"    -> "NOT_ACCEPTABLE"
               )
             }
@@ -500,7 +500,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
             "must route to the v2 controller and return Accepted when successful" in {
 
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
 
               val request =
                 FakeRequest(method = "POST", uri = routes.DeparturesRouter.getDeparturesForEori().url, body = <test></test>, headers = departureHeaders)
@@ -512,7 +512,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
             "must route to the v2 controller and return NotAcceptable when phase5 feature is disabled" in {
 
-              when(mockAppConfig.enablePhase5).thenReturn(false)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(false)
 
               val request =
                 FakeRequest(method = "POST", uri = routes.DeparturesRouter.getDeparturesForEori().url, body = <test></test>, headers = departureHeaders)
@@ -520,7 +520,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
               status(result) mustBe NOT_ACCEPTABLE
               contentAsJson(result) mustBe Json.obj(
-                "message" -> "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages.",
+                "message" -> "CTC Traders API version 2.0 is no longer available. Use CTC Traders API v2.1 to submit transit messages.",
                 "code"    -> "NOT_ACCEPTABLE"
               )
             }
@@ -541,7 +541,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
           s"with accept header set to $acceptHeaderValue" - {
 
             "must route to the v2 controller and return OK when successful" in {
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
               val request = FakeRequest(
                 method = "POST",
                 uri = routes.DeparturesRouter.getMessageIds("1234567890abcdef").url,
@@ -556,7 +556,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             }
 
             "must route to the v2 controller and return NotAcceptable when phase5 feature is disabled" in {
-              when(mockAppConfig.enablePhase5).thenReturn(false)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(false)
               val request =
                 FakeRequest(
                   method = "POST",
@@ -568,7 +568,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
               status(result) mustBe NOT_ACCEPTABLE
               contentAsJson(result) mustBe Json.obj(
-                "message" -> "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages.",
+                "message" -> "CTC Traders API version 2.0 is no longer available. Use CTC Traders API v2.1 to submit transit messages.",
                 "code"    -> "NOT_ACCEPTABLE"
               )
             }
@@ -593,7 +593,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
             "must route to the v2 controller and return Accepted when successful" in {
 
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5FinalEnabled).thenReturn(true)
 
               val request =
                 FakeRequest(method = "POST", uri = routes.DeparturesRouter.submitDeclaration().url, body = <test></test>, headers = departureHeaders)
@@ -614,7 +614,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
               FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
 
             "must route to the v2 controller and return Ok when successful" in {
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
               val request = FakeRequest(
                 method = "POST",
                 uri = routes.DeparturesRouter.getMessage("1234567890abcdef", "1234567890abcdef").url,
@@ -628,7 +628,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             }
 
             "if the departure ID is not the correct format, return a bad request of the appropriate format" in {
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
               val request = FakeRequest(
                 method = "POST",
                 uri = routes.DeparturesRouter.getMessage("01", "0123456789abcdef").url,
@@ -646,7 +646,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             }
 
             "if the message ID is not the correct format, return a bad request of the appropriate format" in {
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
               val request = FakeRequest(
                 method = "POST",
                 uri = routes.DeparturesRouter.getMessage("0123456789abcdef", "01").url,
@@ -679,7 +679,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
           s"with accept header set to $acceptHeaderValue" - {
 
             "must route to the v2 controller and return Ok when successful" in {
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
               val request = FakeRequest(method = "GET", body = "", uri = routes.DeparturesRouter.getDeparture("").url, headers = departureHeaders)
               val result  = sut.getDeparture("1234567890abcdef")(request)
 
@@ -688,7 +688,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             }
 
             "must route to the v2 controller and return BAD_REQUEST when departureId has invalid format" in {
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
               val request = FakeRequest(method = "GET", body = "", uri = routes.DeparturesRouter.getDeparture("").url, headers = departureHeaders)
               val result  = sut.getDeparture("1234567890abcde")(request)
 
@@ -716,7 +716,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
           s"with accept header set to $acceptHeaderValue" - {
 
             "must route to the v2 controller and return Accepted when successful" in {
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
               val request =
                 FakeRequest(method = "POST", uri = routes.DeparturesRouter.attachMessage("").url, body = <test></test>, headers = departureHeaders)
               val result = call(sut.attachMessage("1234567890abcdef"), request)
@@ -742,7 +742,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
             "must route to the v2 controller and return Accepted when successful" in {
 
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
 
               val request =
                 FakeRequest(method = "POST", uri = routes.DeparturesRouter.getDeparturesForEori().url, body = <test></test>, headers = departureHeaders)
@@ -768,7 +768,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
           s"with accept header set to $acceptHeaderValue" - {
 
             "must route to the v2 controller and return OK when successful" in {
-              when(mockAppConfig.enablePhase5).thenReturn(true)
+              when(mockAppConfig.phase5TransitionalEnabled).thenReturn(true)
               val request = FakeRequest(
                 method = "POST",
                 uri = routes.DeparturesRouter.getMessageIds("1234567890abcdef").url,

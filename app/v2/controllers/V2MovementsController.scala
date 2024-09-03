@@ -513,7 +513,7 @@ class V2MovementsControllerImpl @Inject() (
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonAndXmlAcceptHeaders)).async {
       implicit request =>
-        if (config.enablePhase5) {
+        if (config.phase5TransitionalEnabled) {
           implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
           (for {
             messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
@@ -526,7 +526,7 @@ class V2MovementsControllerImpl @Inject() (
           )
         } else {
           val presentationError = PresentationError.notAcceptableError(
-            "CTC Traders API version 2 is not yet available. Please continue to use version 1 to submit transit messages."
+            "CTC Traders API version 2.0 is no longer available. Use CTC Traders API v2.1 to submit transit messages."
           )
           Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
         }

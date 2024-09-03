@@ -61,7 +61,9 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesCon
 
   val disablePhase4: Boolean = config.get[Boolean]("disable-phase-4")
 
-  val enablePhase5: Boolean = config.get[Boolean]("enable-phase-5")
+  val phase5TransitionalEnabled: Boolean = config.get[Boolean]("enable-phase-5")
+
+  val phase5FinalEnabled: Boolean = config.get[Boolean]("phase-5-final-enabled")
 
   val phase4EnrolmentHeader: Boolean = config.get[Boolean]("phase-4-enrolment-header")
 
