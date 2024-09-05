@@ -161,6 +161,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metric
           .post(url"$url")
           .setHeader(Constants.APIVersionHeaderKey -> Constants.APIVersionFinalHeaderValue)
           .withInternalAuthToken
+          .withClientId
 
         (source match {
           case Some(src) => httpClient.setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.XML).withBody(src)
