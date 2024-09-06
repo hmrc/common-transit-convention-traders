@@ -131,7 +131,7 @@ class V2BaseConnectorSpec
       val messageId  = arbitrary[MessageId].sample.value
       val urlPath    = Harness.attachLargeMessageRoute(eori, movementType, movementId, messageId)
       urlPath
-        .toString() mustBe s"/traders/${eori.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
+        .toString() mustBe s"/traders/${eori.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}/final"
   }
 
   "the update message submission URL on localhost for a given EORI, movement ID and message ID should be as expected" in forAll(arbitrary[MovementType]) {
