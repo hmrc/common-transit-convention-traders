@@ -23,5 +23,6 @@ GET        /movements/:movementType/:movementId/messages/:messageId/body        
 
 GET        /movements/push-pull-notifications/box                                   controllers.PushPullNotificationController.getBoxInfo()
 
-POST       /traders/:eori/movements/:movementType/:movementId/messages/:messageId   v2.controllers.V2MovementsController.attachMessageFromUpscan(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: models.common.MessageId, clientId: Option[ClientId] ?= None)
+POST       /traders/:eori/movements/:movementType/:movementId/messages/:messageId         v2.controllers.V2MovementsController.attachMessageFromUpscan(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: models.common.MessageId, clientId: Option[ClientId] ?= None)
+POST       /traders/:eori/movements/:movementType/:movementId/messages/:messageId/final   v2_1.controllers.V2MovementsController.attachMessageFromUpscan(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: models.common.MessageId, clientId: Option[ClientId] ?= None)
 

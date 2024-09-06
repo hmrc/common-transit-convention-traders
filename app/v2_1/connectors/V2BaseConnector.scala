@@ -102,7 +102,7 @@ trait V2BaseConnector extends HttpErrorFunctions {
   lazy val upscanInitiateRoute: UrlPath = UrlPath.parse("/upscan/v2/initiate")
 
   def attachLargeMessageRoute(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): UrlPath =
-    UrlPath.parse(s"/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}")
+    UrlPath.parse(s"/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}/final")
 
   def updateMessageRoute(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId): UrlPath =
     UrlPath.parse(s"$movementsBaseRoute/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}")
