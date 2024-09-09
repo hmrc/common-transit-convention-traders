@@ -112,7 +112,7 @@ class UpscanConnectorSpec
             .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withRequestBody(
               equalToJson(s"""{
-                  |    "callbackUrl": "https://ctc.hmrc.gov.uk/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}?clientId=${clientId.value}",
+                  |    "callbackUrl": "https://ctc.hmrc.gov.uk/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}/final?clientId=${clientId.value}",
                   |    "maximumFileSize": 2000
                   |}
                   |""".stripMargin)
@@ -146,7 +146,7 @@ class UpscanConnectorSpec
             .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withRequestBody(
               equalToJson(s"""{
-                   |    "callbackUrl": "https://ctc.hmrc.gov.uk/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}",
+                   |    "callbackUrl": "https://ctc.hmrc.gov.uk/traders/${eoriNumber.value}/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}/final",
                    |    "maximumFileSize": 2000
                    |}
                    |""".stripMargin)
