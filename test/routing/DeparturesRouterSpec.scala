@@ -118,8 +118,21 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             .getOrElse("nothing")
           s"with accept header set to $withString" - {
 
-            "must route to the v1 controller and return Accepted when successful" in {
+            "must return GONE if 'disablePhase4' is 'true'" in {
+              when(mockAppConfig.disablePhase4).thenReturn(true)
+              val request =
+                FakeRequest(method = "POST", uri = routes.DeparturesRouter.getMessage("123", "4").url, body = <test></test>, headers = departureHeaders)
+              val result = sut.getMessage("123", "4")(request)
 
+              status(result) mustBe GONE
+              contentAsJson(result) mustBe Json.obj(
+                "message" -> "New NCTS4 Departure Declarations can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Departure Declarations.",
+                "code"    -> "GONE"
+              )
+            }
+
+            "must route to the v1 controller and return Accepted when successful" in {
+              when(mockAppConfig.disablePhase4).thenReturn(false)
               val request =
                 FakeRequest(method = "POST", uri = routes.DeparturesRouter.getMessage("123", "4").url, body = <test></test>, headers = departureHeaders)
               val result = sut.getMessage("123", "4")(request)
@@ -171,7 +184,20 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
       "with accept header set to application/vnd.hmrc.1.0+json (version one)" - {
         val departureHeaders = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.1.0+json"))
 
+        "must return GONE if 'disablePhase4' is 'true'" in {
+          when(mockAppConfig.disablePhase4).thenReturn(true)
+          val request = FakeRequest(method = "GET", body = "", uri = routes.DeparturesRouter.getDeparture("").url, headers = departureHeaders)
+          val result  = sut.getDeparture("1234567890")(request)
+
+          status(result) mustBe GONE
+          contentAsJson(result) mustBe Json.obj(
+            "message" -> "New NCTS4 Departure Declarations can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Departure Declarations.",
+            "code"    -> "GONE"
+          )
+        }
+
         "must route to the v1 controller and return Ok when successful" in {
+          when(mockAppConfig.disablePhase4).thenReturn(false)
           val request = FakeRequest(method = "GET", body = "", uri = routes.DeparturesRouter.getDeparture("").url, headers = departureHeaders)
           val result  = sut.getDeparture("1234567890")(request)
 
@@ -213,8 +239,21 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             .getOrElse("nothing")
           s"with accept header set to $withString" - {
 
-            "must route to the v1 controller and return Accepted when successful" in {
+            "must return GONE if 'disablePhase4' is 'true'" in {
+              when(mockAppConfig.disablePhase4).thenReturn(true)
+              val request =
+                FakeRequest(method = "POST", uri = routes.DeparturesRouter.attachMessage("123").url, body = <test></test>, headers = departureHeaders)
+              val result = call(sut.attachMessage("123"), request)
 
+              status(result) mustBe GONE
+              contentAsJson(result) mustBe Json.obj(
+                "message" -> "New NCTS4 Departure Declarations can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Departure Declarations.",
+                "code"    -> "GONE"
+              )
+            }
+
+            "must route to the v1 controller and return Accepted when successful" in {
+              when(mockAppConfig.disablePhase4).thenReturn(false)
               val request =
                 FakeRequest(method = "POST", uri = routes.DeparturesRouter.attachMessage("123").url, body = <test></test>, headers = departureHeaders)
               val result = call(sut.attachMessage("123"), request)
@@ -239,8 +278,21 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             .getOrElse("nothing")
           s"with accept header set to $withString" - {
 
-            "must route to the v1 controller and return Accepted when successful" in {
+            "must return GONE if 'disablePhase4' is 'true'" in {
+              when(mockAppConfig.disablePhase4).thenReturn(true)
+              val request =
+                FakeRequest(method = "POST", uri = routes.DeparturesRouter.getDeparturesForEori().url, body = <test></test>, headers = departureHeaders)
+              val result = call(sut.getDeparturesForEori(), request)
 
+              status(result) mustBe GONE
+              contentAsJson(result) mustBe Json.obj(
+                "message" -> "New NCTS4 Departure Declarations can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Departure Declarations.",
+                "code"    -> "GONE"
+              )
+            }
+
+            "must route to the v1 controller and return Accepted when successful" in {
+              when(mockAppConfig.disablePhase4).thenReturn(false)
               val request =
                 FakeRequest(method = "POST", uri = routes.DeparturesRouter.getDeparturesForEori().url, body = <test></test>, headers = departureHeaders)
               val result = call(sut.getDeparturesForEori(), request)
@@ -265,8 +317,21 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             .getOrElse("nothing")
           s"with accept header set to $withString" - {
 
-            "must route to the v1 controller and return Accepted when successful" in {
+            "must return GONE if 'disablePhase4' is 'true'" in {
+              when(mockAppConfig.disablePhase4).thenReturn(true)
+              val request =
+                FakeRequest(method = "POST", uri = routes.DeparturesRouter.getDeparturesForEori().url, body = <test></test>, headers = departureHeaders)
+              val result = call(sut.getDeparturesForEori(), request)
 
+              status(result) mustBe GONE
+              contentAsJson(result) mustBe Json.obj(
+                "message" -> "New NCTS4 Departure Declarations can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Departure Declarations.",
+                "code"    -> "GONE"
+              )
+            }
+
+            "must route to the v1 controller and return Accepted when successful" in {
+              when(mockAppConfig.disablePhase4).thenReturn(false)
               val request =
                 FakeRequest(method = "POST", uri = routes.DeparturesRouter.getDeparturesForEori().url, body = <test></test>, headers = departureHeaders)
               val result = call(sut.getDeparturesForEori(), request)

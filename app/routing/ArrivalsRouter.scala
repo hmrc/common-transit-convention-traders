@@ -95,11 +95,14 @@ class ArrivalsRouter @Inject() (
           runIfBound[V2ArrivalId]("arrivalId", arrivalId, v2Arrivals.getMovement(MovementType.Arrival, _))
         else handleDisabledPhase5Final()
       case _ =>
-        runIfBound[V1ArrivalId](
-          "arrivalId",
-          arrivalId,
-          v1Arrivals.getArrival
-        )
+        if (config.disablePhase4) handleDisablingPhase4()
+        else {
+          runIfBound[V1ArrivalId](
+            "arrivalId",
+            arrivalId,
+            v1Arrivals.getArrival
+          )
+        }
     }
 
   def getArrivalMessageIds(
@@ -123,11 +126,14 @@ class ArrivalsRouter @Inject() (
       else
         handleDisabledPhase5Final()
     case _ =>
-      runIfBound[V1ArrivalId](
-        "arrivalId",
-        arrivalId,
-        v1ArrivalMessages.getArrivalMessages(_, receivedSince)
-      )
+      if (config.disablePhase4) handleDisablingPhase4()
+      else {
+        runIfBound[V1ArrivalId](
+          "arrivalId",
+          arrivalId,
+          v1ArrivalMessages.getArrivalMessages(_, receivedSince)
+        )
+      }
   }
 
   def getArrivalMessage(arrivalId: String, messageId: String): Action[Source[ByteString, _]] = route {
@@ -158,11 +164,14 @@ class ArrivalsRouter @Inject() (
         )
       else handleDisabledPhase5Final()
     case _ =>
-      runIfBound[V1ArrivalId](
-        "arrivalId",
-        arrivalId,
-        boundArrivalId => runIfBound[V1MessageId]("messageId", messageId, v1ArrivalMessages.getArrivalMessage(boundArrivalId, _))
-      )
+      if (config.disablePhase4) handleDisablingPhase4()
+      else {
+        runIfBound[V1ArrivalId](
+          "arrivalId",
+          arrivalId,
+          boundArrivalId => runIfBound[V1MessageId]("messageId", messageId, v1ArrivalMessages.getArrivalMessage(boundArrivalId, _))
+        )
+      }
   }
 
   def getArrivalsForEori(
@@ -191,7 +200,9 @@ class ArrivalsRouter @Inject() (
       if (config.phase5FinalEnabled)
         v2Arrivals.getMovements(MovementType.Arrival, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
       else handleDisabledPhase5Final()
-    case _ => v1Arrivals.getArrivalsForEori(updatedSince)
+    case _ =>
+      if (config.disablePhase4) handleDisablingPhase4()
+      else v1Arrivals.getArrivalsForEori(updatedSince)
   }
 
   def attachMessage(arrivalId: String): Action[Source[ByteString, _]] = route {
@@ -203,11 +214,14 @@ class ArrivalsRouter @Inject() (
         runIfBound[V2ArrivalId]("arrivalId", arrivalId, v2Arrivals.attachMessage(MovementType.Arrival, _))
       else handleDisabledPhase5Final()
     case _ =>
-      runIfBound[V1ArrivalId](
-        "arrivalId",
-        arrivalId,
-        v1ArrivalMessages.sendMessageDownstream
-      )
+      if (config.disablePhase4) handleDisablingPhase4()
+      else {
+        runIfBound[V1ArrivalId](
+          "arrivalId",
+          arrivalId,
+          v1ArrivalMessages.sendMessageDownstream
+        )
+      }
   }
 
 }
