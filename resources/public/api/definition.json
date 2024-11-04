@@ -1,11 +1,5 @@
 {
-  "scopes": [
-    {
-      "key": "common-transit-convention-traders",
-      "name": "Common Transit Convention Traders",
-      "description": "Common Transit Convention Traders Public API"
-    }
-  ],
+  "scopes": [],
   "api": {
     "name": "CTC Traders",
     "description": "The public API to allow traders to submit and receive Common Transit Convention (IE) messages",
