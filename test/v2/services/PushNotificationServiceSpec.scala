@@ -85,25 +85,8 @@ class PushNotificationServiceSpec
 
   "associate" - {
 
-    "when the service is disabled, return a left with PushNotificationDisabled" in forAll(
-      arbitrary[MovementId],
-      arbitrary[MovementType],
-      arbitrary[EORINumber]
-    ) {
-      (movementId, movementType, eori) =>
-        when(mockAppConfig.pushNotificationsEnabled).thenReturn(false)
-        val headers = FakeHeaders()
-
-        val result = sut.associate(movementId, movementType, headers, eori)
-
-        whenReady(result.value) {
-          r => r mustBe Left(PushNotificationError.PushNotificationDisabled)
-        }
-    }
-
     "when there is no client ID, return a left with MissingClientId" in forAll(arbitrary[MovementId], arbitrary[MovementType], arbitrary[EORINumber]) {
       (movementId, movementType, eori) =>
-        when(mockAppConfig.pushNotificationsEnabled).thenReturn(true)
         val headers = FakeHeaders()
 
         val result = sut.associate(movementId, movementType, headers, eori)
@@ -120,7 +103,6 @@ class PushNotificationServiceSpec
       arbitrary[EORINumber]
     ) {
       (movementId, movementType, clientId, eori) =>
-        when(mockAppConfig.pushNotificationsEnabled).thenReturn(true)
         val headers = FakeHeaders(Seq(Constants.XClientIdHeader -> clientId))
 
         val expectedAssociation = PushNotificationsAssociation(ClientId(clientId), movementType, None, eori)
@@ -144,7 +126,6 @@ class PushNotificationServiceSpec
       arbitrary[EORINumber]
     ) {
       (movementId, movementType, clientId, boxId, eori) =>
-        when(mockAppConfig.pushNotificationsEnabled).thenReturn(true)
         val headers = FakeHeaders(Seq(Constants.XClientIdHeader -> clientId, Constants.XCallbackBoxIdHeader -> boxId))
 
         val expectedAssociation = PushNotificationsAssociation(ClientId(clientId), movementType, Some(BoxId(boxId)), eori)
@@ -167,7 +148,6 @@ class PushNotificationServiceSpec
       arbitrary[EORINumber]
     ) {
       (movementId, movementType, clientId, eori) =>
-        when(mockAppConfig.pushNotificationsEnabled).thenReturn(true)
         val headers = FakeHeaders(Seq(Constants.XClientIdHeader -> clientId))
 
         val expectedAssociation = PushNotificationsAssociation(ClientId(clientId), movementType, None, eori)
@@ -193,7 +173,6 @@ class PushNotificationServiceSpec
       arbitrary[EORINumber]
     ) {
       (movementId, movementType, clientId, boxId, eori) =>
-        when(mockAppConfig.pushNotificationsEnabled).thenReturn(true)
         val headers = FakeHeaders(Seq(Constants.XClientIdHeader -> clientId, Constants.XCallbackBoxIdHeader -> boxId))
 
         val expectedException = new Exception()
@@ -209,19 +188,8 @@ class PushNotificationServiceSpec
 
   "update" - {
 
-    "when the service is disabled, return a unit" in forAll(arbitrary[MovementId]) {
-      movementId =>
-        when(mockAppConfig.pushNotificationsEnabled).thenReturn(false)
-        val result = sut.update(movementId)
-
-        whenReady(result.value) {
-          r => r mustBe Right(())
-        }
-    }
-
     "when the service is enabled and the update was successful, return a unit" in forAll(arbitrary[MovementId]) {
       movementId =>
-        when(mockAppConfig.pushNotificationsEnabled).thenReturn(true)
         when(mockConnector.patchAssociation(MovementId(anyString()))(any(), any())).thenReturn(Future.successful(()))
         val result = sut.update(movementId)
 
@@ -232,7 +200,6 @@ class PushNotificationServiceSpec
 
     "when a 404 is returned occurs, return a Left of AssociationNotFound" in forAll(arbitrary[MovementId]) {
       movementId =>
-        when(mockAppConfig.pushNotificationsEnabled).thenReturn(true)
         when(mockConnector.patchAssociation(MovementId(anyString()))(any(), any())).thenReturn(Future.failed(UpstreamErrorResponse("NOT_FOUND", NOT_FOUND)))
 
         val result = sut.update(movementId)
@@ -243,7 +210,6 @@ class PushNotificationServiceSpec
 
     "when an error occurs, return a Left of Unexpected" in forAll(arbitrary[MovementId]) {
       movementId =>
-        when(mockAppConfig.pushNotificationsEnabled).thenReturn(true)
         val expectedException = new Exception()
 
         when(mockConnector.patchAssociation(MovementId(anyString()))(any(), any())).thenReturn(Future.failed(expectedException))
@@ -256,22 +222,9 @@ class PushNotificationServiceSpec
   }
 
   "postPpnsNotification" - {
-    "should return Right(()) if push notifications are disabled" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
-      (movementId, messageId) =>
-        when(mockAppConfig.pushNotificationsEnabled).thenReturn(false)
-        when(mockConnector.postPpnsSubmissionNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
-          .thenReturn(Future.successful(()))
-
-        val jsonPayload = jsonPayloadGen.sample.get
-
-        val result = sut.postPpnsNotification(movementId, messageId, jsonPayload).value.futureValue
-
-        result mustBe Right(())
-    }
 
     "should return Right(()) if the push notification was successfully sent" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
       (movementId, messageId) =>
-        when(mockAppConfig.pushNotificationsEnabled) thenReturn true
         when(mockConnector.postPpnsSubmissionNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
           .thenReturn(Future.successful(()))
 
@@ -284,7 +237,6 @@ class PushNotificationServiceSpec
 
     "should return Left(BoxNotFound) if the box is not found" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
       (movementId, messageId) =>
-        when(mockAppConfig.pushNotificationsEnabled) thenReturn true
         when(mockConnector.postPpnsSubmissionNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
           .thenReturn(Future.failed(UpstreamErrorResponse("Box not found", NOT_FOUND)))
         val jsonPayload = jsonPayloadGen.sample.get
@@ -297,7 +249,6 @@ class PushNotificationServiceSpec
 
     "should return Left(UnexpectedError) if an unexpected error occurs" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
       (movementId, messageId) =>
-        when(mockAppConfig.pushNotificationsEnabled) thenReturn true
         when(mockConnector.postPpnsSubmissionNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
           .thenReturn(Future.failed(new RuntimeException("Something went wrong")))
         val jsonPayload = jsonPayloadGen.sample.get

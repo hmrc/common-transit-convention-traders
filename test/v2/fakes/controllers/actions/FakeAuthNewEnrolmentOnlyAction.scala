@@ -16,6 +16,7 @@
 
 package v2.fakes.controllers.actions
 
+import controllers.common.AuthenticatedRequest
 import models.common.EORINumber
 import play.api.mvc.AnyContent
 import play.api.mvc.BodyParser
@@ -23,7 +24,6 @@ import play.api.mvc.Request
 import play.api.mvc.Result
 import play.api.test.Helpers
 import v2.controllers.actions.AuthNewEnrolmentOnlyAction
-import controllers.common.AuthenticatedRequest
 
 import scala.concurrent.ExecutionContext.global
 import scala.concurrent.ExecutionContext

@@ -16,8 +16,6 @@
 
 package data
 
-import models.Guarantee
-
 import scala.annotation.tailrec
 import scala.xml.Elem
 import scala.xml.NodeSeq
