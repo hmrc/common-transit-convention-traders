@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-package models
+package data
 
-abstract class Office(value: String) {
-  def prefix: String = value.substring(0, 2)
+case class Guarantee(gType: Char, gReference: String) {
+  def isDefaulting: Boolean = Guarantee.referenceTypes.contains(gType)
 }
 
-final case class DepartureOffice(value: String)   extends Office(value: String)
-final case class DestinationOffice(value: String) extends Office(value: String)
+object Guarantee {
+  val referenceTypes: Seq[Char] = Seq[Char]('0', '1', '2', '4', '9')
+  val validTypes: Seq[Char]     = Seq[Char]('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B')
+
+  def isOther(gType: Char): Boolean = !referenceTypes.contains(gType)
+}

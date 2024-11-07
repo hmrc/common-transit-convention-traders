@@ -17,17 +17,12 @@
 package config
 
 import com.google.inject.AbstractModule
-import utils.JsonHelper
-import utils.MessageTranslation
 
 import java.time.Clock
 
 class Module extends AbstractModule {
 
   override def configure(): Unit = {
-
-    bind(classOf[JsonHelper]).asEagerSingleton()
-    bind(classOf[MessageTranslation]).asEagerSingleton()
     bind(classOf[CTCServicesConfig]).asEagerSingleton()
     bind(classOf[Clock]).toInstance(Clock.systemUTC())
   }

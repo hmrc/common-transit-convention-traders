@@ -26,8 +26,6 @@ import javax.inject.Singleton
 class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesConfig) {
 
   val commmonTransitConventionTradersUrl: Url = Url.parse(servicesConfig.baseUrl("common-transit-convention-traders"))
-  val traderAtDestinationUrl: Url             = Url.parse(servicesConfig.baseUrl("transit-movement-trader-at-destination"))
-  val traderAtDeparturesUrl: Url              = Url.parse(servicesConfig.baseUrl("transits-movements-trader-at-departure"))
   val validatorUrl: Url                       = Url.parse(servicesConfig.baseUrl("transit-movements-validator"))
   val converterUrl: Url                       = Url.parse(servicesConfig.baseUrl("transit-movements-converter"))
   val movementsUrl: Url                       = Url.parse(servicesConfig.baseUrl("transit-movements"))
@@ -37,21 +35,10 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesCon
   val upscanInitiateUrl: Url                  = Url.parse(servicesConfig.baseUrl("upscan-initiate"))
   val upscanMaximumFileSize: Long             = servicesConfig.config("upscan-initiate").get[Long]("maximumFileSize")
   val forwardClientIdToUpscan: Boolean        = servicesConfig.config("upscan-initiate").get[Boolean]("send-client-id")
-  val pushNotificationsEnabled: Boolean       = servicesConfig.config("transit-movements-push-notifications").get[Boolean]("enabled")
 
   val version21BetaEnabled: Boolean = config.get[Boolean]("version21BetaEnabled")
 
-  lazy val enrolmentKey: String = config.get[String]("security.enrolmentKey")
-
-  val messageTranslationFile: String = config.get[String]("message-translation-file")
-
-  val pushPullUrl: Url = Url.parse(servicesConfig.baseUrl("push-pull-notifications-api"))
-
-  val blockUnknownNamespaces: Boolean = config.get[Boolean]("xml-validation.block-unknown-namespaces")
-
   val smallMessageSizeLimit: Int = config.get[Int]("smallMessageSizeLimit")
-
-  val logInsufficientEnrolments: Boolean = config.get[Boolean]("logInsufficientEnrolments")
 
   val defaultItemsPerPage: Int = config.get[Int]("defaultItemsPerPage")
 
@@ -59,12 +46,8 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesCon
 
   val internalAuthToken: String = config.get[String]("internal-auth.token")
 
-  val disablePhase4: Boolean = config.get[Boolean]("disable-phase-4")
-
   val phase5TransitionalEnabled: Boolean = config.get[Boolean]("enable-phase-5")
 
   val phase5FinalEnabled: Boolean = config.get[Boolean]("phase-5-final-enabled")
-
-  val phase4EnrolmentHeader: Boolean = config.get[Boolean]("phase-4-enrolment-header")
 
 }

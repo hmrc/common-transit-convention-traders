@@ -30,7 +30,6 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status.ACCEPTED
-import play.api.http.Status.GONE
 import play.api.http.Status.NOT_ACCEPTABLE
 import play.api.http.Status.OK
 import play.api.libs.json.Json
@@ -43,8 +42,6 @@ import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
 import v2.base.TestActorSystem
-import v2.fakes.controllers.FakeV1ArrivalMessagesController
-import v2.fakes.controllers.FakeV1ArrivalsController
 import v2_1.fakes.controllers.FakeV2MovementsController
 import v2_1.fakes.controllers.FakeV2TransitionalMovementsController
 
@@ -59,10 +56,8 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
 
   val sut = new ArrivalsRouter(
     stubControllerComponents(),
-    new FakeV1ArrivalsController(),
     new FakeV2TransitionalMovementsController(),
     new FakeV2MovementsController(),
-    new FakeV1ArrivalMessagesController(),
     mockAppConfig
   )
 
@@ -209,70 +204,4 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
 
     "when getting messages for an existing arrival" - executeTest(routes.ArrivalsRouter.getArrivalMessageIds(id), sut.attachMessage(id), ACCEPTED, true)
   }
-
-  "route to the version 1 controller" - {
-    def executeTest(callValue: Call, sutValue: => Action[Source[ByteString, _]], expectedStatus: Int, isVersion: Boolean) =
-      Seq(None, Some("application/vnd.hmrc.1.0+json"), Some("text/html"), Some("application/vnd.hmrc.1.0+xml"), Some("text/javascript")).foreach {
-        acceptHeaderValue =>
-          val arrivalsHeaders = FakeHeaders(
-            Seq(HeaderNames.ACCEPT -> acceptHeaderValue.getOrElse(""), HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
-          )
-
-          s"when the accept header equals ${acceptHeaderValue.getOrElse("nothing")}, it returns status code $expectedStatus" in {
-            when(mockAppConfig.disablePhase4).thenReturn(!isVersion)
-            val request =
-              FakeRequest(
-                method = callValue.method,
-                uri = callValue.url,
-                body = <test></test>,
-                headers = arrivalsHeaders
-              )
-            val result = call(sutValue, request)
-
-            status(result) mustBe expectedStatus
-            if (isVersion) {
-              contentAsJson(result) mustBe Json.obj("version" -> 1) // ensure we get the unique value to verify we called the fake action
-            } else {
-              contentAsJson(result) mustBe Json.obj(
-                "message" -> "New NCTS4 Arrival Notifications can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Arrival Notifications.",
-                "code"    -> "GONE"
-              )
-            }
-          }
-      }
-
-    "when creating an arrival notification" - executeTest(
-      routes.ArrivalsRouter.createArrivalNotification(),
-      sut.createArrivalNotification(),
-      ACCEPTED,
-      true
-    )
-    "when creating an arrival notification return Gone when phase5 feature is enabled" - executeTest(
-      routes.ArrivalsRouter.createArrivalNotification(),
-      sut.createArrivalNotification(),
-      GONE,
-      false
-    )
-
-    "when getting an arrival" - executeTest(routes.ArrivalsRouter.getArrival("123"), sut.getArrival("123"), OK, true)
-
-    "when getting arrivals for a given enrolment EORI" - executeTest(routes.ArrivalsRouter.getArrivalsForEori(), sut.getArrivalsForEori(), OK, true)
-
-    "when getting a list of arrival messages with given arrivalId" - executeTest(routes.ArrivalsRouter.getArrival("123"), sut.getArrival("123"), OK, true)
-
-    "when getting a single arrival message" - executeTest(
-      routes.ArrivalsRouter.getArrivalMessage("123", "456"),
-      sut.getArrivalMessage("123", "456"),
-      OK,
-      true
-    )
-
-    "when submitting a new message for an existing arrival" - executeTest(
-      routes.ArrivalsRouter.attachMessage("123"),
-      sut.attachMessage("123"),
-      ACCEPTED,
-      true
-    )
-  }
-
 }
