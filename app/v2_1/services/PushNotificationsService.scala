@@ -60,8 +60,7 @@ trait PushNotificationsService {
 }
 
 class PushNotificationsServiceImpl @Inject() (
-  pushNotificationsConnector: PushNotificationsConnector,
-  appConfig: AppConfig
+  pushNotificationsConnector: PushNotificationsConnector
 ) extends PushNotificationsService
     with Logging {
 

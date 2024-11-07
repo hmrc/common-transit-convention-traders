@@ -30,7 +30,6 @@ import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status.ACCEPTED
-import play.api.http.Status.GONE
 import play.api.http.Status.NOT_ACCEPTABLE
 import play.api.http.Status.OK
 import play.api.libs.json.Json
