@@ -16,14 +16,8 @@
 
 package routing
 
-import org.apache.pekko.stream.Materializer
-import org.apache.pekko.stream.scaladsl.Sink
-import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.util.ByteString
 import com.google.inject.Inject
 import config.AppConfig
-import controllers.V1DepartureMessagesController
-import controllers.V1DeparturesController
 import controllers.common.stream.StreamingParsers
 import models.common.EORINumber
 import models.common.ItemCount
@@ -31,26 +25,23 @@ import models.common.LocalReferenceNumber
 import models.common.MovementReferenceNumber
 import models.common.MovementType
 import models.common.PageNumber
-import models.common.errors.PresentationError
 import models.common.{MessageId => V2MessageId}
 import models.common.{MovementId => V2DepartureId}
-import models.domain.{DepartureId => V1DepartureId}
-import models.domain.{MessageId => V1MessageId}
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import play.api.Logging
-import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
 import v2.controllers.{V2MovementsController => V2TransitionalMovementsController}
-import v2_1.controllers.V2MovementsController
 import v2.models.Bindings._
+import v2_1.controllers.V2MovementsController
 
 import java.time.OffsetDateTime
 
 class DeparturesRouter @Inject() (
   val controllerComponents: ControllerComponents,
-  v1Departures: V1DeparturesController,
-  v1DepartureMessages: V1DepartureMessagesController,
   v2TransitionalDepartures: V2TransitionalMovementsController,
   v2Departures: V2MovementsController,
   config: AppConfig
@@ -62,43 +53,17 @@ class DeparturesRouter @Inject() (
     with Logging {
 
   def submitDeclaration(): Action[Source[ByteString, _]] = route {
-    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      if (config.phase5TransitionalEnabled) v2TransitionalDepartures.createMovement(MovementType.Departure)
-      else handleDisabledPhase5Transitional()
     case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
       if (config.phase5FinalEnabled)
         v2Departures.createMovement(MovementType.Departure)
       else handleDisabledPhase5Final()
     case _ =>
-      if (config.disablePhase4) handleDisablingPhase4()
-      else v1Departures.submitDeclaration()
+      if (config.phase5TransitionalEnabled) v2TransitionalDepartures.createMovement(MovementType.Departure)
+      else handleDisabledPhase5Transitional()
   }
-
-  private def handleDisablingPhase4() =
-    Action(streamFromMemory) {
-      request =>
-        request.body.runWith(Sink.ignore)
-        val presentationError: PresentationError = PresentationError.goneError(
-          "New NCTS4 Departure Declarations can no longer be created using CTC Traders API v1.0. Use CTC Traders API v2.0 to create new NCTS5 Departure Declarations."
-        )
-        Status(presentationError.code.statusCode)(Json.toJson(presentationError))
-    }
 
   def getMessage(departureId: String, messageId: String): Action[Source[ByteString, _]] =
     route {
-      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-        if (config.phase5TransitionalEnabled)
-          runIfBound[V2DepartureId](
-            "departureId",
-            departureId,
-            boundDepartureId =>
-              runIfBound[V2MessageId](
-                "messageId",
-                messageId,
-                v2TransitionalDepartures.getMessage(MovementType.Departure, boundDepartureId, _)
-              )
-          )
-        else handleDisabledPhase5Transitional()
       case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
         if (config.phase5FinalEnabled)
           runIfBound[V2DepartureId](
@@ -113,14 +78,18 @@ class DeparturesRouter @Inject() (
           )
         else handleDisabledPhase5Final()
       case _ =>
-        if (config.disablePhase4) handleDisablingPhase4()
-        else {
-          runIfBound[V1DepartureId](
+        if (config.phase5TransitionalEnabled)
+          runIfBound[V2DepartureId](
             "departureId",
             departureId,
-            boundDepartureId => runIfBound[V1MessageId]("messageId", messageId, v1DepartureMessages.getDepartureMessage(boundDepartureId, _))
+            boundDepartureId =>
+              runIfBound[V2MessageId](
+                "messageId",
+                messageId,
+                v2TransitionalDepartures.getMessage(MovementType.Departure, boundDepartureId, _)
+              )
           )
-        }
+        else handleDisabledPhase5Transitional()
     }
 
   def getMessageIds(
@@ -130,7 +99,11 @@ class DeparturesRouter @Inject() (
     count: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime]
   ): Action[Source[ByteString, _]] = route {
-    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
+    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+      if (config.phase5FinalEnabled)
+        runIfBound[V2DepartureId]("departureId", departureId, v2Departures.getMessageIds(MovementType.Departure, _, receivedSince, page, count, receivedUntil))
+      else handleDisabledPhase5Final()
+    case _ =>
       if (config.phase5TransitionalEnabled)
         runIfBound[V2DepartureId](
           "departureId",
@@ -138,30 +111,9 @@ class DeparturesRouter @Inject() (
           v2TransitionalDepartures.getMessageIds(MovementType.Departure, _, receivedSince, page, count, receivedUntil)
         )
       else handleDisabledPhase5Transitional()
-    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
-      if (config.phase5FinalEnabled)
-        runIfBound[V2DepartureId]("departureId", departureId, v2Departures.getMessageIds(MovementType.Departure, _, receivedSince, page, count, receivedUntil))
-      else handleDisabledPhase5Final()
-    case _ =>
-      if (config.disablePhase4) handleDisablingPhase4()
-      else {
-        runIfBound[V1DepartureId](
-          "departureId",
-          departureId,
-          v1DepartureMessages.getDepartureMessages(_, receivedSince)
-        )
-      }
   }
 
   def getDeparture(departureId: String): Action[Source[ByteString, _]] = route {
-    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      if (config.phase5TransitionalEnabled)
-        runIfBound[V2DepartureId](
-          "departureId",
-          departureId,
-          v2TransitionalDepartures.getMovement(MovementType.Departure, _)
-        )
-      else handleDisabledPhase5Transitional()
     case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
       if (config.phase5FinalEnabled)
         runIfBound[V2DepartureId](
@@ -171,14 +123,13 @@ class DeparturesRouter @Inject() (
         )
       else handleDisabledPhase5Final()
     case _ =>
-      if (config.disablePhase4) handleDisablingPhase4()
-      else {
-        runIfBound[V1DepartureId](
+      if (config.phase5TransitionalEnabled)
+        runIfBound[V2DepartureId](
           "departureId",
           departureId,
-          v1Departures.getDeparture
+          v2TransitionalDepartures.getMovement(MovementType.Departure, _)
         )
-      }
+      else handleDisabledPhase5Transitional()
   }
 
   def getDeparturesForEori(
@@ -190,7 +141,11 @@ class DeparturesRouter @Inject() (
     receivedUntil: Option[OffsetDateTime] = None,
     localReferenceNumber: Option[LocalReferenceNumber] = None
   ): Action[Source[ByteString, _]] = route {
-    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
+    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+      if (config.phase5FinalEnabled)
+        v2Departures.getMovements(MovementType.Departure, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
+      else handleDisabledPhase5Final()
+    case _ =>
       if (config.phase5TransitionalEnabled)
         v2TransitionalDepartures.getMovements(
           MovementType.Departure,
@@ -203,32 +158,17 @@ class DeparturesRouter @Inject() (
           localReferenceNumber
         )
       else handleDisabledPhase5Transitional()
-    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
-      if (config.phase5FinalEnabled)
-        v2Departures.getMovements(MovementType.Departure, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
-      else handleDisabledPhase5Final()
-    case _ =>
-      if (config.disablePhase4) handleDisablingPhase4() else v1Departures.getDeparturesForEori(updatedSince)
   }
 
   def attachMessage(departureId: String): Action[Source[ByteString, _]] = route {
-    case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) =>
-      if (config.phase5TransitionalEnabled)
-        runIfBound[V2DepartureId]("departureId", departureId, v2TransitionalDepartures.attachMessage(MovementType.Departure, _))
-      else handleDisabledPhase5Transitional()
     case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
       if (config.phase5FinalEnabled)
         runIfBound[V2DepartureId]("departureId", departureId, v2Departures.attachMessage(MovementType.Departure, _))
       else handleDisabledPhase5Final()
     case _ =>
-      if (config.disablePhase4) handleDisablingPhase4()
-      else {
-        runIfBound[V1DepartureId](
-          "departureId",
-          departureId,
-          v1DepartureMessages.sendMessageDownstream
-        )
-      }
+      if (config.phase5TransitionalEnabled)
+        runIfBound[V2DepartureId]("departureId", departureId, v2TransitionalDepartures.attachMessage(MovementType.Departure, _))
+      else handleDisabledPhase5Transitional()
   }
 
 }

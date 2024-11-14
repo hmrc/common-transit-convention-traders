@@ -60,8 +60,7 @@ trait PushNotificationsService {
 }
 
 class PushNotificationsServiceImpl @Inject() (
-  pushNotificationsConnector: PushNotificationsConnector,
-  appConfig: AppConfig
+  pushNotificationsConnector: PushNotificationsConnector
 ) extends PushNotificationsService
     with Logging {
 
@@ -69,67 +68,61 @@ class PushNotificationsServiceImpl @Inject() (
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
   ): EitherT[Future, PushNotificationError, BoxResponse] =
-    if (!appConfig.pushNotificationsEnabled) EitherT.leftT(PushNotificationError.PushNotificationDisabled)
-    else
-      EitherT {
-        headers
-          .get(Constants.XClientIdHeader)
-          .map {
-            clientId =>
-              pushNotificationsConnector
-                .postAssociation(
-                  movementId,
-                  PushNotificationsAssociation(
-                    ClientId(clientId),
-                    movementType,
-                    headers.get(Constants.XCallbackBoxIdHeader).map(BoxId.apply),
-                    enrollmentEORINumber
-                  )
+    EitherT {
+      headers
+        .get(Constants.XClientIdHeader)
+        .map {
+          clientId =>
+            pushNotificationsConnector
+              .postAssociation(
+                movementId,
+                PushNotificationsAssociation(
+                  ClientId(clientId),
+                  movementType,
+                  headers.get(Constants.XCallbackBoxIdHeader).map(BoxId.apply),
+                  enrollmentEORINumber
                 )
-                .map(Right(_))
-                .recover {
-                  case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.BoxNotFound)
-                  case NonFatal(thr) =>
-                    logger.error(s"Unable to associate notification : ${thr.getMessage}", thr)
-                    Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
-                }
-          }
-          .getOrElse(Future.successful(Left(PushNotificationError.MissingClientId)))
-      }
+              )
+              .map(Right(_))
+              .recover {
+                case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.BoxNotFound)
+                case NonFatal(thr) =>
+                  logger.error(s"Unable to associate notification : ${thr.getMessage}", thr)
+                  Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
+              }
+        }
+        .getOrElse(Future.successful(Left(PushNotificationError.MissingClientId)))
+    }
 
   override def update(
     movementId: MovementId
   )(implicit headerCarrier: HeaderCarrier, executionContext: ExecutionContext): EitherT[Future, PushNotificationError, Unit] =
-    if (!appConfig.pushNotificationsEnabled) EitherT.rightT(())
-    else
-      EitherT {
-        pushNotificationsConnector
-          .patchAssociation(movementId)
-          .map(Right(_))
-          .recover {
-            case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.AssociationNotFound)
-            case NonFatal(thr) =>
-              logger.error(s"Unable to update notification : ${thr.getMessage}", thr)
-              Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
-          }
-      }
+    EitherT {
+      pushNotificationsConnector
+        .patchAssociation(movementId)
+        .map(Right(_))
+        .recover {
+          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.AssociationNotFound)
+          case NonFatal(thr) =>
+            logger.error(s"Unable to update notification : ${thr.getMessage}", thr)
+            Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
+        }
+    }
 
   override def postPpnsNotification(movementId: MovementId, messageId: MessageId, body: JsValue)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PushNotificationError, Unit] =
-    if (!appConfig.pushNotificationsEnabled) EitherT.rightT(())
-    else
-      EitherT {
-        pushNotificationsConnector
-          .postPpnsSubmissionNotification(movementId, messageId, body)
-          .map(Right(_))
-          .recover {
-            case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.BoxNotFound)
-            case NonFatal(thr) =>
-              logger.error(s"Unable to post notification : ${thr.getMessage}", thr)
-              Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
-          }
-      }
+    EitherT {
+      pushNotificationsConnector
+        .postPpnsSubmissionNotification(movementId, messageId, body)
+        .map(Right(_))
+        .recover {
+          case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.BoxNotFound)
+          case NonFatal(thr) =>
+            logger.error(s"Unable to post notification : ${thr.getMessage}", thr)
+            Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
+        }
+    }
 
 }

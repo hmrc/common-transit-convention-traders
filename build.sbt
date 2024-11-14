@@ -21,9 +21,7 @@ lazy val microservice = Project(appName, file("."))
     Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
     // Import models by default in route files
     RoutesKeys.routesImport ++= Seq(
-      "models._",
       "models.common._",
-      "models.domain._",
       "models.Binders._",
       "v2.models.Bindings._",
       "java.time.OffsetDateTime",
