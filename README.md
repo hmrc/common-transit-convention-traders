@@ -10,7 +10,7 @@ You can find our full list of endpoints on [API definitions](https://developer.s
 
 ### Prerequisites  
 - Scala 2.13.12
-- Java 11
+- Java 21
 - sbt > 1.9.7
 - [Service Manager](https://github.com/hmrc/service-manager)
 
