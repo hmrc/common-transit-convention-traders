@@ -38,34 +38,34 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[ConversionServiceImpl])
 trait ConversionService {
 
-  def convert(messageType: MessageType, source: Source[ByteString, _], headerType: HeaderType)(implicit
+  def convert(messageType: MessageType, source: Source[ByteString, ?], headerType: HeaderType)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer
-  ): EitherT[Future, ConversionError, Source[ByteString, _]]
+  ): EitherT[Future, ConversionError, Source[ByteString, ?]]
 
-  def jsonToXml(messageType: MessageType, source: Source[ByteString, _])(implicit
+  def jsonToXml(messageType: MessageType, source: Source[ByteString, ?])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer
-  ): EitherT[Future, ConversionError, Source[ByteString, _]] = convert(messageType, source, HeaderTypes.jsonToXml)
+  ): EitherT[Future, ConversionError, Source[ByteString, ?]] = convert(messageType, source, HeaderTypes.jsonToXml)
 
-  def xmlToJson(messageType: MessageType, source: Source[ByteString, _])(implicit
+  def xmlToJson(messageType: MessageType, source: Source[ByteString, ?])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer
-  ): EitherT[Future, ConversionError, Source[ByteString, _]] = convert(messageType, source, HeaderTypes.xmlToJson)
+  ): EitherT[Future, ConversionError, Source[ByteString, ?]] = convert(messageType, source, HeaderTypes.xmlToJson)
 
 }
 
 @Singleton
 class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector) extends ConversionService with Logging {
 
-  override def convert(messageType: MessageType, source: Source[ByteString, _], headerType: HeaderType)(implicit
+  override def convert(messageType: MessageType, source: Source[ByteString, ?], headerType: HeaderType)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer
-  ): EitherT[Future, ConversionError, Source[ByteString, _]] =
+  ): EitherT[Future, ConversionError, Source[ByteString, ?]] =
     EitherT(
       conversionConnector
         .post(messageType, source, headerType)

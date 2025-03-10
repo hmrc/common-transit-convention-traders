@@ -47,12 +47,12 @@ class HasMetricsSpec extends AsyncWordSpecLike with Matchers with OptionValues w
     val histogram      = mock[Histogram]
     val metrics        = mock[MetricRegistry]
 
-    when(metrics.timer(anyString())) thenReturn timer
-    when(metrics.counter(endsWith("success-counter"))) thenReturn successCounter
-    when(metrics.counter(endsWith("failed-counter"))) thenReturn failureCounter
-    when(metrics.histogram(anyString())) thenReturn histogram
-    when(timer.time()) thenReturn timerContext
-    when(timerContext.stop()) thenReturn 0L
+    when(metrics.timer(anyString())).thenReturn(timer)
+    when(metrics.counter(endsWith("success-counter"))).thenReturn(successCounter)
+    when(metrics.counter(endsWith("failed-counter"))).thenReturn(failureCounter)
+    when(metrics.histogram(anyString())).thenReturn(histogram)
+    when(timer.time()).thenReturn(timerContext)
+    when(timerContext.stop()).thenReturn(0L)
   }
 
   class TestHasMetrics extends HasMetrics with MockHasMetrics

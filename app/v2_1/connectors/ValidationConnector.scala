@@ -32,8 +32,10 @@ import play.api.http.MimeTypes
 import play.api.http.Status.NO_CONTENT
 import play.api.http.Status.OK
 import play.api.libs.json.Reads
+import play.api.libs.ws.DefaultBodyWritables
+import play.api.libs.ws.JsonBodyWritables
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -47,12 +49,12 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[ValidationConnectorImpl])
 trait ValidationConnector {
 
-  def postXml(messageType: MessageType, stream: Source[ByteString, _])(implicit
+  def postXml(messageType: MessageType, stream: Source[ByteString, ?])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Option[XmlValidationErrorResponse]]
 
-  def postJson(messageType: MessageType, stream: Source[ByteString, _])(implicit
+  def postJson(messageType: MessageType, stream: Source[ByteString, ?])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Option[JsonValidationErrorResponse]]
@@ -64,9 +66,11 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
     extends ValidationConnector
     with HasMetrics
     with V2BaseConnector
+    with DefaultBodyWritables
+    with JsonBodyWritables
     with Logging {
 
-  override def postXml(messageType: MessageType, stream: Source[ByteString, _])(implicit
+  override def postXml(messageType: MessageType, stream: Source[ByteString, ?])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Option[XmlValidationErrorResponse]] =
@@ -75,7 +79,7 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
         post[XmlValidationErrorResponse](messageType, stream, MimeTypes.XML)
     }
 
-  override def postJson(messageType: MessageType, stream: Source[ByteString, _])(implicit
+  override def postJson(messageType: MessageType, stream: Source[ByteString, ?])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Option[JsonValidationErrorResponse]] =
@@ -84,7 +88,7 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
         post[JsonValidationErrorResponse](messageType, stream, MimeTypes.JSON)
     }
 
-  private def post[A](messageType: MessageType, stream: Source[ByteString, _], contentType: String)(implicit
+  private def post[A](messageType: MessageType, stream: Source[ByteString, ?], contentType: String)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     reads: Reads[A]

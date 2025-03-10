@@ -34,6 +34,8 @@ import models.common.MovementType
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.libs.json.Json
+import play.api.libs.ws.DefaultBodyWritables
+import play.api.libs.ws.JsonBodyWritables
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -52,13 +54,15 @@ trait UpscanConnector {
     ec: ExecutionContext
   ): Future[UpscanInitiateResponse]
 
-  def upscanGetFile(downloadUrl: DownloadUrl)(implicit hc: HeaderCarrier, ec: ExecutionContext, materializer: Materializer): Future[Source[ByteString, _]]
+  def upscanGetFile(downloadUrl: DownloadUrl)(implicit hc: HeaderCarrier, ec: ExecutionContext, materializer: Materializer): Future[Source[ByteString, ?]]
 
 }
 
 class UpscanConnectorImpl @Inject() (appConfig: AppConfig, httpClientV2: HttpClientV2, val metrics: MetricRegistry)
     extends UpscanConnector
     with V2BaseConnector
+    with DefaultBodyWritables
+    with JsonBodyWritables
     with HasMetrics {
 
   override def upscanInitiate(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
@@ -99,7 +103,7 @@ class UpscanConnectorImpl @Inject() (appConfig: AppConfig, httpClientV2: HttpCli
 
   override def upscanGetFile(
     downloadUrl: DownloadUrl
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext, materializer: Materializer): Future[Source[ByteString, _]] =
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext, materializer: Materializer): Future[Source[ByteString, ?]] =
     httpClientV2
       .get(url"${downloadUrl.value}")
       .executeAsStream

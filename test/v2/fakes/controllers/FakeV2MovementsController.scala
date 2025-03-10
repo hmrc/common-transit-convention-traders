@@ -43,7 +43,7 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
 
   override val controllerComponents: ControllerComponents = stubControllerComponents()
 
-  override def createMovement(movementType: MovementType): Action[Source[ByteString, _]] = Action(streamFromMemory) {
+  override def createMovement(movementType: MovementType): Action[Source[ByteString, ?]] = Action(streamFromMemory) {
     request =>
       request.body.runWith(Sink.ignore)
       Accepted(Json.obj("version" -> 2))
@@ -85,7 +85,7 @@ class FakeV2MovementsController @Inject() ()(implicit val materializer: Material
       Ok(Json.obj("version" -> 2))
   }
 
-  override def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]] = Action(streamFromMemory) {
+  override def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, ?]] = Action(streamFromMemory) {
     request =>
       request.body.runWith(Sink.ignore)
       Accepted(Json.obj("version" -> 2))

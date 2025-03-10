@@ -59,11 +59,13 @@ import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import play.api.http.Status.CREATED
+import play.api.libs.ws.DefaultBodyWritables
+import play.api.libs.ws.JsonBodyWritables
 
 @ImplementedBy(classOf[PersistenceConnectorImpl])
 trait PersistenceConnector {
 
-  def postMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, _]])(implicit
+  def postMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, ?]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[MovementResponse]
@@ -106,7 +108,7 @@ trait PersistenceConnector {
     ec: ExecutionContext
   ): Future[PaginationMovementSummary]
 
-  def postMessage(movementId: MovementId, messageType: Option[MessageType], source: Option[Source[ByteString, _]])(implicit
+  def postMessage(movementId: MovementId, messageType: Option[MessageType], source: Option[Source[ByteString, ?]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[UpdateMovementResponse]
@@ -128,7 +130,7 @@ trait PersistenceConnector {
     movementType: MovementType,
     movementId: MovementId,
     messageId: MessageId,
-    source: Source[ByteString, _]
+    source: Source[ByteString, ?]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -138,7 +140,7 @@ trait PersistenceConnector {
     hc: HeaderCarrier,
     mat: Materializer,
     ec: ExecutionContext
-  ): Future[Source[ByteString, _]]
+  ): Future[Source[ByteString, ?]]
 
 }
 
@@ -147,9 +149,11 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metric
     extends PersistenceConnector
     with HasMetrics
     with V2BaseConnector
+    with DefaultBodyWritables
+    with JsonBodyWritables
     with Logging {
 
-  override def postMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, _]])(implicit
+  override def postMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, ?]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[MovementResponse] =
@@ -255,7 +259,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metric
       .executeAndDeserialise[PaginationMovementSummary]
   }
 
-  override def postMessage(movementId: MovementId, messageType: Option[MessageType], source: Option[Source[ByteString, _]])(implicit
+  override def postMessage(movementId: MovementId, messageType: Option[MessageType], source: Option[Source[ByteString, ?]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[UpdateMovementResponse] =
@@ -338,7 +342,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metric
     movementType: MovementType,
     movementId: MovementId,
     messageId: MessageId,
-    source: Source[ByteString, _]
+    source: Source[ByteString, ?]
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -357,7 +361,7 @@ class PersistenceConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metric
     hc: HeaderCarrier,
     mat: Materializer,
     ec: ExecutionContext
-  ): Future[Source[ByteString, _]] = {
+  ): Future[Source[ByteString, ?]] = {
 
     val url = appConfig.movementsUrl.withPath(messageBodyUrl(eoriNumber, movementType, movementId, messageId))
 

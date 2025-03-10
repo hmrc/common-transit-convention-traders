@@ -30,9 +30,9 @@ import routing.VersionedRouting
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-trait AcceptHeaderAction[R[_] <: Request[_]] extends ActionRefiner[R, R]
+trait AcceptHeaderAction[R[_] <: Request[?]] extends ActionRefiner[R, R]
 
-class AcceptHeaderActionImpl[R[_] <: Request[_]] @Inject() (acceptedHeaders: Seq[String])(implicit
+class AcceptHeaderActionImpl[R[_] <: Request[?]] @Inject() (acceptedHeaders: Seq[String])(implicit
   val executionContext: ExecutionContext
 ) extends AcceptHeaderAction[R] {
 

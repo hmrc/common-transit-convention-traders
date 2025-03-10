@@ -18,7 +18,6 @@ package v2_1.models.responses
 
 import models.common.MessageId
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import play.api.libs.functional.syntax.unlift
 import play.api.libs.json.JsPath
 import play.api.libs.json.OWrites
 import play.api.libs.json.Reads
@@ -38,7 +37,7 @@ object MessageSummary {
       (JsPath \ "messageType").readNullable[MessageType] and
       (JsPath \ "body").readNullable[XmlPayload] and
       (JsPath \ "status").readNullable[MessageStatus] and
-      (JsPath \ "uri").readNullable[ObjectStoreURI])(MessageSummary.apply _)
+      (JsPath \ "uri").readNullable[ObjectStoreURI])(MessageSummary.apply)
 
   implicit val messageSummaryWrites: OWrites[MessageSummary] =
     ((JsPath \ "id").write[MessageId] and
@@ -46,7 +45,9 @@ object MessageSummary {
       (JsPath \ "messageType").writeNullable[MessageType] and
       (JsPath \ "body").writeNullable[Payload] and
       (JsPath \ "status").writeNullable[MessageStatus] and
-      (JsPath \ "uri").writeNullable[ObjectStoreURI])(unlift(MessageSummary.unapply))
+      (JsPath \ "uri").writeNullable[ObjectStoreURI])(
+      v => (v.id, v.received, v.messageType, v.body, v.status, v.uri)
+    )
 }
 
 case class MessageSummary(

@@ -66,10 +66,10 @@ trait GuiceWiremockSuite extends WiremockSuite with GuiceFakeApplicationFactory 
         portConfigKey.map {
           key =>
             key -> server.port.toString()
-        }: _*
+        }*
       )
-      .configure(configurationOverride: _*)
-      .overrides(bindings: _*)
+      .configure(configurationOverride*)
+      .overrides(bindings*)
 
   val configurationOverride: Seq[(String, String)] = Seq.empty
 

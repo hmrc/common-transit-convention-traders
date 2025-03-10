@@ -16,10 +16,6 @@
 
 package v2_1.connectors
 
-import org.apache.pekko.stream.Materializer
-import org.apache.pekko.stream.scaladsl.Sink
-import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.util.ByteString
 import config.AppConfig
 import config.Constants
 import io.lemonlabs.uri.UrlPath
@@ -27,17 +23,21 @@ import models.common.EORINumber
 import models.common.MessageId
 import models.common.MovementId
 import models.common.MovementType
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import play.api.http.HeaderNames
 import play.api.http.Status.OK
 import play.api.libs.json.JsResult
 import play.api.libs.json.Reads
-import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpErrorFunctions
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.client.RequestBuilder
-import v2_1.models._
+import uk.gov.hmrc.http.client.readStreamHttpResponse
+import v2_1.models.*
 import v2_1.models.request.MessageType
 
 import scala.concurrent.ExecutionContext
@@ -192,7 +192,7 @@ trait V2BaseConnector extends HttpErrorFunctions {
             }
         }
 
-    def executeAsStream(implicit m: Materializer, ec: ExecutionContext): Future[Source[ByteString, _]] =
+    def executeAsStream(implicit m: Materializer, ec: ExecutionContext): Future[Source[ByteString, ?]] =
       requestBuilder
         .stream[HttpResponse]
         .flatMap {

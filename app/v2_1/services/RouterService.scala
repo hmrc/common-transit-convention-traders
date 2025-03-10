@@ -48,7 +48,7 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[RouterServiceImpl])
 trait RouterService {
 
-  def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
+  def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, ?])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): EitherT[Future, RouterError, SubmissionRoute]
@@ -57,7 +57,7 @@ trait RouterService {
 
 class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends RouterService with Logging {
 
-  def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
+  def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, ?])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): EitherT[Future, RouterError, SubmissionRoute] =

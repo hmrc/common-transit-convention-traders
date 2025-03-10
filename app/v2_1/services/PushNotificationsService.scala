@@ -19,13 +19,8 @@ package v2_1.services
 import cats.data.EitherT
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
-import config.AppConfig
 import config.Constants
-import models.common.ClientId
-import models.common.EORINumber
-import models.common.MessageId
-import models.common.MovementId
-import models.common.MovementType
+import models.common.*
 import models.common.errors.PushNotificationError
 import play.api.Logging
 import play.api.http.Status.NOT_FOUND

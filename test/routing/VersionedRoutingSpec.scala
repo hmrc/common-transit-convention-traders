@@ -65,7 +65,7 @@ class VersionedRoutingSpec
       with StreamingParsers
       with Logging {
 
-    def testWithContent: Action[Source[ByteString, _]] = route {
+    def testWithContent: Action[Source[ByteString, ?]] = route {
       case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => contentActionTwo
       case Some(x) if x != MimeTypes.TEXT                           => contentActionOne
     }
@@ -78,7 +78,7 @@ class VersionedRoutingSpec
       _ => Future.successful(Ok("Two"))
     }
 
-    def testWithoutContent: Action[Source[ByteString, _]] = route {
+    def testWithoutContent: Action[Source[ByteString, ?]] = route {
       case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => actionTwo
       case Some(x) if x != MimeTypes.TEXT                           => actionOne
     }

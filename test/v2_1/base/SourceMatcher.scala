@@ -25,11 +25,11 @@ import play.api.test.Helpers.await
 import play.api.test.Helpers.defaultAwaitTimeout
 
 object SourceMatcher {
-  def apply(comparison: String => Boolean)(implicit mat: Materializer): ArgumentMatcher[Source[ByteString, _]] = new SourceMatcher(comparison)
+  def apply(comparison: String => Boolean)(implicit mat: Materializer): ArgumentMatcher[Source[ByteString, ?]] = new SourceMatcher(comparison)
 }
 
-class SourceMatcher(comparison: String => Boolean)(implicit mat: Materializer) extends ArgumentMatcher[Source[ByteString, _]] {
+class SourceMatcher(comparison: String => Boolean)(implicit mat: Materializer) extends ArgumentMatcher[Source[ByteString, ?]] {
 
-  override def matches(argument: Source[ByteString, _]): Boolean =
+  override def matches(argument: Source[ByteString, ?]): Boolean =
     comparison(await(argument.reduce(_ ++ _).map(_.utf8String).runWith(Sink.head[String])))
 }

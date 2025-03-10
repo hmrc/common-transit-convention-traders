@@ -40,7 +40,7 @@ import scala.util.Using
 @ImplementedBy(classOf[JsonMessageParsingServiceImpl])
 trait JsonMessageParsingService {
 
-  def extractMessageType(source: Source[ByteString, _], messageTypeList: Seq[MessageType])(implicit
+  def extractMessageType(source: Source[ByteString, ?], messageTypeList: Seq[MessageType])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, ExtractionError, MessageType]
@@ -53,7 +53,7 @@ class JsonMessageParsingServiceImpl @Inject() (implicit materializer: Materializ
   private val mapper = new ObjectMapper().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
 
   override def extractMessageType(
-    source: Source[ByteString, _],
+    source: Source[ByteString, ?],
     messageTypeList: Seq[MessageType]
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, ExtractionError, MessageType] =
     EitherT(

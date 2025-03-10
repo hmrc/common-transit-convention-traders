@@ -46,7 +46,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
 
   "On converting a message" - {
     "a successful conversion, should return a Right" in new Setup {
-      val result: EitherT[Future, ConversionError, Source[ByteString, _]] =
+      val result: EitherT[Future, ConversionError, Source[ByteString, ?]] =
         sut.convert(MessageType.DeclarationData, jsonPayload, jsonToXml)
 
       whenReady(result.value) {
@@ -66,9 +66,9 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
     }
 
     "a failed conversion, should return a Left" in new Setup {
-      when(mockConnector.post(any[MessageType], any[Source[ByteString, _]](), any[HeaderType])(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
+      when(mockConnector.post(any[MessageType], any[Source[ByteString, ?]](), any[HeaderType])(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result: EitherT[Future, ConversionError, Source[ByteString, _]] = sut.convert(MessageType.DeclarationData, jsonPayload, jsonToXml)
+      val result: EitherT[Future, ConversionError, Source[ByteString, ?]] = sut.convert(MessageType.DeclarationData, jsonPayload, jsonToXml)
       whenReady(result.value) {
         _ mustBe ConversionError.UnexpectedError(Some(upstreamErrorResponse)).asLeft
       }
@@ -85,7 +85,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
     lazy val jsonPayload: Source[ByteString, NotUsed]  = Source.single(ByteString("{}", StandardCharsets.UTF_8))
 
     lazy val mockConnector: ConversionConnector = mock[ConversionConnector]
-    when(mockConnector.post(any[MessageType], any[Source[ByteString, _]](), any())(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
+    when(mockConnector.post(any[MessageType], any[Source[ByteString, ?]](), any())(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
       .thenReturn(Future(mockResponse))
 
     lazy val sut = new ConversionServiceImpl(mockConnector)

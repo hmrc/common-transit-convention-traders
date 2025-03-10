@@ -19,8 +19,8 @@ package v2_1.models
 sealed trait SubmissionRoute
 
 object SubmissionRoute {
-  final case object ViaEIS  extends SubmissionRoute
-  final case object ViaSDES extends SubmissionRoute
+  case object ViaEIS  extends SubmissionRoute
+  case object ViaSDES extends SubmissionRoute
 
   val values: Seq[SubmissionRoute] = Seq(ViaEIS, ViaSDES)
 }

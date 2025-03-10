@@ -104,7 +104,7 @@ object PresentationError extends CommonFormats {
     (
       (__ \ MessageFieldName).read[String] and
         (__ \ CodeFieldName).read[ErrorCode]
-    )(StandardError.apply _)
+    )(StandardError.apply)
 
   implicit val invalidOfficeErrorReads: Reads[InvalidOfficeError] = Json.reads[InvalidOfficeError]
 
@@ -113,14 +113,14 @@ object PresentationError extends CommonFormats {
       (__ \ MessageFieldName).format[String] and
         (__ \ CodeFieldName).format[ErrorCode] and
         (__ \ "validationErrors").format[NonEmptyList[XmlValidationError]]
-    )(XmlSchemaValidationError.apply, unlift(XmlSchemaValidationError.unapply))
+    )(XmlSchemaValidationError.apply, v => (v.message, v.code, v.validationErrors))
 
   implicit val jsonSchemaErrorFormat: OFormat[JsonSchemaValidationError] =
     (
       (__ \ MessageFieldName).format[String] and
         (__ \ CodeFieldName).format[ErrorCode] and
         (__ \ "validationErrors").format[NonEmptyList[JsonValidationError]]
-    )(JsonSchemaValidationError.apply, unlift(JsonSchemaValidationError.unapply))
+    )(JsonSchemaValidationError.apply, v => (v.message, v.code, v.validationErrors))
 
   implicit val baseErrorWrites: OWrites[PresentationError] = OWrites {
     case bindingError: BindingError                           => Json.writes[BindingError].writes(bindingError)

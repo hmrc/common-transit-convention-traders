@@ -29,6 +29,6 @@ object LRNError {
 
   implicit val lrnErrorFormat: OFormat[LRNError] = ((__ \ "message").format[String] and
     (__ \ "code").format[String] and
-    (__ \ "lrn").format[String])(LRNError.apply, unlift(LRNError.unapply))
+    (__ \ "lrn").format[String])(LRNError.apply, v => (v.message, v.code, v.lrn))
 
 }

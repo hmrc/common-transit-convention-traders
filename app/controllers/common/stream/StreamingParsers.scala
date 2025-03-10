@@ -40,7 +40,7 @@ import scala.util.Try
 import scala.util.control.NonFatal
 
 trait StreamingParsers {
-  self: BaseControllerHelpers with Logging =>
+  self: BaseControllerHelpers & Logging =>
 
   implicit val materializer: Materializer
 
@@ -51,12 +51,12 @@ trait StreamingParsers {
   implicit val materializerExecutionContext: ExecutionContext =
     ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
 
-  lazy val streamFromMemory: BodyParser[Source[ByteString, _]] = BodyParser {
+  lazy val streamFromMemory: BodyParser[Source[ByteString, ?]] = BodyParser {
     _ =>
       Accumulator.source[ByteString].map(Right.apply)
   }
 
-  implicit class ActionBuilderStreamHelpers[R[A] <: BodyReplaceableRequest[R, A]](actionBuilder: ActionBuilder[R, _]) {
+  implicit class ActionBuilderStreamHelpers[R[A] <: BodyReplaceableRequest[R, A]](actionBuilder: ActionBuilder[R, ?]) {
 
     /** Updates the [[Source]] in the [[BodyReplaceableRequest]] with a version that can be used
       *  multiple times via the use of a temporary file.
@@ -68,15 +68,15 @@ trait StreamingParsers {
     // Doing it like this ensures that we can make sure that the source we pass is the file based one,
     // and only when it's ready.
     def stream(
-      block: R[Source[ByteString, _]] => Future[Result]
-    )(implicit temporaryFileCreator: TemporaryFileCreator): Action[Source[ByteString, _]] =
+      block: R[Source[ByteString, ?]] => Future[Result]
+    )(implicit temporaryFileCreator: TemporaryFileCreator): Action[Source[ByteString, ?]] =
       streamWithSize(
         request => _ => block(request)
       )
 
     def streamWithSize(
-      block: R[Source[ByteString, _]] => Long => Future[Result]
-    )(implicit temporaryFileCreator: TemporaryFileCreator): Action[Source[ByteString, _]] =
+      block: R[Source[ByteString, ?]] => Long => Future[Result]
+    )(implicit temporaryFileCreator: TemporaryFileCreator): Action[Source[ByteString, ?]] =
       actionBuilder.async(streamFromMemory) {
         request =>
           // This is outside the for comprehension because we need access to the file
@@ -131,8 +131,8 @@ trait StreamingParsers {
   def mergeStreamIntoJson(
     fields: collection.Seq[(String, JsValue)],
     fieldName: String,
-    stream: Source[ByteString, _]
-  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
+    stream: Source[ByteString, ?]
+  ): EitherT[Future, PresentationError, Source[ByteString, ?]] =
     EitherT {
       Future
         .successful(
@@ -162,8 +162,8 @@ trait StreamingParsers {
   def jsonToByteStringStream(
     fields: collection.Seq[(String, JsValue)],
     fieldName: String,
-    stream: Source[ByteString, _]
-  ): EitherT[Future, PresentationError, Source[ByteString, _]] =
+    stream: Source[ByteString, ?]
+  ): EitherT[Future, PresentationError, Source[ByteString, ?]] =
     EitherT {
       Future
         .successful(
@@ -176,19 +176,6 @@ trait StreamingParsers {
         .recover {
           case NonFatal(e) =>
             logger.error(s"Json to ByteString failed: ${e.getMessage}", e)
-            Left(PresentationError.internalServiceError(cause = Some(e)))
-        }
-    }
-
-  def stringToByteStringStream(value: String): EitherT[Future, PresentationError, Source[ByteString, _]] =
-    EitherT {
-      Future
-        .successful(Right(Source.single(value) map {
-          str => ByteString(str)
-        }))
-        .recover {
-          case NonFatal(e) =>
-            logger.error(s"String to ByteString failed: ${e.getMessage}", e)
             Left(PresentationError.internalServiceError(cause = Some(e)))
         }
     }

@@ -56,7 +56,6 @@ import scala.annotation.nowarn
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
 
-@nowarn("msg=discarded non-Unit value")
 class V2BaseConnectorSpec
     extends AnyFreeSpec
     with Matchers
@@ -289,7 +288,7 @@ class V2BaseConnectorSpec
         when(sut.setHeader(any())).thenReturn(sut)
 
         sut.withInternalAuthToken
-        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq((HeaderNames.AUTHORIZATION -> token))): _*)
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq((HeaderNames.AUTHORIZATION -> token))) *)
     }
 
     "withMovementId adds the audit movement Id header for movement value" in forAll(arbitrary[MovementId]) {
@@ -299,7 +298,7 @@ class V2BaseConnectorSpec
         when(sut.setHeader(any())).thenReturn(sut)
 
         sut.withMovementId(Some(movementId))
-        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Movement-Id" -> movementId.value))): _*)
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Movement-Id" -> movementId.value))) *)
     }
 
     "withMovementId ignore the audit movement Id header for None value" in {
@@ -308,7 +307,7 @@ class V2BaseConnectorSpec
       when(sut.setHeader(any())).thenReturn(sut)
 
       sut.withMovementId(None)
-      verify(sut, times(0)).setHeader(Seq(any()): _*)
+      verify(sut, times(0)).setHeader(Seq(any()) *)
     }
 
     "withMovementType adds the audit movement type header for movement type value" in forAll(arbitrary[MovementType]) {
@@ -318,7 +317,7 @@ class V2BaseConnectorSpec
         when(sut.setHeader(any())).thenReturn(sut)
 
         sut.withMovementType(Some(movementType))
-        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Movement-Type" -> movementType.movementType))): _*)
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Movement-Type" -> movementType.movementType))) *)
     }
 
     "withMovementType ignore the audit movement type header for None value" in {
@@ -327,7 +326,7 @@ class V2BaseConnectorSpec
       when(sut.setHeader(any())).thenReturn(sut)
 
       sut.withMovementType(None)
-      verify(sut, times(0)).setHeader(Seq(any()): _*)
+      verify(sut, times(0)).setHeader(Seq(any()) *)
     }
 
     "withEoriNumber adds the audit Eori number header for eori number value" in forAll(arbitrary[EORINumber]) {
@@ -337,7 +336,7 @@ class V2BaseConnectorSpec
         when(sut.setHeader(any())).thenReturn(sut)
 
         sut.withEoriNumber(Some(eoriNumber))
-        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-EORI" -> eoriNumber.value))): _*)
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-EORI" -> eoriNumber.value))) *)
     }
 
     "withEoriNumber ignore the audit Eori number header for None value" in {
@@ -346,7 +345,7 @@ class V2BaseConnectorSpec
       when(sut.setHeader(any())).thenReturn(sut)
 
       sut.withEoriNumber(None)
-      verify(sut, times(0)).setHeader(Seq(any()): _*)
+      verify(sut, times(0)).setHeader(Seq(any()) *)
     }
 
     "withMessageId adds the audit message Id header for message Id value" in forAll(arbitrary[MessageId]) {
@@ -356,7 +355,7 @@ class V2BaseConnectorSpec
         when(sut.setHeader(any())).thenReturn(sut)
 
         sut.withMessageId(Some(messageId))
-        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Message-Id" -> messageId.value))): _*)
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Message-Id" -> messageId.value))) *)
     }
 
     "withMessageId ignore the audit message Id header None value" in {
@@ -365,7 +364,7 @@ class V2BaseConnectorSpec
       when(sut.setHeader(any())).thenReturn(sut)
 
       sut.withMessageId(None)
-      verify(sut, times(0)).setHeader(Seq(any()): _*)
+      verify(sut, times(0)).setHeader(Seq(any()) *)
     }
 
     "withMessageType adds the audit message type header for message type value" in forAll(arbitrary[MessageType]) {
@@ -375,7 +374,7 @@ class V2BaseConnectorSpec
         when(sut.setHeader(any())).thenReturn(sut)
 
         sut.withMessageType(Some(messageType))
-        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Message-Type" -> messageType.code))): _*)
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Message-Type" -> messageType.code))) *)
     }
 
     "withMessageType ignore the audit message type header for None value" in forAll(arbitrary[MessageType]) {
@@ -385,7 +384,7 @@ class V2BaseConnectorSpec
         when(sut.setHeader(any())).thenReturn(sut)
 
         sut.withMessageType(None)
-        verify(sut, times(0)).setHeader(Seq(any()): _*)
+        verify(sut, times(0)).setHeader(Seq(any()) *)
     }
 
     "executeAndExpect returns a unit when the expected response is returned" in forAll(
@@ -395,7 +394,7 @@ class V2BaseConnectorSpec
         val response = mock[HttpResponse]
         when(response.status).thenReturn(status)
         val sut = mock[RequestBuilder]
-        when(sut.execute[HttpResponse](any(), any())).thenReturn(Future.successful(response))
+        when(sut.execute[HttpResponse](using any (), any())).thenReturn(Future.successful(response))
 
         whenReady(sut.executeAndExpect(status)) {
           unit => unit mustBe a[Unit]
@@ -411,7 +410,7 @@ class V2BaseConnectorSpec
         when(response.status).thenReturn(status)
         when(response.body).thenReturn("error")
         val sut = mock[RequestBuilder]
-        when(sut.execute[HttpResponse](any(), any())).thenReturn(Future.successful(response))
+        when(sut.execute[HttpResponse](using any (), any())).thenReturn(Future.successful(response))
 
         sut
           .executeAndExpect(ACCEPTED)
@@ -435,7 +434,7 @@ class V2BaseConnectorSpec
         _ => source
       )
       val sut = mock[RequestBuilder]
-      when(sut.stream[HttpResponse](any(), any())).thenReturn(Future.successful(response))
+      when(sut.stream[HttpResponse](using any (), any())).thenReturn(Future.successful(response))
 
       whenReady(sut.executeAsStream) {
         _ mustBe source
@@ -450,7 +449,7 @@ class V2BaseConnectorSpec
         _ => Source.single(ByteString("error"))
       )
       val sut = mock[RequestBuilder]
-      when(sut.stream[HttpResponse](any(), any())).thenReturn(Future.successful(response))
+      when(sut.stream[HttpResponse](using any (), any())).thenReturn(Future.successful(response))
 
       sut.executeAsStream
         .map(

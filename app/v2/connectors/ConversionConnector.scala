@@ -27,6 +27,8 @@ import config.AppConfig
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
+import play.api.libs.ws.DefaultBodyWritables
+import play.api.libs.ws.JsonBodyWritables
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -39,11 +41,11 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[ConversionConnectorImpl])
 trait ConversionConnector {
 
-  def post(messageType: MessageType, jsonStream: Source[ByteString, _], headerType: HeaderType)(implicit
+  def post(messageType: MessageType, jsonStream: Source[ByteString, ?], headerType: HeaderType)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer
-  ): Future[Source[ByteString, _]]
+  ): Future[Source[ByteString, ?]]
 
 }
 
@@ -52,20 +54,22 @@ class ConversionConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
     extends ConversionConnector
     with HasMetrics
     with V2BaseConnector
+    with DefaultBodyWritables
+    with JsonBodyWritables
     with Logging {
 
-  override def post(messageType: MessageType, jsonStream: Source[ByteString, _], headerType: HeaderType)(implicit
+  override def post(messageType: MessageType, jsonStream: Source[ByteString, ?], headerType: HeaderType)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer
-  ): Future[Source[ByteString, _]] =
+  ): Future[Source[ByteString, ?]] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
         val url = appConfig.converterUrl.withPath(conversionRoute(messageType))
 
         httpClientV2
           .post(url"$url")
-          .transform(_.addHttpHeaders(headerType.header: _*))
+          .transform(_.addHttpHeaders(headerType.header *))
           .withBody(jsonStream)
           .executeAsStream
     }

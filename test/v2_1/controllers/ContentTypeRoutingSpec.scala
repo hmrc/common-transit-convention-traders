@@ -77,7 +77,7 @@ class ContentTypeRoutingSpec extends AnyFreeSpec with Matchers with TestActorSys
 
     val result = Result(ResponseHeader(Status.OK), HttpEntity.NoEntity)
 
-    val pf: PartialFunction[ContentTypeRouting.ContentType, Action[_]] = {
+    val pf: PartialFunction[ContentTypeRouting.ContentType, Action[?]] = {
       case ContentTypeRouting.ContentType.XML =>
         stubControllerComponents().actionBuilder.apply {
           _ => result

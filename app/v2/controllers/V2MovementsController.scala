@@ -82,7 +82,7 @@ import scala.concurrent.Future
 
 @ImplementedBy(classOf[V2MovementsControllerImpl])
 trait V2MovementsController {
-  def createMovement(movementType: MovementType): Action[Source[ByteString, _]]
+  def createMovement(movementType: MovementType): Action[Source[ByteString, ?]]
   def getMessage(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent]
 
   def getMessageIds(
@@ -106,7 +106,7 @@ trait V2MovementsController {
     receivedUntil: Option[OffsetDateTime],
     localReferenceNumber: Option[LocalReferenceNumber]
   ): Action[AnyContent]
-  def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]]
+  def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, ?]]
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent]
 
   def attachMessageFromUpscan(
@@ -168,7 +168,7 @@ class V2MovementsControllerImpl @Inject() (
     }
   }
 
-  def createMovement(movementType: MovementType): Action[Source[ByteString, _]] =
+  def createMovement(movementType: MovementType): Action[Source[ByteString, ?]] =
     movementType match {
       case MovementType.Arrival =>
         contentTypeRoute {
@@ -184,7 +184,7 @@ class V2MovementsControllerImpl @Inject() (
         }
     }
 
-  private def submitDepartureDeclarationXML(): Action[Source[ByteString, _]] =
+  private def submitDepartureDeclarationXML(): Action[Source[ByteString, ?]] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -212,7 +212,7 @@ class V2MovementsControllerImpl @Inject() (
         )
     }
 
-  private def submitDepartureDeclarationJSON(): Action[Source[ByteString, _]] =
+  private def submitDepartureDeclarationJSON(): Action[Source[ByteString, ?]] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -248,7 +248,7 @@ class V2MovementsControllerImpl @Inject() (
         )
     }
 
-  private def submitArrivalNotificationXML(): Action[Source[ByteString, _]] =
+  private def submitArrivalNotificationXML(): Action[Source[ByteString, ?]] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -276,7 +276,7 @@ class V2MovementsControllerImpl @Inject() (
         )
     }
 
-  private def submitArrivalNotificationJSON(): Action[Source[ByteString, _]] =
+  private def submitArrivalNotificationJSON(): Action[Source[ByteString, ?]] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -306,7 +306,7 @@ class V2MovementsControllerImpl @Inject() (
         )
     }
 
-  private def submitLargeMessageXML(movementType: MovementType): Action[Source[ByteString, _]] =
+  private def submitLargeMessageXML(movementType: MovementType): Action[Source[ByteString, ?]] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -403,9 +403,9 @@ class V2MovementsControllerImpl @Inject() (
         persistenceService
           .getMessageBody(eori, movementType, movementId, messageId)
           .map(Option(_))
-          .leftFlatMap[Option[Source[ByteString, _]], PersistenceError] {
+          .leftFlatMap[Option[Source[ByteString, ?]], PersistenceError] {
             case _: PersistenceError.MessageNotFound => EitherT.rightT[Future, PersistenceError](None)
-            case e                                   => EitherT.leftT[Future, Option[Source[ByteString, _]]](e)
+            case e                                   => EitherT.leftT[Future, Option[Source[ByteString, ?]]](e)
           }
           .asPresentation
           .flatMap[PresentationError, Option[BodyAndSize]] {
@@ -415,7 +415,7 @@ class V2MovementsControllerImpl @Inject() (
       case _ => EitherT.leftT(PresentationError.internalServiceError("Did not expect JsonPayload when getting message body"))
     }
 
-  private def getFile(source: Source[ByteString, _]): EitherT[Future, PresentationError, BodyAndSize] =
+  private def getFile(source: Source[ByteString, ?]): EitherT[Future, PresentationError, BodyAndSize] =
     for {
       sources <- reUsableSource(source, 2)
       size    <- calculateSize(sources.lift(0).get)
@@ -466,14 +466,14 @@ class V2MovementsControllerImpl @Inject() (
     bodyAndSizeMaybe: Option[BodyAndSize]
   )(implicit
     hc: HeaderCarrier
-  ): EitherT[Future, PresentationError, Source[ByteString, _]] = {
-    def bodyExists(bodyAndSize: BodyAndSize): EitherT[Future, PresentationError, Source[ByteString, _]] =
+  ): EitherT[Future, PresentationError, Source[ByteString, ?]] = {
+    def bodyExists(bodyAndSize: BodyAndSize): EitherT[Future, PresentationError, Source[ByteString, ?]] =
       VersionedRouting.formatAccept(acceptHeader) match {
         case Left(error) => EitherT.leftT(error)
         case Right(value) =>
           value match {
             case VERSION_2_ACCEPT_HEADER_VALUE_JSON if bodyAndSize.size > config.smallMessageSizeLimit =>
-              EitherT.leftT[Future, Source[ByteString, _]](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
+              EitherT.leftT[Future, Source[ByteString, ?]](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
             case VERSION_2_ACCEPT_HEADER_VALUE_JSON =>
               for {
                 jsonStream <- conversionService.xmlToJson(messageSummary.messageType.get, bodyAndSize.body).asPresentation
@@ -678,14 +678,14 @@ class V2MovementsControllerImpl @Inject() (
         )
     }
 
-  def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, _]] =
+  def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, ?]] =
     contentTypeRoute {
       case ContentTypeRouting.ContentType.XML  => attachMessageXML(movementId, movementType)
       case ContentTypeRouting.ContentType.JSON => attachMessageJSON(movementId, movementType)
       case ContentTypeRouting.ContentType.None => initiateLargeMessage(movementId, movementType)
     }
 
-  private def initiateLargeMessage(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, _]] =
+  private def initiateLargeMessage(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, ?]] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -740,7 +740,7 @@ class V2MovementsControllerImpl @Inject() (
         )
     }
 
-  private def attachMessageXML(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, _]] =
+  private def attachMessageXML(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, ?]] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -774,11 +774,11 @@ class V2MovementsControllerImpl @Inject() (
         )
     }
 
-  private def attachMessageJSON(id: MovementId, movementType: MovementType): Action[Source[ByteString, _]] = {
+  private def attachMessageJSON(id: MovementId, movementType: MovementType): Action[Source[ByteString, ?]] = {
 
-    def handleXml(movementId: MovementId, messageType: MessageType, src: Source[ByteString, _])(implicit
+    def handleXml(movementId: MovementId, messageType: MessageType, src: Source[ByteString, ?])(implicit
       hc: HeaderCarrier,
-      request: AuthenticatedRequest[Source[ByteString, _]]
+      request: AuthenticatedRequest[Source[ByteString, ?]]
     ): EitherT[Future, PresentationError, UpdateMovementResponse] =
       for {
         source <- reUsableSource(src)
@@ -986,12 +986,12 @@ class V2MovementsControllerImpl @Inject() (
     movementId: MovementId,
     movementType: MovementType,
     messageType: MessageType,
-    source: Source[ByteString, _],
+    source: Source[ByteString, ?],
     size: Long,
     contentType: String
   )(implicit
     hc: HeaderCarrier,
-    request: AuthenticatedRequest[_]
+    request: AuthenticatedRequest[?]
   ) =
     for {
       sources <- reUsableSource(source)
@@ -1076,10 +1076,10 @@ class V2MovementsControllerImpl @Inject() (
     } yield updateMovementResponse
 
   private def validatePersistAndSendToEIS(
-    src: Source[ByteString, _],
+    src: Source[ByteString, ?],
     movementType: MovementType,
     messageType: MessageType
-  )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
+  )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, ?]]) =
     for {
       source <- reUsableSource(src)
       size   <- calculateSize(source.head)
@@ -1122,12 +1122,12 @@ class V2MovementsControllerImpl @Inject() (
       )
 
   private def persistAndSendToEIS(
-    source: Source[ByteString, _],
+    source: Source[ByteString, ?],
     movementType: MovementType,
     messageType: MessageType,
     size: Long,
     contentType: String
-  )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, _]]) =
+  )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, ?]]) =
     for {
       sources <- reUsableSource(source)
       movementResponse <- persistenceService.createMovement(request.eoriNumber, movementType, Some(sources.head)).asPresentation.leftMap {
@@ -1230,7 +1230,7 @@ class V2MovementsControllerImpl @Inject() (
       )
     }
 
-  private def materializeSource(source: Source[ByteString, _]): EitherT[Future, PresentationError, Seq[ByteString]] =
+  private def materializeSource(source: Source[ByteString, ?]): EitherT[Future, PresentationError, Seq[ByteString]] =
     EitherT(
       source
         .runWith(Sink.seq)
@@ -1242,18 +1242,18 @@ class V2MovementsControllerImpl @Inject() (
     )
 
   // Function to create a new source from the materialized sequence
-  private def createReusableSource(seq: Seq[ByteString]): Source[ByteString, _] = Source(seq.toList)
+  private def createReusableSource(seq: Seq[ByteString]): Source[ByteString, ?] = Source(seq.toList)
 
-  private def reUsableSourceRequest(request: Request[Source[ByteString, _]]): EitherT[Future, PresentationError, List[Source[ByteString, _]]] = for {
+  private def reUsableSourceRequest(request: Request[Source[ByteString, ?]]): EitherT[Future, PresentationError, List[Source[ByteString, ?]]] = for {
     byteStringSeq <- materializeSource(request.body)
   } yield List.fill(4)(createReusableSource(byteStringSeq))
 
-  private def reUsableSource(source: Source[ByteString, _], numberOfSources: Int = 4): EitherT[Future, PresentationError, List[Source[ByteString, _]]] = for {
+  private def reUsableSource(source: Source[ByteString, ?], numberOfSources: Int = 4): EitherT[Future, PresentationError, List[Source[ByteString, ?]]] = for {
     byteStringSeq <- materializeSource(source)
   } yield List.fill(numberOfSources)(createReusableSource(byteStringSeq))
 
   // Function to calculate the size using EitherT
-  private def calculateSize(source: Source[ByteString, _]): EitherT[Future, PresentationError, Long] = {
+  private def calculateSize(source: Source[ByteString, ?]): EitherT[Future, PresentationError, Long] = {
     val sizeFuture: Future[Either[PresentationError, Long]] = source
       .map(_.size.toLong)
       .runWith(Sink.fold(0L)(_ + _))

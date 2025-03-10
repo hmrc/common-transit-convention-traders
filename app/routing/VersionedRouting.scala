@@ -106,11 +106,11 @@ object VersionedRouting {
 }
 
 trait VersionedRouting {
-  self: BaseController with StreamingParsers =>
+  self: BaseController & StreamingParsers =>
 
-  def route(routes: PartialFunction[Option[String], Action[_]])(implicit materializer: Materializer): Action[Source[ByteString, _]] =
+  def route(routes: PartialFunction[Option[String], Action[?]])(implicit materializer: Materializer): Action[Source[ByteString, ?]] =
     Action.async(streamFromMemory) {
-      (request: Request[Source[ByteString, _]]) =>
+      (request: Request[Source[ByteString, ?]]) =>
         routes
           .lift(request.headers.get(HeaderNames.ACCEPT))
           .map {
@@ -144,17 +144,17 @@ trait VersionedRouting {
 
   // This simulates what Play will do if a binding fails, with the addition of the "code" field
   // that we use elsewhere.
-  def bindingFailureAction(message: String)(implicit materializer: Materializer): Action[Source[ByteString, _]] =
+  def bindingFailureAction(message: String)(implicit materializer: Materializer): Action[Source[ByteString, ?]] =
     Action.async(streamFromMemory) {
       implicit request =>
         request.body.runWith(Sink.ignore)
         Future.successful(Status(BAD_REQUEST)(Json.toJson(PresentationError.bindingBadRequestError(message))))
     }
 
-  def runIfBound[A](key: String, value: String, action: A => Action[_])(implicit binding: PathBindable[A]): Action[_] =
+  def runIfBound[A](key: String, value: String, action: A => Action[?])(implicit binding: PathBindable[A]): Action[?] =
     binding.bind(key, value).fold(bindingFailureAction(_), action)
 
-  def handleDisabledPhase5Transitional(): Action[Source[ByteString, _]] =
+  def handleDisabledPhase5Transitional(): Action[Source[ByteString, ?]] =
     Action(streamFromMemory) {
       request =>
         request.body.runWith(Sink.ignore)
@@ -164,7 +164,7 @@ trait VersionedRouting {
         Status(presentationError.code.statusCode)(Json.toJson(presentationError))
     }
 
-  def handleDisabledPhase5Final(): Action[Source[ByteString, _]] =
+  def handleDisabledPhase5Final(): Action[Source[ByteString, ?]] =
     Action(streamFromMemory) {
       request =>
         request.body.runWith(Sink.ignore)

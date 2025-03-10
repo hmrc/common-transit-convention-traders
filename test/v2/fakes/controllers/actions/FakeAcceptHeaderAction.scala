@@ -26,10 +26,10 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 object FakeAcceptHeaderActionProvider extends AcceptHeaderActionProvider {
-  override def apply[R[_] <: Request[_]](acceptedHeaders: Seq[String]): FakeAcceptHeaderAction[R] = FakeAcceptHeaderAction()
+  override def apply[R[_] <: Request[?]](acceptedHeaders: Seq[String]): FakeAcceptHeaderAction[R] = FakeAcceptHeaderAction()
 }
 
-case class FakeAcceptHeaderAction[R[_] <: Request[_]]() extends AcceptHeaderAction[R] {
+case class FakeAcceptHeaderAction[R[_] <: Request[?]]() extends AcceptHeaderAction[R] {
   override protected def refine[A](request: R[A]): Future[Either[Result, R[A]]] = Future.successful(Right(request))
 
   override protected def executionContext: ExecutionContext = global

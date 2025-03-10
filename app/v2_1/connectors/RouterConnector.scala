@@ -33,6 +33,8 @@ import play.api.http.HeaderNames
 import play.api.http.MimeTypes
 import play.api.http.Status.ACCEPTED
 import play.api.http.Status.CREATED
+import play.api.libs.ws.DefaultBodyWritables
+import play.api.libs.ws.JsonBodyWritables
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.HttpResponse
@@ -47,7 +49,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[RouterConnectorImpl])
 trait RouterConnector {
 
-  def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
+  def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, ?])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): Future[SubmissionRoute]
@@ -57,10 +59,12 @@ trait RouterConnector {
 class RouterConnectorImpl @Inject() (val metrics: MetricRegistry, httpClientV2: HttpClientV2)(implicit appConfig: AppConfig)
     extends RouterConnector
     with V2BaseConnector
+    with DefaultBodyWritables
+    with JsonBodyWritables
     with HasMetrics
     with Logging {
 
-  override def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, _])(implicit
+  override def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, ?])(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): Future[SubmissionRoute] =

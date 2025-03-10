@@ -49,7 +49,6 @@ import v2_1.connectors.PushNotificationsConnector
 import v2_1.models.BoxId
 import v2_1.models.request.PushNotificationsAssociation
 import v2_1.models.responses.BoxResponse
-import v2_1.services.PushNotificationsServiceImpl
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

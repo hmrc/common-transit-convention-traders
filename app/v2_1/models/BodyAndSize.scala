@@ -19,4 +19,4 @@ package v2_1.models
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 
-case class BodyAndSize(size: Long, body: Source[ByteString, _])
+case class BodyAndSize(size: Long, body: Source[ByteString, ?])

@@ -20,12 +20,7 @@ import cats.data.NonEmptyList
 import models.common.errors.JsonValidationError
 import models.common.errors.XmlValidationError
 import play.api.libs.functional.syntax.toInvariantFunctorOps
-import play.api.libs.functional.syntax.unlift
-import play.api.libs.json.JsError
-import play.api.libs.json.JsObject
-import play.api.libs.json.OFormat
-import play.api.libs.json.Reads
-import play.api.libs.json.__
+import play.api.libs.json.*
 import v2.models.formats.CommonFormats
 
 object XmlValidationErrorResponse {
@@ -65,7 +60,7 @@ sealed trait JsonValidationErrorResponse
 object BusinessValidationResponse extends CommonFormats {
 
   implicit val validationResponseFormat: OFormat[BusinessValidationResponse] =
-    (__ \ "message").format[String].inmap(BusinessValidationResponse.apply, unlift(BusinessValidationResponse.unapply))
+    (__ \ "message").format[String].inmap(BusinessValidationResponse.apply, _.message)
 
 }
 
@@ -74,7 +69,7 @@ case class BusinessValidationResponse(message: String) extends XmlValidationErro
 object XmlSchemaValidationResponse extends CommonFormats {
 
   implicit val validationResponseFormat: OFormat[XmlSchemaValidationResponse] =
-    (__ \ "validationErrors").format[NonEmptyList[XmlValidationError]].inmap(XmlSchemaValidationResponse.apply, unlift(XmlSchemaValidationResponse.unapply))
+    (__ \ "validationErrors").format[NonEmptyList[XmlValidationError]].inmap(XmlSchemaValidationResponse.apply, _.validationErrors)
 
 }
 
@@ -83,7 +78,7 @@ case class XmlSchemaValidationResponse(validationErrors: NonEmptyList[XmlValidat
 object JsonSchemaValidationResponse extends CommonFormats {
 
   implicit val validationResponseFormat: OFormat[JsonSchemaValidationResponse] =
-    (__ \ "validationErrors").format[NonEmptyList[JsonValidationError]].inmap(JsonSchemaValidationResponse.apply, unlift(JsonSchemaValidationResponse.unapply))
+    (__ \ "validationErrors").format[NonEmptyList[JsonValidationError]].inmap(JsonSchemaValidationResponse.apply, _.validationErrors)
 
 }
 
