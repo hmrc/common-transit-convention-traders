@@ -3,7 +3,7 @@ import sbt._
 object AppDependencies {
 
   private val catsVersion          = "2.13.0"
-  private val bootstrapPlayVersion = "9.3.0"
+  private val bootstrapPlayVersion = "9.10.0"
 
   val compile: Seq[ModuleID] = Seq(
     "uk.gov.hmrc"      %% "bootstrap-backend-play-30"       % bootstrapPlayVersion,
@@ -16,10 +16,6 @@ object AppDependencies {
     "org.apache.pekko" %% "pekko-serialization-jackson" % "1.1.3",
     "org.apache.pekko" %% "pekko-stream" % "1.1.3",
     "org.apache.pekko" %% "pekko-actor-typed" % "1.1.3"
-
-
-
-      //[pekko-slf4j, pekko-serialization-jackson, pekko-actor-typed]
   )
 
   val test: Seq[ModuleID] = Seq(
