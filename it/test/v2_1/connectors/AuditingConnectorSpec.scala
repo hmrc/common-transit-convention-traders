@@ -116,7 +116,7 @@ class AuditingConnectorSpec
                   .willReturn(aResponse().withStatus(ACCEPTED))
               )
 
-              implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements", Constants.XClientIdHeader -> clientId))
+              implicit val hc = HeaderCarrier(otherHeaders = Seq(("path", "/customs/transits/movements"), (Constants.XClientIdHeader, clientId)))
               // when we call the audit service
               val future = sut.postMessageType(
                 AuditType.DeclarationData,
@@ -158,7 +158,7 @@ class AuditingConnectorSpec
                   .willReturn(aResponse().withStatus(ACCEPTED))
               )
 
-              implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements"))
+              implicit val hc = HeaderCarrier(otherHeaders = Seq(("path", "/customs/transits/movements")))
               // when we call the audit service
               val future = sut.postMessageType(
                 AuditType.DeclarationData,
@@ -198,7 +198,7 @@ class AuditingConnectorSpec
                   .willReturn(aResponse().withStatus(ACCEPTED))
               )
 
-              implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements"))
+              implicit val hc = HeaderCarrier(otherHeaders = Seq(("path", "/customs/transits/movements")))
               // when we call the audit service
               val future = sut.postMessageType(
                 AuditType.DeclarationData,
@@ -232,7 +232,7 @@ class AuditingConnectorSpec
                 .willReturn(aResponse().withStatus(ACCEPTED))
             )
 
-            implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements"))
+            implicit val hc = HeaderCarrier(otherHeaders = Seq(("path", "/customs/transits/movements")))
             // when we call the audit service
             val future = sut.postMessageType(
               AuditType.DeclarationData,
@@ -280,7 +280,7 @@ class AuditingConnectorSpec
                       .willReturn(aResponse().withStatus(statusCode))
                   )
 
-                  implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements"))
+                  implicit val hc = HeaderCarrier(otherHeaders = Seq(("path", "/customs/transits/movements")))
                   // when we call the audit service
                   val future = sut.postMessageType(
                     AuditType.DeclarationData,
@@ -349,7 +349,7 @@ class AuditingConnectorSpec
             .willReturn(aResponse().withStatus(ACCEPTED))
         )
 
-        implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements", Constants.XClientIdHeader -> clientId))
+        implicit val hc = HeaderCarrier(otherHeaders = Seq(("path", "/customs/transits/movements"), (Constants.XClientIdHeader, clientId)))
         // when we call the audit service
         val future = sut.postStatus(
           AuditType.DeclarationData,
@@ -398,7 +398,7 @@ class AuditingConnectorSpec
                 .willReturn(aResponse().withStatus(statusCode))
             )
 
-            implicit val hc = HeaderCarrier(otherHeaders = Seq("path" -> "/customs/transits/movements"))
+            implicit val hc: HeaderCarrier = HeaderCarrier(otherHeaders = Seq(("path", "/customs/transits/movements")))
             // when we call the audit service
             val future = sut.postStatus(
               AuditType.DeclarationData,
