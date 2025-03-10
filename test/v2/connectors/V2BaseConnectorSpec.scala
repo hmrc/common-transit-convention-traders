@@ -52,7 +52,6 @@ import v2.base.TestCommonGenerators
 import v2.models.AuditType
 import v2.models.request.MessageType
 
-import scala.annotation.nowarn
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
 

@@ -52,11 +52,9 @@ import v2_1.base.TestCommonGenerators
 import v2_1.models.AuditType
 import v2_1.models.request.MessageType
 
-import scala.annotation.nowarn
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
 
-@nowarn("msg=discarded non-Unit value")
 class V2BaseConnectorSpec
     extends AnyFreeSpec
     with Matchers
