@@ -91,6 +91,7 @@ lazy val scoverageSettings = Def.settings(
     ".*BuildInfo.*",
     ".*javascript.*",
     ".*Routes.*",
+    ".*models.*",
     ".*GuiceInjector",
     ".*Test.*"
   ).mkString(";")
