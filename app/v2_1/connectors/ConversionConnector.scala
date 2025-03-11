@@ -71,7 +71,7 @@ class ConversionConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
         httpClientV2
           .post(url"$url")
           .setHeader(Constants.APIVersionHeaderKey -> Constants.APIVersionFinalHeaderValue)
-          .transform(_.addHttpHeaders(headerType.header *))
+          .transform(_.addHttpHeaders(headerType.header*))
           .withBody(jsonStream)
           .executeAsStream
     }

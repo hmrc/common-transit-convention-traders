@@ -44,7 +44,7 @@ object HateoasNewMovementResponse extends HateoasResponse {
       "message"  -> Json.obj("href" -> getMessageUri(movementId, messageId, movementType))
     )
 
-    Json.obj("_links"                      -> jsObject) ++
+    Json.obj("_links" -> jsObject) ++
       Json.obj(getMovementId(movementType) -> movementId.value) ++ Json.obj("messageId" -> messageId.value) ++ {
         (boxResponse, upscanInitiateResponse) match {
           case (Some(response), None)             => box(response)

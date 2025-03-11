@@ -58,11 +58,12 @@ trait StreamingParsers {
 
   implicit class ActionBuilderStreamHelpers[R[A] <: BodyReplaceableRequest[R, A]](actionBuilder: ActionBuilder[R, ?]) {
 
-    /** Updates the [[Source]] in the [[BodyReplaceableRequest]] with a version that can be used
-      *  multiple times via the use of a temporary file.
+    /** Updates the [[Source]] in the [[BodyReplaceableRequest]] with a version that can be used multiple times via the use of a temporary file.
       *
-      *   @param block The code to use the with the reusable source
-      *   @return An [[Action]]
+      * @param block
+      *   The code to use the with the reusable source
+      * @return
+      *   An [[Action]]
       */
     // Implementation note: Tried to use the temporary file parser but it didn't pass the "single use" tests.
     // Doing it like this ensures that we can make sure that the source we pass is the file based one,
