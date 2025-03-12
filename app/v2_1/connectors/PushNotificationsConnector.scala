@@ -39,7 +39,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import play.api.http.Status.ACCEPTED
 import play.api.libs.json.JsValue
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import play.api.libs.ws.JsonBodyWritables
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 
 @ImplementedBy(classOf[PushNotificationsConnectorImpl])
 trait PushNotificationsConnector {
@@ -64,6 +65,7 @@ trait PushNotificationsConnector {
 class PushNotificationsConnectorImpl @Inject() (httpClientV2: HttpClientV2, val metrics: MetricRegistry)(implicit appConfig: AppConfig)
     extends PushNotificationsConnector
     with V2BaseConnector
+    with JsonBodyWritables
     with HasMetrics {
 
   override def patchAssociation(movementId: MovementId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =

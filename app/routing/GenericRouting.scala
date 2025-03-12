@@ -50,7 +50,7 @@ class GenericRouting @Inject() (
     VERSION_2_1_ACCEPT_HEADER_VALUE_XML.value
   )
 
-  private def checkAcceptHeader(implicit request: Request[_]): Option[VersionedAcceptHeader] = {
+  private def checkAcceptHeader(implicit request: Request[?]): Option[VersionedAcceptHeader] = {
     val requestHeaderValue = request.headers.get(HeaderNames.ACCEPT)
     requestHeaderValue.flatMap {
       acceptHeaderValue =>

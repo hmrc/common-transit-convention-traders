@@ -30,7 +30,7 @@ import scala.util.control.NonFatal
 object StreamingUtils {
 
   def convertSourceToString(
-    source: Source[ByteString, _]
+    source: Source[ByteString, ?]
   )(implicit ec: ExecutionContext, mat: Materializer): EitherT[Future, StreamingError, String] = EitherT {
     source
       .reduce(_ ++ _)

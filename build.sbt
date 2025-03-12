@@ -5,7 +5,7 @@ import uk.gov.hmrc.DefaultBuildSettings
 val appName = "common-transit-convention-traders"
 
 ThisBuild / majorVersion := 0
-ThisBuild / scalaVersion := "2.13.12"
+ThisBuild / scalaVersion := "3.6.3"
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(PlayScala, SbtDistributablesPlugin)
@@ -56,18 +56,19 @@ lazy val buildSettings = Def.settings(
 
 // Scalac options
 lazy val scalacSettings = Def.settings(
-  // Disable fatal warnings and warnings from discarding values
-  scalacOptions ~= {
-    opts =>
-      opts.filterNot(Set("-Xfatal-warnings", "-Ywarn-value-discard"))
-  },
   // Disable dead code warning as it is triggered by Mockito any()
   Test / scalacOptions ~= {
     opts =>
       opts.filterNot(Set("-Wdead-code"))
   },
-  // Disable warnings arising from generated routing code
-  scalacOptions += "-Wconf:src=routes/.*:s"
+  scalacOptions ++= Seq(
+    "-Wconf:src=routes/.*:s",
+    "-Wconf:msg=Flag.*repeatedly:s"
+  ),
+  scalacOptions := scalacOptions.value.map {
+    case "-Ykind-projector" => "-Xkind-projector"
+    case option             => option
+  }
 )
 
 // Scoverage exclusions and minimums
@@ -90,6 +91,7 @@ lazy val scoverageSettings = Def.settings(
     ".*BuildInfo.*",
     ".*javascript.*",
     ".*Routes.*",
+    ".*models.*",
     ".*GuiceInjector",
     ".*Test.*"
   ).mkString(";")

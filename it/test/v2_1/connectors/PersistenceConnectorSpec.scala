@@ -2026,13 +2026,13 @@ class PersistenceConnectorSpec
       server.stubFor(
         get(
           urlEqualTo(targetUrl(eori) + defaultFilterParams)
+        ).willReturn(
+          aResponse()
+            .withStatus(OK)
+            .withBody(
+              Json.toJson(paginationMovementSummary).toString()
+            )
         )
-          willReturn
-            aResponse()
-              .withStatus(OK)
-              .withBody(
-                Json.toJson(paginationMovementSummary).toString()
-              )
       )
 
       implicit val hc = HeaderCarrier()

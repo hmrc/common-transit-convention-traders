@@ -36,7 +36,7 @@ import java.time.format.DateTimeFormatter
 trait TestCommonGenerators {
 
   lazy val genShortUUID: Gen[String] = Gen.long.map {
-    l: Long =>
+    l =>
       f"${BigInt(l)}%016x"
   }
 
@@ -117,7 +117,7 @@ trait TestCommonGenerators {
   implicit lazy val arbitraryOffsetDateTime: Arbitrary[OffsetDateTime] =
     Arbitrary {
       for {
-        millis <- Gen.chooseNum(0, Long.MaxValue / 1000L)
+        millis <- Gen.chooseNum(0L, Long.MaxValue / 1000L)
       } yield OffsetDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneOffset.UTC)
     }
 

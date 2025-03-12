@@ -71,7 +71,7 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
   val fakeValidationConnector: ValidationConnector = new ValidationConnector {
 
-    override def postXml(messageType: MessageType, stream: Source[ByteString, _])(implicit
+    override def postXml(messageType: MessageType, stream: Source[ByteString, ?])(implicit
       hc: HeaderCarrier,
       ec: ExecutionContext
     ): Future[Option[XmlValidationErrorResponse]] =
@@ -85,7 +85,7 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
         case invalidStream        => fail(s"Invalid Stream: $invalidStream")
       }
 
-    override def postJson(messageType: MessageType, stream: Source[ByteString, _])(implicit
+    override def postJson(messageType: MessageType, stream: Source[ByteString, ?])(implicit
       hc: HeaderCarrier,
       ec: ExecutionContext
     ): Future[Option[JsonValidationErrorResponse]] =

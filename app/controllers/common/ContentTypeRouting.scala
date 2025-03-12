@@ -37,20 +37,20 @@ object ContentTypeRouting {
   sealed abstract class ContentType
 
   object ContentType {
-    final case object XML extends ContentType
+    case object XML extends ContentType
 
-    final case object JSON extends ContentType
+    case object JSON extends ContentType
 
-    final case object None extends ContentType
+    case object None extends ContentType
   }
 
   // The actual content-type won't change, so we cache it in memory once it's needed.
-  lazy val XML_UTF8_CHARSET: String = ContentTypes.XML.toLowerCase
+  private lazy val XML_UTF8_CHARSET: String = ContentTypes.XML.toLowerCase
 
 }
 
 trait ContentTypeRouting {
-  self: BaseController with StreamingParsers =>
+  self: BaseController & StreamingParsers =>
 
   def selectContentType(contentType: Option[String]): Option[ContentTypeRouting.ContentType] =
     contentType.map(_.toLowerCase) match {
@@ -60,9 +60,9 @@ trait ContentTypeRouting {
       case None                                                      => Some(ContentTypeRouting.ContentType.None)
     }
 
-  def contentTypeRoute(routes: PartialFunction[ContentTypeRouting.ContentType, Action[_]])(implicit materializer: Materializer): Action[Source[ByteString, _]] =
+  def contentTypeRoute(routes: PartialFunction[ContentTypeRouting.ContentType, Action[?]])(implicit materializer: Materializer): Action[Source[ByteString, ?]] =
     Action.async(streamFromMemory) {
-      (request: Request[Source[ByteString, _]]) =>
+      (request: Request[Source[ByteString, ?]]) =>
         selectContentType(request.headers.get(HeaderNames.CONTENT_TYPE))
           .flatMap {
             contentType =>

@@ -63,14 +63,14 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
 
   val id = Gen.long
     .map {
-      l: Long =>
+      l =>
         f"${BigInt(abs(l))}%016x"
     }
     .sample
     .get
 
   "route to the version 2 controller" - {
-    def executeTest(callValue: Call, sutValue: => Action[Source[ByteString, _]], expectedStatus: Int, isVersion: Boolean) =
+    def executeTest(callValue: Call, sutValue: => Action[Source[ByteString, ?]], expectedStatus: Int, isVersion: Boolean) =
       Seq(
         Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON.value),
         Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.value),
@@ -159,7 +159,7 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
   }
 
   "route to the version 2_1 controller" - {
-    def executeTest(callValue: Call, sutValue: => Action[Source[ByteString, _]], expectedStatus: Int, isVersion: Boolean) =
+    def executeTest(callValue: Call, sutValue: => Action[Source[ByteString, ?]], expectedStatus: Int, isVersion: Boolean) =
       Seq(
         Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value),
         Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML.value),

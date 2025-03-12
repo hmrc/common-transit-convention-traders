@@ -45,12 +45,12 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[ValidationServiceImpl])
 trait ValidationService {
 
-  def validateXml(messageType: MessageType, source: Source[ByteString, _])(implicit
+  def validateXml(messageType: MessageType, source: Source[ByteString, ?])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, FailedToValidateError, Unit]
 
-  def validateJson(messageType: MessageType, source: Source[ByteString, _])(implicit
+  def validateJson(messageType: MessageType, source: Source[ByteString, ?])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, FailedToValidateError, Unit]
@@ -60,7 +60,7 @@ trait ValidationService {
 @Singleton
 class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector) extends ValidationService with Logging {
 
-  override def validateXml(messageType: MessageType, source: Source[ByteString, _])(implicit
+  override def validateXml(messageType: MessageType, source: Source[ByteString, ?])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, FailedToValidateError, Unit] =
@@ -77,7 +77,7 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
         .recover(recoverFromError(messageType))
     )
 
-  override def validateJson(messageType: MessageType, source: Source[ByteString, _])(implicit
+  override def validateJson(messageType: MessageType, source: Source[ByteString, ?])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, FailedToValidateError, Unit] =

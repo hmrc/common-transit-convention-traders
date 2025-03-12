@@ -189,7 +189,7 @@ class ValidationConnectorSpec
 
         whenReady(future) {
           result =>
-            val thr = result.left.get
+            val thr = result.swap.getOrElse(fail("No throwable"))
             thr mustBe a[http.UpstreamErrorResponse]
             thr.asInstanceOf[UpstreamErrorResponse].statusCode mustBe BAD_REQUEST
             Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj(
@@ -227,7 +227,7 @@ class ValidationConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[JsonParseException]
+            result.swap.getOrElse(fail("No throwable")) mustBe a[JsonParseException]
         }
       }
     }
@@ -350,7 +350,7 @@ class ValidationConnectorSpec
 
         whenReady(future) {
           result =>
-            val thr = result.left.get
+            val thr = result.swap.getOrElse(fail("No throwable"))
             thr mustBe a[http.UpstreamErrorResponse]
             thr.asInstanceOf[UpstreamErrorResponse].statusCode mustBe BAD_REQUEST
             Json.parse(thr.asInstanceOf[UpstreamErrorResponse].message) mustBe Json.obj(
@@ -388,7 +388,7 @@ class ValidationConnectorSpec
 
         whenReady(future) {
           result =>
-            result.left.get mustBe a[JsonParseException]
+            result.swap.getOrElse(fail("No throwable")) mustBe a[JsonParseException]
         }
       }
 

@@ -37,6 +37,8 @@ import play.api.http.Status.ACCEPTED
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
+import play.api.libs.ws.DefaultBodyWritables
+import play.api.libs.ws.JsonBodyWritables
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.StringContextOps
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -55,7 +57,7 @@ trait AuditingConnector {
     auditType: AuditType,
     contentType: String,
     contentLength: Long,
-    payload: Source[ByteString, _],
+    payload: Source[ByteString, ?],
     movementId: Option[MovementId],
     messageId: Option[MessageId],
     enrolmentEORI: Option[EORINumber],
@@ -84,6 +86,8 @@ trait AuditingConnector {
 class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: MetricRegistry)(implicit appConfig: AppConfig)
     extends AuditingConnector
     with V2BaseConnector
+    with DefaultBodyWritables
+    with JsonBodyWritables
     with HasMetrics
     with Logging {
 
@@ -91,7 +95,7 @@ class AuditingConnectorImpl @Inject() (httpClient: HttpClientV2, val metrics: Me
     auditType: AuditType,
     contentType: String,
     contentLength: Long,
-    payload: Source[ByteString, _],
+    payload: Source[ByteString, ?],
     movementId: Option[MovementId] = None,
     messageId: Option[MessageId] = None,
     enrolmentEORI: Option[EORINumber] = None,

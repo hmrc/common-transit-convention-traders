@@ -80,7 +80,7 @@ class StreamingParsersSpec
     implicit val temporaryFileCreator: Files.SingletonTemporaryFileCreator.type = SingletonTemporaryFileCreator
     implicit val materializer: Materializer                                     = Materializer(TestActorSystem.system)
 
-    def testFromMemory: Action[Source[ByteString, _]] = Action.async(streamFromMemory) {
+    def testFromMemory: Action[Source[ByteString, ?]] = Action.async(streamFromMemory) {
       request => result.apply(request).run(request.body)(materializer)
     }
 
@@ -89,7 +89,7 @@ class StreamingParsersSpec
         Future.successful(Ok(request.body))
     }
 
-    def resultStream: Action[Source[ByteString, _]] = Action.andThen(TestActionBuilder).stream {
+    def resultStream: Action[Source[ByteString, ?]] = Action.andThen(TestActionBuilder).stream {
       request =>
         (for {
           a <- request.body.runWith(Sink.head)

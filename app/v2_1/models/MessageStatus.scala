@@ -26,15 +26,15 @@ import play.api.libs.json.Writes
 sealed trait MessageStatus
 
 object MessageStatus {
-  final case object Received extends MessageStatus
+  case object Received extends MessageStatus
 
-  final case object Pending extends MessageStatus
+  case object Pending extends MessageStatus
 
-  final case object Processing extends MessageStatus
+  case object Processing extends MessageStatus
 
-  final case object Success extends MessageStatus
+  case object Success extends MessageStatus
 
-  final case object Failed extends MessageStatus
+  case object Failed extends MessageStatus
 
   val statusValues: Seq[MessageStatus] = Seq(Received, Pending, Processing, Success, Failed)
 

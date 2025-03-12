@@ -23,13 +23,13 @@ sealed abstract class HeaderType(val header: (String, String)*)
 
 object HeaderTypes {
 
-  final case object jsonToXml
+  case object jsonToXml
       extends HeaderType(
         (HeaderNames.CONTENT_TYPE -> MimeTypes.JSON),
         (HeaderNames.ACCEPT       -> MimeTypes.XML)
       )
 
-  final case object xmlToJson
+  case object xmlToJson
       extends HeaderType(
         (HeaderNames.CONTENT_TYPE -> MimeTypes.XML),
         (HeaderNames.ACCEPT       -> MimeTypes.JSON)

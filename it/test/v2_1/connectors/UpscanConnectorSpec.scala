@@ -90,7 +90,7 @@ class UpscanConnectorSpec
       _ => Url.parse("https://ctc.hmrc.gov.uk/")
     }
 
-    when(mockAppConfig.upscanMaximumFileSize).thenReturn(2000)
+    when(mockAppConfig.upscanMaximumFileSize).thenReturn(2000L)
   }
 
   lazy val sut = new UpscanConnectorImpl(mockAppConfig, httpClientV2, new MetricRegistry)

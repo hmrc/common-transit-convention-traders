@@ -43,7 +43,7 @@ import scala.util.control.NonFatal
 @ImplementedBy(classOf[XmlMessageParsingServiceImpl])
 trait XmlMessageParsingService {
 
-  def extractMessageType(source: Source[ByteString, _], messageTypeList: Seq[MessageType])(implicit
+  def extractMessageType(source: Source[ByteString, ?], messageTypeList: Seq[MessageType])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, ExtractionError, MessageType]
@@ -67,7 +67,7 @@ class XmlMessageParsingServiceImpl @Inject() (implicit materializer: Materialize
     }
   )
 
-  override def extractMessageType(source: Source[ByteString, _], messageTypeList: Seq[MessageType])(implicit
+  override def extractMessageType(source: Source[ByteString, ?], messageTypeList: Seq[MessageType])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, ExtractionError, MessageType] =

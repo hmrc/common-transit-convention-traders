@@ -52,7 +52,7 @@ trait UpscanService {
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext,
     materializer: Materializer
-  ): EitherT[Future, UpscanError, Source[ByteString, _]]
+  ): EitherT[Future, UpscanError, Source[ByteString, ?]]
 
 }
 
@@ -83,7 +83,7 @@ class UpscanServiceImpl @Inject() (
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext,
     materializer: Materializer
-  ): EitherT[Future, UpscanError, Source[ByteString, _]] =
+  ): EitherT[Future, UpscanError, Source[ByteString, ?]] =
     EitherT {
       upscanConnector
         .upscanGetFile(downloadUrl)
