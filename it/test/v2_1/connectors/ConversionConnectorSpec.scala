@@ -22,7 +22,6 @@ import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import com.github.tomakehurst.wiremock.client.WireMock._
 import config.AppConfig
-import config.Constants
 import org.apache.pekko.stream.Materializer
 import org.scalatest.concurrent._
 import org.scalatest.freespec.AnyFreeSpec
@@ -62,7 +61,7 @@ class ConversionConnectorSpec
       server.stubFor(
         post(
           urlEqualTo(s"/transit-movements-converter/messages/${messageType.code}")
-        ).withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
+        )
           .willReturn(
             aResponse().withStatus(OK).withBody("a response from the converter")
           )
@@ -82,7 +81,7 @@ class ConversionConnectorSpec
       server.stubFor(
         post(
           urlEqualTo(s"/transit-movements-converter/messages/${messageType.code}")
-        ).withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
+        )
           .willReturn(
             aResponse().withStatus(500).withBody("Internal service error")
           )

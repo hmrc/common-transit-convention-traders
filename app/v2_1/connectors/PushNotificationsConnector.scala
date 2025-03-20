@@ -20,7 +20,6 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.codahale.metrics.MetricRegistry
 import config.AppConfig
-import config.Constants
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import models.common.MessageId
@@ -75,7 +74,6 @@ class PushNotificationsConnectorImpl @Inject() (httpClientV2: HttpClientV2, val 
 
         httpClientV2
           .patch(url"$url")
-          .setHeader(Constants.APIVersionHeaderKey -> Constants.APIVersionFinalHeaderValue)
           .withInternalAuthToken
           .executeAndExpect(NO_CONTENT)
     }
@@ -92,7 +90,6 @@ class PushNotificationsConnectorImpl @Inject() (httpClientV2: HttpClientV2, val 
           .post(url"$url")
           .withInternalAuthToken
           .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
-          .setHeader(Constants.APIVersionHeaderKey -> Constants.APIVersionFinalHeaderValue)
           .withBody(Json.toJson(pushNotificationsAssociation))
           .execute[BoxResponse]
     }
@@ -108,7 +105,6 @@ class PushNotificationsConnectorImpl @Inject() (httpClientV2: HttpClientV2, val 
       .post(url"$url")
       .withInternalAuthToken
       .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
-      .setHeader(Constants.APIVersionHeaderKey -> Constants.APIVersionFinalHeaderValue)
       .withBody(body)
       .executeAndExpect(ACCEPTED)
   }

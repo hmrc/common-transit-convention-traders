@@ -24,7 +24,6 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.codahale.metrics.MetricRegistry
 import config.AppConfig
-import config.Constants
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
@@ -70,7 +69,6 @@ class ConversionConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
 
         httpClientV2
           .post(url"$url")
-          .setHeader(Constants.APIVersionHeaderKey -> Constants.APIVersionFinalHeaderValue)
           .transform(_.addHttpHeaders(headerType.header*))
           .withBody(jsonStream)
           .executeAsStream
