@@ -24,7 +24,6 @@ import models.common.MovementId
 import models.common.MovementReferenceNumber
 import models.common.MovementType
 import models.common.PageNumber
-import play.api.libs.json.{JsObject, Json}
 import v2_1.utils.CallOps.*
 
 import java.time.OffsetDateTime
@@ -96,10 +95,4 @@ trait HateoasResponse {
     }
 
   def getMovementId(movementType: MovementType): String = if (movementType == MovementType.Departure) "departureId" else "arrivalId"
-
-  def links(movementId: MovementId, messageId: MessageId, movementType: MovementType): JsObject =
-    Json.obj(
-      "self"                    -> Json.obj("href" -> getMessageUri(movementId, messageId, movementType)),
-      movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
-    )
 }
