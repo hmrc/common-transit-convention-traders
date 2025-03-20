@@ -28,13 +28,15 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.guice.GuiceableModule
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 
 import java.time.Clock
 
 trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
   this: Suite =>
 
-  protected val wiremockConfig = wireMockConfig().dynamicPort().notifier(new ConsoleNotifier(false))
+  protected val wiremockConfig: WireMockConfiguration =
+    wireMockConfig().dynamicPort().notifier(new ConsoleNotifier(false))
 
   protected val server: WireMockServer = new WireMockServer(wiremockConfig)
 
@@ -66,10 +68,10 @@ trait GuiceWiremockSuite extends WiremockSuite with GuiceFakeApplicationFactory 
         portConfigKey.map {
           key =>
             key -> server.port.toString()
-        } *
+        }*
       )
-      .configure(configurationOverride *)
-      .overrides(bindings *)
+      .configure(configurationOverride*)
+      .overrides(bindings*)
 
   val configurationOverride: Seq[(String, String)] = Seq.empty
 

@@ -23,7 +23,7 @@ import play.api.mvc.PathBindable
 
 object Bindings {
 
-  val idPattern = "^[0-9a-f]{16}$".r
+  private val idPattern = "^[0-9a-f]{16}$".r
 
   def hexBinding[T](bindFn: String => T, unbindFn: T => String): PathBindable[T] = new PathBindable[T] {
 

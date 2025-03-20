@@ -302,7 +302,7 @@ class AuditingConnectorSpec
                       // backticks for stable identifier
                       case UpstreamErrorResponse(_, `statusCode`, _, _) => ()
                       case x: TestFailedException                       => x
-                      case x                                            => fail(s"An unexpected exception was thrown: ${x.getClass.getSimpleName}, ${x.getMessage}")
+                      case x => fail(s"An unexpected exception was thrown: ${x.getClass.getSimpleName}, ${x.getMessage}")
                     }
 
                   // then the future should be ready

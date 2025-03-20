@@ -24,7 +24,6 @@ import javax.inject.Singleton
 
 @Singleton
 class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesConfig) {
-
   val commmonTransitConventionTradersUrl: Url = Url.parse(servicesConfig.baseUrl("common-transit-convention-traders"))
   val validatorUrl: Url                       = Url.parse(servicesConfig.baseUrl("transit-movements-validator"))
   val converterUrl: Url                       = Url.parse(servicesConfig.baseUrl("transit-movements-converter"))
@@ -35,19 +34,8 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesCon
   val upscanInitiateUrl: Url                  = Url.parse(servicesConfig.baseUrl("upscan-initiate"))
   val upscanMaximumFileSize: Long             = servicesConfig.config("upscan-initiate").get[Long]("maximumFileSize")
   val forwardClientIdToUpscan: Boolean        = servicesConfig.config("upscan-initiate").get[Boolean]("send-client-id")
-
-  val version21BetaEnabled: Boolean = config.get[Boolean]("version21BetaEnabled")
-
-  val smallMessageSizeLimit: Int = config.get[Int]("smallMessageSizeLimit")
-
-  val defaultItemsPerPage: Int = config.get[Int]("defaultItemsPerPage")
-
-  val maxItemsPerPage: Int = config.get[Int]("maxItemsPerPage")
-
-  val internalAuthToken: String = config.get[String]("internal-auth.token")
-
-  val phase5TransitionalEnabled: Boolean = config.get[Boolean]("enable-phase-5")
-
-  val phase5FinalEnabled: Boolean = config.get[Boolean]("phase-5-final-enabled")
-
+  val smallMessageSizeLimit: Int              = config.get[Int]("smallMessageSizeLimit")
+  val defaultItemsPerPage: Int                = config.get[Int]("defaultItemsPerPage")
+  val maxItemsPerPage: Int                    = config.get[Int]("maxItemsPerPage")
+  val internalAuthToken: String               = config.get[String]("internal-auth.token")
 }

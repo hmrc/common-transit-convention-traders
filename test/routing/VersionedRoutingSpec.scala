@@ -45,7 +45,7 @@ import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import v2.base.TestActorSystem
+import v2_1.base.TestActorSystem
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.Future
@@ -66,36 +66,24 @@ class VersionedRoutingSpec
       with Logging {
 
     def testWithContent: Action[Source[ByteString, ?]] = route {
-      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => contentActionTwo
-      case Some(x) if x != MimeTypes.TEXT                           => contentActionOne
-    }
-
-    def contentActionOne: Action[NodeSeq] = Action.async(parse.xml) {
-      _ => Future.successful(Ok("One"))
+      case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) => contentActionTwo
+      case Some(x) if x != MimeTypes.TEXT                             => fail(s"Wrong header: $x")
     }
 
     def contentActionTwo: Action[NodeSeq] = Action.async(parse.xml) {
-      _ => Future.successful(Ok("Two"))
+      _ => Future.successful(Ok("2.1"))
     }
 
     def testWithoutContent: Action[Source[ByteString, ?]] = route {
-      case Some(VersionedRouting.VERSION_2_ACCEPT_HEADER_PATTERN()) => actionTwo
-      case Some(x) if x != MimeTypes.TEXT                           => actionOne
-    }
-
-    def actionOne: Action[AnyContent] = Action {
-      request =>
-        request.headers.get(CONTENT_TYPE) match {
-          case Some(x) => UnsupportedMediaType(s"Content type was set: $x")
-          case None    => Ok("One")
-        }
+      case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) => actionTwo
+      case Some(x) if x != MimeTypes.TEXT                             => fail(s"Wrong header: $x")
     }
 
     def actionTwo: Action[AnyContent] = Action {
       request =>
         request.headers.get(CONTENT_TYPE) match {
           case Some(x) => UnsupportedMediaType(s"Content type was set: $x")
-          case None    => Ok("Two")
+          case None    => Ok("2.1")
         }
     }
   }
@@ -121,7 +109,7 @@ class VersionedRoutingSpec
     )
 
     val headers =
-      Seq(Some("application/vnd.hmrc.1.0+json"), Some("text/html"), Some("application/vnd.hmrc.1.0+xml"), Some("text/javascript"))
+      Seq(Some("application/vnd.hmrc.2.1+json"), Some("application/vnd.hmrc.2.1+xml"))
 
     headers.foreach {
       acceptHeaderValue =>
@@ -145,7 +133,7 @@ class VersionedRoutingSpec
                 val request = FakeRequest(method, "/", departureHeaders, generateSource("<test>test</test>"))
 
                 val result = sut.testWithContent()(request)
-                contentAsString(result) mustBe "One"
+                contentAsString(result) mustBe "2.1"
               }
           }
 
@@ -166,7 +154,7 @@ class VersionedRoutingSpec
                     val request = FakeRequest(method, "/", headersWithoutBody, AnyContentAsEmpty)
 
                     val result = sut.testWithoutContent()(request)
-                    contentAsString(result) mustBe "One"
+                    contentAsString(result) mustBe "2.1"
                   }
               }
           }
@@ -186,9 +174,9 @@ class VersionedRoutingSpec
         }
     }
 
-    "with accept header set to application/vnd.hmrc.2.0+json (version two)" - {
+    "with accept header set to application/vnd.hmrc.2.1+json" - {
 
-      val departureHeaders = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.0+json", HeaderNames.CONTENT_TYPE -> "application/xml"))
+      val departureHeaders = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json", HeaderNames.CONTENT_TYPE -> "application/xml"))
 
       "must call correct action without body" in {
 
@@ -198,7 +186,7 @@ class VersionedRoutingSpec
         val request = FakeRequest(HttpVerbs.GET, "/", departureHeaders, AnyContentAsEmpty)
 
         val result = sut.testWithoutContent()(request)
-        contentAsString(result) mustBe "Two"
+        contentAsString(result) mustBe "2.1"
 
       }
 
@@ -210,7 +198,7 @@ class VersionedRoutingSpec
         val request = FakeRequest(HttpVerbs.POST, "/", departureHeaders, generateSource("<test>test</test>"))
 
         val result = sut.testWithContent()(request)
-        contentAsString(result) mustBe "Two"
+        contentAsString(result) mustBe "2.1"
 
       }
     }
@@ -254,12 +242,12 @@ class VersionedRoutingSpec
 
   }
 
-  "with accept header set to version two" - {
+  "with accept header set to version 2.1" - {
     val headers =
       Seq(
-        Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON.value),
-        Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.value),
-        Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)
+        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value),
+        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML.value),
+        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)
       )
 
     headers.foreach {
@@ -284,7 +272,7 @@ class VersionedRoutingSpec
             val request = FakeRequest(HttpVerbs.GET, "/", departureHeaders, AnyContentAsEmpty)
 
             val result = sut.testWithoutContent()(request)
-            contentAsString(result) mustBe "Two"
+            contentAsString(result) mustBe "2.1"
 
           }
 
@@ -296,7 +284,7 @@ class VersionedRoutingSpec
             val request = FakeRequest(HttpVerbs.POST, "/", departureHeaders, generateSource("<test>test</test>"))
 
             val result = sut.testWithContent()(request)
-            contentAsString(result) mustBe "Two"
+            contentAsString(result) mustBe "2.1"
 
           }
         }
@@ -306,10 +294,10 @@ class VersionedRoutingSpec
   "with mixed case valid version 2 accept header" - {
     val headers =
       Seq(
-        Some("application/vnd.hmrc.2.0+xMl"),
-        Some("application/vnd.hmrc.2.0+jsOn"),
-        Some("application/vnd.hmrc.2.0+json+xmL"),
-        Some("application/vnd.hmrc.2.0+JSON-XML")
+        Some("application/vnd.hmrc.2.1+xMl"),
+        Some("application/vnd.hmrc.2.1+jsOn"),
+        Some("application/vnd.hmrc.2.1+json+xmL"),
+        Some("application/vnd.hmrc.2.1+JSON-XML")
       )
 
     headers.foreach {
@@ -334,7 +322,7 @@ class VersionedRoutingSpec
             val request = FakeRequest(HttpVerbs.POST, "/", departureHeaders, generateSource("<test>test</test>"))
 
             val result = sut.testWithContent()(request)
-            contentAsString(result) mustBe "Two"
+            contentAsString(result) mustBe "2.1"
 
           }
         }
@@ -364,13 +352,13 @@ class VersionedRoutingSpec
       val sut = new Harness(stubControllerComponents())
 
       val request = FakeRequest(HttpVerbs.POST, "/", FakeHeaders(), generateSource("<test>test</test>"))
-      val action  = sut.handleDisabledPhase5Transitional()
+      val action  = sut.invalidAcceptHeader()
       val result  = action(request)
 
       status(result) mustBe NOT_ACCEPTABLE
       contentAsJson(result) mustBe Json.obj(
         "code"    -> "NOT_ACCEPTABLE",
-        "message" -> "CTC Traders API version 2.0 is no longer available. Use CTC Traders API v2.1 to submit transit messages."
+        "message" -> "Use CTC Traders API v2.1 to submit transit messages."
       )
     }
 

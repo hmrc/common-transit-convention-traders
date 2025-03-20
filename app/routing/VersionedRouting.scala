@@ -41,32 +41,12 @@ sealed trait VersionedAcceptHeader {
 object VersionedAcceptHeader {
 
   def apply(value: String): Either[PresentationError, VersionedAcceptHeader] = value match {
-    case VERSION_2_ACCEPT_HEADER_VALUE_XML.value               => VERSION_2_ACCEPT_HEADER_VALUE_XML.asRight
-    case VERSION_2_ACCEPT_HEADER_VALUE_JSON.value              => VERSION_2_ACCEPT_HEADER_VALUE_JSON.asRight
-    case VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.value          => VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML.asRight
-    case VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value   => VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.asRight
     case VERSION_2_1_ACCEPT_HEADER_VALUE_XML.value             => VERSION_2_1_ACCEPT_HEADER_VALUE_XML.asRight
     case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value            => VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.asRight
     case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML.value        => VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML.asRight
     case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value => VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.asRight
     case invalidAcceptHeader                                   => PresentationError.notAcceptableError(s"Invalid accept header: $invalidAcceptHeader").asLeft
   }
-}
-
-case object VERSION_2_ACCEPT_HEADER_VALUE_XML extends VersionedAcceptHeader {
-  override val value: String = "application/vnd.hmrc.2.0+xml"
-}
-
-case object VERSION_2_ACCEPT_HEADER_VALUE_JSON extends VersionedAcceptHeader {
-  override val value: String = "application/vnd.hmrc.2.0+json"
-}
-
-case object VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML extends VersionedAcceptHeader {
-  override val value: String = "application/vnd.hmrc.2.0+json+xml"
-}
-
-case object VERSION_2_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN extends VersionedAcceptHeader {
-  override val value: String = "application/vnd.hmrc.2.0+json-xml"
 }
 
 case object VERSION_2_1_ACCEPT_HEADER_VALUE_XML extends VersionedAcceptHeader {
@@ -86,17 +66,12 @@ case object VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN extends VersionedAcc
 }
 
 object VersionedRouting {
-  val VERSION_2_ACCEPT_HEADER_PATTERN: Regex   = """^application/vnd\.hmrc\.2\.0\+.+$""".r
   val VERSION_2_1_ACCEPT_HEADER_PATTERN: Regex = """^application/vnd\.hmrc\.2\.1\+.+$""".r
 
   def formatAccept(header: String): Either[PresentationError, VersionedAcceptHeader] = {
-    val version2SplitHeader   = """^(application/vnd\.hmrc\.2\.0\+)(.+)""".r
     val version2_1SplitHeader = """^(application/vnd\.hmrc\.2\.1\+)(.+)""".r
 
     header match {
-      case version2SplitHeader(frameworkPath, ctcPath) =>
-        val formattedHeader = frameworkPath + ctcPath.toLowerCase
-        VersionedAcceptHeader(formattedHeader)
       case version2_1SplitHeader(frameworkPath, ctcPath) =>
         val formattedHeader = frameworkPath + ctcPath.toLowerCase
         VersionedAcceptHeader(formattedHeader)
@@ -154,22 +129,12 @@ trait VersionedRouting {
   def runIfBound[A](key: String, value: String, action: A => Action[?])(implicit binding: PathBindable[A]): Action[?] =
     binding.bind(key, value).fold(bindingFailureAction(_), action)
 
-  def handleDisabledPhase5Transitional(): Action[Source[ByteString, ?]] =
+  def invalidAcceptHeader(): Action[Source[ByteString, ?]] =
     Action(streamFromMemory) {
       request =>
         request.body.runWith(Sink.ignore)
         val presentationError = PresentationError.notAcceptableError(
-          "CTC Traders API version 2.0 is no longer available. Use CTC Traders API v2.1 to submit transit messages."
-        )
-        Status(presentationError.code.statusCode)(Json.toJson(presentationError))
-    }
-
-  def handleDisabledPhase5Final(): Action[Source[ByteString, ?]] =
-    Action(streamFromMemory) {
-      request =>
-        request.body.runWith(Sink.ignore)
-        val presentationError = PresentationError.notAcceptableError(
-          "CTC Traders API version 2.1 is not available. Use CTC Traders API v2.0 to submit transit messages."
+          "Use CTC Traders API v2.1 to submit transit messages."
         )
         Status(presentationError.code.statusCode)(Json.toJson(presentationError))
     }

@@ -26,12 +26,10 @@ import v2_1.models.responses.UpscanInitiateResponse
 object HateoasMovementUpdateResponse extends HateoasResponse {
 
   def apply(movementId: MovementId, messageId: MessageId, movementType: MovementType, upscanInitiateResponse: Option[UpscanInitiateResponse]): JsObject =
-    Json.obj(
-      "_links" -> Json.obj(
-        "self"                    -> Json.obj("href" -> getMessageUri(movementId, messageId, movementType)),
-        movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
-      )
-    ) ++
+
+    val jsLinksObject = links(movementId, messageId, movementType)
+
+    jsLinksObject ++
       Json.obj(
         getMovementId(movementType) -> movementId.value,
         "messageId"                 -> messageId.value

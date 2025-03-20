@@ -70,7 +70,7 @@ trait TestCommonGenerators {
 
   implicit lazy val arbitraryTotalCount: Arbitrary[TotalCount] = Arbitrary {
     Gen.long.map(
-      l => TotalCount(Math.abs(l % (Int.MaxValue - 1))) //require a positive integer
+      l => TotalCount(Math.abs(l % (Int.MaxValue - 1))) // require a positive integer
     )
   }
 

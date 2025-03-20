@@ -16,7 +16,6 @@
 
 package controllers.documentation
 
-import config.AppConfig
 import controllers.Assets
 
 import javax.inject.Inject
@@ -25,17 +24,11 @@ import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import scala.concurrent.Future
-
-class DocumentationController @Inject() (assets: Assets, cc: ControllerComponents, appConfig: AppConfig) extends BackendController(cc) {
+class DocumentationController @Inject() (assets: Assets, cc: ControllerComponents) extends BackendController(cc) {
 
   def definition(): Action[AnyContent] =
-    if (appConfig.version21BetaEnabled) {
-      assets.at("/public/api", "v2_1-definition.json")
-    } else { assets.at("/public/api", "definition.json") }
+    assets.at("/public/api", "v2_1-definition.json")
 
   def raml(version: String, file: String): Action[AnyContent] =
-    if (!appConfig.version21BetaEnabled && version == "2.1") {
-      Action.async(Future.successful(NotFound("Resource not found by Assets controller")))
-    } else assets.at(s"/public/api/conf/$version", file)
+    assets.at(s"/public/api/conf/$version", file)
 }
