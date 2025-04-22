@@ -30,8 +30,8 @@ import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
 import play.api.test.Helpers.stubControllerComponents
-import v2.controllers.V2MovementsController
-import v2.models.responses.UpscanResponse
+import v2_1.controllers.V2MovementsController
+import v2_1.models.responses.UpscanResponse
 
 import java.time.OffsetDateTime
 

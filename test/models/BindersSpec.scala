@@ -21,30 +21,32 @@ import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import v2.base.TestCommonGenerators
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
-class BindersSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with TestCommonGenerators {
+class BindersSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+
+  def positiveYear: Gen[Int] = Gen.posNum[Int]
+  def negativeYear: Gen[Int] = Gen.negNum[Int]
 
   "offsetDateTimeQueryStringBindable" - {
 
-    "parses a standard ISO 8601 timestamp" in forAll(arbitrary[OffsetDateTime].map(_.truncatedTo(ChronoUnit.SECONDS))) {
-      dateTime =>
-        val formattedDateTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(dateTime)
+    "parses a standard ISO 8601 timestamp" in forAll(arbitrary[OffsetDateTime].map(_.truncatedTo(ChronoUnit.SECONDS)), positiveYear) {
+      (dateTime, year) =>
+        val updatedDateTime   = dateTime.withYear(year)
+        val formattedDateTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(updatedDateTime)
         val result            = Binders.offsetDateTimeQueryStringBindable.bind("something", Map("something" -> Seq(formattedDateTime)))
-        result mustBe Some(Right(dateTime))
+        result mustBe Some(Right(updatedDateTime))
     }
 
     "parses a standard ISO 8601 timestamp but rejects a negative year" in forAll(
-      arbitrary[OffsetDateTime].map(
-        x => x.withYear(-x.getYear)
-      )
+      arbitrary[OffsetDateTime],
+      negativeYear
     ) {
-      dateTime =>
-        val formattedDateTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(dateTime)
+      (dateTime, year) =>
+        val formattedDateTime = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(dateTime.withYear(year))
         val result            = Binders.offsetDateTimeQueryStringBindable.bind("something", Map("something" -> Seq(formattedDateTime)))
         result mustBe Some(Left("Year cannot be negative"))
     }

@@ -27,6 +27,7 @@ import v2_1.models.responses.MessageSummary
 object HateoasMovementMessageResponse extends HateoasResponse {
 
   def apply(movementId: MovementId, messageId: MessageId, messageSummary: MessageSummary, movementType: MovementType): JsObject = {
+
     val jsLinksObject = Json.obj(
       "self"                    -> Json.obj("href" -> getMessageUri(movementId, messageId, movementType)),
       movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))

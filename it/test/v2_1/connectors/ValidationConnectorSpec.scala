@@ -26,7 +26,6 @@ import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
-import config.Constants
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -80,7 +79,6 @@ class ValidationConnectorSpec
             urlEqualTo("/transit-movements-validator/messages/IE015/validation")
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse().withStatus(NO_CONTENT)
             )
@@ -103,7 +101,6 @@ class ValidationConnectorSpec
             urlEqualTo("/transit-movements-validator/messages/IE015/validation")
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -134,7 +131,6 @@ class ValidationConnectorSpec
             urlEqualTo("/transit-movements-validator/messages/IE015/validation")
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -165,7 +161,6 @@ class ValidationConnectorSpec
             urlEqualTo("/transit-movements-validator/messages/IE015/validation")
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(BAD_REQUEST)
@@ -207,7 +202,6 @@ class ValidationConnectorSpec
             urlEqualTo("/transit-movements-validator/messages/IE015/validation")
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -241,7 +235,6 @@ class ValidationConnectorSpec
             urlEqualTo("/transit-movements-validator/messages/IE015/validation")
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.JSON))
-            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse().withStatus(NO_CONTENT)
             )
@@ -264,7 +257,6 @@ class ValidationConnectorSpec
             urlEqualTo("/transit-movements-validator/messages/IE015/validation")
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.JSON))
-            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -295,7 +287,6 @@ class ValidationConnectorSpec
             urlEqualTo("/transit-movements-validator/messages/IE015/validation")
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -326,7 +317,6 @@ class ValidationConnectorSpec
             urlEqualTo("/transit-movements-validator/messages/IE015/validation")
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.JSON))
-            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(BAD_REQUEST)
@@ -368,7 +358,6 @@ class ValidationConnectorSpec
             urlEqualTo("/transit-movements-validator/messages/IE015/validation")
           )
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.JSON))
-            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .willReturn(
               aResponse()
                 .withStatus(OK)

@@ -60,7 +60,7 @@ class HateoasMovementMessageResponseSpec extends AnyFreeSpec with Matchers with 
       val actual = HateoasMovementMessageResponse(departureId, messageId, response, movementType)
       val expected = Json.obj(
         "_links" -> Json.obj(
-          "self"                    -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${departureId.value}/messages/${messageId.value}"),
+          "self" -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${departureId.value}/messages/${messageId.value}"),
           movementType.movementType -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${departureId.value}")
         ),
         "id"                              -> messageId.value,
@@ -90,7 +90,7 @@ class HateoasMovementMessageResponseSpec extends AnyFreeSpec with Matchers with 
       val actual = HateoasMovementMessageResponse(movementId, messageId, response, movementType)
       val expected = Json.obj(
         "_links" -> Json.obj(
-          "self"                    -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"),
+          "self" -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"),
           movementType.movementType -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}")
         ),
         "id"                              -> messageId.value,
@@ -120,7 +120,7 @@ class HateoasMovementMessageResponseSpec extends AnyFreeSpec with Matchers with 
       val actual = HateoasMovementMessageResponse(movementId, messageId, response, movementType)
       val expected = Json.obj(
         "_links" -> Json.obj(
-          "self"                    -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"),
+          "self" -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"),
           movementType.movementType -> Json.obj("href" -> s"/customs/transits/movements/${movementType.urlFragment}/${movementId.value}")
         ),
         "id"                              -> messageId.value,

@@ -25,16 +25,14 @@ import models.common.errors.PresentationError
 import org.apache.pekko.stream.Materializer
 import play.api.Logging
 import play.api.libs.json.Json
-import play.api.mvc._
+import play.api.mvc.*
 import play.mvc.Http.HeaderNames
-import v2.controllers.{V2MovementsController => V2TransitionalMovementsController}
 import v2_1.controllers.V2MovementsController
 
 import scala.concurrent.Future
 
 class GenericRouting @Inject() (
   val controllerComponents: ControllerComponents,
-  v2TransitionalMovements: V2TransitionalMovementsController,
   v2Movements: V2MovementsController
 )(implicit
   val materializer: Materializer
@@ -44,8 +42,6 @@ class GenericRouting @Inject() (
     with Logging {
 
   private lazy val validHeaders: Seq[String] = Seq(
-    VERSION_2_ACCEPT_HEADER_VALUE_JSON.value,
-    VERSION_2_ACCEPT_HEADER_VALUE_XML.value,
     VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value,
     VERSION_2_1_ACCEPT_HEADER_VALUE_XML.value
   )
@@ -65,8 +61,6 @@ class GenericRouting @Inject() (
     Action.async {
       implicit request =>
         checkAcceptHeader match {
-          case Some(VERSION_2_ACCEPT_HEADER_VALUE_JSON) | Some(VERSION_2_ACCEPT_HEADER_VALUE_XML) =>
-            v2TransitionalMovements.getMessageBody(movementType, movementId, messageId)(request)
           case Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON) | Some(VERSION_2_1_ACCEPT_HEADER_VALUE_XML) =>
             v2Movements.getMessageBody(movementType, movementId, messageId)(request)
           case _ => Future.successful(NotAcceptable(Json.toJson(PresentationError.notAcceptableError("The Accept header is missing or invalid."))))

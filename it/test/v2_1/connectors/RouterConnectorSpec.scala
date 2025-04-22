@@ -99,7 +99,6 @@ class RouterConnectorSpec
             urlEqualTo(targetUrl(eoriNumber, messageType, movementId, messageId))
           ).withRequestBody(equalToXml(<test></test>.mkString))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withHeader(Constants.XMessageTypeHeader, equalTo(messageType.code))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .willReturn(aResponse().withStatus(CREATED))
@@ -132,7 +131,6 @@ class RouterConnectorSpec
             urlEqualTo(targetUrl(eoriNumber, messageType, movementId, messageId))
           ).withRequestBody(equalToXml(<test></test>.mkString))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withHeader(Constants.XMessageTypeHeader, equalTo(messageType.code))
             .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
@@ -168,7 +166,6 @@ class RouterConnectorSpec
             urlEqualTo(targetUrl(eoriNumber, messageType, movementId, messageId))
           ).withRequestBody(equalToXml(<test></test>.mkString))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo(MimeTypes.XML))
-            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withHeader(Constants.XMessageTypeHeader, equalTo(messageType.code))
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .willReturn(

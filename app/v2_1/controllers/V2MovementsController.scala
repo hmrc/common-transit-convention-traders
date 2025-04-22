@@ -400,7 +400,7 @@ class V2MovementsControllerImpl @Inject() (
   private def getFile(source: Source[ByteString, ?]): EitherT[Future, PresentationError, BodyAndSize] =
     for {
       sources <- reUsableSource(source, 2)
-      size    <- calculateSize(sources.lift(0).get)
+      size    <- calculateSize(sources.head)
     } yield BodyAndSize(size, sources.lift(1).get)
 
   private def formatMessageBody(
@@ -495,23 +495,16 @@ class V2MovementsControllerImpl @Inject() (
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =
     (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonAndXmlAcceptHeaders)).async {
       implicit request =>
-        if (config.phase5FinalEnabled) {
-          implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-          (for {
-            messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
-            acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
-            messageBody <- getBody(request.eoriNumber, movementType, movementId, messageId, messageSummary.body)
-            body        <- formatMessageBody(messageSummary, acceptHeader, messageBody)
-          } yield body).fold(
-            presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
-            response => Ok.chunked(response.body, Some(response.contentType))
-          )
-        } else {
-          val presentationError = PresentationError.notAcceptableError(
-            "CTC Traders API version 2.1 is not available. Use CTC Traders API v2.0 to submit transit messages."
-          )
-          Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
-        }
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+        (for {
+          messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
+          acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
+          messageBody <- getBody(request.eoriNumber, movementType, movementId, messageId, messageSummary.body)
+          body        <- formatMessageBody(messageSummary, acceptHeader, messageBody)
+        } yield body).fold(
+          presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
+          response => Ok.chunked(response.body, Some(response.contentType))
+        )
     }
 
   def getMessageIds(
@@ -579,7 +572,7 @@ class V2MovementsControllerImpl @Inject() (
           )
     }
 
-  def ensurePositive(parameter: Option[Long], keyName: String): EitherT[Future, PresentationError, Unit] =
+  private def ensurePositive(parameter: Option[Long], keyName: String): EitherT[Future, PresentationError, Unit] =
     parameter match {
       case Some(x) if x <= 0 =>
         val error = PresentationError.badRequestError(s"The $keyName parameter must be a positive number")

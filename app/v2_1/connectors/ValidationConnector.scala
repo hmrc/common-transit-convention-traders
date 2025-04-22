@@ -23,7 +23,6 @@ import com.google.inject.Inject
 import com.google.inject.Singleton
 import com.codahale.metrics.MetricRegistry
 import config.AppConfig
-import config.Constants
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import play.api.Logging
@@ -98,7 +97,6 @@ class ValidationConnectorImpl @Inject() (httpClientV2: HttpClientV2, appConfig: 
     httpClientV2
       .post(url"$url")
       .setHeader(HeaderNames.CONTENT_TYPE -> contentType)
-      .setHeader(Constants.APIVersionHeaderKey -> Constants.APIVersionFinalHeaderValue)
       .withBody(stream)
       .execute[HttpResponse]
       .flatMap {

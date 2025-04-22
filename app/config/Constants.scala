@@ -30,7 +30,4 @@ object Constants {
 
   val NewEnrolmentKey: String   = "HMRC-CTC-ORG"
   val NewEnrolmentIdKey: String = "EORINumber"
-
-  val APIVersionHeaderKey        = "APIVersion"
-  val APIVersionFinalHeaderValue = "final"
 }

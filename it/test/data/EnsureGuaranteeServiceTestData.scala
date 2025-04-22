@@ -588,7 +588,7 @@ object EnsureGuaranteeServiceTestData {
       </PACGS2>
     </GOOITEGDS>
 
-  //Fragments
+  // Fragments
   val basicGuarantee =
     <GUAGUA>
       <GuaTypGUA1>1</GuaTypGUA1>

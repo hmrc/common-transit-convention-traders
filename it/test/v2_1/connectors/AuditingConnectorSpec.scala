@@ -111,7 +111,6 @@ class AuditingConnectorSpec
                   .withHeader("X-Audit-Meta-Message-Type", equalTo(messageType.code))
                   .withHeader("X-Audit-Meta-Movement-Type", equalTo(movementType.movementType))
                   .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
-                  .withHeader(Constants.APIVersionHeaderKey, equalTo("final"))
                   .withHeader(Constants.XClientIdHeader, equalTo(clientId))
                   .willReturn(aResponse().withStatus(ACCEPTED))
               )
@@ -154,7 +153,6 @@ class AuditingConnectorSpec
                   .withHeader("X-Audit-Meta-EORI", equalTo(eori.value))
                   .withHeader("X-Audit-Meta-Path", equalTo("/customs/transits/movements"))
                   .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
-                  .withHeader(Constants.APIVersionHeaderKey, equalTo("final"))
                   .willReturn(aResponse().withStatus(ACCEPTED))
               )
 
@@ -194,7 +192,6 @@ class AuditingConnectorSpec
                   .withHeader("X-Audit-Meta-Movement-Type", equalTo(movementType.movementType))
                   .withHeader("X-Audit-Meta-Path", equalTo("/customs/transits/movements"))
                   .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
-                  .withHeader(Constants.APIVersionHeaderKey, equalTo("final"))
                   .willReturn(aResponse().withStatus(ACCEPTED))
               )
 
@@ -228,7 +225,6 @@ class AuditingConnectorSpec
                 .withHeader(Constants.XContentLengthHeader, equalTo(contentSize.toString))
                 .withHeader("X-Audit-Meta-Path", equalTo("/customs/transits/movements"))
                 .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
-                .withHeader(Constants.APIVersionHeaderKey, equalTo("final"))
                 .willReturn(aResponse().withStatus(ACCEPTED))
             )
 
@@ -276,7 +272,6 @@ class AuditingConnectorSpec
                       .withHeader("X-Audit-Meta-Message-Type", equalTo(messageType.code))
                       .withHeader("X-Audit-Meta-Movement-Type", equalTo(movementType.movementType))
                       .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
-                      .withHeader(Constants.APIVersionHeaderKey, equalTo("final"))
                       .willReturn(aResponse().withStatus(statusCode))
                   )
 
@@ -302,7 +297,7 @@ class AuditingConnectorSpec
                       // backticks for stable identifier
                       case UpstreamErrorResponse(_, `statusCode`, _, _) => ()
                       case x: TestFailedException                       => x
-                      case x                                            => fail(s"An unexpected exception was thrown: ${x.getClass.getSimpleName}, ${x.getMessage}")
+                      case x => fail(s"An unexpected exception was thrown: ${x.getClass.getSimpleName}, ${x.getMessage}")
                     }
 
                   // then the future should be ready
@@ -335,7 +330,6 @@ class AuditingConnectorSpec
             .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
             .withHeader(HeaderNames.CONTENT_TYPE, equalTo("application/json"))
             .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
-            .withHeader(Constants.APIVersionHeaderKey, equalTo(Constants.APIVersionFinalHeaderValue))
             .withHeader(Constants.XClientIdHeader, equalTo(clientId))
             .withRequestBody(
               equalToJson(
@@ -385,7 +379,6 @@ class AuditingConnectorSpec
                 .withHeader(HeaderNames.AUTHORIZATION, equalTo(token))
                 .withHeader(HeaderNames.CONTENT_TYPE, equalTo("application/json"))
                 .withHeader("X-Audit-Source", equalTo("common-transit-convention-traders"))
-                .withHeader(Constants.APIVersionHeaderKey, equalTo("final"))
                 .withRequestBody(
                   equalToJson(
                     Json.stringify(
