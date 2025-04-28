@@ -23,12 +23,13 @@ import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import config.AppConfig
+import config.Constants
 import config.Constants.XClientIdHeader
 import controllers.common.AuthenticatedRequest
 import controllers.common.ContentTypeRouting
 import controllers.common.stream.StreamingParsers
 import metrics.HasActionMetrics
-import models.common._
+import models.common.*
 import models.common.errors.PersistenceError
 import models.common.errors.PresentationError
 import models.common.errors.PushNotificationError
@@ -42,20 +43,20 @@ import play.api.http.MimeTypes
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import play.api.mvc._
-import routing._
+import play.api.mvc.*
+import routing.*
 import uk.gov.hmrc.http
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import v2_1.controllers.actions.AuthNewEnrolmentOnlyAction
 import v2_1.controllers.actions.providers.AcceptHeaderActionProvider
-import v2_1.models.AuditType._
-import v2_1.models._
+import v2_1.models.AuditType.*
+import v2_1.models.*
 import v2_1.models.request.MessageType
 import v2_1.models.request.MessageUpdate
-import v2_1.models.responses._
-import v2_1.models.responses.hateoas._
-import v2_1.services._
+import v2_1.models.responses.*
+import v2_1.models.responses.hateoas.*
+import v2_1.services.*
 import v2_1.utils.StreamWithFile
 
 import java.nio.charset.StandardCharsets
@@ -312,24 +313,27 @@ class V2MovementsControllerImpl @Inject() (
           upscanResponse <- upscanService
             .upscanInitiate(request.eoriNumber, movementType, movementResponse.movementId, movementResponse.messageId)
             .asPresentation
-          boxResponseOption <- mapToOptionalResponse(
-            pushNotificationsService
-              .associate(movementResponse.movementId, movementType, request.headers, request.eoriNumber)
-              .leftMap {
-                err =>
-                  val auditType = if (err == PushNotificationError.BoxNotFound) PushPullNotificationGetBoxFailed else PushNotificationFailed
-                  auditService.auditStatusEvent(
-                    auditType,
-                    Some(Json.obj("message" -> err.toString)),
-                    Some(movementResponse.movementId),
-                    Some(movementResponse.messageId),
-                    Some(request.eoriNumber),
-                    Some(movementType),
-                    None
-                  )
-                  err
-              }
-          )
+          boxResponseOption <-
+            if (request.headers.get(Constants.XClientIdHeader).isEmpty) { EitherT.rightT[Future, PresentationError](None) }
+            else
+              mapToOptionalResponse(
+                pushNotificationsService
+                  .associate(movementResponse.movementId, movementType, request.headers, request.eoriNumber)
+                  .leftMap {
+                    err =>
+                      val auditType = if (err == PushNotificationError.BoxNotFound) PushPullNotificationGetBoxFailed else PushNotificationFailed
+                      auditService.auditStatusEvent(
+                        auditType,
+                        Some(Json.obj("message" -> err.toString)),
+                        Some(movementResponse.movementId),
+                        Some(movementResponse.messageId),
+                        Some(request.eoriNumber),
+                        Some(movementType),
+                        None
+                      )
+                      err
+                  }
+              )
 
           _ = auditService.auditStatusEvent(
             AuditType.LargeMessageSubmissionRequested,
@@ -1129,24 +1133,27 @@ class V2MovementsControllerImpl @Inject() (
         Some(movementType),
         Some(messageType)
       )
-      boxResponseOption <- mapToOptionalResponse[PushNotificationError, BoxResponse](
-        pushNotificationsService
-          .associate(movementResponse.movementId, movementType, request.headers, request.eoriNumber)
-          .leftMap {
-            err =>
-              val auditType = if (err == PushNotificationError.BoxNotFound) PushPullNotificationGetBoxFailed else PushNotificationFailed
-              auditService.auditStatusEvent(
-                auditType,
-                Some(Json.obj("message" -> err.toString)),
-                Some(movementResponse.movementId),
-                Some(movementResponse.messageId),
-                Some(request.eoriNumber),
-                Some(movementType),
-                None
-              )
-              err
-          }
-      )
+      boxResponseOption <-
+        if (request.headers.get(Constants.XClientIdHeader).isEmpty) { EitherT.rightT[Future, PresentationError](None) }
+        else
+          mapToOptionalResponse[PushNotificationError, BoxResponse](
+            pushNotificationsService
+              .associate(movementResponse.movementId, movementType, request.headers, request.eoriNumber)
+              .leftMap {
+                err =>
+                  val auditType = if (err == PushNotificationError.BoxNotFound) PushPullNotificationGetBoxFailed else PushNotificationFailed
+                  auditService.auditStatusEvent(
+                    auditType,
+                    Some(Json.obj("message" -> err.toString)),
+                    Some(movementResponse.movementId),
+                    Some(movementResponse.messageId),
+                    Some(request.eoriNumber),
+                    Some(movementType),
+                    None
+                  )
+                  err
+              }
+          )
       _ <- routerService
         .send(
           messageType,
