@@ -22,11 +22,12 @@ import cats.implicits.catsStdInstancesForFuture
 import cats.implicits.toBifunctorOps
 import com.codahale.metrics.MetricRegistry
 import config.AppConfig
-import models.common._
+import config.Constants
+import models.common.*
 import models.common.errors.ExtractionError.MessageTypeNotFound
 import models.common.errors.FailedToValidateError.InvalidMessageTypeError
 import models.common.errors.FailedToValidateError.JsonSchemaFailedToValidateError
-import models.common.errors._
+import models.common.errors.*
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Flow
 import org.apache.pekko.stream.scaladsl.Keep
@@ -37,7 +38,7 @@ import org.apache.pekko.util.Timeout
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.ArgumentMatchers.argThat
-import org.mockito.ArgumentMatchers.{eq => eqTo}
+import org.mockito.ArgumentMatchers.eq as eqTo
 import org.mockito.Mockito.atLeastOnce
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
@@ -56,7 +57,7 @@ import play.api.Logger
 import play.api.http.HttpVerbs.GET
 import play.api.http.HeaderNames
 import play.api.http.MimeTypes
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.JsValue
@@ -72,7 +73,7 @@ import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.contentType
 import play.api.test.Helpers.status
-import routing._
+import routing.*
 import uk.gov.hmrc.http.HeaderCarrier
 import v2_1.base.HeaderCarrierMatcher
 import v2_1.base.TestActorSystem
@@ -82,15 +83,15 @@ import v2_1.controllers.actions.providers.AcceptHeaderActionProvider
 import v2_1.controllers.actions.providers.AcceptHeaderActionProviderImpl
 import v2_1.fakes.controllers.actions.FakeAcceptHeaderActionProvider
 import v2_1.fakes.controllers.actions.FakeAuthNewEnrolmentOnlyAction
-import v2_1.models.AuditType._
-import v2_1.models._
+import v2_1.models.AuditType.*
+import v2_1.models.*
 import v2_1.models.request.MessageType
 import v2_1.models.request.MessageUpdate
 import v2_1.models.responses.UpscanResponse.DownloadUrl
 import v2_1.models.responses.UpscanResponse.Reference
-import v2_1.models.responses._
-import v2_1.models.responses.hateoas._
-import v2_1.services._
+import v2_1.models.responses.*
+import v2_1.models.responses.hateoas.*
+import v2_1.services.*
 
 import java.nio.charset.StandardCharsets
 import java.time.Instant
@@ -316,7 +317,12 @@ class V2MovementsControllerSpec
 
       // For the content length headers, we have to ensure that we send something
       val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
+        Seq(
+          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+          HeaderNames.CONTENT_TYPE   -> MimeTypes.XML,
+          HeaderNames.CONTENT_LENGTH -> "1000",
+          Constants.XClientIdHeader  -> "1234567890"
+        )
       )
 
       "must return Accepted when body length is within limits and is considered valid" in forAll(
@@ -462,6 +468,163 @@ class V2MovementsControllerSpec
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockPushNotificationService, times(1)).associate(MovementId(any()), eqTo(MovementType.Departure), any(), EORINumber(eqTo(eori.value)))(
+            any(),
+            any()
+          )
+      }
+
+      "must return Accepted without a boxId if the clientID is not present in the headers" in forAll(
+        arbitraryMovementResponse().arbitrary,
+        arbitraryBoxResponse.arbitrary,
+        arbitraryEORINumber.arbitrary
+      ) {
+        (movementResponse, boxResponse, eori) =>
+          val ControllerAndMocks(
+            sut,
+            mockValidationService,
+            mockPersistenceService,
+            mockRouterService,
+            mockAuditService,
+            _,
+            _,
+            _,
+            mockPushNotificationService,
+            _,
+            _
+          ) = createControllerAndMocks(enrollmentEORI = eori)
+
+          when(mockValidationService.validateXml(any[MessageType], any[Source[ByteString, ?]]())(any[HeaderCarrier], any[ExecutionContext]))
+            .thenAnswer(
+              _ => EitherT.rightT(())
+            )
+
+          when(
+            mockAuditService.auditMessageEvent(
+              eqTo(DeclarationData),
+              eqTo(MimeTypes.XML),
+              any(),
+              any(),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              eqTo(Some(eori)),
+              eqTo(Some(MovementType.Departure)),
+              eqTo(Some(MessageType.DeclarationData))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
+
+          when(
+            mockPersistenceService
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]]())(
+                any[HeaderCarrier],
+                any[ExecutionContext]
+              )
+          )
+            .thenAnswer {
+              _ => EitherT.rightT(movementResponse)
+            }
+
+          // ensure that we are associating with the correct EORI
+          when(
+            mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(eqTo(eori.value)))(any(), any())
+          )
+            .thenAnswer(
+              _ => EitherT.rightT(boxResponse)
+            )
+
+          when(
+            mockRouterService.send(
+              any[String].asInstanceOf[MessageType],
+              any[String].asInstanceOf[EORINumber],
+              any[String].asInstanceOf[MovementId],
+              any[String].asInstanceOf[MessageId],
+              any[Source[ByteString, ?]]
+            )(any[ExecutionContext], any[HeaderCarrier])
+          ).thenAnswer(
+            _ => EitherT.rightT(SubmissionRoute.ViaEIS)
+          )
+
+          when(
+            mockPersistenceService
+              .updateMessage(
+                EORINumber(any()),
+                eqTo(MovementType.Departure),
+                MovementId(eqTo(movementResponse.movementId.value)),
+                MessageId(eqTo(movementResponse.messageId.value)),
+                eqTo(messageUpdateSuccess)
+              )(
+                any[HeaderCarrier],
+                any[ExecutionContext]
+              )
+          )
+            .thenAnswer {
+              _ => EitherT.rightT(())
+            }
+          when(
+            mockAuditService.auditStatusEvent(
+              eqTo(TraderToNCTSSubmissionSuccessful),
+              eqTo(None),
+              eqTo(Some(movementResponse.movementId)),
+              eqTo(Some(movementResponse.messageId)),
+              eqTo(Some(eori)),
+              eqTo(Some(MovementType.Departure)),
+              eqTo(Some(MessageType.DeclarationData))
+            )(any[HeaderCarrier], any[ExecutionContext])
+          ).thenReturn(Future.successful(()))
+
+          val standardHeaders = FakeHeaders(
+            Seq(
+              HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+              HeaderNames.CONTENT_TYPE   -> MimeTypes.XML,
+              HeaderNames.CONTENT_LENGTH -> "1000"
+            )
+          )
+
+          val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC015C.mkString), MovementType.Departure)
+          val result  = sut.createMovement(MovementType.Departure)(request)
+          status(result) mustBe ACCEPTED
+
+          contentAsJson(result) mustBe Json.toJson(
+            HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, None, None, MovementType.Departure)
+          )
+
+          verify(mockAuditService, times(1)).auditMessageEvent(
+            eqTo(AuditType.DeclarationData),
+            eqTo(MimeTypes.XML),
+            any(),
+            any(),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Departure)),
+            eqTo(Some(MessageType.DeclarationData))
+          )(any(), any())
+          verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
+          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), eqTo(MovementType.Departure), any())(any(), any())
+          verify(mockRouterService, times(1)).send(eqTo(MessageType.DeclarationData), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
+            any(),
+            any()
+          )
+          verify(mockPersistenceService, times(1)).updateMessage(
+            EORINumber(any()),
+            eqTo(MovementType.Departure),
+            MovementId(eqTo(movementResponse.movementId.value)),
+            MessageId(eqTo(movementResponse.messageId.value)),
+            eqTo(messageUpdateSuccess)
+          )(
+            any(),
+            any()
+          )
+          verify(mockAuditService, times(1)).auditStatusEvent(
+            eqTo(TraderToNCTSSubmissionSuccessful),
+            eqTo(None),
+            eqTo(Some(movementResponse.movementId)),
+            eqTo(Some(movementResponse.messageId)),
+            eqTo(Some(eori)),
+            eqTo(Some(MovementType.Departure)),
+            eqTo(Some(MessageType.DeclarationData))
+          )(any[HeaderCarrier], any[ExecutionContext])
+
+          verify(mockPushNotificationService, times(0)).associate(MovementId(any()), eqTo(MovementType.Departure), any(), EORINumber(eqTo(eori.value)))(
             any(),
             any()
           )
@@ -1156,7 +1319,12 @@ class V2MovementsControllerSpec
 
     "with content type set to application/json" - {
       val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json", HeaderNames.CONTENT_TYPE -> MimeTypes.JSON, HeaderNames.CONTENT_LENGTH -> "1000")
+        Seq(
+          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+          HeaderNames.CONTENT_TYPE   -> MimeTypes.JSON,
+          HeaderNames.CONTENT_LENGTH -> "1000",
+          Constants.XClientIdHeader  -> "1234567890"
+        )
       )
 
       "must return Accepted when body length is within limits and is considered valid" in forAll(
@@ -2180,7 +2348,7 @@ class V2MovementsControllerSpec
 
       // For the content length headers, we have to ensure that we send something
       val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json", HeaderNames.CONTENT_LENGTH -> "1000")
+        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json", HeaderNames.CONTENT_LENGTH -> "1000", Constants.XClientIdHeader -> "1234567890")
       )
 
       "must return Accepted when call to upscan is success" in forAll(
@@ -2481,7 +2649,12 @@ class V2MovementsControllerSpec
         _
       ) = createControllerAndMocks()
       val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json", HeaderNames.CONTENT_TYPE -> "invalid", HeaderNames.CONTENT_LENGTH -> "1000")
+        Seq(
+          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+          HeaderNames.CONTENT_TYPE   -> "invalid",
+          HeaderNames.CONTENT_LENGTH -> "1000",
+          Constants.XClientIdHeader  -> "1234567890"
+        )
       )
 
       val json    = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
@@ -2515,7 +2688,8 @@ class V2MovementsControllerSpec
         Seq(
           HeaderNames.ACCEPT         -> VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value,
           HeaderNames.CONTENT_TYPE   -> MimeTypes.JSON,
-          HeaderNames.CONTENT_LENGTH -> "1000"
+          HeaderNames.CONTENT_LENGTH -> "1000",
+          Constants.XClientIdHeader  -> "1234567890"
         )
       )
 
@@ -2546,7 +2720,12 @@ class V2MovementsControllerSpec
         new AcceptHeaderActionProviderImpl()
       )
       val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json123", HeaderNames.CONTENT_TYPE -> MimeTypes.JSON, HeaderNames.CONTENT_LENGTH -> "1000")
+        Seq(
+          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json123",
+          HeaderNames.CONTENT_TYPE   -> MimeTypes.JSON,
+          HeaderNames.CONTENT_LENGTH -> "1000",
+          Constants.XClientIdHeader  -> "1234567890"
+        )
       )
 
       val json     = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
@@ -2565,7 +2744,12 @@ class V2MovementsControllerSpec
 
       // For the content length headers, we have to ensure that we send something
       val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
+        Seq(
+          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+          HeaderNames.CONTENT_TYPE   -> MimeTypes.XML,
+          HeaderNames.CONTENT_LENGTH -> "1000",
+          Constants.XClientIdHeader  -> "1234567890"
+        )
       )
 
       "must return Accepted when body length is within limits and is considered valid" in forAll(
@@ -3268,7 +3452,12 @@ class V2MovementsControllerSpec
 
     "with content type set to application/json" - {
       val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json", HeaderNames.CONTENT_TYPE -> MimeTypes.JSON, HeaderNames.CONTENT_LENGTH -> "1000")
+        Seq(
+          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+          HeaderNames.CONTENT_TYPE   -> MimeTypes.JSON,
+          HeaderNames.CONTENT_LENGTH -> "1000",
+          Constants.XClientIdHeader  -> "1234567890"
+        )
       )
 
       "must return Accepted when body length is within limits and is considered valid" in forAll(
@@ -4113,7 +4302,7 @@ class V2MovementsControllerSpec
     "when the content type is not present" - {
 
       val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json")
+        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json", Constants.XClientIdHeader -> "1234567890")
       )
 
       "must return Accepted if the call to upscan and the persistence service succeeds" in forAll(
@@ -4399,7 +4588,12 @@ class V2MovementsControllerSpec
         _
       ) = createControllerAndMocks()
       val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json", HeaderNames.CONTENT_TYPE -> "invalid", HeaderNames.CONTENT_LENGTH -> "1000")
+        Seq(
+          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+          HeaderNames.CONTENT_TYPE   -> "invalid",
+          HeaderNames.CONTENT_LENGTH -> "1000",
+          Constants.XClientIdHeader  -> "1234567890"
+        )
       )
 
       val json    = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
@@ -4433,7 +4627,8 @@ class V2MovementsControllerSpec
         Seq(
           HeaderNames.ACCEPT         -> VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value,
           HeaderNames.CONTENT_TYPE   -> MimeTypes.JSON,
-          HeaderNames.CONTENT_LENGTH -> "1000"
+          HeaderNames.CONTENT_LENGTH -> "1000",
+          Constants.XClientIdHeader  -> "1234567890"
         )
       )
 
@@ -4465,7 +4660,12 @@ class V2MovementsControllerSpec
         new AcceptHeaderActionProviderImpl()
       )
       val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json123", HeaderNames.CONTENT_TYPE -> MimeTypes.JSON, HeaderNames.CONTENT_LENGTH -> "1000")
+        Seq(
+          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json123",
+          HeaderNames.CONTENT_TYPE   -> MimeTypes.JSON,
+          HeaderNames.CONTENT_LENGTH -> "1000",
+          Constants.XClientIdHeader  -> "1234567890"
+        )
       )
 
       val json    = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
@@ -4499,7 +4699,12 @@ class V2MovementsControllerSpec
         ) = createControllerAndMocks()
 
         val standardHeaders = FakeHeaders(
-          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
+          Seq(
+            HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+            HeaderNames.CONTENT_TYPE   -> MimeTypes.XML,
+            HeaderNames.CONTENT_LENGTH -> "1000",
+            Constants.XClientIdHeader  -> "1234567890"
+          )
         )
 
         when(mockValidationService.validateXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]]())(any[HeaderCarrier], any[ExecutionContext]))
@@ -4970,7 +5175,12 @@ class V2MovementsControllerSpec
             new AcceptHeaderActionProviderImpl()
           )
           val standardHeaders = FakeHeaders(
-            Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json123", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
+            Seq(
+              HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json123",
+              HeaderNames.CONTENT_TYPE   -> MimeTypes.XML,
+              HeaderNames.CONTENT_LENGTH -> "1000",
+              Constants.XClientIdHeader  -> "1234567890"
+            )
           )
 
           val request  = FakeRequest("GET", "/", standardHeaders, Source.empty[ByteString])
@@ -5005,7 +5215,12 @@ class V2MovementsControllerSpec
             new AcceptHeaderActionProviderImpl()
           )
           val standardHeaders = FakeHeaders(
-            Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json-xml", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
+            Seq(
+              HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json-xml",
+              HeaderNames.CONTENT_TYPE   -> MimeTypes.XML,
+              HeaderNames.CONTENT_LENGTH -> "1000",
+              Constants.XClientIdHeader  -> "1234567890"
+            )
           )
 
           val request  = FakeRequest("GET", "/", standardHeaders, Source.empty[ByteString])
@@ -5568,7 +5783,12 @@ class V2MovementsControllerSpec
             new AcceptHeaderActionProviderImpl()
           )
           val standardHeaders = FakeHeaders(
-            Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json123", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
+            Seq(
+              HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json123",
+              HeaderNames.CONTENT_TYPE   -> MimeTypes.XML,
+              HeaderNames.CONTENT_LENGTH -> "1000",
+              Constants.XClientIdHeader  -> "1234567890"
+            )
           )
 
           val request = fakeAttachMessageRequest("POST", standardHeaders, Source.single(ByteString(contentXml.mkString, StandardCharsets.UTF_8)), movementType)
@@ -5981,7 +6201,12 @@ class V2MovementsControllerSpec
             new AcceptHeaderActionProviderImpl()
           )
           val standardHeaders = FakeHeaders(
-            Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json123", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
+            Seq(
+              HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json123",
+              HeaderNames.CONTENT_TYPE   -> MimeTypes.XML,
+              HeaderNames.CONTENT_LENGTH -> "1000",
+              Constants.XClientIdHeader  -> "1234567890"
+            )
           )
 
           val request = fakeAttachMessageRequest("POST", standardHeaders, Source.single(ByteString(contentXml.mkString, StandardCharsets.UTF_8)), movementType)
@@ -8325,7 +8550,12 @@ class V2MovementsControllerSpec
             _
           ) = createControllerAndMocks()
           val standardHeaders = FakeHeaders(
-            Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json", HeaderNames.CONTENT_TYPE -> "invalid", HeaderNames.CONTENT_LENGTH -> "1000")
+            Seq(
+              HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+              HeaderNames.CONTENT_TYPE   -> "invalid",
+              HeaderNames.CONTENT_LENGTH -> "1000",
+              Constants.XClientIdHeader  -> "1234567890"
+            )
           )
 
           val request  = fakeAttachMessageRequest("POST", standardHeaders, Source.single(ByteString(contentXml.mkString, StandardCharsets.UTF_8)), movementType)
@@ -8354,7 +8584,12 @@ class V2MovementsControllerSpec
           new AcceptHeaderActionProviderImpl()
         )
         val standardHeaders = FakeHeaders(
-          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json123", HeaderNames.CONTENT_TYPE -> MimeTypes.XML, HeaderNames.CONTENT_LENGTH -> "1000")
+          Seq(
+            HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json123",
+            HeaderNames.CONTENT_TYPE   -> MimeTypes.XML,
+            HeaderNames.CONTENT_LENGTH -> "1000",
+            Constants.XClientIdHeader  -> "1234567890"
+          )
         )
 
         val request  = fakeAttachMessageRequest("POST", standardHeaders, Source.single(ByteString(contentXml.mkString, StandardCharsets.UTF_8)), movementType)
@@ -8389,7 +8624,8 @@ class V2MovementsControllerSpec
             Seq(
               HeaderNames.ACCEPT         -> VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value,
               HeaderNames.CONTENT_TYPE   -> MimeTypes.XML,
-              HeaderNames.CONTENT_LENGTH -> "1000"
+              HeaderNames.CONTENT_LENGTH -> "1000",
+              Constants.XClientIdHeader  -> "1234567890"
             )
           )
 
