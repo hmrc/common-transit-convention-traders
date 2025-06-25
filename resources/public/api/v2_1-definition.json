@@ -6,6 +6,15 @@
     "categories": ["CUSTOMS"],
     "versions": [
       {
+        "version": "2.0",
+        "status": "RETIRED",
+        "endpointsEnabled": false,
+        "access": {
+          "type": "PUBLIC"
+        },
+        "fieldDefinitions": []
+      },
+      {
         "version": "2.1",
         "status": "BETA",
         "endpointsEnabled": true,
