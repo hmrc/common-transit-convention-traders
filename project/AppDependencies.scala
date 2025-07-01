@@ -3,7 +3,7 @@ import sbt._
 object AppDependencies {
 
   private val catsVersion          = "2.13.0"
-  private val bootstrapPlayVersion = "9.11.0"
+  private val bootstrapPlayVersion = "9.13.0"
 
   val compile: Seq[ModuleID] = Seq(
     "uk.gov.hmrc"      %% "bootstrap-backend-play-30"       % bootstrapPlayVersion,
@@ -21,7 +21,6 @@ object AppDependencies {
   val test: Seq[ModuleID] = Seq(
     "org.mockito"        % "mockito-core"           % "5.15.2",
     "org.typelevel"     %% "cats-core"              % catsVersion,
-    "org.pegdown"        % "pegdown"                % "1.6.0",
     "org.scalacheck"    %% "scalacheck"             % "1.18.1",
     "org.typelevel"     %% "discipline-scalatest"   % "2.3.0",
     "uk.gov.hmrc"       %% "bootstrap-test-play-30" % bootstrapPlayVersion,
