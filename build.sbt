@@ -15,7 +15,6 @@ lazy val microservice = Project(appName, file("."))
   .settings(scoverageSettings)
   .settings(scalacSettings)
   .settings(
-    resolvers += Resolver.jcenterRepo,
     PlayKeys.playDefaultPort := 9487,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
     Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
