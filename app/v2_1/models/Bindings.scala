@@ -47,6 +47,6 @@ object Bindings {
       }
 
     override def unbind(key: String, value: MovementType): String =
-      value.toString
+      value.urlFragment
   }
 }

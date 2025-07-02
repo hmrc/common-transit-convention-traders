@@ -18,22 +18,24 @@ package routing
 
 import com.google.inject.Inject
 import controllers.common.stream.StreamingParsers
-import models.common.MessageId
-import models.common.MovementId
-import models.common.MovementType
+import models.common.*
 import models.common.errors.PresentationError
 import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.*
 import play.mvc.Http.HeaderNames
-import v2_1.controllers.V2MovementsController
+import v2_1.controllers.MovementsController
+import v2_1.models.Bindings.*
 
+import java.time.OffsetDateTime
 import scala.concurrent.Future
 
 class GenericRouting @Inject() (
   val controllerComponents: ControllerComponents,
-  v2Movements: V2MovementsController
+  movementsController: MovementsController
 )(implicit
   val materializer: Materializer
 ) extends BaseController
@@ -57,12 +59,79 @@ class GenericRouting @Inject() (
     }
   }
 
+  def attachMessage(movementType: MovementType, id: String): Action[Source[ByteString, ?]] = route {
+    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+      runIfBound[MovementId](movementType.movementTypeId, id, movementsController.attachMessage(movementType, _))
+    case _ => invalidAcceptHeader()
+  }
+
+  def getMovementForEori(
+    updatedSince: Option[OffsetDateTime] = None,
+    movementEORI: Option[EORINumber] = None,
+    movementReferenceNumber: Option[MovementReferenceNumber] = None,
+    page: Option[PageNumber] = None,
+    count: Option[ItemCount] = None,
+    receivedUntil: Option[OffsetDateTime] = None,
+    localReferenceNumber: Option[LocalReferenceNumber] = None,
+    movementType: MovementType
+  ): Action[Source[ByteString, ?]] = route {
+    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+      movementsController.getMovements(movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
+    case _ => invalidAcceptHeader()
+  }
+
+  def createMovement(movementType: MovementType): Action[Source[ByteString, ?]] =
+    route {
+      case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+        movementsController.createMovement(movementType)
+      case _ => invalidAcceptHeader()
+    }
+
+  def getMovement(movementType: MovementType, id: String): Action[Source[ByteString, ?]] =
+    route {
+      case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+        runIfBound[MovementId](movementType.movementTypeId, id, movementsController.getMovement(movementType, _))
+      case _ => invalidAcceptHeader()
+    }
+
+  def getMessageIds(
+    movementType: MovementType,
+    id: String,
+    receivedSince: Option[OffsetDateTime] = None,
+    page: Option[PageNumber] = None,
+    count: Option[ItemCount] = None,
+    receivedUntil: Option[OffsetDateTime] = None
+  ): Action[Source[ByteString, ?]] = route {
+    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+      runIfBound[MovementId](
+        movementType.movementTypeId,
+        id,
+        movementsController.getMessageIds(movementType, _, receivedSince, page, count, receivedUntil)
+      )
+    case _ => invalidAcceptHeader()
+  }
+
+  def getMessage(movementType: MovementType, movementId: String, messageId: String): Action[Source[ByteString, ?]] = route {
+    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+      runIfBound[MovementId](
+        movementType.movementTypeId,
+        movementId,
+        boundArrivalId =>
+          runIfBound[MessageId](
+            "messageId",
+            messageId,
+            movementsController.getMessage(movementType, boundArrivalId, _)
+          )
+      )
+    case _ => invalidAcceptHeader()
+  }
+
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =
     Action.async {
       implicit request =>
         checkAcceptHeader match {
           case Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON) | Some(VERSION_2_1_ACCEPT_HEADER_VALUE_XML) =>
-            v2Movements.getMessageBody(movementType, movementId, messageId)(request)
+            movementsController.getMessageBody(movementType, movementId, messageId)(request)
           case _ => Future.successful(NotAcceptable(Json.toJson(PresentationError.notAcceptableError("The Accept header is missing or invalid."))))
         }
     }

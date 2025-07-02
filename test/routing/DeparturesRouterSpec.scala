@@ -16,6 +16,7 @@
 
 package routing
 
+import models.common.MovementType.Departure
 import org.apache.pekko.util.Timeout
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -35,7 +36,7 @@ import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
 import v2_1.base.TestActorSystem
-import v2_1.fakes.controllers.FakeV2MovementsController
+import v2_1.fakes.controllers.FakeMovementsController
 
 import scala.concurrent.duration.DurationInt
 
@@ -43,9 +44,9 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
   implicit private val timeout: Timeout = 5.seconds
 
-  val sut = new DeparturesRouter(
+  val sut = new GenericRouting(
     stubControllerComponents(),
-    new FakeV2MovementsController
+    new FakeMovementsController
   )
 
   "route to version 2_1 controller" - {
@@ -63,8 +64,8 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
             "must route to the v2 controller and return Accepted when successful" in {
               val request =
-                FakeRequest(method = "POST", uri = routes.DeparturesRouter.submitDeclaration().url, body = <test></test>, headers = departureHeaders)
-              val result = call(sut.submitDeclaration(), request)
+                FakeRequest(method = "POST", uri = routes.GenericRouting.createMovement(Departure).url, body = <test></test>, headers = departureHeaders)
+              val result = call(sut.createMovement(Departure), request)
 
               status(result) mustBe ACCEPTED
               contentAsJson(result) mustBe Json.obj("version" -> 2.1) // ensure we get the unique value to verify we called the fake action
@@ -83,11 +84,11 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             "must route to the v2 controller and return Ok when successful" in {
               val request = FakeRequest(
                 method = "POST",
-                uri = routes.DeparturesRouter.getMessage("1234567890abcdef", "1234567890abcdef").url,
+                uri = routes.GenericRouting.getMessage(Departure, "1234567890abcdef", "1234567890abcdef").url,
                 body = <test></test>,
                 headers = departureHeaders
               )
-              val result = sut.getMessage("1234567890abcdef", "1234567890abcdef")(request)
+              val result = sut.getMessage(Departure, "1234567890abcdef", "1234567890abcdef")(request)
 
               status(result) mustBe OK
               contentAsJson(result) mustBe Json.obj("version" -> 2.1) // ensure we get the unique value to verify we called the fake action
@@ -96,28 +97,29 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             "if the departure ID is not the correct format, return a bad request of the appropriate format" in {
               val request = FakeRequest(
                 method = "POST",
-                uri = routes.DeparturesRouter.getMessage("01", "0123456789abcdef").url,
+                uri = routes.GenericRouting.getMessage(Departure, "01", "0123456789abcdef").url,
                 body = <test></test>,
                 headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
               )
-              val result = sut.getMessage("01", "01234567890bcdef")(request)
+              val result = sut.getMessage(Departure, "01", "01234567890bcdef")(request)
 
-              status(result) mustBe BAD_REQUEST
               contentAsJson(result) mustBe Json.obj(
                 "code"       -> "BAD_REQUEST",
                 "statusCode" -> 400,
                 "message"    -> "departureId: Value 01 is not a 16 character hexadecimal string"
               )
+              status(result) mustBe BAD_REQUEST
+
             }
 
             "if the message ID is not the correct format, return a bad request of the appropriate format" in {
               val request = FakeRequest(
                 method = "POST",
-                uri = routes.DeparturesRouter.getMessage("0123456789abcdef", "01").url,
+                uri = routes.GenericRouting.getMessage(Departure, "0123456789abcdef", "01").url,
                 body = <test></test>,
                 headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
               )
-              val result = sut.getMessage("01234567890bcdef", "01")(request)
+              val result = sut.getMessage(Departure, "01234567890bcdef", "01")(request)
 
               status(result) mustBe BAD_REQUEST
               contentAsJson(result) mustBe Json.obj(
@@ -143,16 +145,17 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
           s"with accept header set to $acceptHeaderValue" - {
 
             "must route to the v2 controller and return Ok when successful" in {
-              val request = FakeRequest(method = "GET", body = "", uri = routes.DeparturesRouter.getDeparture("").url, headers = departureHeaders)
-              val result  = sut.getDeparture("1234567890abcdef")(request)
+              val request =
+                FakeRequest(method = "GET", body = "", uri = routes.GenericRouting.getMovement(Departure, "1234567890abcdef").url, headers = departureHeaders)
+              val result = sut.getMovement(Departure, "1234567890abcdef")(request)
 
               status(result) mustBe OK
               contentAsJson(result) mustBe Json.obj("version" -> 2.1) // ensure we get the unique value to verify we called the fake action
             }
 
             "must route to the v2 controller and return BAD_REQUEST when departureId has invalid format" in {
-              val request = FakeRequest(method = "GET", body = "", uri = routes.DeparturesRouter.getDeparture("").url, headers = departureHeaders)
-              val result  = sut.getDeparture("1234567890abcde")(request)
+              val request = FakeRequest(method = "GET", body = "", uri = routes.GenericRouting.getMovement(Departure, "").url, headers = departureHeaders)
+              val result  = sut.getMovement(Departure, "1234567890abcde")(request)
 
               status(result) mustBe BAD_REQUEST
               contentAsJson(result) mustBe Json.obj(
@@ -179,8 +182,8 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
             "must route to the v2 controller and return Accepted when successful" in {
               val request =
-                FakeRequest(method = "POST", uri = routes.DeparturesRouter.attachMessage("").url, body = <test></test>, headers = departureHeaders)
-              val result = call(sut.attachMessage("1234567890abcdef"), request)
+                FakeRequest(method = "POST", uri = routes.GenericRouting.attachMessage(Departure, "").url, body = <test></test>, headers = departureHeaders)
+              val result = call(sut.attachMessage(Departure, "1234567890abcdef"), request)
 
               status(result) mustBe ACCEPTED
               contentAsJson(result) mustBe Json.obj("version" -> 2.1) // ensure we get the unique value to verify we called the fake action
@@ -203,8 +206,13 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
             "must route to the v2 controller and return Accepted when successful" in {
               val request =
-                FakeRequest(method = "POST", uri = routes.DeparturesRouter.getDeparturesForEori().url, body = <test></test>, headers = departureHeaders)
-              val result = call(sut.getDeparturesForEori(), request)
+                FakeRequest(
+                  method = "POST",
+                  uri = routes.GenericRouting.getMovementForEori(movementType = Departure).url,
+                  body = <test></test>,
+                  headers = departureHeaders
+                )
+              val result = call(sut.getMovementForEori(movementType = Departure), request)
 
               status(result) mustBe OK
               contentAsJson(result) mustBe Json.obj("version" -> 2.1) // ensure we get the unique value to verify we called the fake action
@@ -228,11 +236,11 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
             "must route to the v2 controller and return OK when successful" in {
               val request = FakeRequest(
                 method = "POST",
-                uri = routes.DeparturesRouter.getMessageIds("1234567890abcdef").url,
+                uri = routes.GenericRouting.getMessageIds(Departure, "1234567890abcdef").url,
                 body = <test></test>,
                 headers = departureHeaders
               )
-              val result = call(sut.getMessageIds("1234567890abcdef", None, None, None, None), request)
+              val result = call(sut.getMessageIds(Departure, "1234567890abcdef", None, None, None, None), request)
 
               status(result) mustBe OK
               contentAsJson(result) mustBe Json.obj("version" -> 2.1) // ensure we get the unique value to verify we called the fake action

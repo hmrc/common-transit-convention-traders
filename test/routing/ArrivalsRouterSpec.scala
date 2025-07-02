@@ -16,6 +16,7 @@
 
 package routing
 
+import models.common.MovementType.Arrival
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import org.apache.pekko.util.Timeout
@@ -39,7 +40,7 @@ import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
 import v2_1.base.TestActorSystem
-import v2_1.fakes.controllers.FakeV2MovementsController
+import v2_1.fakes.controllers.FakeMovementsController
 
 import scala.concurrent.duration.DurationInt
 import scala.math.abs
@@ -48,9 +49,9 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
 
   implicit private val timeout: Timeout = 5.seconds
 
-  val sut = new ArrivalsRouter(
+  val sut = new GenericRouting(
     stubControllerComponents(),
-    new FakeV2MovementsController()
+    new FakeMovementsController()
   )
 
   val id = Gen.long
@@ -90,19 +91,38 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
             }
           }
       }
+    "when creating an arrival notification" - executeTest(routes.GenericRouting.createMovement(Arrival), sut.createMovement(Arrival), ACCEPTED, true)
 
-    "when creating an arrival notification" - executeTest(routes.ArrivalsRouter.createArrivalNotification(), sut.createArrivalNotification(), ACCEPTED, true)
+    "when getting an arrival" - executeTest(routes.GenericRouting.getMovement(Arrival, id), sut.getMovement(Arrival, id), OK, true)
 
-    "when getting an arrival" - executeTest(routes.ArrivalsRouter.getArrival(id), sut.getArrival(id), OK, true)
+    "when getting arrivals for a given enrolment EORI" - executeTest(
+      routes.GenericRouting.getMovementForEori(movementType = Arrival),
+      sut.getMovementForEori(movementType = Arrival),
+      OK,
+      true
+    )
 
-    "when getting arrivals for a given enrolment EORI" - executeTest(routes.ArrivalsRouter.getArrivalsForEori(), sut.getArrivalsForEori(), OK, true)
+    "when getting a list of arrival messages with given arrivalId" - executeTest(
+      routes.GenericRouting.getMovement(Arrival, id),
+      sut.getMovement(Arrival, id),
+      OK,
+      true
+    )
 
-    "when getting a list of arrival messages with given arrivalId" - executeTest(routes.ArrivalsRouter.getArrival(id), sut.getArrival(id), OK, true)
+    "when getting a single arrival message" - executeTest(routes.GenericRouting.getMessage(Arrival, id, id), sut.getMessage(Arrival, id, id), OK, true)
 
-    "when getting a single arrival message" - executeTest(routes.ArrivalsRouter.getArrivalMessage(id, id), sut.getArrivalMessage(id, id), OK, true)
+    "when submitting a new message for an existing arrival" - executeTest(
+      routes.GenericRouting.attachMessage(Arrival, id),
+      sut.attachMessage(Arrival, id),
+      ACCEPTED,
+      true
+    )
 
-    "when submitting a new message for an existing arrival" - executeTest(routes.ArrivalsRouter.attachMessage(id), sut.attachMessage(id), ACCEPTED, true)
-
-    "when getting messages for an existing arrival" - executeTest(routes.ArrivalsRouter.getArrivalMessageIds(id), sut.attachMessage(id), ACCEPTED, true)
+    "when getting messages for an existing arrival" - executeTest(
+      routes.GenericRouting.getMessageIds(Arrival, id),
+      sut.attachMessage(Arrival, id),
+      ACCEPTED,
+      true
+    )
   }
 }

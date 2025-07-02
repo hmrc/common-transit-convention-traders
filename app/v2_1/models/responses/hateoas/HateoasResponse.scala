@@ -31,10 +31,7 @@ import java.time.OffsetDateTime
 trait HateoasResponse {
 
   def getMessageUri(movementId: MovementId, messageId: MessageId, movementType: MovementType): String =
-    movementType match {
-      case MovementType.Departure => routing.routes.DeparturesRouter.getMessage(movementId.value, messageId.value).urlWithContext
-      case MovementType.Arrival   => routing.routes.ArrivalsRouter.getArrivalMessage(movementId.value, messageId.value).urlWithContext
-    }
+    routing.routes.GenericRouting.getMessage(movementType, movementId.value, messageId.value).urlWithContext
 
   def getMessagesUri(
     movementId: MovementId,
@@ -44,34 +41,19 @@ trait HateoasResponse {
     count: Option[ItemCount] = None,
     receivedUntil: Option[OffsetDateTime] = None
   ): String =
-    movementType match {
-      case MovementType.Arrival =>
-        routing.routes.ArrivalsRouter
-          .getArrivalMessageIds(
-            movementId.value,
-            receivedSince,
-            page,
-            count,
-            receivedUntil
-          )
-          .urlWithContext
-      case MovementType.Departure =>
-        routing.routes.DeparturesRouter
-          .getMessageIds(
-            movementId.value,
-            receivedSince,
-            page,
-            count,
-            receivedUntil
-          )
-          .urlWithContext
-    }
+    routing.routes.GenericRouting
+      .getMessageIds(
+        movementType,
+        movementId.value,
+        receivedSince,
+        page,
+        count,
+        receivedUntil
+      )
+      .urlWithContext
 
   def getMovementUri(movementId: MovementId, movementType: MovementType): String =
-    movementType match {
-      case MovementType.Arrival   => routing.routes.ArrivalsRouter.getArrival(movementId.value).urlWithContext
-      case MovementType.Departure => routing.routes.DeparturesRouter.getDeparture(movementId.value).urlWithContext
-    }
+    routing.routes.GenericRouting.getMovement(movementType = movementType, id = movementId.value).urlWithContext
 
   def getMovementsUri(
     movementType: MovementType,
@@ -83,16 +65,9 @@ trait HateoasResponse {
     receivedUntil: Option[OffsetDateTime],
     localReferenceNumber: Option[LocalReferenceNumber]
   ): String =
-    movementType match {
-      case MovementType.Arrival =>
-        routing.routes.ArrivalsRouter
-          .getArrivalsForEori(updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
-          .urlWithContext
-      case MovementType.Departure =>
-        routing.routes.DeparturesRouter
-          .getDeparturesForEori(updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
-          .urlWithContext
-    }
+    routing.routes.GenericRouting
+      .getMovementForEori(updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber, movementType)
+      .urlWithContext
 
   def getMovementId(movementType: MovementType): String = if (movementType == MovementType.Departure) "departureId" else "arrivalId"
 }

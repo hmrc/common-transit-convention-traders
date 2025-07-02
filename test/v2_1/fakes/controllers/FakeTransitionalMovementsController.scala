@@ -30,14 +30,14 @@ import play.api.mvc.AnyContent
 import play.api.mvc.BaseController
 import play.api.mvc.ControllerComponents
 import play.api.test.Helpers.stubControllerComponents
-import v2_1.controllers.V2MovementsController
+import v2_1.controllers.MovementsController
 import v2_1.models.responses.UpscanResponse
 
 import java.time.OffsetDateTime
 
-class FakeV2TransitionalMovementsController @Inject() ()(implicit val materializer: Materializer)
+class FakeTransitionalMovementsController @Inject() ()(implicit val materializer: Materializer)
     extends BaseController
-    with V2MovementsController
+    with MovementsController
     with StreamingParsers
     with Logging {
 

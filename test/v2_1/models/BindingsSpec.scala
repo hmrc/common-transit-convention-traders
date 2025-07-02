@@ -95,13 +95,13 @@ class BindingsSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenProper
     "must unbind Departure MovementType" in {
 
       val result = pathBindable.unbind("movementType", MovementType.Departure)
-      result mustEqual MovementType.Departure.toString
+      result mustEqual MovementType.Departure.urlFragment
     }
 
     "must unbind Arrival MovementType" in {
 
       val result = pathBindable.unbind("movementType", MovementType.Arrival)
-      result mustEqual MovementType.Arrival.toString
+      result mustEqual MovementType.Arrival.urlFragment
     }
   }
 

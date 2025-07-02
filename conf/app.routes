@@ -1,24 +1,12 @@
-GET        /movements/arrivals                                                      routing.ArrivalsRouter.getArrivalsForEori(updatedSince: Option[OffsetDateTime] ?= None, movementEORI: Option[EORINumber] ?= None, movementReferenceNumber: Option[MovementReferenceNumber] ?= None, page: Option[PageNumber] ?= None, count: Option[ItemCount] ?= None, receivedUntil: Option[OffsetDateTime] ?= None, localReferenceNumber: Option[LocalReferenceNumber] ?= None)
-POST       /movements/arrivals                                                      routing.ArrivalsRouter.createArrivalNotification()
+GET         /movements/:movementType                                                            routing.GenericRouting.getMovementForEori(updatedSince: Option[OffsetDateTime] ?= None, movementEORI: Option[EORINumber] ?= None, movementReferenceNumber: Option[MovementReferenceNumber] ?= None, page: Option[PageNumber] ?= None, count: Option[ItemCount] ?= None, receivedUntil: Option[OffsetDateTime] ?= None, localReferenceNumber: Option[LocalReferenceNumber] ?= None, movementType: MovementType)
+POST        /movements/:movementType                                                            routing.GenericRouting.createMovement(movementType: MovementType)
+GET         /movements/:movementType/:id                                                        routing.GenericRouting.getMovement(movementType: MovementType, id: String)
 
-GET        /movements/arrivals/:arrivalId                                           routing.ArrivalsRouter.getArrival(arrivalId: String)
+POST        /movements/:movementType/:id/messages                                               routing.GenericRouting.attachMessage(movementType: MovementType, id: String)
+GET         /movements/:movementType/:id/messages                                               routing.GenericRouting.getMessageIds(movementType: MovementType, id: String, receivedSince: Option[OffsetDateTime] ?= None, page: Option[PageNumber] ?= None, count: Option[ItemCount] ?= None, receivedUntil: Option[OffsetDateTime] ?= None)
 
-POST       /movements/arrivals/:arrivalId/messages                                  routing.ArrivalsRouter.attachMessage(arrivalId: String)
-GET        /movements/arrivals/:arrivalId/messages                                  routing.ArrivalsRouter.getArrivalMessageIds(arrivalId: String, receivedSince: Option[OffsetDateTime] ?= None, page: Option[PageNumber] ?= None, count: Option[ItemCount] ?= None, receivedUntil: Option[OffsetDateTime] ?= None)
+GET         /movements/:movementType/:movementId/messages/:messageId                            routing.GenericRouting.getMessage(movementType: MovementType, movementId: String, messageId: String)
+GET         /movements/:movementType/:movementId/messages/:messageId/body                       routing.GenericRouting.getMessageBody(movementType: MovementType, movementId: MovementId, messageId: models.common.MessageId)
 
-GET        /movements/arrivals/:arrivalId/messages/:messageId                       routing.ArrivalsRouter.getArrivalMessage(arrivalId: String, messageId: String)
-
-GET        /movements/departures                                                    routing.DeparturesRouter.getDeparturesForEori(updatedSince: Option[OffsetDateTime] ?= None, movementEORI: Option[EORINumber] ?= None, movementReferenceNumber: Option[MovementReferenceNumber] ?= None, page: Option[PageNumber] ?= None, count: Option[ItemCount] ?= None, receivedUntil: Option[OffsetDateTime] ?= None, localReferenceNumber: Option[LocalReferenceNumber] ?= None)
-POST       /movements/departures                                                    routing.DeparturesRouter.submitDeclaration()
-
-GET        /movements/departures/:departureId                                       routing.DeparturesRouter.getDeparture(departureId: String)
-
-POST       /movements/departures/:departureId/messages                              routing.DeparturesRouter.attachMessage(departureId: String)
-GET        /movements/departures/:departureId/messages                              routing.DeparturesRouter.getMessageIds(departureId: String, receivedSince: Option[OffsetDateTime] ?= None, page: Option[PageNumber] ?= None, count: Option[ItemCount] ?= None, receivedUntil: Option[OffsetDateTime] ?= None)
-
-GET        /movements/departures/:departureId/messages/:messageId                   routing.DeparturesRouter.getMessage(departureId: String, messageId: String)
-
-GET        /movements/:movementType/:movementId/messages/:messageId/body            routing.GenericRouting.getMessageBody(movementType: MovementType, movementId: MovementId, messageId: models.common.MessageId)
-
-POST       /traders/:eori/movements/:movementType/:movementId/messages/:messageId/final   v2_1.controllers.V2MovementsController.attachMessageFromUpscan(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: models.common.MessageId, clientId: Option[ClientId] ?= None)
+POST        /traders/:eori/movements/:movementType/:movementId/messages/:messageId/final        v2_1.controllers.MovementsController.attachMessageFromUpscan(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: models.common.MessageId, clientId: Option[ClientId] ?= None)
 
