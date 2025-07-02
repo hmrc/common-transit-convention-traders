@@ -104,7 +104,7 @@ import scala.concurrent.duration.DurationInt
 import scala.util.Try
 import scala.xml.NodeSeq
 
-class V2MovementsControllerSpec
+class MovementsControllerSpec
     extends AnyFreeSpec
     with Matchers
     with OptionValues
@@ -166,7 +166,7 @@ class V2MovementsControllerSpec
     )
 
   case class ControllerAndMocks(
-    sut: V2MovementsController,
+    sut: MovementsController,
     mockValidationService: ValidationService,
     mockPersistenceService: PersistenceService,
     mockRouterService: RouterService,
@@ -198,7 +198,7 @@ class V2MovementsControllerSpec
 
     when(mockAppConfig.smallMessageSizeLimit).thenReturn(500000)
 
-    val sut: V2MovementsController = new V2MovementsControllerImpl(
+    val sut: MovementsController = new MovementsControllerImpl(
       Helpers.stubControllerComponents(),
       FakeAuthNewEnrolmentOnlyAction(enrollmentEORI),
       mockValidationService,
@@ -9794,7 +9794,7 @@ class V2MovementsControllerSpec
         // TODO: Need to see how to do this using v2_1 controller
         val request = FakeRequest(
           POST,
-          v2_1.controllers.routes.V2MovementsController.attachMessageFromUpscan(eoriNumber, movementType, movementId, messageId, None).url,
+          v2_1.controllers.routes.MovementsController.attachMessageFromUpscan(eoriNumber, movementType, movementId, messageId, None).url,
           headers = FakeHeaders(Seq(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)),
           upscanFailed
         )

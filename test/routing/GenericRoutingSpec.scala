@@ -38,7 +38,7 @@ import play.api.test.Helpers.defaultAwaitTimeout
 import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
 import v2_1.base.TestActorSystem
-import v2_1.fakes.controllers.FakeV2MovementsController
+import v2_1.fakes.controllers.FakeMovementsController
 
 import scala.xml.Elem
 
@@ -78,7 +78,7 @@ class GenericRoutingSpec extends AnyWordSpec with Matchers with TestActorSystem 
 
     val controller = new GenericRouting(
       stubControllerComponents(),
-      new FakeV2MovementsController()
+      new FakeMovementsController()
     )
 
     val movementType: MovementType = MovementType.Arrival

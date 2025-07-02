@@ -8,5 +8,5 @@ GET         /movements/:movementType/:id/messages                               
 GET         /movements/:movementType/:movementId/messages/:messageId                            routing.GenericRouting.getMessage(movementType: MovementType, movementId: String, messageId: String)
 GET         /movements/:movementType/:movementId/messages/:messageId/body                       routing.GenericRouting.getMessageBody(movementType: MovementType, movementId: MovementId, messageId: models.common.MessageId)
 
-POST        /traders/:eori/movements/:movementType/:movementId/messages/:messageId/final        v2_1.controllers.V2MovementsController.attachMessageFromUpscan(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: models.common.MessageId, clientId: Option[ClientId] ?= None)
+POST        /traders/:eori/movements/:movementType/:movementId/messages/:messageId/final        v2_1.controllers.MovementsController.attachMessageFromUpscan(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: models.common.MessageId, clientId: Option[ClientId] ?= None)
 

@@ -63,8 +63,8 @@ import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
 import scala.concurrent.Future
 
-@ImplementedBy(classOf[V2MovementsControllerImpl])
-trait V2MovementsController {
+@ImplementedBy(classOf[MovementsControllerImpl])
+trait MovementsController {
   def createMovement(movementType: MovementType): Action[Source[ByteString, ?]]
   def getMessage(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent]
 
@@ -102,7 +102,7 @@ trait V2MovementsController {
 }
 
 @Singleton
-class V2MovementsControllerImpl @Inject() (
+class MovementsControllerImpl @Inject() (
   val controllerComponents: ControllerComponents,
   authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
   validationService: ValidationService,
@@ -119,7 +119,7 @@ class V2MovementsControllerImpl @Inject() (
   config: AppConfig
 )(implicit val materializer: Materializer, val temporaryFileCreator: TemporaryFileCreator)
     extends BaseController
-    with V2MovementsController
+    with MovementsController
     with Logging
     with StreamingParsers
     with StreamWithFile

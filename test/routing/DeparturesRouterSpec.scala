@@ -36,7 +36,7 @@ import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
 import v2_1.base.TestActorSystem
-import v2_1.fakes.controllers.FakeV2MovementsController
+import v2_1.fakes.controllers.FakeMovementsController
 
 import scala.concurrent.duration.DurationInt
 
@@ -46,7 +46,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
 
   val sut = new GenericRouting(
     stubControllerComponents(),
-    new FakeV2MovementsController
+    new FakeMovementsController
   )
 
   "route to version 2_1 controller" - {
