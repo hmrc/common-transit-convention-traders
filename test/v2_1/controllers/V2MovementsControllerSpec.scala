@@ -254,9 +254,7 @@ class V2MovementsControllerSpec
   ): Request[A] =
     FakeRequest(
       method = method,
-      uri =
-        if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.submitDeclaration().url
-        else routing.routes.ArrivalsRouter.createArrivalNotification().url,
+      uri = routing.routes.GenericRouting.createMovement(movementType).url,
       headers = headers,
       body = body
     )
@@ -269,9 +267,7 @@ class V2MovementsControllerSpec
   ): Request[A] =
     FakeRequest(
       method = method,
-      uri =
-        if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.attachMessage("123").url
-        else routing.routes.ArrivalsRouter.attachMessage("123").url,
+      uri = routing.routes.GenericRouting.attachMessage(movementType, "123").url,
       headers = headers,
       body = body
     )
@@ -5259,8 +5255,7 @@ class V2MovementsControllerSpec
           val request =
             FakeRequest(
               "GET",
-              if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.getMessage(movementId.value, messageId.value).url
-              else routing.routes.ArrivalsRouter.getArrivalMessage(movementId.value, messageId.value).url,
+              routing.routes.GenericRouting.getMessage(movementType, movementId.value, messageId.value).url,
               headers,
               Source.empty[ByteString]
             )
@@ -6221,8 +6216,7 @@ class V2MovementsControllerSpec
 
     s"GET /movements/${movementType.movementType}" - {
       val url =
-        if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.getDeparturesForEori().url
-        else routing.routes.ArrivalsRouter.getArrivalsForEori().url
+        routing.routes.GenericRouting.getMovementForEori(movementType = movementType).url
 
       "should return ok with json body for movements" in {
         val ControllerAndMocks(
@@ -6803,8 +6797,7 @@ class V2MovementsControllerSpec
             )
 
           val url =
-            if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.getDeparture(movementId.value).url
-            else routing.routes.ArrivalsRouter.getArrival(movementId.value).url
+            routing.routes.GenericRouting.getMovement(movementType, movementId.value).url
 
           val request = FakeRequest(
             GET,
@@ -6857,8 +6850,7 @@ class V2MovementsControllerSpec
             }
 
           val url =
-            if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.getDeparture(movementId.value).url
-            else routing.routes.ArrivalsRouter.getArrival(movementId.value).url
+            routing.routes.GenericRouting.getMovement(movementType, movementId.value).url
 
           val request = FakeRequest(
             GET,
@@ -6910,8 +6902,7 @@ class V2MovementsControllerSpec
             }
 
           val url =
-            if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.getDeparture(movementId.value).url
-            else routing.routes.ArrivalsRouter.getArrival(movementId.value).url
+            routing.routes.GenericRouting.getMovement(movementType, movementId.value).url
 
           val request = FakeRequest(
             GET,
@@ -6965,8 +6956,7 @@ class V2MovementsControllerSpec
             }
 
           val url =
-            if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.getDeparture(movementId.value).url
-            else routing.routes.ArrivalsRouter.getArrival(movementId.value).url
+            routing.routes.GenericRouting.getMovement(movementType, movementId.value).url
 
           val request = FakeRequest(
             GET,
@@ -7005,8 +6995,7 @@ class V2MovementsControllerSpec
             }
 
           val url =
-            if (movementType == MovementType.Departure) routing.routes.DeparturesRouter.getDeparture(movementId.value).url
-            else routing.routes.ArrivalsRouter.getArrival(movementId.value).url
+            routing.routes.GenericRouting.getMovement(movementType, movementId.value).url
 
           val request = FakeRequest(
             GET,

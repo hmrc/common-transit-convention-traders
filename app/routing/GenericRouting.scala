@@ -18,17 +18,19 @@ package routing
 
 import com.google.inject.Inject
 import controllers.common.stream.StreamingParsers
-import models.common.MessageId
-import models.common.MovementId
-import models.common.MovementType
+import models.common.*
 import models.common.errors.PresentationError
 import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.*
 import play.mvc.Http.HeaderNames
 import v2_1.controllers.V2MovementsController
+import v2_1.models.Bindings.*
 
+import java.time.OffsetDateTime
 import scala.concurrent.Future
 
 class GenericRouting @Inject() (
@@ -55,6 +57,69 @@ class GenericRouting @Inject() (
           case _                                                                                  => None
         }
     }
+  }
+
+  def attachMessage(movementType: MovementType, id: String): Action[Source[ByteString, ?]] = route {
+    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+      runIfBound[MovementId](movementType.movementTypeId, id, v2Movements.attachMessage(movementType, _))
+    case _ => invalidAcceptHeader()
+  }
+
+  def getMovementForEori(
+    updatedSince: Option[OffsetDateTime] = None,
+    movementEORI: Option[EORINumber] = None,
+    movementReferenceNumber: Option[MovementReferenceNumber] = None,
+    page: Option[PageNumber] = None,
+    count: Option[ItemCount] = None,
+    receivedUntil: Option[OffsetDateTime] = None,
+    localReferenceNumber: Option[LocalReferenceNumber] = None,
+    movementType: MovementType
+  ): Action[Source[ByteString, ?]] = route {
+    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+      v2Movements.getMovements(movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
+    case _ => invalidAcceptHeader()
+  }
+
+  def createMovement(movementType: MovementType): Action[Source[ByteString, ?]] =
+    route {
+      case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+        v2Movements.createMovement(movementType)
+      case _ => invalidAcceptHeader()
+    }
+
+  def getMovement(movementType: MovementType, id: String): Action[Source[ByteString, ?]] =
+    route {
+      case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+        runIfBound[MovementId](movementType.movementTypeId, id, v2Movements.getMovement(movementType, _))
+      case _ => invalidAcceptHeader()
+    }
+
+  def getMessageIds(
+    movementType: MovementType,
+    id: String,
+    receivedSince: Option[OffsetDateTime] = None,
+    page: Option[PageNumber] = None,
+    count: Option[ItemCount] = None,
+    receivedUntil: Option[OffsetDateTime] = None
+  ): Action[Source[ByteString, ?]] = route {
+    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+      runIfBound[MovementId](movementType.movementTypeId, id, v2Movements.getMessageIds(MovementType.Arrival, _, receivedSince, page, count, receivedUntil))
+    case _ => invalidAcceptHeader()
+  }
+
+  def getMessage(movementType: MovementType, movementId: String, messageId: String): Action[Source[ByteString, ?]] = route {
+    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+      runIfBound[MovementId](
+        movementType.movementTypeId,
+        movementId,
+        boundArrivalId =>
+          runIfBound[MessageId](
+            "messageId",
+            messageId,
+            v2Movements.getMessage(MovementType.Arrival, boundArrivalId, _)
+          )
+      )
+    case _ => invalidAcceptHeader()
   }
 
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =

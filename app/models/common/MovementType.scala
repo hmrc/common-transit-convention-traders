@@ -18,11 +18,11 @@ package models.common
 
 import play.api.libs.json._
 
-sealed abstract class MovementType(val movementType: String, val urlFragment: String)
+sealed abstract class MovementType(val movementType: String, val urlFragment: String, val movementTypeId: String)
 
 object MovementType {
-  case object Departure extends MovementType("departure", "departures")
-  case object Arrival   extends MovementType("arrival", "arrivals")
+  case object Departure extends MovementType("departure", "departures", "departureId")
+  case object Arrival   extends MovementType("arrival", "arrivals", "arrivalId")
 
   implicit val movementTypeReads: Reads[MovementType] = Reads {
     case x: JsString => MovementType.findByName(x.value).map(JsSuccess(_)).getOrElse(JsError())
