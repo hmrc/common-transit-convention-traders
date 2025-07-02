@@ -106,7 +106,7 @@ class GenericRouting @Inject() (
       runIfBound[MovementId](
         movementType.movementTypeId,
         id,
-        movementsController.getMessageIds(MovementType.Arrival, _, receivedSince, page, count, receivedUntil)
+        movementsController.getMessageIds(movementType, _, receivedSince, page, count, receivedUntil)
       )
     case _ => invalidAcceptHeader()
   }
@@ -120,7 +120,7 @@ class GenericRouting @Inject() (
           runIfBound[MessageId](
             "messageId",
             messageId,
-            movementsController.getMessage(MovementType.Arrival, boundArrivalId, _)
+            movementsController.getMessage(movementType, boundArrivalId, _)
           )
       )
     case _ => invalidAcceptHeader()
