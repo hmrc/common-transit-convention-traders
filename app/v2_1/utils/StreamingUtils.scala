@@ -35,10 +35,10 @@ object StreamingUtils {
     source
       .reduce(_ ++ _)
       .map(_.utf8String)
-      .runWith(Sink.head[String])
-      .map(Right[StreamingError, String])
+      .runWith(Sink.head)
+      .map(Right(_))
       .recover {
-        case NonFatal(ex) => Left[StreamingError, String](StreamingError.UnexpectedError(Some(ex)))
+        case NonFatal(ex) => Left(StreamingError.UnexpectedError(Some(ex)))
       }
   }
 }

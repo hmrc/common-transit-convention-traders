@@ -18,8 +18,6 @@ package config
 
 object Constants {
 
-  val Context: String = "/customs/transits"
-
   val XClientIdHeader: String = "X-Client-Id"
 
   val XMessageTypeHeader: String = "X-Message-Type"

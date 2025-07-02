@@ -45,9 +45,9 @@ abstract class Payload(val value: String) {
 }
 
 case class XmlPayload(override val value: String) extends Payload(value) {
-  lazy val asJson = JsString(value)
+  lazy val asJson: JsValue = JsString(value)
 }
 
 case class JsonPayload(override val value: String) extends Payload(value) {
-  lazy val asJson = Json.parse(value)
+  lazy val asJson: JsValue = Json.parse(value)
 }

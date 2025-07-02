@@ -52,7 +52,7 @@ trait XmlMessageParsingService {
 @Singleton
 class XmlMessageParsingServiceImpl @Inject() (implicit materializer: Materializer) extends XmlMessageParsingService {
 
-  val messageSink = Sink.head[Either[ExtractionError, MessageType]]
+  private val messageSink = Sink.head[Either[ExtractionError, MessageType]]
 
   private def messageTypeSink(messageTypeList: Seq[MessageType]): Sink[ByteString, Future[Either[ExtractionError, MessageType]]] = Sink.fromGraph(
     GraphDSL.createGraph(messageSink) {

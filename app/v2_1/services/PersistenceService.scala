@@ -331,5 +331,4 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
     )
-
 }
