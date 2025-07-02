@@ -69,9 +69,9 @@ class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector)
     EitherT(
       conversionConnector
         .post(messageType, source, headerType)
-        .map {
-          case response => Right(response)
-        }
+        .map(
+          response => Right(response)
+        )
         .recover {
           case NonFatal(e) =>
             logger.error(s"Unable to convert payload : ${e.getMessage}", e)

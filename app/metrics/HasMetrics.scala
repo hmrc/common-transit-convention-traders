@@ -17,13 +17,11 @@
 package metrics
 
 import com.codahale.metrics.Counter
-import com.codahale.metrics.Histogram
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
 import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.Result
-import uk.gov.hmrc.http.HttpResponse
 
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.ExecutionContext
@@ -54,9 +52,6 @@ trait HasActionMetrics extends HasMetrics {
 trait HasMetrics {
   def metrics: MetricRegistry
 
-  def histo(metricKey: String): Histogram =
-    metrics.histogram(metricKey)
-
   def counter(metricsKey: String): Counter =
     metrics.counter(metricsKey)
 
@@ -78,39 +73,6 @@ trait HasMetrics {
         failureCounter.inc()
       }
   }
-
-  /** Execute a block of code with a metrics timer. Intended for use in controllers that return HTTP responses.
-    *
-    * @param metricKey
-    *   The id of the metric to be collected
-    * @param block
-    *   The block of code to execute asynchronously
-    * @param ec
-    *   The [[scala.concurrent.ExecutionContext]] on which the block of code should run
-    * @return
-    *   The result of the block of code
-    */
-  def withMetricsTimerResponse(metricKey: String)(block: => Future[HttpResponse])(implicit ec: ExecutionContext): Future[HttpResponse] =
-    withMetricsTimer(metricKey) {
-      timer =>
-        val response = block
-
-        // Clean up timer according to server response
-        response.foreach {
-          response =>
-            if (isFailureStatus(response.status))
-              timer.completeWithFailure()
-            else
-              timer.completeWithSuccess()
-        }
-
-        // Clean up timer for unhandled exceptions
-        response.failed.foreach(
-          _ => timer.completeWithFailure()
-        )
-
-        response
-    }
 
   /** Execute a block of code with a metrics timer. Intended for use in controllers that return HTTP responses.
     *
@@ -183,7 +145,7 @@ trait HasMetrics {
         result
     }
 
-  def withMetricsTimer[T](metricKey: String)(block: MetricsTimer => T): T = {
+  private def withMetricsTimer[T](metricKey: String)(block: MetricsTimer => T): T = {
     val timer = new MetricsTimer(metricKey)
 
     try block(timer)

@@ -16,14 +16,13 @@
 
 package v2_1.utils
 
-import config.Constants
 import play.api.mvc.Call
 
 object CallOps {
 
-  implicit class CallOps(c: Call) {
+  implicit class CallOps(call: Call) {
 
     def urlWithContext: String =
-      Constants.Context + c.url
+      "/customs/transits" + call.url
   }
 }

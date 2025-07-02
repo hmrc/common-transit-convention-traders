@@ -63,8 +63,8 @@ object MessageType {
 
   case object PresentationNotificationForThePreLodgedDeclaration
       extends DepartureMessageType("IE170", "CC170C", AuditType.PresentationNotificationForThePreLodgedDeclaration)
-  case object FunctionalNack      extends DepartureMessageType("IE906", "CC906C", AuditType.FunctionalNack)      // TODO: This is also an arrival message
-  case object PositiveAcknowledge extends DepartureMessageType("IE928", "CC928C", AuditType.PositiveAcknowledge) // TODO: This is also an arrival message
+  case object FunctionalNack      extends DepartureMessageType("IE906", "CC906C", AuditType.FunctionalNack)
+  case object PositiveAcknowledge extends DepartureMessageType("IE928", "CC928C", AuditType.PositiveAcknowledge)
 
   val updateMessageTypesSentByDepartureTrader: Seq[MessageType] = Seq(
     DeclarationAmendment,
@@ -97,7 +97,7 @@ object MessageType {
 
   val messageTypesSentByArrivalTrader: Seq[MessageType] = ArrivalNotification +: updateMessageTypesSentByArrivalTrader
 
-  val messageTypesSentToArrivalTrader: Seq[MessageType] = Seq(
+  private val messageTypesSentToArrivalTrader: Seq[MessageType] = Seq(
     GoodsReleaseNotification,
     UnloadingPermission,
     RejectionFromOfficeOfDestination,
@@ -105,19 +105,13 @@ object MessageType {
     PositiveAcknowledge
   )
 
-  val updateMessageTypeSentByTrader: Seq[MessageType] =
-    updateMessageTypesSentByDepartureTrader ++ updateMessageTypesSentByArrivalTrader
-
-  val values = (messageTypesSentByDepartureTrader ++
+  val values: Seq[MessageType] = (messageTypesSentByDepartureTrader ++
     messageTypesSentToDepartureTrader ++
     messageTypesSentByArrivalTrader ++
     messageTypesSentToArrivalTrader).distinct
 
   def findByCode(code: String): Option[MessageType] =
     values.find(_.code == code)
-
-  def findByRootNode(root: String): Option[MessageType] =
-    values.find(_.rootNode == root)
 
   implicit val messageTypeReads: Reads[MessageType] = Reads {
     case JsString(value) => findByCode(value).map(JsSuccess(_)).getOrElse(JsError())
@@ -127,5 +121,4 @@ object MessageType {
   implicit val messageTypeWrites: Writes[MessageType] = Writes {
     obj => JsString(obj.code)
   }
-
 }
