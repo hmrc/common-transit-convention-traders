@@ -16,6 +16,10 @@
 
 package routing
 
+import models.Version2_1
+import models.VersionedJsonHeader
+import models.VersionedJsonHyphenXmlHeader
+import models.VersionedJsonPlusXmlHeader
 import models.common.MovementType.Departure
 import org.apache.pekko.util.Timeout
 import org.scalatest.OptionValues
@@ -52,13 +56,13 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
   "route to version 2_1 controller" - {
     "when submitting a departure" - {
       Seq(
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value),
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML.value),
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)
+        Some(VersionedJsonHeader(Version2_1)),
+        Some(VersionedJsonPlusXmlHeader(Version2_1)),
+        Some(VersionedJsonHyphenXmlHeader(Version2_1))
       ).foreach {
         acceptHeaderValue =>
           val departureHeaders = FakeHeaders(
-            Seq(HeaderNames.ACCEPT -> acceptHeaderValue.get, HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+            Seq(HeaderNames.ACCEPT -> acceptHeaderValue.get.value, HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
           )
           s"with accept header set to $acceptHeaderValue" - {
 
@@ -74,12 +78,12 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
       }
     }
     "when getting a single message" - {
-      Seq(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value, VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML.value).foreach {
+      Seq(VersionedJsonHeader(Version2_1), VersionedJsonPlusXmlHeader(Version2_1)).foreach {
         acceptHeaderValue =>
-          s"with accept header set to $acceptHeaderValue (version two)" - {
+          s"with accept header set to ${acceptHeaderValue.value} (version two)" - {
 
             val departureHeaders =
-              FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
+              FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue.value))
 
             "must route to the v2 controller and return Ok when successful" in {
               val request = FakeRequest(
@@ -99,7 +103,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
                 method = "POST",
                 uri = routes.GenericRouting.getMessage(Departure, "01", "0123456789abcdef").url,
                 body = <test></test>,
-                headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
+                headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue.value))
               )
               val result = sut.getMessage(Departure, "01", "01234567890bcdef")(request)
 
@@ -117,7 +121,7 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
                 method = "POST",
                 uri = routes.GenericRouting.getMessage(Departure, "0123456789abcdef", "01").url,
                 body = <test></test>,
-                headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
+                headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue.value))
               )
               val result = sut.getMessage(Departure, "01234567890bcdef", "01")(request)
 
@@ -134,13 +138,13 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
     }
     "when getting a departure/movement" - {
       Seq(
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value),
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML.value),
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)
+        Some(VersionedJsonHeader(Version2_1)),
+        Some(VersionedJsonPlusXmlHeader(Version2_1)),
+        Some(VersionedJsonHyphenXmlHeader(Version2_1))
       ).foreach {
         acceptHeaderValue =>
           val departureHeaders = FakeHeaders(
-            Seq(HeaderNames.ACCEPT -> acceptHeaderValue.get, HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+            Seq(HeaderNames.ACCEPT -> acceptHeaderValue.get.value, HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
           )
           s"with accept header set to $acceptHeaderValue" - {
 
@@ -170,13 +174,13 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
     }
     "when submitting a new message for an existing departure" - {
       Seq(
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value),
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML.value),
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)
+        Some(VersionedJsonHeader(Version2_1)),
+        Some(VersionedJsonPlusXmlHeader(Version2_1)),
+        Some(VersionedJsonHyphenXmlHeader(Version2_1))
       ).foreach {
         acceptHeaderValue =>
           val departureHeaders = FakeHeaders(
-            Seq(HeaderNames.ACCEPT -> acceptHeaderValue.get, HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+            Seq(HeaderNames.ACCEPT -> acceptHeaderValue.get.value, HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
           )
           s"with accept header set to $acceptHeaderValue" - {
 
@@ -194,13 +198,13 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
     }
     "when getting departures for a given enrolment EORI" - {
       Seq(
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value),
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML.value),
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)
+        Some(VersionedJsonHeader(Version2_1)),
+        Some(VersionedJsonPlusXmlHeader(Version2_1)),
+        Some(VersionedJsonHyphenXmlHeader(Version2_1))
       ).foreach {
         acceptHeaderValue =>
           val departureHeaders = FakeHeaders(
-            Seq(HeaderNames.ACCEPT -> acceptHeaderValue.get, HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+            Seq(HeaderNames.ACCEPT -> acceptHeaderValue.get.value, HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
           )
           s"with accept header set to $acceptHeaderValue" - {
 
@@ -223,13 +227,13 @@ class DeparturesRouterSpec extends AnyFreeSpec with Matchers with OptionValues w
     }
     "when getting departures messages for a given departure" - {
       Seq(
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value),
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML.value),
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)
+        Some(VersionedJsonHeader(Version2_1)),
+        Some(VersionedJsonPlusXmlHeader(Version2_1)),
+        Some(VersionedJsonHyphenXmlHeader(Version2_1))
       ).foreach {
         acceptHeaderValue =>
           val departureHeaders = FakeHeaders(
-            Seq(HeaderNames.ACCEPT -> acceptHeaderValue.get, HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+            Seq(HeaderNames.ACCEPT -> acceptHeaderValue.get.value, HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
           )
           s"with accept header set to $acceptHeaderValue" - {
 

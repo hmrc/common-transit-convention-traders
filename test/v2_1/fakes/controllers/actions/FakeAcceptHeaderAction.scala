@@ -16,6 +16,7 @@
 
 package v2_1.fakes.controllers.actions
 
+import models.VersionedHeader
 import play.api.mvc.Request
 import play.api.mvc.Result
 import v2_1.controllers.actions.AcceptHeaderAction
@@ -26,7 +27,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 object FakeAcceptHeaderActionProvider extends AcceptHeaderActionProvider {
-  override def apply[R[_] <: Request[?]](acceptedHeaders: Seq[String]): FakeAcceptHeaderAction[R] = FakeAcceptHeaderAction()
+  override def apply[R[_] <: Request[?]](acceptedHeaders: Seq[VersionedHeader]): FakeAcceptHeaderAction[R] = FakeAcceptHeaderAction()
 }
 
 case class FakeAcceptHeaderAction[R[_] <: Request[?]]() extends AcceptHeaderAction[R] {

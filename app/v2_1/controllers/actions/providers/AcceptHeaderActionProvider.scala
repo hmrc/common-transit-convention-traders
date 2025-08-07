@@ -18,6 +18,7 @@ package v2_1.controllers.actions.providers
 
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
+import models.VersionedHeader
 import play.api.mvc.Request
 import v2_1.controllers.actions.AcceptHeaderAction
 import v2_1.controllers.actions.AcceptHeaderActionImpl
@@ -26,11 +27,11 @@ import scala.concurrent.ExecutionContext
 
 @ImplementedBy(classOf[AcceptHeaderActionProviderImpl])
 trait AcceptHeaderActionProvider {
-  def apply[R[_] <: Request[?]](acceptedHeaders: Seq[String]): AcceptHeaderAction[R]
+  def apply[R[_] <: Request[?]](acceptedHeaders: Seq[VersionedHeader]): AcceptHeaderAction[R]
 }
 
 class AcceptHeaderActionProviderImpl @Inject() ()(implicit ec: ExecutionContext) extends AcceptHeaderActionProvider {
 
-  def apply[R[_] <: Request[?]](acceptedHeaders: Seq[String]): AcceptHeaderAction[R] =
-    new AcceptHeaderActionImpl[R](acceptedHeaders: Seq[String])
+  def apply[R[_] <: Request[?]](acceptedHeaders: Seq[VersionedHeader]): AcceptHeaderAction[R] =
+    new AcceptHeaderActionImpl[R](acceptedHeaders: Seq[VersionedHeader])
 }

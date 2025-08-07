@@ -18,15 +18,18 @@ package routing
 
 import com.google.inject.Inject
 import controllers.common.stream.StreamingParsers
+import models.VersionedHeader
+import models.VersionedJsonHeader
+import models.VersionedXmlHeader
 import models.common.*
 import models.common.errors.PresentationError
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import play.api.Logging
+import play.api.http.HeaderNames
 import play.api.libs.json.Json
 import play.api.mvc.*
-import play.mvc.Http.HeaderNames
 import v2_1.controllers.MovementsController
 import v2_1.models.Bindings.*
 
@@ -43,26 +46,8 @@ class GenericRouting @Inject() (
     with VersionedRouting
     with Logging {
 
-  private lazy val validHeaders: Seq[String] = Seq(
-    VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value,
-    VERSION_2_1_ACCEPT_HEADER_VALUE_XML.value
-  )
-
-  private def checkAcceptHeader(implicit request: Request[?]): Option[VersionedAcceptHeader] = {
-    val requestHeaderValue = request.headers.get(HeaderNames.ACCEPT)
-    requestHeaderValue.flatMap {
-      acceptHeaderValue =>
-        VersionedRouting.formatAccept(acceptHeaderValue) match {
-          case Right(validatedAcceptHeader) if validHeaders.contains(validatedAcceptHeader.value) => Some(validatedAcceptHeader)
-          case _                                                                                  => None
-        }
-    }
-  }
-
   def attachMessage(movementType: MovementType, id: String): Action[Source[ByteString, ?]] = route {
-    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
-      runIfBound[MovementId](movementType.movementTypeId, id, movementsController.attachMessage(movementType, _))
-    case _ => invalidAcceptHeader()
+    _ => runIfBound[MovementId](movementType.movementTypeId, id, movementsController.attachMessage(movementType, _))
   }
 
   def getMovementForEori(
@@ -75,23 +60,19 @@ class GenericRouting @Inject() (
     localReferenceNumber: Option[LocalReferenceNumber] = None,
     movementType: MovementType
   ): Action[Source[ByteString, ?]] = route {
-    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
-      movementsController.getMovements(movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
-    case _ => invalidAcceptHeader()
+    _ =>
+      movementsController
+        .getMovements(movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
   }
 
   def createMovement(movementType: MovementType): Action[Source[ByteString, ?]] =
     route {
-      case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
-        movementsController.createMovement(movementType)
-      case _ => invalidAcceptHeader()
+      _ => movementsController.createMovement(movementType)
     }
 
   def getMovement(movementType: MovementType, id: String): Action[Source[ByteString, ?]] =
     route {
-      case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
-        runIfBound[MovementId](movementType.movementTypeId, id, movementsController.getMovement(movementType, _))
-      case _ => invalidAcceptHeader()
+      _ => runIfBound[MovementId](movementType.movementTypeId, id, movementsController.getMovement(movementType, _))
     }
 
   def getMessageIds(
@@ -102,17 +83,16 @@ class GenericRouting @Inject() (
     count: Option[ItemCount] = None,
     receivedUntil: Option[OffsetDateTime] = None
   ): Action[Source[ByteString, ?]] = route {
-    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+    _ =>
       runIfBound[MovementId](
         movementType.movementTypeId,
         id,
         movementsController.getMessageIds(movementType, _, receivedSince, page, count, receivedUntil)
       )
-    case _ => invalidAcceptHeader()
   }
 
   def getMessage(movementType: MovementType, movementId: String, messageId: String): Action[Source[ByteString, ?]] = route {
-    case Some(VersionedRouting.VERSION_2_1_ACCEPT_HEADER_PATTERN()) =>
+    _ =>
       runIfBound[MovementId](
         movementType.movementTypeId,
         movementId,
@@ -123,15 +103,18 @@ class GenericRouting @Inject() (
             movementsController.getMessage(movementType, boundArrivalId, _)
           )
       )
-    case _ => invalidAcceptHeader()
   }
 
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =
     Action.async {
       implicit request =>
-        checkAcceptHeader match {
-          case Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON) | Some(VERSION_2_1_ACCEPT_HEADER_VALUE_XML) =>
-            movementsController.getMessageBody(movementType, movementId, messageId)(request)
+        val maybeHeader = request.headers
+          .get(HeaderNames.ACCEPT)
+          .map(VersionedRouting.validateAcceptHeader)
+          .flatMap(_.toOption)
+
+        maybeHeader match {
+          case Some(VersionedXmlHeader(_)) | Some(VersionedJsonHeader(_)) => movementsController.getMessageBody(movementType, movementId, messageId)(request)
           case _ => Future.successful(NotAcceptable(Json.toJson(PresentationError.notAcceptableError("The Accept header is missing or invalid."))))
         }
     }

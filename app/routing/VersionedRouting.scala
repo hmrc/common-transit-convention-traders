@@ -18,6 +18,9 @@ package routing
 
 import cats.implicits.catsSyntaxEitherId
 import controllers.common.stream.StreamingParsers
+import models.MediaType
+import models.VersionedHeader
+import models.Version
 import models.common.errors.PresentationError
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
@@ -30,82 +33,59 @@ import play.api.mvc.Action
 import play.api.mvc.BaseController
 import play.api.mvc.PathBindable
 import play.api.mvc.Request
+import play.api.mvc.Result
 
 import scala.concurrent.Future
 import scala.util.matching.Regex
 
-sealed trait VersionedAcceptHeader {
-  val value: String
-}
-
-object VersionedAcceptHeader {
-
-  def apply(value: String): Either[PresentationError, VersionedAcceptHeader] = value match {
-    case VERSION_2_1_ACCEPT_HEADER_VALUE_XML.value             => VERSION_2_1_ACCEPT_HEADER_VALUE_XML.asRight
-    case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value            => VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.asRight
-    case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML.value        => VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML.asRight
-    case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value => VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.asRight
-    case invalidAcceptHeader                                   => PresentationError.notAcceptableError(s"Invalid accept header: $invalidAcceptHeader").asLeft
-  }
-}
-
-case object VERSION_2_1_ACCEPT_HEADER_VALUE_XML extends VersionedAcceptHeader {
-  override val value: String = "application/vnd.hmrc.2.1+xml"
-}
-
-case object VERSION_2_1_ACCEPT_HEADER_VALUE_JSON extends VersionedAcceptHeader {
-  override val value: String = "application/vnd.hmrc.2.1+json"
-}
-
-case object VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML extends VersionedAcceptHeader {
-  override val value: String = "application/vnd.hmrc.2.1+json+xml"
-}
-
-case object VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN extends VersionedAcceptHeader {
-  override val value: String = "application/vnd.hmrc.2.1+json-xml"
-}
-
 object VersionedRouting {
-  val VERSION_2_1_ACCEPT_HEADER_PATTERN: Regex = """^application/vnd\.hmrc\.2\.1\+.+$""".r
+  val versionedRegex: Regex = """^application/vnd\.hmrc\.(\d*\.\d*)\+(.+)""".r
 
-  def formatAccept(header: String): Either[PresentationError, VersionedAcceptHeader] = {
-    val version2_1SplitHeader = """^(application/vnd\.hmrc\.2\.1\+)(.+)""".r
-
+  def validateAcceptHeader(header: String): Either[PresentationError, VersionedHeader] =
     header match {
-      case version2_1SplitHeader(frameworkPath, ctcPath) =>
-        val formattedHeader = frameworkPath + ctcPath.toLowerCase
-        VersionedAcceptHeader(formattedHeader)
+      case versionedRegex(ver, ext) =>
+        for {
+          extension <- MediaType.fromString(ext)
+          version   <- Version.fromString(ver)
+          result    <- VersionedHeader.fromExtensionAndVersion(extension, version)
+        } yield result
       case invalidHeader => PresentationError.notAcceptableError(s"Invalid accept header: $invalidHeader").asLeft
     }
-  }
 }
 
 trait VersionedRouting {
   self: BaseController & StreamingParsers =>
 
-  def route(routes: PartialFunction[Option[String], Action[?]])(implicit materializer: Materializer): Action[Source[ByteString, ?]] =
+  private def handleVerbs(request: Request[Source[ByteString, ?]], action: Action[?]): Future[Result] =
+    request.method match {
+      case HttpVerbs.GET | HttpVerbs.HEAD | HttpVerbs.DELETE | HttpVerbs.OPTIONS =>
+        request.body.to(Sink.ignore).run()
+        val headersWithoutContentType = request.headers.remove(CONTENT_TYPE)
+        action(request.withHeaders(headersWithoutContentType)).run()
+      case _ =>
+        action(request).run(request.body)
+    }
+
+  def route(routes: PartialFunction[Unit, Action[?]])(implicit materializer: Materializer): Action[Source[ByteString, ?]] =
     Action.async(streamFromMemory) {
       (request: Request[Source[ByteString, ?]]) =>
         routes
           .lift(request.headers.get(HeaderNames.ACCEPT))
+          .map(handleVerbs(request, _))
           .map {
-            action =>
-              request.method match {
-                case HttpVerbs.GET | HttpVerbs.HEAD | HttpVerbs.DELETE | HttpVerbs.OPTIONS =>
-                  // For the above verbs, we don't want to send a body,
-                  // however, in case we have one, we still need to drain the body.
-                  request.body.to(Sink.ignore).run()
-
-                  // We need to remove this as it might otherwise trigger any AnyContent
-                  // actions to try to parse an empty body
-                  val headersWithoutContentType = request.headers.remove(CONTENT_TYPE)
-                  action(request.withHeaders(headersWithoutContentType)).run()
+            run =>
+              val maybeAcceptHeader = request.headers.get(HeaderNames.ACCEPT)
+              maybeAcceptHeader match {
+                case Some(VersionedRouting.versionedRegex(_, _)) => run
                 case _ =>
-                  action(request).run(request.body)
+                  request.body.runWith(Sink.ignore)
+                  val presentationError = PresentationError.notAcceptableError(
+                    "Use CTC Traders API v2.1 to submit transit messages."
+                  )
+                  Future.successful(Status(presentationError.code.statusCode)(Json.toJson(presentationError)))
               }
           }
           .getOrElse {
-            // To avoid a memory leak, we need to ensure we run the request stream and ignore it.
             request.body.to(Sink.ignore).run()
             Future.successful(
               NotAcceptable(
@@ -117,9 +97,7 @@ trait VersionedRouting {
           }
     }
 
-  // This simulates what Play will do if a binding fails, with the addition of the "code" field
-  // that we use elsewhere.
-  def bindingFailureAction(message: String)(implicit materializer: Materializer): Action[Source[ByteString, ?]] =
+  private def bindingFailureAction(message: String)(implicit materializer: Materializer): Action[Source[ByteString, ?]] =
     Action.async(streamFromMemory) {
       implicit request =>
         request.body.runWith(Sink.ignore)
@@ -128,14 +106,4 @@ trait VersionedRouting {
 
   def runIfBound[A](key: String, value: String, action: A => Action[?])(implicit binding: PathBindable[A]): Action[?] =
     binding.bind(key, value).fold(bindingFailureAction(_), action)
-
-  def invalidAcceptHeader(): Action[Source[ByteString, ?]] =
-    Action(streamFromMemory) {
-      request =>
-        request.body.runWith(Sink.ignore)
-        val presentationError = PresentationError.notAcceptableError(
-          "Use CTC Traders API v2.1 to submit transit messages."
-        )
-        Status(presentationError.code.statusCode)(Json.toJson(presentationError))
-    }
 }

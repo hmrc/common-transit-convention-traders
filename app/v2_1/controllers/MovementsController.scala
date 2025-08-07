@@ -29,6 +29,11 @@ import controllers.common.AuthenticatedRequest
 import controllers.common.ContentTypeRouting
 import controllers.common.stream.StreamingParsers
 import metrics.HasActionMetrics
+import models.Version2_1
+import models.VersionedJsonHeader
+import models.VersionedJsonHyphenXmlHeader
+import models.VersionedJsonPlusXmlHeader
+import models.VersionedXmlHeader
 import models.common.*
 import models.common.errors.PersistenceError
 import models.common.errors.PresentationError
@@ -131,17 +136,17 @@ class MovementsControllerImpl @Inject() (
   private lazy val sCounter: Counter = counter(s"success-counter")
   private lazy val fCounter: Counter = counter(s"failure-counter")
 
-  private lazy val jsonOnlyAcceptHeader = Seq(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value)
+  private lazy val jsonOnlyAcceptHeader = Seq(VersionedJsonHeader(Version2_1))
 
   private lazy val jsonAndXmlAcceptHeaders = Seq(
-    VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value,
-    VERSION_2_1_ACCEPT_HEADER_VALUE_XML.value
+    VersionedJsonHeader(Version2_1),
+    VersionedXmlHeader(Version2_1)
   )
 
   private lazy val jsonAndJsonWrappedXmlAcceptHeaders = Seq(
-    VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value,
-    VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML.value,
-    VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value
+    VersionedJsonHeader(Version2_1),
+    VersionedJsonPlusXmlHeader(Version2_1),
+    VersionedJsonHyphenXmlHeader(Version2_1)
   )
 
   private def contentSizeIsLessThanLimit(size: Long): EitherT[Future, PresentationError, Unit] = EitherT {
@@ -415,26 +420,22 @@ class MovementsControllerImpl @Inject() (
     hc: HeaderCarrier
   ): EitherT[Future, PresentationError, BodyAndContentType] = {
     def bodyExists(bodyAndSize: BodyAndSize): EitherT[Future, PresentationError, BodyAndContentType] =
-      VersionedRouting.formatAccept(acceptHeader) match {
+      VersionedRouting.validateAcceptHeader(acceptHeader) match {
         case Left(error) => EitherT.leftT(error)
-        case Right(value) =>
-          value match {
-            case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON if bodyAndSize.size > config.smallMessageSizeLimit =>
-              EitherT.leftT[Future, BodyAndContentType](
-                PresentationError.notAcceptableError(s"Messages larger than ${config.smallMessageSizeLimit} bytes cannot be retrieved in JSON")
-              )
-            case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON =>
-              for {
-                jsonStream <- conversionService.xmlToJson(messageSummary.messageType.get, bodyAndSize.body).asPresentation
-                bodyWithContentType = BodyAndContentType(MimeTypes.JSON, jsonStream)
-              } yield bodyWithContentType
-            case VERSION_2_1_ACCEPT_HEADER_VALUE_XML =>
-              EitherT.rightT[Future, PresentationError](
-                BodyAndContentType(MimeTypes.XML, bodyAndSize.body)
-              )
-            case _ =>
-              EitherT.leftT(PresentationError.notAcceptableError("Invalid accept header"))
-          }
+        case Right(VersionedJsonHeader(_)) if bodyAndSize.size > config.smallMessageSizeLimit =>
+          EitherT.leftT[Future, BodyAndContentType](
+            PresentationError.notAcceptableError(s"Messages larger than ${config.smallMessageSizeLimit} bytes cannot be retrieved in JSON")
+          )
+        case Right(VersionedJsonHeader(_)) =>
+          for {
+            jsonStream <- conversionService.xmlToJson(messageSummary.messageType.get, bodyAndSize.body).asPresentation
+            bodyWithContentType = BodyAndContentType(MimeTypes.JSON, jsonStream)
+          } yield bodyWithContentType
+        case Right(VersionedXmlHeader(_)) =>
+          EitherT.rightT[Future, PresentationError](
+            BodyAndContentType(MimeTypes.XML, bodyAndSize.body)
+          )
+        case _ => EitherT.leftT(PresentationError.notAcceptableError("Invalid accept header"))
       }
 
     bodyAndSizeMaybe match {
@@ -454,37 +455,34 @@ class MovementsControllerImpl @Inject() (
     hc: HeaderCarrier
   ): EitherT[Future, PresentationError, Source[ByteString, ?]] = {
     def bodyExists(bodyAndSize: BodyAndSize): EitherT[Future, PresentationError, Source[ByteString, ?]] =
-      VersionedRouting.formatAccept(acceptHeader) match {
+      VersionedRouting.validateAcceptHeader(acceptHeader) match {
         case Left(error) => EitherT.leftT(error)
-        case Right(value) =>
-          value match {
-            case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON if bodyAndSize.size > config.smallMessageSizeLimit =>
-              EitherT.leftT[Future, Source[ByteString, ?]](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
-            case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON =>
-              for {
-                jsonStream <- conversionService.xmlToJson(messageSummary.messageType.get, bodyAndSize.body).asPresentation
-                summary = messageSummary.copy(body = None)
-                jsonHateoasResponse = Json
-                  .toJson(
-                    HateoasMovementMessageResponse(movementId, summary.id, summary, movementType)
-                  )
-                  .as[JsObject]
-                stream <- jsonToByteStringStream(jsonHateoasResponse.fields, "body", jsonStream)
-              } yield stream
-            case VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML | VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN =>
-              if (messageSummary.body.isDefined)
-                EitherT.rightT[Future, PresentationError](
-                  Source.single(ByteString(Json.stringify(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType))))
-                )
-              else
-                mergeStreamIntoJson(
-                  Json.toJson(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)).as[JsObject].fields,
-                  "body",
-                  bodyAndSize.body
-                )
-            case _ =>
-              EitherT.leftT(PresentationError.notAcceptableError("Invalid accept header"))
-          }
+        case Right(VersionedJsonHeader(_)) if bodyAndSize.size > config.smallMessageSizeLimit =>
+          EitherT.leftT[Future, Source[ByteString, ?]](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
+        case Right(VersionedJsonHeader(_)) =>
+          for {
+            jsonStream <- conversionService.xmlToJson(messageSummary.messageType.get, bodyAndSize.body).asPresentation
+            summary = messageSummary.copy(body = None)
+            jsonHateoasResponse = Json
+              .toJson(
+                HateoasMovementMessageResponse(movementId, summary.id, summary, movementType)
+              )
+              .as[JsObject]
+            stream <- jsonToByteStringStream(jsonHateoasResponse.fields, "body", jsonStream)
+          } yield stream
+        case Right(VersionedJsonPlusXmlHeader(_)) | Right(VersionedJsonHyphenXmlHeader(_)) =>
+          if (messageSummary.body.isDefined)
+            EitherT.rightT[Future, PresentationError](
+              Source.single(ByteString(Json.stringify(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType))))
+            )
+          else
+            mergeStreamIntoJson(
+              Json.toJson(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType)).as[JsObject].fields,
+              "body",
+              bodyAndSize.body
+            )
+        case _ =>
+          EitherT.leftT(PresentationError.notAcceptableError("Invalid accept header"))
       }
 
     bodyAndSizeMaybe match {

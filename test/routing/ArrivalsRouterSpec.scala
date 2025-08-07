@@ -16,6 +16,10 @@
 
 package routing
 
+import models.Version2_1
+import models.VersionedJsonHeader
+import models.VersionedJsonHyphenXmlHeader
+import models.VersionedJsonPlusXmlHeader
 import models.common.MovementType.Arrival
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
@@ -65,16 +69,16 @@ class ArrivalsRouterSpec extends AnyFreeSpec with Matchers with OptionValues wit
   "route to the version 2_1 controller" - {
     def executeTest(callValue: Call, sutValue: => Action[Source[ByteString, ?]], expectedStatus: Int, isVersion: Boolean): Unit =
       Seq(
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON.value),
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML.value),
-        Some(VERSION_2_1_ACCEPT_HEADER_VALUE_JSON_XML_HYPHEN.value)
+        Some(VersionedJsonHeader(Version2_1)),
+        Some(VersionedJsonPlusXmlHeader(Version2_1)),
+        Some(VersionedJsonHyphenXmlHeader(Version2_1))
       ).foreach {
-        acceptHeaderValue =>
+        accept =>
           val arrivalsHeaders = FakeHeaders(
-            Seq(HeaderNames.ACCEPT -> acceptHeaderValue.get, HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+            Seq(HeaderNames.ACCEPT -> accept.get.value, HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
           )
 
-          s"when the accept header equals ${acceptHeaderValue.getOrElse("nothing")}, it returns status code $expectedStatus" in {
+          s"when the accept header equals ${accept.get.value}, it returns status code $expectedStatus" in {
             val request =
               FakeRequest(method = callValue.method, uri = callValue.url, body = <test></test>, headers = arrivalsHeaders)
             val result = call(sutValue, request)

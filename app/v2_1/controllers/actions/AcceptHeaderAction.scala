@@ -18,6 +18,7 @@ package v2_1.controllers.actions
 
 import cats.implicits.catsSyntaxEitherId
 import com.google.inject.Inject
+import models.VersionedHeader
 import models.common.errors.PresentationError
 import play.api.http.HeaderNames
 import play.api.libs.json.Json
@@ -32,7 +33,7 @@ import scala.concurrent.Future
 
 trait AcceptHeaderAction[R[_] <: Request[?]] extends ActionRefiner[R, R]
 
-class AcceptHeaderActionImpl[R[_] <: Request[?]] @Inject() (acceptedHeaders: Seq[String])(implicit
+class AcceptHeaderActionImpl[R[_] <: Request[?]] @Inject() (acceptedHeaders: Seq[VersionedHeader])(implicit
   val executionContext: ExecutionContext
 ) extends AcceptHeaderAction[R] {
 
@@ -52,8 +53,8 @@ class AcceptHeaderActionImpl[R[_] <: Request[?]] @Inject() (acceptedHeaders: Seq
     }
 
   private def checkAcceptHeader[A](acceptHeaderValue: String, request: R[A]): Either[Result, R[A]] =
-    VersionedRouting.formatAccept(acceptHeaderValue) match {
-      case Right(validatedAcceptHeader) if acceptedHeaders.contains(validatedAcceptHeader.value) =>
+    VersionedRouting.validateAcceptHeader(acceptHeaderValue) match {
+      case Right(validatedAcceptHeader) if acceptedHeaders.contains(validatedAcceptHeader) =>
         request.asRight
       case _ =>
         NotAcceptable(Json.toJson(PresentationError.notAcceptableError("The Accept header is missing or invalid."))).asLeft
