@@ -24,9 +24,11 @@ import com.github.tomakehurst.wiremock.client.WireMock.patch
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
+import connectors.PushNotificationsConnector
 import io.lemonlabs.uri.Url
 import models.common.MessageId
 import models.common.MovementId
+import models.request.PushNotificationsAssociation
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
@@ -50,7 +52,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.WiremockSuite
-import v2_1.models.request.PushNotificationsAssociation
 import v2_1.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -73,7 +74,7 @@ class PushNotificationsConnectorSpec
   }
   // using thenAnswer for lazy semantics
 
-  lazy val sut = new PushNotificationsConnectorImpl(httpClientV2, new MetricRegistry)
+  lazy val sut = new PushNotificationsConnector(httpClientV2, new MetricRegistry)
 
   "associate" - {
 

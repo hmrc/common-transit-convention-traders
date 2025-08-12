@@ -97,7 +97,7 @@ trait VersionedRouting {
           }
     }
 
-  private def bindingFailureAction(message: String)(implicit materializer: Materializer): Action[Source[ByteString, ?]] =
+  def bindingFailureAction(message: String)(implicit materializer: Materializer): Action[Source[ByteString, ?]] =
     Action.async(streamFromMemory) {
       implicit request =>
         request.body.runWith(Sink.ignore)

@@ -17,6 +17,7 @@
 package models.common.errors
 
 import cats.data.NonEmptyList
+import models.formats.CommonFormats
 import play.api.http.Status.BAD_REQUEST
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.functional.syntax.unlift
@@ -26,7 +27,6 @@ import play.api.libs.json.OWrites
 import play.api.libs.json.Reads
 import play.api.libs.json.__
 import uk.gov.hmrc.http.UpstreamErrorResponse
-import v2_1.models.formats.CommonFormats
 
 object PresentationError extends CommonFormats {
 

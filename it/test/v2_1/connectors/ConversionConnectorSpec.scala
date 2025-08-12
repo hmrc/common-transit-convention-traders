@@ -20,10 +20,12 @@ import com.codahale.metrics.MetricRegistry
 import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import config.AppConfig
+import connectors.ConversionConnector
+import models.request.MessageType
 import org.apache.pekko.stream.Materializer
-import org.scalatest.concurrent._
+import org.scalatest.concurrent.*
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
@@ -31,9 +33,8 @@ import play.api.http.Status.OK
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
-import utils._
-import v2_1.models.HeaderTypes.jsonToXml
-import v2_1.models.request.MessageType
+import utils.*
+import models.HeaderTypes.jsonToXml
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContextExecutor
@@ -54,7 +55,7 @@ class ConversionConnectorSpec
   lazy val messageType                           = MessageType.DeclarationData
   lazy val jsonStream                            = Source.single(ByteString("{}", StandardCharsets.UTF_8))
 
-  lazy val sut: ConversionConnectorImpl = new ConversionConnectorImpl(httpClientV2, appConfig, new MetricRegistry)
+  lazy val sut = new ConversionConnector(httpClientV2, appConfig, new MetricRegistry)
 
   "POST /messages/:messageType " - {
     "when making a successful submission, must return successful" in {

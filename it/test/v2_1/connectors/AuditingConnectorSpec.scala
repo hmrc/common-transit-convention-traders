@@ -25,11 +25,16 @@ import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
 import config.Constants
+import connectors.AuditingConnector
 import io.lemonlabs.uri.Url
+import models.AuditType
 import models.common.EORINumber
 import models.common.MessageId
 import models.common.MovementId
 import models.common.MovementType
+import models.request.Details
+import models.request.MessageType
+import models.request.Metadata
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
@@ -53,10 +58,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.WiremockSuite
-import v2_1.models._
-import v2_1.models.request.Details
-import v2_1.models.request.MessageType
-import v2_1.models.request.Metadata
 import v2_1.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -79,7 +80,7 @@ class AuditingConnectorSpec
     _ => Url.parse(server.baseUrl())
   ) // using thenAnswer for lazy semantics
 
-  lazy val sut                        = new AuditingConnectorImpl(httpClientV2, new MetricRegistry)
+  lazy val sut                        = new AuditingConnector(httpClientV2, new MetricRegistry)
   def targetUrl(auditType: AuditType) = s"/transit-movements-auditing/audit/${auditType.name}"
 
   lazy val contentSize = 49999L

@@ -1,0 +1,43 @@
+/*
+ * Copyright 2023 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package models.responses.hateoas
+
+import models.common.MovementId
+import models.common.MovementType
+import models.responses.MovementSummary
+import play.api.libs.json.JsObject
+import play.api.libs.json.Json
+
+object HateoasMovementResponse extends HateoasResponse {
+
+  def apply(movementId: MovementId, movementSummary: MovementSummary, movementType: MovementType): JsObject =
+    Json
+      .obj(
+        "_links" -> Json.obj(
+          "self"     -> Json.obj("href" -> getMovementUri(movementId, movementType)),
+          "messages" -> Json.obj("href" -> getMessagesUri(movementId, None, movementType))
+        ),
+        "id"                      -> movementId,
+        "movementReferenceNumber" -> movementSummary.movementReferenceNumber,
+        "localReferenceNumber"    -> movementSummary.localReferenceNumber,
+        "created"                 -> movementSummary.created,
+        "updated"                 -> movementSummary.updated,
+        "enrollmentEORINumber"    -> movementSummary.enrollmentEORINumber,
+        "movementEORINumber"      -> movementSummary.movementEORINumber
+      )
+
+}

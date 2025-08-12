@@ -16,14 +16,18 @@
 
 package v2_1.connectors
 
+import base.TestActorSystem
 import com.codahale.metrics.MetricRegistry
 import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import com.fasterxml.jackson.core.JsonParseException
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import config.AppConfig
 import config.Constants
+import connectors.PersistenceConnector
+import models.MessageStatus
+import models.TotalCount
 import models.common.MessageId
 import models.common.MovementId
 import models.common.MovementType
@@ -53,20 +57,18 @@ import utils.GuiceWiremockSuite
 import models.common.EORINumber
 import models.common.ItemCount
 import models.common.LocalReferenceNumber
-import v2_1.models.MessageStatus
 import models.common.MovementReferenceNumber
 import models.common.PageNumber
-import v2_1.models.TotalCount
 import models.common.errors.ErrorCode
 import models.common.errors.PresentationError
 import models.common.errors.StandardError
-import v2_1.models.request.MessageType
-import v2_1.models.request.MessageUpdate
-import v2_1.models.responses.MessageSummary
-import v2_1.models.responses.MovementResponse
-import v2_1.models.responses.PaginationMessageSummary
-import v2_1.models.responses.PaginationMovementSummary
-import v2_1.models.responses.UpdateMovementResponse
+import models.request.MessageType
+import models.request.MessageUpdate
+import models.responses.MessageSummary
+import models.responses.MovementResponse
+import models.responses.PaginationMessageSummary
+import models.responses.PaginationMovementSummary
+import models.responses.UpdateMovementResponse
 import v2_1.utils.CommonGenerators
 
 import java.nio.charset.StandardCharsets
@@ -76,7 +78,6 @@ import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 import play.api.http.Status.CREATED
-import v2_1.base.TestActorSystem
 
 class PersistenceConnectorSpec
     extends AnyFreeSpec
@@ -97,10 +98,10 @@ class PersistenceConnectorSpec
       "internal-auth.token" -> token
     )
 
-  implicit lazy val appConfig: AppConfig                  = app.injector.instanceOf[AppConfig]
-  lazy val messageType                                    = MessageType.DeclarationAmendment
-  lazy val persistenceConnector: PersistenceConnectorImpl = new PersistenceConnectorImpl(httpClientV2, new MetricRegistry)
-  implicit lazy val ec: ExecutionContext                  = app.materializer.executionContext
+  implicit lazy val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
+  lazy val messageType                   = MessageType.DeclarationAmendment
+  lazy val persistenceConnector          = new PersistenceConnector(httpClientV2, new MetricRegistry)
+  implicit lazy val ec: ExecutionContext = app.materializer.executionContext
 
   val defaultFilterParams = "?page=1&count=25"
 

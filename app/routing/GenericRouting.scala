@@ -17,6 +17,7 @@
 package routing
 
 import com.google.inject.Inject
+import controllers.MovementsController
 import controllers.common.stream.StreamingParsers
 import models.VersionedHeader
 import models.VersionedJsonHeader
@@ -30,8 +31,7 @@ import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.libs.json.Json
 import play.api.mvc.*
-import v2_1.controllers.MovementsController
-import v2_1.models.Bindings.*
+import models.Bindings.*
 
 import java.time.OffsetDateTime
 import scala.concurrent.Future

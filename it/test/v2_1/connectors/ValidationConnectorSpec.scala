@@ -16,8 +16,6 @@
 
 package v2_1.connectors
 
-import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.util.ByteString
 import cats.data.NonEmptyList
 import com.codahale.metrics.MetricRegistry
 import com.fasterxml.jackson.core.JsonParseException
@@ -26,6 +24,16 @@ import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
+import connectors.ValidationConnector
+import models.common.errors.JsonValidationError
+import models.common.errors.PresentationError
+import models.common.errors.XmlValidationError
+import models.request.MessageType
+import models.responses.BusinessValidationResponse
+import models.responses.JsonSchemaValidationResponse
+import models.responses.XmlSchemaValidationResponse
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -42,13 +50,6 @@ import uk.gov.hmrc.http
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
-import models.common.errors.JsonValidationError
-import models.common.errors.PresentationError
-import models.common.errors.XmlValidationError
-import v2_1.models.request.MessageType
-import v2_1.models.responses.BusinessValidationResponse
-import v2_1.models.responses.JsonSchemaValidationResponse
-import v2_1.models.responses.XmlSchemaValidationResponse
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext
@@ -65,8 +66,8 @@ class ValidationConnectorSpec
 
   lazy val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
-  lazy val validationConnector: ValidationConnectorImpl = new ValidationConnectorImpl(httpClientV2, appConfig, new MetricRegistry)
-  implicit lazy val ec: ExecutionContext                = app.materializer.executionContext
+  lazy val validationConnector: ValidationConnector = new ValidationConnector(httpClientV2, appConfig, new MetricRegistry)
+  implicit lazy val ec: ExecutionContext            = app.materializer.executionContext
 
   "POST /message/:messageType/validation" - {
 

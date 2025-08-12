@@ -16,11 +16,16 @@
 
 package v2_1.connectors
 
+import base.TestActorSystem
 import com.codahale.metrics.MetricRegistry
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import config.AppConfig
+import connectors.UpscanConnector
 import io.lemonlabs.uri.Url
 import models.common.*
+import models.responses.UpscanFormTemplate
+import models.responses.UpscanInitiateResponse
+import models.responses.UpscanReference
 import org.apache.pekko.stream.scaladsl.Sink
 import org.mockito.Mockito.reset
 import org.mockito.Mockito.when
@@ -39,11 +44,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.WiremockSuite
-import v2_1.base.TestActorSystem
-import v2_1.models.responses.UpscanFormTemplate
-import v2_1.models.responses.UpscanInitiateResponse
-import v2_1.models.responses.UpscanReference
-import v2_1.models.responses.UpscanResponse.DownloadUrl
+import models.responses.UpscanResponse.DownloadUrl
 import v2_1.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -83,7 +84,7 @@ class UpscanConnectorSpec
     when(mockAppConfig.upscanMaximumFileSize).thenReturn(2000L)
   }
 
-  lazy val sut = new UpscanConnectorImpl(mockAppConfig, httpClientV2, new MetricRegistry)
+  lazy val sut = new UpscanConnector(mockAppConfig, httpClientV2, new MetricRegistry)
 
   "POST /upscan/v2/initiate" - {
     "when making a successful call to upscan initiate with client ID query strings turned on, must return upscan upload url" in forAll(

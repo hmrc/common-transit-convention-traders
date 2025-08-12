@@ -16,8 +16,10 @@
 
 package routing
 
+import base.TestActorSystem
 import cats.implicits.catsSyntaxOptionId
 import cats.implicits.none
+import controllers.FakeMovementsController
 import models.common.MessageId
 import models.common.MovementId
 import models.common.MovementType
@@ -37,8 +39,6 @@ import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.defaultAwaitTimeout
 import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
-import v2_1.base.TestActorSystem
-import v2_1.fakes.controllers.FakeMovementsController
 
 import scala.xml.Elem
 

@@ -16,6 +16,8 @@
 
 package routing
 
+import base.TestActorSystem
+import controllers.FakeMovementsController
 import models.Version2_1
 import models.VersionedJsonHeader
 import models.VersionedJsonHyphenXmlHeader
@@ -43,8 +45,6 @@ import play.api.test.Helpers.call
 import play.api.test.Helpers.contentAsJson
 import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
-import v2_1.base.TestActorSystem
-import v2_1.fakes.controllers.FakeMovementsController
 
 import scala.concurrent.duration.DurationInt
 import scala.math.abs

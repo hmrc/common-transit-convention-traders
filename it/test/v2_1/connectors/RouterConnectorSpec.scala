@@ -20,9 +20,11 @@ import com.codahale.metrics.MetricRegistry
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import config.AppConfig
 import config.Constants
+import connectors.RouterConnector
+import models.SubmissionRoute
 import models.common.MessageId
 import models.common.MovementId
 import org.scalacheck.Arbitrary.arbitrary
@@ -45,11 +47,10 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.GuiceWiremockSuite
 import models.common.EORINumber
-import v2_1.models.SubmissionRoute
 import models.common.errors.ErrorCode
 import models.common.errors.PresentationError
 import models.common.errors.StandardError
-import v2_1.models.request.MessageType
+import models.request.MessageType
 import v2_1.utils.CommonGenerators
 
 import java.nio.charset.StandardCharsets
@@ -78,7 +79,7 @@ class RouterConnectorSpec
 
   implicit lazy val materializer: Materializer = app.materializer
   implicit lazy val ec: ExecutionContext       = app.materializer.executionContext
-  lazy val routerConnector: RouterConnector    = new RouterConnectorImpl(new MetricRegistry, httpClientV2)
+  lazy val routerConnector: RouterConnector    = new RouterConnector(new MetricRegistry, httpClientV2)
 
   def targetUrl(eoriNumber: EORINumber, messageType: MessageType, movementId: MovementId, messageId: MessageId) =
     s"/transit-movements-router/traders/${eoriNumber.value}/movements/${messageType.movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
