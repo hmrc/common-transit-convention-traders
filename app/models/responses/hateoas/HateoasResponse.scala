@@ -31,7 +31,7 @@ import java.time.OffsetDateTime
 trait HateoasResponse {
 
   def getMessageUri(movementId: MovementId, messageId: MessageId, movementType: MovementType): String =
-    routing.routes.GenericRouting.getMessage(movementType, movementId.value, messageId.value).urlWithContext
+    controllers.routes.MovementsController.getMessage(movementType, movementId, messageId).urlWithContext
 
   def getMessagesUri(
     movementId: MovementId,
@@ -41,10 +41,10 @@ trait HateoasResponse {
     count: Option[ItemCount] = None,
     receivedUntil: Option[OffsetDateTime] = None
   ): String =
-    routing.routes.GenericRouting
+    controllers.routes.MovementsController
       .getMessageIds(
         movementType,
-        movementId.value,
+        movementId,
         receivedSince,
         page,
         count,
@@ -53,7 +53,7 @@ trait HateoasResponse {
       .urlWithContext
 
   def getMovementUri(movementId: MovementId, movementType: MovementType): String =
-    routing.routes.GenericRouting.getMovement(movementType = movementType, id = movementId.value).urlWithContext
+    controllers.routes.MovementsController.getMovement(movementType = movementType, id = movementId).urlWithContext
 
   def getMovementsUri(
     movementType: MovementType,
@@ -65,8 +65,8 @@ trait HateoasResponse {
     receivedUntil: Option[OffsetDateTime],
     localReferenceNumber: Option[LocalReferenceNumber]
   ): String =
-    routing.routes.GenericRouting
-      .getMovementForEori(updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber, movementType)
+    controllers.routes.MovementsController
+      .getMovements(updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber, movementType)
       .urlWithContext
 
   def getMovementId(movementType: MovementType): String = if (movementType == MovementType.Departure) "departureId" else "arrivalId"

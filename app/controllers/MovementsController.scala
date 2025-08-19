@@ -26,11 +26,12 @@ import config.AppConfig
 import config.Constants
 import config.Constants.XClientIdHeader
 import controllers.actions.AuthNewEnrolmentOnlyAction
-import controllers.actions.providers.AcceptHeaderActionProvider
-import controllers.common.AuthenticatedRequest
+import controllers.actions.ValidateAcceptRefiner
+import controllers.actions.ValidatedVersionedRequest
 import controllers.common.ContentTypeRouting
 import controllers.common.stream.StreamingParsers
 import metrics.HasActionMetrics
+import models.*
 import models.AuditType.*
 import models.common.*
 import models.common.errors.PersistenceError
@@ -38,9 +39,8 @@ import models.common.errors.PresentationError
 import models.common.errors.PushNotificationError
 import models.request.MessageType
 import models.request.MessageUpdate
-import models.responses.hateoas.*
 import models.responses.*
-import models.*
+import models.responses.hateoas.*
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
@@ -52,7 +52,6 @@ import play.api.libs.Files.TemporaryFileCreator
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.mvc.*
-import routing.*
 import services.*
 import uk.gov.hmrc.http
 import uk.gov.hmrc.http.HeaderCarrier
@@ -80,14 +79,14 @@ trait MovementsController {
   def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent]
 
   def getMovements(
-    movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
     page: Option[PageNumber],
     count: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime],
-    localReferenceNumber: Option[LocalReferenceNumber]
+    localReferenceNumber: Option[LocalReferenceNumber],
+    movementType: MovementType
   ): Action[AnyContent]
   def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, ?]]
   def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent]
@@ -111,7 +110,7 @@ class MovementsControllerImpl @Inject() (
   routerService: RouterService,
   auditService: AuditingService,
   pushNotificationsService: PushNotificationsService,
-  acceptHeaderActionProvider: AcceptHeaderActionProvider,
+  validateAccept: ValidateAcceptRefiner,
   val metrics: MetricRegistry,
   xmlParsingService: XmlMessageParsingService,
   jsonParsingService: JsonMessageParsingService,
@@ -123,7 +122,6 @@ class MovementsControllerImpl @Inject() (
     with Logging
     with StreamingParsers
     with StreamWithFile
-    with VersionedRouting
     with ConvertError
     with ContentTypeRouting
     with HasActionMetrics {
@@ -131,14 +129,14 @@ class MovementsControllerImpl @Inject() (
   private lazy val sCounter: Counter = counter(s"success-counter")
   private lazy val fCounter: Counter = counter(s"failure-counter")
 
-  private lazy val jsonOnlyAcceptHeader = Seq(VersionedJsonHeader(Version2_1))
+  private lazy val jsonOnlyAcceptHeader: Set[VersionedHeader] = Set(VersionedJsonHeader(Version2_1))
 
-  private lazy val jsonAndXmlAcceptHeaders = Seq(
+  private lazy val jsonAndXmlAcceptHeaders: Set[VersionedHeader] = Set(
     VersionedJsonHeader(Version2_1),
     VersionedXmlHeader(Version2_1)
   )
 
-  private lazy val jsonAndJsonWrappedXmlAcceptHeaders = Seq(
+  private lazy val jsonAndJsonWrappedXmlAcceptHeaders: Set[VersionedHeader] = Set(
     VersionedJsonHeader(Version2_1),
     VersionedJsonPlusXmlHeader(Version2_1),
     VersionedJsonHyphenXmlHeader(Version2_1)
@@ -151,7 +149,7 @@ class MovementsControllerImpl @Inject() (
     }
   }
 
-  def createMovement(movementType: MovementType): Action[Source[ByteString, ?]] =
+  override def createMovement(movementType: MovementType): Action[Source[ByteString, ?]] =
     movementType match {
       case MovementType.Arrival =>
         contentTypeRoute {
@@ -168,7 +166,7 @@ class MovementsControllerImpl @Inject() (
     }
 
   private def submitDepartureDeclarationXML(): Action[Source[ByteString, ?]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
+    (authActionNewEnrolmentOnly andThen validateAccept(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
@@ -182,7 +180,7 @@ class MovementsControllerImpl @Inject() (
                 Some(Json.toJson(err)),
                 None,
                 None,
-                Some(request.eoriNumber),
+                Some(request.authenticatedRequest.eoriNumber),
                 Some(MovementType.Departure),
                 Some(MessageType.DeclarationData)
               )
@@ -196,7 +194,7 @@ class MovementsControllerImpl @Inject() (
     }
 
   private def submitDepartureDeclarationJSON(): Action[Source[ByteString, ?]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
+    (authActionNewEnrolmentOnly andThen validateAccept(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -211,7 +209,7 @@ class MovementsControllerImpl @Inject() (
                 Some(Json.toJson(err)),
                 None,
                 None,
-                Some(request.eoriNumber),
+                Some(request.authenticatedRequest.eoriNumber),
                 Some(MovementType.Departure),
                 Some(MessageType.DeclarationData)
               )
@@ -232,7 +230,7 @@ class MovementsControllerImpl @Inject() (
     }
 
   private def submitArrivalNotificationXML(): Action[Source[ByteString, ?]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
+    (authActionNewEnrolmentOnly andThen validateAccept(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
@@ -246,7 +244,7 @@ class MovementsControllerImpl @Inject() (
                 Some(Json.toJson(err)),
                 None,
                 None,
-                Some(request.eoriNumber),
+                Some(request.authenticatedRequest.eoriNumber),
                 Some(MovementType.Arrival),
                 Some(MessageType.ArrivalNotification)
               )
@@ -260,7 +258,7 @@ class MovementsControllerImpl @Inject() (
     }
 
   private def submitArrivalNotificationJSON(): Action[Source[ByteString, ?]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
+    (authActionNewEnrolmentOnly andThen validateAccept(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -275,7 +273,7 @@ class MovementsControllerImpl @Inject() (
                 Some(Json.toJson(err)),
                 None,
                 None,
-                Some(request.eoriNumber),
+                Some(request.authenticatedRequest.eoriNumber),
                 Some(MovementType.Arrival),
                 Some(MessageType.ArrivalNotification)
               )
@@ -290,35 +288,35 @@ class MovementsControllerImpl @Inject() (
     }
 
   private def submitLargeMessageXML(movementType: MovementType): Action[Source[ByteString, ?]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
+    (authActionNewEnrolmentOnly andThen validateAccept(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         request.body.runWith(Sink.ignore)
 
         (for {
-          movementResponse <- persistenceService.createMovement(request.eoriNumber, movementType, None).asPresentation.leftMap {
+          movementResponse <- persistenceService.createMovement(request.authenticatedRequest.eoriNumber, movementType, None).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 CreateMovementDBFailed,
                 Some(Json.toJson(err)),
                 None,
                 None,
-                Some(request.eoriNumber),
+                Some(request.authenticatedRequest.eoriNumber),
                 Some(movementType),
                 None
               )
               err
           }
           upscanResponse <- upscanService
-            .upscanInitiate(request.eoriNumber, movementType, movementResponse.movementId, movementResponse.messageId)
+            .upscanInitiate(request.authenticatedRequest.eoriNumber, movementType, movementResponse.movementId, movementResponse.messageId)
             .asPresentation
           boxResponseOption <-
             if (request.headers.get(Constants.XClientIdHeader).isEmpty) { EitherT.rightT[Future, PresentationError](None) }
             else
               mapToOptionalResponse(
                 pushNotificationsService
-                  .associate(movementResponse.movementId, movementType, request.headers, request.eoriNumber)
+                  .associate(movementResponse.movementId, movementType, request.headers, request.authenticatedRequest.eoriNumber)
                   .leftMap {
                     err =>
                       val auditType = if (err == PushNotificationError.BoxNotFound) PushPullNotificationGetBoxFailed else PushNotificationFailed
@@ -327,7 +325,7 @@ class MovementsControllerImpl @Inject() (
                         Some(Json.obj("message" -> err.toString)),
                         Some(movementResponse.movementId),
                         Some(movementResponse.messageId),
-                        Some(request.eoriNumber),
+                        Some(request.authenticatedRequest.eoriNumber),
                         Some(movementType),
                         None
                       )
@@ -340,7 +338,7 @@ class MovementsControllerImpl @Inject() (
             None,
             Some(movementResponse.movementId),
             Some(movementResponse.messageId),
-            Some(request.eoriNumber),
+            Some(request.authenticatedRequest.eoriNumber),
             Some(movementType),
             None
           )
@@ -351,27 +349,27 @@ class MovementsControllerImpl @Inject() (
           )
     }
 
-  def getMessage(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonAndJsonWrappedXmlAcceptHeaders)).async {
+  override def getMessage(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =
+    (authActionNewEnrolmentOnly andThen validateAccept(jsonAndJsonWrappedXmlAcceptHeaders)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
-          messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation.leftMap {
+          messageSummary <- persistenceService.getMessage(request.authenticatedRequest.eoriNumber, movementType, movementId, messageId).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 GetMovementMessageDBFailed,
                 Some(Json.toJson(err)),
                 Some(movementId),
                 Some(messageId),
-                Some(request.eoriNumber),
+                Some(request.authenticatedRequest.eoriNumber),
                 Some(movementType),
                 None
               )
               err
           }
           acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
-          messageBody <- getBody(request.eoriNumber, movementType, movementId, messageId, messageSummary.body)
-          body        <- mergeMessageSummaryAndBody(movementId, messageSummary, movementType, acceptHeader, messageBody)
+          messageBody <- getBody(request.authenticatedRequest.eoriNumber, movementType, movementId, messageId, messageSummary.body)
+          body        <- mergeMessageSummaryAndBody(movementId, messageSummary, movementType, messageBody)
         } yield body).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Ok.chunked(response, Some(MimeTypes.JSON))
@@ -409,27 +407,22 @@ class MovementsControllerImpl @Inject() (
 
   private def formatMessageBody(
     messageSummary: MessageSummary,
-    acceptHeader: String,
     bodyAndSizeMaybe: Option[BodyAndSize]
   )(implicit
-    hc: HeaderCarrier
+    hc: HeaderCarrier,
+    request: ValidatedVersionedRequest[?]
   ): EitherT[Future, PresentationError, BodyAndContentType] = {
     def bodyExists(bodyAndSize: BodyAndSize): EitherT[Future, PresentationError, BodyAndContentType] =
-      VersionedRouting.validateAcceptHeader(acceptHeader) match {
-        case Left(error) => EitherT.leftT(error)
-        case Right(VersionedJsonHeader(_)) if bodyAndSize.size > config.smallMessageSizeLimit =>
-          EitherT.leftT[Future, BodyAndContentType](
-            PresentationError.notAcceptableError(s"Messages larger than ${config.smallMessageSizeLimit} bytes cannot be retrieved in JSON")
-          )
-        case Right(VersionedJsonHeader(_)) =>
+      request.versionedHeader match {
+        case VersionedXmlHeader(_) =>
+          EitherT.rightT(BodyAndContentType(MimeTypes.XML, bodyAndSize.body))
+        case VersionedJsonHeader(_) if bodyAndSize.size > config.smallMessageSizeLimit =>
+          EitherT.leftT(PresentationError.notAcceptableError(s"Messages larger than ${config.smallMessageSizeLimit} bytes cannot be retrieved in JSON"))
+        case VersionedJsonHeader(_) =>
           for {
             jsonStream <- conversionService.xmlToJson(messageSummary.messageType.get, bodyAndSize.body).asPresentation
             bodyWithContentType = BodyAndContentType(MimeTypes.JSON, jsonStream)
           } yield bodyWithContentType
-        case Right(VersionedXmlHeader(_)) =>
-          EitherT.rightT[Future, PresentationError](
-            BodyAndContentType(MimeTypes.XML, bodyAndSize.body)
-          )
         case _ => EitherT.leftT(PresentationError.notAcceptableError("Invalid accept header"))
       }
 
@@ -444,17 +437,16 @@ class MovementsControllerImpl @Inject() (
     movementId: MovementId,
     messageSummary: MessageSummary,
     movementType: MovementType,
-    acceptHeader: String,
     bodyAndSizeMaybe: Option[BodyAndSize]
   )(implicit
-    hc: HeaderCarrier
+    hc: HeaderCarrier,
+    request: ValidatedVersionedRequest[?]
   ): EitherT[Future, PresentationError, Source[ByteString, ?]] = {
     def bodyExists(bodyAndSize: BodyAndSize): EitherT[Future, PresentationError, Source[ByteString, ?]] =
-      VersionedRouting.validateAcceptHeader(acceptHeader) match {
-        case Left(error) => EitherT.leftT(error)
-        case Right(VersionedJsonHeader(_)) if bodyAndSize.size > config.smallMessageSizeLimit =>
+      request.versionedHeader match {
+        case VersionedJsonHeader(_) if bodyAndSize.size > config.smallMessageSizeLimit =>
           EitherT.leftT[Future, Source[ByteString, ?]](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
-        case Right(VersionedJsonHeader(_)) =>
+        case VersionedJsonHeader(_) =>
           for {
             jsonStream <- conversionService.xmlToJson(messageSummary.messageType.get, bodyAndSize.body).asPresentation
             summary = messageSummary.copy(body = None)
@@ -465,7 +457,7 @@ class MovementsControllerImpl @Inject() (
               .as[JsObject]
             stream <- jsonToByteStringStream(jsonHateoasResponse.fields, "body", jsonStream)
           } yield stream
-        case Right(VersionedJsonPlusXmlHeader(_)) | Right(VersionedJsonHyphenXmlHeader(_)) =>
+        case VersionedJsonPlusXmlHeader(_) | VersionedJsonHyphenXmlHeader(_) =>
           if (messageSummary.body.isDefined)
             EitherT.rightT[Future, PresentationError](
               Source.single(ByteString(Json.stringify(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType))))
@@ -489,22 +481,22 @@ class MovementsControllerImpl @Inject() (
     }
   }
 
-  def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonAndXmlAcceptHeaders)).async {
+  override def getMessageBody(movementType: MovementType, movementId: MovementId, messageId: MessageId): Action[AnyContent] =
+    (authActionNewEnrolmentOnly andThen validateAccept(jsonAndXmlAcceptHeaders)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         (for {
-          messageSummary <- persistenceService.getMessage(request.eoriNumber, movementType, movementId, messageId).asPresentation
+          messageSummary <- persistenceService.getMessage(request.authenticatedRequest.eoriNumber, movementType, movementId, messageId).asPresentation
           acceptHeader = request.headers.get(HeaderNames.ACCEPT).get
-          messageBody <- getBody(request.eoriNumber, movementType, movementId, messageId, messageSummary.body)
-          body        <- formatMessageBody(messageSummary, acceptHeader, messageBody)
+          messageBody <- getBody(request.authenticatedRequest.eoriNumber, movementType, movementId, messageId, messageSummary.body)
+          body        <- formatMessageBody(messageSummary, messageBody)
         } yield body).fold(
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
           response => Ok.chunked(response.body, Some(response.contentType))
         )
     }
 
-  def getMessageIds(
+  override def getMessageIds(
     movementType: MovementType,
     movementId: MovementId,
     receivedSince: Option[OffsetDateTime],
@@ -512,7 +504,7 @@ class MovementsControllerImpl @Inject() (
     count: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime]
   ): Action[AnyContent] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async {
+    (authActionNewEnrolmentOnly andThen validateAccept(jsonOnlyAcceptHeader)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -521,7 +513,7 @@ class MovementsControllerImpl @Inject() (
           _ <- ensurePositive(count.map(_.value), "count")
           perPageCount = determineMaxPerPageCount(count.map(_.value))
           response <- persistenceService
-            .getMessages(request.eoriNumber, movementType, movementId, receivedSince, page, perPageCount, receivedUntil)
+            .getMessages(request.authenticatedRequest.eoriNumber, movementType, movementId, receivedSince, page, perPageCount, receivedUntil)
             .asPresentation
             .leftMap {
               err =>
@@ -530,7 +522,7 @@ class MovementsControllerImpl @Inject() (
                   Some(Json.toJson(err)),
                   Some(movementId),
                   None,
-                  Some(request.eoriNumber),
+                  Some(request.authenticatedRequest.eoriNumber),
                   Some(movementType),
                   None
                 )
@@ -542,13 +534,13 @@ class MovementsControllerImpl @Inject() (
         )
     }
 
-  def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async {
+  override def getMovement(movementType: MovementType, movementId: MovementId): Action[AnyContent] =
+    (authActionNewEnrolmentOnly andThen validateAccept(jsonOnlyAcceptHeader)).async {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         persistenceService
-          .getMovement(request.eoriNumber, movementType, movementId)
+          .getMovement(request.authenticatedRequest.eoriNumber, movementType, movementId)
           .asPresentation
           .leftMap {
             err =>
@@ -557,7 +549,7 @@ class MovementsControllerImpl @Inject() (
                 Some(Json.toJson(err)),
                 Some(movementId),
                 None,
-                Some(request.eoriNumber),
+                Some(request.authenticatedRequest.eoriNumber),
                 Some(movementType),
                 None
               )
@@ -585,17 +577,17 @@ class MovementsControllerImpl @Inject() (
       )
       .getOrElse(ItemCount(config.defaultItemsPerPage.toLong))
 
-  def getMovements(
-    movementType: MovementType,
+  override def getMovements(
     updatedSince: Option[OffsetDateTime],
     movementEORI: Option[EORINumber],
     movementReferenceNumber: Option[MovementReferenceNumber],
     page: Option[PageNumber],
     count: Option[ItemCount],
     receivedUntil: Option[OffsetDateTime],
-    localReferenceNumber: Option[LocalReferenceNumber]
+    localReferenceNumber: Option[LocalReferenceNumber],
+    movementType: MovementType
   ): Action[AnyContent] =
-    authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader) async {
+    authActionNewEnrolmentOnly andThen validateAccept(jsonOnlyAcceptHeader) async {
       request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -605,7 +597,7 @@ class MovementsControllerImpl @Inject() (
           perPageCount = determineMaxPerPageCount(count.map(_.value))
           response <- persistenceService
             .getMovements(
-              request.eoriNumber,
+              request.authenticatedRequest.eoriNumber,
               movementType,
               updatedSince,
               movementEORI,
@@ -623,7 +615,7 @@ class MovementsControllerImpl @Inject() (
                   Some(Json.toJson(err)),
                   None,
                   None,
-                  Some(request.eoriNumber),
+                  Some(request.authenticatedRequest.eoriNumber),
                   Some(movementType),
                   None
                 )
@@ -650,7 +642,7 @@ class MovementsControllerImpl @Inject() (
         )
     }
 
-  def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, ?]] =
+  override def attachMessage(movementType: MovementType, movementId: MovementId): Action[Source[ByteString, ?]] =
     contentTypeRoute {
       case ContentTypeRouting.ContentType.XML  => attachMessageXML(movementId, movementType)
       case ContentTypeRouting.ContentType.JSON => attachMessageJSON(movementId, movementType)
@@ -658,14 +650,14 @@ class MovementsControllerImpl @Inject() (
     }
 
   private def initiateLargeMessage(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, ?]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
+    (authActionNewEnrolmentOnly andThen validateAccept(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
         request.body.runWith(Sink.ignore)
 
         (for {
-          _ <- persistenceService.getMovement(request.eoriNumber, movementType, movementId).asPresentation.leftMap {
+          _ <- persistenceService.getMovement(request.authenticatedRequest.eoriNumber, movementType, movementId).asPresentation.leftMap {
             err =>
               if (err.code.statusCode == NOT_FOUND)
                 auditService.auditStatusEvent(
@@ -673,7 +665,7 @@ class MovementsControllerImpl @Inject() (
                   Some(Json.toJson(err)),
                   Some(movementId),
                   None,
-                  Some(request.eoriNumber),
+                  Some(request.authenticatedRequest.eoriNumber),
                   Some(movementType),
                   None
                 )
@@ -686,7 +678,7 @@ class MovementsControllerImpl @Inject() (
                 Some(Json.toJson(err)),
                 Some(movementId),
                 None,
-                Some(request.eoriNumber),
+                Some(request.authenticatedRequest.eoriNumber),
                 Some(movementType),
                 None
               )
@@ -698,13 +690,13 @@ class MovementsControllerImpl @Inject() (
             None,
             Some(movementId),
             Some(updateMovementResponse.messageId),
-            Some(request.eoriNumber),
+            Some(request.authenticatedRequest.eoriNumber),
             Some(movementType),
             None
           )
 
           upscanResponse <- upscanService
-            .upscanInitiate(request.eoriNumber, movementType, movementId, updateMovementResponse.messageId)
+            .upscanInitiate(request.authenticatedRequest.eoriNumber, movementType, movementId, updateMovementResponse.messageId)
             .asPresentation
         } yield HateoasMovementUpdateResponse(movementId, updateMovementResponse.messageId, movementType, Some(upscanResponse))).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -713,7 +705,7 @@ class MovementsControllerImpl @Inject() (
     }
 
   private def attachMessageXML(movementId: MovementId, movementType: MovementType): Action[Source[ByteString, ?]] =
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
+    (authActionNewEnrolmentOnly andThen validateAccept(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -732,7 +724,7 @@ class MovementsControllerImpl @Inject() (
                 Some(Json.toJson(err)),
                 Some(movementId),
                 None,
-                Some(request.eoriNumber),
+                Some(request.authenticatedRequest.eoriNumber),
                 Some(messageType.movementType),
                 Some(messageType)
               )
@@ -750,7 +742,7 @@ class MovementsControllerImpl @Inject() (
 
     def handleXml(movementId: MovementId, messageType: MessageType, src: Source[ByteString, ?])(implicit
       hc: HeaderCarrier,
-      request: AuthenticatedRequest[Source[ByteString, ?]]
+      request: ValidatedVersionedRequest[Source[ByteString, ?]]
     ): EitherT[Future, PresentationError, UpdateMovementResponse] =
       for {
         source <- reUsableSource(src)
@@ -766,7 +758,7 @@ class MovementsControllerImpl @Inject() (
                 Some(Json.toJson(err)),
                 Some(movementId),
                 None,
-                Some(request.eoriNumber),
+                Some(request.authenticatedRequest.eoriNumber),
                 Some(messageType.movementType),
                 Some(messageType)
               )
@@ -775,7 +767,7 @@ class MovementsControllerImpl @Inject() (
         updateResponse <- updateAndSendToEIS(movementId, movementType, messageType, source.lift(2).get, size, MimeTypes.XML)
       } yield updateResponse
 
-    (authActionNewEnrolmentOnly andThen acceptHeaderActionProvider(jsonOnlyAcceptHeader)).async(streamFromMemory) {
+    (authActionNewEnrolmentOnly andThen validateAccept(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -794,7 +786,7 @@ class MovementsControllerImpl @Inject() (
                 Some(Json.toJson(err)),
                 Some(id),
                 None,
-                Some(request.eoriNumber),
+                Some(request.authenticatedRequest.eoriNumber),
                 Some(movementType),
                 Some(messageType)
               )
@@ -809,7 +801,7 @@ class MovementsControllerImpl @Inject() (
     }
   }
 
-  def attachMessageFromUpscan(
+  override def attachMessageFromUpscan(
     eori: EORINumber,
     movementType: MovementType,
     movementId: MovementId,
@@ -963,7 +955,7 @@ class MovementsControllerImpl @Inject() (
     contentType: String
   )(implicit
     hc: HeaderCarrier,
-    request: AuthenticatedRequest[?]
+    request: ValidatedVersionedRequest[?]
   ) =
     for {
       sources <- reUsableSource(source)
@@ -975,7 +967,7 @@ class MovementsControllerImpl @Inject() (
             Some(Json.toJson(err)),
             Some(movementId),
             None,
-            Some(request.eoriNumber),
+            Some(request.authenticatedRequest.eoriNumber),
             Some(movementType),
             Some(messageType)
           )
@@ -988,7 +980,7 @@ class MovementsControllerImpl @Inject() (
         sources.lift(1).get,
         Some(movementId),
         Some(updateMovementResponse.messageId),
-        Some(request.eoriNumber),
+        Some(request.authenticatedRequest.eoriNumber),
         Some(movementType),
         Some(messageType)
       )
@@ -999,19 +991,19 @@ class MovementsControllerImpl @Inject() (
             Some(Json.obj("message" -> err.toString)),
             Some(movementId),
             Some(updateMovementResponse.messageId),
-            Some(request.eoriNumber),
+            Some(request.authenticatedRequest.eoriNumber),
             Some(movementType),
             Some(messageType)
           )
           err
       }
       _ <- routerService
-        .send(messageType, request.eoriNumber, movementId, updateMovementResponse.messageId, sources.lift(2).get)
+        .send(messageType, request.authenticatedRequest.eoriNumber, movementId, updateMovementResponse.messageId, sources.lift(2).get)
         .asPresentation
         .leftMap {
           err =>
             updateSmallMessageStatus(
-              request.eoriNumber,
+              request.authenticatedRequest.eoriNumber,
               movementType,
               movementId,
               updateMovementResponse.messageId,
@@ -1022,7 +1014,7 @@ class MovementsControllerImpl @Inject() (
               Some(Json.toJson(err)),
               Some(movementId),
               Some(updateMovementResponse.messageId),
-              Some(request.eoriNumber),
+              Some(request.authenticatedRequest.eoriNumber),
               Some(movementType),
               Some(messageType)
             )
@@ -1034,12 +1026,12 @@ class MovementsControllerImpl @Inject() (
         None,
         Some(movementId),
         Some(updateMovementResponse.messageId),
-        Some(request.eoriNumber),
+        Some(request.authenticatedRequest.eoriNumber),
         Some(movementType),
         Some(messageType)
       )
       _ <- updateSmallMessageStatus(
-        request.eoriNumber,
+        request.authenticatedRequest.eoriNumber,
         movementType,
         movementId,
         updateMovementResponse.messageId,
@@ -1051,7 +1043,7 @@ class MovementsControllerImpl @Inject() (
     src: Source[ByteString, ?],
     movementType: MovementType,
     messageType: MessageType
-  )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, ?]]) =
+  )(implicit hc: HeaderCarrier, request: ValidatedVersionedRequest[Source[ByteString, ?]]) =
     for {
       source <- reUsableSource(src)
       size   <- calculateSize(source.head)
@@ -1066,7 +1058,7 @@ class MovementsControllerImpl @Inject() (
               Some(Json.toJson(err)),
               None,
               None,
-              Some(request.eoriNumber),
+              Some(request.authenticatedRequest.eoriNumber),
               Some(movementType),
               Some(messageType)
             )
@@ -1099,17 +1091,17 @@ class MovementsControllerImpl @Inject() (
     messageType: MessageType,
     size: Long,
     contentType: String
-  )(implicit hc: HeaderCarrier, request: AuthenticatedRequest[Source[ByteString, ?]]) =
+  )(implicit hc: HeaderCarrier, request: ValidatedVersionedRequest[Source[ByteString, ?]]) =
     for {
       sources <- reUsableSource(source)
-      movementResponse <- persistenceService.createMovement(request.eoriNumber, movementType, Some(sources.head)).asPresentation.leftMap {
+      movementResponse <- persistenceService.createMovement(request.authenticatedRequest.eoriNumber, movementType, Some(sources.head)).asPresentation.leftMap {
         err =>
           auditService.auditStatusEvent(
             CreateMovementDBFailed,
             Some(Json.toJson(err)),
             None,
             None,
-            Some(request.eoriNumber),
+            Some(request.authenticatedRequest.eoriNumber),
             Some(movementType),
             Some(messageType)
           )
@@ -1122,7 +1114,7 @@ class MovementsControllerImpl @Inject() (
         sources.lift(1).get,
         Some(movementResponse.movementId),
         Some(movementResponse.messageId),
-        Some(request.eoriNumber),
+        Some(request.authenticatedRequest.eoriNumber),
         Some(movementType),
         Some(messageType)
       )
@@ -1131,7 +1123,7 @@ class MovementsControllerImpl @Inject() (
         else
           mapToOptionalResponse[PushNotificationError, BoxResponse](
             pushNotificationsService
-              .associate(movementResponse.movementId, movementType, request.headers, request.eoriNumber)
+              .associate(movementResponse.movementId, movementType, request.headers, request.authenticatedRequest.eoriNumber)
               .leftMap {
                 err =>
                   val auditType = if (err == PushNotificationError.BoxNotFound) PushPullNotificationGetBoxFailed else PushNotificationFailed
@@ -1140,7 +1132,7 @@ class MovementsControllerImpl @Inject() (
                     Some(Json.obj("message" -> err.toString)),
                     Some(movementResponse.movementId),
                     Some(movementResponse.messageId),
-                    Some(request.eoriNumber),
+                    Some(request.authenticatedRequest.eoriNumber),
                     Some(movementType),
                     None
                   )
@@ -1150,7 +1142,7 @@ class MovementsControllerImpl @Inject() (
       _ <- routerService
         .send(
           messageType,
-          request.eoriNumber,
+          request.authenticatedRequest.eoriNumber,
           movementResponse.movementId,
           movementResponse.messageId,
           sources.lift(2).get
@@ -1159,7 +1151,7 @@ class MovementsControllerImpl @Inject() (
         .leftMap {
           err =>
             updateSmallMessageStatus(
-              request.eoriNumber,
+              request.authenticatedRequest.eoriNumber,
               movementType,
               movementResponse.movementId,
               movementResponse.messageId,
@@ -1170,7 +1162,7 @@ class MovementsControllerImpl @Inject() (
               Some(Json.toJson(err)),
               Some(movementResponse.movementId),
               Some(movementResponse.messageId),
-              Some(request.eoriNumber),
+              Some(request.authenticatedRequest.eoriNumber),
               Some(movementType),
               Some(messageType)
             )
@@ -1181,12 +1173,12 @@ class MovementsControllerImpl @Inject() (
         None,
         Some(movementResponse.movementId),
         Some(movementResponse.messageId),
-        Some(request.eoriNumber),
+        Some(request.authenticatedRequest.eoriNumber),
         Some(movementType),
         Some(messageType)
       )
       _ <- updateSmallMessageStatus(
-        request.eoriNumber,
+        request.authenticatedRequest.eoriNumber,
         movementType,
         movementResponse.movementId,
         movementResponse.messageId,

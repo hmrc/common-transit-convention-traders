@@ -27,9 +27,6 @@ import cats.implicits.toBifunctorOps
 import com.codahale.metrics.MetricRegistry
 import config.AppConfig
 import config.Constants
-import controllers.actions.providers.AcceptHeaderActionProvider
-import controllers.actions.providers.AcceptHeaderActionProviderImpl
-import controllers.actions.FakeAcceptHeaderActionProvider
 import controllers.actions.FakeAuthNewEnrolmentOnlyAction
 import models.*
 import models.AuditType.*
@@ -89,7 +86,6 @@ import play.api.test.Helpers.status
 import play.api.test.FakeHeaders
 import play.api.test.FakeRequest
 import play.api.test.Helpers
-import routing.VersionedRouting
 import services.*
 import uk.gov.hmrc.http.HeaderCarrier
 
