@@ -25,7 +25,7 @@ import com.google.inject.Singleton
 import config.AppConfig
 import config.Constants
 import config.Constants.XClientIdHeader
-import controllers.actions.AuthNewEnrolmentOnlyAction
+import controllers.actions.AuthAction
 import controllers.actions.ValidateAcceptRefiner
 import controllers.actions.ValidatedVersionedRequest
 import controllers.common.ContentTypeRouting
@@ -103,7 +103,7 @@ trait MovementsController {
 @Singleton
 class MovementsControllerImpl @Inject() (
   val controllerComponents: ControllerComponents,
-  authActionNewEnrolmentOnly: AuthNewEnrolmentOnlyAction,
+  authActionNewEnrolmentOnly: AuthAction,
   validationService: ValidationService,
   conversionService: ConversionService,
   persistenceService: PersistenceService,
@@ -423,7 +423,7 @@ class MovementsControllerImpl @Inject() (
             jsonStream <- conversionService.xmlToJson(messageSummary.messageType.get, bodyAndSize.body).asPresentation
             bodyWithContentType = BodyAndContentType(MimeTypes.JSON, jsonStream)
           } yield bodyWithContentType
-        case _ => EitherT.leftT(PresentationError.notAcceptableError("Invalid accept header"))
+        case _ => EitherT.leftT(PresentationError.notAcceptableError("The Accept header is missing or invalid."))
       }
 
     bodyAndSizeMaybe match {

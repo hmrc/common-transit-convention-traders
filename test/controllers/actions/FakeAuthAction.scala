@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext.global
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-case class FakeAuthNewEnrolmentOnlyAction(eori: EORINumber = EORINumber("id")) extends AuthNewEnrolmentOnlyAction {
+case class FakeAuthAction(eori: EORINumber = EORINumber("id")) extends AuthAction {
 
   override def invokeBlock[A](request: Request[A], block: AuthenticatedRequest[A] => Future[Result]): Future[Result] =
     block(AuthenticatedRequest(eori, request))

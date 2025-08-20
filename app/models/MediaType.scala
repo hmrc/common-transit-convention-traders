@@ -47,5 +47,5 @@ object MediaType {
   def fromString(value: String): Either[PresentationError, MediaType] =
     allExtensions
       .find(_.value == value.toLowerCase())
-      .toRight(PresentationError.notAcceptableError("Invalid accept header"))
+      .toRight(PresentationError.notAcceptableError("The Accept header is missing or invalid."))
 }

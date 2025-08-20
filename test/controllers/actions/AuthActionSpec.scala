@@ -40,7 +40,7 @@ import java.time.Clock
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class AuthNewEnrolmentOnlyActionSpec extends AnyFreeSpec with Matchers with MockitoSugar with BeforeAndAfterEach {
+class AuthActionSpec extends AnyFreeSpec with Matchers with MockitoSugar with BeforeAndAfterEach {
 
   val authConnector = mock[AuthConnector]
   val mockClock     = mock[Clock]
@@ -57,7 +57,7 @@ class AuthNewEnrolmentOnlyActionSpec extends AnyFreeSpec with Matchers with Mock
     reset(authConnector)
   }
 
-  class Harness(authAction: AuthNewEnrolmentOnlyAction) {
+  class Harness(authAction: AuthAction) {
 
     def get(): Action[AnyContent] = authAction {
       authedRequest =>

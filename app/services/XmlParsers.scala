@@ -25,16 +25,20 @@ import org.apache.pekko.stream.scaladsl.Flow
 
 object XmlParsers {
 
-  def messageTypeExtractor(messageTypeList: Seq[MessageType]): Flow[ParseEvent, Either[ExtractionError, MessageType], NotUsed] =
-    Flow[ParseEvent]
-      .filter(_ == StartElement)
-      .take(1)
-      .map {
-        case StartElement(localName, _, _, _, _) =>
-          messageTypeList
-            .find(_.rootNode == localName)
-            .toRight(ExtractionError.MessageTypeNotFound(localName))
-        case _ => Left(ExtractionError.MalformedInput)
-      }
+  def messageTypeExtractor(messageTypeList: Seq[MessageType]): Flow[ParseEvent, Either[ExtractionError, MessageType], NotUsed] = Flow[ParseEvent]
+    .filter {
+      case _: StartElement =>
+        true
+      case _ => false
+    }
+    .take(1)
+    .map {
+      case s: StartElement =>
+        messageTypeList
+          .find(_.rootNode == s.localName)
+          .map(Right(_))
+          .getOrElse(Left(ExtractionError.MessageTypeNotFound(s.localName)))
+      case _ => Left(ExtractionError.MalformedInput)
+    }
 
 }

@@ -36,11 +36,11 @@ import scala.concurrent.Future
 import scala.util.control.NonFatal
 
 @ImplementedBy(classOf[AuthNewEnrolmentOnlyActionImpl])
-trait AuthNewEnrolmentOnlyAction extends ActionBuilder[AuthenticatedRequest, AnyContent] with ActionFunction[Request, AuthenticatedRequest]
+trait AuthAction extends ActionBuilder[AuthenticatedRequest, AnyContent] with ActionFunction[Request, AuthenticatedRequest]
 
 class AuthNewEnrolmentOnlyActionImpl @Inject() (override val authConnector: AuthConnector, val parser: BodyParsers.Default)(implicit
   val executionContext: ExecutionContext
-) extends AuthNewEnrolmentOnlyAction
+) extends AuthAction
     with AuthorisedFunctions
     with Logging {
 

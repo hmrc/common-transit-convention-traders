@@ -27,7 +27,8 @@ import cats.implicits.toBifunctorOps
 import com.codahale.metrics.MetricRegistry
 import config.AppConfig
 import config.Constants
-import controllers.actions.FakeAuthNewEnrolmentOnlyAction
+import controllers.actions.FakeAuthAction
+import controllers.actions.ValidateAcceptRefiner
 import models.*
 import models.AuditType.*
 import models.common.*
@@ -99,6 +100,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Try
 import scala.xml.NodeSeq
+
+//TODO: ensure movementId and messageId bindings are working as expected
 
 class MovementsControllerSpec
     extends AnyFreeSpec
@@ -176,7 +179,6 @@ class MovementsControllerSpec
   )
 
   def createControllerAndMocks(
-    acceptHeaderProvider: AcceptHeaderActionProvider = FakeAcceptHeaderActionProvider,
     enrollmentEORI: EORINumber = EORINumber("id")
   ): ControllerAndMocks = {
     val mockValidationService       = mock[ValidationService]
@@ -196,14 +198,14 @@ class MovementsControllerSpec
 
     val sut: MovementsController = new MovementsControllerImpl(
       Helpers.stubControllerComponents(),
-      FakeAuthNewEnrolmentOnlyAction(enrollmentEORI),
+      FakeAuthAction(enrollmentEORI),
       mockValidationService,
       mockConversionService,
       mockPersistenceService,
       mockRouterService,
       mockAuditService,
       mockPushNotificationService,
-      acceptHeaderProvider,
+      new ValidateAcceptRefiner(),
       new MetricRegistry,
       mockXmlParsingService,
       mockJsonParsingService,
@@ -250,7 +252,7 @@ class MovementsControllerSpec
   ): Request[A] =
     FakeRequest(
       method = method,
-      uri = routing.routes.GenericRouting.createMovement(movementType).url,
+      uri = controllers.routes.MovementsController.createMovement(movementType).url,
       headers = headers,
       body = body
     )
@@ -263,7 +265,7 @@ class MovementsControllerSpec
   ): Request[A] =
     FakeRequest(
       method = method,
-      uri = routing.routes.GenericRouting.attachMessage(movementType, "123").url,
+      uri = controllers.routes.MovementsController.attachMessage(movementType, MovementId("123")).url,
       headers = headers,
       body = body
     )
@@ -2674,7 +2676,6 @@ class MovementsControllerSpec
         _,
         _
       ) = createControllerAndMocks(
-        new AcceptHeaderActionProviderImpl()
       )
       val standardHeaders = FakeHeaders(
         Seq(
@@ -2709,7 +2710,6 @@ class MovementsControllerSpec
         _,
         _
       ) = createControllerAndMocks(
-        new AcceptHeaderActionProviderImpl()
       )
       val standardHeaders = FakeHeaders(
         Seq(
@@ -4613,7 +4613,6 @@ class MovementsControllerSpec
         _,
         _
       ) = createControllerAndMocks(
-        new AcceptHeaderActionProviderImpl()
       )
       val standardHeaders = FakeHeaders(
         Seq(
@@ -4649,7 +4648,6 @@ class MovementsControllerSpec
         _,
         _
       ) = createControllerAndMocks(
-        new AcceptHeaderActionProviderImpl()
       )
       val standardHeaders = FakeHeaders(
         Seq(
@@ -4841,7 +4839,7 @@ class MovementsControllerSpec
                   _ => EitherT.rightT(summaries)
                 )
 
-              val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+              val request = FakeRequest("GET", "/", FakeHeaders().add((HeaderNames.ACCEPT, VersionedJsonHeader(Version2_1).value)), Source.empty[ByteString])
               val result  = sut.getMessageIds(movementType, movementId, dateTime, Some(pageNumber), Some(itemCount), dateTime)(request)
 
               status(result) mustBe OK
@@ -4897,7 +4895,7 @@ class MovementsControllerSpec
             )
 
           when(mockAppConfig.maxItemsPerPage).thenReturn(3)
-          val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+          val request = FakeRequest("GET", "/", FakeHeaders().add((HeaderNames.ACCEPT, VersionedJsonHeader(Version2_1).value)), Source.empty[ByteString])
           val result  = sut.getMessageIds(movementType, movementId, None, None, Some(ItemCount(2)), None)(request)
 
           status(result) mustBe OK
@@ -4953,7 +4951,7 @@ class MovementsControllerSpec
             )
 
           when(mockAppConfig.maxItemsPerPage).thenReturn(3)
-          val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+          val request = FakeRequest("GET", "/", FakeHeaders().add((HeaderNames.ACCEPT, VersionedJsonHeader(Version2_1).value)), Source.empty[ByteString])
           val result  = sut.getMessageIds(movementType, movementId, None, None, Some(ItemCount(4)), None)(request)
 
           status(result) mustBe OK
@@ -5005,7 +5003,7 @@ class MovementsControllerSpec
               _ => EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType))
             )
 
-          val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+          val request = FakeRequest("GET", "/", FakeHeaders().add((HeaderNames.ACCEPT, VersionedJsonHeader(Version2_1).value)), Source.empty[ByteString])
           val result  = sut.getMessageIds(movementType, movementId, None, page, Some(itemCount), None)(request)
 
           status(result) mustBe NOT_FOUND
@@ -5075,7 +5073,7 @@ class MovementsControllerSpec
               _ => EitherT.leftT(PersistenceError.PageNotFound)
             )
 
-          val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+          val request = FakeRequest("GET", "/", FakeHeaders().add((HeaderNames.ACCEPT, VersionedJsonHeader(Version2_1).value)), Source.empty[ByteString])
           val result  = sut.getMessageIds(movementType, movementId, None, Some(page), Some(itemCount), None)(request)
 
           status(result) mustBe NOT_FOUND
@@ -5135,7 +5133,7 @@ class MovementsControllerSpec
               _ => EitherT.leftT(PersistenceError.UnexpectedError(thr = None))
             )
 
-          val request = FakeRequest("GET", "/", FakeHeaders(), Source.empty[ByteString])
+          val request = FakeRequest("GET", "/", FakeHeaders().add((HeaderNames.ACCEPT, VersionedJsonHeader(Version2_1).value)), Source.empty[ByteString])
           val result  = sut.getMessageIds(movementType, movementId, None, Some(pageNumber), Some(itemCount), None)(request)
 
           status(result) mustBe INTERNAL_SERVER_ERROR
@@ -5164,7 +5162,6 @@ class MovementsControllerSpec
             _,
             _
           ) = createControllerAndMocks(
-            new AcceptHeaderActionProviderImpl()
           )
           val standardHeaders = FakeHeaders(
             Seq(
@@ -5204,7 +5201,6 @@ class MovementsControllerSpec
             _,
             _
           ) = createControllerAndMocks(
-            new AcceptHeaderActionProviderImpl()
           )
           val standardHeaders = FakeHeaders(
             Seq(
@@ -5251,7 +5247,7 @@ class MovementsControllerSpec
           val request =
             FakeRequest(
               "GET",
-              routing.routes.GenericRouting.getMessage(movementType, movementId.value, messageId.value).url,
+              controllers.routes.MovementsController.getMessage(movementType, movementId, messageId).url,
               headers,
               Source.empty[ByteString]
             )
@@ -5771,7 +5767,6 @@ class MovementsControllerSpec
             _,
             _
           ) = createControllerAndMocks(
-            new AcceptHeaderActionProviderImpl()
           )
           val standardHeaders = FakeHeaders(
             Seq(
@@ -5805,20 +5800,20 @@ class MovementsControllerSpec
       val smallMessageSummaryInObjectStore =
         smallMessageSummaryXml.copy(body = None, uri = Some(ObjectStoreURI("common-transit-convention-traders/movements/123.xml")))
       Seq(
-        VersionedJsonHeader(Version2_1).value,
-        VersionedXmlHeader(Version2_1).value
+        VersionedJsonHeader(Version2_1),
+        VersionedXmlHeader(Version2_1)
       ).foreach {
-        acceptHeaderValue =>
+        acceptHeader =>
           val headers =
-            FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeaderValue))
+            FakeHeaders(Seq(HeaderNames.ACCEPT -> acceptHeader.value))
           val request =
             FakeRequest(
               "GET",
-              routing.routes.GenericRouting.getMessageBody(movementType, movementId, messageId).url,
+              controllers.routes.MovementsController.getMessageBody(movementType, movementId, messageId).url,
               headers,
               Source.empty[ByteString]
             )
-          s"for a small message, when the accept header equals $acceptHeaderValue" - {
+          s"for a small message, when the accept header equals ${acceptHeader.value}" - {
 
             "when the message is stored in mongo and is found" in {
               val ControllerAndMocks(
@@ -5843,7 +5838,7 @@ class MovementsControllerSpec
                 .thenAnswer(
                   _ => EitherT.rightT(smallMessageSummaryXml)
                 )
-              if (acceptHeaderValue == VersionedJsonHeader(Version2_1).value) {
+              if (acceptHeader == VersionedJsonHeader(Version2_1)) {
                 when(
                   mockConversionService.xmlToJson(eqTo(smallMessageSummaryXml.messageType.get), any())(any(), any(), any())
                 ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
@@ -5853,14 +5848,15 @@ class MovementsControllerSpec
 
               status(result) mustBe OK
 
-              if (acceptHeaderValue == VersionedJsonHeader(Version2_1).value) {
-                contentAsJson(result) mustBe Json.toJson(json)
-                contentType(result).get mustBe MimeTypes.JSON
-              } else if (acceptHeaderValue == VersionedXmlHeader(Version2_1).value) {
-                contentAsString(result) mustBe xml
-                contentType(result).get mustBe MimeTypes.XML
-              } else fail(s"Invalid accept header: $acceptHeaderValue")
-
+              acceptHeader match {
+                case VersionedXmlHeader(version) =>
+                  contentAsString(result) mustBe xml
+                  contentType(result).get mustBe MimeTypes.XML
+                case VersionedJsonHeader(version) =>
+                  contentAsJson(result) mustBe Json.toJson(json)
+                  contentType(result).get mustBe MimeTypes.JSON
+                case _ => fail(s"Invalid accept header: ${acceptHeader.value}")
+              }
             }
 
             "when the message is stored in object store and is found" in {
@@ -5898,7 +5894,7 @@ class MovementsControllerSpec
                   _ => EitherT.rightT(Source.single(ByteString(xml)))
                 )
 
-              if (acceptHeaderValue == VersionedJsonHeader(Version2_1).value) {
+              if (acceptHeader == VersionedJsonHeader(Version2_1)) {
                 when(
                   mockConversionService.xmlToJson(eqTo(smallMessageSummaryXml.messageType.get), any())(any(), any(), any())
                 ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
@@ -5907,17 +5903,6 @@ class MovementsControllerSpec
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
               status(result) mustBe OK
-
-              VersionedRouting.validateAcceptHeader(acceptHeaderValue) match {
-                case Right(VersionedJsonHeader(Version2_1)) =>
-                  contentAsJson(result) mustBe Json.toJson(json)
-                  contentType(result).get mustBe MimeTypes.JSON
-                case Right(VersionedXmlHeader(Version2_1)) =>
-                  contentAsString(result) mustBe xml
-                  contentType(result).get mustBe MimeTypes.XML
-                case Left(failure) => fail(failure.message)
-                case _             => fail("Unexpected failure")
-              }
             }
 
             "when no message is found" in {
@@ -5989,7 +5974,7 @@ class MovementsControllerSpec
             }
           }
 
-          s"for a large message,when the accept header equals $acceptHeaderValue" - {
+          s"for a large message,when the accept header equals ${acceptHeader.value}" - {
 
             "when the message is found but greater than small message limit" in {
               val ControllerAndMocks(
@@ -6028,20 +6013,19 @@ class MovementsControllerSpec
 
               val result = sut.getMessageBody(movementType, movementId, messageId)(request)
 
-              VersionedRouting.validateAcceptHeader(acceptHeaderValue) match {
-                case Right(VersionedJsonHeader(Version2_1)) =>
+              acceptHeader match {
+                case VersionedXmlHeader(version) =>
+                  status(result) mustBe OK
+                  contentType(result).get mustBe MimeTypes.XML
+                  contentAsString(result) mustBe xml
+                case VersionedJsonHeader(version) =>
                   status(result) mustBe NOT_ACCEPTABLE
                   contentType(result).get mustBe MimeTypes.JSON
                   contentAsJson(result) mustBe Json.obj(
                     "code"    -> "NOT_ACCEPTABLE",
                     "message" -> "Messages larger than 1 bytes cannot be retrieved in JSON"
                   )
-                case Right(VersionedXmlHeader(Version2_1)) =>
-                  status(result) mustBe OK
-                  contentType(result).get mustBe MimeTypes.XML
-                  contentAsString(result) mustBe xml
-                case Left(failure) => fail(failure.message)
-                case _             => fail("Unexpected failure")
+                case _ => fail("Unexpected failure")
               }
             }
 
@@ -6080,7 +6064,7 @@ class MovementsControllerSpec
                   _ => EitherT.rightT(Source.single(ByteString(xml)))
                 )
 
-              if (acceptHeaderValue == VersionedJsonHeader(Version2_1).value) {
+              if (acceptHeader == VersionedJsonHeader(Version2_1)) {
                 when(
                   mockConversionService.xmlToJson(eqTo(largeMessageSummaryXml.messageType.get), any())(any(), any(), any())
                 ).thenReturn(EitherT.rightT(Source.single(ByteString(Json.stringify(json)))))
@@ -6090,15 +6074,14 @@ class MovementsControllerSpec
 
               status(result) mustBe OK
 
-              VersionedRouting.validateAcceptHeader(acceptHeaderValue) match {
-                case Right(VersionedJsonHeader(Version2_1)) =>
-                  contentType(result).get mustBe MimeTypes.JSON
-                  contentAsJson(result) mustBe Json.toJson(json)
-                case Right(VersionedXmlHeader(Version2_1)) =>
+              acceptHeader match {
+                case VersionedXmlHeader(version) =>
                   contentType(result).get mustBe MimeTypes.XML
                   contentAsString(result) mustBe xml
-                case Left(failure) => fail(failure.message)
-                case _             => fail("Unexpected failure")
+                case VersionedJsonHeader(version) =>
+                  contentType(result).get mustBe MimeTypes.JSON
+                  contentAsJson(result) mustBe Json.toJson(json)
+                case _ => fail()
               }
             }
 
@@ -6189,7 +6172,6 @@ class MovementsControllerSpec
             _,
             _
           ) = createControllerAndMocks(
-            new AcceptHeaderActionProviderImpl()
           )
           val standardHeaders = FakeHeaders(
             Seq(
@@ -6212,7 +6194,7 @@ class MovementsControllerSpec
 
     s"GET /movements/${movementType.movementType}" - {
       val url =
-        routing.routes.GenericRouting.getMovementForEori(movementType = movementType).url
+        controllers.routes.MovementsController.getMovements(movementType = movementType).url
 
       "should return ok with json body for movements" in {
         val ControllerAndMocks(
@@ -6279,7 +6261,7 @@ class MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedJsonHeader(Version2_1).value)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, None, None, None, None)(request)
+        val result = sut.getMovements(None, None, None, None, None, None, None, movementType)(request)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(
@@ -6353,7 +6335,7 @@ class MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedJsonHeader(Version2_1).value)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, None, Some(ItemCount(1)), None, None)(request)
+        val result = sut.getMovements(None, None, None, None, Some(ItemCount(1)), None, None, movementType)(request)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(
@@ -6427,7 +6409,7 @@ class MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedJsonHeader(Version2_1).value)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, None, Some(ItemCount(3)), None, None)(request)
+        val result = sut.getMovements(None, None, None, None, Some(ItemCount(3)), None, None, movementType)(request)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(
@@ -6491,7 +6473,7 @@ class MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedJsonHeader(Version2_1).value)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, page, None, None, None)(request)
+        val result = sut.getMovements(None, None, None, page, None, None, None, movementType)(request)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(
@@ -6555,7 +6537,7 @@ class MovementsControllerSpec
           AnyContentAsEmpty
         )
 
-        val result = sut.getMovements(movementType, None, None, None, page, None, None, None)(request)
+        val result = sut.getMovements(None, None, None, page, None, None, None, movementType)(request)
 
         status(result) mustBe NOT_FOUND
 
@@ -6623,7 +6605,7 @@ class MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedJsonHeader(Version2_1).value)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, None, None, None, None)(request)
+        val result = sut.getMovements(None, None, None, None, None, None, None, movementType)(request)
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         contentAsJson(result) mustBe Json.obj(
@@ -6662,9 +6644,7 @@ class MovementsControllerSpec
           _,
           _,
           _
-        ) = createControllerAndMocks(
-          new AcceptHeaderActionProviderImpl()
-        )
+        ) = createControllerAndMocks()
         when(
           mockPersistenceService.getMovements(
             EORINumber(any()),
@@ -6691,7 +6671,7 @@ class MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> VersionedJsonHyphenXmlHeader(Version2_1).value)),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, None, None, None, None)(request)
+        val result = sut.getMovements(None, None, None, None, None, None, None, movementType)(request)
 
         status(result) mustBe NOT_ACCEPTABLE
         contentAsJson(result) mustBe Json.obj(
@@ -6714,7 +6694,6 @@ class MovementsControllerSpec
           _,
           _
         ) = createControllerAndMocks(
-          new AcceptHeaderActionProviderImpl()
         )
         when(
           mockPersistenceService.getMovements(
@@ -6742,7 +6721,7 @@ class MovementsControllerSpec
           headers = FakeHeaders(Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json123")),
           AnyContentAsEmpty
         )
-        val result = sut.getMovements(movementType, None, None, None, None, None, None, None)(request)
+        val result = sut.getMovements(None, None, None, None, None, None, None, movementType)(request)
 
         status(result) mustBe NOT_ACCEPTABLE
         contentAsJson(result) mustBe Json.obj(
@@ -6793,7 +6772,7 @@ class MovementsControllerSpec
             )
 
           val url =
-            routing.routes.GenericRouting.getMovement(movementType, movementId.value).url
+            controllers.routes.MovementsController.getMovement(movementType, movementId).url
 
           val request = FakeRequest(
             GET,
@@ -6846,7 +6825,7 @@ class MovementsControllerSpec
             }
 
           val url =
-            routing.routes.GenericRouting.getMovement(movementType, movementId.value).url
+            controllers.routes.MovementsController.getMovement(movementType, movementId).url
 
           val request = FakeRequest(
             GET,
@@ -6898,7 +6877,7 @@ class MovementsControllerSpec
             }
 
           val url =
-            routing.routes.GenericRouting.getMovement(movementType, movementId.value).url
+            controllers.routes.MovementsController.getMovement(movementType, movementId).url
 
           val request = FakeRequest(
             GET,
@@ -6943,7 +6922,6 @@ class MovementsControllerSpec
             _,
             _
           ) = createControllerAndMocks(
-            new AcceptHeaderActionProviderImpl()
           )
           when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
             .thenAnswer {
@@ -6952,7 +6930,7 @@ class MovementsControllerSpec
             }
 
           val url =
-            routing.routes.GenericRouting.getMovement(movementType, movementId.value).url
+            controllers.routes.MovementsController.getMovement(movementType, movementId).url
 
           val request = FakeRequest(
             GET,
@@ -6982,7 +6960,6 @@ class MovementsControllerSpec
             _,
             _
           ) = createControllerAndMocks(
-            new AcceptHeaderActionProviderImpl()
           )
           when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
             .thenAnswer {
@@ -6991,7 +6968,7 @@ class MovementsControllerSpec
             }
 
           val url =
-            routing.routes.GenericRouting.getMovement(movementType, movementId.value).url
+            controllers.routes.MovementsController.getMovement(movementType, movementId).url
 
           val request = FakeRequest(
             GET,
@@ -8089,29 +8066,6 @@ class MovementsControllerSpec
             eqTo(Some(messageType))
           )(any[HeaderCarrier], any[ExecutionContext])
         }
-
-        // TODO: Fix the intention of this test... or the code behind it
-        "must return Accepted when persistence message status is not updated" ignore {
-          val ControllerAndMocks(
-            sut,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-          ) = setup(persistenceStatus = EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType)))
-
-          val request = fakeJsonAttachRequest(contentJson)
-          val result  = sut.attachMessage(movementType, movementId)(request)
-
-          status(result) mustBe ACCEPTED
-        }
-
       }
 
       "without content type" - {
@@ -8566,7 +8520,6 @@ class MovementsControllerSpec
           _,
           _
         ) = createControllerAndMocks(
-          new AcceptHeaderActionProviderImpl()
         )
         val standardHeaders = FakeHeaders(
           Seq(
@@ -8603,7 +8556,6 @@ class MovementsControllerSpec
             _,
             _
           ) = createControllerAndMocks(
-            new AcceptHeaderActionProviderImpl()
           )
           val standardHeaders = FakeHeaders(
             Seq(
@@ -8649,7 +8601,6 @@ class MovementsControllerSpec
             mockUpscanService,
             _
           ) = createControllerAndMocks(
-            new AcceptHeaderActionProviderImpl()
           )
 
           when(mockUpscanService.upscanGetFile(DownloadUrl(eqTo(upscanDownloadUrl.value)))(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
@@ -8762,7 +8713,6 @@ class MovementsControllerSpec
               mockUpscanService,
               _
             ) = createControllerAndMocks(
-              new AcceptHeaderActionProviderImpl()
             )
 
             val allowedTypes =
@@ -8877,7 +8827,6 @@ class MovementsControllerSpec
               mockUpscanService,
               _
             ) = createControllerAndMocks(
-              new AcceptHeaderActionProviderImpl()
             )
 
             val allowedTypes =
@@ -9009,7 +8958,6 @@ class MovementsControllerSpec
               mockUpscanService,
               _
             ) = createControllerAndMocks(
-              new AcceptHeaderActionProviderImpl()
             )
 
             val allowedTypes =
@@ -9144,7 +9092,6 @@ class MovementsControllerSpec
                 mockUpscanService,
                 mockAppConfig
               ) = createControllerAndMocks(
-                new AcceptHeaderActionProviderImpl()
               )
 
               val allowedTypes =
@@ -9350,7 +9297,6 @@ class MovementsControllerSpec
                 mockUpscanService,
                 mockAppConfig
               ) = createControllerAndMocks(
-                new AcceptHeaderActionProviderImpl()
               )
 
               val ppnsMessage = Json.toJson(
@@ -9557,7 +9503,6 @@ class MovementsControllerSpec
                 mockUpscanService,
                 mockAppConfig
               ) = createControllerAndMocks(
-                new AcceptHeaderActionProviderImpl()
               )
 
               val allowedTypes =
@@ -9847,7 +9792,7 @@ class MovementsControllerSpec
             count = None,
             receivedUntil = None,
             localReferenceNumber = None
-          )(FakeRequest())
+          )(FakeRequest().withHeaders(HeaderNames.ACCEPT -> VersionedJsonHeader(Version2_1).value))
 
           status(result) mustBe BAD_REQUEST
           contentAsJson(result) mustBe Json.obj(
@@ -9872,7 +9817,7 @@ class MovementsControllerSpec
             count = Some(ItemCount(0)),
             receivedUntil = None,
             localReferenceNumber = None
-          )(FakeRequest())
+          )(FakeRequest().withHeaders(HeaderNames.ACCEPT -> VersionedJsonHeader(Version2_1).value))
 
           status(result) mustBe BAD_REQUEST
           contentAsJson(result) mustBe Json.obj(
@@ -9920,7 +9865,7 @@ class MovementsControllerSpec
             page = Some(PageNumber(1)),
             count = Some(ItemCount(10)),
             receivedUntil = Some(OffsetDateTime.now)
-          )(FakeRequest())
+          )(FakeRequest().withHeaders(HeaderNames.ACCEPT -> VersionedJsonHeader(Version2_1).value))
 
           status(result) mustBe OK
       }
@@ -9962,7 +9907,7 @@ class MovementsControllerSpec
             page = Some(PageNumber(-1)),
             count = Some(ItemCount(10)),
             receivedUntil = Some(OffsetDateTime.now)
-          )(FakeRequest())
+          )(FakeRequest().withHeaders(HeaderNames.ACCEPT -> VersionedJsonHeader(Version2_1).value))
 
           status(result) mustBe BAD_REQUEST
           contentAsJson(result) mustBe Json.obj(
@@ -9987,7 +9932,7 @@ class MovementsControllerSpec
             page = Some(PageNumber(1)),
             count = Some(ItemCount(-10)),
             receivedUntil = Some(OffsetDateTime.now)
-          )(FakeRequest())
+          )(FakeRequest().withHeaders(HeaderNames.ACCEPT -> VersionedJsonHeader(Version2_1).value))
 
           status(result) mustBe BAD_REQUEST
           contentAsJson(result) mustBe Json.obj(
