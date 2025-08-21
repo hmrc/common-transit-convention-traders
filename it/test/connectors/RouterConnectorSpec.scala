@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package v2_1.connectors
+package connectors
 
 import com.codahale.metrics.MetricRegistry
 import org.apache.pekko.stream.Materializer
@@ -23,7 +23,6 @@ import org.apache.pekko.util.ByteString
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import config.AppConfig
 import config.Constants
-import connectors.RouterConnector
 import models.SubmissionRoute
 import models.common.MessageId
 import models.common.MovementId
@@ -45,13 +44,13 @@ import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
+import utils.CommonGenerators
 import utils.GuiceWiremockSuite
 import models.common.EORINumber
 import models.common.errors.ErrorCode
 import models.common.errors.PresentationError
 import models.common.errors.StandardError
 import models.request.MessageType
-import v2_1.utils.CommonGenerators
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext

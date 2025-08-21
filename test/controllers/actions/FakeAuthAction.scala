@@ -16,7 +16,7 @@
 
 package controllers.actions
 
-import controllers.common.AuthenticatedRequest
+import controllers.AuthenticatedRequest
 import models.common.EORINumber
 import play.api.mvc.AnyContent
 import play.api.mvc.BodyParser

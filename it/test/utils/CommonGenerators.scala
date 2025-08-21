@@ -14,21 +14,13 @@
  * limitations under the License.
  */
 
-package v2_1.utils
+package utils
 
 import models.BoxId
 import models.MessageStatus
 import models.ObjectStoreURI
 import models.TotalCount
-import models.common.ClientId
-import models.common.EORINumber
-import models.common.ItemCount
-import models.common.LocalReferenceNumber
-import models.common.MessageId
-import models.common.MovementId
-import models.common.MovementReferenceNumber
-import models.common.MovementType
-import models.common.PageNumber
+import models.common.*
 import models.request.MessageType
 import models.request.MessageUpdate
 import models.request.PushNotificationsAssociation

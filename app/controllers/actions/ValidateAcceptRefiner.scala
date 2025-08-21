@@ -17,7 +17,7 @@
 package controllers.actions
 
 import cats.implicits.catsSyntaxEitherId
-import controllers.common.AuthenticatedRequest
+import controllers.AuthenticatedRequest
 import models.MediaType
 import models.Version
 import models.VersionedHeader

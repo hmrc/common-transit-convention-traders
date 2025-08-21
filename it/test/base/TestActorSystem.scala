@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package v2_1.base
+package base
 
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer

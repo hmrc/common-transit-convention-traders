@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package v2_1.connectors
+package connectors
 
 import cats.data.NonEmptyList
 import com.codahale.metrics.MetricRegistry
@@ -24,7 +24,6 @@ import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
-import connectors.ValidationConnector
 import models.common.errors.JsonValidationError
 import models.common.errors.PresentationError
 import models.common.errors.XmlValidationError

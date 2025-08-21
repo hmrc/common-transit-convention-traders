@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package v2_1.connectors
+package connectors
 
 import base.TestActorSystem
 import com.codahale.metrics.MetricRegistry
@@ -25,7 +25,6 @@ import com.fasterxml.jackson.core.JsonParseException
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import config.AppConfig
 import config.Constants
-import connectors.PersistenceConnector
 import models.MessageStatus
 import models.TotalCount
 import models.common.MessageId
@@ -53,6 +52,7 @@ import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
+import utils.CommonGenerators
 import utils.GuiceWiremockSuite
 import models.common.EORINumber
 import models.common.ItemCount
@@ -69,7 +69,6 @@ import models.responses.MovementResponse
 import models.responses.PaginationMessageSummary
 import models.responses.PaginationMovementSummary
 import models.responses.UpdateMovementResponse
-import v2_1.utils.CommonGenerators
 
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime

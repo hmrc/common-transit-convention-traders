@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package v2_1.connectors
+package connectors
 
 import base.TestActorSystem
 import com.codahale.metrics.MetricRegistry
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import config.AppConfig
-import connectors.UpscanConnector
 import io.lemonlabs.uri.Url
 import models.common.*
 import models.responses.UpscanFormTemplate
@@ -43,9 +42,9 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
+import utils.CommonGenerators
 import utils.WiremockSuite
 import models.responses.UpscanResponse.DownloadUrl
-import v2_1.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

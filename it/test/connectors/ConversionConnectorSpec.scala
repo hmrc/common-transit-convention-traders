@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package v2_1.connectors
+package connectors
 
 import com.codahale.metrics.MetricRegistry
 import org.apache.pekko.stream.scaladsl.Sink
@@ -22,7 +22,6 @@ import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import config.AppConfig
-import connectors.ConversionConnector
 import models.request.MessageType
 import org.apache.pekko.stream.Materializer
 import org.scalatest.concurrent.*

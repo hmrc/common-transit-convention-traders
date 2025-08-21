@@ -16,13 +16,15 @@
 
 package controllers
 
+import models.common.errors.PresentationError
+
 import javax.inject.Inject
 import play.api.Configuration
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.libs.json.Json
 import play.api.mvc.RequestHeader
 import play.api.mvc.Result
-import play.api.mvc.Results._
+import play.api.mvc.Results.*
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.backend.http.ErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.http.JsonErrorHandler
@@ -39,13 +41,15 @@ class CustomJsonErrorHandler @Inject() (
     extends JsonErrorHandler(auditConnector, httpAuditEvent, configuration)(ec) {
 
   override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] =
-    if (statusCode == BAD_REQUEST)
-      super.onClientError(request, statusCode, message).map {
-        _ =>
-          BadRequest(Json.toJson(ErrorResponse(BAD_REQUEST, message)))
-      }
-    else
-      super.onClientError(request, statusCode, message)
+    super.onClientError(request, statusCode, message).map {
+      result =>
+        statusCode match {
+          case BAD_REQUEST if message.contains("16 character hexadecimal") =>
+            Status(BAD_REQUEST)(Json.toJson(PresentationError.bindingBadRequestError(message)))
+          case BAD_REQUEST => BadRequest(Json.toJson(ErrorResponse(BAD_REQUEST, message)))
+          case _           => result
+        }
+    }
 
   override def onServerError(request: RequestHeader, ex: Throwable): Future[Result] =
     super.onServerError(request, ex)

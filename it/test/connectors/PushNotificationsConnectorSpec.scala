@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package v2_1.connectors
+package connectors
 
 import com.codahale.metrics.MetricRegistry
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
@@ -24,7 +24,6 @@ import com.github.tomakehurst.wiremock.client.WireMock.patch
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
-import connectors.PushNotificationsConnector
 import io.lemonlabs.uri.Url
 import models.common.MessageId
 import models.common.MovementId
@@ -51,8 +50,8 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
+import utils.CommonGenerators
 import utils.WiremockSuite
-import v2_1.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

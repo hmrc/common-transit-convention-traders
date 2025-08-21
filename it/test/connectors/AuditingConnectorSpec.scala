@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package v2_1.connectors
+package connectors
 
 import com.codahale.metrics.MetricRegistry
 import org.apache.pekko.stream.scaladsl.Source
@@ -25,7 +25,6 @@ import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
 import config.Constants
-import connectors.AuditingConnector
 import io.lemonlabs.uri.Url
 import models.AuditType
 import models.common.EORINumber
@@ -57,8 +56,8 @@ import play.mvc.Http.MimeTypes
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
+import utils.CommonGenerators
 import utils.WiremockSuite
-import v2_1.utils.CommonGenerators
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

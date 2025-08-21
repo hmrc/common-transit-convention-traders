@@ -101,8 +101,6 @@ import scala.concurrent.Future
 import scala.util.Try
 import scala.xml.NodeSeq
 
-//TODO: ensure movementId and messageId bindings are working as expected
-
 class MovementsControllerSpec
     extends AnyFreeSpec
     with Matchers

@@ -54,7 +54,7 @@ import uk.gov.hmrc.http.client.RequestBuilder
 import scala.concurrent.ExecutionContext.Implicits.*
 import scala.concurrent.Future
 
-class V2BaseConnectorSpec
+class BaseConnectorSpec
     extends AnyFreeSpec
     with Matchers
     with MockitoSugar

@@ -19,7 +19,7 @@ package controllers.actions
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import config.Constants._
-import controllers.common.AuthenticatedRequest
+import controllers.AuthenticatedRequest
 import models.common.EORINumber
 import models.common.errors.PresentationError
 import play.api.Logging

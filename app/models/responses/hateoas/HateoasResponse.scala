@@ -53,7 +53,7 @@ trait HateoasResponse {
       .urlWithContext
 
   def getMovementUri(movementId: MovementId, movementType: MovementType): String =
-    controllers.routes.MovementsController.getMovement(movementType = movementType, id = movementId).urlWithContext
+    controllers.routes.MovementsController.getMovement(movementType = movementType, movementId = movementId).urlWithContext
 
   def getMovementsUri(
     movementType: MovementType,

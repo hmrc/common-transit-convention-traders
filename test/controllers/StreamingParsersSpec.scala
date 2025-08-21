@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package controllers.stream
+package controllers
 
 import base.TestActorSystem
 import base.TestSourceProvider
-import controllers.common.BodyReplaceableRequest
-import controllers.common.stream.StreamingParsers
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Sink
@@ -37,12 +35,12 @@ import play.api.http.Status.OK
 import play.api.libs.Files
 import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.mvc.*
-import play.api.test.FakeHeaders
-import play.api.test.FakeRequest
 import play.api.test.Helpers.contentAsString
 import play.api.test.Helpers.defaultAwaitTimeout
 import play.api.test.Helpers.status
 import play.api.test.Helpers.stubControllerComponents
+import play.api.test.FakeHeaders
+import play.api.test.FakeRequest
 
 import java.nio.charset.StandardCharsets
 import scala.annotation.tailrec
