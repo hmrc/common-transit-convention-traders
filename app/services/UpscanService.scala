@@ -17,7 +17,6 @@
 package services
 
 import cats.data.EitherT
-import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import connectors.UpscanConnector
 import connectors.BaseConnector
@@ -38,31 +37,12 @@ import org.apache.pekko.util.ByteString
 import play.api.Logging
 import models.responses.UpscanResponse.DownloadUrl
 
-@ImplementedBy(classOf[UpscanServiceImpl])
-trait UpscanService {
-
-  def upscanInitiate(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
-    headerCarrier: HeaderCarrier,
-    executionContext: ExecutionContext
-  ): EitherT[Future, UpscanError, UpscanInitiateResponse]
-
-  def upscanGetFile(
-    downloadUrl: DownloadUrl
-  )(implicit
-    headerCarrier: HeaderCarrier,
-    executionContext: ExecutionContext,
-    materializer: Materializer
-  ): EitherT[Future, UpscanError, Source[ByteString, ?]]
-
-}
-
-class UpscanServiceImpl @Inject() (
+class UpscanService @Inject() (
   upscanConnector: UpscanConnector
-) extends UpscanService
-    with BaseConnector
+) extends BaseConnector
     with Logging {
 
-  override def upscanInitiate(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
+  def upscanInitiate(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
   ): EitherT[Future, UpscanError, UpscanInitiateResponse] =
@@ -77,7 +57,7 @@ class UpscanServiceImpl @Inject() (
         }
     }
 
-  override def upscanGetFile(
+  def upscanGetFile(
     downloadUrl: DownloadUrl
   )(implicit
     headerCarrier: HeaderCarrier,

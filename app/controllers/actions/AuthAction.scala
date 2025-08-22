@@ -19,7 +19,6 @@ package controllers.actions
 import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import config.Constants._
-import controllers.AuthenticatedRequest
 import models.common.EORINumber
 import models.common.errors.PresentationError
 import play.api.Logging
@@ -54,12 +53,12 @@ class AuthNewEnrolmentOnlyActionImpl @Inject() (override val authConnector: Auth
 
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-    authorised(Enrolment(NewEnrolmentKey)).retrieve(Retrievals.authorisedEnrolments) {
+    authorised(Enrolment(EnrolmentKey)).retrieve(Retrievals.authorisedEnrolments) {
       enrolments =>
         val newEnrolmentId = getEnrolmentIdentifier(
           enrolments,
-          NewEnrolmentKey,
-          NewEnrolmentIdKey
+          EnrolmentKey,
+          EnrolmentIdKey
         )
 
         newEnrolmentId
@@ -68,7 +67,7 @@ class AuthNewEnrolmentOnlyActionImpl @Inject() (override val authConnector: Auth
               block(AuthenticatedRequest(EORINumber(eoriNumber), request))
           }
           .getOrElse {
-            Future.failed(InsufficientEnrolments(s"Unable to retrieve enrolment for $NewEnrolmentKey"))
+            Future.failed(InsufficientEnrolments(s"Unable to retrieve enrolment for $EnrolmentKey"))
           }
     }
   } recover {

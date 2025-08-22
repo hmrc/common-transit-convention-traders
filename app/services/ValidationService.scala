@@ -19,7 +19,6 @@ package services
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import cats.data.EitherT
-import com.google.inject.ImplementedBy
 import connectors.ValidationConnector
 import models.common.errors.ErrorCode
 import models.common.errors.FailedToValidateError
@@ -42,25 +41,10 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-@ImplementedBy(classOf[ValidationServiceImpl])
-trait ValidationService {
+@Singleton
+class ValidationService @Inject() (validationConnector: ValidationConnector) extends Logging {
 
   def validateXml(messageType: MessageType, source: Source[ByteString, ?])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, FailedToValidateError, Unit]
-
-  def validateJson(messageType: MessageType, source: Source[ByteString, ?])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, FailedToValidateError, Unit]
-
-}
-
-@Singleton
-class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector) extends ValidationService with Logging {
-
-  override def validateXml(messageType: MessageType, source: Source[ByteString, ?])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, FailedToValidateError, Unit] =
@@ -77,7 +61,7 @@ class ValidationServiceImpl @Inject() (validationConnector: ValidationConnector)
         .recover(recoverFromError(messageType))
     )
 
-  override def validateJson(messageType: MessageType, source: Source[ByteString, ?])(implicit
+  def validateJson(messageType: MessageType, source: Source[ByteString, ?])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, FailedToValidateError, Unit] =

@@ -66,7 +66,7 @@ class UpscanServiceSpec
 
   val mockConnector: UpscanConnector = mock[UpscanConnector]
 
-  val sut = new UpscanServiceImpl(mockConnector)
+  val sut = new UpscanService(mockConnector)
 
   override protected def beforeEach(): Unit =
     reset(mockConnector)

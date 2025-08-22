@@ -80,7 +80,7 @@ class RouterServiceSpec
 
   val mockConnector: RouterConnector = mock[RouterConnector]
 
-  val sut = new RouterServiceImpl(mockConnector)
+  val sut = new RouterService(mockConnector)
 
   val validRequest: Source[ByteString, NotUsed] = Source.single(ByteString(<schemaValid></schemaValid>.mkString, StandardCharsets.UTF_8))
 

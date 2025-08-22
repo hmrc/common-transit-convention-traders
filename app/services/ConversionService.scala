@@ -20,10 +20,8 @@ import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import cats.data.EitherT
-import com.google.inject.ImplementedBy
 import connectors.ConversionConnector
 import models.HeaderType
-import models.HeaderTypes
 import models.common.errors.ConversionError
 import models.request.MessageType
 import play.api.Logging
@@ -35,33 +33,10 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-@ImplementedBy(classOf[ConversionServiceImpl])
-trait ConversionService {
+@Singleton
+class ConversionService @Inject() (conversionConnector: ConversionConnector) extends Logging {
 
   def convert(messageType: MessageType, source: Source[ByteString, ?], headerType: HeaderType)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext,
-    materializer: Materializer
-  ): EitherT[Future, ConversionError, Source[ByteString, ?]]
-
-  def jsonToXml(messageType: MessageType, source: Source[ByteString, ?])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext,
-    materializer: Materializer
-  ): EitherT[Future, ConversionError, Source[ByteString, ?]] = convert(messageType, source, HeaderTypes.jsonToXml)
-
-  def xmlToJson(messageType: MessageType, source: Source[ByteString, ?])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext,
-    materializer: Materializer
-  ): EitherT[Future, ConversionError, Source[ByteString, ?]] = convert(messageType, source, HeaderTypes.xmlToJson)
-
-}
-
-@Singleton
-class ConversionServiceImpl @Inject() (conversionConnector: ConversionConnector) extends ConversionService with Logging {
-
-  override def convert(messageType: MessageType, source: Source[ByteString, ?], headerType: HeaderType)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer

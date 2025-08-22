@@ -20,7 +20,6 @@ import cats.data.EitherT
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.google.inject.ImplementedBy
 import models.common.errors.ExtractionError
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Source
@@ -37,22 +36,12 @@ import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.Using
 
-@ImplementedBy(classOf[JsonMessageParsingServiceImpl])
-trait JsonMessageParsingService {
-
-  def extractMessageType(source: Source[ByteString, ?], messageTypeList: Seq[MessageType])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, ExtractionError, MessageType]
-
-}
-
 @Singleton
-class JsonMessageParsingServiceImpl @Inject() (implicit materializer: Materializer) extends JsonMessageParsingService {
+class JsonMessageParsingService @Inject() (implicit materializer: Materializer) {
 
   private val mapper = new ObjectMapper().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
 
-  override def extractMessageType(
+  def extractMessageType(
     source: Source[ByteString, ?],
     messageTypeList: Seq[MessageType]
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): EitherT[Future, ExtractionError, MessageType] =

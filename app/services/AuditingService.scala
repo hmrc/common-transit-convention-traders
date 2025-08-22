@@ -18,7 +18,6 @@ package services
 
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
-import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import connectors.AuditingConnector
 import models.AuditType
@@ -35,42 +34,9 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-@ImplementedBy(classOf[AuditingServiceImpl])
-trait AuditingService {
-
-  def auditStatusEvent(
-    auditType: AuditType,
-    payload: Option[JsValue],
-    movementId: Option[MovementId],
-    messageId: Option[MessageId],
-    enrolmentEORI: Option[EORINumber],
-    movementType: Option[MovementType],
-    messageType: Option[MessageType]
-  )(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[Unit]
+class AuditingService @Inject() (auditingConnector: AuditingConnector) extends Logging {
 
   def auditMessageEvent(
-    auditType: AuditType,
-    contentType: String,
-    contentLength: Long,
-    payload: Source[ByteString, ?],
-    movementId: Option[MovementId],
-    messageId: Option[MessageId],
-    enrolmentEORI: Option[EORINumber],
-    movementType: Option[MovementType],
-    messageType: Option[MessageType]
-  )(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): Future[Unit]
-
-}
-
-class AuditingServiceImpl @Inject() (auditingConnector: AuditingConnector) extends AuditingService with Logging {
-
-  override def auditMessageEvent(
     auditType: AuditType,
     contentType: String,
     contentLength: Long,

@@ -61,7 +61,7 @@ class AuditingServiceSpec
     with BeforeAndAfterEach {
 
   val mockConnector: AuditingConnector = mock[AuditingConnector]
-  val sut: AuditingServiceImpl         = new AuditingServiceImpl(mockConnector)
+  val sut: AuditingService             = new AuditingService(mockConnector)
   implicit val hc: HeaderCarrier       = HeaderCarrier()
   val smallMessageSize                 = 49999
 
@@ -146,7 +146,7 @@ class AuditingServiceSpec
                 )(any(), any())
               ).thenReturn(Future.failed(exception))
 
-              object Harness extends AuditingServiceImpl(mockConnector) {
+              object Harness extends AuditingService(mockConnector) {
                 val logger0: slf4j.Logger = mock[org.slf4j.Logger]
                 when(logger0.isWarnEnabled()).thenReturn(true)
                 override val logger: Logger = new Logger(logger0)
@@ -257,7 +257,7 @@ class AuditingServiceSpec
           )(any(), any())
         ).thenReturn(Future.failed(exception))
 
-        object Harness extends AuditingServiceImpl(mockConnector) {
+        object Harness extends AuditingService(mockConnector) {
           val logger0 = mock[org.slf4j.Logger]
           when(logger0.isWarnEnabled()).thenReturn(true)
           override val logger: Logger = new Logger(logger0)

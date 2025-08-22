@@ -64,7 +64,7 @@ class PushNotificationServiceSpec
   val mockConnector: PushNotificationsConnector = mock[PushNotificationsConnector]
   val mockAppConfig: AppConfig                  = mock[AppConfig]
 
-  val sut = new PushNotificationsServiceImpl(mockConnector)
+  val sut = new PushNotificationsService(mockConnector)
 
   override protected def beforeEach(): Unit = {
     reset(mockConnector)

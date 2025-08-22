@@ -17,7 +17,6 @@
 package services
 
 import cats.data.EitherT
-import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import config.Constants
 import connectors.PushNotificationsConnector
@@ -37,29 +36,11 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-@ImplementedBy(classOf[PushNotificationsServiceImpl])
-trait PushNotificationsService {
+class PushNotificationsService @Inject() (
+  pushNotificationsConnector: PushNotificationsConnector
+) extends Logging {
 
   def associate(movementId: MovementId, movementType: MovementType, headers: Headers, enrollmentEORINumber: EORINumber)(implicit
-    headerCarrier: HeaderCarrier,
-    executionContext: ExecutionContext
-  ): EitherT[Future, PushNotificationError, BoxResponse]
-
-  def update(movementId: MovementId)(implicit headerCarrier: HeaderCarrier, executionContext: ExecutionContext): EitherT[Future, PushNotificationError, Unit]
-
-  def postPpnsNotification(movementId: MovementId, messageId: MessageId, body: JsValue)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, PushNotificationError, Unit]
-
-}
-
-class PushNotificationsServiceImpl @Inject() (
-  pushNotificationsConnector: PushNotificationsConnector
-) extends PushNotificationsService
-    with Logging {
-
-  override def associate(movementId: MovementId, movementType: MovementType, headers: Headers, enrollmentEORINumber: EORINumber)(implicit
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
   ): EitherT[Future, PushNotificationError, BoxResponse] =
@@ -89,7 +70,7 @@ class PushNotificationsServiceImpl @Inject() (
         .getOrElse(Future.successful(Left(PushNotificationError.MissingClientId)))
     }
 
-  override def update(
+  def update(
     movementId: MovementId
   )(implicit headerCarrier: HeaderCarrier, executionContext: ExecutionContext): EitherT[Future, PushNotificationError, Unit] =
     EitherT {
@@ -104,7 +85,7 @@ class PushNotificationsServiceImpl @Inject() (
         }
     }
 
-  override def postPpnsNotification(movementId: MovementId, messageId: MessageId, body: JsValue)(implicit
+  def postPpnsNotification(movementId: MovementId, messageId: MessageId, body: JsValue)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PushNotificationError, Unit] =

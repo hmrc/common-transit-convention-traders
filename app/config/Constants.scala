@@ -26,6 +26,6 @@ object Constants {
 
   val XContentLengthHeader: String = "X-ContentLength"
 
-  val NewEnrolmentKey: String   = "HMRC-CTC-ORG"
-  val NewEnrolmentIdKey: String = "EORINumber"
+  val EnrolmentKey: String   = "HMRC-CTC-ORG"
+  val EnrolmentIdKey: String = "EORINumber"
 }

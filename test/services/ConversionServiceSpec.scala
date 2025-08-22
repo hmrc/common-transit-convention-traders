@@ -88,7 +88,7 @@ class ConversionServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar 
     when(mockConnector.post(any[MessageType], any[Source[ByteString, ?]](), any())(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
       .thenReturn(Future(mockResponse))
 
-    lazy val sut = new ConversionServiceImpl(mockConnector)
+    lazy val sut = new ConversionService(mockConnector)
   }
 
 }

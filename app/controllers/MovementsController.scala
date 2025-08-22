@@ -31,6 +31,8 @@ import controllers.actions.ValidatedVersionedRequest
 import metrics.HasActionMetrics
 import models.*
 import models.AuditType.*
+import models.HeaderTypes.jsonToXml
+import models.HeaderTypes.xmlToJson
 import models.common.*
 import models.common.errors.PersistenceError
 import models.common.errors.PresentationError
@@ -213,7 +215,7 @@ class MovementsControllerImpl @Inject() (
               )
               err
           }
-          xmlSource       <- conversionService.jsonToXml(MessageType.DeclarationData, source.lift(2).get).asPresentation
+          xmlSource       <- conversionService.convert(MessageType.DeclarationData, source.lift(2).get, jsonToXml).asPresentation
           hateoasResponse <- validatePersistAndSendToEIS(xmlSource, MovementType.Departure, MessageType.DeclarationData)
         } yield hateoasResponse).fold[Result](
           presentationError => {
@@ -277,7 +279,7 @@ class MovementsControllerImpl @Inject() (
               )
               err
           }
-          xmlSource       <- conversionService.jsonToXml(MessageType.ArrivalNotification, source.lift(2).get).asPresentation
+          xmlSource       <- conversionService.convert(MessageType.ArrivalNotification, source.lift(2).get, jsonToXml).asPresentation
           hateoasResponse <- validatePersistAndSendToEIS(xmlSource, MovementType.Arrival, MessageType.ArrivalNotification)
         } yield hateoasResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),
@@ -418,7 +420,7 @@ class MovementsControllerImpl @Inject() (
           EitherT.leftT(PresentationError.notAcceptableError(s"Messages larger than ${config.smallMessageSizeLimit} bytes cannot be retrieved in JSON"))
         case VersionedJsonHeader(_) =>
           for {
-            jsonStream <- conversionService.xmlToJson(messageSummary.messageType.get, bodyAndSize.body).asPresentation
+            jsonStream <- conversionService.convert(messageSummary.messageType.get, bodyAndSize.body, xmlToJson).asPresentation
             bodyWithContentType = BodyAndContentType(MimeTypes.JSON, jsonStream)
           } yield bodyWithContentType
         case _ => EitherT.leftT(PresentationError.notAcceptableError("The Accept header is missing or invalid."))
@@ -446,7 +448,7 @@ class MovementsControllerImpl @Inject() (
           EitherT.leftT[Future, Source[ByteString, ?]](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
         case VersionedJsonHeader(_) =>
           for {
-            jsonStream <- conversionService.xmlToJson(messageSummary.messageType.get, bodyAndSize.body).asPresentation
+            jsonStream <- conversionService.convert(messageSummary.messageType.get, bodyAndSize.body, xmlToJson).asPresentation
             summary = messageSummary.copy(body = None)
             jsonHateoasResponse = Json
               .toJson(
@@ -790,7 +792,7 @@ class MovementsControllerImpl @Inject() (
               )
               err
           }
-          converted      <- conversionService.jsonToXml(messageType, source.lift(3).get).asPresentation
+          converted      <- conversionService.convert(messageType, source.lift(3).get, jsonToXml).asPresentation
           updateResponse <- handleXml(id, messageType, converted)
         } yield updateResponse).fold[Result](
           presentationError => Status(presentationError.code.statusCode)(Json.toJson(presentationError)),

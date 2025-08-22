@@ -19,7 +19,6 @@ package services
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import cats.data.EitherT
-import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import connectors.RouterConnector
 import models.SubmissionRoute
@@ -45,17 +44,7 @@ import scala.concurrent.Future
 import scala.util.Try
 import scala.util.control.NonFatal
 
-@ImplementedBy(classOf[RouterServiceImpl])
-trait RouterService {
-
-  def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, ?])(implicit
-    ec: ExecutionContext,
-    hc: HeaderCarrier
-  ): EitherT[Future, RouterError, SubmissionRoute]
-
-}
-
-class RouterServiceImpl @Inject() (routerConnector: RouterConnector) extends RouterService with Logging {
+class RouterService @Inject() (routerConnector: RouterConnector) extends Logging {
 
   def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, ?])(implicit
     ec: ExecutionContext,

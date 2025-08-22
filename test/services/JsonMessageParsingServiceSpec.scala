@@ -70,7 +70,7 @@ class JsonMessageParsingServiceSpec
 
   "extractMessageType and then" - {
     "if it is valid, return an appropriate Message Type" in {
-      val jsonParsingService = new JsonMessageParsingServiceImpl()
+      val jsonParsingService = new JsonMessageParsingService()
       val payload            = createStream(validJson)
       val response =
         jsonParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByDepartureTrader)
@@ -81,7 +81,7 @@ class JsonMessageParsingServiceSpec
     }
 
     "if it doesn't have a valid message type, return ExtractionError.MessageTypeNotFound" in {
-      val jsonParsingService = new JsonMessageParsingServiceImpl()
+      val jsonParsingService = new JsonMessageParsingService()
       val payload            = createStream(invalidMessageType)
       val response =
         jsonParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByDepartureTrader)
@@ -93,7 +93,7 @@ class JsonMessageParsingServiceSpec
     }
 
     "if the root node is invalid, return ExtractionError.MalformedInput" in {
-      val jsonParsingService = new JsonMessageParsingServiceImpl()
+      val jsonParsingService = new JsonMessageParsingService()
       val payload            = createStream(withInvalidRootNodeEntry)
       val response =
         jsonParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByDepartureTrader)

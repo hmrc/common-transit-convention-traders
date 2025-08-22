@@ -67,7 +67,7 @@ class PersistenceServiceSpec
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   val mockConnector: PersistenceConnector = mock[PersistenceConnector]
-  val sut                                 = new PersistenceServiceImpl(mockConnector)
+  val sut                                 = new PersistenceService(mockConnector)
 
   override def beforeEach(): Unit =
     reset(mockConnector)

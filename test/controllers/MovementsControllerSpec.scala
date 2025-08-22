@@ -31,6 +31,8 @@ import controllers.actions.FakeAuthAction
 import controllers.actions.ValidateAcceptRefiner
 import models.*
 import models.AuditType.*
+import models.HeaderTypes.jsonToXml
+import models.HeaderTypes.xmlToJson
 import models.common.*
 import models.common.errors.*
 import models.common.errors.ExtractionError.MessageTypeNotFound
@@ -1357,7 +1359,7 @@ class MovementsControllerSpec
 
           when(
             mockConversionService
-              .jsonToXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]]())(
+              .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -1445,9 +1447,9 @@ class MovementsControllerSpec
             HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, Some(boxResponse), None, MovementType.Departure)
           )
 
-          verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
+          verify(mockConversionService, times(1)).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
-          verify(mockConversionService).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
+          verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
           verify(mockAuditService, times(1)).auditMessageEvent(
             eqTo(AuditType.DeclarationData),
             eqTo(MimeTypes.XML),
@@ -1521,7 +1523,7 @@ class MovementsControllerSpec
           }
           when(
             mockConversionService
-              .jsonToXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]]())(
+              .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -1539,7 +1541,7 @@ class MovementsControllerSpec
             "code"    -> "REQUEST_ENTITY_TOO_LARGE",
             "message" -> "Request Entity Too Large"
           )
-          verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
+          verify(mockConversionService, times(1)).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
 
       }
@@ -1581,7 +1583,7 @@ class MovementsControllerSpec
 
           when(
             mockConversionService
-              .jsonToXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]]())(
+              .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -1669,9 +1671,9 @@ class MovementsControllerSpec
             HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, None, None, MovementType.Departure)
           )
 
-          verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
+          verify(mockConversionService, times(1)).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
-          verify(mockConversionService).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
+          verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
           verify(mockAuditService, times(1)).auditMessageEvent(
             eqTo(AuditType.DeclarationData),
             eqTo(MimeTypes.XML),
@@ -1757,7 +1759,7 @@ class MovementsControllerSpec
 
           when(
             mockConversionService
-              .jsonToXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]]())(
+              .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -1849,7 +1851,7 @@ class MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Departure)(request)
           status(result) mustBe NOT_FOUND
 
-          verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
+          verify(mockConversionService, times(1)).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
           verify(mockAuditService, times(1)).auditMessageEvent(
@@ -1987,18 +1989,18 @@ class MovementsControllerSpec
           invocation =>
             jsonValidationMockAnswer(MovementType.Departure)(invocation)
         }
-        val jsonToXmlConversionError = (_: InvocationOnMock) => EitherT.leftT(ConversionError.UnexpectedError(None))
+        val convertConversionError = (_: InvocationOnMock) => EitherT.leftT(ConversionError.UnexpectedError(None))
 
         when(
           mockConversionService
-            .jsonToXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]]())(
+            .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
             )
         ).thenAnswer {
           invocation =>
-            jsonToXmlConversionError(invocation)
+            convertConversionError(invocation)
         }
 
         val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC015Cjson), MovementType.Departure)
@@ -2006,7 +2008,7 @@ class MovementsControllerSpec
         status(result) mustBe INTERNAL_SERVER_ERROR
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
-        verify(mockConversionService).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
+        verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
       }
 
       "must return Internal Service Error after JSON to XML conversion if the XML validation service reports an error" in {
@@ -2042,7 +2044,7 @@ class MovementsControllerSpec
 
         when(
           mockConversionService
-            .jsonToXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]]())(
+            .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -2064,7 +2066,7 @@ class MovementsControllerSpec
         )
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
-        verify(mockConversionService).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
+        verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
         verify(mockValidationService).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
         verify(mockAuditService, times(1)).auditStatusEvent(
           eqTo(ValidationFailed),
@@ -2110,7 +2112,7 @@ class MovementsControllerSpec
 
         when(
           mockConversionService
-            .jsonToXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]]())(
+            .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -2138,7 +2140,7 @@ class MovementsControllerSpec
         status(result) mustBe INTERNAL_SERVER_ERROR
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
-        verify(mockConversionService).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
+        verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
         verify(mockPersistenceService).createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any(), any())
 
         verify(mockAuditService, times(1)).auditStatusEvent(
@@ -2190,7 +2192,7 @@ class MovementsControllerSpec
 
           when(
             mockConversionService
-              .jsonToXml(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]]())(
+              .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -2281,7 +2283,7 @@ class MovementsControllerSpec
           status(result) mustBe INTERNAL_SERVER_ERROR
 
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
-          verify(mockConversionService).jsonToXml(eqTo(MessageType.DeclarationData), any())(any(), any(), any())
+          verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
           verify(mockPersistenceService).createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any(), any())
           verify(mockRouterService).send(
             eqTo(MessageType.DeclarationData),
@@ -3486,7 +3488,7 @@ class MovementsControllerSpec
 
           when(
             mockConversionService
-              .jsonToXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]]())(
+              .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -3636,7 +3638,7 @@ class MovementsControllerSpec
 
           when(
             mockConversionService
-              .jsonToXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]]())(
+              .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -3655,7 +3657,7 @@ class MovementsControllerSpec
             "code"    -> "REQUEST_ENTITY_TOO_LARGE",
             "message" -> "Request Entity Too Large"
           )
-          verify(mockConversionService, times(1)).jsonToXml(eqTo(MessageType.ArrivalNotification), any())(any(), any(), any())
+          verify(mockConversionService, times(1)).convert(eqTo(MessageType.ArrivalNotification), any(), eqTo(jsonToXml))(any(), any(), any())
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
       }
 
@@ -3695,7 +3697,7 @@ class MovementsControllerSpec
 
           when(
             mockConversionService
-              .jsonToXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]]())(
+              .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -3939,18 +3941,18 @@ class MovementsControllerSpec
           invocation =>
             jsonValidationMockAnswer(MovementType.Arrival)(invocation)
         }
-        val jsonToXmlConversionError = (_: InvocationOnMock) => EitherT.leftT(ConversionError.UnexpectedError(None))
+        val convertConversionError = (_: InvocationOnMock) => EitherT.leftT(ConversionError.UnexpectedError(None))
 
         when(
           mockConversionService
-            .jsonToXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]]())(
+            .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
             )
         ).thenAnswer {
           invocation =>
-            jsonToXmlConversionError(invocation)
+            convertConversionError(invocation)
         }
 
         val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC007Cjson), MovementType.Arrival)
@@ -3959,7 +3961,7 @@ class MovementsControllerSpec
         status(result) mustBe INTERNAL_SERVER_ERROR
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
-        verify(mockConversionService).jsonToXml(eqTo(MessageType.ArrivalNotification), any())(any(), any(), any())
+        verify(mockConversionService).convert(eqTo(MessageType.ArrivalNotification), any(), eqTo(jsonToXml))(any(), any(), any())
       }
 
       "must return Internal Service Error after JSON to XML conversion if the XML validation service reports an error" in {
@@ -3995,7 +3997,7 @@ class MovementsControllerSpec
 
         when(
           mockConversionService
-            .jsonToXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]]())(
+            .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -4017,7 +4019,7 @@ class MovementsControllerSpec
         )
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
-        verify(mockConversionService).jsonToXml(eqTo(MessageType.ArrivalNotification), any())(any(), any(), any())
+        verify(mockConversionService).convert(eqTo(MessageType.ArrivalNotification), any(), eqTo(jsonToXml))(any(), any(), any())
         verify(mockValidationService).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
         verify(mockAuditService, times(1)).auditStatusEvent(
           eqTo(ValidationFailed),
@@ -4063,7 +4065,7 @@ class MovementsControllerSpec
 
         when(
           mockConversionService
-            .jsonToXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]]())(
+            .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -4092,7 +4094,7 @@ class MovementsControllerSpec
         status(result) mustBe INTERNAL_SERVER_ERROR
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
-        verify(mockConversionService).jsonToXml(eqTo(MessageType.ArrivalNotification), any())(any(), any(), any())
+        verify(mockConversionService).convert(eqTo(MessageType.ArrivalNotification), any(), eqTo(jsonToXml))(any(), any(), any())
         verify(mockPersistenceService).createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any(), any())
         verify(mockAuditService, times(1)).auditStatusEvent(
           eqTo(CreateMovementDBFailed),
@@ -4143,7 +4145,7 @@ class MovementsControllerSpec
 
           when(
             mockConversionService
-              .jsonToXml(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]]())(
+              .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -4246,7 +4248,7 @@ class MovementsControllerSpec
           )(any(), any())
 
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
-          verify(mockConversionService).jsonToXml(eqTo(MessageType.ArrivalNotification), any())(any(), any(), any())
+          verify(mockConversionService).convert(eqTo(MessageType.ArrivalNotification), any(), eqTo(jsonToXml))(any(), any(), any())
           verify(mockPersistenceService).createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any(), any())
           verify(mockRouterService).send(
             eqTo(MessageType.ArrivalNotification),
@@ -5278,7 +5280,7 @@ class MovementsControllerSpec
 
               if (acceptHeaderValue == VersionedJsonHeader(Version2_1)) {
                 when(
-                  mockConversionService.xmlToJson(eqTo(smallMessageSummaryXml.messageType.get), any())(any(), any(), any())
+                  mockConversionService.convert(eqTo(smallMessageSummaryXml.messageType.get), any(), eqTo(xmlToJson))(any(), any(), any())
                 ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
               }
 
@@ -5346,7 +5348,7 @@ class MovementsControllerSpec
 
               if (acceptHeaderValue == VersionedJsonHeader(Version2_1)) {
                 when(
-                  mockConversionService.xmlToJson(eqTo(smallMessageSummaryXml.messageType.get), any())(any(), any(), any())
+                  mockConversionService.convert(eqTo(smallMessageSummaryXml.messageType.get), any(), eqTo(xmlToJson))(any(), any(), any())
                 ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
               }
 
@@ -5838,7 +5840,7 @@ class MovementsControllerSpec
                 )
               if (acceptHeader == VersionedJsonHeader(Version2_1)) {
                 when(
-                  mockConversionService.xmlToJson(eqTo(smallMessageSummaryXml.messageType.get), any())(any(), any(), any())
+                  mockConversionService.convert(eqTo(smallMessageSummaryXml.messageType.get), any(), eqTo(xmlToJson))(any(), any(), any())
                 ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
               }
 
@@ -5894,7 +5896,7 @@ class MovementsControllerSpec
 
               if (acceptHeader == VersionedJsonHeader(Version2_1)) {
                 when(
-                  mockConversionService.xmlToJson(eqTo(smallMessageSummaryXml.messageType.get), any())(any(), any(), any())
+                  mockConversionService.convert(eqTo(smallMessageSummaryXml.messageType.get), any(), eqTo(xmlToJson))(any(), any(), any())
                 ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
               }
 
@@ -6064,7 +6066,7 @@ class MovementsControllerSpec
 
               if (acceptHeader == VersionedJsonHeader(Version2_1)) {
                 when(
-                  mockConversionService.xmlToJson(eqTo(largeMessageSummaryXml.messageType.get), any())(any(), any(), any())
+                  mockConversionService.convert(eqTo(largeMessageSummaryXml.messageType.get), any(), eqTo(xmlToJson))(any(), any(), any())
                 ).thenReturn(EitherT.rightT(Source.single(ByteString(Json.stringify(json)))))
               }
 
@@ -7486,7 +7488,7 @@ class MovementsControllerSpec
               _ => validateJson
             )
 
-          when(mockConversionService.jsonToXml(any(), any())(any(), any(), any())).thenReturn(conversion)
+          when(mockConversionService.convert(any(), any(), eqTo(jsonToXml))(any(), any(), any())).thenReturn(conversion)
 
           when(
             mockPersistenceService
@@ -7616,7 +7618,7 @@ class MovementsControllerSpec
             eqTo(Some(messageType))
           )(any(), any())
 
-          verify(mockConversionService, times(1)).jsonToXml(any(), any())(any(), any(), any())
+          verify(mockConversionService, times(1)).convert(any(), any(), eqTo(jsonToXml))(any(), any(), any())
           verify(mockValidationService, times(1)).validateXml(any(), any())(any(), any())
           verify(mockPersistenceService, times(1)).addMessage(MovementId(any()), any(), any(), any())(any(), any())
           verify(mockRouterService, times(1)).send(any(), EORINumber(any()), MovementId(any()), MessageId(any()), any())(

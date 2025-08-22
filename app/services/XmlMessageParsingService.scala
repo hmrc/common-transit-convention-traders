@@ -29,7 +29,6 @@ import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import cats.data.EitherT
-import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import models.common.errors.ExtractionError
 import models.request.MessageType
@@ -40,17 +39,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-@ImplementedBy(classOf[XmlMessageParsingServiceImpl])
-trait XmlMessageParsingService {
-
-  def extractMessageType(source: Source[ByteString, ?], messageTypeList: Seq[MessageType])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, ExtractionError, MessageType]
-}
-
 @Singleton
-class XmlMessageParsingServiceImpl @Inject() (implicit materializer: Materializer) extends XmlMessageParsingService {
+class XmlMessageParsingService @Inject() (implicit materializer: Materializer) {
 
   private val messageSink = Sink.head[Either[ExtractionError, MessageType]]
 
@@ -67,7 +57,7 @@ class XmlMessageParsingServiceImpl @Inject() (implicit materializer: Materialize
     }
   )
 
-  override def extractMessageType(source: Source[ByteString, ?], messageTypeList: Seq[MessageType])(implicit
+  def extractMessageType(source: Source[ByteString, ?], messageTypeList: Seq[MessageType])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, ExtractionError, MessageType] =

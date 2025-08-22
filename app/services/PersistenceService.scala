@@ -20,7 +20,6 @@ import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import cats.data.EitherT
-import com.google.inject.ImplementedBy
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import connectors.PersistenceConnector
@@ -46,96 +45,10 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
-@ImplementedBy(classOf[PersistenceServiceImpl])
-trait PersistenceService {
+@Singleton
+class PersistenceService @Inject() (persistenceConnector: PersistenceConnector) extends Logging {
 
   def createMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, ?]])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, MovementResponse]
-
-  def getMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, MessageSummary]
-
-  def getMessages(
-    eori: EORINumber,
-    movementType: MovementType,
-    movementId: MovementId,
-    receivedSince: Option[OffsetDateTime],
-    page: Option[PageNumber],
-    count: ItemCount,
-    receivedUntil: Option[OffsetDateTime]
-  )(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, PaginationMessageSummary]
-
-  def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId)(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, MovementSummary]
-
-  def getMovements(
-    eori: EORINumber,
-    movementType: MovementType,
-    updatedSince: Option[OffsetDateTime],
-    movementEORI: Option[EORINumber],
-    movementReferenceNumber: Option[MovementReferenceNumber],
-    page: Option[PageNumber],
-    count: ItemCount,
-    receivedUntil: Option[OffsetDateTime],
-    localReferenceNumber: Option[LocalReferenceNumber]
-  )(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, PaginationMovementSummary]
-
-  def addMessage(movementId: MovementId, movementType: MovementType, messageType: Option[MessageType], source: Option[Source[ByteString, ?]])(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, UpdateMovementResponse]
-
-  def updateMessage(
-    eoriNumber: EORINumber,
-    movementType: MovementType,
-    movementId: MovementId,
-    messageId: MessageId,
-    body: MessageUpdate
-  )(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Unit]
-
-  def updateMessageBody(
-    messageType: MessageType,
-    eoriNumber: EORINumber,
-    movementType: MovementType,
-    movementId: MovementId,
-    messageId: MessageId,
-    source: Source[ByteString, ?]
-  )(implicit
-    hc: HeaderCarrier,
-    ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Unit]
-
-  def getMessageBody(
-    eoriNumber: EORINumber,
-    movementType: MovementType,
-    movementId: MovementId,
-    messageId: MessageId
-  )(implicit
-    hc: HeaderCarrier,
-    mat: Materializer,
-    ec: ExecutionContext
-  ): EitherT[Future, PersistenceError, Source[ByteString, ?]]
-}
-
-@Singleton
-class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnector) extends PersistenceService with Logging {
-
-  override def createMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, ?]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MovementResponse] =
@@ -152,7 +65,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         }
     )
 
-  override def getMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
+  def getMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MessageSummary] =
@@ -168,7 +81,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         }
     )
 
-  override def getMessages(
+  def getMessages(
     eori: EORINumber,
     movementType: MovementType,
     movementId: MovementId,
@@ -194,7 +107,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         }
     )
 
-  override def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId)(implicit
+  def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MovementSummary] =
@@ -210,7 +123,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         }
     )
 
-  override def getMovements(
+  def getMovements(
     eori: EORINumber,
     movementType: MovementType,
     updatedSince: Option[OffsetDateTime],
@@ -255,7 +168,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
     else
       Right(summary)
 
-  override def addMessage(movementId: MovementId, movementType: MovementType, messageType: Option[MessageType], source: Option[Source[ByteString, ?]])(implicit
+  def addMessage(movementId: MovementId, movementType: MovementType, messageType: Option[MessageType], source: Option[Source[ByteString, ?]])(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, UpdateMovementResponse] =
@@ -271,7 +184,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         }
     )
 
-  override def updateMessage(
+  def updateMessage(
     eoriNumber: EORINumber,
     movementType: MovementType,
     movementId: MovementId,
@@ -293,7 +206,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         }
     )
 
-  override def updateMessageBody(
+  def updateMessageBody(
     messageType: MessageType,
     eoriNumber: EORINumber,
     movementType: MovementType,
@@ -315,7 +228,7 @@ class PersistenceServiceImpl @Inject() (persistenceConnector: PersistenceConnect
         }
     )
 
-  override def getMessageBody(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
+  def getMessageBody(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
     hc: HeaderCarrier,
     mat: Materializer,
     ec: ExecutionContext

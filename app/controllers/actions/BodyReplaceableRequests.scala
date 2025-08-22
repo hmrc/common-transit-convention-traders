@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package controllers
+package controllers.actions
 
 import models.common.EORINumber
 import play.api.mvc.Request
