@@ -19,33 +19,16 @@ package models
 import cats.implicits.*
 import models.common.errors.PresentationError
 
-sealed trait MediaType {
-  val value: String
-}
-
-case object XMLHeader extends MediaType {
-  override val value: String = "xml"
-}
-case object JsonHeader extends MediaType {
-  override val value: String = "json"
-}
-case object JsonPlusXmlHeader extends MediaType {
-  override val value: String = "json+xml"
-}
-case object JsonHyphenXmlHeader extends MediaType {
-  override val value: String = "json-xml"
+enum MediaType(val value: String) {
+  case XMLHeader extends MediaType("xml")
+  case JsonHeader extends MediaType("json")
+  case JsonPlusXmlHeader extends MediaType("json+xml")
+  case JsonHyphenXmlHeader extends MediaType("json-xml")
 }
 
 object MediaType {
-  private lazy val allExtensions = List(
-    XMLHeader,
-    JsonHeader,
-    JsonPlusXmlHeader,
-    JsonHyphenXmlHeader
-  )
-
   def fromString(value: String): Either[PresentationError, MediaType] =
-    allExtensions
-      .find(_.value == value.toLowerCase())
+    MediaType.values
+      .find(_.value.equalsIgnoreCase(value))
       .toRight(PresentationError.notAcceptableError("The Accept header is missing or invalid."))
 }

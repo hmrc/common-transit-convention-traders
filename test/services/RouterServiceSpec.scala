@@ -105,7 +105,7 @@ class RouterServiceSpec
       arbitrary[EORINumber],
       arbitrary[MovementId],
       arbitrary[MessageId],
-      Gen.oneOf(SubmissionRoute.values)
+      Gen.oneOf(SubmissionRoute.values.toIndexedSeq)
     ) {
       (messageType, eori, movementId, messageId, submissionRoute) =>
         when(

@@ -75,11 +75,11 @@ trait TestCommonGenerators {
   }
 
   implicit lazy val arbitraryMessageType: Arbitrary[MessageType] = Arbitrary {
-    Gen.oneOf(MessageType.values)
+    Gen.oneOf(MessageType.values.toIndexedSeq)
   }
 
   implicit lazy val arbitraryAuditType: Arbitrary[AuditType] = Arbitrary {
-    Gen.oneOf(AuditType.values)
+    Gen.oneOf(AuditType.values.toIndexedSeq)
   }
 
   implicit val arbitraryObjectStoreURI: Arbitrary[ObjectStoreURI] = Arbitrary {
@@ -97,10 +97,10 @@ trait TestCommonGenerators {
   implicit lazy val arbitraryMessageSummaryXml: Arbitrary[MessageSummary] = Arbitrary {
     for {
       received       <- arbitrary[OffsetDateTime]
-      messageType    <- Gen.oneOf(MessageType.values)
+      messageType    <- Gen.oneOf(MessageType.values.toIndexedSeq)
       body           <- Gen.option(Gen.alphaNumStr.map(XmlPayload(_)))
       messageId      <- genShortUUID.map(MessageId(_))
-      status         <- Gen.oneOf(MessageStatus.statusValues)
+      status         <- Gen.oneOf(MessageStatus.values.toIndexedSeq)
       objectStoreURI <- Gen.option(arbitrary[ObjectStoreURI])
     } yield MessageSummary(messageId, received, Some(messageType), body, Some(status), objectStoreURI)
   }
@@ -206,9 +206,9 @@ trait TestCommonGenerators {
 
   implicit val arbitraryMessageUpdate: Arbitrary[MessageUpdate] = Arbitrary {
     for {
-      status      <- Gen.oneOf(MessageStatus.statusValues)
+      status      <- Gen.oneOf(MessageStatus.values.toIndexedSeq)
       uri         <- Gen.alphaNumStr
-      messageType <- Gen.oneOf(MessageType.values)
+      messageType <- Gen.oneOf(MessageType.values.toIndexedSeq)
     } yield MessageUpdate(status, Some(ObjectStoreURI(uri)), Some(messageType))
   }
 

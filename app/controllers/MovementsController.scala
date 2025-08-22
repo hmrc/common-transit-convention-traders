@@ -33,6 +33,11 @@ import models.*
 import models.AuditType.*
 import models.HeaderTypes.jsonToXml
 import models.HeaderTypes.xmlToJson
+import models.MediaType.JsonHeader
+import models.MediaType.JsonHyphenXmlHeader
+import models.MediaType.JsonPlusXmlHeader
+import models.MediaType.XMLHeader
+import models.Version.V2_1
 import models.common.*
 import models.common.errors.PersistenceError
 import models.common.errors.PresentationError
@@ -129,17 +134,17 @@ class MovementsControllerImpl @Inject() (
   private lazy val sCounter: Counter = counter(s"success-counter")
   private lazy val fCounter: Counter = counter(s"failure-counter")
 
-  private lazy val jsonOnlyAcceptHeader: Set[VersionedHeader] = Set(VersionedJsonHeader(Version2_1))
+  private lazy val jsonOnlyAcceptHeader: Set[VersionedHeader] = Set(VersionedHeader(JsonHeader, V2_1))
 
   private lazy val jsonAndXmlAcceptHeaders: Set[VersionedHeader] = Set(
-    VersionedJsonHeader(Version2_1),
-    VersionedXmlHeader(Version2_1)
+    VersionedHeader(JsonHeader, V2_1),
+    VersionedHeader(XMLHeader, V2_1)
   )
 
   private lazy val jsonAndJsonWrappedXmlAcceptHeaders: Set[VersionedHeader] = Set(
-    VersionedJsonHeader(Version2_1),
-    VersionedJsonPlusXmlHeader(Version2_1),
-    VersionedJsonHyphenXmlHeader(Version2_1)
+    VersionedHeader(JsonHeader, V2_1),
+    VersionedHeader(JsonPlusXmlHeader, V2_1),
+    VersionedHeader(JsonHyphenXmlHeader, V2_1)
   )
 
   private def contentSizeIsLessThanLimit(size: Long): EitherT[Future, PresentationError, Unit] = EitherT {
@@ -414,11 +419,11 @@ class MovementsControllerImpl @Inject() (
   ): EitherT[Future, PresentationError, BodyAndContentType] = {
     def bodyExists(bodyAndSize: BodyAndSize): EitherT[Future, PresentationError, BodyAndContentType] =
       request.versionedHeader match {
-        case VersionedXmlHeader(_) =>
+        case VersionedHeader(XMLHeader, _) =>
           EitherT.rightT(BodyAndContentType(MimeTypes.XML, bodyAndSize.body))
-        case VersionedJsonHeader(_) if bodyAndSize.size > config.smallMessageSizeLimit =>
+        case VersionedHeader(JsonHeader, _) if bodyAndSize.size > config.smallMessageSizeLimit =>
           EitherT.leftT(PresentationError.notAcceptableError(s"Messages larger than ${config.smallMessageSizeLimit} bytes cannot be retrieved in JSON"))
-        case VersionedJsonHeader(_) =>
+        case VersionedHeader(JsonHeader, _) =>
           for {
             jsonStream <- conversionService.convert(messageSummary.messageType.get, bodyAndSize.body, xmlToJson).asPresentation
             bodyWithContentType = BodyAndContentType(MimeTypes.JSON, jsonStream)
@@ -444,9 +449,9 @@ class MovementsControllerImpl @Inject() (
   ): EitherT[Future, PresentationError, Source[ByteString, ?]] = {
     def bodyExists(bodyAndSize: BodyAndSize): EitherT[Future, PresentationError, Source[ByteString, ?]] =
       request.versionedHeader match {
-        case VersionedJsonHeader(_) if bodyAndSize.size > config.smallMessageSizeLimit =>
+        case VersionedHeader(JsonHeader, _) if bodyAndSize.size > config.smallMessageSizeLimit =>
           EitherT.leftT[Future, Source[ByteString, ?]](PresentationError.notAcceptableError("Large messages cannot be returned as json"))
-        case VersionedJsonHeader(_) =>
+        case VersionedHeader(JsonHeader, _) =>
           for {
             jsonStream <- conversionService.convert(messageSummary.messageType.get, bodyAndSize.body, xmlToJson).asPresentation
             summary = messageSummary.copy(body = None)
@@ -457,7 +462,7 @@ class MovementsControllerImpl @Inject() (
               .as[JsObject]
             stream <- jsonToByteStringStream(jsonHateoasResponse.fields, "body", jsonStream)
           } yield stream
-        case VersionedJsonPlusXmlHeader(_) | VersionedJsonHyphenXmlHeader(_) =>
+        case VersionedHeader(JsonPlusXmlHeader, _) | VersionedHeader(JsonHyphenXmlHeader, _) =>
           if (messageSummary.body.isDefined)
             EitherT.rightT[Future, PresentationError](
               Source.single(ByteString(Json.stringify(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType))))

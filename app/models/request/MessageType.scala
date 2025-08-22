@@ -24,47 +24,33 @@ import play.api.libs.json.JsSuccess
 import play.api.libs.json.Reads
 import play.api.libs.json.Writes
 
-sealed trait MessageType {
-  def code: String
-  def movementType: MovementType
-  def rootNode: String
-  def auditType: AuditType
-}
-
-sealed abstract class DepartureMessageType(val code: String, val rootNode: String, val auditType: AuditType) extends MessageType {
-  val movementType: MovementType = MovementType.Departure
-}
-
-sealed abstract class ArrivalMessageType(val code: String, val rootNode: String, val auditType: AuditType) extends MessageType {
-  val movementType: MovementType = MovementType.Arrival
+enum MessageType(val code: String, val movementType: MovementType, val rootNode: String, val auditType: AuditType) {
+  case ArrivalNotification extends MessageType("IE007", MovementType.Arrival, "CC007C", AuditType.ArrivalNotification)
+  case GoodsReleaseNotification extends MessageType("IE025", MovementType.Arrival, "CC025C", AuditType.GoodsReleaseNotification)
+  case UnloadingPermission extends MessageType("IE043", MovementType.Arrival, "CC043C", AuditType.UnloadingPermission)
+  case UnloadingRemarks extends MessageType("IE044", MovementType.Arrival, "CC044C", AuditType.UnloadingRemarks)
+  case RejectionFromOfficeOfDestination extends MessageType("IE057", MovementType.Arrival, "CC057C", AuditType.RejectionFromOfficeOfDestination)
+  case AmendmentAcceptance extends MessageType("IE004", MovementType.Departure, "CC004C", AuditType.AmendmentAcceptance)
+  case InvalidationDecision extends MessageType("IE009", MovementType.Departure, "CC009C", AuditType.InvalidationDecision)
+  case DeclarationAmendment extends MessageType("IE013", MovementType.Departure, "CC013C", AuditType.DeclarationAmendment)
+  case DeclarationInvalidationRequest extends MessageType("IE014", MovementType.Departure, "CC014C", AuditType.DeclarationInvalidationRequest)
+  case DeclarationData extends MessageType("IE015", MovementType.Departure, "CC015C", AuditType.DeclarationData)
+  case Discrepancies extends MessageType("IE019", MovementType.Departure, "CC019C", AuditType.Discrepancies)
+  case MRNAllocated extends MessageType("IE028", MovementType.Departure, "CC028C", AuditType.MRNAllocated)
+  case ReleaseForTransit extends MessageType("IE029", MovementType.Departure, "CC029C", AuditType.ReleaseForTransit)
+  case RecoveryNotification extends MessageType("IE035", MovementType.Departure, "CC035C", AuditType.RecoveryNotification)
+  case WriteOffNotification extends MessageType("IE045", MovementType.Departure, "CC045C", AuditType.WriteOffNotification)
+  case NoReleaseForTransit extends MessageType("IE051", MovementType.Departure, "CC051C", AuditType.NoReleaseForTransit)
+  case GuaranteeNotValid extends MessageType("IE055", MovementType.Departure, "CC055C", AuditType.GuaranteeNotValid)
+  case RejectionFromOfficeOfDeparture extends MessageType("IE056", MovementType.Departure, "CC056C", AuditType.RejectionFromOfficeOfDeparture)
+  case ControlDecisionNotification extends MessageType("IE060", MovementType.Departure, "CC060C", AuditType.ControlDecisionNotification)
+  case ForwardedIncidentNotificationToED extends MessageType("IE182", MovementType.Departure, "CC182C", AuditType.ForwardedIncidentNotificationToED)
+  case PresentationNotificationForThePreLodgedDeclaration extends MessageType("IE170", MovementType.Departure, "CC170C", AuditType.PresentationNotificationForThePreLodgedDeclaration)
+  case FunctionalNack extends MessageType("IE906", MovementType.Departure, "CC906C", AuditType.FunctionalNack)
+  case PositiveAcknowledge extends MessageType("IE928", MovementType.Departure, "CC928C", AuditType.PositiveAcknowledge)
 }
 
 object MessageType {
-  case object AmendmentAcceptance               extends DepartureMessageType("IE004", "CC004C", AuditType.AmendmentAcceptance)
-  case object ArrivalNotification               extends ArrivalMessageType("IE007", "CC007C", AuditType.ArrivalNotification)
-  case object InvalidationDecision              extends DepartureMessageType("IE009", "CC009C", AuditType.InvalidationDecision)
-  case object DeclarationAmendment              extends DepartureMessageType("IE013", "CC013C", AuditType.DeclarationAmendment)
-  case object DeclarationInvalidationRequest    extends DepartureMessageType("IE014", "CC014C", AuditType.DeclarationInvalidationRequest)
-  case object DeclarationData                   extends DepartureMessageType("IE015", "CC015C", AuditType.DeclarationData)
-  case object Discrepancies                     extends DepartureMessageType("IE019", "CC019C", AuditType.Discrepancies)
-  case object GoodsReleaseNotification          extends ArrivalMessageType("IE025", "CC025C", AuditType.GoodsReleaseNotification)
-  case object MRNAllocated                      extends DepartureMessageType("IE028", "CC028C", AuditType.MRNAllocated)
-  case object ReleaseForTransit                 extends DepartureMessageType("IE029", "CC029C", AuditType.ReleaseForTransit)
-  case object RecoveryNotification              extends DepartureMessageType("IE035", "CC035C", AuditType.RecoveryNotification)
-  case object UnloadingPermission               extends ArrivalMessageType("IE043", "CC043C", AuditType.UnloadingPermission)
-  case object UnloadingRemarks                  extends ArrivalMessageType("IE044", "CC044C", AuditType.UnloadingRemarks)
-  case object WriteOffNotification              extends DepartureMessageType("IE045", "CC045C", AuditType.WriteOffNotification)
-  case object NoReleaseForTransit               extends DepartureMessageType("IE051", "CC051C", AuditType.NoReleaseForTransit)
-  case object GuaranteeNotValid                 extends DepartureMessageType("IE055", "CC055C", AuditType.GuaranteeNotValid)
-  case object RejectionFromOfficeOfDeparture    extends DepartureMessageType("IE056", "CC056C", AuditType.RejectionFromOfficeOfDeparture)
-  case object RejectionFromOfficeOfDestination  extends ArrivalMessageType("IE057", "CC057C", AuditType.RejectionFromOfficeOfDestination)
-  case object ControlDecisionNotification       extends DepartureMessageType("IE060", "CC060C", AuditType.ControlDecisionNotification)
-  case object ForwardedIncidentNotificationToED extends DepartureMessageType("IE182", "CC182C", AuditType.ForwardedIncidentNotificationToED)
-
-  case object PresentationNotificationForThePreLodgedDeclaration
-      extends DepartureMessageType("IE170", "CC170C", AuditType.PresentationNotificationForThePreLodgedDeclaration)
-  case object FunctionalNack      extends DepartureMessageType("IE906", "CC906C", AuditType.FunctionalNack)
-  case object PositiveAcknowledge extends DepartureMessageType("IE928", "CC928C", AuditType.PositiveAcknowledge)
 
   val updateMessageTypesSentByDepartureTrader: Seq[MessageType] = Seq(
     DeclarationAmendment,
@@ -74,41 +60,12 @@ object MessageType {
 
   val messageTypesSentByDepartureTrader: Seq[MessageType] = DeclarationData +: updateMessageTypesSentByDepartureTrader
 
-  val messageTypesSentToDepartureTrader: Seq[MessageType] = Seq(
-    AmendmentAcceptance,
-    InvalidationDecision,
-    Discrepancies,
-    MRNAllocated,
-    ReleaseForTransit,
-    RecoveryNotification,
-    WriteOffNotification,
-    NoReleaseForTransit,
-    GuaranteeNotValid,
-    RejectionFromOfficeOfDeparture,
-    ControlDecisionNotification,
-    FunctionalNack,
-    PositiveAcknowledge,
-    ForwardedIncidentNotificationToED
-  )
-
   val updateMessageTypesSentByArrivalTrader: Seq[MessageType] = Seq(
     UnloadingRemarks
   )
 
   val messageTypesSentByArrivalTrader: Seq[MessageType] = ArrivalNotification +: updateMessageTypesSentByArrivalTrader
-
-  private val messageTypesSentToArrivalTrader: Seq[MessageType] = Seq(
-    GoodsReleaseNotification,
-    UnloadingPermission,
-    RejectionFromOfficeOfDestination,
-    FunctionalNack,
-    PositiveAcknowledge
-  )
-
-  val values: Seq[MessageType] = (messageTypesSentByDepartureTrader ++
-    messageTypesSentToDepartureTrader ++
-    messageTypesSentByArrivalTrader ++
-    messageTypesSentToArrivalTrader).distinct
+  
 
   def findByCode(code: String): Option[MessageType] =
     values.find(_.code == code)

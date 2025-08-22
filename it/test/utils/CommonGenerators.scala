@@ -78,7 +78,7 @@ trait CommonGenerators {
   }
 
   implicit lazy val arbitraryMessageType: Arbitrary[MessageType] =
-    Arbitrary(Gen.oneOf(MessageType.values))
+    Arbitrary(Gen.oneOf(MessageType.values.toIndexedSeq))
 
   // Restricts the date times to the range of positive long numbers to avoid overflows.
   implicit lazy val arbitraryOffsetDateTime: Arbitrary[OffsetDateTime] =
@@ -143,7 +143,7 @@ trait CommonGenerators {
         id             <- arbitrary[MessageId]
         offsetDateTime <- arbitrary[OffsetDateTime]
         messageType    <- arbitrary[MessageType]
-        status         <- Gen.oneOf(MessageStatus.statusValues)
+        status         <- Gen.oneOf(MessageStatus.values.toIndexedSeq)
         objectStoreURI <- Gen.option(arbitrary[ObjectStoreURI])
       } yield MessageSummary(id, offsetDateTime, Some(messageType), None, Some(status), objectStoreURI)
     }
@@ -168,9 +168,9 @@ trait CommonGenerators {
 
   implicit val arbitraryMessageUpdate: Arbitrary[MessageUpdate] = Arbitrary {
     for {
-      status      <- Gen.oneOf(MessageStatus.statusValues)
+      status      <- Gen.oneOf(MessageStatus.values.toIndexedSeq)
       uri         <- Gen.alphaNumStr
-      messageType <- Gen.oneOf(MessageType.values)
+      messageType <- Gen.oneOf(MessageType.values.toIndexedSeq)
     } yield MessageUpdate(status, Some(ObjectStoreURI(uri)), Some(messageType))
   }
 

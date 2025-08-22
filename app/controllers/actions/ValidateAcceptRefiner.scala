@@ -51,9 +51,9 @@ final class ValidateAcceptRefiner @Inject() (implicit val ec: ExecutionContext, 
     authenticatedRequest.headers.get(play.api.http.HeaderNames.ACCEPT) match {
       case Some(versionedRegex(ver, ext)) =>
         for {
-          extension <- MediaType.fromString(ext)
+          mediaType <- MediaType.fromString(ext)
           version   <- Version.fromString(ver)
-          result    <- VersionedHeader.fromExtensionAndVersion(extension, version)
+          result    <- VersionedHeader(mediaType, version).asRight
         } yield result
       case Some(invalidHeader) => PresentationError.notAcceptableError(s"Invalid accept header: $invalidHeader").asLeft
       case None                => PresentationError.notAcceptableError("The Accept header is missing.").asLeft

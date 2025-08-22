@@ -80,7 +80,7 @@ class MessageTypeSpec extends AnyFreeSpec with Matchers with MockitoSugar with O
         MessageType.findByCode(code) must not be defined
     }
 
-    "must return the correct message type when a correct code is provided" in forAll(Gen.oneOf(MessageType.values)) {
+    "must return the correct message type when a correct code is provided" in forAll(Gen.oneOf(MessageType.values.toIndexedSeq)) {
       messageType =>
         MessageType.findByCode(messageType.code) mustBe Some(messageType)
     }

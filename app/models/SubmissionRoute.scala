@@ -16,11 +16,7 @@
 
 package models
 
-sealed trait SubmissionRoute
-
-object SubmissionRoute {
-  case object ViaEIS  extends SubmissionRoute
-  case object ViaSDES extends SubmissionRoute
-
-  val values: Seq[SubmissionRoute] = Seq(ViaEIS, ViaSDES)
+enum SubmissionRoute {
+  case ViaEIS
+  case ViaSDES
 }

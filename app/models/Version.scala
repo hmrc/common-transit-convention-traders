@@ -19,18 +19,13 @@ package models
 import cats.implicits.*
 import models.common.errors.PresentationError
 
-sealed trait Version {
-  val value: String
-}
-
-case object Version2_1 extends Version {
-  override val value: String = "2.1"
+enum Version(val value: String) {
+  case V2_1 extends Version("2.1")
 }
 
 object Version {
   def fromString(value: String): Either[PresentationError, Version] =
-    value match {
-      case "2.1" => Version2_1.asRight
-      case _     => PresentationError.notAcceptableError(s"Invalid version provided").asLeft
-    }
+    Version.values
+      .find(_.value == value)
+      .toRight(PresentationError.notAcceptableError("Invalid version provided"))
 }

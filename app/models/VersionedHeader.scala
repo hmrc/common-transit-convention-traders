@@ -16,32 +16,9 @@
 
 package models
 
-import cats.implicits.*
-import models.common.errors.PresentationError
+import models.MediaType.*
 
-sealed trait VersionedHeader {
-  val value: String
-}
-
-case class VersionedXmlHeader(version: Version) extends VersionedHeader {
-  val value: String = s"application/vnd.hmrc.${version.value}+${XMLHeader.value}"
-}
-case class VersionedJsonHeader(version: Version) extends VersionedHeader {
-  override val value: String = s"application/vnd.hmrc.${version.value}+${JsonHeader.value}"
-}
-case class VersionedJsonPlusXmlHeader(version: Version) extends VersionedHeader {
-  override val value: String = s"application/vnd.hmrc.${version.value}+${JsonPlusXmlHeader.value}"
-}
-case class VersionedJsonHyphenXmlHeader(version: Version) extends VersionedHeader {
-  override val value: String = s"application/vnd.hmrc.${version.value}+${JsonHyphenXmlHeader.value}"
-}
-
-object VersionedHeader {
-  def fromExtensionAndVersion(contentType: MediaType, version: Version): Either[PresentationError, VersionedHeader] =
-    (contentType match {
-      case XMLHeader           => VersionedXmlHeader(version)
-      case JsonHeader          => VersionedJsonHeader(version)
-      case JsonPlusXmlHeader   => VersionedJsonPlusXmlHeader(version)
-      case JsonHyphenXmlHeader => VersionedJsonHyphenXmlHeader(version)
-    }).asRight
+case class VersionedHeader(mediaType: MediaType, version: Version) {
+  def value: String =
+    s"application/vnd.hmrc.${version.value}+${mediaType.value}"
 }

@@ -23,22 +23,17 @@ import play.api.libs.json.Json
 import play.api.libs.json.Reads
 import play.api.libs.json.Writes
 
-sealed trait MessageStatus
+enum MessageStatus {
+  case Received
+  case Pending
+  case Processing
+  case Success
+  case Failed
+}
 
 object MessageStatus {
-  case object Received extends MessageStatus
-
-  case object Pending extends MessageStatus
-
-  case object Processing extends MessageStatus
-
-  case object Success extends MessageStatus
-
-  case object Failed extends MessageStatus
-
-  val statusValues: Seq[MessageStatus] = Seq(Received, Pending, Processing, Success, Failed)
-
-  implicit val messageStatusWrites: Writes[MessageStatus] = (status: MessageStatus) => Json.toJson(status.toString)
+  implicit val messageStatusWrites: Writes[MessageStatus] =
+    (status: MessageStatus) => Json.toJson(status.toString)
 
   implicit val statusReads: Reads[MessageStatus] = Reads {
     case JsString("Received")   => JsSuccess(Received)
@@ -48,5 +43,4 @@ object MessageStatus {
     case JsString("Failed")     => JsSuccess(Failed)
     case _                      => JsError("Invalid message status")
   }
-
 }
