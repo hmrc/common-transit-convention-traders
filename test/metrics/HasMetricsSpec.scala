@@ -20,9 +20,9 @@ import com.codahale.metrics.Counter
 import com.codahale.metrics.Histogram
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
-import org.mockito.ArgumentMatchers._
+import org.mockito.ArgumentMatchers.*
 import org.mockito.Mockito
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.OptionValues
 import org.scalatest.compatible.Assertion

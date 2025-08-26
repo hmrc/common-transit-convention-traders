@@ -22,7 +22,7 @@ lazy val microservice = Project(appName, file("."))
     RoutesKeys.routesImport ++= Seq(
       "models.common._",
       "models.Binders._",
-      "v2_1.models.Bindings._",
+      "models.Bindings._",
       "java.time.OffsetDateTime",
     ),
     javaOptions ++= Seq(
