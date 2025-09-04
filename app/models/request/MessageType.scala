@@ -45,7 +45,8 @@ enum MessageType(val code: String, val movementType: MovementType, val rootNode:
   case RejectionFromOfficeOfDeparture extends MessageType("IE056", MovementType.Departure, "CC056C", AuditType.RejectionFromOfficeOfDeparture)
   case ControlDecisionNotification extends MessageType("IE060", MovementType.Departure, "CC060C", AuditType.ControlDecisionNotification)
   case ForwardedIncidentNotificationToED extends MessageType("IE182", MovementType.Departure, "CC182C", AuditType.ForwardedIncidentNotificationToED)
-  case PresentationNotificationForThePreLodgedDeclaration extends MessageType("IE170", MovementType.Departure, "CC170C", AuditType.PresentationNotificationForThePreLodgedDeclaration)
+  case PresentationNotificationForThePreLodgedDeclaration
+      extends MessageType("IE170", MovementType.Departure, "CC170C", AuditType.PresentationNotificationForThePreLodgedDeclaration)
   case FunctionalNack extends MessageType("IE906", MovementType.Departure, "CC906C", AuditType.FunctionalNack)
   case PositiveAcknowledge extends MessageType("IE928", MovementType.Departure, "CC928C", AuditType.PositiveAcknowledge)
 }
@@ -65,7 +66,6 @@ object MessageType {
   )
 
   val messageTypesSentByArrivalTrader: Seq[MessageType] = ArrivalNotification +: updateMessageTypesSentByArrivalTrader
-  
 
   def findByCode(code: String): Option[MessageType] =
     values.find(_.code == code)

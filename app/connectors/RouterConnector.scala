@@ -72,6 +72,7 @@ class RouterConnector @Inject() (val metrics: MetricRegistry, httpClientV2: Http
           .post(url"$url")
           .withInternalAuthToken
           .setHeader(
+//            HeaderNames.ACCEPT           -> s"APIVersion:$version",
             HeaderNames.CONTENT_TYPE     -> MimeTypes.XML,
             Constants.XMessageTypeHeader -> messageType.code
           )
