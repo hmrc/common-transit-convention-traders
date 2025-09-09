@@ -27,6 +27,10 @@ import config.AppConfig
 import io.lemonlabs.uri.Url
 import models.common.MessageId
 import models.common.MovementId
+import org.scalatest.OptionValues
+import models.Version
+import models.Version.V2_1
+import models.Version.V3_0
 import models.request.PushNotificationsAssociation
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary
@@ -60,12 +64,15 @@ class PushNotificationsConnectorSpec
     with HttpClientV2Support
     with Matchers
     with ScalaFutures
+    with OptionValues
     with IntegrationPatience
     with WiremockSuite
     with MockitoSugar
     with CommonGenerators {
 
-  val token                             = Gen.alphaNumStr.sample.get
+  lazy val version: Version = Gen.oneOf(V2_1, V3_0).sample.value
+
+  val token: String                     = Gen.alphaNumStr.sample.get
   implicit val mockAppConfig: AppConfig = mock[AppConfig]
   when(mockAppConfig.internalAuthToken).thenReturn(token)
   when(mockAppConfig.pushNotificationsUrl).thenAnswer {
@@ -112,7 +119,7 @@ class PushNotificationsConnectorSpec
 
         implicit val hc = HeaderCarrier()
 
-        val result = sut.postAssociation(movementId, assoc)
+        val result = sut.postAssociation(movementId, assoc, version)
         whenReady(result) {
           _ mustBe boxResponse
         }
@@ -136,7 +143,7 @@ class PushNotificationsConnectorSpec
         implicit val hc = HeaderCarrier()
 
         val result = sut
-          .postAssociation(movementId, assoc)
+          .postAssociation(movementId, assoc, version)
           .map(
             _ => fail("A success was recorded when it shouldn't have been")
           )
@@ -166,7 +173,7 @@ class PushNotificationsConnectorSpec
 
         implicit val hc = HeaderCarrier()
 
-        val result = sut.patchAssociation(movementId)
+        val result = sut.patchAssociation(movementId, version)
         whenReady(result) {
           _ => // if we get here, we have a success and a Unit, so all is okay!
         }
@@ -189,7 +196,7 @@ class PushNotificationsConnectorSpec
         implicit val hc = HeaderCarrier()
 
         val result = sut
-          .patchAssociation(movementId)
+          .patchAssociation(movementId, version)
           .map(
             _ => fail("A success was recorded when it shouldn't have been")
           )
@@ -235,7 +242,7 @@ class PushNotificationsConnectorSpec
         )
 
         implicit val hc = HeaderCarrier()
-        val response    = sut.postPpnsSubmissionNotification(movementId, messageId, body)
+        val response    = sut.postPpnsSubmissionNotification(movementId, messageId, body, version)
         whenReady(response) {
           result =>
             result mustBe (())
@@ -264,7 +271,7 @@ class PushNotificationsConnectorSpec
         )
 
         implicit val hc = HeaderCarrier()
-        val response    = sut.postPpnsSubmissionNotification(movementId, messageId, body)
+        val response    = sut.postPpnsSubmissionNotification(movementId, messageId, body, version)
 
         whenReady(response.recover {
           case UpstreamErrorResponse(_, _, _, _) => ()

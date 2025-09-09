@@ -323,7 +323,7 @@ class MovementsControllerImpl @Inject() (
             else
               mapToOptionalResponse(
                 pushNotificationsService
-                  .associate(movementResponse.movementId, movementType, request.headers, request.authenticatedRequest.eoriNumber)
+                  .associate(movementResponse.movementId, movementType, request.headers, request.authenticatedRequest.eoriNumber, version)
                   .leftMap {
                     err =>
                       val auditType = if (err == PushNotificationError.BoxNotFound) PushPullNotificationGetBoxFailed else PushNotificationFailed
@@ -879,7 +879,12 @@ class MovementsControllerImpl @Inject() (
               V2_1
             ) // TODO - Make version value dynamic CTCP6-68
             pushNotificationsService
-              .postPpnsNotification(movementId, messageId, Json.toJson(PresentationError.badRequestError(failureDetails.message)))
+              .postPpnsNotification(
+                movementId,
+                messageId,
+                Json.toJson(PresentationError.badRequestError(failureDetails.message)),
+                V2_1
+              ) // TODO - Make version value dynamic CTCP6-68
             Future.successful(Ok)
           case UpscanSuccessResponse(_, downloadUrl, uploadDetails) =>
             def completeSmallMessage(): EitherT[Future, PushNotificationError, Unit] = {
@@ -900,7 +905,8 @@ class MovementsControllerImpl @Inject() (
                     "message" ->
                       s"The message ${messageId.value} for movement ${movementId.value} was successfully processed"
                   )
-                )
+                ),
+                V2_1 // TODO - Make version value dynamic CTCP6-68
               )
             }
 
@@ -990,7 +996,12 @@ class MovementsControllerImpl @Inject() (
                     MessageUpdate(MessageStatus.Failed, None, None),
                     V2_1
                   ) // TODO - Make version value dynamic CTCP6-68
-                  pushNotificationsService.postPpnsNotification(movementId, messageId, Json.toJson(presentationError))
+                  pushNotificationsService.postPpnsNotification(
+                    movementId,
+                    messageId,
+                    Json.toJson(presentationError),
+                    V2_1
+                  ) // TODO - Make version value dynamic CTCP6-68
                   Ok
               }
         }
@@ -1035,7 +1046,7 @@ class MovementsControllerImpl @Inject() (
         Some(movementType),
         Some(messageType)
       )
-      _ = pushNotificationsService.update(movementId).leftMap {
+      _ = pushNotificationsService.update(movementId, version).leftMap {
         err =>
           auditService.auditStatusEvent(
             PushNotificationUpdateFailed,
@@ -1182,7 +1193,7 @@ class MovementsControllerImpl @Inject() (
         else
           mapToOptionalResponse[PushNotificationError, BoxResponse](
             pushNotificationsService
-              .associate(movementResponse.movementId, movementType, request.headers, request.authenticatedRequest.eoriNumber)
+              .associate(movementResponse.movementId, movementType, request.headers, request.authenticatedRequest.eoriNumber, version)
               .leftMap {
                 err =>
                   val auditType = if (err == PushNotificationError.BoxNotFound) PushPullNotificationGetBoxFailed else PushNotificationFailed

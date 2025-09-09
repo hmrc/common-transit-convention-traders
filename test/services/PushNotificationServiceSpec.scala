@@ -21,6 +21,7 @@ import config.AppConfig
 import config.Constants
 import connectors.PushNotificationsConnector
 import models.BoxId
+import models.Version
 import models.common.*
 import models.common.errors.PushNotificationError
 import models.request.PushNotificationsAssociation
@@ -32,6 +33,8 @@ import org.mockito.Mockito.reset
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
+import models.Version.V2_1
+import models.Version.V3_0
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -63,6 +66,7 @@ class PushNotificationServiceSpec
 
   val mockConnector: PushNotificationsConnector = mock[PushNotificationsConnector]
   val mockAppConfig: AppConfig                  = mock[AppConfig]
+  val version: Version                          = Gen.oneOf(V2_1, V3_0).sample.value
 
   val sut = new PushNotificationsService(mockConnector)
 
@@ -89,7 +93,7 @@ class PushNotificationServiceSpec
       (movementId, movementType, eori) =>
         val headers = FakeHeaders()
 
-        val result = sut.associate(movementId, movementType, headers, eori)
+        val result = sut.associate(movementId, movementType, headers, eori, version)
 
         whenReady(result.value) {
           r => r mustBe Left(PushNotificationError.MissingClientId)
@@ -107,12 +111,12 @@ class PushNotificationServiceSpec
 
         val expectedAssociation = PushNotificationsAssociation(ClientId(clientId), movementType, None, eori)
 
-        when(mockConnector.postAssociation(MovementId(anyString()), any())(any(), any()))
+        when(mockConnector.postAssociation(MovementId(anyString()), any(), any())(any(), any()))
           .thenReturn(Future.failed(new Exception()))
-        when(mockConnector.postAssociation(MovementId(anyString()), eqTo(expectedAssociation))(any(), any()))
+        when(mockConnector.postAssociation(MovementId(anyString()), eqTo(expectedAssociation), eqTo(version))(any(), any()))
           .thenReturn(Future.successful(BoxResponse(BoxId("test")))) // last wins
 
-        val result = sut.associate(movementId, movementType, headers, eori)
+        val result = sut.associate(movementId, movementType, headers, eori, version)
         whenReady(result.value) {
           r => r mustBe Right(BoxResponse(BoxId("test")))
         }
@@ -130,12 +134,12 @@ class PushNotificationServiceSpec
 
         val expectedAssociation = PushNotificationsAssociation(ClientId(clientId), movementType, Some(BoxId(boxId)), eori)
 
-        when(mockConnector.postAssociation(MovementId(anyString()), any())(any(), any()))
+        when(mockConnector.postAssociation(MovementId(anyString()), any(), any())(any(), any()))
           .thenReturn(Future.failed(new Exception()))
-        when(mockConnector.postAssociation(MovementId(anyString()), eqTo(expectedAssociation))(any(), any()))
+        when(mockConnector.postAssociation(MovementId(anyString()), eqTo(expectedAssociation), eqTo(version))(any(), any()))
           .thenReturn(Future.successful(BoxResponse(BoxId("test")))) // last wins
 
-        val result = sut.associate(movementId, movementType, headers, eori)
+        val result = sut.associate(movementId, movementType, headers, eori, version)
         whenReady(result.value) {
           r => r mustBe Right(BoxResponse(BoxId("test")))
         }
@@ -152,14 +156,14 @@ class PushNotificationServiceSpec
 
         val expectedAssociation = PushNotificationsAssociation(ClientId(clientId), movementType, None, eori)
 
-        when(mockConnector.postAssociation(MovementId(anyString()), any())(any(), any()))
+        when(mockConnector.postAssociation(MovementId(anyString()), any(), any())(any(), any()))
           .thenReturn(Future.failed(new Exception()))
-        when(mockConnector.postAssociation(MovementId(anyString()), eqTo(expectedAssociation))(any(), any()))
+        when(mockConnector.postAssociation(MovementId(anyString()), eqTo(expectedAssociation), eqTo(version))(any(), any()))
           .thenAnswer(
             _ => Future.failed(UpstreamErrorResponse("error", NOT_FOUND))
           ) // last wins
 
-        val result = sut.associate(movementId, movementType, headers, eori)
+        val result = sut.associate(movementId, movementType, headers, eori, version)
         whenReady(result.value) {
           r => r mustBe Left(PushNotificationError.BoxNotFound)
         }
@@ -177,9 +181,9 @@ class PushNotificationServiceSpec
 
         val expectedException = new Exception()
 
-        when(mockConnector.postAssociation(MovementId(anyString()), any())(any(), any())).thenReturn(Future.failed(expectedException))
+        when(mockConnector.postAssociation(MovementId(anyString()), any(), any())(any(), any())).thenReturn(Future.failed(expectedException))
 
-        val result = sut.associate(movementId, movementType, headers, eori)
+        val result = sut.associate(movementId, movementType, headers, eori, version)
         whenReady(result.value) {
           r => r mustBe Left(PushNotificationError.UnexpectedError(thr = Some(expectedException)))
         }
@@ -190,8 +194,8 @@ class PushNotificationServiceSpec
 
     "when the service is enabled and the update was successful, return a unit" in forAll(arbitrary[MovementId]) {
       movementId =>
-        when(mockConnector.patchAssociation(MovementId(anyString()))(any(), any())).thenReturn(Future.successful(()))
-        val result = sut.update(movementId)
+        when(mockConnector.patchAssociation(MovementId(anyString()), any())(any(), any())).thenReturn(Future.successful(()))
+        val result = sut.update(movementId, version)
 
         whenReady(result.value) {
           r => r mustBe Right(())
@@ -200,9 +204,10 @@ class PushNotificationServiceSpec
 
     "when a 404 is returned occurs, return a Left of AssociationNotFound" in forAll(arbitrary[MovementId]) {
       movementId =>
-        when(mockConnector.patchAssociation(MovementId(anyString()))(any(), any())).thenReturn(Future.failed(UpstreamErrorResponse("NOT_FOUND", NOT_FOUND)))
+        when(mockConnector.patchAssociation(MovementId(anyString()), any())(any(), any()))
+          .thenReturn(Future.failed(UpstreamErrorResponse("NOT_FOUND", NOT_FOUND)))
 
-        val result = sut.update(movementId)
+        val result = sut.update(movementId, version)
         whenReady(result.value) {
           r => r mustBe Left(PushNotificationError.AssociationNotFound)
         }
@@ -212,9 +217,9 @@ class PushNotificationServiceSpec
       movementId =>
         val expectedException = new Exception()
 
-        when(mockConnector.patchAssociation(MovementId(anyString()))(any(), any())).thenReturn(Future.failed(expectedException))
+        when(mockConnector.patchAssociation(MovementId(anyString()), any())(any(), any())).thenReturn(Future.failed(expectedException))
 
-        val result = sut.update(movementId)
+        val result = sut.update(movementId, version)
         whenReady(result.value) {
           r => r mustBe Left(PushNotificationError.UnexpectedError(thr = Some(expectedException)))
         }
@@ -225,11 +230,11 @@ class PushNotificationServiceSpec
 
     "should return Right(()) if the push notification was successfully sent" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
       (movementId, messageId) =>
-        when(mockConnector.postPpnsSubmissionNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
+        when(mockConnector.postPpnsSubmissionNotification(MovementId(anyString()), MessageId(anyString()), any(), any())(any(), any()))
           .thenReturn(Future.successful(()))
 
         val jsonPayload = jsonPayloadGen.sample.get
-        val result      = sut.postPpnsNotification(movementId, messageId, jsonPayload).value.futureValue
+        val result      = sut.postPpnsNotification(movementId, messageId, jsonPayload, version).value.futureValue
 
         result mustBe Right(())
 
@@ -237,11 +242,11 @@ class PushNotificationServiceSpec
 
     "should return Left(BoxNotFound) if the box is not found" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
       (movementId, messageId) =>
-        when(mockConnector.postPpnsSubmissionNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
+        when(mockConnector.postPpnsSubmissionNotification(MovementId(anyString()), MessageId(anyString()), any(), any())(any(), any()))
           .thenReturn(Future.failed(UpstreamErrorResponse("Box not found", NOT_FOUND)))
         val jsonPayload = jsonPayloadGen.sample.get
 
-        val result = sut.postPpnsNotification(movementId, messageId, jsonPayload).value.futureValue
+        val result = sut.postPpnsNotification(movementId, messageId, jsonPayload, version).value.futureValue
 
         result mustBe Left(PushNotificationError.BoxNotFound)
 
@@ -249,11 +254,11 @@ class PushNotificationServiceSpec
 
     "should return Left(UnexpectedError) if an unexpected error occurs" in forAll(arbitrary[MovementId], arbitrary[MessageId]) {
       (movementId, messageId) =>
-        when(mockConnector.postPpnsSubmissionNotification(MovementId(anyString()), MessageId(anyString()), any())(any(), any()))
+        when(mockConnector.postPpnsSubmissionNotification(MovementId(anyString()), MessageId(anyString()), any(), any())(any(), any()))
           .thenReturn(Future.failed(new RuntimeException("Something went wrong")))
         val jsonPayload = jsonPayloadGen.sample.get
 
-        whenReady(sut.postPpnsNotification(movementId, messageId, jsonPayload).value) {
+        whenReady(sut.postPpnsNotification(movementId, messageId, jsonPayload, version).value) {
           case Left(PushNotificationError.UnexpectedError(_)) => succeed
           case x                                              => fail(s"Expected Left(UnspectedError), got $x")
         }

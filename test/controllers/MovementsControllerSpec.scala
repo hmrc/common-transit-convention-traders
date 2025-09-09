@@ -379,7 +379,10 @@ class MovementsControllerSpec
 
           // ensure that we are associating with the correct EORI
           when(
-            mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(eqTo(eori.value)))(any(), any())
+            mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(eqTo(eori.value)), any[Version])(
+              any(),
+              any()
+            )
           )
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
@@ -471,7 +474,13 @@ class MovementsControllerSpec
             eqTo(Some(MessageType.DeclarationData))
           )(any[HeaderCarrier], any[ExecutionContext])
 
-          verify(mockPushNotificationService, times(1)).associate(MovementId(any()), eqTo(MovementType.Departure), any(), EORINumber(eqTo(eori.value)))(
+          verify(mockPushNotificationService, times(1)).associate(
+            MovementId(any()),
+            eqTo(MovementType.Departure),
+            any(),
+            EORINumber(eqTo(eori.value)),
+            eqTo(versionHeader)
+          )(
             any(),
             any()
           )
@@ -529,7 +538,10 @@ class MovementsControllerSpec
 
           // ensure that we are associating with the correct EORI
           when(
-            mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(eqTo(eori.value)))(any(), any())
+            mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(eqTo(eori.value)), any[Version])(
+              any(),
+              any()
+            )
           )
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
@@ -630,7 +642,13 @@ class MovementsControllerSpec
             eqTo(Some(MessageType.DeclarationData))
           )(any[HeaderCarrier], any[ExecutionContext])
 
-          verify(mockPushNotificationService, times(0)).associate(MovementId(any()), eqTo(MovementType.Departure), any(), EORINumber(eqTo(eori.value)))(
+          verify(mockPushNotificationService, times(0)).associate(
+            MovementId(any()),
+            eqTo(MovementType.Departure),
+            any(),
+            EORINumber(eqTo(eori.value)),
+            eqTo(versionHeader)
+          )(
             any(),
             any()
           )
@@ -714,7 +732,12 @@ class MovementsControllerSpec
               _ => EitherT.rightT(())
             }
 
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
+          when(
+            mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()), any[Version])(
+              any(),
+              any()
+            )
+          )
             .thenAnswer(
               _ => EitherT.leftT(PushNotificationError.BoxNotFound)
             )
@@ -767,7 +790,13 @@ class MovementsControllerSpec
             any(),
             any()
           )
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any(), EORINumber(anyString()))(
+          verify(mockPushNotificationService, times(1)).associate(
+            MovementId(anyString()),
+            eqTo(MovementType.Departure),
+            any(),
+            EORINumber(anyString()),
+            eqTo(versionHeader)
+          )(
             any(),
             any()
           )
@@ -850,7 +879,8 @@ class MovementsControllerSpec
               MovementId(eqTo(movementResponse.movementId.value)),
               eqTo(MovementType.Departure),
               any(),
-              EORINumber(anyString())
+              EORINumber(anyString()),
+              eqTo(versionHeader)
             )(any(), any())
           )
             .thenAnswer(
@@ -947,7 +977,10 @@ class MovementsControllerSpec
             any()
           )
           verify(mockPushNotificationService, times(1))
-            .associate(MovementId(eqTo(movementResponse.movementId.value)), eqTo(MovementType.Departure), any(), EORINumber(anyString()))(any(), any())
+            .associate(MovementId(eqTo(movementResponse.movementId.value)), eqTo(MovementType.Departure), any(), EORINumber(anyString()), eqTo(versionHeader))(
+              any(),
+              any()
+            )
       }
 
       "must return Bad Request when body is an XML document that would fail schema validation" in {
@@ -1091,7 +1124,12 @@ class MovementsControllerSpec
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
+          when(
+            mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()), any[Version])(
+              any(),
+              any()
+            )
+          )
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -1239,7 +1277,12 @@ class MovementsControllerSpec
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
+          when(
+            mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()), any[Version])(
+              any(),
+              any()
+            )
+          )
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -1414,7 +1457,12 @@ class MovementsControllerSpec
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
+          when(
+            mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()), any[Version])(
+              any(),
+              any()
+            )
+          )
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -1503,7 +1551,13 @@ class MovementsControllerSpec
             any[HeaderCarrier],
             any[ExecutionContext]
           )
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any(), EORINumber(anyString()))(
+          verify(mockPushNotificationService, times(1)).associate(
+            MovementId(anyString()),
+            eqTo(MovementType.Departure),
+            any(),
+            EORINumber(anyString()),
+            eqTo(versionHeader)
+          )(
             any(),
             any()
           )
@@ -1681,7 +1735,7 @@ class MovementsControllerSpec
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
-          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()))(any(), any()))
+          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()), any())(any(), any()))
             .thenAnswer(
               _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
             )
@@ -1730,7 +1784,13 @@ class MovementsControllerSpec
             any[HeaderCarrier],
             any[ExecutionContext]
           )
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any(), EORINumber(anyString()))(
+          verify(mockPushNotificationService, times(1)).associate(
+            MovementId(anyString()),
+            eqTo(MovementType.Departure),
+            any(),
+            EORINumber(anyString()),
+            eqTo(versionHeader)
+          )(
             any(),
             any()
           )
@@ -1822,7 +1882,8 @@ class MovementsControllerSpec
               MovementId(eqTo(movementResponse.movementId.value)),
               eqTo(MovementType.Departure),
               any(),
-              EORINumber(anyString())
+              EORINumber(anyString()),
+              eqTo(versionHeader)
             )(any(), any())
           )
             .thenAnswer(
@@ -1903,7 +1964,10 @@ class MovementsControllerSpec
             any[ExecutionContext]
           )
           verify(mockPushNotificationService, times(1))
-            .associate(MovementId(eqTo(movementResponse.movementId.value)), eqTo(MovementType.Departure), any(), EORINumber(anyString()))(any(), any())
+            .associate(MovementId(eqTo(movementResponse.movementId.value)), eqTo(MovementType.Departure), any(), EORINumber(anyString()), eqTo(versionHeader))(
+              any(),
+              any()
+            )
           verify(mockAuditService, times(1)).auditStatusEvent(
             eqTo(TraderToNCTSSubmissionSuccessful),
             eqTo(None),
@@ -2257,7 +2321,12 @@ class MovementsControllerSpec
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
+          when(
+            mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()), any[Version])(
+              any(),
+              any()
+            )
+          )
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -2430,7 +2499,7 @@ class MovementsControllerSpec
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
-          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()))(any(), any()))
+          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()), any())(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -2446,7 +2515,13 @@ class MovementsControllerSpec
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Departure), MovementId(any()), MessageId(any()))(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any(), any[Version])(any(), any())
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any(), EORINumber(anyString()))(
+          verify(mockPushNotificationService, times(1)).associate(
+            MovementId(anyString()),
+            eqTo(MovementType.Departure),
+            any(),
+            EORINumber(anyString()),
+            eqTo(versionHeader)
+          )(
             any(),
             any()
           )
@@ -2513,7 +2588,7 @@ class MovementsControllerSpec
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
-          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()))(any(), any()))
+          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()), any())(any(), any()))
             .thenAnswer(
               _ => EitherT.leftT(PushNotificationError.BoxNotFound)
             )
@@ -2537,7 +2612,13 @@ class MovementsControllerSpec
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Departure), MovementId(any()), MessageId(any()))(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any(), any[Version])(any(), any())
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any(), EORINumber(anyString()))(
+          verify(mockPushNotificationService, times(1)).associate(
+            MovementId(anyString()),
+            eqTo(MovementType.Departure),
+            any(),
+            EORINumber(anyString()),
+            eqTo(versionHeader)
+          )(
             any(),
             any()
           )
@@ -2827,7 +2908,7 @@ class MovementsControllerSpec
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
-          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(eqTo(eori.value)))(any(), any()))
+          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(eqTo(eori.value)), any())(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -2910,7 +2991,13 @@ class MovementsControllerSpec
             any[HeaderCarrier],
             any[ExecutionContext]
           )
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any(), EORINumber(anyString()))(
+          verify(mockPushNotificationService, times(1)).associate(
+            MovementId(anyString()),
+            eqTo(MovementType.Arrival),
+            any(),
+            EORINumber(anyString()),
+            eqTo(versionHeader)
+          )(
             any(),
             any()
           )
@@ -3017,7 +3104,7 @@ class MovementsControllerSpec
               _ => EitherT.rightT(())
             }
 
-          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()))(any(), any()))
+          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()), any())(any(), any()))
             .thenAnswer(
               _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
             )
@@ -3080,7 +3167,13 @@ class MovementsControllerSpec
             any[HeaderCarrier],
             any[ExecutionContext]
           )
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any(), EORINumber(anyString()))(
+          verify(mockPushNotificationService, times(1)).associate(
+            MovementId(anyString()),
+            eqTo(MovementType.Arrival),
+            any(),
+            EORINumber(anyString()),
+            eqTo(versionHeader)
+          )(
             any(),
             any()
           )
@@ -3142,7 +3235,8 @@ class MovementsControllerSpec
               MovementId(eqTo(movementResponse.movementId.value)),
               eqTo(MovementType.Arrival),
               any(),
-              EORINumber(anyString())
+              EORINumber(anyString()),
+              eqTo(versionHeader)
             )(any(), any())
           )
             .thenAnswer(
@@ -3239,7 +3333,10 @@ class MovementsControllerSpec
             any()
           )
           verify(mockPushNotificationService, times(1))
-            .associate(MovementId(eqTo(movementResponse.movementId.value)), eqTo(MovementType.Arrival), any(), EORINumber(anyString()))(any(), any())
+            .associate(MovementId(eqTo(movementResponse.movementId.value)), eqTo(MovementType.Arrival), any(), EORINumber(anyString()), eqTo(versionHeader))(
+              any(),
+              any()
+            )
       }
 
       "must return Bad Request when body is an XML document that would fail schema validation" in {
@@ -3424,7 +3521,12 @@ class MovementsControllerSpec
               )
           ).thenReturn(EitherT.fromEither[Future](Right[PersistenceError, MovementResponse](movementResponse)))
 
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
+          when(
+            mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()), any[Version])(
+              any(),
+              any()
+            )
+          )
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -3603,7 +3705,12 @@ class MovementsControllerSpec
               _ => EitherT.rightT(())
             }
 
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
+          when(
+            mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()), any[Version])(
+              any(),
+              any()
+            )
+          )
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -3818,7 +3925,7 @@ class MovementsControllerSpec
               eqTo(Some(MessageType.ArrivalNotification))
             )(any(), any())
           ).thenReturn(Future.successful(()))
-          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()))(any(), any()))
+          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()), any())(any(), any()))
             .thenAnswer(
               _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
             )
@@ -4231,7 +4338,12 @@ class MovementsControllerSpec
               eqTo(Some(MessageType.ArrivalNotification))
             )(any(), any())
           ).thenReturn(Future.successful(()))
-          when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
+          when(
+            mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()), any[Version])(
+              any(),
+              any()
+            )
+          )
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -4398,7 +4510,7 @@ class MovementsControllerSpec
               eqTo(None)
             )(any(), any())
           ).thenReturn(Future.successful(()))
-          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()))(any(), any()))
+          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()), any())(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(boxResponse)
             )
@@ -4413,7 +4525,13 @@ class MovementsControllerSpec
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Arrival), MovementId(any()), MessageId(any()))(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any(), any[Version])(any(), any())
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any(), EORINumber(anyString()))(
+          verify(mockPushNotificationService, times(1)).associate(
+            MovementId(anyString()),
+            eqTo(MovementType.Arrival),
+            any(),
+            EORINumber(anyString()),
+            eqTo(versionHeader)
+          )(
             any(),
             any()
           )
@@ -4481,7 +4599,7 @@ class MovementsControllerSpec
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
-          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()))(any(), any()))
+          when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()), any())(any(), any()))
             .thenAnswer(
               _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
             )
@@ -4505,7 +4623,13 @@ class MovementsControllerSpec
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Arrival), MovementId(any()), MessageId(any()))(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any(), any[Version])(any(), any())
-          verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any(), EORINumber(anyString()))(
+          verify(mockPushNotificationService, times(1)).associate(
+            MovementId(anyString()),
+            eqTo(MovementType.Arrival),
+            any(),
+            EORINumber(anyString()),
+            eqTo(versionHeader)
+          )(
             any(),
             any()
           )
@@ -4800,7 +4924,12 @@ class MovementsControllerSpec
             _ => EitherT.rightT(())
           }
 
-        when(mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()))(any(), any()))
+        when(
+          mockPushNotificationService.associate(any[String].asInstanceOf[MovementId], any[MovementType], any(), EORINumber(anyString()), any[Version])(
+            any(),
+            any()
+          )
+        )
           .thenAnswer(
             _ => EitherT.rightT(boxResponse)
           )
@@ -7180,7 +7309,7 @@ class MovementsControllerSpec
               )(any[HeaderCarrier], any[ExecutionContext])
             ).thenReturn(Future.successful(()))
 
-            when(mockPushNotificationService.update(any[String].asInstanceOf[MovementId])(any(), any()))
+            when(mockPushNotificationService.update(any[String].asInstanceOf[MovementId], any[Version])(any(), any()))
               .thenAnswer(
                 _ => EitherT.rightT(())
               )
@@ -7209,7 +7338,7 @@ class MovementsControllerSpec
               any(),
               any()
             )
-            verify(mockPushNotificationService, times(1)).update(MovementId(eqTo(movementId.value)))(any(), any())
+            verify(mockPushNotificationService, times(1)).update(MovementId(eqTo(movementId.value)), eqTo(versionHeader))(any(), any())
             verify(mockPersistenceService, times(1)).updateMessage(
               EORINumber(any()),
               eqTo(movementType),
@@ -7262,7 +7391,7 @@ class MovementsControllerSpec
               _
             ) = createControllerAndMocks(enrollmentEORI = eori)
 
-            when(mockPushNotificationService.update(any[String].asInstanceOf[MovementId])(any(), any()))
+            when(mockPushNotificationService.update(any[String].asInstanceOf[MovementId], any[Version])(any(), any()))
               .thenAnswer(
                 _ => EitherT.leftT(PushNotificationError.UnexpectedError(None))
               )
@@ -7346,7 +7475,7 @@ class MovementsControllerSpec
               any(),
               any()
             )
-            verify(mockPushNotificationService, times(1)).update(MovementId(eqTo(movementId.value)))(any(), any())
+            verify(mockPushNotificationService, times(1)).update(MovementId(eqTo(movementId.value)), eqTo(versionHeader))(any(), any())
             verify(mockPersistenceService, times(1)).updateMessage(
               EORINumber(any()),
               eqTo(movementType),
@@ -7698,7 +7827,7 @@ class MovementsControllerSpec
             _
           ) = setup()
 
-          when(mockPushNotificationService.update(any[String].asInstanceOf[MovementId])(any(), any()))
+          when(mockPushNotificationService.update(any[String].asInstanceOf[MovementId], any[Version])(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(())
             )
@@ -8145,7 +8274,7 @@ class MovementsControllerSpec
             _
           ) = setup(router = EitherT.leftT(RouterError.UnrecognisedOffice("AB012345", "field")))
 
-          when(mockPushNotificationService.update(any[String].asInstanceOf[MovementId])(any(), any()))
+          when(mockPushNotificationService.update(any[String].asInstanceOf[MovementId], any[Version])(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(())
             )
@@ -8730,7 +8859,8 @@ class MovementsControllerSpec
             mockPushNotificationService.postPpnsNotification(
               MovementId(eqTo(movementId.value)),
               MessageId(eqTo(messageId.value)),
-              any[JsValue]
+              any[JsValue],
+              eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
             )(
               any(),
               any()
@@ -8794,7 +8924,8 @@ class MovementsControllerSpec
               verify(mockPushNotificationService, times(1)).postPpnsNotification(
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
-                any[JsValue]
+                any[JsValue],
+                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
               )(
                 any(),
                 any()
@@ -8849,7 +8980,8 @@ class MovementsControllerSpec
               mockPushNotificationService.postPpnsNotification(
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
-                any[JsValue]
+                any[JsValue],
+                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -8903,7 +9035,8 @@ class MovementsControllerSpec
                 verify(mockPushNotificationService, times(1)).postPpnsNotification(
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  any[JsValue]
+                  any[JsValue],
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -8983,7 +9116,8 @@ class MovementsControllerSpec
               mockPushNotificationService.postPpnsNotification(
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
-                any[JsValue]
+                any[JsValue],
+                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -9019,7 +9153,8 @@ class MovementsControllerSpec
                 verify(mockPushNotificationService, times(1)).postPpnsNotification(
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  any[JsValue]
+                  any[JsValue],
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -9118,7 +9253,8 @@ class MovementsControllerSpec
               mockPushNotificationService.postPpnsNotification(
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
-                any[JsValue]
+                any[JsValue],
+                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -9182,7 +9318,8 @@ class MovementsControllerSpec
                 verify(mockPushNotificationService, times(1)).postPpnsNotification(
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  any[JsValue]
+                  any[JsValue],
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -9295,7 +9432,8 @@ class MovementsControllerSpec
                 mockPushNotificationService.postPpnsNotification(
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  any[JsValue]
+                  any[JsValue],
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -9367,7 +9505,8 @@ class MovementsControllerSpec
                   verify(mockPushNotificationService, times(1)).postPpnsNotification(
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
-                    any[JsValue]
+                    any[JsValue],
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(
                     any[HeaderCarrier],
                     any[ExecutionContext]
@@ -9514,7 +9653,8 @@ class MovementsControllerSpec
                 mockPushNotificationService.postPpnsNotification(
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  eqTo(ppnsMessage)
+                  eqTo(ppnsMessage),
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -9595,7 +9735,8 @@ class MovementsControllerSpec
                   verify(mockPushNotificationService, times(1)).postPpnsNotification(
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
-                    eqTo(ppnsMessage)
+                    eqTo(ppnsMessage),
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(
                     argThat(HeaderCarrierMatcher.clientId(clientId)),
                     any[ExecutionContext]
@@ -9717,7 +9858,8 @@ class MovementsControllerSpec
                 mockPushNotificationService.postPpnsNotification(
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  any[JsValue]
+                  any[JsValue],
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -9801,7 +9943,8 @@ class MovementsControllerSpec
                   verify(mockPushNotificationService, times(0)).postPpnsNotification(
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
-                    any[JsValue]
+                    any[JsValue],
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(
                     any[HeaderCarrier],
                     any[ExecutionContext]
@@ -9873,7 +10016,8 @@ class MovementsControllerSpec
             MessageId(eqTo(messageId.value)),
             eqTo(
               Json.toJson(PresentationError.badRequestError("e.g. This file has a virus"))
-            )
+            ),
+            eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -9917,7 +10061,8 @@ class MovementsControllerSpec
           MessageId(eqTo(messageId.value)),
           eqTo(
             Json.toJson(PresentationError.badRequestError("e.g. This file has a virus"))
-          )
+          ),
+          eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
         )(
           any[HeaderCarrier],
           any[ExecutionContext]

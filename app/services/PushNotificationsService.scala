@@ -21,6 +21,7 @@ import com.google.inject.Inject
 import config.Constants
 import connectors.PushNotificationsConnector
 import models.BoxId
+import models.Version
 import models.common.*
 import models.common.errors.PushNotificationError
 import models.request.PushNotificationsAssociation
@@ -40,7 +41,7 @@ class PushNotificationsService @Inject() (
   pushNotificationsConnector: PushNotificationsConnector
 ) extends Logging {
 
-  def associate(movementId: MovementId, movementType: MovementType, headers: Headers, enrollmentEORINumber: EORINumber)(implicit
+  def associate(movementId: MovementId, movementType: MovementType, headers: Headers, enrollmentEORINumber: EORINumber, version: Version)(implicit
     headerCarrier: HeaderCarrier,
     executionContext: ExecutionContext
   ): EitherT[Future, PushNotificationError, BoxResponse] =
@@ -57,7 +58,8 @@ class PushNotificationsService @Inject() (
                   movementType,
                   headers.get(Constants.XCallbackBoxIdHeader).map(BoxId.apply),
                   enrollmentEORINumber
-                )
+                ),
+                version
               )
               .map(Right(_))
               .recover {
@@ -71,11 +73,12 @@ class PushNotificationsService @Inject() (
     }
 
   def update(
-    movementId: MovementId
+    movementId: MovementId,
+    version: Version
   )(implicit headerCarrier: HeaderCarrier, executionContext: ExecutionContext): EitherT[Future, PushNotificationError, Unit] =
     EitherT {
       pushNotificationsConnector
-        .patchAssociation(movementId)
+        .patchAssociation(movementId, version)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.AssociationNotFound)
@@ -85,13 +88,13 @@ class PushNotificationsService @Inject() (
         }
     }
 
-  def postPpnsNotification(movementId: MovementId, messageId: MessageId, body: JsValue)(implicit
+  def postPpnsNotification(movementId: MovementId, messageId: MessageId, body: JsValue, version: Version)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PushNotificationError, Unit] =
     EitherT {
       pushNotificationsConnector
-        .postPpnsSubmissionNotification(movementId, messageId, body)
+        .postPpnsSubmissionNotification(movementId, messageId, body, version)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.BoxNotFound)
