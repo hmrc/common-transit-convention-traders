@@ -23,6 +23,9 @@ import org.apache.pekko.util.ByteString
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import config.AppConfig
 import config.Constants
+import models.Version
+import models.Version.V2_1
+import models.Version.V3_0
 import models.SubmissionRoute
 import models.common.MessageId
 import models.common.MovementId
@@ -51,6 +54,7 @@ import models.common.errors.ErrorCode
 import models.common.errors.PresentationError
 import models.common.errors.StandardError
 import models.request.MessageType
+import org.scalatest.OptionValues
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext
@@ -63,6 +67,7 @@ class RouterConnectorSpec
     with GuiceOneAppPerSuite
     with GuiceWiremockSuite
     with ScalaFutures
+    with OptionValues
     with IntegrationPatience
     with ScalaCheckDrivenPropertyChecks
     with CommonGenerators {
@@ -79,6 +84,8 @@ class RouterConnectorSpec
   implicit lazy val materializer: Materializer = app.materializer
   implicit lazy val ec: ExecutionContext       = app.materializer.executionContext
   lazy val routerConnector: RouterConnector    = new RouterConnector(new MetricRegistry, httpClientV2)
+
+  lazy val version: Version = Gen.oneOf(V2_1, V3_0).sample.value
 
   def targetUrl(eoriNumber: EORINumber, messageType: MessageType, movementId: MovementId, messageId: MessageId) =
     s"/transit-movements-router/traders/${eoriNumber.value}/movements/${messageType.movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
@@ -108,7 +115,7 @@ class RouterConnectorSpec
 
         whenReady(
           routerConnector
-            .post(messageType, eoriNumber, movementId, messageId, source)
+            .post(messageType, eoriNumber, movementId, messageId, source, version)
             .map(Right(_)) // can't test unit, but we want to test for success
             .recover {
               case thr => Left(thr)
@@ -141,7 +148,7 @@ class RouterConnectorSpec
 
         whenReady(
           routerConnector
-            .post(messageType, eoriNumber, movementId, messageId, source)(
+            .post(messageType, eoriNumber, movementId, messageId, source, version)(
               implicitly[ExecutionContext],
               HeaderCarrier(otherHeaders = Seq((Constants.XClientIdHeader -> clientId)))
             )
@@ -179,7 +186,7 @@ class RouterConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = routerConnector.post(messageType, eoriNumber, movementId, messageId, source).map(Right(_)).recover {
+        val future = routerConnector.post(messageType, eoriNumber, movementId, messageId, source, version).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 

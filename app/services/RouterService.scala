@@ -22,6 +22,7 @@ import cats.data.EitherT
 import com.google.inject.Inject
 import connectors.RouterConnector
 import models.SubmissionRoute
+import models.Version
 import models.common.EORINumber
 import models.common.LocalReferenceNumber
 import models.common.MessageId
@@ -46,13 +47,14 @@ import scala.util.control.NonFatal
 
 class RouterService @Inject() (routerConnector: RouterConnector) extends Logging {
 
-  def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, ?])(implicit
+  def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, ?], version: Version)(
+    implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): EitherT[Future, RouterError, SubmissionRoute] =
     EitherT(
       routerConnector
-        .post(messageType, eoriNumber, movementId, messageId, body)
+        .post(messageType, eoriNumber, movementId, messageId, body, version)
         .map(
           result => Right(result)
         )

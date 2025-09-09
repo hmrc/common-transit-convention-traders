@@ -953,19 +953,22 @@ class MovementsControllerImpl @Inject() (
                       )
 
                       // Send message to router to be sent
-                      submissionResult <- routerService.send(messageType, eori, movementId, messageId, source).asPresentation.leftMap {
-                        err =>
-                          auditService.auditStatusEvent(
-                            SubmitAttachMessageFailed,
-                            Some(Json.toJson(err)),
-                            Some(movementId),
-                            Some(messageId),
-                            Some(eori),
-                            Some(movementType),
-                            Some(messageType)
-                          )
-                          err
-                      }
+                      submissionResult <- routerService
+                        .send(messageType, eori, movementId, messageId, source, V2_1)
+                        .asPresentation
+                        .leftMap { // TODO - Make version value dynamic CTCP6-68
+                          err =>
+                            auditService.auditStatusEvent(
+                              SubmitAttachMessageFailed,
+                              Some(Json.toJson(err)),
+                              Some(movementId),
+                              Some(messageId),
+                              Some(eori),
+                              Some(movementType),
+                              Some(messageType)
+                            )
+                            err
+                        }
                       _ = auditService.auditStatusEvent(
                         TraderToNCTSSubmissionSuccessful,
                         None,
@@ -1060,7 +1063,7 @@ class MovementsControllerImpl @Inject() (
           err
       }
       _ <- routerService
-        .send(messageType, request.authenticatedRequest.eoriNumber, movementId, updateMovementResponse.messageId, sources.lift(2).get)
+        .send(messageType, request.authenticatedRequest.eoriNumber, movementId, updateMovementResponse.messageId, sources.lift(2).get, version)
         .asPresentation
         .leftMap {
           err =>
@@ -1215,7 +1218,8 @@ class MovementsControllerImpl @Inject() (
           request.authenticatedRequest.eoriNumber,
           movementResponse.movementId,
           movementResponse.messageId,
-          sources.lift(2).get
+          sources.lift(2).get,
+          version
         )
         .asPresentation
         .leftMap {
