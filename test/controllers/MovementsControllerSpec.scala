@@ -313,14 +313,14 @@ class MovementsControllerSpec
     )
 
   // Version 2
-  "for a departure declaration with accept header set to application/vnd.hmrc.2.1+json (version two)" - {
+  "for a departure declaration with accept header" - {
 
     "with content type set to application/xml" - {
 
       // For the content length headers, we have to ensure that we send something
       val standardHeaders = FakeHeaders(
         Seq(
-          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+          HeaderNames.ACCEPT         -> s"application/vnd.hmrc.${versionHeader.value}+json",
           HeaderNames.CONTENT_TYPE   -> MimeTypes.XML,
           HeaderNames.CONTENT_LENGTH -> "1000",
           Constants.XClientIdHeader  -> "1234567890"
@@ -368,7 +368,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]]())(
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]](), any[Version])(
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
@@ -404,7 +404,8 @@ class MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
-                eqTo(messageUpdateSuccess)
+                eqTo(messageUpdateSuccess),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -444,7 +445,7 @@ class MovementsControllerSpec
             eqTo(Some(MessageType.DeclarationData))
           )(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
-          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), eqTo(MovementType.Departure), any())(any(), any())
+          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), eqTo(MovementType.Departure), any(), eqTo(versionHeader))(any(), any())
           verify(mockRouterService, times(1)).send(eqTo(MessageType.DeclarationData), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
             any(),
             any()
@@ -454,7 +455,8 @@ class MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
-            eqTo(messageUpdateSuccess)
+            eqTo(messageUpdateSuccess),
+            eqTo(versionHeader)
           )(
             any(),
             any()
@@ -516,7 +518,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]]())(
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]](), any[Version])(
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
@@ -552,7 +554,8 @@ class MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
-                eqTo(messageUpdateSuccess)
+                eqTo(messageUpdateSuccess),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -575,7 +578,7 @@ class MovementsControllerSpec
 
           val standardHeaders = FakeHeaders(
             Seq(
-              HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+              HeaderNames.ACCEPT         -> s"application/vnd.hmrc.${versionHeader.value}+json",
               HeaderNames.CONTENT_TYPE   -> MimeTypes.XML,
               HeaderNames.CONTENT_LENGTH -> "1000"
             )
@@ -601,7 +604,7 @@ class MovementsControllerSpec
             eqTo(Some(MessageType.DeclarationData))
           )(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
-          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), eqTo(MovementType.Departure), any())(any(), any())
+          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), eqTo(MovementType.Departure), any(), eqTo(versionHeader))(any(), any())
           verify(mockRouterService, times(1)).send(eqTo(MessageType.DeclarationData), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
             any(),
             any()
@@ -611,7 +614,8 @@ class MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
-            eqTo(messageUpdateSuccess)
+            eqTo(messageUpdateSuccess),
+            eqTo(versionHeader)
           )(
             any(),
             any()
@@ -671,7 +675,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]]())(
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]](), any[Version])(
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
@@ -699,7 +703,8 @@ class MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
-                eqTo(messageUpdateSuccess)
+                eqTo(messageUpdateSuccess),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -746,7 +751,7 @@ class MovementsControllerSpec
             eqTo(Some(MessageType.DeclarationData))
           )(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
-          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
+          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any(), any[Version])(any(), any())
           verify(mockRouterService, times(1)).send(eqTo(MessageType.DeclarationData), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
             any(),
             any()
@@ -756,7 +761,8 @@ class MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
-            eqTo(messageUpdateSuccess)
+            eqTo(messageUpdateSuccess),
+            eqTo(versionHeader)
           )(
             any(),
             any()
@@ -816,7 +822,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], eqTo(MovementType.Departure), any[Option[Source[ByteString, ?]]]())(
+              .createMovement(any[String].asInstanceOf[EORINumber], eqTo(MovementType.Departure), any[Option[Source[ByteString, ?]]](), eqTo(versionHeader))(
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
@@ -881,7 +887,8 @@ class MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
-                eqTo(messageUpdateSuccess)
+                eqTo(messageUpdateSuccess),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -907,7 +914,7 @@ class MovementsControllerSpec
             eqTo(Some(MessageType.DeclarationData))
           )(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
-          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), eqTo(MovementType.Departure), any())(any(), any())
+          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), eqTo(MovementType.Departure), any(), any())(any(), any())
           verify(mockRouterService, times(1)).send(
             eqTo(MessageType.DeclarationData),
             EORINumber(any()),
@@ -933,7 +940,8 @@ class MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
-            eqTo(messageUpdateSuccess)
+            eqTo(messageUpdateSuccess),
+            eqTo(versionHeader)
           )(
             any(),
             any()
@@ -1007,7 +1015,7 @@ class MovementsControllerSpec
 
         when(
           mockPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]]())(
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]](), any[Version])(
               any[HeaderCarrier],
               any[ExecutionContext]
             )
@@ -1063,7 +1071,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]]())(
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]](), any[Version])(
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
@@ -1118,7 +1126,8 @@ class MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
-                eqTo(messageUpdateFailure)
+                eqTo(messageUpdateFailure),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -1143,7 +1152,8 @@ class MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
-            eqTo(messageUpdateFailure)
+            eqTo(messageUpdateFailure),
+            eqTo(versionHeader)
           )(
             any(),
             any()
@@ -1209,7 +1219,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]]())(
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]](), any[Version])(
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
@@ -1264,7 +1274,8 @@ class MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
-                eqTo(messageUpdateFailure)
+                eqTo(messageUpdateFailure),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -1289,7 +1300,8 @@ class MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
-            eqTo(messageUpdateFailure)
+            eqTo(messageUpdateFailure),
+            eqTo(versionHeader)
           )(
             any(),
             any()
@@ -1322,7 +1334,7 @@ class MovementsControllerSpec
     "with content type set to application/json" - {
       val standardHeaders = FakeHeaders(
         Seq(
-          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+          HeaderNames.ACCEPT         -> s"application/vnd.hmrc.${versionHeader.value}+json",
           HeaderNames.CONTENT_TYPE   -> MimeTypes.JSON,
           HeaderNames.CONTENT_LENGTH -> "1000",
           Constants.XClientIdHeader  -> "1234567890"
@@ -1367,7 +1379,7 @@ class MovementsControllerSpec
 
           when(
             mockConversionService
-              .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
+              .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml), eqTo(versionHeader))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -1379,7 +1391,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]]())(
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]](), any[Version])(
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
@@ -1438,7 +1450,8 @@ class MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
-                eqTo(messageUpdateSuccess)
+                eqTo(messageUpdateSuccess),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -1455,9 +1468,9 @@ class MovementsControllerSpec
             HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, Some(boxResponse), None, MovementType.Departure)
           )
 
-          verify(mockConversionService, times(1)).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
+          verify(mockConversionService, times(1)).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml), eqTo(versionHeader))(any(), any(), any())
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
-          verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
+          verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml), eqTo(versionHeader))(any(), any(), any())
           verify(mockAuditService, times(1)).auditMessageEvent(
             eqTo(AuditType.DeclarationData),
             eqTo(MimeTypes.XML),
@@ -1484,7 +1497,8 @@ class MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
-            eqTo(messageUpdateSuccess)
+            eqTo(messageUpdateSuccess),
+            eqTo(versionHeader)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -1531,7 +1545,7 @@ class MovementsControllerSpec
           }
           when(
             mockConversionService
-              .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
+              .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml), eqTo(versionHeader))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -1549,7 +1563,7 @@ class MovementsControllerSpec
             "code"    -> "REQUEST_ENTITY_TOO_LARGE",
             "message" -> "Request Entity Too Large"
           )
-          verify(mockConversionService, times(1)).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
+          verify(mockConversionService, times(1)).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml), eqTo(versionHeader))(any(), any(), any())
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
 
       }
@@ -1591,7 +1605,7 @@ class MovementsControllerSpec
 
           when(
             mockConversionService
-              .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
+              .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml), eqTo(versionHeader))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -1631,7 +1645,8 @@ class MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
-                eqTo(messageUpdateSuccess)
+                eqTo(messageUpdateSuccess),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -1643,7 +1658,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]]())(
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]](), any[Version])(
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
@@ -1679,9 +1694,9 @@ class MovementsControllerSpec
             HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, None, None, MovementType.Departure)
           )
 
-          verify(mockConversionService, times(1)).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
+          verify(mockConversionService, times(1)).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml), eqTo(versionHeader))(any(), any(), any())
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
-          verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
+          verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml), eqTo(versionHeader))(any(), any(), any())
           verify(mockAuditService, times(1)).auditMessageEvent(
             eqTo(AuditType.DeclarationData),
             eqTo(MimeTypes.XML),
@@ -1709,7 +1724,8 @@ class MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
-            eqTo(messageUpdateSuccess)
+            eqTo(messageUpdateSuccess),
+            eqTo(versionHeader)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -1767,7 +1783,7 @@ class MovementsControllerSpec
 
           when(
             mockConversionService
-              .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
+              .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml), eqTo(versionHeader))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -1779,7 +1795,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], eqTo(MovementType.Departure), any[Option[Source[ByteString, ?]]]())(
+              .createMovement(any[String].asInstanceOf[EORINumber], eqTo(MovementType.Departure), any[Option[Source[ByteString, ?]]](), any[Version])(
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
@@ -1844,7 +1860,8 @@ class MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
-                eqTo(messageUpdateSuccess)
+                eqTo(messageUpdateSuccess),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -1859,7 +1876,7 @@ class MovementsControllerSpec
           val result  = sut.createMovement(MovementType.Departure)(request)
           status(result) mustBe NOT_FOUND
 
-          verify(mockConversionService, times(1)).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
+          verify(mockConversionService, times(1)).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml), eqTo(versionHeader))(any(), any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
           verify(mockAuditService, times(1)).auditMessageEvent(
@@ -1879,7 +1896,8 @@ class MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
-            eqTo(messageUpdateSuccess)
+            eqTo(messageUpdateSuccess),
+            eqTo(versionHeader)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -2001,7 +2019,7 @@ class MovementsControllerSpec
 
         when(
           mockConversionService
-            .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
+            .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml), eqTo(versionHeader))(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -2016,7 +2034,7 @@ class MovementsControllerSpec
         status(result) mustBe INTERNAL_SERVER_ERROR
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
-        verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
+        verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml), eqTo(versionHeader))(any(), any(), any())
       }
 
       "must return Internal Service Error after JSON to XML conversion if the XML validation service reports an error" in {
@@ -2052,7 +2070,7 @@ class MovementsControllerSpec
 
         when(
           mockConversionService
-            .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
+            .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml), eqTo(versionHeader))(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -2074,7 +2092,7 @@ class MovementsControllerSpec
         )
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
-        verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
+        verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml), eqTo(versionHeader))(any(), any(), any())
         verify(mockValidationService).validateXml(eqTo(MessageType.DeclarationData), any())(any(), any())
         verify(mockAuditService, times(1)).auditStatusEvent(
           eqTo(ValidationFailed),
@@ -2120,7 +2138,7 @@ class MovementsControllerSpec
 
         when(
           mockConversionService
-            .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
+            .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml), eqTo(versionHeader))(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -2134,7 +2152,7 @@ class MovementsControllerSpec
 
         when(
           mockPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]])(
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]], any[Version])(
               any[HeaderCarrier],
               any[ExecutionContext]
             )
@@ -2148,8 +2166,8 @@ class MovementsControllerSpec
         status(result) mustBe INTERNAL_SERVER_ERROR
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
-        verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
-        verify(mockPersistenceService).createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any(), any())
+        verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml), eqTo(versionHeader))(any(), any(), any())
+        verify(mockPersistenceService).createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any(), any[Version])(any(), any())
 
         verify(mockAuditService, times(1)).auditStatusEvent(
           eqTo(CreateMovementDBFailed),
@@ -2200,7 +2218,7 @@ class MovementsControllerSpec
 
           when(
             mockConversionService
-              .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
+              .convert(eqTo(MessageType.DeclarationData), any[Source[ByteString, ?]](), eqTo(jsonToXml), eqTo(versionHeader))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -2214,7 +2232,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]])(
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]], any[Version])(
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
@@ -2276,7 +2294,8 @@ class MovementsControllerSpec
                 eqTo(MovementType.Departure),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
-                eqTo(messageUpdateFailure)
+                eqTo(messageUpdateFailure),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -2291,8 +2310,8 @@ class MovementsControllerSpec
           status(result) mustBe INTERNAL_SERVER_ERROR
 
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.DeclarationData), any())(any(), any())
-          verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml))(any(), any(), any())
-          verify(mockPersistenceService).createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any(), any())
+          verify(mockConversionService).convert(eqTo(MessageType.DeclarationData), any(), eqTo(jsonToXml), eqTo(versionHeader))(any(), any(), any())
+          verify(mockPersistenceService).createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any(), any[Version])(any(), any())
           verify(mockRouterService).send(
             eqTo(MessageType.DeclarationData),
             any[String].asInstanceOf[EORINumber],
@@ -2316,7 +2335,8 @@ class MovementsControllerSpec
             eqTo(MovementType.Departure),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
-            eqTo(messageUpdateFailure)
+            eqTo(messageUpdateFailure),
+            eqTo(versionHeader)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -2350,7 +2370,11 @@ class MovementsControllerSpec
 
       // For the content length headers, we have to ensure that we send something
       val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json", HeaderNames.CONTENT_LENGTH -> "1000", Constants.XClientIdHeader -> "1234567890")
+        Seq(
+          HeaderNames.ACCEPT         -> s"application/vnd.hmrc.${versionHeader.value}+json",
+          HeaderNames.CONTENT_LENGTH -> "1000",
+          Constants.XClientIdHeader  -> "1234567890"
+        )
       )
 
       "must return Accepted when call to upscan is success" in forAll(
@@ -2388,7 +2412,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any(), any[Version])(any[HeaderCarrier], any[ExecutionContext])
           )
             .thenAnswer {
               _ => EitherT.rightT(movementResponse)
@@ -2421,7 +2445,7 @@ class MovementsControllerSpec
           )
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Departure), MovementId(any()), MessageId(any()))(any(), any())
-          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
+          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any(), any[Version])(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any(), EORINumber(anyString()))(
             any(),
             any()
@@ -2472,7 +2496,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any(), any[Version])(any[HeaderCarrier], any[ExecutionContext])
           )
             .thenAnswer {
               _ => EitherT.rightT(movementResponse)
@@ -2512,7 +2536,7 @@ class MovementsControllerSpec
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Departure), MovementId(any()), MessageId(any()))(any(), any())
-          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
+          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any(), any[Version])(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Departure), any(), EORINumber(anyString()))(
             any(),
             any()
@@ -2546,7 +2570,7 @@ class MovementsControllerSpec
         ) = createControllerAndMocks(enrollmentEORI = eori)
         when(
           mockPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any(), any[Version])(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer(
           _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
         )
@@ -2592,7 +2616,7 @@ class MovementsControllerSpec
           ) = createControllerAndMocks()
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any(), any[Version])(any[HeaderCarrier], any[ExecutionContext])
           )
             .thenAnswer {
               _ => EitherT.rightT(movementResponse)
@@ -2652,7 +2676,7 @@ class MovementsControllerSpec
       ) = createControllerAndMocks()
       val standardHeaders = FakeHeaders(
         Seq(
-          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+          HeaderNames.ACCEPT         -> s"application/vnd.hmrc.${versionHeader.value}+json",
           HeaderNames.CONTENT_TYPE   -> "invalid",
           HeaderNames.CONTENT_LENGTH -> "1000",
           Constants.XClientIdHeader  -> "1234567890"
@@ -2739,13 +2763,13 @@ class MovementsControllerSpec
     }
   }
 
-  "for an arrival notification with accept header set to application/vnd.hmrc.2.1+json (version two)" - {
+  "for an arrival notification with accept header" - {
     "with content type set to application/xml" - {
 
       // For the content length headers, we have to ensure that we send something
       val standardHeaders = FakeHeaders(
         Seq(
-          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+          HeaderNames.ACCEPT         -> s"application/vnd.hmrc.${versionHeader.value}+json",
           HeaderNames.CONTENT_TYPE   -> MimeTypes.XML,
           HeaderNames.CONTENT_LENGTH -> "1000",
           Constants.XClientIdHeader  -> "1234567890"
@@ -2780,7 +2804,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]]())(
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]](), any[Version])(
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
@@ -2838,7 +2862,8 @@ class MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
-                eqTo(messageUpdateSuccess)
+                eqTo(messageUpdateSuccess),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -2869,7 +2894,7 @@ class MovementsControllerSpec
           )(any(), any())
 
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
-          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
+          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any(), any())(any(), any())
           verify(mockRouterService, times(1)).send(eqTo(MessageType.ArrivalNotification), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
             any(),
             any()
@@ -2879,7 +2904,8 @@ class MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
-            eqTo(messageUpdateSuccess)
+            eqTo(messageUpdateSuccess),
+            eqTo(versionHeader)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -2928,7 +2954,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]]())(
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]](), any[Version])(
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
@@ -2980,7 +3006,8 @@ class MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
-                eqTo(messageUpdateSuccess)
+                eqTo(messageUpdateSuccess),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -3026,7 +3053,7 @@ class MovementsControllerSpec
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
-          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
+          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any(), any[Version])(any(), any())
           verify(mockRouterService, times(1)).send(eqTo(MessageType.ArrivalNotification), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
             any(),
             any()
@@ -3047,7 +3074,8 @@ class MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
-            eqTo(messageUpdateSuccess)
+            eqTo(messageUpdateSuccess),
+            eqTo(versionHeader)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -3086,7 +3114,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], eqTo(MovementType.Arrival), any[Option[Source[ByteString, ?]]]())(
+              .createMovement(any[String].asInstanceOf[EORINumber], eqTo(MovementType.Arrival), any[Option[Source[ByteString, ?]]](), any[Version])(
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
@@ -3151,7 +3179,8 @@ class MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
-                eqTo(messageUpdateSuccess)
+                eqTo(messageUpdateSuccess),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -3178,7 +3207,7 @@ class MovementsControllerSpec
           )(any(), any())
 
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
-          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), eqTo(MovementType.Arrival), any())(any(), any())
+          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), eqTo(MovementType.Arrival), any(), any())(any(), any())
           verify(mockRouterService, times(1)).send(
             eqTo(MessageType.ArrivalNotification),
             EORINumber(any()),
@@ -3203,7 +3232,8 @@ class MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
-            eqTo(messageUpdateSuccess)
+            eqTo(messageUpdateSuccess),
+            eqTo(versionHeader)
           )(
             any(),
             any()
@@ -3278,7 +3308,7 @@ class MovementsControllerSpec
 
         when(
           mockPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]]())(
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]](), any[Version])(
               any[HeaderCarrier],
               any[ExecutionContext]
             )
@@ -3361,7 +3391,8 @@ class MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
-                eqTo(messageUpdateFailure)
+                eqTo(messageUpdateFailure),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -3387,7 +3418,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]]())(
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]](), any[Version])(
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
@@ -3433,7 +3464,8 @@ class MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
-            eqTo(messageUpdateFailure)
+            eqTo(messageUpdateFailure),
+            eqTo(versionHeader)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -3453,7 +3485,7 @@ class MovementsControllerSpec
     "with content type set to application/json" - {
       val standardHeaders = FakeHeaders(
         Seq(
-          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+          HeaderNames.ACCEPT         -> s"application/vnd.hmrc.${versionHeader.value}+json",
           HeaderNames.CONTENT_TYPE   -> MimeTypes.JSON,
           HeaderNames.CONTENT_LENGTH -> "1000",
           Constants.XClientIdHeader  -> "1234567890"
@@ -3496,7 +3528,7 @@ class MovementsControllerSpec
 
           when(
             mockConversionService
-              .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
+              .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml), eqTo(versionHeader))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -3531,7 +3563,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]]())(
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]](), any[Version])(
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
@@ -3560,7 +3592,8 @@ class MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
-                eqTo(messageUpdateSuccess)
+                eqTo(messageUpdateSuccess),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -3600,7 +3633,8 @@ class MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
-            eqTo(messageUpdateSuccess)
+            eqTo(messageUpdateSuccess),
+            eqTo(versionHeader)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -3646,7 +3680,7 @@ class MovementsControllerSpec
 
           when(
             mockConversionService
-              .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
+              .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml), eqTo(versionHeader))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -3665,7 +3699,11 @@ class MovementsControllerSpec
             "code"    -> "REQUEST_ENTITY_TOO_LARGE",
             "message" -> "Request Entity Too Large"
           )
-          verify(mockConversionService, times(1)).convert(eqTo(MessageType.ArrivalNotification), any(), eqTo(jsonToXml))(any(), any(), any())
+          verify(mockConversionService, times(1)).convert(eqTo(MessageType.ArrivalNotification), any(), eqTo(jsonToXml), eqTo(versionHeader))(
+            any(),
+            any(),
+            any()
+          )
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
       }
 
@@ -3705,7 +3743,7 @@ class MovementsControllerSpec
 
           when(
             mockConversionService
-              .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
+              .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml), eqTo(versionHeader))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -3746,7 +3784,8 @@ class MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
-                eqTo(messageUpdateSuccess)
+                eqTo(messageUpdateSuccess),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -3758,7 +3797,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]]())(
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]](), any[Version])(
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
@@ -3819,7 +3858,8 @@ class MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
-            eqTo(messageUpdateSuccess)
+            eqTo(messageUpdateSuccess),
+            eqTo(versionHeader)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -3953,7 +3993,7 @@ class MovementsControllerSpec
 
         when(
           mockConversionService
-            .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
+            .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml), eqTo(versionHeader))(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -3969,7 +4009,7 @@ class MovementsControllerSpec
         status(result) mustBe INTERNAL_SERVER_ERROR
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
-        verify(mockConversionService).convert(eqTo(MessageType.ArrivalNotification), any(), eqTo(jsonToXml))(any(), any(), any())
+        verify(mockConversionService).convert(eqTo(MessageType.ArrivalNotification), any(), eqTo(jsonToXml), eqTo(versionHeader))(any(), any(), any())
       }
 
       "must return Internal Service Error after JSON to XML conversion if the XML validation service reports an error" in {
@@ -4005,7 +4045,7 @@ class MovementsControllerSpec
 
         when(
           mockConversionService
-            .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
+            .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml), eqTo(versionHeader))(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -4027,7 +4067,7 @@ class MovementsControllerSpec
         )
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
-        verify(mockConversionService).convert(eqTo(MessageType.ArrivalNotification), any(), eqTo(jsonToXml))(any(), any(), any())
+        verify(mockConversionService).convert(eqTo(MessageType.ArrivalNotification), any(), eqTo(jsonToXml), eqTo(versionHeader))(any(), any(), any())
         verify(mockValidationService).validateXml(eqTo(MessageType.ArrivalNotification), any())(any(), any())
         verify(mockAuditService, times(1)).auditStatusEvent(
           eqTo(ValidationFailed),
@@ -4073,7 +4113,7 @@ class MovementsControllerSpec
 
         when(
           mockConversionService
-            .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
+            .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml), eqTo(versionHeader))(
               any[HeaderCarrier],
               any[ExecutionContext],
               any[Materializer]
@@ -4087,7 +4127,7 @@ class MovementsControllerSpec
 
         when(
           mockPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]])(
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]], any[Version])(
               any[HeaderCarrier],
               any[ExecutionContext]
             )
@@ -4102,8 +4142,8 @@ class MovementsControllerSpec
         status(result) mustBe INTERNAL_SERVER_ERROR
 
         verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
-        verify(mockConversionService).convert(eqTo(MessageType.ArrivalNotification), any(), eqTo(jsonToXml))(any(), any(), any())
-        verify(mockPersistenceService).createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any(), any())
+        verify(mockConversionService).convert(eqTo(MessageType.ArrivalNotification), any(), eqTo(jsonToXml), eqTo(versionHeader))(any(), any(), any())
+        verify(mockPersistenceService).createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any(), any[Version])(any(), any())
         verify(mockAuditService, times(1)).auditStatusEvent(
           eqTo(CreateMovementDBFailed),
           eqTo(Some(Json.obj("message" -> "Internal server error", "code" -> "INTERNAL_SERVER_ERROR"))),
@@ -4153,7 +4193,7 @@ class MovementsControllerSpec
 
           when(
             mockConversionService
-              .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml))(
+              .convert(eqTo(MessageType.ArrivalNotification), any[Source[ByteString, ?]](), eqTo(jsonToXml), eqTo(versionHeader))(
                 any[HeaderCarrier],
                 any[ExecutionContext],
                 any[Materializer]
@@ -4167,7 +4207,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]])(
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]], any[Version])(
                 any[HeaderCarrier],
                 any[ExecutionContext]
               )
@@ -4228,7 +4268,8 @@ class MovementsControllerSpec
                 eqTo(MovementType.Arrival),
                 MovementId(eqTo(movementResponse.movementId.value)),
                 MessageId(eqTo(movementResponse.messageId.value)),
-                eqTo(messageUpdateFailure)
+                eqTo(messageUpdateFailure),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -4256,8 +4297,8 @@ class MovementsControllerSpec
           )(any(), any())
 
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any())(any(), any())
-          verify(mockConversionService).convert(eqTo(MessageType.ArrivalNotification), any(), eqTo(jsonToXml))(any(), any(), any())
-          verify(mockPersistenceService).createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any(), any())
+          verify(mockConversionService).convert(eqTo(MessageType.ArrivalNotification), any(), eqTo(jsonToXml), eqTo(versionHeader))(any(), any(), any())
+          verify(mockPersistenceService).createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any(), any[Version])(any(), any())
           verify(mockRouterService).send(
             eqTo(MessageType.ArrivalNotification),
             any[String].asInstanceOf[EORINumber],
@@ -4281,7 +4322,8 @@ class MovementsControllerSpec
             eqTo(MovementType.Arrival),
             MovementId(eqTo(movementResponse.movementId.value)),
             MessageId(eqTo(movementResponse.messageId.value)),
-            eqTo(messageUpdateFailure)
+            eqTo(messageUpdateFailure),
+            eqTo(versionHeader)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -4302,7 +4344,7 @@ class MovementsControllerSpec
     "when the content type is not present" - {
 
       val standardHeaders = FakeHeaders(
-        Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json", Constants.XClientIdHeader -> "1234567890")
+        Seq(HeaderNames.ACCEPT -> s"application/vnd.hmrc.${versionHeader.value}+json", Constants.XClientIdHeader -> "1234567890")
       )
 
       "must return Accepted if the call to upscan and the persistence service succeeds" in forAll(
@@ -4340,7 +4382,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any(), any[Version])(any[HeaderCarrier], any[ExecutionContext])
           )
             .thenAnswer {
               _ => EitherT.rightT(movementResponse)
@@ -4370,7 +4412,7 @@ class MovementsControllerSpec
           )
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Arrival), MovementId(any()), MessageId(any()))(any(), any())
-          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
+          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any(), any[Version])(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any(), EORINumber(anyString()))(
             any(),
             any()
@@ -4422,7 +4464,7 @@ class MovementsControllerSpec
 
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any(), any[Version])(any[HeaderCarrier], any[ExecutionContext])
           )
             .thenAnswer {
               _ => EitherT.rightT(movementResponse)
@@ -4462,7 +4504,7 @@ class MovementsControllerSpec
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Arrival), MovementId(any()), MessageId(any()))(any(), any())
-          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any())(any(), any())
+          verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any(), any[Version])(any(), any())
           verify(mockPushNotificationService, times(1)).associate(MovementId(anyString()), eqTo(MovementType.Arrival), any(), EORINumber(anyString()))(
             any(),
             any()
@@ -4486,7 +4528,7 @@ class MovementsControllerSpec
         ) = createControllerAndMocks(enrollmentEORI = eori)
         when(
           mockPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any(), any[Version])(any[HeaderCarrier], any[ExecutionContext])
         ).thenAnswer(
           _ => EitherT.leftT(PersistenceError.UnexpectedError(None))
         )
@@ -4531,7 +4573,7 @@ class MovementsControllerSpec
           ) = createControllerAndMocks()
           when(
             mockPersistenceService
-              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any())(any[HeaderCarrier], any[ExecutionContext])
+              .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any(), any[Version])(any[HeaderCarrier], any[ExecutionContext])
           )
             .thenAnswer {
               _ => EitherT.rightT(movementResponse)
@@ -4589,7 +4631,7 @@ class MovementsControllerSpec
       ) = createControllerAndMocks()
       val standardHeaders = FakeHeaders(
         Seq(
-          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+          HeaderNames.ACCEPT         -> s"application/vnd.hmrc.${versionHeader.value}+json",
           HeaderNames.CONTENT_TYPE   -> "invalid",
           HeaderNames.CONTENT_LENGTH -> "1000",
           Constants.XClientIdHeader  -> "1234567890"
@@ -4698,7 +4740,7 @@ class MovementsControllerSpec
 
         val standardHeaders = FakeHeaders(
           Seq(
-            HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+            HeaderNames.ACCEPT         -> s"application/vnd.hmrc.${versionHeader.value}+json",
             HeaderNames.CONTENT_TYPE   -> MimeTypes.XML,
             HeaderNames.CONTENT_LENGTH -> "1000",
             Constants.XClientIdHeader  -> "1234567890"
@@ -4734,7 +4776,7 @@ class MovementsControllerSpec
         ).thenReturn(Future.successful(()))
         when(
           mockPersistenceService
-            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]]())(
+            .createMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[Option[Source[ByteString, ?]]](), any[Version])(
               any[HeaderCarrier],
               any[ExecutionContext]
             )
@@ -4747,7 +4789,8 @@ class MovementsControllerSpec
               eqTo(MovementType.Arrival),
               MovementId(eqTo(movementResponse.movementId.value)),
               MessageId(eqTo(movementResponse.messageId.value)),
-              eqTo(messageUpdateFailure)
+              eqTo(messageUpdateFailure),
+              eqTo(versionHeader)
             )(
               any[HeaderCarrier],
               any[ExecutionContext]
@@ -4775,7 +4818,8 @@ class MovementsControllerSpec
           eqTo(MovementType.Arrival),
           MovementId(eqTo(movementResponse.movementId.value)),
           MessageId(eqTo(movementResponse.messageId.value)),
-          eqTo(messageUpdateFailure)
+          eqTo(messageUpdateFailure),
+          eqTo(versionHeader)
         )(
           any[HeaderCarrier],
           any[ExecutionContext]
@@ -4837,7 +4881,8 @@ class MovementsControllerSpec
                   any(),
                   any[Option[PageNumber]],
                   ItemCount(any()),
-                  any[Option[OffsetDateTime]]
+                  any[Option[OffsetDateTime]],
+                  any[Version]
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -4893,7 +4938,8 @@ class MovementsControllerSpec
               any(),
               any[Option[PageNumber]],
               ItemCount(any()),
-              any[Option[OffsetDateTime]]
+              any[Option[OffsetDateTime]],
+              any[Version]
             )(
               any[HeaderCarrier],
               any[ExecutionContext]
@@ -4950,7 +4996,8 @@ class MovementsControllerSpec
               any(),
               any[Option[PageNumber]],
               ItemCount(any()),
-              any[Option[OffsetDateTime]]
+              any[Option[OffsetDateTime]],
+              any[Version]
             )(
               any[HeaderCarrier],
               any[ExecutionContext]
@@ -5004,7 +5051,8 @@ class MovementsControllerSpec
               any(),
               eqTo(page),
               ItemCount(any()),
-              any[Option[OffsetDateTime]]
+              any[Option[OffsetDateTime]],
+              any[Version]
             )(
               any[HeaderCarrier],
               any[ExecutionContext]
@@ -5075,7 +5123,8 @@ class MovementsControllerSpec
               any(),
               eqTo(Some(page)),
               ItemCount(any()),
-              any[Option[OffsetDateTime]]
+              any[Option[OffsetDateTime]],
+              any[Version]
             )(
               any[HeaderCarrier],
               any[ExecutionContext]
@@ -5136,7 +5185,8 @@ class MovementsControllerSpec
               any(),
               any[Option[PageNumber]],
               ItemCount(any()),
-              any[Option[OffsetDateTime]]
+              any[Option[OffsetDateTime]],
+              any[Version]
             )(
               any[HeaderCarrier],
               any[ExecutionContext]
@@ -5283,7 +5333,7 @@ class MovementsControllerSpec
                 _
               ) = createControllerAndMocks()
               when(
-                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -5294,7 +5344,7 @@ class MovementsControllerSpec
 
               if (acceptHeaderValue == VersionedHeader(JsonHeader, versionHeader)) {
                 when(
-                  mockConversionService.convert(eqTo(smallMessageSummaryXml.messageType.get), any(), eqTo(xmlToJson))(any(), any(), any())
+                  mockConversionService.convert(eqTo(smallMessageSummaryXml.messageType.get), any(), eqTo(xmlToJson), eqTo(versionHeader))(any(), any(), any())
                 ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
               }
 
@@ -5340,7 +5390,7 @@ class MovementsControllerSpec
                 _
               ) = createControllerAndMocks()
               when(
-                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -5350,7 +5400,7 @@ class MovementsControllerSpec
                 )
 
               when(
-                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any(),
                   any(),
                   any()
@@ -5362,7 +5412,7 @@ class MovementsControllerSpec
 
               if (acceptHeaderValue == VersionedHeader(JsonHeader, versionHeader)) {
                 when(
-                  mockConversionService.convert(eqTo(smallMessageSummaryXml.messageType.get), any(), eqTo(xmlToJson))(any(), any(), any())
+                  mockConversionService.convert(eqTo(smallMessageSummaryXml.messageType.get), any(), eqTo(xmlToJson), eqTo(versionHeader))(any(), any(), any())
                 ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
               }
 
@@ -5412,7 +5462,8 @@ class MovementsControllerSpec
                   EORINumber(any[String]),
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
-                  MessageId(eqTo(messageId.value))
+                  MessageId(eqTo(messageId.value)),
+                  eqTo(versionHeader)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -5427,7 +5478,8 @@ class MovementsControllerSpec
                   EORINumber(any[String]),
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
-                  MessageId(eqTo(messageId.value))
+                  MessageId(eqTo(messageId.value)),
+                  eqTo(versionHeader)
                 )(
                   any(),
                   any(),
@@ -5460,7 +5512,7 @@ class MovementsControllerSpec
                 _
               ) = createControllerAndMocks()
               when(
-                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -5470,7 +5522,7 @@ class MovementsControllerSpec
                 )
 
               when(
-                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any(),
                   any(),
                   any()
@@ -5502,7 +5554,7 @@ class MovementsControllerSpec
                 _
               ) = createControllerAndMocks(enrollmentEORI = eori)
               when(
-                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -5554,7 +5606,7 @@ class MovementsControllerSpec
                 _
               ) = createControllerAndMocks(enrollmentEORI = eori)
               when(
-                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -5608,7 +5660,7 @@ class MovementsControllerSpec
                 mockAppConfig
               ) = createControllerAndMocks()
               when(
-                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -5620,7 +5672,7 @@ class MovementsControllerSpec
               when(mockAppConfig.smallMessageSizeLimit).thenReturn(1)
 
               when(
-                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any(),
                   any(),
                   any()
@@ -5672,7 +5724,7 @@ class MovementsControllerSpec
                 _
               ) = createControllerAndMocks(enrollmentEORI = eori)
               when(
-                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -5725,7 +5777,7 @@ class MovementsControllerSpec
                 _
               ) = createControllerAndMocks(enrollmentEORI = eori)
               when(
-                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -5844,7 +5896,7 @@ class MovementsControllerSpec
                 mockAppConfig
               ) = createControllerAndMocks()
               when(
-                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -5854,7 +5906,7 @@ class MovementsControllerSpec
                 )
               if (acceptHeader == VersionedHeader(JsonHeader, versionHeader)) {
                 when(
-                  mockConversionService.convert(eqTo(smallMessageSummaryXml.messageType.get), any(), eqTo(xmlToJson))(any(), any(), any())
+                  mockConversionService.convert(eqTo(smallMessageSummaryXml.messageType.get), any(), eqTo(xmlToJson), eqTo(versionHeader))(any(), any(), any())
                 ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
               }
 
@@ -5888,7 +5940,7 @@ class MovementsControllerSpec
                 mockAppConfig
               ) = createControllerAndMocks()
               when(
-                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -5898,7 +5950,7 @@ class MovementsControllerSpec
                 )
 
               when(
-                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any(),
                   any(),
                   any()
@@ -5910,7 +5962,7 @@ class MovementsControllerSpec
 
               if (acceptHeader == VersionedHeader(JsonHeader, versionHeader)) {
                 when(
-                  mockConversionService.convert(eqTo(smallMessageSummaryXml.messageType.get), any(), eqTo(xmlToJson))(any(), any(), any())
+                  mockConversionService.convert(eqTo(smallMessageSummaryXml.messageType.get), any(), eqTo(xmlToJson), eqTo(versionHeader))(any(), any(), any())
                 ).thenReturn(EitherT.rightT(Source.single(ByteString(smallMessageSummaryJson.body.get.value))))
               }
 
@@ -5934,7 +5986,7 @@ class MovementsControllerSpec
                 mockAppConfig
               ) = createControllerAndMocks()
               when(
-                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -5968,7 +6020,7 @@ class MovementsControllerSpec
                 mockAppConfig
               ) = createControllerAndMocks()
               when(
-                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -6005,7 +6057,7 @@ class MovementsControllerSpec
                 mockAppConfig
               ) = createControllerAndMocks()
               when(
-                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -6015,7 +6067,7 @@ class MovementsControllerSpec
                 )
               when(mockAppConfig.smallMessageSizeLimit).thenReturn(1)
               when(
-                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any(),
                   any(),
                   any()
@@ -6058,7 +6110,7 @@ class MovementsControllerSpec
                 mockAppConfig
               ) = createControllerAndMocks()
               when(
-                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -6068,7 +6120,7 @@ class MovementsControllerSpec
                 )
               when(mockAppConfig.smallMessageSizeLimit).thenReturn(50000)
               when(
-                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessageBody(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any(),
                   any(),
                   any()
@@ -6080,7 +6132,7 @@ class MovementsControllerSpec
 
               if (acceptHeader == VersionedHeader(JsonHeader, versionHeader)) {
                 when(
-                  mockConversionService.convert(eqTo(largeMessageSummaryXml.messageType.get), any(), eqTo(xmlToJson))(any(), any(), any())
+                  mockConversionService.convert(eqTo(largeMessageSummaryXml.messageType.get), any(), eqTo(xmlToJson), eqTo(versionHeader))(any(), any(), any())
                 ).thenReturn(EitherT.rightT(Source.single(ByteString(Json.stringify(json)))))
               }
 
@@ -6114,7 +6166,7 @@ class MovementsControllerSpec
                 mockAppConfig
               ) = createControllerAndMocks()
               when(
-                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -6148,7 +6200,7 @@ class MovementsControllerSpec
                 mockAppConfig
               ) = createControllerAndMocks()
               when(
-                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()))(
+                mockPersistenceService.getMessage(EORINumber(any()), any[MovementType], MovementId(any()), MessageId(any()), any[Version])(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -6260,7 +6312,8 @@ class MovementsControllerSpec
             any[Option[PageNumber]],
             ItemCount(any()),
             any[Option[OffsetDateTime]],
-            any[Option[LocalReferenceNumber]]
+            any[Option[LocalReferenceNumber]],
+            any[Version]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -6334,7 +6387,8 @@ class MovementsControllerSpec
             any[Option[PageNumber]],
             ItemCount(any()),
             any[Option[OffsetDateTime]],
-            any[Option[LocalReferenceNumber]]
+            any[Option[LocalReferenceNumber]],
+            any[Version]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -6408,7 +6462,8 @@ class MovementsControllerSpec
             any[Option[PageNumber]],
             ItemCount(any()),
             any[Option[OffsetDateTime]],
-            any[Option[LocalReferenceNumber]]
+            any[Option[LocalReferenceNumber]],
+            any[Version]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -6471,7 +6526,8 @@ class MovementsControllerSpec
             eqTo(page),
             ItemCount(any()),
             any[Option[OffsetDateTime]],
-            any[Option[LocalReferenceNumber]]
+            any[Option[LocalReferenceNumber]],
+            any[Version]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -6534,7 +6590,8 @@ class MovementsControllerSpec
             eqTo(page),
             ItemCount(any()),
             any[Option[OffsetDateTime]],
-            any[Option[LocalReferenceNumber]]
+            any[Option[LocalReferenceNumber]],
+            any[Version]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -6603,7 +6660,8 @@ class MovementsControllerSpec
             any[Option[PageNumber]],
             ItemCount(any()),
             any[Option[OffsetDateTime]],
-            any[Option[LocalReferenceNumber]]
+            any[Option[LocalReferenceNumber]],
+            any[Version]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -6669,7 +6727,8 @@ class MovementsControllerSpec
             any[Option[PageNumber]],
             ItemCount(any()),
             any[Option[OffsetDateTime]],
-            any[Option[LocalReferenceNumber]]
+            any[Option[LocalReferenceNumber]],
+            any[Version]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -6719,7 +6778,8 @@ class MovementsControllerSpec
             any[Option[PageNumber]],
             ItemCount(any()),
             any[Option[OffsetDateTime]],
-            any[Option[LocalReferenceNumber]]
+            any[Option[LocalReferenceNumber]],
+            any[Version]
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -6780,7 +6840,7 @@ class MovementsControllerSpec
             createdTime
           )
 
-          when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
+          when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()), any[Version])(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(departureResponse)
             )
@@ -6831,7 +6891,7 @@ class MovementsControllerSpec
           ) = createControllerAndMocks(enrollmentEORI = eori)
           when(
             mockPersistenceService
-              .getMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[String].asInstanceOf[MovementId])(any(), any())
+              .getMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[String].asInstanceOf[MovementId], any[Version])(any(), any())
           )
             .thenAnswer {
               _ =>
@@ -6884,7 +6944,7 @@ class MovementsControllerSpec
             _,
             _
           ) = createControllerAndMocks(enrollmentEORI = eori)
-          when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
+          when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()), any[Version])(any(), any()))
             .thenAnswer {
               _ =>
                 EitherT.leftT(PersistenceError.UnexpectedError(None))
@@ -6937,7 +6997,7 @@ class MovementsControllerSpec
             _
           ) = createControllerAndMocks(
           )
-          when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
+          when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()), any[Version])(any(), any()))
             .thenAnswer {
               _ =>
                 EitherT.leftT(PersistenceError.UnexpectedError(None))
@@ -6975,7 +7035,7 @@ class MovementsControllerSpec
             _
           ) = createControllerAndMocks(
           )
-          when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
+          when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()), any[Version])(any(), any()))
             .thenAnswer {
               _ =>
                 EitherT.leftT(PersistenceError.UnexpectedError(None))
@@ -7008,7 +7068,7 @@ class MovementsControllerSpec
       "with content type set to application/xml" - {
 
         val standardHeaders = FakeHeaders(
-          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
+          Seq(HeaderNames.ACCEPT -> s"application/vnd.hmrc.${versionHeader.value}+json", HeaderNames.CONTENT_TYPE -> MimeTypes.XML)
         )
 
         "must return Accepted when body length is within limits and is considered valid" in forAll(
@@ -7053,7 +7113,13 @@ class MovementsControllerSpec
 
             when(
               mockPersistenceService
-                .addMessage(any[String].asInstanceOf[MovementId], any[MovementType], any[Option[MessageType]], any[Option[Source[ByteString, ?]]]())(
+                .addMessage(
+                  any[String].asInstanceOf[MovementId],
+                  any[MovementType],
+                  any[Option[MessageType]],
+                  any[Option[Source[ByteString, ?]]](),
+                  any[Version]
+                )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -7078,7 +7144,8 @@ class MovementsControllerSpec
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(updateMovementResponse.messageId.value)),
-                  eqTo(messageUpdateSuccess)
+                  eqTo(messageUpdateSuccess),
+                  eqTo(versionHeader)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -7137,7 +7204,7 @@ class MovementsControllerSpec
             )(any(), any())
 
             verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any())(any(), any())
-            verify(mockPersistenceService, times(1)).addMessage(MovementId(any()), any(), any(), any())(any(), any())
+            verify(mockPersistenceService, times(1)).addMessage(MovementId(any()), any(), any(), any(), any())(any(), any())
             verify(mockRouterService, times(1)).send(eqTo(messageType), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
               any(),
               any()
@@ -7148,7 +7215,8 @@ class MovementsControllerSpec
               eqTo(movementType),
               MovementId(eqTo(movementId.value)),
               MessageId(eqTo(updateMovementResponse.messageId.value)),
-              eqTo(messageUpdateSuccess)
+              eqTo(messageUpdateSuccess),
+              eqTo(versionHeader)
             )(
               any[HeaderCarrier],
               any[ExecutionContext]
@@ -7223,7 +7291,13 @@ class MovementsControllerSpec
 
             when(
               mockPersistenceService
-                .addMessage(any[String].asInstanceOf[MovementId], any[MovementType], any[Option[MessageType]], any[Option[Source[ByteString, ?]]]())(
+                .addMessage(
+                  any[String].asInstanceOf[MovementId],
+                  any[MovementType],
+                  any[Option[MessageType]],
+                  any[Option[Source[ByteString, ?]]](),
+                  any[Version]
+                )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -7236,7 +7310,8 @@ class MovementsControllerSpec
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(updateMovementResponse.messageId.value)),
-                  eqTo(messageUpdateSuccess)
+                  eqTo(messageUpdateSuccess),
+                  eqTo(versionHeader)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -7266,7 +7341,7 @@ class MovementsControllerSpec
             contentAsJson(result) mustBe Json.toJson(HateoasMovementUpdateResponse(movementId, updateMovementResponse.messageId, movementType, None))
 
             verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any())(any(), any())
-            verify(mockPersistenceService, times(1)).addMessage(MovementId(any()), any(), any(), any())(any(), any())
+            verify(mockPersistenceService, times(1)).addMessage(MovementId(any()), any(), any(), any(), any())(any(), any())
             verify(mockRouterService, times(1)).send(eqTo(messageType), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
               any(),
               any()
@@ -7277,7 +7352,8 @@ class MovementsControllerSpec
               eqTo(movementType),
               MovementId(eqTo(movementId.value)),
               MessageId(eqTo(updateMovementResponse.messageId.value)),
-              eqTo(messageUpdateSuccess)
+              eqTo(messageUpdateSuccess),
+              eqTo(versionHeader)
             )(
               any[HeaderCarrier],
               any[ExecutionContext]
@@ -7343,7 +7419,13 @@ class MovementsControllerSpec
               )
             when(
               mockPersistenceService
-                .addMessage(any[String].asInstanceOf[MovementId], any[MovementType], any[Option[MessageType]], any[Option[Source[ByteString, ?]]])(
+                .addMessage(
+                  any[String].asInstanceOf[MovementId],
+                  any[MovementType],
+                  any[Option[MessageType]],
+                  any[Option[Source[ByteString, ?]]],
+                  any[Version]
+                )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -7394,6 +7476,7 @@ class MovementsControllerSpec
           arbitraryMovementId.arbitrary
         ) {
           movementId =>
+            println(s"This is the $movementId")
             val ControllerAndMocks(
               sut,
               mockValidationService,
@@ -7417,7 +7500,13 @@ class MovementsControllerSpec
               )
             when(
               mockPersistenceService
-                .addMessage(any[String].asInstanceOf[MovementId], any[MovementType], any[Option[MessageType]], any[Option[Source[ByteString, ?]]])(
+                .addMessage(
+                  any[String].asInstanceOf[MovementId],
+                  any[MovementType],
+                  any[Option[MessageType]],
+                  any[Option[Source[ByteString, ?]]],
+                  any[Version]
+                )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
                 )
@@ -7502,7 +7591,7 @@ class MovementsControllerSpec
               _ => validateJson
             )
 
-          when(mockConversionService.convert(any(), any(), eqTo(jsonToXml))(any(), any(), any())).thenReturn(conversion)
+          when(mockConversionService.convert(any(), any(), eqTo(jsonToXml), eqTo(versionHeader))(any(), any(), any())).thenReturn(conversion)
 
           when(
             mockPersistenceService
@@ -7510,7 +7599,8 @@ class MovementsControllerSpec
                 any[String].asInstanceOf[MovementId],
                 any[MovementType],
                 any[Option[MessageType]],
-                any[Option[Source[ByteString, ?]]]()
+                any[Option[Source[ByteString, ?]]](),
+                any[Version]
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -7572,7 +7662,8 @@ class MovementsControllerSpec
                 eqTo(movementType),
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
-                eqTo(MessageUpdate(MessageStatus.Success, None, None))
+                eqTo(MessageUpdate(MessageStatus.Success, None, None)),
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -7586,7 +7677,7 @@ class MovementsControllerSpec
         }
 
         val standardHeaders = FakeHeaders(
-          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json", HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
+          Seq(HeaderNames.ACCEPT -> s"application/vnd.hmrc.${versionHeader.value}+json", HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
         )
 
         def fakeJsonAttachRequest(content: String): Request[Source[ByteString, ?]] =
@@ -7632,9 +7723,9 @@ class MovementsControllerSpec
             eqTo(Some(messageType))
           )(any(), any())
 
-          verify(mockConversionService, times(1)).convert(any(), any(), eqTo(jsonToXml))(any(), any(), any())
+          verify(mockConversionService, times(1)).convert(any(), any(), eqTo(jsonToXml), eqTo(versionHeader))(any(), any(), any())
           verify(mockValidationService, times(1)).validateXml(any(), any())(any(), any())
-          verify(mockPersistenceService, times(1)).addMessage(MovementId(any()), any(), any(), any())(any(), any())
+          verify(mockPersistenceService, times(1)).addMessage(MovementId(any()), any(), any(), any(), any())(any(), any())
           verify(mockRouterService, times(1)).send(any(), EORINumber(any()), MovementId(any()), MessageId(any()), any())(
             any(),
             any()
@@ -7654,7 +7745,8 @@ class MovementsControllerSpec
             eqTo(movementType),
             MovementId(eqTo(movementId.value)),
             MessageId(eqTo(messageId.value)),
-            eqTo(messageUpdateSuccess)
+            eqTo(messageUpdateSuccess),
+            eqTo(versionHeader)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -8084,7 +8176,7 @@ class MovementsControllerSpec
 
       "without content type" - {
         val standardHeaders = FakeHeaders(
-          Seq(HeaderNames.ACCEPT -> "application/vnd.hmrc.2.1+json")
+          Seq(HeaderNames.ACCEPT -> s"application/vnd.hmrc.${versionHeader.value}+json")
         )
 
         val source = Source.empty[ByteString]
@@ -8123,7 +8215,9 @@ class MovementsControllerSpec
               createdTime
             )
 
-            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+            when(
+              mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)), eqTo(versionHeader))(any(), any())
+            )
               .thenAnswer(
                 _ => EitherT.rightT(movementResponse)
               )
@@ -8134,7 +8228,8 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   eqTo(movementType),
                   eqTo(None),
-                  eqTo(None)
+                  eqTo(None),
+                  eqTo(versionHeader)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -8225,7 +8320,9 @@ class MovementsControllerSpec
               createdTime,
               createdTime
             )
-            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+            when(
+              mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)), eqTo(versionHeader))(any(), any())
+            )
               .thenAnswer(
                 _ => EitherT.rightT(movementResponse)
               )
@@ -8236,7 +8333,8 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   eqTo(movementType),
                   eqTo(None),
-                  eqTo(None)
+                  eqTo(None),
+                  eqTo(versionHeader)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -8292,7 +8390,9 @@ class MovementsControllerSpec
               createdTime
             )
 
-            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+            when(
+              mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)), eqTo(versionHeader))(any(), any())
+            )
               .thenAnswer(
                 _ => EitherT.rightT(movementResponse)
               )
@@ -8302,7 +8402,8 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   eqTo(movementType),
                   eqTo(None),
-                  eqTo(None)
+                  eqTo(None),
+                  eqTo(versionHeader)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -8378,7 +8479,9 @@ class MovementsControllerSpec
               createdTime
             )
 
-            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+            when(
+              mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)), eqTo(versionHeader))(any(), any())
+            )
               .thenAnswer(
                 _ => EitherT.rightT(movementResponse)
               )
@@ -8389,7 +8492,8 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   eqTo(movementType),
                   eqTo(None),
-                  eqTo(None)
+                  eqTo(None),
+                  eqTo(versionHeader)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -8450,7 +8554,9 @@ class MovementsControllerSpec
               _
             ) = createControllerAndMocks()
 
-            when(mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any()))
+            when(
+              mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)), eqTo(versionHeader))(any(), any())
+            )
               .thenAnswer(
                 _ => EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType))
               )
@@ -8504,7 +8610,7 @@ class MovementsControllerSpec
           ) = createControllerAndMocks()
           val standardHeaders = FakeHeaders(
             Seq(
-              HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+              HeaderNames.ACCEPT         -> s"application/vnd.hmrc.${versionHeader.value}+json",
               HeaderNames.CONTENT_TYPE   -> "invalid",
               HeaderNames.CONTENT_LENGTH -> "1000",
               Constants.XClientIdHeader  -> "1234567890"
@@ -8651,7 +8757,8 @@ class MovementsControllerSpec
                 eqTo(movementType),
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
-                any[Source[ByteString, ?]]
+                any[Source[ByteString, ?]],
+                any[Version]
               )(any[HeaderCarrier], any[ExecutionContext])
               verify(mockValidationService, times(0)).validateXml(any[MessageType], any[Source[ByteString, ?]])(any(), any())
 
@@ -8660,7 +8767,8 @@ class MovementsControllerSpec
                 EORINumber(eqTo(eori.value)),
                 eqTo(movementType),
                 MovementId(eqTo(movementId.value)),
-                MessageId(eqTo(messageId.value))
+                MessageId(eqTo(messageId.value)),
+                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
               )(any[HeaderCarrier], any[ExecutionContext])
 
               // small messages
@@ -8678,7 +8786,8 @@ class MovementsControllerSpec
                 eqTo(movementType),
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
-                eqTo(MessageUpdate(MessageStatus.Failed, None, None))
+                eqTo(MessageUpdate(MessageStatus.Failed, None, None)),
+                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
               )(any[HeaderCarrier], any[ExecutionContext])
 
               // Verify that postPpnsNotification was called
@@ -8767,7 +8876,8 @@ class MovementsControllerSpec
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  any[Source[ByteString, ?]]
+                  any[Source[ByteString, ?]],
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any[HeaderCarrier], any[ExecutionContext])
                 verify(mockValidationService, times(0)).validateXml(any[MessageType], any[Source[ByteString, ?]])(any(), any())
 
@@ -8776,7 +8886,8 @@ class MovementsControllerSpec
                   EORINumber(eqTo(eori.value)),
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
-                  MessageId(eqTo(messageId.value))
+                  MessageId(eqTo(messageId.value)),
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any[HeaderCarrier], any[ExecutionContext])
 
                 // small messages
@@ -8804,7 +8915,8 @@ class MovementsControllerSpec
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  eqTo(MessageUpdate(MessageStatus.Failed, None, None))
+                  eqTo(MessageUpdate(MessageStatus.Failed, None, None)),
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any[HeaderCarrier], any[ExecutionContext])
 
                 verify(mockAuditService, times(0)).auditMessageEvent(
@@ -8859,7 +8971,8 @@ class MovementsControllerSpec
                 eqTo(movementType),
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
-                any[Source[ByteString, ?]]
+                any[Source[ByteString, ?]],
+                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
               )(any[HeaderCarrier], any[ExecutionContext])
             )
               .thenReturn(EitherT.rightT((): Unit))
@@ -8898,7 +9011,8 @@ class MovementsControllerSpec
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  any[Source[ByteString, ?]]
+                  any[Source[ByteString, ?]],
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any[HeaderCarrier], any[ExecutionContext])
 
                 // Verify that postPpnsNotification was not  called
@@ -8916,7 +9030,8 @@ class MovementsControllerSpec
                   EORINumber(eqTo(eori.value)),
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
-                  MessageId(eqTo(messageId.value))
+                  MessageId(eqTo(messageId.value)),
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any[HeaderCarrier], any[ExecutionContext])
 
                 // small messages
@@ -8934,7 +9049,8 @@ class MovementsControllerSpec
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  eqTo(MessageUpdate(MessageStatus.Failed, None, None))
+                  eqTo(MessageUpdate(MessageStatus.Failed, None, None)),
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any[HeaderCarrier], any[ExecutionContext])
 
                 verify(mockAuditService, times(0)).auditMessageEvent(
@@ -8992,7 +9108,8 @@ class MovementsControllerSpec
                 eqTo(movementType),
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
-                any[Source[ByteString, ?]]
+                any[Source[ByteString, ?]],
+                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
               )(any[HeaderCarrier], any[ExecutionContext])
             )
               .thenReturn(EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))) // it doesn't matter what the error is really.
@@ -9029,7 +9146,8 @@ class MovementsControllerSpec
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  any[Source[ByteString, ?]]
+                  any[Source[ByteString, ?]],
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any[HeaderCarrier], any[ExecutionContext])
 
                 // large messages: TODO: hopefully will disappear
@@ -9037,7 +9155,8 @@ class MovementsControllerSpec
                   EORINumber(eqTo(eori.value)),
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
-                  MessageId(eqTo(messageId.value))
+                  MessageId(eqTo(messageId.value)),
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any[HeaderCarrier], any[ExecutionContext])
 
                 // small messages
@@ -9055,7 +9174,8 @@ class MovementsControllerSpec
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  eqTo(MessageUpdate(MessageStatus.Failed, None, None))
+                  eqTo(MessageUpdate(MessageStatus.Failed, None, None)),
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any[HeaderCarrier], any[ExecutionContext])
 
                 // Verify that postPpnsNotification was called
@@ -9124,7 +9244,8 @@ class MovementsControllerSpec
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  any[Source[ByteString, ?]]
+                  any[Source[ByteString, ?]],
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any[HeaderCarrier], any[ExecutionContext])
               )
                 .thenReturn(EitherT.rightT((): Unit))
@@ -9201,7 +9322,8 @@ class MovementsControllerSpec
                     eqTo(movementType),
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
-                    any[Source[ByteString, ?]]
+                    any[Source[ByteString, ?]],
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(any[HeaderCarrier], any[ExecutionContext])
                   verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any[Source[ByteString, ?]])(any(), any())
 
@@ -9210,7 +9332,8 @@ class MovementsControllerSpec
                     EORINumber(eqTo(eori.value)),
                     eqTo(movementType),
                     MovementId(eqTo(movementId.value)),
-                    MessageId(eqTo(messageId.value))
+                    MessageId(eqTo(messageId.value)),
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   // small messages
@@ -9237,7 +9360,8 @@ class MovementsControllerSpec
                     eqTo(movementType),
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
-                    eqTo(MessageUpdate(MessageStatus.Success, None, None))
+                    eqTo(MessageUpdate(MessageStatus.Success, None, None)),
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   verify(mockPushNotificationService, times(1)).postPpnsNotification(
@@ -9255,7 +9379,8 @@ class MovementsControllerSpec
                     eqTo(movementType),
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
-                    eqTo(MessageUpdate(MessageStatus.Failed, None, None))
+                    eqTo(MessageUpdate(MessageStatus.Failed, None, None)),
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   verify(mockAuditService, times(1)).auditMessageEvent(
@@ -9337,7 +9462,8 @@ class MovementsControllerSpec
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  any[Source[ByteString, ?]]
+                  any[Source[ByteString, ?]],
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any[HeaderCarrier], any[ExecutionContext])
               )
                 .thenReturn(EitherT.rightT((): Unit))
@@ -9422,7 +9548,8 @@ class MovementsControllerSpec
                     eqTo(movementType),
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
-                    any[Source[ByteString, ?]]
+                    any[Source[ByteString, ?]],
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(argThat(HeaderCarrierMatcher.clientId(clientId)), any[ExecutionContext])
 
                   verify(mockValidationService, times(1))
@@ -9432,7 +9559,8 @@ class MovementsControllerSpec
                     EORINumber(eqTo(eori.value)),
                     eqTo(movementType),
                     MovementId(eqTo(movementId.value)),
-                    MessageId(eqTo(messageId.value))
+                    MessageId(eqTo(messageId.value)),
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   // small messages
@@ -9460,7 +9588,8 @@ class MovementsControllerSpec
                     eqTo(movementType),
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
-                    eqTo(MessageUpdate(MessageStatus.Success, None, None))
+                    eqTo(MessageUpdate(MessageStatus.Success, None, None)),
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(argThat(HeaderCarrierMatcher.clientId(clientId)), any[ExecutionContext])
 
                   verify(mockPushNotificationService, times(1)).postPpnsNotification(
@@ -9478,7 +9607,8 @@ class MovementsControllerSpec
                     eqTo(movementType),
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
-                    eqTo(MessageUpdate(MessageStatus.Failed, None, None))
+                    eqTo(MessageUpdate(MessageStatus.Failed, None, None)),
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   verify(mockAuditService, times(1)).auditMessageEvent(
@@ -9535,7 +9665,8 @@ class MovementsControllerSpec
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  any[Source[ByteString, ?]]
+                  any[Source[ByteString, ?]],
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any[HeaderCarrier], any[ExecutionContext])
               )
                 .thenReturn(EitherT.rightT((): Unit))
@@ -9635,7 +9766,8 @@ class MovementsControllerSpec
                     eqTo(movementType),
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
-                    any[Source[ByteString, ?]]
+                    any[Source[ByteString, ?]],
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(any[HeaderCarrier], any[ExecutionContext])
                   verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any[Source[ByteString, ?]])(any(), any())
 
@@ -9643,7 +9775,8 @@ class MovementsControllerSpec
                     EORINumber(eqTo(eori.value)),
                     eqTo(movementType),
                     MovementId(eqTo(movementId.value)),
-                    MessageId(eqTo(messageId.value))
+                    MessageId(eqTo(messageId.value)),
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   verify(mockRouterService, times(1)).send(
@@ -9660,7 +9793,8 @@ class MovementsControllerSpec
                     eqTo(movementType),
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
-                    eqTo(MessageUpdate(MessageStatus.Success, None, None))
+                    eqTo(MessageUpdate(MessageStatus.Success, None, None)),
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   // Verify that postPpnsNotification was not  called
@@ -9679,7 +9813,8 @@ class MovementsControllerSpec
                     eqTo(movementType),
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
-                    eqTo(MessageUpdate(MessageStatus.Failed, None, None))
+                    eqTo(MessageUpdate(MessageStatus.Failed, None, None)),
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(any[HeaderCarrier], any[ExecutionContext])
 
               }
@@ -9862,7 +9997,8 @@ class MovementsControllerSpec
               any(),
               any[Option[PageNumber]],
               ItemCount(any()),
-              any[Option[OffsetDateTime]]
+              any[Option[OffsetDateTime]],
+              any[Version]
             )(
               any[HeaderCarrier],
               any[ExecutionContext]
@@ -9904,7 +10040,8 @@ class MovementsControllerSpec
               any(),
               any[Option[PageNumber]],
               ItemCount(any()),
-              any[Option[OffsetDateTime]]
+              any[Option[OffsetDateTime]],
+              any[Version]
             )(
               any[HeaderCarrier],
               any[ExecutionContext]

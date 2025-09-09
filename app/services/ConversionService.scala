@@ -22,6 +22,7 @@ import org.apache.pekko.util.ByteString
 import cats.data.EitherT
 import connectors.ConversionConnector
 import models.HeaderType
+import models.Version
 import models.common.errors.ConversionError
 import models.request.MessageType
 import play.api.Logging
@@ -36,14 +37,14 @@ import scala.util.control.NonFatal
 @Singleton
 class ConversionService @Inject() (conversionConnector: ConversionConnector) extends Logging {
 
-  def convert(messageType: MessageType, source: Source[ByteString, ?], headerType: HeaderType)(implicit
+  def convert(messageType: MessageType, source: Source[ByteString, ?], headerType: HeaderType, version: Version)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer
   ): EitherT[Future, ConversionError, Source[ByteString, ?]] =
     EitherT(
       conversionConnector
-        .post(messageType, source, headerType)
+        .post(messageType, source, headerType, version)
         .map(
           response => Right(response)
         )

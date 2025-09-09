@@ -23,6 +23,7 @@ import cats.data.EitherT
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import connectors.PersistenceConnector
+import models.Version
 import models.common.EORINumber
 import models.common.ItemCount
 import models.common.LocalReferenceNumber
@@ -48,13 +49,13 @@ import scala.util.control.NonFatal
 @Singleton
 class PersistenceService @Inject() (persistenceConnector: PersistenceConnector) extends Logging {
 
-  def createMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, ?]])(implicit
+  def createMovement(eori: EORINumber, movementType: MovementType, source: Option[Source[ByteString, ?]], version: Version)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MovementResponse] =
     EitherT(
       persistenceConnector
-        .postMovement(eori, movementType, source)
+        .postMovement(eori, movementType, source, version)
         .map {
           movementResponse => Right(movementResponse)
         }
@@ -65,13 +66,13 @@ class PersistenceService @Inject() (persistenceConnector: PersistenceConnector) 
         }
     )
 
-  def getMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
+  def getMessage(eori: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId, version: Version)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MessageSummary] =
     EitherT(
       persistenceConnector
-        .getMessage(eori, movementType, movementId, messageId)
+        .getMessage(eori, movementType, movementId, messageId, version)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
@@ -88,14 +89,15 @@ class PersistenceService @Inject() (persistenceConnector: PersistenceConnector) 
     receivedSince: Option[OffsetDateTime],
     page: Option[PageNumber],
     count: ItemCount,
-    receivedUntil: Option[OffsetDateTime]
+    receivedUntil: Option[OffsetDateTime],
+    version: Version
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, PaginationMessageSummary] =
     EitherT(
       persistenceConnector
-        .getMessages(eori, movementType, movementId, receivedSince, page, count, receivedUntil)
+        .getMessages(eori, movementType, movementId, receivedSince, page, count, receivedUntil, version)
         .map {
           summary => messages(page, summary)
         }
@@ -107,13 +109,13 @@ class PersistenceService @Inject() (persistenceConnector: PersistenceConnector) 
         }
     )
 
-  def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId)(implicit
+  def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId, version: Version)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MovementSummary] =
     EitherT(
       persistenceConnector
-        .getMovement(eori, movementType, movementId)
+        .getMovement(eori, movementType, movementId, version)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
@@ -132,13 +134,14 @@ class PersistenceService @Inject() (persistenceConnector: PersistenceConnector) 
     page: Option[PageNumber],
     count: ItemCount,
     receivedUntil: Option[OffsetDateTime],
-    localReferenceNumber: Option[LocalReferenceNumber]
+    localReferenceNumber: Option[LocalReferenceNumber],
+    version: Version
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, PaginationMovementSummary] = EitherT {
     persistenceConnector
-      .getMovements(eori, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
+      .getMovements(eori, movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber, version)
       .map {
         summary => movements(page, summary)
       }
@@ -168,13 +171,14 @@ class PersistenceService @Inject() (persistenceConnector: PersistenceConnector) 
     else
       Right(summary)
 
-  def addMessage(movementId: MovementId, movementType: MovementType, messageType: Option[MessageType], source: Option[Source[ByteString, ?]])(implicit
+  def addMessage(movementId: MovementId, movementType: MovementType, messageType: Option[MessageType], source: Option[Source[ByteString, ?]], version: Version)(
+    implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, UpdateMovementResponse] =
     EitherT(
       persistenceConnector
-        .postMessage(movementId, messageType, source)
+        .postMessage(movementId, messageType, source, version)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
@@ -189,14 +193,15 @@ class PersistenceService @Inject() (persistenceConnector: PersistenceConnector) 
     movementType: MovementType,
     movementId: MovementId,
     messageId: MessageId,
-    body: MessageUpdate
+    body: MessageUpdate,
+    version: Version
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Unit] =
     EitherT(
       persistenceConnector
-        .patchMessage(eoriNumber, movementType, movementId, messageId, body)
+        .patchMessage(eoriNumber, movementType, movementId, messageId, body, version)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
@@ -212,14 +217,15 @@ class PersistenceService @Inject() (persistenceConnector: PersistenceConnector) 
     movementType: MovementType,
     movementId: MovementId,
     messageId: MessageId,
-    source: Source[ByteString, ?]
+    source: Source[ByteString, ?],
+    version: Version
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Unit] =
     EitherT(
       persistenceConnector
-        .updateMessageBody(messageType, eoriNumber, movementType, movementId, messageId, source)
+        .updateMessageBody(messageType, eoriNumber, movementType, movementId, messageId, source, version)
         .map(Right(_))
         .recover {
           case NonFatal(thr) =>
@@ -228,14 +234,14 @@ class PersistenceService @Inject() (persistenceConnector: PersistenceConnector) 
         }
     )
 
-  def getMessageBody(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId)(implicit
+  def getMessageBody(eoriNumber: EORINumber, movementType: MovementType, movementId: MovementId, messageId: MessageId, version: Version)(implicit
     hc: HeaderCarrier,
     mat: Materializer,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, Source[ByteString, ?]] =
     EitherT(
       persistenceConnector
-        .getMessageBody(eoriNumber, movementType, movementId, messageId)
+        .getMessageBody(eoriNumber, movementType, movementId, messageId, version)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
