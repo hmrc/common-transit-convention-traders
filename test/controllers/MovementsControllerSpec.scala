@@ -312,7 +312,7 @@ class MovementsControllerSpec
         .runWith(testSinkJson(if (movementType == MovementType.Departure) "CC015" else "CC007"))
     )
 
-  // Version 2
+  // Version 2 and 3
   "for a departure declaration with accept header" - {
 
     "with content type set to application/xml" - {
@@ -362,7 +362,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -426,7 +427,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
           val request = fakeCreateMovementRequest("POST", standardHeaders, singleUseStringSource(CC015C.mkString), MovementType.Departure)
@@ -446,7 +448,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any(), any())(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), eqTo(MovementType.Departure), any(), eqTo(versionHeader))(any(), any())
@@ -472,7 +475,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockPushNotificationService, times(1)).associate(
@@ -522,7 +526,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -586,7 +591,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -615,7 +621,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any(), any())(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), eqTo(MovementType.Departure), any(), eqTo(versionHeader))(any(), any())
@@ -641,7 +648,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockPushNotificationService, times(0)).associate(
@@ -692,7 +700,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
@@ -756,7 +765,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -777,7 +787,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any(), any())(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), any[MovementType], any(), any[Version])(any(), any())
@@ -813,7 +824,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockAuditService, times(1)).auditStatusEvent(
@@ -823,7 +835,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(None)
+            eqTo(None),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
       }
@@ -877,7 +890,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
@@ -914,7 +928,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -949,7 +964,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any(), any())
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.DeclarationData), any(), any())(any(), any())
           verify(mockPersistenceService, times(1)).createMovement(EORINumber(any()), eqTo(MovementType.Departure), any(), any())(any(), any())
@@ -971,7 +987,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockPersistenceService, times(1)).updateMessage(
@@ -1034,7 +1051,8 @@ class MovementsControllerSpec
           eqTo(None),
           eqTo(Some(eori)),
           eqTo(Some(MovementType.Departure)),
-          eqTo(Some(MessageType.DeclarationData))
+          eqTo(Some(MessageType.DeclarationData)),
+          eqTo(versionHeader)
         )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -1088,7 +1106,8 @@ class MovementsControllerSpec
           eqTo(None),
           eqTo(Some(eori)),
           eqTo(Some(MovementType.Departure)),
-          eqTo(Some(MessageType.DeclarationData))
+          eqTo(Some(MessageType.DeclarationData)),
+          eqTo(versionHeader)
         )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -1138,7 +1157,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
@@ -1172,7 +1192,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -1224,7 +1245,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any(), any())
 
           verify(mockAuditService, times(0)).auditStatusEvent(
@@ -1234,7 +1256,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockAuditService, times(1)).auditStatusEvent(
@@ -1244,7 +1267,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
       }
@@ -1295,7 +1319,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
@@ -1329,7 +1354,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -1381,7 +1407,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any(), any())
 
           verify(mockAuditService, times(0)).auditStatusEvent(
@@ -1391,7 +1418,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
       }
@@ -1476,7 +1504,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -1511,7 +1540,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -1552,7 +1582,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any(), any())
           verify(mockAuditService, times(1)).auditStatusEvent(
             eqTo(TraderToNCTSSubmissionSuccessful),
@@ -1561,7 +1592,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockPersistenceService, times(1)).updateMessage(
@@ -1713,7 +1745,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -1756,7 +1789,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
@@ -1785,7 +1819,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any(), any())
 
           verify(mockAuditService, times(1)).auditStatusEvent(
@@ -1795,7 +1830,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(None)
+            eqTo(None),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockPersistenceService, times(1)).updateMessage(
@@ -1826,7 +1862,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -1898,7 +1935,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
@@ -1936,7 +1974,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -1975,7 +2014,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any(), any())
 
           verify(mockPersistenceService, times(1)).updateMessage(
@@ -2001,7 +2041,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
       }
@@ -2191,7 +2232,8 @@ class MovementsControllerSpec
           eqTo(None),
           eqTo(Some(eori)),
           eqTo(Some(MovementType.Departure)),
-          eqTo(Some(MessageType.DeclarationData))
+          eqTo(Some(MessageType.DeclarationData)),
+          eqTo(versionHeader)
         )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -2266,7 +2308,8 @@ class MovementsControllerSpec
           eqTo(None),
           eqTo(Some(eori)),
           eqTo(Some(MovementType.Departure)),
-          eqTo(Some(MessageType.DeclarationData))
+          eqTo(Some(MessageType.DeclarationData)),
+          eqTo(versionHeader)
         )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -2343,7 +2386,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
@@ -2379,7 +2423,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Departure)),
-              eqTo(Some(MessageType.DeclarationData))
+              eqTo(Some(MessageType.DeclarationData)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -2424,7 +2469,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockPersistenceService, times(1)).updateMessage(
@@ -2447,7 +2493,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any(), any())
           verify(mockAuditService, times(0)).auditStatusEvent(
             eqTo(TraderToNCTSSubmissionSuccessful),
@@ -2456,7 +2503,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(Some(MessageType.DeclarationData))
+            eqTo(Some(MessageType.DeclarationData)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
       }
@@ -2523,7 +2571,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Departure)),
-              eqTo(None)
+              eqTo(None),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -2560,7 +2609,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             any(),
             eqTo(Some(MovementType.Departure)),
-            eqTo(None)
+            eqTo(None),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -2612,7 +2662,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Departure)),
-              eqTo(None)
+              eqTo(None),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
@@ -2635,7 +2686,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(None)
+            eqTo(None),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Departure), MovementId(any()), MessageId(any()))(any(), any())
@@ -2658,7 +2710,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Departure)),
-            eqTo(None)
+            eqTo(None),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -2701,7 +2754,8 @@ class MovementsControllerSpec
           eqTo(None),
           eqTo(Some(eori)),
           eqTo(Some(MovementType.Departure)),
-          eqTo(None)
+          eqTo(None),
+          eqTo(versionHeader)
         )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -2739,7 +2793,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Departure)),
-              eqTo(None)
+              eqTo(None),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
@@ -2933,7 +2988,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Arrival)),
-              eqTo(Some(MessageType.ArrivalNotification))
+              eqTo(Some(MessageType.ArrivalNotification)),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
@@ -2962,7 +3018,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               eqTo(Some(eori)),
               eqTo(Some(MovementType.Arrival)),
-              eqTo(Some(MessageType.ArrivalNotification))
+              eqTo(Some(MessageType.ArrivalNotification)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -3001,7 +3058,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(Some(MessageType.ArrivalNotification))
+            eqTo(Some(MessageType.ArrivalNotification)),
+            eqTo(versionHeader)
           )(any(), any())
 
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any(), any())(any(), any())
@@ -3038,7 +3096,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(Some(MessageType.ArrivalNotification))
+            eqTo(Some(MessageType.ArrivalNotification)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
       }
@@ -3090,7 +3149,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Arrival)),
-              eqTo(Some(MessageType.ArrivalNotification))
+              eqTo(Some(MessageType.ArrivalNotification)),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
@@ -3114,7 +3174,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Arrival)),
-              eqTo(Some(MessageType.ArrivalNotification))
+              eqTo(Some(MessageType.ArrivalNotification)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -3158,7 +3219,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             any(),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(Some(MessageType.ArrivalNotification))
+            eqTo(Some(MessageType.ArrivalNotification)),
+            eqTo(versionHeader)
           )(any(), any())
 
           verify(mockAuditService, times(1)).auditStatusEvent(
@@ -3168,7 +3230,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(None)
+            eqTo(None),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any(), any())(any(), any())
@@ -3185,7 +3248,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             any(),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(Some(MessageType.ArrivalNotification))
+            eqTo(Some(MessageType.ArrivalNotification)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockPersistenceService, times(1)).updateMessage(
@@ -3259,7 +3323,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Arrival)),
-              eqTo(Some(MessageType.ArrivalNotification))
+              eqTo(Some(MessageType.ArrivalNotification)),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
@@ -3296,7 +3361,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Arrival)),
-              eqTo(Some(MessageType.ArrivalNotification))
+              eqTo(Some(MessageType.ArrivalNotification)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -3331,7 +3397,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             any(),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(Some(MessageType.ArrivalNotification))
+            eqTo(Some(MessageType.ArrivalNotification)),
+            eqTo(versionHeader)
           )(any(), any())
 
           verify(mockValidationService, times(1)).validateXml(eqTo(MessageType.ArrivalNotification), any(), any())(any(), any())
@@ -3354,7 +3421,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             any(),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(Some(MessageType.ArrivalNotification))
+            eqTo(Some(MessageType.ArrivalNotification)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
           verify(mockPersistenceService, times(1)).updateMessage(
             EORINumber(any()),
@@ -3417,7 +3485,8 @@ class MovementsControllerSpec
           eqTo(None),
           eqTo(Some(eori)),
           eqTo(Some(MovementType.Arrival)),
-          eqTo(Some(MessageType.ArrivalNotification))
+          eqTo(Some(MessageType.ArrivalNotification)),
+          eqTo(versionHeader)
         )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -3469,7 +3538,8 @@ class MovementsControllerSpec
           eqTo(None),
           eqTo(Some(eori)),
           eqTo(Some(MovementType.Arrival)),
-          eqTo(Some(MessageType.ArrivalNotification))
+          eqTo(Some(MessageType.ArrivalNotification)),
+          eqTo(versionHeader)
         )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -3521,7 +3591,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Arrival)),
-              eqTo(Some(MessageType.ArrivalNotification))
+              eqTo(Some(MessageType.ArrivalNotification)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
           when(
@@ -3552,7 +3623,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Arrival)),
-              eqTo(Some(MessageType.ArrivalNotification))
+              eqTo(Some(MessageType.ArrivalNotification)),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
@@ -3591,7 +3663,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             any(),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(Some(MessageType.ArrivalNotification))
+            eqTo(Some(MessageType.ArrivalNotification)),
+            eqTo(versionHeader)
           )(any(), any())
 
           verify(mockAuditService, times(1)).auditStatusEvent(
@@ -3601,7 +3674,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(Some(MessageType.ArrivalNotification))
+            eqTo(Some(MessageType.ArrivalNotification)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockPersistenceService, times(1)).updateMessage(
@@ -3622,7 +3696,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             any(),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(Some(MessageType.ArrivalNotification))
+            eqTo(Some(MessageType.ArrivalNotification)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
       }
     }
@@ -3703,7 +3778,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Arrival)),
-              eqTo(Some(MessageType.ArrivalNotification))
+              eqTo(Some(MessageType.ArrivalNotification)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -3727,7 +3803,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Arrival)),
-              eqTo(Some(MessageType.ArrivalNotification))
+              eqTo(Some(MessageType.ArrivalNotification)),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
@@ -3776,7 +3853,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             any(),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(Some(MessageType.ArrivalNotification))
+            eqTo(Some(MessageType.ArrivalNotification)),
+            eqTo(versionHeader)
           )(any(), any())
 
           verify(mockPersistenceService, times(1)).updateMessage(
@@ -3797,7 +3875,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             any(),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(Some(MessageType.ArrivalNotification))
+            eqTo(Some(MessageType.ArrivalNotification)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
       }
@@ -3925,7 +4004,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Arrival)),
-              eqTo(Some(MessageType.ArrivalNotification))
+              eqTo(Some(MessageType.ArrivalNotification)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -3967,7 +4047,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Arrival)),
-              eqTo(Some(MessageType.ArrivalNotification))
+              eqTo(Some(MessageType.ArrivalNotification)),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
           when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()), any())(any(), any()))
@@ -3992,7 +4073,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             any(),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(Some(MessageType.ArrivalNotification))
+            eqTo(Some(MessageType.ArrivalNotification)),
+            eqTo(versionHeader)
           )(any(), any())
 
           verify(mockAuditService, times(1)).auditStatusEvent(
@@ -4002,7 +4084,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(None)
+            eqTo(None),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockPersistenceService, times(1)).updateMessage(
@@ -4023,7 +4106,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             any(),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(Some(MessageType.ArrivalNotification))
+            eqTo(Some(MessageType.ArrivalNotification)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
       }
@@ -4076,7 +4160,8 @@ class MovementsControllerSpec
           eqTo(None),
           eqTo(Some(eori)),
           eqTo(Some(MovementType.Arrival)),
-          eqTo(Some(MessageType.ArrivalNotification))
+          eqTo(Some(MessageType.ArrivalNotification)),
+          eqTo(versionHeader)
         )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -4228,7 +4313,8 @@ class MovementsControllerSpec
           eqTo(None),
           eqTo(Some(eori)),
           eqTo(Some(MovementType.Arrival)),
-          eqTo(Some(MessageType.ArrivalNotification))
+          eqTo(Some(MessageType.ArrivalNotification)),
+          eqTo(versionHeader)
         )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -4303,7 +4389,8 @@ class MovementsControllerSpec
           eqTo(None),
           eqTo(Some(eori)),
           eqTo(Some(MovementType.Arrival)),
-          eqTo(Some(MessageType.ArrivalNotification))
+          eqTo(Some(MessageType.ArrivalNotification)),
+          eqTo(versionHeader)
         )(any[HeaderCarrier], any[ExecutionContext])
 
       }
@@ -4380,7 +4467,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Arrival)),
-              eqTo(Some(MessageType.ArrivalNotification))
+              eqTo(Some(MessageType.ArrivalNotification)),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
           when(
@@ -4415,7 +4503,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Arrival)),
-              eqTo(Some(MessageType.ArrivalNotification))
+              eqTo(Some(MessageType.ArrivalNotification)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -4451,7 +4540,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             any(),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(Some(MessageType.ArrivalNotification))
+            eqTo(Some(MessageType.ArrivalNotification)),
+            eqTo(versionHeader)
           )(any(), any())
 
           verify(mockValidationService, times(1)).validateJson(eqTo(MessageType.ArrivalNotification), any(), any())(any(), any())
@@ -4473,7 +4563,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(Some(MessageType.ArrivalNotification))
+            eqTo(Some(MessageType.ArrivalNotification)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockPersistenceService, times(1)).updateMessage(
@@ -4494,7 +4585,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             any(),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(Some(MessageType.ArrivalNotification))
+            eqTo(Some(MessageType.ArrivalNotification)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -4554,7 +4646,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Arrival)),
-              eqTo(None)
+              eqTo(None),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
           when(mockPushNotificationService.associate(MovementId(anyString()), any(), any(), EORINumber(anyString()), any())(any(), any()))
@@ -4589,7 +4682,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             any(),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(None)
+            eqTo(None),
+            eqTo(versionHeader)
           )(any(), any())
 
       }
@@ -4642,7 +4736,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Arrival)),
-              eqTo(None)
+              eqTo(None),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
@@ -4665,7 +4760,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             eqTo(Some(eori)),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(None)
+            eqTo(None),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockUpscanService, times(1)).upscanInitiate(EORINumber(any()), eqTo(MovementType.Arrival), MovementId(any()), MessageId(any()))(any(), any())
@@ -4721,7 +4817,8 @@ class MovementsControllerSpec
           eqTo(None),
           eqTo(Some(eori)),
           eqTo(Some(MovementType.Departure)),
-          eqTo(None)
+          eqTo(None),
+          eqTo(versionHeader)
         )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -4757,7 +4854,8 @@ class MovementsControllerSpec
               eqTo(Some(movementResponse.messageId)),
               any(),
               eqTo(Some(MovementType.Arrival)),
-              eqTo(None)
+              eqTo(None),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
 
@@ -4946,7 +5044,8 @@ class MovementsControllerSpec
             eqTo(Some(movementResponse.messageId)),
             any(),
             eqTo(Some(MovementType.Arrival)),
-            eqTo(Some(MessageType.ArrivalNotification))
+            eqTo(Some(MessageType.ArrivalNotification)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
         ).thenReturn(Future.successful(()))
         when(
@@ -5011,7 +5110,8 @@ class MovementsControllerSpec
           eqTo(Some(movementResponse.messageId)),
           any(),
           eqTo(Some(MovementType.Arrival)),
-          eqTo(Some(MessageType.ArrivalNotification))
+          eqTo(Some(MessageType.ArrivalNotification)),
+          eqTo(versionHeader)
         )(any[HeaderCarrier], any[ExecutionContext])
     }
   }
@@ -5266,7 +5366,8 @@ class MovementsControllerSpec
             eqTo(None),
             eqTo(Some(eori)),
             eqTo(Some(movementType)),
-            eqTo(None)
+            eqTo(None),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -5338,7 +5439,8 @@ class MovementsControllerSpec
             eqTo(None),
             eqTo(Some(eori)),
             eqTo(Some(movementType)),
-            eqTo(None)
+            eqTo(None),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -5766,7 +5868,8 @@ class MovementsControllerSpec
                 eqTo(Some(messageId)),
                 eqTo(Some(eori)),
                 eqTo(Some(movementType)),
-                eqTo(None)
+                eqTo(None),
+                eqTo(versionHeader)
               )(any[HeaderCarrier], any[ExecutionContext])
             }
 
@@ -5817,7 +5920,8 @@ class MovementsControllerSpec
                 eqTo(Some(messageId)),
                 eqTo(Some(eori)),
                 eqTo(Some(movementType)),
-                eqTo(None)
+                eqTo(None),
+                eqTo(versionHeader)
               )(any[HeaderCarrier], any[ExecutionContext])
             }
 
@@ -5937,7 +6041,8 @@ class MovementsControllerSpec
                 eqTo(Some(messageId)),
                 eqTo(Some(eori)),
                 eqTo(Some(movementType)),
-                eqTo(None)
+                eqTo(None),
+                eqTo(versionHeader)
               )(any[HeaderCarrier], any[ExecutionContext])
             }
 
@@ -5989,7 +6094,8 @@ class MovementsControllerSpec
                 eqTo(Some(messageId)),
                 eqTo(Some(eori)),
                 eqTo(Some(movementType)),
-                eqTo(None)
+                eqTo(None),
+                eqTo(versionHeader)
               )(any[HeaderCarrier], any[ExecutionContext])
             }
 
@@ -6811,7 +6917,8 @@ class MovementsControllerSpec
           eqTo(None),
           eqTo(Some(eori)),
           eqTo(Some(movementType)),
-          eqTo(None)
+          eqTo(None),
+          eqTo(versionHeader)
         )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -6879,7 +6986,8 @@ class MovementsControllerSpec
           eqTo(None),
           eqTo(Some(eori)),
           eqTo(Some(movementType)),
-          eqTo(None)
+          eqTo(None),
+          eqTo(versionHeader)
         )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -7105,7 +7213,8 @@ class MovementsControllerSpec
             eqTo(None),
             eqTo(Some(eori)),
             eqTo(Some(movementType)),
-            eqTo(None)
+            eqTo(None),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -7157,7 +7266,8 @@ class MovementsControllerSpec
             eqTo(None),
             eqTo(Some(eori)),
             eqTo(Some(movementType)),
-            eqTo(None)
+            eqTo(None),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
       }
 
@@ -7314,7 +7424,8 @@ class MovementsControllerSpec
                 eqTo(None),
                 any(),
                 eqTo(Some(movementType)),
-                eqTo(Some(messageType))
+                eqTo(Some(messageType)),
+                eqTo(versionHeader)
               )(any[HeaderCarrier], any[ExecutionContext])
             ).thenReturn(Future.successful(()))
 
@@ -7345,7 +7456,8 @@ class MovementsControllerSpec
                 eqTo(Some(updateMovementResponse.messageId)),
                 any(),
                 eqTo(Some(movementType)),
-                eqTo(Some(messageType))
+                eqTo(Some(messageType)),
+                eqTo(versionHeader)
               )(any(), any())
             ).thenReturn(Future.successful(()))
 
@@ -7357,7 +7469,8 @@ class MovementsControllerSpec
                 eqTo(Some(updateMovementResponse.messageId)),
                 any(),
                 eqTo(Some(movementType)),
-                eqTo(Some(messageType))
+                eqTo(Some(messageType)),
+                eqTo(versionHeader)
               )(any[HeaderCarrier], any[ExecutionContext])
             ).thenReturn(Future.successful(()))
 
@@ -7381,7 +7494,8 @@ class MovementsControllerSpec
               eqTo(Some(updateMovementResponse.messageId)),
               any(),
               eqTo(Some(movementType)),
-              eqTo(Some(messageType))
+              eqTo(Some(messageType)),
+              eqTo(versionHeader)
             )(any(), any())
 
             verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any(), any())(any(), any())
@@ -7409,7 +7523,8 @@ class MovementsControllerSpec
               eqTo(Some(updateMovementResponse.messageId)),
               any(),
               eqTo(Some(movementType)),
-              eqTo(Some(messageType))
+              eqTo(Some(messageType)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
 
             verify(mockAuditService, times(0)).auditStatusEvent(
@@ -7419,7 +7534,8 @@ class MovementsControllerSpec
               eqTo(None),
               any(),
               eqTo(Some(movementType)),
-              eqTo(Some(messageType))
+              eqTo(Some(messageType)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
 
         }
@@ -7512,7 +7628,8 @@ class MovementsControllerSpec
                 eqTo(Some(updateMovementResponse.messageId)),
                 any(),
                 eqTo(Some(movementType)),
-                eqTo(Some(messageType))
+                eqTo(Some(messageType)),
+                eqTo(versionHeader)
               )(any(), any())
             ).thenReturn(Future.successful(()))
 
@@ -7620,7 +7737,8 @@ class MovementsControllerSpec
                 eqTo(None),
                 any(),
                 eqTo(Some(movementType)),
-                eqTo(Some(messageType))
+                eqTo(Some(messageType)),
+                eqTo(versionHeader)
               )(any[HeaderCarrier], any[ExecutionContext])
             ).thenReturn(Future.successful(()))
 
@@ -7640,7 +7758,8 @@ class MovementsControllerSpec
               eqTo(None),
               any(),
               eqTo(Some(movementType)),
-              eqTo(Some(messageType))
+              eqTo(Some(messageType)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
 
             verify(mockAuditService, times(1)).auditStatusEvent(
@@ -7650,7 +7769,8 @@ class MovementsControllerSpec
               eqTo(None),
               eqTo(Some(eori)),
               eqTo(Some(movementType)),
-              eqTo(Some(messageType))
+              eqTo(Some(messageType)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
         }
 
@@ -7658,7 +7778,6 @@ class MovementsControllerSpec
           arbitraryMovementId.arbitrary
         ) {
           movementId =>
-            println(s"This is the $movementId")
             val ControllerAndMocks(
               sut,
               mockValidationService,
@@ -7703,7 +7822,8 @@ class MovementsControllerSpec
                 eqTo(None),
                 any(),
                 eqTo(Some(movementType)),
-                eqTo(Some(messageType))
+                eqTo(Some(messageType)),
+                eqTo(versionHeader)
               )(any[HeaderCarrier], any[ExecutionContext])
             ).thenReturn(Future.successful(()))
 
@@ -7723,7 +7843,8 @@ class MovementsControllerSpec
               eqTo(None),
               any(),
               eqTo(Some(movementType)),
-              eqTo(Some(messageType))
+              eqTo(Some(messageType)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
         }
 
@@ -7797,7 +7918,8 @@ class MovementsControllerSpec
               eqTo(None),
               any(),
               eqTo(Some(movementType)),
-              eqTo(Some(messageType))
+              eqTo(Some(messageType)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -7811,7 +7933,8 @@ class MovementsControllerSpec
               eqTo(Some(messageId)),
               any(),
               eqTo(Some(movementType)),
-              eqTo(Some(messageType))
+              eqTo(Some(messageType)),
+              eqTo(versionHeader)
             )(any(), any())
           ).thenReturn(Future.successful(()))
           when(
@@ -7822,7 +7945,8 @@ class MovementsControllerSpec
               eqTo(Some(messageId)),
               any(),
               eqTo(Some(movementType)),
-              eqTo(Some(messageType))
+              eqTo(Some(messageType)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
           ).thenReturn(Future.successful(()))
 
@@ -7903,7 +8027,8 @@ class MovementsControllerSpec
             eqTo(Some(messageId)),
             any(),
             eqTo(Some(movementType)),
-            eqTo(Some(messageType))
+            eqTo(Some(messageType)),
+            eqTo(versionHeader)
           )(any(), any())
 
           verify(mockConversionService, times(1)).convert(any(), any(), eqTo(jsonToXml), eqTo(versionHeader))(any(), any(), any())
@@ -7920,7 +8045,8 @@ class MovementsControllerSpec
             eqTo(Some(messageId)),
             any(),
             eqTo(Some(movementType)),
-            eqTo(Some(messageType))
+            eqTo(Some(messageType)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
 
           verify(mockPersistenceService, times(1)).updateMessage(
@@ -7941,7 +8067,8 @@ class MovementsControllerSpec
             eqTo(None),
             any(),
             eqTo(Some(movementType)),
-            eqTo(Some(messageType))
+            eqTo(Some(messageType)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
         }
 
@@ -8248,7 +8375,8 @@ class MovementsControllerSpec
                 eqTo(None),
                 any(),
                 eqTo(Some(movementType)),
-                eqTo(Some(messageType))
+                eqTo(Some(messageType)),
+                eqTo(versionHeader)
               )(any[HeaderCarrier], any[ExecutionContext])
             ).thenReturn(Future.successful(()))
 
@@ -8263,7 +8391,8 @@ class MovementsControllerSpec
               eqTo(None),
               any(),
               eqTo(Some(movementType)),
-              eqTo(Some(messageType))
+              eqTo(Some(messageType)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
         }
 
@@ -8292,7 +8421,8 @@ class MovementsControllerSpec
                 eqTo(None),
                 any(),
                 eqTo(Some(movementType)),
-                eqTo(Some(messageType))
+                eqTo(Some(messageType)),
+                eqTo(versionHeader)
               )(any[HeaderCarrier], any[ExecutionContext])
             ).thenReturn(Future.successful(()))
 
@@ -8307,7 +8437,8 @@ class MovementsControllerSpec
               eqTo(None),
               any(),
               eqTo(Some(movementType)),
-              eqTo(Some(messageType))
+              eqTo(Some(messageType)),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
         }
 
@@ -8352,7 +8483,8 @@ class MovementsControllerSpec
             eqTo(Some(messageId)),
             eqTo(Some(EORINumber("id"))),
             eqTo(Some(movementType)),
-            eqTo(Some(messageType))
+            eqTo(Some(messageType)),
+            eqTo(versionHeader)
           )(any[HeaderCarrier], any[ExecutionContext])
         }
       }
@@ -8426,7 +8558,8 @@ class MovementsControllerSpec
                 eqTo(None),
                 any(),
                 eqTo(Some(movementType)),
-                eqTo(None)
+                eqTo(None),
+                eqTo(versionHeader)
               )(any[HeaderCarrier], any[ExecutionContext])
             ).thenReturn(Future.successful(()))
 
@@ -8454,7 +8587,8 @@ class MovementsControllerSpec
                 eqTo(Some(messageId)),
                 any(),
                 eqTo(Some(movementType)),
-                eqTo(None)
+                eqTo(None),
+                eqTo(versionHeader)
               )(any(), any())
             ).thenReturn(Future.successful(()))
 
@@ -8470,7 +8604,8 @@ class MovementsControllerSpec
               eqTo(None),
               any(),
               eqTo(Some(movementType)),
-              eqTo(None)
+              eqTo(None),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
         }
 
@@ -8540,7 +8675,8 @@ class MovementsControllerSpec
               eqTo(None),
               eqTo(Some(eori)),
               eqTo(Some(movementType)),
-              eqTo(None)
+              eqTo(None),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
         }
 
@@ -8600,7 +8736,8 @@ class MovementsControllerSpec
                 eqTo(None),
                 any(),
                 eqTo(Some(movementType)),
-                eqTo(None)
+                eqTo(None),
+                eqTo(versionHeader)
               )(any[HeaderCarrier], any[ExecutionContext])
             ).thenReturn(Future.successful(()))
 
@@ -8618,7 +8755,8 @@ class MovementsControllerSpec
               eqTo(None),
               any(),
               eqTo(Some(movementType)),
-              eqTo(None)
+              eqTo(None),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
 
             verify(mockAuditService, times(1)).auditStatusEvent(
@@ -8628,7 +8766,8 @@ class MovementsControllerSpec
               eqTo(None),
               eqTo(Some(eori)),
               eqTo(Some(movementType)),
-              eqTo(None)
+              eqTo(None),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
         }
 
@@ -8691,7 +8830,8 @@ class MovementsControllerSpec
                 eqTo(Some(messageId)),
                 any(),
                 eqTo(Some(movementType)),
-                eqTo(None)
+                eqTo(None),
+                eqTo(versionHeader)
               )(any(), any())
             ).thenReturn(Future.successful(()))
             when(
@@ -8751,7 +8891,8 @@ class MovementsControllerSpec
                 eqTo(None),
                 any(),
                 eqTo(Some(movementType)),
-                eqTo(None)
+                eqTo(None),
+                eqTo(versionHeader)
               )(any[HeaderCarrier], any[ExecutionContext])
             ).thenReturn(Future.successful(()))
             val result = sut.attachMessage(movementType, movementId)(request)
@@ -8768,7 +8909,8 @@ class MovementsControllerSpec
               eqTo(None),
               any(),
               eqTo(Some(movementType)),
-              eqTo(None)
+              eqTo(None),
+              eqTo(versionHeader)
             )(any[HeaderCarrier], any[ExecutionContext])
         }
 
@@ -8995,7 +9137,8 @@ class MovementsControllerSpec
                 eqTo(Some(messageId)),
                 eqTo(Some(eori)),
                 eqTo(Some(movementType)),
-                eqTo(None)
+                eqTo(None),
+                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
               )(any(), any())
           }
       }
@@ -9117,7 +9260,8 @@ class MovementsControllerSpec
                   eqTo(Some(messageId)),
                   eqTo(Some(eori)),
                   eqTo(Some(movementType)),
-                  eqTo(None)
+                  eqTo(None),
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any(), any())
             }
         }
@@ -9256,7 +9400,8 @@ class MovementsControllerSpec
                   eqTo(Some(messageId)),
                   eqTo(Some(eori)),
                   eqTo(Some(movementType)),
-                  eqTo(None)
+                  eqTo(None),
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any(), any())
             }
 
@@ -9396,7 +9541,8 @@ class MovementsControllerSpec
                   eqTo(Some(messageId)),
                   eqTo(Some(eori)),
                   eqTo(Some(movementType)),
-                  eqTo(None)
+                  eqTo(None),
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any(), any())
 
             }
@@ -9459,7 +9605,8 @@ class MovementsControllerSpec
                   eqTo(Some(messageId)),
                   eqTo(Some(eori)),
                   eqTo(Some(movementType)),
-                  eqTo(Some(messageType))
+                  eqTo(Some(messageType)),
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any(), any())
               ).thenReturn(Future.successful(()))
 
@@ -9489,7 +9636,8 @@ class MovementsControllerSpec
                   eqTo(Some(messageId)),
                   any(),
                   eqTo(Some(movementType)),
-                  eqTo(Some(messageType))
+                  eqTo(Some(messageType)),
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any[HeaderCarrier], any[ExecutionContext])
               ).thenReturn(Future.successful(()))
 
@@ -9556,7 +9704,8 @@ class MovementsControllerSpec
                     eqTo(Some(messageId)),
                     any(),
                     eqTo(Some(movementType)),
-                    eqTo(Some(messageType))
+                    eqTo(Some(messageType)),
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(any[HeaderCarrier], any[ExecutionContext])
                   // success status
                   verify(mockPersistenceService, times(0)).updateMessage(
@@ -9597,7 +9746,8 @@ class MovementsControllerSpec
                     eqTo(Some(messageId)),
                     eqTo(Some(eori)),
                     eqTo(Some(movementType)),
-                    eqTo(Some(messageType))
+                    eqTo(Some(messageType)),
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(any(), any())
 
                   verify(mockAuditService, times(1)).auditStatusEvent(
@@ -9614,7 +9764,8 @@ class MovementsControllerSpec
                     eqTo(Some(messageId)),
                     eqTo(Some(eori)),
                     eqTo(Some(movementType)),
-                    eqTo(Some(messageType))
+                    eqTo(Some(messageType)),
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(any[HeaderCarrier], any[ExecutionContext])
               }
 
@@ -9683,7 +9834,8 @@ class MovementsControllerSpec
                   eqTo(Some(messageId)),
                   eqTo(Some(eori)),
                   eqTo(Some(movementType)),
-                  eqTo(Some(messageType))
+                  eqTo(Some(messageType)),
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any(), any())
               ).thenReturn(Future.successful(()))
 
@@ -9695,7 +9847,8 @@ class MovementsControllerSpec
                   eqTo(Some(messageId)),
                   any(),
                   eqTo(Some(movementType)),
-                  eqTo(Some(messageType))
+                  eqTo(Some(messageType)),
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any[HeaderCarrier], any[ExecutionContext])
               ).thenReturn(Future.successful(()))
 
@@ -9789,7 +9942,8 @@ class MovementsControllerSpec
                     eqTo(Some(messageId)),
                     any(),
                     eqTo(Some(movementType)),
-                    eqTo(Some(messageType))
+                    eqTo(Some(messageType)),
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   // success status
@@ -9831,7 +9985,8 @@ class MovementsControllerSpec
                     eqTo(Some(messageId)),
                     eqTo(Some(eori)),
                     eqTo(Some(movementType)),
-                    eqTo(Some(messageType))
+                    eqTo(Some(messageType)),
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(any(), any())
 
               }
@@ -9892,7 +10047,8 @@ class MovementsControllerSpec
                   eqTo(Some(messageId)),
                   eqTo(Some(eori)),
                   eqTo(Some(movementType)),
-                  eqTo(Some(messageType))
+                  eqTo(Some(messageType)),
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any(), any())
               ).thenReturn(Future.successful(()))
 
@@ -9909,7 +10065,8 @@ class MovementsControllerSpec
                   eqTo(Some(messageId)),
                   any(),
                   eqTo(Some(movementType)),
-                  eqTo(Some(messageType))
+                  eqTo(Some(messageType)),
+                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                 )(any[HeaderCarrier], any[ExecutionContext])
               ).thenReturn(Future.successful(()))
 
@@ -9962,7 +10119,8 @@ class MovementsControllerSpec
                     eqTo(Some(messageId)),
                     eqTo(Some(eori)),
                     eqTo(Some(movementType)),
-                    eqTo(Some(messageType))
+                    eqTo(Some(messageType)),
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(any(), any())
 
                   verify(mockAuditService, times(1)).auditStatusEvent(
@@ -9972,7 +10130,8 @@ class MovementsControllerSpec
                     eqTo(Some(messageId)),
                     any(),
                     eqTo(Some(movementType)),
-                    eqTo(Some(messageType))
+                    eqTo(Some(messageType)),
+                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   verify(mockPersistenceService, times(1)).updateMessageBody(
@@ -10080,7 +10239,8 @@ class MovementsControllerSpec
             eqTo(Some(messageId)),
             eqTo(Some(eoriNumber)),
             eqTo(Some(movementType)),
-            eqTo(None)
+            eqTo(None),
+            eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
           )(any(), any())
         ).thenReturn(Future.successful(()))
 
@@ -10126,7 +10286,8 @@ class MovementsControllerSpec
           eqTo(Some(messageId)),
           eqTo(Some(eoriNumber)),
           eqTo(Some(movementType)),
-          eqTo(None)
+          eqTo(None),
+          eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
         )(any(), any())
 
         // Verify that postPpnsNotification was not  called

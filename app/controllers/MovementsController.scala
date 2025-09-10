@@ -188,7 +188,8 @@ class MovementsControllerImpl @Inject() (
                 None,
                 Some(request.authenticatedRequest.eoriNumber),
                 Some(MovementType.Departure),
-                Some(MessageType.DeclarationData)
+                Some(MessageType.DeclarationData),
+                version
               )
               err
           }
@@ -218,7 +219,8 @@ class MovementsControllerImpl @Inject() (
                 None,
                 Some(request.authenticatedRequest.eoriNumber),
                 Some(MovementType.Departure),
-                Some(MessageType.DeclarationData)
+                Some(MessageType.DeclarationData),
+                version
               )
               err
           }
@@ -254,7 +256,8 @@ class MovementsControllerImpl @Inject() (
                 None,
                 Some(request.authenticatedRequest.eoriNumber),
                 Some(MovementType.Arrival),
-                Some(MessageType.ArrivalNotification)
+                Some(MessageType.ArrivalNotification),
+                version
               )
               err
           }
@@ -283,7 +286,8 @@ class MovementsControllerImpl @Inject() (
                 None,
                 Some(request.authenticatedRequest.eoriNumber),
                 Some(MovementType.Arrival),
-                Some(MessageType.ArrivalNotification)
+                Some(MessageType.ArrivalNotification),
+                version
               )
               err
           }
@@ -313,7 +317,8 @@ class MovementsControllerImpl @Inject() (
                 None,
                 Some(request.authenticatedRequest.eoriNumber),
                 Some(movementType),
-                None
+                None,
+                version
               )
               err
           }
@@ -336,7 +341,8 @@ class MovementsControllerImpl @Inject() (
                         Some(movementResponse.messageId),
                         Some(request.authenticatedRequest.eoriNumber),
                         Some(movementType),
-                        None
+                        None,
+                        version
                       )
                       err
                   }
@@ -349,7 +355,8 @@ class MovementsControllerImpl @Inject() (
             Some(movementResponse.messageId),
             Some(request.authenticatedRequest.eoriNumber),
             Some(movementType),
-            None
+            None,
+            version
           )
         } yield HateoasNewMovementResponse(movementResponse.movementId, movementResponse.messageId, boxResponseOption, Some(upscanResponse), movementType))
           .fold[Result](
@@ -377,7 +384,8 @@ class MovementsControllerImpl @Inject() (
                   Some(messageId),
                   Some(request.authenticatedRequest.eoriNumber),
                   Some(movementType),
-                  None
+                  None,
+                  version
                 )
                 err
             }
@@ -548,7 +556,8 @@ class MovementsControllerImpl @Inject() (
                   None,
                   Some(request.authenticatedRequest.eoriNumber),
                   Some(movementType),
-                  None
+                  None,
+                  version
                 )
                 err
             }
@@ -576,7 +585,8 @@ class MovementsControllerImpl @Inject() (
                 None,
                 Some(request.authenticatedRequest.eoriNumber),
                 Some(movementType),
-                None
+                None,
+                version
               )
               err
           }
@@ -644,7 +654,8 @@ class MovementsControllerImpl @Inject() (
                   None,
                   Some(request.authenticatedRequest.eoriNumber),
                   Some(movementType),
-                  None
+                  None,
+                  version
                 )
                 err
             }
@@ -695,7 +706,8 @@ class MovementsControllerImpl @Inject() (
                   None,
                   Some(request.authenticatedRequest.eoriNumber),
                   Some(movementType),
-                  None
+                  None,
+                  version
                 )
               err
           }
@@ -708,7 +720,8 @@ class MovementsControllerImpl @Inject() (
                 None,
                 Some(request.authenticatedRequest.eoriNumber),
                 Some(movementType),
-                None
+                None,
+                version
               )
               err
           }
@@ -720,7 +733,8 @@ class MovementsControllerImpl @Inject() (
             Some(updateMovementResponse.messageId),
             Some(request.authenticatedRequest.eoriNumber),
             Some(movementType),
-            None
+            None,
+            version
           )
 
           upscanResponse <- upscanService
@@ -755,7 +769,8 @@ class MovementsControllerImpl @Inject() (
                 None,
                 Some(request.authenticatedRequest.eoriNumber),
                 Some(messageType.movementType),
-                Some(messageType)
+                Some(messageType),
+                version
               )
               err
           }
@@ -790,7 +805,8 @@ class MovementsControllerImpl @Inject() (
                 None,
                 Some(request.authenticatedRequest.eoriNumber),
                 Some(messageType.movementType),
-                Some(messageType)
+                Some(messageType),
+                version
               )
               err
           }
@@ -819,7 +835,8 @@ class MovementsControllerImpl @Inject() (
                 None,
                 Some(request.authenticatedRequest.eoriNumber),
                 Some(movementType),
-                Some(messageType)
+                Some(messageType),
+                version
               )
               err
           }
@@ -863,7 +880,8 @@ class MovementsControllerImpl @Inject() (
               Some(messageId),
               Some(eori),
               Some(movementType),
-              None
+              None,
+              V2_1 // TODO - Make version value dynamic CTCP6-68
             )
 
             logger.warn(s"""Upscan failed to process trader-uploaded file
@@ -936,7 +954,8 @@ class MovementsControllerImpl @Inject() (
                             Some(messageId),
                             Some(eori),
                             Some(movementType),
-                            Some(messageType)
+                            Some(messageType),
+                            V2_1 // TODO - Make version value dynamic CTCP6-68
                           )
                           err
                       }
@@ -953,7 +972,8 @@ class MovementsControllerImpl @Inject() (
                         Some(messageId),
                         Some(eori),
                         Some(movementType),
-                        Some(messageType)
+                        Some(messageType),
+                        V2_1 // TODO - Make version value dynamic CTCP6-68
                       )
 
                       // Send message to router to be sent
@@ -969,7 +989,8 @@ class MovementsControllerImpl @Inject() (
                               Some(messageId),
                               Some(eori),
                               Some(movementType),
-                              Some(messageType)
+                              Some(messageType),
+                              V2_1 // TODO - Make version value dynamic CTCP6-68
                             )
                             err
                         }
@@ -980,7 +1001,8 @@ class MovementsControllerImpl @Inject() (
                         Some(messageId),
                         Some(eori),
                         Some(movementType),
-                        Some(messageType)
+                        Some(messageType),
+                        V2_1 // TODO - Make version value dynamic CTCP6-68
                       )
                     } yield submissionResult
                 }
@@ -1038,7 +1060,8 @@ class MovementsControllerImpl @Inject() (
             None,
             Some(request.authenticatedRequest.eoriNumber),
             Some(movementType),
-            Some(messageType)
+            Some(messageType),
+            version
           )
           err
       }
@@ -1051,7 +1074,8 @@ class MovementsControllerImpl @Inject() (
         Some(updateMovementResponse.messageId),
         Some(request.authenticatedRequest.eoriNumber),
         Some(movementType),
-        Some(messageType)
+        Some(messageType),
+        version
       )
       _ = pushNotificationsService.update(movementId, version).leftMap {
         err =>
@@ -1062,7 +1086,8 @@ class MovementsControllerImpl @Inject() (
             Some(updateMovementResponse.messageId),
             Some(request.authenticatedRequest.eoriNumber),
             Some(movementType),
-            Some(messageType)
+            Some(messageType),
+            version
           )
           err
       }
@@ -1086,7 +1111,8 @@ class MovementsControllerImpl @Inject() (
               Some(updateMovementResponse.messageId),
               Some(request.authenticatedRequest.eoriNumber),
               Some(movementType),
-              Some(messageType)
+              Some(messageType),
+              version
             )
 
             err
@@ -1098,7 +1124,8 @@ class MovementsControllerImpl @Inject() (
         Some(updateMovementResponse.messageId),
         Some(request.authenticatedRequest.eoriNumber),
         Some(movementType),
-        Some(messageType)
+        Some(messageType),
+        version
       )
       _ <- updateSmallMessageStatus(
         request.authenticatedRequest.eoriNumber,
@@ -1132,7 +1159,8 @@ class MovementsControllerImpl @Inject() (
               None,
               Some(request.authenticatedRequest.eoriNumber),
               Some(movementType),
-              Some(messageType)
+              Some(messageType),
+              version
             )
             err
         }
@@ -1181,7 +1209,8 @@ class MovementsControllerImpl @Inject() (
               None,
               Some(request.authenticatedRequest.eoriNumber),
               Some(movementType),
-              Some(messageType)
+              Some(messageType),
+              version
             )
             err
         }
@@ -1194,7 +1223,8 @@ class MovementsControllerImpl @Inject() (
         Some(movementResponse.messageId),
         Some(request.authenticatedRequest.eoriNumber),
         Some(movementType),
-        Some(messageType)
+        Some(messageType),
+        version
       )
       boxResponseOption <-
         if (request.headers.get(Constants.XClientIdHeader).isEmpty) { EitherT.rightT[Future, PresentationError](None) }
@@ -1212,7 +1242,8 @@ class MovementsControllerImpl @Inject() (
                     Some(movementResponse.messageId),
                     Some(request.authenticatedRequest.eoriNumber),
                     Some(movementType),
-                    None
+                    None,
+                    version
                   )
                   err
               }
@@ -1244,7 +1275,8 @@ class MovementsControllerImpl @Inject() (
               Some(movementResponse.messageId),
               Some(request.authenticatedRequest.eoriNumber),
               Some(movementType),
-              Some(messageType)
+              Some(messageType),
+              version
             )
             err
         }
@@ -1255,7 +1287,8 @@ class MovementsControllerImpl @Inject() (
         Some(movementResponse.messageId),
         Some(request.authenticatedRequest.eoriNumber),
         Some(movementType),
-        Some(messageType)
+        Some(messageType),
+        version
       )
       _ <- updateSmallMessageStatus(
         request.authenticatedRequest.eoriNumber,
