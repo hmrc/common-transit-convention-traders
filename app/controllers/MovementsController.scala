@@ -174,11 +174,12 @@ class MovementsControllerImpl @Inject() (
     (authActionNewEnrolmentOnly andThen validateAccept(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+        val version                    = request.versionedHeader.version
         (for {
           source <- reUsableSourceRequest(request)
           size   <- calculateSize(source.head)
           _      <- contentSizeIsLessThanLimit(size)
-          _ <- validationService.validateXml(MessageType.DeclarationData, source.lift(1).get).asPresentation.leftMap {
+          _ <- validationService.validateXml(MessageType.DeclarationData, source.lift(1).get, version).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -208,7 +209,7 @@ class MovementsControllerImpl @Inject() (
           source <- reUsableSourceRequest(request)
           size   <- calculateSize(source.head)
           _      <- contentSizeIsLessThanLimit(size)
-          _ <- validationService.validateJson(MessageType.DeclarationData, source.lift(1).get).asPresentation.leftMap {
+          _ <- validationService.validateJson(MessageType.DeclarationData, source.lift(1).get, version).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -239,11 +240,12 @@ class MovementsControllerImpl @Inject() (
     (authActionNewEnrolmentOnly andThen validateAccept(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+        val version                    = request.versionedHeader.version
         (for {
           source <- reUsableSourceRequest(request)
           size   <- calculateSize(source.head)
           _      <- contentSizeIsLessThanLimit(size)
-          _ <- validationService.validateXml(MessageType.ArrivalNotification, source.lift(1).get).asPresentation.leftMap {
+          _ <- validationService.validateXml(MessageType.ArrivalNotification, source.lift(1).get, version).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -272,7 +274,7 @@ class MovementsControllerImpl @Inject() (
           source <- reUsableSourceRequest(request)
           size   <- calculateSize(source.head)
           _      <- contentSizeIsLessThanLimit(size)
-          _ <- validationService.validateJson(MessageType.ArrivalNotification, source.lift(1).get).asPresentation.leftMap {
+          _ <- validationService.validateJson(MessageType.ArrivalNotification, source.lift(1).get, version).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -734,6 +736,7 @@ class MovementsControllerImpl @Inject() (
     (authActionNewEnrolmentOnly andThen validateAccept(jsonOnlyAcceptHeader)).async(streamFromMemory) {
       implicit request =>
         implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+        val version                    = request.versionedHeader.version
 
         val messageTypeList =
           if (movementType == MovementType.Arrival) MessageType.updateMessageTypesSentByArrivalTrader else MessageType.updateMessageTypesSentByDepartureTrader
@@ -743,7 +746,7 @@ class MovementsControllerImpl @Inject() (
           size        <- calculateSize(source.head)
           _           <- contentSizeIsLessThanLimit(size)
           messageType <- xmlParsingService.extractMessageType(source.lift(1).get, messageTypeList).asPresentation
-          _ <- validationService.validateXml(messageType, source.lift(2).get).asPresentation.leftMap {
+          _ <- validationService.validateXml(messageType, source.lift(2).get, version).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -770,12 +773,13 @@ class MovementsControllerImpl @Inject() (
       hc: HeaderCarrier,
       request: ValidatedVersionedRequest[Source[ByteString, ?]]
     ): EitherT[Future, PresentationError, UpdateMovementResponse] =
+      val version = request.versionedHeader.version
       for {
         source <- reUsableSource(src)
         size   <- calculateSize(source.head)
         _      <- contentSizeIsLessThanLimit(size)
         _ <- validationService
-          .validateXml(messageType, source.lift(1).get)
+          .validateXml(messageType, source.lift(1).get, version)
           .asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
           .leftMap {
             err =>
@@ -806,7 +810,7 @@ class MovementsControllerImpl @Inject() (
           size        <- calculateSize(source.head)
           _           <- contentSizeIsLessThanLimit(size)
           messageType <- jsonParsingService.extractMessageType(source.lift(1).get, messageTypeList).asPresentation
-          _ <- validationService.validateJson(messageType, source.lift(2).get).asPresentation.leftMap {
+          _ <- validationService.validateJson(messageType, source.lift(2).get, version).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -923,7 +927,7 @@ class MovementsControllerImpl @Inject() (
                       // Extract type
                       messageType <- xmlParsingService.extractMessageType(source, allowedTypes).asPresentation
                       // Validate file
-                      _ <- validationService.validateXml(messageType, source).asPresentation.leftMap {
+                      _ <- validationService.validateXml(messageType, source, V2_1).asPresentation.leftMap { // TODO - Make version value dynamic CTCP6-68
                         err =>
                           auditService.auditStatusEvent(
                             ValidationFailed,
@@ -1111,12 +1115,13 @@ class MovementsControllerImpl @Inject() (
     movementType: MovementType,
     messageType: MessageType
   )(implicit hc: HeaderCarrier, request: ValidatedVersionedRequest[Source[ByteString, ?]]) =
+    val version = request.versionedHeader.version
     for {
       source <- reUsableSource(src)
       size   <- calculateSize(source.head)
       _      <- contentSizeIsLessThanLimit(size)
       _ <- validationService
-        .validateXml(messageType, source.lift(1).get)
+        .validateXml(messageType, source.lift(1).get, version)
         .asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
         .leftMap {
           err =>

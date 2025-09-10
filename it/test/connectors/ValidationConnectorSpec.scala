@@ -24,6 +24,9 @@ import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
+import models.Version
+import models.Version.V2_1
+import models.Version.V3_0
 import models.common.errors.JsonValidationError
 import models.common.errors.PresentationError
 import models.common.errors.XmlValidationError
@@ -33,11 +36,13 @@ import models.responses.JsonSchemaValidationResponse
 import models.responses.XmlSchemaValidationResponse
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
+import org.scalacheck.Gen
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import org.scalatest.OptionValues
 import play.api.http.ContentTypes
 import play.api.http.HeaderNames
 import play.api.http.Status.BAD_REQUEST
@@ -61,9 +66,11 @@ class ValidationConnectorSpec
     with GuiceOneAppPerSuite
     with utils.GuiceWiremockSuite
     with ScalaFutures
+    with OptionValues
     with IntegrationPatience {
 
   lazy val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
+  lazy val version: Version     = Gen.oneOf(V2_1, V3_0).sample.value
 
   lazy val validationConnector: ValidationConnector = new ValidationConnector(httpClientV2, appConfig, new MetricRegistry)
   implicit lazy val ec: ExecutionContext            = app.materializer.executionContext
@@ -88,7 +95,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8)) // TODO: IE015C
 
-        whenReady(validationConnector.postXml(MessageType.DeclarationData, source)) {
+        whenReady(validationConnector.postXml(MessageType.DeclarationData, source, version)) {
           result =>
             result mustBe None
         }
@@ -118,7 +125,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
 
-        whenReady(validationConnector.postXml(MessageType.DeclarationData, source)) {
+        whenReady(validationConnector.postXml(MessageType.DeclarationData, source, version)) {
           result =>
             result mustBe Some(XmlSchemaValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)))
         }
@@ -148,7 +155,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
 
-        whenReady(validationConnector.postXml(MessageType.DeclarationData, source)) {
+        whenReady(validationConnector.postXml(MessageType.DeclarationData, source, version)) {
           result =>
             result mustBe Some(BusinessValidationResponse("business error"))
         }
@@ -178,7 +185,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
 
-        val future = validationConnector.postXml(MessageType.DeclarationData, source).map(Right(_)).recover {
+        val future = validationConnector.postXml(MessageType.DeclarationData, source, version).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -215,7 +222,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString(<test></test>.mkString, StandardCharsets.UTF_8)) // TODO: IE015C
 
-        val future = validationConnector.postXml(MessageType.DeclarationData, source).map(Right(_)).recover {
+        val future = validationConnector.postXml(MessageType.DeclarationData, source, version).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -244,7 +251,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString("{}", StandardCharsets.UTF_8)) // TODO: IE015C
 
-        whenReady(validationConnector.postJson(MessageType.DeclarationData, source)) {
+        whenReady(validationConnector.postJson(MessageType.DeclarationData, source, version)) {
           result =>
             result mustBe None
         }
@@ -274,7 +281,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString("{", StandardCharsets.UTF_8)) // TODO: IE015C
 
-        whenReady(validationConnector.postJson(MessageType.DeclarationData, source)) {
+        whenReady(validationConnector.postJson(MessageType.DeclarationData, source, version)) {
           result =>
             result mustBe Some(JsonSchemaValidationResponse(NonEmptyList(JsonValidationError("path", "error"), Nil)))
         }
@@ -304,7 +311,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8)) // TODO: IE015C
 
-        whenReady(validationConnector.postXml(MessageType.DeclarationData, source)) {
+        whenReady(validationConnector.postXml(MessageType.DeclarationData, source, version)) {
           result =>
             result mustBe Some(BusinessValidationResponse("business error"))
         }
@@ -334,7 +341,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString("{}", StandardCharsets.UTF_8)) // TODO: IE015C
 
-        val future = validationConnector.postJson(MessageType.DeclarationData, source).map(Right(_)).recover {
+        val future = validationConnector.postJson(MessageType.DeclarationData, source, version).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 
@@ -371,7 +378,7 @@ class ValidationConnectorSpec
 
         val source = Source.single(ByteString("{}", StandardCharsets.UTF_8)) // TODO: IE015C
 
-        val future = validationConnector.postJson(MessageType.DeclarationData, source).map(Right(_)).recover {
+        val future = validationConnector.postJson(MessageType.DeclarationData, source, version).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 

@@ -23,6 +23,7 @@ import config.AppConfig
 import io.lemonlabs.uri.UrlPath
 import metrics.HasMetrics
 import metrics.MetricsKeys
+import models.Version
 import models.request.MessageType
 import models.responses.JsonValidationErrorResponse
 import models.responses.XmlValidationErrorResponse
@@ -56,25 +57,25 @@ class ValidationConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppC
   def validationRoute(messageType: MessageType): UrlPath =
     UrlPath.parse(s"/transit-movements-validator/messages/${messageType.code}/validation")
 
-  def postXml(messageType: MessageType, stream: Source[ByteString, ?])(implicit
+  def postXml(messageType: MessageType, stream: Source[ByteString, ?], version: Version)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Option[XmlValidationErrorResponse]] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
-        post[XmlValidationErrorResponse](messageType, stream, MimeTypes.XML)
+        post[XmlValidationErrorResponse](messageType, stream, MimeTypes.XML, version)
     }
 
-  def postJson(messageType: MessageType, stream: Source[ByteString, ?])(implicit
+  def postJson(messageType: MessageType, stream: Source[ByteString, ?], version: Version)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Option[JsonValidationErrorResponse]] =
     withMetricsTimerAsync(MetricsKeys.ValidatorBackend.Post) {
       _ =>
-        post[JsonValidationErrorResponse](messageType, stream, MimeTypes.JSON)
+        post[JsonValidationErrorResponse](messageType, stream, MimeTypes.JSON, version)
     }
 
-  private def post[A](messageType: MessageType, stream: Source[ByteString, ?], contentType: String)(implicit
+  private def post[A](messageType: MessageType, stream: Source[ByteString, ?], contentType: String, version: Version)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     reads: Reads[A]
@@ -83,7 +84,10 @@ class ValidationConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppC
 
     httpClientV2
       .post(url"$url")
-      .setHeader(HeaderNames.CONTENT_TYPE -> contentType)
+      .setHeader(
+        HeaderNames.CONTENT_TYPE -> contentType,
+        "APIVersion"             -> s"${version.value}"
+      )
       .withBody(stream)
       .execute[HttpResponse]
       .flatMap {
