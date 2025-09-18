@@ -35,6 +35,9 @@ import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
+import models.Version.V2_1
+import models.Version.V3_0
+import org.scalatest.OptionValues
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -55,6 +58,7 @@ class AuditingServiceSpec
     extends AnyFreeSpec
     with Matchers
     with ScalaFutures
+    with OptionValues
     with MockitoSugar
     with ScalaCheckDrivenPropertyChecks
     with TestCommonGenerators
@@ -64,6 +68,7 @@ class AuditingServiceSpec
   val sut: AuditingService             = new AuditingService(mockConnector)
   implicit val hc: HeaderCarrier       = HeaderCarrier()
   val smallMessageSize                 = 49999
+  val version: Version                 = Gen.oneOf(V2_1, V3_0).sample.value
 
   override def beforeEach(): Unit =
     reset(mockConnector)
@@ -90,7 +95,8 @@ class AuditingServiceSpec
                   eqTo(messageId),
                   eqTo(eoriNumber),
                   eqTo(movementType),
-                  eqTo(messageType)
+                  eqTo(messageType),
+                  eqTo(version)
                 )(any(), any())
               )
                 .thenReturn(Future.successful(()))
@@ -105,7 +111,8 @@ class AuditingServiceSpec
                   messageId,
                   eoriNumber,
                   movementType,
-                  messageType
+                  messageType,
+                  version
                 )
               ) {
                 _ =>
@@ -118,7 +125,8 @@ class AuditingServiceSpec
                     eqTo(messageId),
                     eqTo(eoriNumber),
                     eqTo(movementType),
-                    eqTo(messageType)
+                    eqTo(messageType),
+                    eqTo(version)
                   )(any(), any())
               }
           }
@@ -142,7 +150,8 @@ class AuditingServiceSpec
                   eqTo(messageId),
                   eqTo(eoriNumber),
                   eqTo(movementType),
-                  eqTo(messageType)
+                  eqTo(messageType),
+                  eqTo(version)
                 )(any(), any())
               ).thenReturn(Future.failed(exception))
 
@@ -162,7 +171,8 @@ class AuditingServiceSpec
                   messageId,
                   eoriNumber,
                   movementType,
-                  messageType
+                  messageType,
+                  version
                 )
               ) {
                 _ =>
@@ -175,7 +185,8 @@ class AuditingServiceSpec
                     eqTo(messageId),
                     eqTo(eoriNumber),
                     eqTo(movementType),
-                    eqTo(messageType)
+                    eqTo(messageType),
+                    eqTo(version)
                   )(any(), any())
                   verify(Harness.logger0, times(1)).warn(eqTo("Unable to audit payload due to an exception"), eqTo(exception))
               }
@@ -206,7 +217,8 @@ class AuditingServiceSpec
             eqTo(messageId),
             eqTo(eoriNumber),
             eqTo(movementType),
-            eqTo(messageType)
+            eqTo(messageType),
+            eqTo(version)
           )(any(), any())
         )
           .thenReturn(Future.successful(()))
@@ -219,7 +231,8 @@ class AuditingServiceSpec
             messageId,
             eoriNumber,
             movementType,
-            messageType
+            messageType,
+            version
           )
         ) {
           _ =>
@@ -230,7 +243,8 @@ class AuditingServiceSpec
               eqTo(messageId),
               eqTo(eoriNumber),
               eqTo(movementType),
-              eqTo(messageType)
+              eqTo(messageType),
+              eqTo(version)
             )(any(), any())
         }
     }
@@ -253,12 +267,13 @@ class AuditingServiceSpec
             eqTo(messageId),
             eqTo(eoriNumber),
             eqTo(movementType),
-            eqTo(messageType)
+            eqTo(messageType),
+            eqTo(version)
           )(any(), any())
         ).thenReturn(Future.failed(exception))
 
         object Harness extends AuditingService(mockConnector) {
-          val logger0 = mock[org.slf4j.Logger]
+          val logger0: slf4j.Logger = mock[org.slf4j.Logger]
           when(logger0.isWarnEnabled()).thenReturn(true)
           override val logger: Logger = new Logger(logger0)
         }
@@ -271,7 +286,8 @@ class AuditingServiceSpec
             messageId,
             eoriNumber,
             movementType,
-            messageType
+            messageType,
+            version
           )
         ) {
           _ =>
@@ -282,13 +298,11 @@ class AuditingServiceSpec
               eqTo(messageId),
               eqTo(eoriNumber),
               eqTo(movementType),
-              eqTo(messageType)
+              eqTo(messageType),
+              eqTo(version)
             )(any(), any())
             verify(Harness.logger0, times(1)).warn(eqTo("Unable to audit payload due to an exception"), eqTo(exception))
         }
-
     }
-
   }
-
 }

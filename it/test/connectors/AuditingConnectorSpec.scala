@@ -38,6 +38,10 @@ import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
+import models.Version
+import models.Version.V2_1
+import models.Version.V3_0
+import org.scalatest.OptionValues
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.exceptions.TestFailedException
@@ -66,13 +70,15 @@ class AuditingConnectorSpec
     with Matchers
     with MockitoSugar
     with ScalaFutures
+    with OptionValues
     with WiremockSuite
     with IntegrationPatience
     with HttpClientV2Support
     with ScalaCheckDrivenPropertyChecks
     with CommonGenerators {
 
-  val token                             = Gen.alphaNumStr.sample.get
+  val token: String                     = Gen.alphaNumStr.sample.get
+  lazy val version: Version             = Gen.oneOf(V2_1, V3_0).sample.value
   implicit val mockAppConfig: AppConfig = mock[AppConfig]
   when(mockAppConfig.internalAuthToken).thenReturn(token)
   when(mockAppConfig.auditingUrl).thenAnswer(
@@ -126,7 +132,8 @@ class AuditingConnectorSpec
                 Some(messageId),
                 Some(eori),
                 Some(movementType),
-                Some(messageType)
+                Some(messageType),
+                version
               )
 
               // then the future should be ready
@@ -167,7 +174,8 @@ class AuditingConnectorSpec
                 Some(messageId),
                 Some(eori),
                 None,
-                None
+                None,
+                version
               )
 
               // then the future should be ready
@@ -206,7 +214,8 @@ class AuditingConnectorSpec
                 None,
                 None,
                 Some(movementType),
-                Some(messageType)
+                Some(messageType),
+                version
               )
 
               // then the future should be ready
@@ -239,7 +248,8 @@ class AuditingConnectorSpec
               None,
               None,
               None,
-              None
+              None,
+              version
             )
 
             // then the future should be ready
@@ -286,7 +296,8 @@ class AuditingConnectorSpec
                     Some(messageId),
                     Some(eori),
                     Some(movementType),
-                    Some(messageType)
+                    Some(messageType),
+                    version
                   )
 
                   val result = future
@@ -352,7 +363,8 @@ class AuditingConnectorSpec
           messageId,
           eori,
           movementType,
-          messageType
+          messageType,
+          version
         )
 
         // then the future should be ready
@@ -400,7 +412,8 @@ class AuditingConnectorSpec
               messageId,
               eori,
               movementType,
-              messageType
+              messageType,
+              version
             )
 
             val result = future

@@ -24,6 +24,9 @@ import models.common.errors.JsonValidationError
 import models.common.errors.XmlValidationError
 import models.request.MessageType
 import models.responses.*
+import models.Version
+import models.Version.V2_1
+import models.Version.V3_0
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
@@ -40,6 +43,7 @@ import play.api.http.Status.NOT_FOUND
 import play.api.libs.json.JsError
 import play.api.libs.json.JsResult
 import play.api.libs.json.Json
+import org.scalacheck.Gen
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
@@ -50,12 +54,14 @@ import scala.concurrent.Future
 
 class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar {
 
+  val version: Version = Gen.oneOf(V2_1, V3_0).sample.value
+
   "validating XML" - {
 
     "should return a right with no validation errors" in new Setup {
-      when(mockValidationConnector.postXml(any, any)(any, any)).thenReturn(Future.successful(None))
+      when(mockValidationConnector.postXml(any, any, any)(any, any)).thenReturn(Future.successful(None))
       val sut: ValidationService                               = new ValidationService(mockValidationConnector)
-      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateXml(MessageType.DeclarationData, SchemaValidXml)
+      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateXml(MessageType.DeclarationData, SchemaValidXml, version)
 
       whenReady(result.value) {
         result => result mustBe Right(())
@@ -63,10 +69,10 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
     }
 
     "non-conforming XML should return a left with a SchemaFailedToValidateError" in new Setup {
-      when(mockValidationConnector.postXml(any, any)(any, any))
+      when(mockValidationConnector.postXml(any, any, any)(any, any))
         .thenReturn(Future.successful(Some(XmlSchemaValidationResponse(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)))))
       val sut: ValidationService                               = new ValidationService(mockValidationConnector)
-      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateXml(MessageType.DeclarationData, SchemaInvalidXml)
+      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateXml(MessageType.DeclarationData, SchemaInvalidXml, version)
 
       whenReady(result.value) {
         result => result mustBe Left(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList(XmlValidationError(1, 1, "nope"), Nil)))
@@ -74,9 +80,9 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
     }
 
     "business invalid XML should return a left with a SchemaFailedToValidateError" in new Setup {
-      when(mockValidationConnector.postXml(any, any)(any, any)).thenReturn(Future.successful(Some(BusinessValidationResponse("business error"))))
+      when(mockValidationConnector.postXml(any, any, any)(any, any)).thenReturn(Future.successful(Some(BusinessValidationResponse("business error"))))
       val sut: ValidationService                               = new ValidationService(mockValidationConnector)
-      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateXml(MessageType.DeclarationData, BusinessError)
+      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateXml(MessageType.DeclarationData, BusinessError, version)
 
       whenReady(result.value) {
         result =>
@@ -87,9 +93,9 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
     }
 
     "a bad message type should return a left with a InvalidMessageTypeError" in new Setup {
-      when(mockValidationConnector.postXml(any, any)(any, any)).thenReturn(Future.failed(badMessageType(MessageType.DeclarationData)))
+      when(mockValidationConnector.postXml(any, any, any)(any, any)).thenReturn(Future.failed(badMessageType(MessageType.DeclarationData)))
       val sut: ValidationService                               = new ValidationService(mockValidationConnector)
-      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateXml(MessageType.DeclarationData, BadMessageType)
+      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateXml(MessageType.DeclarationData, BadMessageType, version)
 
       whenReady(result.value) {
         result => result mustBe Left(FailedToValidateError.InvalidMessageTypeError(MessageType.DeclarationData.toString))
@@ -97,9 +103,9 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
     }
 
     "an upstream error should return a left with an UnexpectedError" in new Setup {
-      when(mockValidationConnector.postXml(any, any)(any, any)).thenReturn(Future.failed(upstreamErrorResponse))
+      when(mockValidationConnector.postXml(any, any, any)(any, any)).thenReturn(Future.failed(upstreamErrorResponse))
       val sut: ValidationService                               = new ValidationService(mockValidationConnector)
-      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateXml(MessageType.DeclarationData, UpstreamError)
+      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateXml(MessageType.DeclarationData, UpstreamError, version)
 
       whenReady(result.value) {
         result => result mustBe Left(FailedToValidateError.UnexpectedError(Some(upstreamErrorResponse)))
@@ -107,9 +113,9 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
     }
 
     "an internal exception should return a left with an UnexpectedError" in new Setup {
-      when(mockValidationConnector.postXml(any, any)(any, any)).thenReturn(Future.failed(internalException))
+      when(mockValidationConnector.postXml(any, any, any)(any, any)).thenReturn(Future.failed(internalException))
       val sut: ValidationService                               = new ValidationService(mockValidationConnector)
-      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateXml(MessageType.DeclarationData, InternalServiceError)
+      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateXml(MessageType.DeclarationData, InternalServiceError, version)
 
       whenReady(result.value) {
         result => result mustBe Left(FailedToValidateError.UnexpectedError(Some(internalException)))
@@ -121,9 +127,9 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
   "validating JSON" - {
 
     "should return a right with no validation errors" in new Setup {
-      when(mockValidationConnector.postJson(any, any)(any, any)).thenReturn(Future.successful(None))
+      when(mockValidationConnector.postJson(any, any, any)(any, any)).thenReturn(Future.successful(None))
       val sut: ValidationService                               = new ValidationService(mockValidationConnector)
-      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateJson(MessageType.DeclarationData, SchemaValidJson)
+      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateJson(MessageType.DeclarationData, SchemaValidJson, version)
 
       whenReady(result.value) {
         result => result mustBe Right(())
@@ -131,11 +137,11 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
     }
 
     "non-conforming JSON should return a left with a SchemaFailedToValidateError" in new Setup {
-      when(mockValidationConnector.postJson(any, any)(any, any)).thenReturn(
+      when(mockValidationConnector.postJson(any, any, any)(any, any)).thenReturn(
         Future.successful(Some(JsonSchemaValidationResponse(NonEmptyList(JsonValidationError("IEO15C:messageSender", "MessageSender not expected"), Nil))))
       )
       val sut: ValidationService                               = new ValidationService(mockValidationConnector)
-      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateJson(MessageType.DeclarationData, SchemaInvalidJson)
+      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateJson(MessageType.DeclarationData, SchemaInvalidJson, version)
 
       whenReady(result.value) {
         result =>
@@ -146,9 +152,9 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
     }
 
     "business invalid JSON should return a left with a SchemaFailedToValidateError" in new Setup {
-      when(mockValidationConnector.postJson(any, any)(any, any)).thenReturn(Future.successful(Some(BusinessValidationResponse("business error"))))
+      when(mockValidationConnector.postJson(any, any, any)(any, any)).thenReturn(Future.successful(Some(BusinessValidationResponse("business error"))))
       val sut: ValidationService                               = new ValidationService(mockValidationConnector)
-      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateJson(MessageType.DeclarationData, BusinessError)
+      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateJson(MessageType.DeclarationData, BusinessError, version)
 
       whenReady(result.value) {
         result =>
@@ -159,9 +165,9 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
     }
 
     "invalid JSON should return a left with a ParsingError" in new Setup {
-      when(mockValidationConnector.postJson(any, any)(any, any)).thenReturn(Future.failed(parseError))
+      when(mockValidationConnector.postJson(any, any, any)(any, any)).thenReturn(Future.failed(parseError))
       val sut: ValidationService                               = new ValidationService(mockValidationConnector)
-      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateJson(MessageType.DeclarationData, Invalid)
+      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateJson(MessageType.DeclarationData, Invalid, version)
 
       whenReady(result.value) {
         result => result mustBe Left(FailedToValidateError.ParsingError("parse error"))
@@ -169,9 +175,9 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
     }
 
     "a bad message type should return a left with a InvalidMessageTypeError" in new Setup {
-      when(mockValidationConnector.postJson(any, any)(any, any)).thenReturn(Future.failed(badMessageType(MessageType.DeclarationData)))
+      when(mockValidationConnector.postJson(any, any, any)(any, any)).thenReturn(Future.failed(badMessageType(MessageType.DeclarationData)))
       val sut: ValidationService                               = new ValidationService(mockValidationConnector)
-      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateJson(MessageType.DeclarationData, BadMessageType)
+      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateJson(MessageType.DeclarationData, BadMessageType, version)
 
       whenReady(result.value) {
         result => result mustBe Left(FailedToValidateError.InvalidMessageTypeError(MessageType.DeclarationData.toString))
@@ -179,9 +185,9 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
     }
 
     "an upstream error should return a left with an UnexpectedError" in new Setup {
-      when(mockValidationConnector.postJson(any, any)(any, any)).thenReturn(Future.failed(upstreamErrorResponse))
+      when(mockValidationConnector.postJson(any, any, any)(any, any)).thenReturn(Future.failed(upstreamErrorResponse))
       val sut: ValidationService                               = new ValidationService(mockValidationConnector)
-      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateJson(MessageType.DeclarationData, UpstreamError)
+      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateJson(MessageType.DeclarationData, UpstreamError, version)
 
       whenReady(result.value) {
         result =>
@@ -190,9 +196,9 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
     }
 
     "an internal exception should return a left with an UnexpectedError" in new Setup {
-      when(mockValidationConnector.postJson(any, any)(any, any)).thenReturn(Future.failed(internalException))
+      when(mockValidationConnector.postJson(any, any, any)(any, any)).thenReturn(Future.failed(internalException))
       val sut: ValidationService                               = new ValidationService(mockValidationConnector)
-      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateJson(MessageType.DeclarationData, InternalServiceError)
+      val result: EitherT[Future, FailedToValidateError, Unit] = sut.validateJson(MessageType.DeclarationData, InternalServiceError, version)
 
       whenReady(result.value) {
         result =>
@@ -214,16 +220,16 @@ class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues 
 
     implicit val hc: HeaderCarrier = HeaderCarrier()
 
-    val parseError =
+    val parseError: UpstreamErrorResponse =
       UpstreamErrorResponse(Json.obj("code" -> "BAD_REQUEST", "message" -> "parse error").toString, BAD_REQUEST)
 
-    def badMessageType(messageType: MessageType) =
+    def badMessageType(messageType: MessageType): UpstreamErrorResponse =
       UpstreamErrorResponse(Json.obj("code" -> "NOT_FOUND", "message" -> messageType.toString).toString, NOT_FOUND)
 
-    val upstreamErrorResponse =
+    val upstreamErrorResponse: UpstreamErrorResponse =
       UpstreamErrorResponse(Json.obj("code" -> "INTERNAL_SERVER_ERROR", "message" -> "Internal Server Error").toString, INTERNAL_SERVER_ERROR)
 
-    val internalException = JsResult.Exception(JsError("arbitrary failure"))
+    val internalException: JsResult.Exception = JsResult.Exception(JsError("arbitrary failure"))
 
     val mockValidationConnector: ValidationConnector = mock[ValidationConnector]
   }

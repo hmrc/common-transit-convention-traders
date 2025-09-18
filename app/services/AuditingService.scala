@@ -21,6 +21,7 @@ import org.apache.pekko.util.ByteString
 import com.google.inject.Inject
 import connectors.AuditingConnector
 import models.AuditType
+import models.Version
 import models.common.EORINumber
 import models.common.MessageId
 import models.common.MovementId
@@ -45,15 +46,18 @@ class AuditingService @Inject() (auditingConnector: AuditingConnector) extends L
     messageId: Option[MessageId],
     enrolmentEORI: Option[EORINumber],
     movementType: Option[MovementType],
-    messageType: Option[MessageType]
+    messageType: Option[MessageType],
+    version: Version
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit] =
-    auditingConnector.postMessageType(auditType, contentType, contentLength, payload, movementId, messageId, enrolmentEORI, movementType, messageType).recover {
-      case NonFatal(e) =>
-        logger.warn("Unable to audit payload due to an exception", e)
-    }
+    auditingConnector
+      .postMessageType(auditType, contentType, contentLength, payload, movementId, messageId, enrolmentEORI, movementType, messageType, version)
+      .recover {
+        case NonFatal(e) =>
+          logger.warn("Unable to audit payload due to an exception", e)
+      }
 
   def auditStatusEvent(
     auditType: AuditType,
@@ -62,12 +66,13 @@ class AuditingService @Inject() (auditingConnector: AuditingConnector) extends L
     messageId: Option[MessageId],
     enrolmentEORI: Option[EORINumber],
     movementType: Option[MovementType],
-    messageType: Option[MessageType]
+    messageType: Option[MessageType],
+    version: Version
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit] =
-    auditingConnector.postStatus(auditType, payload, movementId, messageId, enrolmentEORI, movementType, messageType).recover {
+    auditingConnector.postStatus(auditType, payload, movementId, messageId, enrolmentEORI, movementType, messageType, version).recover {
       case NonFatal(e) =>
         logger.warn("Unable to audit payload due to an exception", e)
 

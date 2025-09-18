@@ -21,6 +21,7 @@ import models.common.errors.PresentationError
 
 enum Version(val value: String) {
   case V2_1 extends Version("2.1")
+  case V3_0 extends Version("3.0")
 }
 
 object Version {

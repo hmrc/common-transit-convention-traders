@@ -34,6 +34,8 @@ import org.mockito.Mockito.reset
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
+import models.Version.V2_1
+import models.Version.V3_0
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -68,6 +70,7 @@ class PersistenceServiceSpec
 
   val mockConnector: PersistenceConnector = mock[PersistenceConnector]
   val sut                                 = new PersistenceService(mockConnector)
+  val version: Version                    = Gen.oneOf(V2_1, V3_0).sample.value
 
   override def beforeEach(): Unit =
     reset(mockConnector)
@@ -80,9 +83,9 @@ class PersistenceServiceSpec
     val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
 
     "on a successful submission, should return a Right" in {
-      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(validRequest)))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(validRequest)), eqTo(version))(any[HeaderCarrier], any[ExecutionContext]))
         .thenReturn(Future.successful(MovementResponse(MovementId("ABC"), MessageId("123"))))
-      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, Some(validRequest))
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, Some(validRequest), version)
       val expected: Either[PersistenceError, MovementResponse] = Right(MovementResponse(MovementId("ABC"), MessageId("123")))
       whenReady(result.value) {
         _ mustBe expected
@@ -90,9 +93,9 @@ class PersistenceServiceSpec
     }
 
     "on a failed submission, should return a Left with an UnexpectedError" in {
-      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(invalidRequest)))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(invalidRequest)), eqTo(version))(any[HeaderCarrier], any[ExecutionContext]))
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, Some(invalidRequest))
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, Some(invalidRequest), version)
       val expected: Either[PersistenceError, MovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected
@@ -106,9 +109,9 @@ class PersistenceServiceSpec
 
     "on a successful submission, should return a Right" in {
       implicit val hc: HeaderCarrier = HeaderCarrier()
-      when(mockConnector.postMovement(EORINumber(any[String]), any(), any())(eqTo(hc), any[ExecutionContext]))
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), any(), any())(eqTo(hc), any[ExecutionContext]))
         .thenReturn(Future.successful(MovementResponse(MovementId("ABC"), MessageId("1234567890abcdsd"))))
-      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, None)
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, None, version)
       val expected: Either[PersistenceError, MovementResponse] = Right(MovementResponse(MovementId("ABC"), MessageId("1234567890abcdsd")))
       whenReady(result.value) {
         _ mustBe expected
@@ -117,9 +120,9 @@ class PersistenceServiceSpec
 
     "on a failed submission, should return a Left with an UnexpectedError" in {
       implicit val hc: HeaderCarrier = HeaderCarrier()
-      when(mockConnector.postMovement(EORINumber(any[String]), any(), any())(eqTo(hc), any[ExecutionContext]))
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), any(), any())(eqTo(hc), any[ExecutionContext]))
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, None)
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Departure, None, version)
       val expected: Either[PersistenceError, MovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected
@@ -137,7 +140,7 @@ class PersistenceServiceSpec
       summaries =>
         val expected = PaginationMessageSummary(TotalCount(summaries.length.toLong), summaries)
         when(
-          mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(2))), ItemCount(eqTo(30L)), any())(
+          mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(2))), ItemCount(eqTo(30L)), any(), any())(
             any(),
             any()
           )
@@ -151,7 +154,8 @@ class PersistenceServiceSpec
           dateTime.sample.get,
           Some(PageNumber(2)),
           ItemCount(30),
-          dateTime.sample.get
+          dateTime.sample.get,
+          version
         )
         whenReady(result.value) {
           _ mustBe Right(expected)
@@ -161,7 +165,7 @@ class PersistenceServiceSpec
     "when a given movement is not found, and the page is 1, should return a MovementNotFound" in {
 
       when(
-        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(1))), ItemCount(eqTo(35L)), any())(
+        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(1))), ItemCount(eqTo(35L)), any(), any())(
           any(),
           any()
         )
@@ -175,7 +179,8 @@ class PersistenceServiceSpec
         dateTime.sample.get,
         Some(PageNumber(1)),
         ItemCount(35),
-        dateTime.sample.get
+        dateTime.sample.get,
+        version
       )
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.MovementNotFound(MovementId("1234567890abcdef"), MovementType.Departure))
@@ -185,7 +190,7 @@ class PersistenceServiceSpec
     "when a given movement is not found, and the page is greater than 1, should return a MovementNotFound" in {
 
       when(
-        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(9))), ItemCount(eqTo(35L)), any())(
+        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(9))), ItemCount(eqTo(35L)), any(), any())(
           any(),
           any()
         )
@@ -199,7 +204,8 @@ class PersistenceServiceSpec
         dateTime.sample.get,
         Some(PageNumber(9)),
         ItemCount(35),
-        dateTime.sample.get
+        dateTime.sample.get,
+        version
       )
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.MovementNotFound(MovementId("1234567890abcdef"), MovementType.Departure))
@@ -211,7 +217,7 @@ class PersistenceServiceSpec
       val expected = PaginationMessageSummary(TotalCount(0), Seq.empty[MessageSummary])
 
       when(
-        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(2))), ItemCount(eqTo(35L)), any())(
+        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(2))), ItemCount(eqTo(35L)), any(), any())(
           any(),
           any()
         )
@@ -225,7 +231,8 @@ class PersistenceServiceSpec
         dateTime.sample.get,
         Some(PageNumber(2)),
         ItemCount(35),
-        dateTime.sample.get
+        dateTime.sample.get,
+        version
       )
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.PageNotFound)
@@ -235,7 +242,7 @@ class PersistenceServiceSpec
     "on a failed submission, should return a Left with an UnexpectedError" in {
       val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
       when(
-        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(4))), ItemCount(eqTo(40L)), any())(
+        mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(Some(PageNumber(4))), ItemCount(eqTo(40L)), any(), any())(
           any(),
           any()
         )
@@ -249,7 +256,8 @@ class PersistenceServiceSpec
         dateTime.sample.get,
         Some(PageNumber(4)),
         ItemCount(40),
-        dateTime.sample.get
+        dateTime.sample.get,
+        version
       )
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
@@ -272,20 +280,20 @@ class PersistenceServiceSpec
         None
       )
 
-      when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()))(any(), any()))
+      when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()), any())(any(), any()))
         .thenReturn(Future.successful(successResponse))
 
-      val result = sut.getMessage(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"), MessageId("1234567890abcdef"))
+      val result = sut.getMessage(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"), MessageId("1234567890abcdef"), version)
       whenReady(result.value) {
         _ mustBe Right(successResponse)
       }
     }
 
     "when a message is not found, should return a Left with an MessageNotFound" in {
-      when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()))(any(), any()))
+      when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()), any())(any(), any()))
         .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-      val result = sut.getMessage(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"), MessageId("1234567890abcdef"))
+      val result = sut.getMessage(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"), MessageId("1234567890abcdef"), version)
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.MessageNotFound(MovementId("1234567890abcdef"), MessageId("1234567890abcdef")))
       }
@@ -293,10 +301,10 @@ class PersistenceServiceSpec
 
     "on a failed submission, should return a Left with an UnexpectedError" in {
       val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
-      when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()))(any(), any()))
+      when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()), any())(any(), any()))
         .thenReturn(Future.failed(error))
 
-      val result = sut.getMessage(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"), MessageId("1234567890abcdef"))
+      val result = sut.getMessage(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"), MessageId("1234567890abcdef"), version)
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
       }
@@ -319,20 +327,20 @@ class PersistenceServiceSpec
         updated = now
       )
 
-      when(mockConnector.getMovement(EORINumber(any()), any(), MovementId(any()))(any(), any()))
+      when(mockConnector.getMovement(EORINumber(any()), any(), MovementId(any()), any())(any(), any()))
         .thenReturn(Future.successful(successResponse))
 
-      val result = sut.getMovement(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"))
+      val result = sut.getMovement(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"), version)
       whenReady(result.value) {
         _ mustBe Right(successResponse)
       }
     }
 
     "when a departure is not found, should return DepartureNotFound" in {
-      when(mockConnector.getMovement(EORINumber(any()), any(), MovementId(any()))(any(), any()))
+      when(mockConnector.getMovement(EORINumber(any()), any(), MovementId(any()), any())(any(), any()))
         .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-      val result = sut.getMovement(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"))
+      val result = sut.getMovement(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"), version)
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.MovementNotFound(MovementId("1234567890abcdef"), MovementType.Departure))
       }
@@ -340,10 +348,10 @@ class PersistenceServiceSpec
 
     "on any other error, should return an UnexpectedError" in {
       val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
-      when(mockConnector.getMovement(EORINumber(any()), any(), MovementId(any()))(any(), any()))
+      when(mockConnector.getMovement(EORINumber(any()), any(), MovementId(any()), any())(any(), any()))
         .thenReturn(Future.failed(error))
 
-      val result = sut.getMovement(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"))
+      val result = sut.getMovement(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"), version)
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
       }
@@ -360,13 +368,13 @@ class PersistenceServiceSpec
 
     "on a successful submission, should return a Right" in {
       when(
-        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(validRequest))(
+        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(validRequest), eqTo(version))(
           any[HeaderCarrier],
           any[ExecutionContext]
         )
       )
         .thenReturn(Future.successful(UpdateMovementResponse(MessageId("123"))))
-      val result = sut.addMessage(MovementId("abc"), MovementType.Departure, Some(MessageType.DeclarationInvalidationRequest), validRequest)
+      val result = sut.addMessage(MovementId("abc"), MovementType.Departure, Some(MessageType.DeclarationInvalidationRequest), validRequest, version)
       val expected: Either[PersistenceError, UpdateMovementResponse] = Right(UpdateMovementResponse(MessageId("123")))
       whenReady(result.value) {
         _ mustBe expected
@@ -375,13 +383,14 @@ class PersistenceServiceSpec
 
     "on a departure is not found, should return DepartureNotFound" in {
       when(
-        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(validRequest))(
+        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(validRequest), eqTo(version))(
           any[HeaderCarrier],
           any[ExecutionContext]
         )
       ).thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-      val result = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Departure, Some(MessageType.DeclarationInvalidationRequest), validRequest)
+      val result =
+        sut.addMessage(MovementId("1234567890abcdef"), MovementType.Departure, Some(MessageType.DeclarationInvalidationRequest), validRequest, version)
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.MovementNotFound(MovementId("1234567890abcdef"), MovementType.Departure))
       }
@@ -389,13 +398,13 @@ class PersistenceServiceSpec
 
     "on a failed submission, should return a Left with an UnexpectedError" in {
       when(
-        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(invalidRequest))(
+        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(invalidRequest), eqTo(version))(
           any[HeaderCarrier],
           any[ExecutionContext]
         )
       )
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result = sut.addMessage(MovementId("abc"), MovementType.Departure, Some(MessageType.DeclarationInvalidationRequest), invalidRequest)
+      val result = sut.addMessage(MovementId("abc"), MovementType.Departure, Some(MessageType.DeclarationInvalidationRequest), invalidRequest, version)
       val expected: Either[PersistenceError, UpdateMovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected
@@ -430,7 +439,8 @@ class PersistenceServiceSpec
             pageNumber,
             count,
             updatedSinceMaybe,
-            lrn
+            lrn,
+            version
           )
         )
           .thenReturn(Future.successful(expected))
@@ -445,7 +455,8 @@ class PersistenceServiceSpec
             pageNumber,
             count,
             updatedSinceMaybe,
-            lrn
+            lrn,
+            version
           )
         whenReady(result.value) {
           _ mustBe Right(expected)
@@ -478,7 +489,8 @@ class PersistenceServiceSpec
             pageNumber,
             count,
             receivedUntil,
-            lrn
+            lrn,
+            version
           )
         )
           .thenReturn(Future.successful(expected))
@@ -493,7 +505,8 @@ class PersistenceServiceSpec
             pageNumber,
             count,
             receivedUntil,
-            lrn
+            lrn,
+            version
           )
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.PageNotFound)
@@ -523,7 +536,8 @@ class PersistenceServiceSpec
           pageNumber,
           itemCount,
           receivedUntil,
-          lrn
+          lrn,
+          version
         )
       )
         .thenReturn(Future.successful(expected))
@@ -538,7 +552,8 @@ class PersistenceServiceSpec
           pageNumber,
           itemCount,
           receivedUntil,
-          lrn
+          lrn,
+          version
         )
       whenReady(result.value) {
         _ mustBe Right(expected)
@@ -568,7 +583,8 @@ class PersistenceServiceSpec
           pageNumber,
           itemCount,
           receivedUntil,
-          lrn
+          lrn,
+          version
         )
       )
         .thenReturn(Future.successful(expected))
@@ -583,7 +599,8 @@ class PersistenceServiceSpec
           pageNumber,
           itemCount,
           receivedUntil,
-          lrn
+          lrn,
+          version
         )
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.PageNotFound)
@@ -614,7 +631,8 @@ class PersistenceServiceSpec
             pageNumber,
             itemCount,
             receivedUntil,
-            lrn
+            lrn,
+            version
           )
         )
           .thenReturn(Future.failed(error))
@@ -629,7 +647,8 @@ class PersistenceServiceSpec
             pageNumber,
             itemCount,
             receivedUntil,
-            lrn
+            lrn,
+            version
           )
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
@@ -645,9 +664,9 @@ class PersistenceServiceSpec
     val upstreamErrorResponse: Throwable = UpstreamErrorResponse("Internal service error", INTERNAL_SERVER_ERROR)
 
     "on a successful creation, should return a Right" in {
-      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(validRequest)))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(validRequest)), any())(any[HeaderCarrier], any[ExecutionContext]))
         .thenReturn(Future.successful(MovementResponse(MovementId("ABC"), MessageId("123"))))
-      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Arrival, Some(validRequest))
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Arrival, Some(validRequest), version)
       val expected: Either[PersistenceError, MovementResponse] = Right(MovementResponse(MovementId("ABC"), MessageId("123")))
       whenReady(result.value) {
         _ mustBe expected
@@ -655,9 +674,9 @@ class PersistenceServiceSpec
     }
 
     "on a failed creation, should return a Left with an UnexpectedError" in {
-      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(invalidRequest)))(any[HeaderCarrier], any[ExecutionContext]))
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), eqTo(Some(invalidRequest)), any())(any[HeaderCarrier], any[ExecutionContext]))
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Arrival, Some(invalidRequest))
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Arrival, Some(invalidRequest), version)
       val expected: Either[PersistenceError, MovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected
@@ -671,9 +690,9 @@ class PersistenceServiceSpec
 
     "on a successful creation, should return a Right" in {
       implicit val hc: HeaderCarrier = HeaderCarrier()
-      when(mockConnector.postMovement(EORINumber(any[String]), any(), any())(eqTo(hc), any[ExecutionContext]))
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), any(), any())(eqTo(hc), any[ExecutionContext]))
         .thenReturn(Future.successful(MovementResponse(MovementId("ABC"), MessageId("1234567890abcdsd"))))
-      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Arrival, None)
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Arrival, None, version)
       val expected: Either[PersistenceError, MovementResponse] = Right(MovementResponse(MovementId("ABC"), MessageId("1234567890abcdsd")))
       whenReady(result.value) {
         _ mustBe expected
@@ -682,9 +701,9 @@ class PersistenceServiceSpec
 
     "on a failed creation, should return a Left with an UnexpectedError" in {
       implicit val hc: HeaderCarrier = HeaderCarrier()
-      when(mockConnector.postMovement(EORINumber(any[String]), any(), any())(eqTo(hc), any[ExecutionContext]))
+      when(mockConnector.postMovement(EORINumber(any[String]), any(), any(), any())(eqTo(hc), any[ExecutionContext]))
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Arrival, None)
+      val result                                               = sut.createMovement(EORINumber("1"), MovementType.Arrival, None, version)
       val expected: Either[PersistenceError, MovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected
@@ -708,14 +727,23 @@ class PersistenceServiceSpec
         val page = Some(pageNumber.getOrElse(PageNumber(1)))
 
         when(
-          mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(page), ItemCount(eqTo(itemCount.value)), eqTo(receivedSince))(
+          mockConnector.getMessages(
+            EORINumber(any()),
+            any(),
+            MovementId(any()),
+            any(),
+            eqTo(page),
+            ItemCount(eqTo(itemCount.value)),
+            eqTo(receivedSince),
+            any()
+          )(
             any(),
             any()
           )
         )
           .thenReturn(Future.successful(expected))
 
-        val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, page, itemCount, receivedSince)
+        val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, page, itemCount, receivedSince, version)
         whenReady(result.value) {
           _ mustBe Right(expected)
         }
@@ -731,11 +759,14 @@ class PersistenceServiceSpec
         val pageNumber = Some(PageNumber(1))
 
         when(
-          mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(pageNumber), ItemCount(eqTo(itemCount.value)), any())(any(), any())
+          mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(pageNumber), ItemCount(eqTo(itemCount.value)), any(), any())(
+            any(),
+            any()
+          )
         )
           .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-        val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, pageNumber, itemCount, receivedSince)
+        val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, pageNumber, itemCount, receivedSince, version)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.MovementNotFound(arrivalId, MovementType.Arrival))
         }
@@ -751,11 +782,14 @@ class PersistenceServiceSpec
         val pageNumber = Some(PageNumber(12))
 
         when(
-          mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(pageNumber), ItemCount(eqTo(itemCount.value)), any())(any(), any())
+          mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(pageNumber), ItemCount(eqTo(itemCount.value)), any(), any())(
+            any(),
+            any()
+          )
         )
           .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-        val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, pageNumber, itemCount, receivedSince)
+        val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, pageNumber, itemCount, receivedSince, version)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.MovementNotFound(arrivalId, MovementType.Arrival))
         }
@@ -772,11 +806,14 @@ class PersistenceServiceSpec
         val summary    = PaginationMessageSummary(TotalCount(0), List.empty[MessageSummary])
 
         when(
-          mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(pageNumber), ItemCount(eqTo(itemCount.value)), any())(any(), any())
+          mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(pageNumber), ItemCount(eqTo(itemCount.value)), any(), any())(
+            any(),
+            any()
+          )
         )
           .thenReturn(Future.successful(summary))
 
-        val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, pageNumber, itemCount, receivedSince)
+        val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, pageNumber, itemCount, receivedSince, version)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.PageNotFound)
         }
@@ -792,11 +829,14 @@ class PersistenceServiceSpec
       (eori, arrivalId, receivedSince, pageNumber, itemCount) =>
         val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
         when(
-          mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(pageNumber), ItemCount(eqTo(itemCount.value)), any())(any(), any())
+          mockConnector.getMessages(EORINumber(any()), any(), MovementId(any()), any(), eqTo(pageNumber), ItemCount(eqTo(itemCount.value)), any(), any())(
+            any(),
+            any()
+          )
         )
           .thenReturn(Future.failed(error))
 
-        val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, pageNumber, itemCount, receivedSince)
+        val result = sut.getMessages(eori, MovementType.Arrival, arrivalId, receivedSince, pageNumber, itemCount, receivedSince, version)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
         }
@@ -833,7 +873,8 @@ class PersistenceServiceSpec
             pageNumber,
             itemCount,
             updatedSinceMaybe,
-            localReferenceNumber
+            localReferenceNumber,
+            version
           )
         )
           .thenReturn(Future.successful(expected))
@@ -848,7 +889,8 @@ class PersistenceServiceSpec
             pageNumber,
             itemCount,
             updatedSinceMaybe,
-            localReferenceNumber
+            localReferenceNumber,
+            version
           )
         whenReady(result.value) {
           _ mustBe Right(expected)
@@ -879,7 +921,8 @@ class PersistenceServiceSpec
             pageNumber,
             itemCount,
             receivedUntil,
-            localReferenceNumber
+            localReferenceNumber,
+            version
           )
         )
           .thenReturn(Future.successful(expected))
@@ -894,7 +937,8 @@ class PersistenceServiceSpec
             pageNumber,
             itemCount,
             receivedUntil,
-            localReferenceNumber
+            localReferenceNumber,
+            version
           )
         whenReady(result.value) {
           _ mustBe Right(expected)
@@ -925,7 +969,8 @@ class PersistenceServiceSpec
             pageNumber,
             itemCount,
             receivedUntil,
-            localReferenceNumber
+            localReferenceNumber,
+            version
           )
         )
           .thenReturn(Future.successful(expected))
@@ -940,7 +985,8 @@ class PersistenceServiceSpec
             pageNumber,
             itemCount,
             receivedUntil,
-            localReferenceNumber
+            localReferenceNumber,
+            version
           )
         whenReady(result.value) {
           _ mustBe Right(expected)
@@ -972,7 +1018,8 @@ class PersistenceServiceSpec
             pageNumber,
             itemCount,
             receivedUntil,
-            localReferenceNumber
+            localReferenceNumber,
+            version
           )
         )
           .thenReturn(Future.failed(error))
@@ -987,7 +1034,8 @@ class PersistenceServiceSpec
             pageNumber,
             itemCount,
             receivedUntil,
-            localReferenceNumber
+            localReferenceNumber,
+            version
           )
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
@@ -1010,20 +1058,20 @@ class PersistenceServiceSpec
         None
       )
 
-      when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()))(any(), any()))
+      when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()), any())(any(), any()))
         .thenReturn(Future.successful(successResponse))
 
-      val result = sut.getMessage(EORINumber("1"), MovementType.Arrival, MovementId("1234567890abcdef"), MessageId("1234567890abcdef"))
+      val result = sut.getMessage(EORINumber("1"), MovementType.Arrival, MovementId("1234567890abcdef"), MessageId("1234567890abcdef"), version)
       whenReady(result.value) {
         _ mustBe Right(successResponse)
       }
     }
 
     "when a message is not found, should return a Left with an MessageNotFound" in {
-      when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()))(any(), any()))
+      when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()), any())(any(), any()))
         .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-      val result = sut.getMessage(EORINumber("1"), MovementType.Arrival, MovementId("1234567890abcdef"), MessageId("1234567890abcdef"))
+      val result = sut.getMessage(EORINumber("1"), MovementType.Arrival, MovementId("1234567890abcdef"), MessageId("1234567890abcdef"), version)
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.MessageNotFound(MovementId("1234567890abcdef"), MessageId("1234567890abcdef")))
       }
@@ -1031,10 +1079,10 @@ class PersistenceServiceSpec
 
     "on a failed submission, should return a Left with an UnexpectedError" in {
       val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
-      when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()))(any(), any()))
+      when(mockConnector.getMessage(EORINumber(any()), any(), MovementId(any()), MessageId(any()), any())(any(), any()))
         .thenReturn(Future.failed(error))
 
-      val result = sut.getMessage(EORINumber("1"), MovementType.Arrival, MovementId("1234567890abcdef"), MessageId("1234567890abcdef"))
+      val result = sut.getMessage(EORINumber("1"), MovementType.Arrival, MovementId("1234567890abcdef"), MessageId("1234567890abcdef"), version)
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
       }
@@ -1051,13 +1099,13 @@ class PersistenceServiceSpec
 
     "on a successful submission, should return a Right" in {
       when(
-        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(validRequest))(
+        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(validRequest), any[Version])(
           any[HeaderCarrier],
           any[ExecutionContext]
         )
       )
         .thenReturn(Future.successful(UpdateMovementResponse(MessageId("1234567890abcdsd"))))
-      val result = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Arrival, Some(MessageType.UnloadingRemarks), validRequest)
+      val result = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Arrival, Some(MessageType.UnloadingRemarks), validRequest, version)
       val expected: Either[PersistenceError, UpdateMovementResponse] = Right(UpdateMovementResponse(MessageId("1234567890abcdsd")))
       whenReady(result.value) {
         _ mustBe expected
@@ -1066,13 +1114,13 @@ class PersistenceServiceSpec
 
     "on an arrival is not found, should return ArrivalNotFound" in {
       when(
-        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(validRequest))(
+        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(validRequest), any[Version])(
           any[HeaderCarrier],
           any[ExecutionContext]
         )
       ).thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-      val result = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Arrival, Some(MessageType.UnloadingRemarks), validRequest)
+      val result = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Arrival, Some(MessageType.UnloadingRemarks), validRequest, version)
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.MovementNotFound(MovementId("1234567890abcdef"), MovementType.Arrival))
       }
@@ -1080,13 +1128,13 @@ class PersistenceServiceSpec
 
     "on a failed submission, should return a Left with an UnexpectedError" in {
       when(
-        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(invalidRequest))(
+        mockConnector.postMessage(MovementId(any[String]), any[Option[MessageType]], eqTo(invalidRequest), any[Version])(
           any[HeaderCarrier],
           any[ExecutionContext]
         )
       )
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Arrival, Some(MessageType.UnloadingRemarks), invalidRequest)
+      val result = sut.addMessage(MovementId("1234567890abcdef"), MovementType.Arrival, Some(MessageType.UnloadingRemarks), invalidRequest, version)
       val expected: Either[PersistenceError, UpdateMovementResponse] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected
@@ -1112,14 +1160,15 @@ class PersistenceServiceSpec
             any[String].asInstanceOf[MovementType],
             any[String].asInstanceOf[MovementId],
             any[String].asInstanceOf[MessageId],
-            eqTo(messageUpdate)
+            eqTo(messageUpdate),
+            eqTo(version)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
           )
         )
           .thenReturn(Future.successful(()))
-        val result = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageUpdate)
+        val result = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageUpdate, version)
 
         val expected: Either[PersistenceError, Unit] = Right(())
         whenReady(result.value) {
@@ -1141,14 +1190,15 @@ class PersistenceServiceSpec
             any[String].asInstanceOf[MovementType],
             any[String].asInstanceOf[MovementId],
             any[String].asInstanceOf[MessageId],
-            eqTo(messageUpdate)
+            eqTo(messageUpdate),
+            eqTo(version)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
           )
         ).thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-        val result = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageUpdate)
+        val result = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageUpdate, version)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.MessageNotFound(movementId, messageId))
         }
@@ -1168,14 +1218,15 @@ class PersistenceServiceSpec
             any[String].asInstanceOf[MovementType],
             any[String].asInstanceOf[MovementId],
             any[String].asInstanceOf[MessageId],
-            eqTo(messageUpdate)
+            eqTo(messageUpdate),
+            eqTo(version)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
           )
         )
           .thenReturn(Future.failed(upstreamErrorResponse))
-        val result                                   = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageUpdate)
+        val result                                   = sut.updateMessage(eoriNumber, movementType, movementId, messageId, messageUpdate, version)
         val expected: Either[PersistenceError, Unit] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
         whenReady(result.value) {
           _ mustBe expected
@@ -1203,7 +1254,8 @@ class PersistenceServiceSpec
             any[String].asInstanceOf[MovementType],
             any[String].asInstanceOf[MovementId],
             any[String].asInstanceOf[MessageId],
-            eqTo(validRequest)
+            eqTo(validRequest),
+            eqTo(version)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -1211,7 +1263,7 @@ class PersistenceServiceSpec
         )
           .thenReturn(Future.successful(()))
 
-        val result = sut.updateMessageBody(messageType, eoriNumber, movementType, movementId, messageId, validRequest)
+        val result = sut.updateMessageBody(messageType, eoriNumber, movementType, movementId, messageId, validRequest, version)
 
         val expected: Either[PersistenceError, Unit] = Right(())
         whenReady(result.value) {
@@ -1234,14 +1286,15 @@ class PersistenceServiceSpec
             any[String].asInstanceOf[MovementType],
             any[String].asInstanceOf[MovementId],
             any[String].asInstanceOf[MessageId],
-            eqTo(invalidRequest)
+            eqTo(invalidRequest),
+            eqTo(version)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
           )
         )
           .thenReturn(Future.failed(upstreamErrorResponse))
-        val result                                   = sut.updateMessageBody(messageType, eoriNumber, movementType, movementId, messageId, invalidRequest)
+        val result = sut.updateMessageBody(messageType, eoriNumber, movementType, movementId, messageId, invalidRequest, version)
         val expected: Either[PersistenceError, Unit] = Left(PersistenceError.UnexpectedError(Some(upstreamErrorResponse)))
         whenReady(result.value) {
           _ mustBe expected
@@ -1261,7 +1314,13 @@ class PersistenceServiceSpec
         val source = Source.single(ByteString("test"))
 
         when(
-          mockConnector.getMessageBody(EORINumber(eqTo(eori.value)), eqTo(movementType), MovementId(eqTo(movementId.value)), MessageId(eqTo(messageId.value)))(
+          mockConnector.getMessageBody(
+            EORINumber(eqTo(eori.value)),
+            eqTo(movementType),
+            MovementId(eqTo(movementId.value)),
+            MessageId(eqTo(messageId.value)),
+            eqTo(version)
+          )(
             any(),
             any(),
             any()
@@ -1269,7 +1328,7 @@ class PersistenceServiceSpec
         )
           .thenReturn(Future.successful(source))
 
-        val result = sut.getMessageBody(eori, movementType, movementId, messageId)
+        val result = sut.getMessageBody(eori, movementType, movementId, messageId, version)
         whenReady(result.value) {
           _ mustBe Right(source)
         }
@@ -1283,7 +1342,13 @@ class PersistenceServiceSpec
     ) {
       (eori, movementType, movementId, messageId) =>
         when(
-          mockConnector.getMessageBody(EORINumber(eqTo(eori.value)), eqTo(movementType), MovementId(eqTo(movementId.value)), MessageId(eqTo(messageId.value)))(
+          mockConnector.getMessageBody(
+            EORINumber(eqTo(eori.value)),
+            eqTo(movementType),
+            MovementId(eqTo(movementId.value)),
+            MessageId(eqTo(messageId.value)),
+            eqTo(version)
+          )(
             any(),
             any(),
             any()
@@ -1291,7 +1356,7 @@ class PersistenceServiceSpec
         )
           .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-        val result = sut.getMessageBody(eori, movementType, movementId, messageId)
+        val result = sut.getMessageBody(eori, movementType, movementId, messageId, version)
         whenReady(result.value) {
           _ mustBe Left(PersistenceError.MessageNotFound(movementId, messageId))
         }
@@ -1311,12 +1376,13 @@ class PersistenceServiceSpec
               EORINumber(eqTo(eori.value)),
               eqTo(movementType),
               MovementId(eqTo(movementId.value)),
-              MessageId(eqTo(messageId.value))
+              MessageId(eqTo(messageId.value)),
+              eqTo(version)
             )(any(), any(), any())
           )
             .thenReturn(Future.failed(error))
 
-          val result = sut.getMessageBody(eori, movementType, movementId, messageId)
+          val result = sut.getMessageBody(eori, movementType, movementId, messageId, version)
           whenReady(result.value) {
             _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
           }

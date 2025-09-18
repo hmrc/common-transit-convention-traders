@@ -23,8 +23,9 @@ import config.AppConfig
 import io.lemonlabs.uri.UrlPath
 import metrics.HasMetrics
 import metrics.MetricsKeys
-import models.HeaderType
 import models.request.MessageType
+import models.HeaderType
+import models.Version
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
@@ -51,7 +52,7 @@ class ConversionConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppC
   def conversionRoute(messageType: MessageType): UrlPath =
     UrlPath.parse(s"$conversionBaseRoute/messages/${messageType.code}")
 
-  def post(messageType: MessageType, jsonStream: Source[ByteString, ?], headerType: HeaderType)(implicit
+  def post(messageType: MessageType, jsonStream: Source[ByteString, ?], headerType: HeaderType, version: Version)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext,
     materializer: Materializer
@@ -62,7 +63,7 @@ class ConversionConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppC
 
         httpClientV2
           .post(url"$url")
-          .transform(_.addHttpHeaders(headerType.header*))
+          .transform(_.addHttpHeaders(headerType.header :+ ("APIVersion" -> s"${version.value}")*))
           .withBody(jsonStream)
           .executeAsStream
     }

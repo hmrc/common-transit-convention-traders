@@ -22,6 +22,7 @@ import config.AppConfig
 import io.lemonlabs.uri.UrlPath
 import metrics.HasMetrics
 import metrics.MetricsKeys
+import models.Version
 import models.common.MessageId
 import models.common.MovementId
 import models.request.PushNotificationsAssociation
@@ -46,7 +47,7 @@ class PushNotificationsConnector @Inject() (httpClientV2: HttpClientV2, val metr
     with JsonBodyWritables
     with HasMetrics {
 
-  def patchAssociation(movementId: MovementId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
+  def patchAssociation(movementId: MovementId, version: Version)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Unit] =
     withMetricsTimerAsync(MetricsKeys.PushNotificationsBackend.Update) {
       _ =>
         val url = appConfig.pushNotificationsUrl.withPath(pushNotificationsRoute(movementId))
@@ -54,10 +55,11 @@ class PushNotificationsConnector @Inject() (httpClientV2: HttpClientV2, val metr
         httpClientV2
           .patch(url"$url")
           .withInternalAuthToken
+          .setHeader("APIVersion" -> s"${version.value}")
           .executeAndExpect(NO_CONTENT)
     }
 
-  def postAssociation(movementId: MovementId, pushNotificationsAssociation: PushNotificationsAssociation)(implicit
+  def postAssociation(movementId: MovementId, pushNotificationsAssociation: PushNotificationsAssociation, version: Version)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[BoxResponse] =
@@ -68,12 +70,13 @@ class PushNotificationsConnector @Inject() (httpClientV2: HttpClientV2, val metr
         httpClientV2
           .post(url"$url")
           .withInternalAuthToken
+          .setHeader("APIVersion" -> s"${version.value}")
           .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
           .withBody(Json.toJson(pushNotificationsAssociation))
           .execute[BoxResponse]
     }
 
-  def postPpnsSubmissionNotification(movementId: MovementId, messageId: MessageId, body: JsValue)(implicit
+  def postPpnsSubmissionNotification(movementId: MovementId, messageId: MessageId, body: JsValue, version: Version)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[Unit] = {
@@ -83,6 +86,7 @@ class PushNotificationsConnector @Inject() (httpClientV2: HttpClientV2, val metr
     httpClientV2
       .post(url"$url")
       .withInternalAuthToken
+      .setHeader("APIVersion" -> s"${version.value}")
       .setHeader(HeaderNames.CONTENT_TYPE -> MimeTypes.JSON)
       .withBody(body)
       .executeAndExpect(ACCEPTED)

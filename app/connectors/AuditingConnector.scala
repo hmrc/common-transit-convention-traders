@@ -27,6 +27,7 @@ import io.lemonlabs.uri.UrlPath
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import models.AuditType
+import models.Version
 import models.common.EORINumber
 import models.common.MessageId
 import models.common.MovementId
@@ -66,7 +67,8 @@ class AuditingConnector @Inject() (httpClient: HttpClientV2, val metrics: Metric
     messageId: Option[MessageId] = None,
     enrolmentEORI: Option[EORINumber] = None,
     movementType: Option[MovementType] = None,
-    messageType: Option[MessageType] = None
+    messageType: Option[MessageType] = None,
+    version: Version
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -85,7 +87,8 @@ class AuditingConnector @Inject() (httpClient: HttpClientV2, val metrics: Metric
           HeaderNames.CONTENT_TYPE       -> contentType,
           Constants.XContentLengthHeader -> contentLength.toString,
           "X-Audit-Meta-Path"            -> getPath(),
-          "X-Audit-Source"               -> "common-transit-convention-traders"
+          "X-Audit-Source"               -> "common-transit-convention-traders",
+          "APIVersion"                   -> s"${version.value}"
         )
         .withBody(payload)
         .executeAndExpect(ACCEPTED)
@@ -98,7 +101,8 @@ class AuditingConnector @Inject() (httpClient: HttpClientV2, val metrics: Metric
     messageId: Option[MessageId],
     enrolmentEORI: Option[EORINumber],
     movementType: Option[MovementType],
-    messageType: Option[MessageType]
+    messageType: Option[MessageType],
+    version: Version
   )(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
@@ -111,7 +115,8 @@ class AuditingConnector @Inject() (httpClient: HttpClientV2, val metrics: Metric
         .withInternalAuthToken
         .setHeader(
           "X-Audit-Source"         -> "common-transit-convention-traders",
-          HeaderNames.CONTENT_TYPE -> MimeTypes.JSON
+          HeaderNames.CONTENT_TYPE -> MimeTypes.JSON,
+          "APIVersion"             -> s"${version.value}"
         )
         .withClientId
         .withBody(Json.toJson(details))

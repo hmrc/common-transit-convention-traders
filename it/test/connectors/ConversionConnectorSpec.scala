@@ -22,6 +22,10 @@ import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import config.AppConfig
+import org.scalacheck.Gen
+import models.Version
+import models.Version.V2_1
+import models.Version.V3_0
 import models.request.MessageType
 import org.apache.pekko.stream.Materializer
 import org.scalatest.concurrent.*
@@ -34,6 +38,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.*
 import models.HeaderTypes.jsonToXml
+import org.scalatest.OptionValues
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContextExecutor
@@ -43,6 +48,7 @@ class ConversionConnectorSpec
     with HttpClientV2Support
     with Matchers
     with ScalaFutures
+    with OptionValues
     with IntegrationPatience
     with GuiceOneAppPerSuite
     with GuiceWiremockSuite {
@@ -53,6 +59,7 @@ class ConversionConnectorSpec
   implicit lazy val hc: HeaderCarrier            = HeaderCarrier()
   lazy val messageType                           = MessageType.DeclarationData
   lazy val jsonStream                            = Source.single(ByteString("{}", StandardCharsets.UTF_8))
+  lazy val version: Version                      = Gen.oneOf(V2_1, V3_0).sample.value
 
   lazy val sut = new ConversionConnector(httpClientV2, appConfig, new MetricRegistry)
 
@@ -67,7 +74,7 @@ class ConversionConnectorSpec
           )
       )
 
-      whenReady(sut.post(MessageType.DeclarationData, jsonStream, jsonToXml)) {
+      whenReady(sut.post(MessageType.DeclarationData, jsonStream, jsonToXml, version)) {
         _.reduce(_ ++ _)
           .map(_.utf8String)
           .runWith(Sink.last)
@@ -87,7 +94,7 @@ class ConversionConnectorSpec
           )
       )
 
-      val postResponse = sut.post(MessageType.DeclarationData, jsonStream, jsonToXml)
+      val postResponse = sut.post(MessageType.DeclarationData, jsonStream, jsonToXml, version)
       val failedResponse = postResponse
         .map(
           _ => fail("Future unexpectedly succeeded, expected and UpstreamErrorResponse")

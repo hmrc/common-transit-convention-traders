@@ -24,6 +24,7 @@ import io.lemonlabs.uri.UrlPath
 import metrics.HasMetrics
 import metrics.MetricsKeys
 import models.SubmissionRoute
+import models.Version
 import models.common.EORINumber
 import models.common.MessageId
 import models.common.MovementId
@@ -60,7 +61,8 @@ class RouterConnector @Inject() (val metrics: MetricRegistry, httpClientV2: Http
       s"$routerBaseRoute/traders/${eoriNumber.value}/movements/${messageType.movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
     )
 
-  def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, ?])(implicit
+  def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, ?], version: Version)(
+    implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): Future[SubmissionRoute] =
@@ -73,7 +75,8 @@ class RouterConnector @Inject() (val metrics: MetricRegistry, httpClientV2: Http
           .withInternalAuthToken
           .setHeader(
             HeaderNames.CONTENT_TYPE     -> MimeTypes.XML,
-            Constants.XMessageTypeHeader -> messageType.code
+            Constants.XMessageTypeHeader -> messageType.code,
+            "APIVersion"                 -> s"${version.value}"
           )
           .withBody(body)
           .withClientId

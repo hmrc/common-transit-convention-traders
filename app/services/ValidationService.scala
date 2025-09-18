@@ -20,6 +20,7 @@ import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import cats.data.EitherT
 import connectors.ValidationConnector
+import models.Version
 import models.common.errors.ErrorCode
 import models.common.errors.FailedToValidateError
 import models.common.errors.StandardError
@@ -44,13 +45,13 @@ import scala.util.control.NonFatal
 @Singleton
 class ValidationService @Inject() (validationConnector: ValidationConnector) extends Logging {
 
-  def validateXml(messageType: MessageType, source: Source[ByteString, ?])(implicit
+  def validateXml(messageType: MessageType, source: Source[ByteString, ?], version: Version)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, FailedToValidateError, Unit] =
     EitherT(
       validationConnector
-        .postXml(messageType, source)
+        .postXml(messageType, source, version)
         .flatMap {
           case None => Future.successful(Right(()))
           case Some(response: BusinessValidationResponse) =>
@@ -61,13 +62,13 @@ class ValidationService @Inject() (validationConnector: ValidationConnector) ext
         .recover(recoverFromError(messageType))
     )
 
-  def validateJson(messageType: MessageType, source: Source[ByteString, ?])(implicit
+  def validateJson(messageType: MessageType, source: Source[ByteString, ?], version: Version)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, FailedToValidateError, Unit] =
     EitherT(
       validationConnector
-        .postJson(messageType, source)
+        .postJson(messageType, source, version)
         .flatMap {
           case None => Future.successful(Right(()))
           case Some(response: BusinessValidationResponse) =>
