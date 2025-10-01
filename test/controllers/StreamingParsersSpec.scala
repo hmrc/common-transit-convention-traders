@@ -112,7 +112,7 @@ class StreamingParsersSpec
     Source(byteString.grouped(1024).toList)
 
   "Streaming" - {
-    "from Memory" - {
+    "from Memory" -
       (1 to 5).foreach {
         value =>
           s"~$value kb string is created" in {
@@ -123,7 +123,6 @@ class StreamingParsersSpec
             contentAsString(result) mustBe byteString.utf8String
           }
       }
-    }
 
     "via the stream extension method" in {
       val string  = Gen.stringOfN(20, Gen.alphaNumChar).sample.value

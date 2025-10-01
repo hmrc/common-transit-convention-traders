@@ -205,7 +205,7 @@ class ConvertErrorSpec
   "Router Error" - {
     "an UnrecognisedOffice error returns a bad request error" in forAll(Gen.alphaNumStr, Gen.alphaStr) {
       (office, field) =>
-        val input = RouterError.UnrecognisedOffice(office, field)
+        val input  = RouterError.UnrecognisedOffice(office, field)
         val output = PresentationError.badRequestError(
           s"The customs office specified for $field must be a customs office located in the United Kingdom ($office was specified)"
         )

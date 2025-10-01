@@ -34,7 +34,7 @@ class DetailsSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropert
     arbitrary[JsObject]
   ) {
     (metadata, payload) =>
-      val actual = Details.detailsFormat.writes(Details(metadata, Some(payload)))
+      val actual   = Details.detailsFormat.writes(Details(metadata, Some(payload)))
       val expected = Json.obj(
         "metadata" -> metadata,
         "payload"  -> payload

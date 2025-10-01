@@ -53,7 +53,7 @@ class ValidationService @Inject() (validationConnector: ValidationConnector) ext
       validationConnector
         .postXml(messageType, source, version)
         .flatMap {
-          case None => Future.successful(Right(()))
+          case None                                       => Future.successful(Right(()))
           case Some(response: BusinessValidationResponse) =>
             Future.successful(Left(FailedToValidateError.BusinessValidationError(response.message)))
           case Some(response: XmlSchemaValidationResponse) =>
@@ -70,7 +70,7 @@ class ValidationService @Inject() (validationConnector: ValidationConnector) ext
       validationConnector
         .postJson(messageType, source, version)
         .flatMap {
-          case None => Future.successful(Right(()))
+          case None                                       => Future.successful(Right(()))
           case Some(response: BusinessValidationResponse) =>
             Future.successful(Left(FailedToValidateError.BusinessValidationError(response.message)))
           case Some(response: JsonSchemaValidationResponse) =>
@@ -90,7 +90,7 @@ class ValidationService @Inject() (validationConnector: ValidationConnector) ext
         case _                                                        => Left(FailedToValidateError.UnexpectedError(None))
       }
     case upstreamError: UpstreamErrorResponse => Left(FailedToValidateError.UnexpectedError(Some(upstreamError)))
-    case NonFatal(e) =>
+    case NonFatal(e)                          =>
       logger.error(s"Exception occurred while validating request: ${e.getMessage}", e)
       Left(FailedToValidateError.UnexpectedError(Some(e)))
   }

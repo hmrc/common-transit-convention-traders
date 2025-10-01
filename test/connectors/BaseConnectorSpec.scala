@@ -133,7 +133,7 @@ class BaseConnectorSpec
         .recover {
           case UpstreamErrorResponse(`expected`, INTERNAL_SERVER_ERROR, _, _) => // success
           case x: TestFailedException                                         => x
-          case thr =>
+          case thr                                                            =>
             fail(s"Test failed in an unexpected way: $thr")
         }
 
@@ -155,7 +155,7 @@ class BaseConnectorSpec
         .recover {
           case UpstreamErrorResponse(`expected`, INTERNAL_SERVER_ERROR, _, _) => // success
           case x: TestFailedException                                         => x
-          case thr =>
+          case thr                                                            =>
             fail(s"Test failed in an unexpected way: $thr")
         }
 
@@ -176,7 +176,7 @@ class BaseConnectorSpec
         when(sut.setHeader(any())).thenReturn(sut)
 
         sut.withInternalAuthToken
-        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq((HeaderNames.AUTHORIZATION -> token)))*)
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(HeaderNames.AUTHORIZATION -> token))*)
     }
 
     "withMovementId adds the audit movement Id header for movement value" in forAll(arbitrary[MovementId]) {
@@ -186,7 +186,7 @@ class BaseConnectorSpec
         when(sut.setHeader(any())).thenReturn(sut)
 
         sut.withMovementId(Some(movementId))
-        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Movement-Id" -> movementId.value)))*)
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq("X-Audit-Meta-Movement-Id" -> movementId.value))*)
     }
 
     "withMovementId ignore the audit movement Id header for None value" in {
@@ -205,7 +205,7 @@ class BaseConnectorSpec
         when(sut.setHeader(any())).thenReturn(sut)
 
         sut.withMovementType(Some(movementType))
-        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Movement-Type" -> movementType.movementType)))*)
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq("X-Audit-Meta-Movement-Type" -> movementType.movementType))*)
     }
 
     "withMovementType ignore the audit movement type header for None value" in {
@@ -224,7 +224,7 @@ class BaseConnectorSpec
         when(sut.setHeader(any())).thenReturn(sut)
 
         sut.withEoriNumber(Some(eoriNumber))
-        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-EORI" -> eoriNumber.value)))*)
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq("X-Audit-Meta-EORI" -> eoriNumber.value))*)
     }
 
     "withEoriNumber ignore the audit Eori number header for None value" in {
@@ -243,7 +243,7 @@ class BaseConnectorSpec
         when(sut.setHeader(any())).thenReturn(sut)
 
         sut.withMessageId(Some(messageId))
-        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Message-Id" -> messageId.value)))*)
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq("X-Audit-Meta-Message-Id" -> messageId.value))*)
     }
 
     "withMessageId ignore the audit message Id header None value" in {
@@ -262,7 +262,7 @@ class BaseConnectorSpec
         when(sut.setHeader(any())).thenReturn(sut)
 
         sut.withMessageType(Some(messageType))
-        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq(("X-Audit-Meta-Message-Type" -> messageType.code)))*)
+        verify(sut, times(1)).setHeader(ArgumentMatchers.eq(Seq("X-Audit-Meta-Message-Type" -> messageType.code))*)
     }
 
     "withMessageType ignore the audit message type header for None value" in forAll(arbitrary[MessageType]) {
@@ -308,7 +308,7 @@ class BaseConnectorSpec
           .recover {
             case UpstreamErrorResponse("error", `status`, _, _) => // success
             case x: TestFailedException                         => x
-            case thr =>
+            case thr                                            =>
               fail(s"Test failed in an unexpected way: $thr")
           }
 
@@ -346,7 +346,7 @@ class BaseConnectorSpec
         .recover {
           case UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR, _, _) => // success
           case x: TestFailedException                                      => x
-          case thr =>
+          case thr                                                         =>
             fail(s"Test failed in an unexpected way: $thr")
         }
 

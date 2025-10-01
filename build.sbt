@@ -10,7 +10,6 @@ ThisBuild / scalaVersion := "3.6.3"
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(PlayScala, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
-  .settings(inConfig(Test)(ScalafmtPlugin.scalafmtConfigSettings))
   .settings(inThisBuild(buildSettings))
   .settings(scoverageSettings)
   .settings(scalacSettings)
@@ -45,7 +44,6 @@ lazy val it = project
   )
   .settings(scalacSettings)
   .settings(scoverageSettings)
-  .settings(inConfig(Test)(ScalafmtPlugin.scalafmtConfigSettings))
 
 // Settings for the whole build
 lazy val buildSettings = Def.settings(

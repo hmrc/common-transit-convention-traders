@@ -10,7 +10,7 @@ addSbtPlugin("org.playframework" % "sbt-plugin" % "3.0.8")
 
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.2.2")
 
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.3")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.5")
 
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.6.0")
 

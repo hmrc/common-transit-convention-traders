@@ -64,7 +64,7 @@ class PushNotificationsService @Inject() (
               .map(Right(_))
               .recover {
                 case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.BoxNotFound)
-                case NonFatal(thr) =>
+                case NonFatal(thr)                             =>
                   logger.error(s"Unable to associate notification : ${thr.getMessage}", thr)
                   Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
               }
@@ -82,7 +82,7 @@ class PushNotificationsService @Inject() (
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.AssociationNotFound)
-          case NonFatal(thr) =>
+          case NonFatal(thr)                             =>
             logger.error(s"Unable to update notification : ${thr.getMessage}", thr)
             Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
         }
@@ -98,7 +98,7 @@ class PushNotificationsService @Inject() (
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PushNotificationError.BoxNotFound)
-          case NonFatal(thr) =>
+          case NonFatal(thr)                             =>
             logger.error(s"Unable to post notification : ${thr.getMessage}", thr)
             Left(PushNotificationError.UnexpectedError(thr = Some(thr)))
         }

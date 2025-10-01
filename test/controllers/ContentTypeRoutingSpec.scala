@@ -82,7 +82,7 @@ class ContentTypeRoutingSpec extends AnyFreeSpec with Matchers with TestActorSys
         }
     }
 
-    "for a known type, return the expected result" in {
+    "for a known type, return the expected result" in
       whenReady(
         sut
           .contentTypeRoute(pf)
@@ -90,7 +90,6 @@ class ContentTypeRoutingSpec extends AnyFreeSpec with Matchers with TestActorSys
       ) {
         _ mustBe result
       }
-    }
 
     "for an unknown type, return the expected result" in forAll(Gen.alphaNumStr) {
       ct =>
