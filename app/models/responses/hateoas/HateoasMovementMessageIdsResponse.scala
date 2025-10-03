@@ -44,7 +44,7 @@ object HateoasMovementMessageIdsResponse extends HateoasResponse {
         movementType.movementType -> Json.obj("href" -> getMovementUri(movementId, movementType))
       ),
       "totalCount" -> messageIds.totalCount.value,
-      "messages" -> messageIds.messageSummary.map {
+      "messages"   -> messageIds.messageSummary.map {
         message =>
           val jsMessageLinksObject = Json.obj(
             "self"                    -> Json.obj("href" -> getMessageUri(movementId, message.id, movementType)),

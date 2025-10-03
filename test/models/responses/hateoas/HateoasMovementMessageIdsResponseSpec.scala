@@ -69,7 +69,7 @@ class HateoasMovementMessageIdsResponseSpec
               "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
             ),
             "totalCount" -> responses.totalCount.value,
-            "messages" -> responses.messageSummary.map(
+            "messages"   -> responses.messageSummary.map(
               response =>
                 Json.obj(
                   "_links" -> Json.obj(
@@ -107,7 +107,7 @@ class HateoasMovementMessageIdsResponseSpec
               "departure" -> Json.obj("href" -> s"/customs/transits/movements/departures/${departureId.value}")
             ),
             "totalCount" -> responses.totalCount,
-            "messages" -> responses.messageSummary.map(
+            "messages"   -> responses.messageSummary.map(
               response =>
                 Json.obj(
                   "_links" -> Json.obj(

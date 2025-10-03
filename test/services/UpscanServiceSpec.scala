@@ -132,7 +132,7 @@ class UpscanServiceSpec
   }
 
   "upscanGetFile" - {
-    val downloadUrl = DownloadUrl("http://download.url")
+    val downloadUrl                             = DownloadUrl("http://download.url")
     implicit val patienceConfig: PatienceConfig =
       PatienceConfig(Span(5, Seconds), Span(100, Millis))
 

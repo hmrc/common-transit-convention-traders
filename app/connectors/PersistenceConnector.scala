@@ -223,11 +223,11 @@ class PersistenceConnector @Inject() (httpClientV2: HttpClientV2, val metrics: M
         "movementEORI"            -> movementEORI.map(_.value),
         "movementReferenceNumber" -> movementReferenceNumber.map(_.value),
         "localReferenceNumber"    -> localReferenceNumber.map(_.value),
-        "receivedSince" -> receivedSince.map(
+        "receivedSince"           -> receivedSince.map(
           time => DateTimeFormatter.ISO_DATE_TIME.format(time)
         ),
-        "page"  -> pageNumberValid.map(_.value.toString),
-        "count" -> Some(count.value.toString),
+        "page"          -> pageNumberValid.map(_.value.toString),
+        "count"         -> Some(count.value.toString),
         "receivedUntil" -> receivedUntil.map(
           time => DateTimeFormatter.ISO_DATE_TIME.format(time)
         )

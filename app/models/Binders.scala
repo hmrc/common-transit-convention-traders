@@ -37,7 +37,7 @@ object Binders {
       (param, exception) =>
         exception match {
           case x: IllegalArgumentException if x.getMessage == "negative year" => "Year cannot be negative"
-          case _ =>
+          case _                                                              =>
             s"Cannot parse parameter $param as a valid ISO 8601 timestamp, e.g. 2015-09-08T01:55:28+00:00"
         }
     )

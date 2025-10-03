@@ -68,7 +68,7 @@ class XmlMessageParsingServiceSpec
     "if it is valid Departure Message Type, return an appropriate Departure Message Type" in {
       val xmlParsingService = new XmlMessageParsingService()
       val payload           = createStream(validDepartureXml)
-      val response =
+      val response          =
         xmlParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByDepartureTrader)
 
       whenReady(response.value) {
@@ -79,7 +79,7 @@ class XmlMessageParsingServiceSpec
     "if it is valid Arrival Message Type, return an appropriate Arrival Message Type" in {
       val xmlParsingService = new XmlMessageParsingService()
       val payload           = createStream(validArrivalXml)
-      val response =
+      val response          =
         xmlParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByArrivalTrader)
 
       whenReady(response.value) {
@@ -90,7 +90,7 @@ class XmlMessageParsingServiceSpec
     "if it doesn't have a valid message type, return ExtractionError.MessageTypeNotFound" in {
       val xmlParsingService = new XmlMessageParsingService()
       val payload           = createStream(invalidMessageType)
-      val response =
+      val response          =
         xmlParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByArrivalTrader)
 
       whenReady(response.value) {
@@ -101,7 +101,7 @@ class XmlMessageParsingServiceSpec
     "if it doesn't have a message type entry, return ExtractionError.MessageTypeNotFound" in {
       val xmlParsingService = new XmlMessageParsingService()
       val payload           = createStream(withNoMessageTypeEntry)
-      val response =
+      val response          =
         xmlParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByArrivalTrader)
 
       whenReady(response.value) {
@@ -112,7 +112,7 @@ class XmlMessageParsingServiceSpec
     "if the input is malformed, return ExtractionError.MalformedInput" in {
       val xmlParsingService = new XmlMessageParsingService()
       val payload           = createStream("malformed")
-      val response =
+      val response          =
         xmlParsingService.extractMessageType(payload, MessageType.updateMessageTypesSentByArrivalTrader)
 
       whenReady(response.value) {

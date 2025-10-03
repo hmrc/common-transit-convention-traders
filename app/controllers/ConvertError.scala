@@ -96,7 +96,7 @@ trait ConvertError extends Logging {
   }
 
   implicit val routerErrorConverter: Converter[RouterError] = {
-    case RouterError.UnexpectedError(thr) => PresentationError.internalServiceError(cause = thr)
+    case RouterError.UnexpectedError(thr)  => PresentationError.internalServiceError(cause = thr)
     case UnrecognisedOffice(office, field) =>
       PresentationError.badRequestError(
         s"The customs office specified for $field must be a customs office located in the United Kingdom ($office was specified)"

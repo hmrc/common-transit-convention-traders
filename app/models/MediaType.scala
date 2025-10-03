@@ -20,9 +20,9 @@ import cats.implicits.*
 import models.common.errors.PresentationError
 
 enum MediaType(val value: String) {
-  case XMLHeader extends MediaType("xml")
-  case JsonHeader extends MediaType("json")
-  case JsonPlusXmlHeader extends MediaType("json+xml")
+  case XMLHeader           extends MediaType("xml")
+  case JsonHeader          extends MediaType("json")
+  case JsonPlusXmlHeader   extends MediaType("json+xml")
   case JsonHyphenXmlHeader extends MediaType("json-xml")
 }
 

@@ -41,13 +41,12 @@ class MovementTypeSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPr
     }
   }
 
-  "MovementType writes" - {
+  "MovementType writes" -
     MovementType.values.foreach {
       movementType =>
         s"should write a JsString of ${movementType.movementType} from a valid movement type" in {
           MovementType.movementTypeWrites.writes(movementType) mustBe JsString(movementType.movementType)
         }
     }
-  }
 
 }

@@ -113,7 +113,7 @@ trait BaseConnector extends HttpErrorFunctions {
           response =>
             response.status match {
               case OK => response.as[T]
-              case _ =>
+              case _  =>
                 response.error
             }
         }

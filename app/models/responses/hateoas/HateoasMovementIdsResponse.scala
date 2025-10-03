@@ -46,7 +46,7 @@ object HateoasMovementIdsResponse extends HateoasResponse {
           "href" -> getMovementsUri(movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
         )
       ),
-      "totalCount" -> responses.totalCount,
+      "totalCount"             -> responses.totalCount,
       movementType.urlFragment -> responses.movementSummary.map(
         response =>
           Json.obj(

@@ -106,7 +106,7 @@ class HateoasNewMovementResponseSpec extends AnyFreeSpec with Matchers with Scal
             s"${movementType.movementType}Id" -> movementId.value,
             "messageId"                       -> messageId.value,
             "boxId"                           -> s"${boxResponse.boxId.value}",
-            "uploadRequest" -> Json.obj(
+            "uploadRequest"                   -> Json.obj(
               "href"   -> upscanResponse.uploadRequest.href,
               "fields" -> upscanResponse.uploadRequest.fields
             )

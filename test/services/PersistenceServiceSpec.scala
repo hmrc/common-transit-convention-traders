@@ -1362,7 +1362,7 @@ class PersistenceServiceSpec
         }
     }
 
-    "on a failed submission, should return a Left with an UnexpectedError" in {
+    "on a failed submission, should return a Left with an UnexpectedError" in
       forAll(
         arbitrary[EORINumber],
         arbitrary[MovementType],
@@ -1388,6 +1388,5 @@ class PersistenceServiceSpec
           }
       }
 
-    }
   }
 }

@@ -40,7 +40,7 @@ class MetadataSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenProper
     arbitrary[MessageType]
   ) {
     (path, movementId, messageId, eoriNumber, movementType, messageType) =>
-      val actual = Metadata.metadataFormat.writes(Metadata(path, Some(movementId), Some(messageId), Some(eoriNumber), Some(movementType), Some(messageType)))
+      val actual   = Metadata.metadataFormat.writes(Metadata(path, Some(movementId), Some(messageId), Some(eoriNumber), Some(movementType), Some(messageType)))
       val expected = Json.obj(
         "path"          -> path,
         "movementId"    -> movementId,

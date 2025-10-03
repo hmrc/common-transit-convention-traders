@@ -76,7 +76,7 @@ class PersistenceService @Inject() (persistenceConnector: PersistenceConnector) 
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
-          case NonFatal(thr) =>
+          case NonFatal(thr)                             =>
             logger.error(s"Unable to get message : ${thr.getMessage}", thr)
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
@@ -103,7 +103,7 @@ class PersistenceService @Inject() (persistenceConnector: PersistenceConnector) 
         }
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
-          case NonFatal(thr) =>
+          case NonFatal(thr)                             =>
             logger.error(s"Unable to get messages : ${thr.getMessage}", thr)
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
@@ -119,7 +119,7 @@ class PersistenceService @Inject() (persistenceConnector: PersistenceConnector) 
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
-          case NonFatal(thr) =>
+          case NonFatal(thr)                             =>
             logger.error(s"Unable to get movement : ${thr.getMessage}", thr)
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
@@ -182,7 +182,7 @@ class PersistenceService @Inject() (persistenceConnector: PersistenceConnector) 
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))
-          case NonFatal(thr) =>
+          case NonFatal(thr)                             =>
             logger.error(s"Unable to add message : ${thr.getMessage}", thr)
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
@@ -205,7 +205,7 @@ class PersistenceService @Inject() (persistenceConnector: PersistenceConnector) 
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
-          case NonFatal(thr) =>
+          case NonFatal(thr)                             =>
             logger.error(s"Unable to update message : ${thr.getMessage}", thr)
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }
@@ -245,7 +245,7 @@ class PersistenceService @Inject() (persistenceConnector: PersistenceConnector) 
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MessageNotFound(movementId, messageId))
-          case NonFatal(thr) =>
+          case NonFatal(thr)                             =>
             logger.error(s"Unable to get message body : ${thr.getMessage}", thr)
             Left(PersistenceError.UnexpectedError(Some(thr)))
         }

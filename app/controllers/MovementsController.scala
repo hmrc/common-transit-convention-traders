@@ -179,7 +179,7 @@ class MovementsControllerImpl @Inject() (
           source <- reUsableSourceRequest(request)
           size   <- calculateSize(source.head)
           _      <- contentSizeIsLessThanLimit(size)
-          _ <- validationService.validateXml(MessageType.DeclarationData, source.lift(1).get, version).asPresentation.leftMap {
+          _      <- validationService.validateXml(MessageType.DeclarationData, source.lift(1).get, version).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -210,7 +210,7 @@ class MovementsControllerImpl @Inject() (
           source <- reUsableSourceRequest(request)
           size   <- calculateSize(source.head)
           _      <- contentSizeIsLessThanLimit(size)
-          _ <- validationService.validateJson(MessageType.DeclarationData, source.lift(1).get, version).asPresentation.leftMap {
+          _      <- validationService.validateJson(MessageType.DeclarationData, source.lift(1).get, version).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -247,7 +247,7 @@ class MovementsControllerImpl @Inject() (
           source <- reUsableSourceRequest(request)
           size   <- calculateSize(source.head)
           _      <- contentSizeIsLessThanLimit(size)
-          _ <- validationService.validateXml(MessageType.ArrivalNotification, source.lift(1).get, version).asPresentation.leftMap {
+          _      <- validationService.validateXml(MessageType.ArrivalNotification, source.lift(1).get, version).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -277,7 +277,7 @@ class MovementsControllerImpl @Inject() (
           source <- reUsableSourceRequest(request)
           size   <- calculateSize(source.head)
           _      <- contentSizeIsLessThanLimit(size)
-          _ <- validationService.validateJson(MessageType.ArrivalNotification, source.lift(1).get, version).asPresentation.leftMap {
+          _      <- validationService.validateJson(MessageType.ArrivalNotification, source.lift(1).get, version).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -457,7 +457,7 @@ class MovementsControllerImpl @Inject() (
 
     bodyAndSizeMaybe match {
       case Some(value) => bodyExists(value)
-      case None =>
+      case None        =>
         EitherT.leftT[Future, BodyAndContentType](PresentationError.notFoundError(s"Body for message id ${messageSummary.id.value} does not exist"))
     }
   }
@@ -478,7 +478,7 @@ class MovementsControllerImpl @Inject() (
         case VersionedHeader(JsonHeader, version) =>
           for {
             jsonStream <- conversionService.convert(messageSummary.messageType.get, bodyAndSize.body, xmlToJson, version).asPresentation
-            summary = messageSummary.copy(body = None)
+            summary             = messageSummary.copy(body = None)
             jsonHateoasResponse = Json
               .toJson(
                 HateoasMovementMessageResponse(movementId, summary.id, summary, movementType)
@@ -503,7 +503,7 @@ class MovementsControllerImpl @Inject() (
 
     bodyAndSizeMaybe match {
       case Some(value) => bodyExists(value)
-      case None =>
+      case None        =>
         EitherT.rightT[Future, PresentationError](
           Source.single(ByteString(Json.stringify(HateoasMovementMessageResponse(movementId, messageSummary.id, messageSummary, movementType))))
         )
@@ -760,7 +760,7 @@ class MovementsControllerImpl @Inject() (
           size        <- calculateSize(source.head)
           _           <- contentSizeIsLessThanLimit(size)
           messageType <- xmlParsingService.extractMessageType(source.lift(1).get, messageTypeList).asPresentation
-          _ <- validationService.validateXml(messageType, source.lift(2).get, version).asPresentation.leftMap {
+          _           <- validationService.validateXml(messageType, source.lift(2).get, version).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -793,7 +793,7 @@ class MovementsControllerImpl @Inject() (
         source <- reUsableSource(src)
         size   <- calculateSize(source.head)
         _      <- contentSizeIsLessThanLimit(size)
-        _ <- validationService
+        _      <- validationService
           .validateXml(messageType, source.lift(1).get, version)
           .asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
           .leftMap {
@@ -826,7 +826,7 @@ class MovementsControllerImpl @Inject() (
           size        <- calculateSize(source.head)
           _           <- contentSizeIsLessThanLimit(size)
           messageType <- jsonParsingService.extractMessageType(source.lift(1).get, messageTypeList).asPresentation
-          _ <- validationService.validateJson(messageType, source.lift(2).get, version).asPresentation.leftMap {
+          _           <- validationService.validateJson(messageType, source.lift(2).get, version).asPresentation.leftMap {
             err =>
               auditService.auditStatusEvent(
                 ValidationFailed,
@@ -923,7 +923,7 @@ class MovementsControllerImpl @Inject() (
                 messageId,
                 Json.toJson(
                   Json.obj(
-                    "code" -> "SUCCESS",
+                    "code"    -> "SUCCESS",
                     "message" ->
                       s"The message ${messageId.value} for movement ${movementId.value} was successfully processed"
                   )
@@ -1049,7 +1049,7 @@ class MovementsControllerImpl @Inject() (
   ) =
     val version = request.versionedHeader.version
     for {
-      sources <- reUsableSource(source)
+      sources                <- reUsableSource(source)
       updateMovementResponse <- persistenceService.addMessage(movementId, movementType, Some(messageType), Some(sources.head), version).asPresentation.leftMap {
         err =>
           val auditType = if (err.code.statusCode == NOT_FOUND) CustomerRequestedMissingMovement else AddMessageDBFailed
@@ -1147,7 +1147,7 @@ class MovementsControllerImpl @Inject() (
       source <- reUsableSource(src)
       size   <- calculateSize(source.head)
       _      <- contentSizeIsLessThanLimit(size)
-      _ <- validationService
+      _      <- validationService
         .validateXml(messageType, source.lift(1).get, version)
         .asPresentation(jsonToXmlValidationErrorConverter, materializerExecutionContext)
         .leftMap {
@@ -1196,7 +1196,7 @@ class MovementsControllerImpl @Inject() (
   )(implicit hc: HeaderCarrier, request: ValidatedVersionedRequest[Source[ByteString, ?]]) =
     val version = request.versionedHeader.version
     for {
-      sources <- reUsableSource(source)
+      sources          <- reUsableSource(source)
       movementResponse <- persistenceService
         .createMovement(request.authenticatedRequest.eoriNumber, movementType, Some(sources.head), version)
         .asPresentation

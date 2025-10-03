@@ -54,7 +54,7 @@ class HateoasMovementIdsResponseSpec extends AnyFreeSpec with Matchers with Opti
           "_links" -> Json.obj(
             "self" -> selfUrl(movementType, updatedSince, movementEORI, movementReferenceNumber, page, count, receivedUntil, localReferenceNumber)
           ),
-          "totalCount" -> response.totalCount,
+          "totalCount"             -> response.totalCount,
           movementType.urlFragment -> response.movementSummary.map(
             movementResponse =>
               Json.obj(

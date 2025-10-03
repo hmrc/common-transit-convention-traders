@@ -33,7 +33,7 @@ class HateoasMovementUpdateResponseSpec extends AnyFreeSpec with Matchers with O
       arbitraryMessageId.arbitrary
     ) {
       (movementId, messageId) =>
-        val actual = HateoasMovementUpdateResponse(movementId, messageId, movementType, None)
+        val actual   = HateoasMovementUpdateResponse(movementId, messageId, movementType, None)
         val expected = Json.obj(
           "_links" -> Json.obj(
             movementType.movementType -> Json.obj(
@@ -56,7 +56,7 @@ class HateoasMovementUpdateResponseSpec extends AnyFreeSpec with Matchers with O
       arbitraryUpscanInitiateResponse.arbitrary
     ) {
       (movementId, messageId, upscanIniateResponse) =>
-        val actual = HateoasMovementUpdateResponse(movementId, messageId, movementType, Some(upscanIniateResponse))
+        val actual   = HateoasMovementUpdateResponse(movementId, messageId, movementType, Some(upscanIniateResponse))
         val expected = Json.obj(
           "_links" -> Json.obj(
             movementType.movementType -> Json.obj(
@@ -68,7 +68,7 @@ class HateoasMovementUpdateResponseSpec extends AnyFreeSpec with Matchers with O
           ),
           s"${movementType.movementType}Id" -> movementId.value,
           "messageId"                       -> messageId.value,
-          "uploadRequest" -> Json.obj(
+          "uploadRequest"                   -> Json.obj(
             "href"   -> upscanIniateResponse.uploadRequest.href,
             "fields" -> upscanIniateResponse.uploadRequest.fields
           )

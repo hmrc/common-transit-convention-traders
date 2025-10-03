@@ -61,7 +61,7 @@ class RouterService @Inject() (routerConnector: RouterConnector) extends Logging
         .recover {
           case UpstreamErrorResponse(message, BAD_REQUEST, _, _) => Left(determineError(message))
           case UpstreamErrorResponse(message, CONFLICT, _, _)    => Left(onConflict(message))
-          case NonFatal(e) =>
+          case NonFatal(e)                                       =>
             logger.error(s"Unable to send to EIS : ${e.getMessage}", e)
             Left(RouterError.UnexpectedError(thr = Some(e)))
         }

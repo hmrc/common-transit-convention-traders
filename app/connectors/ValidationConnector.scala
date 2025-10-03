@@ -94,7 +94,7 @@ class ValidationConnector @Inject() (httpClientV2: HttpClientV2, appConfig: AppC
         response =>
           response.status match {
             case NO_CONTENT => Future.successful(None)
-            case OK =>
+            case OK         =>
               response
                 .as[A]
                 .map(

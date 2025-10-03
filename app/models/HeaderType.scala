@@ -25,13 +25,13 @@ object HeaderTypes {
 
   case object jsonToXml
       extends HeaderType(
-        (HeaderNames.CONTENT_TYPE -> MimeTypes.JSON),
-        (HeaderNames.ACCEPT       -> MimeTypes.XML)
+        HeaderNames.CONTENT_TYPE -> MimeTypes.JSON,
+        HeaderNames.ACCEPT       -> MimeTypes.XML
       )
 
   case object xmlToJson
       extends HeaderType(
-        (HeaderNames.CONTENT_TYPE -> MimeTypes.XML),
-        (HeaderNames.ACCEPT       -> MimeTypes.JSON)
+        HeaderNames.CONTENT_TYPE -> MimeTypes.XML,
+        HeaderNames.ACCEPT       -> MimeTypes.JSON
       )
 }

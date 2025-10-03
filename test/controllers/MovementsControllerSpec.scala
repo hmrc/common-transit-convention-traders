@@ -2073,8 +2073,8 @@ class MovementsControllerSpec
         val result  = sut.createMovement(MovementType.Departure)(request)
         status(result) mustBe BAD_REQUEST
         contentAsJson(result) mustBe Json.obj(
-          "code"    -> "SCHEMA_VALIDATION",
-          "message" -> "Request failed schema validation",
+          "code"             -> "SCHEMA_VALIDATION",
+          "message"          -> "Request failed schema validation",
           "validationErrors" -> Seq(
             Json.obj(
               "schemaPath" -> "path",
@@ -2112,8 +2112,8 @@ class MovementsControllerSpec
         val result  = sut.createMovement(MovementType.Departure)(request)
         status(result) mustBe BAD_REQUEST
         contentAsJson(result) mustBe Json.obj(
-          "code"    -> "SCHEMA_VALIDATION",
-          "message" -> "Request failed schema validation",
+          "code"             -> "SCHEMA_VALIDATION",
+          "message"          -> "Request failed schema validation",
           "validationErrors" -> Seq(
             Json.obj(
               "schemaPath" -> "CC015",
@@ -4140,8 +4140,8 @@ class MovementsControllerSpec
         val result = sut.createMovement(MovementType.Arrival)(request)
         status(result) mustBe BAD_REQUEST
         val validationPayload = Json.obj(
-          "code"    -> "SCHEMA_VALIDATION",
-          "message" -> "Request failed schema validation",
+          "code"             -> "SCHEMA_VALIDATION",
+          "message"          -> "Request failed schema validation",
           "validationErrors" -> Seq(
             Json.obj(
               "schemaPath" -> "path",
@@ -4192,8 +4192,8 @@ class MovementsControllerSpec
         val result = sut.createMovement(MovementType.Arrival)(request)
         status(result) mustBe BAD_REQUEST
         contentAsJson(result) mustBe Json.obj(
-          "code"    -> "SCHEMA_VALIDATION",
-          "message" -> "Request failed schema validation",
+          "code"             -> "SCHEMA_VALIDATION",
+          "message"          -> "Request failed schema validation",
           "validationErrors" -> Seq(
             Json.obj(
               "schemaPath" -> "CC007",
@@ -5128,10 +5128,10 @@ class MovementsControllerSpec
       datetimes.foreach {
         dateTime =>
           s"when a movement is found ${dateTime
-            .map(
-              _ => "with"
-            )
-            .getOrElse("without")} a date filter" in forAll(
+              .map(
+                _ => "with"
+              )
+              .getOrElse("without")} a date filter" in forAll(
             arbitraryMovementId.arbitrary,
             Gen.listOfN(3, arbitraryMessageSummaryXml.arbitrary.sample.head),
             arbitraryPageNumber.arbitrary,
@@ -5577,7 +5577,7 @@ class MovementsControllerSpec
       val smallMessageSummaryXml           = arbitraryMessageSummaryXml.arbitrary.sample.value.copy(id = messageId, body = Some(XmlPayload(xml)), uri = None)
       val smallMessageSummaryInObjectStore = smallMessageSummaryXml.copy(body = None, uri = Some(objectStoreUri))
       val smallMessageSummaryJson          = smallMessageSummaryXml.copy(body = Some(JsonPayload("""{"test": "ABC"}""")), uri = None)
-      val largeMessageSummaryXml =
+      val largeMessageSummaryXml           =
         arbitraryMessageSummaryXml.arbitrary.sample.value
           .copy(id = messageId, body = None, uri = Some(objectStoreUri))
 
@@ -6148,7 +6148,7 @@ class MovementsControllerSpec
       val largeMessageSummaryXml =
         arbitraryMessageSummaryXml.arbitrary.sample.value
           .copy(id = messageId, body = None, uri = Some(ObjectStoreURI("common-transit-convention-traders/movements/123.xml")))
-      val smallMessageSummaryJson = smallMessageSummaryXml.copy(body = Some(JsonPayload("""{"test": "ABC"}""")), uri = None)
+      val smallMessageSummaryJson          = smallMessageSummaryXml.copy(body = Some(JsonPayload("""{"test": "ABC"}""")), uri = None)
       val smallMessageSummaryInObjectStore =
         smallMessageSummaryXml.copy(body = None, uri = Some(ObjectStoreURI("common-transit-convention-traders/movements/123.xml")))
       Seq(
@@ -7117,7 +7117,7 @@ class MovementsControllerSpec
             _,
             _
           ) = createControllerAndMocks()
-          val createdTime = OffsetDateTime.now()
+          val createdTime       = OffsetDateTime.now()
           val departureResponse = MovementSummary(
             movementId,
             enrollmentEori,
@@ -8519,7 +8519,7 @@ class MovementsControllerSpec
               _
             ) = createControllerAndMocks()
 
-            val createdTime = OffsetDateTime.now()
+            val createdTime      = OffsetDateTime.now()
             val movementResponse = MovementSummary(
               movementId,
               arbitrary[EORINumber].sample.value,
@@ -8628,7 +8628,7 @@ class MovementsControllerSpec
               _
             ) = createControllerAndMocks(enrollmentEORI = eori)
 
-            val createdTime = OffsetDateTime.now()
+            val createdTime      = OffsetDateTime.now()
             val movementResponse = MovementSummary(
               movementId,
               arbitrary[EORINumber].sample.value,
@@ -8698,7 +8698,7 @@ class MovementsControllerSpec
               _,
               _
             ) = createControllerAndMocks(enrollmentEORI = eori)
-            val createdTime = OffsetDateTime.now()
+            val createdTime      = OffsetDateTime.now()
             val movementResponse = MovementSummary(
               movementId,
               arbitrary[EORINumber].sample.value,
@@ -8790,7 +8790,7 @@ class MovementsControllerSpec
               _
             ) = createControllerAndMocks()
 
-            val createdTime = OffsetDateTime.now()
+            val createdTime      = OffsetDateTime.now()
             val movementResponse = MovementSummary(
               movementId,
               arbitrary[EORINumber].sample.value,
@@ -9796,7 +9796,7 @@ class MovementsControllerSpec
 
               val ppnsMessage = Json.toJson(
                 Json.obj(
-                  "code" -> "SUCCESS",
+                  "code"    -> "SUCCESS",
                   "message" ->
                     s"The message ${messageId.value} for movement ${movementId.value} was successfully processed"
                 )
@@ -10311,7 +10311,7 @@ class MovementsControllerSpec
         arbitrary[MovementType]
       ) {
         movementType =>
-          val controllerAndMocks = createControllerAndMocks()
+          val controllerAndMocks     = createControllerAndMocks()
           val result: Future[Result] = controllerAndMocks.sut.getMovements(
             movementType = movementType,
             updatedSince = None,
@@ -10336,7 +10336,7 @@ class MovementsControllerSpec
         arbitrary[MovementType]
       ) {
         movementType =>
-          val controllerAndMocks = createControllerAndMocks()
+          val controllerAndMocks     = createControllerAndMocks()
           val result: Future[Result] = controllerAndMocks.sut.getMovements(
             movementType = movementType,
             updatedSince = None,
