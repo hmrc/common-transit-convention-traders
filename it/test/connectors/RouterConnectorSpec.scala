@@ -150,7 +150,7 @@ class RouterConnectorSpec
           routerConnector
             .post(messageType, eoriNumber, movementId, messageId, source, version)(
               implicitly[ExecutionContext],
-              HeaderCarrier(otherHeaders = Seq((Constants.XClientIdHeader -> clientId)))
+              HeaderCarrier(otherHeaders = Seq(Constants.XClientIdHeader -> clientId))
             )
             .map(Right(_)) // can't test unit, but we want to test for success
             .recover {
