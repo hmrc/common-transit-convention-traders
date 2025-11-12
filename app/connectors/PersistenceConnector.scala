@@ -125,7 +125,7 @@ class PersistenceConnector @Inject() (httpClientV2: HttpClientV2, val metrics: M
       .executeAndDeserialise[PaginationMessageSummary]
   }
 
-  def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId, version: Version)(implicit
+  def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): Future[MovementSummary] = {
@@ -134,7 +134,6 @@ class PersistenceConnector @Inject() (httpClientV2: HttpClientV2, val metrics: M
     httpClientV2
       .get(url"$url")
       .withInternalAuthToken
-      .setHeader("APIVersion" -> s"${version.value}")
       .setHeader(HeaderNames.ACCEPT -> MimeTypes.JSON)
       .executeAndDeserialise[MovementSummary]
   }

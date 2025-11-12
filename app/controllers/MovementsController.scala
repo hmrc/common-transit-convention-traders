@@ -574,7 +574,7 @@ class MovementsControllerImpl @Inject() (
         val version                    = request.versionedHeader.version
 
         persistenceService
-          .getMovement(request.authenticatedRequest.eoriNumber, movementType, movementId, version)
+          .getMovement(request.authenticatedRequest.eoriNumber, movementType, movementId)
           .asPresentation
           .leftMap {
             err =>
@@ -696,7 +696,7 @@ class MovementsControllerImpl @Inject() (
         request.body.runWith(Sink.ignore)
 
         (for {
-          _ <- persistenceService.getMovement(request.authenticatedRequest.eoriNumber, movementType, movementId, version).asPresentation.leftMap {
+          _ <- persistenceService.getMovement(request.authenticatedRequest.eoriNumber, movementType, movementId).asPresentation.leftMap {
             err =>
               if (err.code.statusCode == NOT_FOUND)
                 auditService.auditStatusEvent(
@@ -871,168 +871,175 @@ class MovementsControllerImpl @Inject() (
         // a direct call to the API Gateway.
         implicit val hc: http.HeaderCarrier = originalHc.copy(otherHeaders = clientIdHeader ++ originalHc.otherHeaders)
 
-        request.body match {
-          case UpscanFailedResponse(reference, failureDetails) =>
-            auditService.auditStatusEvent(
-              AuditType.TraderFailedUpload,
-              Some(Json.toJson(failureDetails)),
-              Some(movementId),
-              Some(messageId),
-              Some(eori),
-              Some(movementType),
-              None,
-              V2_1 // TODO - Make version value dynamic CTCP6-68
-            )
+        val movement = persistenceService.getMovement(eori, movementType, movementId).toOption
 
-            logger.warn(s"""Upscan failed to process trader-uploaded file
-                 |
-                 |Movement ID: ${movementId.value}
-                 |Message ID: ${messageId.value}
-                 |
-                 |Upscan Reference: ${reference.value}
-                 |Reason: ${failureDetails.failureReason}
-                 |Message: ${failureDetails.message}""".stripMargin)
-            persistenceService.updateMessage(
-              eori,
-              movementType,
-              movementId,
-              messageId,
-              MessageUpdate(MessageStatus.Failed, None, None),
-              V2_1
-            ) // TODO - Make version value dynamic CTCP6-68
-            pushNotificationsService
-              .postPpnsNotification(
-                movementId,
-                messageId,
-                Json.toJson(PresentationError.badRequestError(failureDetails.message)),
-                V2_1
-              ) // TODO - Make version value dynamic CTCP6-68
-            Future.successful(Ok)
-          case UpscanSuccessResponse(_, downloadUrl, uploadDetails) =>
-            def completeSmallMessage(): EitherT[Future, PushNotificationError, Unit] = {
-              persistenceService.updateMessage(
-                eori,
-                movementType,
-                movementId,
-                messageId,
-                MessageUpdate(MessageStatus.Success, None, None),
-                V2_1
-              ) // TODO - Make version value dynamic CTCP6-68
-              pushNotificationsService.postPpnsNotification(
-                movementId,
-                messageId,
-                Json.toJson(
-                  Json.obj(
-                    "code"    -> "SUCCESS",
-                    "message" ->
-                      s"The message ${messageId.value} for movement ${movementId.value} was successfully processed"
+        movement.value.flatMap {
+          case Some(movementSummary) =>
+            request.body match {
+              case UpscanFailedResponse(reference, failureDetails) =>
+                auditService.auditStatusEvent(
+                  AuditType.TraderFailedUpload,
+                  Some(Json.toJson(failureDetails)),
+                  Some(movementId),
+                  Some(messageId),
+                  Some(eori),
+                  Some(movementType),
+                  None,
+                  movementSummary.apiVersion
+                )
+
+                logger.warn(s"""Upscan failed to process trader-uploaded file
+                     |
+                     |Movement ID: ${movementId.value}
+                     |Message ID: ${messageId.value}
+                     |
+                     |Upscan Reference: ${reference.value}
+                     |Reason: ${failureDetails.failureReason}
+                     |Message: ${failureDetails.message}""".stripMargin)
+                persistenceService.updateMessage(
+                  eori,
+                  movementType,
+                  movementId,
+                  messageId,
+                  MessageUpdate(MessageStatus.Failed, None, None),
+                  movementSummary.apiVersion
+                )
+                pushNotificationsService
+                  .postPpnsNotification(
+                    movementId,
+                    messageId,
+                    Json.toJson(PresentationError.badRequestError(failureDetails.message)),
+                    movementSummary.apiVersion
                   )
-                ),
-                V2_1 // TODO - Make version value dynamic CTCP6-68
-              )
-            }
-
-            // Download file to stream
-            upscanService
-              .upscanGetFile(downloadUrl) // TODO: If this fails, maybe consider returning 400 to upscan?
-              .asPresentation
-              .flatMap {
-                withReusableSource[SubmissionRoute](_) {
-                  source =>
-                    val allowedTypes =
-                      if (movementType == MovementType.Arrival) MessageType.messageTypesSentByArrivalTrader else MessageType.messageTypesSentByDepartureTrader
-                    for {
-                      // Extract type
-                      messageType <- xmlParsingService.extractMessageType(source, allowedTypes).asPresentation
-                      // Validate file
-                      _ <- validationService.validateXml(messageType, source, V2_1).asPresentation.leftMap { // TODO - Make version value dynamic CTCP6-68
-                        err =>
-                          auditService.auditStatusEvent(
-                            ValidationFailed,
-                            Some(Json.toJson(err)),
-                            Some(movementId),
-                            Some(messageId),
-                            Some(eori),
-                            Some(movementType),
-                            Some(messageType),
-                            V2_1 // TODO - Make version value dynamic CTCP6-68
-                          )
-                          err
-                      }
-                      // Save file (this will check the size and put it in the right place.
-                      _ <- persistenceService
-                        .updateMessageBody(messageType, eori, movementType, movementId, messageId, source, V2_1)
-                        .asPresentation // TODO - Make version value dynamic CTCP6-68
-                      _ = auditService.auditMessageEvent(
-                        messageType.auditType,
-                        MimeTypes.XML,
-                        uploadDetails.size,
-                        source,
-                        Some(movementId),
-                        Some(messageId),
-                        Some(eori),
-                        Some(movementType),
-                        Some(messageType),
-                        V2_1 // TODO - Make version value dynamic CTCP6-68
-                      )
-
-                      // Send message to router to be sent
-                      submissionResult <- routerService
-                        .send(messageType, eori, movementId, messageId, source, V2_1)
-                        .asPresentation
-                        .leftMap { // TODO - Make version value dynamic CTCP6-68
-                          err =>
-                            auditService.auditStatusEvent(
-                              SubmitAttachMessageFailed,
-                              Some(Json.toJson(err)),
-                              Some(movementId),
-                              Some(messageId),
-                              Some(eori),
-                              Some(movementType),
-                              Some(messageType),
-                              V2_1 // TODO - Make version value dynamic CTCP6-68
-                            )
-                            err
-                        }
-                      _ = auditService.auditStatusEvent(
-                        TraderToNCTSSubmissionSuccessful,
-                        None,
-                        Some(movementId),
-                        Some(messageId),
-                        Some(eori),
-                        Some(movementType),
-                        Some(messageType),
-                        V2_1 // TODO - Make version value dynamic CTCP6-68
-                      )
-                    } yield submissionResult
-                }
-              }
-              .map {
-                case SubmissionRoute.ViaEIS =>
-                  completeSmallMessage()
-                  Ok
-                case SubmissionRoute.ViaSDES =>
-                  Ok
-              }
-              .valueOr {
-                presentationError =>
-                  // we failed, so mark message as failure (but we can do that async)
+                Future.successful(Ok)
+              case UpscanSuccessResponse(_, downloadUrl, uploadDetails) =>
+                def completeSmallMessage(): EitherT[Future, PushNotificationError, Unit] = {
                   persistenceService.updateMessage(
                     eori,
                     movementType,
                     movementId,
                     messageId,
-                    MessageUpdate(MessageStatus.Failed, None, None),
-                    V2_1
-                  ) // TODO - Make version value dynamic CTCP6-68
+                    MessageUpdate(MessageStatus.Success, None, None),
+                    movementSummary.apiVersion
+                  )
                   pushNotificationsService.postPpnsNotification(
                     movementId,
                     messageId,
-                    Json.toJson(presentationError),
-                    V2_1
-                  ) // TODO - Make version value dynamic CTCP6-68
-                  Ok
-              }
+                    Json.toJson(
+                      Json.obj(
+                        "code"    -> "SUCCESS",
+                        "message" ->
+                          s"The message ${messageId.value} for movement ${movementId.value} was successfully processed"
+                      )
+                    ),
+                    movementSummary.apiVersion
+                  )
+                }
+
+                // Download file to stream
+                upscanService
+                  .upscanGetFile(downloadUrl) // TODO: If this fails, maybe consider returning 400 to upscan?
+                  .asPresentation
+                  .flatMap {
+                    withReusableSource[SubmissionRoute](_) {
+                      source =>
+                        val allowedTypes =
+                          if (movementType == MovementType.Arrival) MessageType.messageTypesSentByArrivalTrader
+                          else MessageType.messageTypesSentByDepartureTrader
+                        for {
+                          // Extract type
+                          messageType <- xmlParsingService.extractMessageType(source, allowedTypes).asPresentation
+                          // Validate file
+                          _ <- validationService.validateXml(messageType, source, movementSummary.apiVersion).asPresentation.leftMap {
+                            err =>
+                              auditService.auditStatusEvent(
+                                ValidationFailed,
+                                Some(Json.toJson(err)),
+                                Some(movementId),
+                                Some(messageId),
+                                Some(eori),
+                                Some(movementType),
+                                Some(messageType),
+                                movementSummary.apiVersion
+                              )
+                              err
+                          }
+                          // Save file (this will check the size and put it in the right place.
+                          _ <- persistenceService
+                            .updateMessageBody(messageType, eori, movementType, movementId, messageId, source, movementSummary.apiVersion)
+                            .asPresentation
+                          _ = auditService.auditMessageEvent(
+                            messageType.auditType,
+                            MimeTypes.XML,
+                            uploadDetails.size,
+                            source,
+                            Some(movementId),
+                            Some(messageId),
+                            Some(eori),
+                            Some(movementType),
+                            Some(messageType),
+                            movementSummary.apiVersion
+                          )
+
+                          // Send message to router to be sent
+                          submissionResult <- routerService
+                            .send(messageType, eori, movementId, messageId, source, movementSummary.apiVersion)
+                            .asPresentation
+                            .leftMap {
+                              err =>
+                                auditService.auditStatusEvent(
+                                  SubmitAttachMessageFailed,
+                                  Some(Json.toJson(err)),
+                                  Some(movementId),
+                                  Some(messageId),
+                                  Some(eori),
+                                  Some(movementType),
+                                  Some(messageType),
+                                  movementSummary.apiVersion
+                                )
+                                err
+                            }
+                          _ = auditService.auditStatusEvent(
+                            TraderToNCTSSubmissionSuccessful,
+                            None,
+                            Some(movementId),
+                            Some(messageId),
+                            Some(eori),
+                            Some(movementType),
+                            Some(messageType),
+                            movementSummary.apiVersion
+                          )
+                        } yield submissionResult
+                    }
+                  }
+                  .map {
+                    case SubmissionRoute.ViaEIS =>
+                      completeSmallMessage()
+                      Ok
+                    case SubmissionRoute.ViaSDES =>
+                      Ok
+                  }
+                  .valueOr {
+                    presentationError =>
+                      // we failed, so mark message as failure (but we can do that async)
+                      persistenceService.updateMessage(
+                        eori,
+                        movementType,
+                        movementId,
+                        messageId,
+                        MessageUpdate(MessageStatus.Failed, None, None),
+                        movementSummary.apiVersion
+                      )
+                      pushNotificationsService.postPpnsNotification(
+                        movementId,
+                        messageId,
+                        Json.toJson(presentationError),
+                        movementSummary.apiVersion
+                      )
+                      Ok
+                  }
+            }
+          case None => Future.successful(NotFound)
         }
     }
 
