@@ -159,7 +159,7 @@ class UpscanConnectorSpec
         ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
       )
       implicit val hc: HeaderCarrier = HeaderCarrier()
-      val result = sut
+      val result                     = sut
         .upscanInitiate(eoriNumber, movementType, movementId, messageId)
         .map(
           _ => fail("A success was recorded when it shouldn't have been")
@@ -208,7 +208,7 @@ class UpscanConnectorSpec
         ).willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR))
       )
       implicit val hc: HeaderCarrier = HeaderCarrier()
-      val result = sut
+      val result                     = sut
         .upscanGetFile(DownloadUrl(Url.parse(server.baseUrl()).toString()))
         .map(
           _ => fail("A success was recorded when it shouldn't have been")

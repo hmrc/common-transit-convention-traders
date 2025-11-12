@@ -34,6 +34,8 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesCon
   val upscanInitiateUrl: Url                  = Url.parse(servicesConfig.baseUrl("upscan-initiate"))
   val upscanMaximumFileSize: Long             = servicesConfig.config("upscan-initiate").get[Long]("maximumFileSize")
   val forwardClientIdToUpscan: Boolean        = servicesConfig.config("upscan-initiate").get[Boolean]("send-client-id")
+  val deployV3Beta: Boolean                   = config.get[Boolean]("deploy-v3-beta")
+  val deployV3Alpha: Boolean                  = config.get[Boolean]("deploy-v3-alpha")
   val smallMessageSizeLimit: Int              = config.get[Int]("smallMessageSizeLimit")
   val defaultItemsPerPage: Int                = config.get[Int]("defaultItemsPerPage")
   val maxItemsPerPage: Int                    = config.get[Int]("maxItemsPerPage")

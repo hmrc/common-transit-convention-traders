@@ -94,7 +94,7 @@ class ConversionConnectorSpec
           )
       )
 
-      val postResponse = sut.post(MessageType.DeclarationData, jsonStream, jsonToXml, version)
+      val postResponse   = sut.post(MessageType.DeclarationData, jsonStream, jsonToXml, version)
       val failedResponse = postResponse
         .map(
           _ => fail("Future unexpectedly succeeded, expected and UpstreamErrorResponse")
