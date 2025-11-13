@@ -6573,7 +6573,8 @@ class MovementsControllerSpec
           movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
           localReferenceNumber = Some(arbitrary[LocalReferenceNumber].sample.value),
           created = dateTime,
-          updated = dateTime.plusHours(1)
+          updated = dateTime.plusHours(1),
+          apiVersion = versionHeader
         )
 
         val departureResponse2 = MovementSummary(
@@ -6583,7 +6584,8 @@ class MovementsControllerSpec
           movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
           localReferenceNumber = Some(arbitrary[LocalReferenceNumber].sample.value),
           created = dateTime.plusHours(2),
-          updated = dateTime.plusHours(3)
+          updated = dateTime.plusHours(3),
+          apiVersion = versionHeader
         )
         val departureResponses        = Seq(departureResponse1, departureResponse2)
         val paginationMovementSummary = PaginationMovementSummary(TotalCount(departureResponses.length.toLong), departureResponses)
@@ -6657,7 +6659,8 @@ class MovementsControllerSpec
           movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
           localReferenceNumber = Some(arbitrary[LocalReferenceNumber].sample.value),
           created = dateTime,
-          updated = dateTime.plusHours(1)
+          updated = dateTime.plusHours(1),
+          apiVersion = versionHeader
         )
         val departureResponses        = Seq(departureResponse1)
         val paginationMovementSummary = PaginationMovementSummary(TotalCount(departureResponses.length.toLong), departureResponses)
@@ -6732,7 +6735,8 @@ class MovementsControllerSpec
           movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
           localReferenceNumber = Some(arbitrary[LocalReferenceNumber].sample.value),
           created = dateTime,
-          updated = dateTime.plusHours(1)
+          updated = dateTime.plusHours(1),
+          apiVersion = versionHeader
         )
         val departureResponses        = Seq(departureResponse1)
         val paginationMovementSummary = PaginationMovementSummary(TotalCount(departureResponses.length.toLong), departureResponses)
@@ -7125,10 +7129,11 @@ class MovementsControllerSpec
             Some(mrn),
             Some(lrn),
             createdTime,
-            createdTime
+            createdTime,
+            versionHeader
           )
 
-          when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()), any[Version])(any(), any()))
+          when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
             .thenAnswer(
               _ => EitherT.rightT(departureResponse)
             )
@@ -7155,7 +7160,8 @@ class MovementsControllerSpec
                 Some(mrn),
                 Some(lrn),
                 createdTime,
-                createdTime
+                createdTime,
+                versionHeader
               ),
               movementType
             )
@@ -7179,7 +7185,7 @@ class MovementsControllerSpec
           ) = createControllerAndMocks(enrollmentEORI = eori)
           when(
             mockPersistenceService
-              .getMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[String].asInstanceOf[MovementId], any[Version])(any(), any())
+              .getMovement(any[String].asInstanceOf[EORINumber], any[MovementType], any[String].asInstanceOf[MovementId])(any(), any())
           )
             .thenAnswer {
               _ =>
@@ -7233,7 +7239,7 @@ class MovementsControllerSpec
             _,
             _
           ) = createControllerAndMocks(enrollmentEORI = eori)
-          when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()), any[Version])(any(), any()))
+          when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
             .thenAnswer {
               _ =>
                 EitherT.leftT(PersistenceError.UnexpectedError(None))
@@ -7287,7 +7293,7 @@ class MovementsControllerSpec
             _
           ) = createControllerAndMocks(
           )
-          when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()), any[Version])(any(), any()))
+          when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
             .thenAnswer {
               _ =>
                 EitherT.leftT(PersistenceError.UnexpectedError(None))
@@ -7325,7 +7331,7 @@ class MovementsControllerSpec
             _
           ) = createControllerAndMocks(
           )
-          when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()), any[Version])(any(), any()))
+          when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
             .thenAnswer {
               _ =>
                 EitherT.leftT(PersistenceError.UnexpectedError(None))
@@ -8527,11 +8533,12 @@ class MovementsControllerSpec
               Some(arbitrary[MovementReferenceNumber].sample.value),
               Some(arbitrary[LocalReferenceNumber].sample.value),
               createdTime,
-              createdTime
+              createdTime,
+              versionHeader
             )
 
             when(
-              mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)), eqTo(versionHeader))(any(), any())
+              mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any())
             )
               .thenAnswer(
                 _ => EitherT.rightT(movementResponse)
@@ -8636,10 +8643,11 @@ class MovementsControllerSpec
               Some(arbitrary[MovementReferenceNumber].sample.value),
               Some(arbitrary[LocalReferenceNumber].sample.value),
               createdTime,
-              createdTime
+              createdTime,
+              versionHeader
             )
             when(
-              mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)), eqTo(versionHeader))(any(), any())
+              mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any())
             )
               .thenAnswer(
                 _ => EitherT.rightT(movementResponse)
@@ -8706,11 +8714,12 @@ class MovementsControllerSpec
               Some(arbitrary[MovementReferenceNumber].sample.value),
               Some(arbitrary[LocalReferenceNumber].sample.value),
               createdTime,
-              createdTime
+              createdTime,
+              versionHeader
             )
 
             when(
-              mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)), eqTo(versionHeader))(any(), any())
+              mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any())
             )
               .thenAnswer(
                 _ => EitherT.rightT(movementResponse)
@@ -8798,11 +8807,12 @@ class MovementsControllerSpec
               Some(arbitrary[MovementReferenceNumber].sample.value),
               Some(arbitrary[LocalReferenceNumber].sample.value),
               createdTime,
-              createdTime
+              createdTime,
+              versionHeader
             )
 
             when(
-              mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)), eqTo(versionHeader))(any(), any())
+              mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any())
             )
               .thenAnswer(
                 _ => EitherT.rightT(movementResponse)
@@ -8878,7 +8888,7 @@ class MovementsControllerSpec
             ) = createControllerAndMocks()
 
             when(
-              mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)), eqTo(versionHeader))(any(), any())
+              mockPersistenceService.getMovement(EORINumber(any()), eqTo(movementType), MovementId(eqTo(movementId.value)))(any(), any())
             )
               .thenAnswer(
                 _ => EitherT.leftT(PersistenceError.MovementNotFound(movementId, movementType))
@@ -9030,9 +9040,11 @@ class MovementsControllerSpec
         arbitrary[EORINumber],
         arbitrary[MovementType],
         arbitrary[MovementId],
-        arbitrary[MessageId]
+        arbitrary[MessageId],
+        arbitrary[MovementReferenceNumber],
+        arbitrary[LocalReferenceNumber]
       ) { // TODO: This is upscan's fault, we should consider a failure response here
-        (eori, movementType, movementId, messageId) =>
+        (eori, movementType, movementId, messageId, mrn, lrn) =>
           val ControllerAndMocks(
             sut,
             mockValidationService,
@@ -9048,6 +9060,21 @@ class MovementsControllerSpec
           ) = createControllerAndMocks(
           )
 
+          val createdTime      = OffsetDateTime.now()
+          val movementResponse = MovementSummary(
+            movementId,
+            eori,
+            Some(eori),
+            Some(mrn),
+            Some(lrn),
+            createdTime,
+            createdTime,
+            versionHeader
+          )
+
+          when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
+            .thenReturn(EitherT.rightT(movementResponse))
+
           when(mockUpscanService.upscanGetFile(DownloadUrl(eqTo(upscanDownloadUrl.value)))(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
             .thenReturn(EitherT.leftT(UpscanError.UnexpectedError(None)))
 
@@ -9056,7 +9083,7 @@ class MovementsControllerSpec
               MovementId(eqTo(movementId.value)),
               MessageId(eqTo(messageId.value)),
               any[JsValue],
-              eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+              eqTo(versionHeader)
             )(
               any(),
               any()
@@ -9094,7 +9121,7 @@ class MovementsControllerSpec
                 eqTo(movementType),
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
-                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                eqTo(versionHeader)
               )(any[HeaderCarrier], any[ExecutionContext])
 
               // small messages
@@ -9104,7 +9131,7 @@ class MovementsControllerSpec
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
                 any[Source[ByteString, ?]],
-                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                eqTo(versionHeader)
               )(any[ExecutionContext], any[HeaderCarrier])
 
               // failed status
@@ -9114,7 +9141,7 @@ class MovementsControllerSpec
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
                 eqTo(MessageUpdate(MessageStatus.Failed, None, None)),
-                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                eqTo(versionHeader)
               )(any[HeaderCarrier], any[ExecutionContext])
 
               // Verify that postPpnsNotification was called
@@ -9122,7 +9149,7 @@ class MovementsControllerSpec
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
                 any[JsValue],
-                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                eqTo(versionHeader)
               )(
                 any(),
                 any()
@@ -9138,7 +9165,7 @@ class MovementsControllerSpec
                 eqTo(Some(eori)),
                 eqTo(Some(movementType)),
                 eqTo(None),
-                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                eqTo(versionHeader)
               )(any(), any())
           }
       }
@@ -9149,9 +9176,11 @@ class MovementsControllerSpec
           arbitrary[EORINumber],
           arbitrary[MovementType],
           arbitrary[MovementId],
-          arbitrary[MessageId]
+          arbitrary[MessageId],
+          arbitrary[MovementReferenceNumber],
+          arbitrary[LocalReferenceNumber]
         ) {
-          (eori, movementType, movementId, messageId) =>
+          (eori, movementType, movementId, messageId, mrn, lrn) =>
             val ControllerAndMocks(
               sut,
               mockValidationService,
@@ -9167,6 +9196,18 @@ class MovementsControllerSpec
             ) = createControllerAndMocks(
             )
 
+            val createdTime      = OffsetDateTime.now()
+            val movementResponse = MovementSummary(
+              movementId,
+              eori,
+              Some(eori),
+              Some(mrn),
+              Some(lrn),
+              createdTime,
+              createdTime,
+              versionHeader
+            )
+
             val allowedTypes =
               if (movementType == MovementType.Arrival) MessageType.messageTypesSentByArrivalTrader else MessageType.messageTypesSentByDepartureTrader
 
@@ -9174,12 +9215,15 @@ class MovementsControllerSpec
               .thenReturn(EitherT.rightT(singleUseStringSource("<test></test>")))
             when(mockXmlParsingService.extractMessageType(any(), eqTo(allowedTypes))(any(), any())).thenReturn(EitherT.leftT(ExtractionError.MalformedInput))
 
+            when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
+              .thenReturn(EitherT.rightT(movementResponse))
+
             when(
               mockPushNotificationService.postPpnsNotification(
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
                 any[JsValue],
-                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -9207,7 +9251,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   any[Source[ByteString, ?]],
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[HeaderCarrier], any[ExecutionContext])
                 verify(mockValidationService, times(0)).validateXml(any[MessageType], any[Source[ByteString, ?]], any[Version])(any(), any())
 
@@ -9217,7 +9261,7 @@ class MovementsControllerSpec
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[HeaderCarrier], any[ExecutionContext])
 
                 // small messages
@@ -9227,7 +9271,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   any[Source[ByteString, ?]],
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[ExecutionContext], any[HeaderCarrier])
 
                 // Verify that postPpnsNotification was  called
@@ -9235,7 +9279,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   any[JsValue],
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -9248,7 +9292,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   eqTo(MessageUpdate(MessageStatus.Failed, None, None)),
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[HeaderCarrier], any[ExecutionContext])
 
                 verify(mockAuditService, times(0)).auditMessageEvent(
@@ -9261,7 +9305,7 @@ class MovementsControllerSpec
                   eqTo(Some(eori)),
                   eqTo(Some(movementType)),
                   eqTo(None),
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any(), any())
             }
         }
@@ -9270,9 +9314,11 @@ class MovementsControllerSpec
           arbitrary[EORINumber],
           arbitrary[MovementType],
           arbitrary[MovementId],
-          arbitrary[MessageId]
+          arbitrary[MessageId],
+          arbitrary[MovementReferenceNumber],
+          arbitrary[LocalReferenceNumber]
         ) {
-          (eori, movementType, movementId, messageId) =>
+          (eori, movementType, movementId, messageId, mrn, lrn) =>
             val ControllerAndMocks(
               sut,
               mockValidationService,
@@ -9288,10 +9334,25 @@ class MovementsControllerSpec
             ) = createControllerAndMocks(
             )
 
+            val createdTime      = OffsetDateTime.now()
+            val movementResponse = MovementSummary(
+              movementId,
+              eori,
+              Some(eori),
+              Some(mrn),
+              Some(lrn),
+              createdTime,
+              createdTime,
+              versionHeader
+            )
+
             val allowedTypes =
               if (movementType == MovementType.Arrival) MessageType.messageTypesSentByArrivalTrader else MessageType.messageTypesSentByDepartureTrader
 
             val messageType = Gen.oneOf(allowedTypes).sample.value
+
+            when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
+              .thenReturn(EitherT.rightT(movementResponse))
 
             when(mockUpscanService.upscanGetFile(DownloadUrl(eqTo(upscanDownloadUrl.value)))(any[HeaderCarrier], any[ExecutionContext], any[Materializer]))
               .thenReturn(EitherT.rightT(singleUseStringSource("<test></test>")))
@@ -9305,13 +9366,13 @@ class MovementsControllerSpec
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
                 any[Source[ByteString, ?]],
-                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                eqTo(versionHeader)
               )(any[HeaderCarrier], any[ExecutionContext])
             )
               .thenReturn(EitherT.rightT((): Unit))
             when(
-              mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, ?]], eqTo(V2_1))(any(), any())
-            ) // TODO version will need to be dynamic CTCP6-68
+              mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, ?]], eqTo(versionHeader))(any(), any())
+            )
               .thenReturn(EitherT.leftT(FailedToValidateError.XmlSchemaFailedToValidateError(NonEmptyList.one(XmlValidationError(1, 1, "nope")))))
 
             when(
@@ -9319,7 +9380,7 @@ class MovementsControllerSpec
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
                 any[JsValue],
-                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -9348,7 +9409,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   any[Source[ByteString, ?]],
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[HeaderCarrier], any[ExecutionContext])
 
                 // Verify that postPpnsNotification was not  called
@@ -9356,7 +9417,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   any[JsValue],
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -9368,7 +9429,7 @@ class MovementsControllerSpec
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[HeaderCarrier], any[ExecutionContext])
 
                 // small messages
@@ -9378,7 +9439,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   any[Source[ByteString, ?]],
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[ExecutionContext], any[HeaderCarrier])
 
                 // failed status
@@ -9388,7 +9449,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   eqTo(MessageUpdate(MessageStatus.Failed, None, None)),
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[HeaderCarrier], any[ExecutionContext])
 
                 verify(mockAuditService, times(0)).auditMessageEvent(
@@ -9401,7 +9462,7 @@ class MovementsControllerSpec
                   eqTo(Some(eori)),
                   eqTo(Some(movementType)),
                   eqTo(None),
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any(), any())
             }
 
@@ -9411,9 +9472,11 @@ class MovementsControllerSpec
           arbitrary[EORINumber],
           arbitrary[MovementType],
           arbitrary[MovementId],
-          arbitrary[MessageId]
+          arbitrary[MessageId],
+          arbitrary[MovementReferenceNumber],
+          arbitrary[LocalReferenceNumber]
         ) {
-          (eori, movementType, movementId, messageId) =>
+          (eori, movementType, movementId, messageId, mrn, lrn) =>
             val ControllerAndMocks(
               sut,
               mockValidationService,
@@ -9429,6 +9492,21 @@ class MovementsControllerSpec
             ) = createControllerAndMocks(
             )
 
+            val createdTime      = OffsetDateTime.now()
+            val movementResponse = MovementSummary(
+              movementId,
+              eori,
+              Some(eori),
+              Some(mrn),
+              Some(lrn),
+              createdTime,
+              createdTime,
+              versionHeader
+            )
+
+            when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
+              .thenReturn(EitherT.rightT(movementResponse))
+
             val allowedTypes =
               if (movementType == MovementType.Arrival) MessageType.messageTypesSentByArrivalTrader else MessageType.messageTypesSentByDepartureTrader
 
@@ -9439,8 +9517,8 @@ class MovementsControllerSpec
             when(mockXmlParsingService.extractMessageType(any(), eqTo(allowedTypes))(any(), any())).thenReturn(EitherT.rightT(messageType))
             // Audit service is ignored so no need to mock. We should verify though, which we do below.
             when(
-              mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, ?]], eqTo(V2_1))(any(), any())
-            ) // TODO version will need to be dynamic CTCP6-68
+              mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, ?]], eqTo(versionHeader))(any(), any())
+            )
               .thenReturn(EitherT.rightT((): Unit))
             when(
               mockPersistenceService.updateMessageBody(
@@ -9450,7 +9528,7 @@ class MovementsControllerSpec
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
                 any[Source[ByteString, ?]],
-                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                eqTo(versionHeader)
               )(any[HeaderCarrier], any[ExecutionContext])
             )
               .thenReturn(EitherT.leftT(PersistenceError.MessageNotFound(movementId, messageId))) // it doesn't matter what the error is really.
@@ -9460,7 +9538,7 @@ class MovementsControllerSpec
                 MovementId(eqTo(movementId.value)),
                 MessageId(eqTo(messageId.value)),
                 any[JsValue],
-                eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                eqTo(versionHeader)
               )(
                 any[HeaderCarrier],
                 any[ExecutionContext]
@@ -9489,7 +9567,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   any[Source[ByteString, ?]],
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[HeaderCarrier], any[ExecutionContext])
 
                 // large messages: TODO: hopefully will disappear
@@ -9498,7 +9576,7 @@ class MovementsControllerSpec
                   eqTo(movementType),
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[HeaderCarrier], any[ExecutionContext])
 
                 // small messages
@@ -9508,7 +9586,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   any[Source[ByteString, ?]],
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[ExecutionContext], any[HeaderCarrier])
 
                 // failed status
@@ -9518,7 +9596,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   eqTo(MessageUpdate(MessageStatus.Failed, None, None)),
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[HeaderCarrier], any[ExecutionContext])
 
                 // Verify that postPpnsNotification was called
@@ -9526,7 +9604,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   any[JsValue],
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -9542,7 +9620,7 @@ class MovementsControllerSpec
                   eqTo(Some(eori)),
                   eqTo(Some(movementType)),
                   eqTo(None),
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any(), any())
 
             }
@@ -9555,9 +9633,11 @@ class MovementsControllerSpec
             arbitrary[EORINumber],
             arbitrary[MovementType],
             arbitrary[MovementId],
-            arbitrary[MessageId]
+            arbitrary[MessageId],
+            arbitrary[MovementReferenceNumber],
+            arbitrary[LocalReferenceNumber]
           ) {
-            (eori, movementType, movementId, messageId) =>
+            (eori, movementType, movementId, messageId, mrn, lrn) =>
               val ControllerAndMocks(
                 sut,
                 mockValidationService,
@@ -9572,6 +9652,21 @@ class MovementsControllerSpec
                 mockAppConfig
               ) = createControllerAndMocks(
               )
+
+              val createdTime      = OffsetDateTime.now()
+              val movementResponse = MovementSummary(
+                movementId,
+                eori,
+                Some(eori),
+                Some(mrn),
+                Some(lrn),
+                createdTime,
+                createdTime,
+                versionHeader
+              )
+
+              when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
+                .thenReturn(EitherT.rightT(movementResponse))
 
               val allowedTypes =
                 if (movementType == MovementType.Arrival) MessageType.messageTypesSentByArrivalTrader else MessageType.messageTypesSentByDepartureTrader
@@ -9590,7 +9685,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   any[Source[ByteString, ?]],
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[HeaderCarrier], any[ExecutionContext])
               )
                 .thenReturn(EitherT.rightT((): Unit))
@@ -9606,13 +9701,13 @@ class MovementsControllerSpec
                   eqTo(Some(eori)),
                   eqTo(Some(movementType)),
                   eqTo(Some(messageType)),
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any(), any())
               ).thenReturn(Future.successful(()))
 
               when(
-                mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, ?]], eqTo(V2_1))(any(), any())
-              ) // TODO version will need to be dynamic CTCP6-68
+                mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, ?]], eqTo(versionHeader))(any(), any())
+              )
                 .thenReturn(EitherT.rightT((): Unit))
 
               // large message
@@ -9624,7 +9719,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   any[Source[ByteString, ?]],
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[ExecutionContext], any[HeaderCarrier])
               )
                 .thenReturn(EitherT.leftT(RouterError.UnrecognisedOffice("office", "office")))
@@ -9637,7 +9732,7 @@ class MovementsControllerSpec
                   any(),
                   eqTo(Some(movementType)),
                   eqTo(Some(messageType)),
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[HeaderCarrier], any[ExecutionContext])
               ).thenReturn(Future.successful(()))
 
@@ -9646,7 +9741,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   any[JsValue],
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -9674,7 +9769,7 @@ class MovementsControllerSpec
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     any[Source[ByteString, ?]],
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any[HeaderCarrier], any[ExecutionContext])
                   verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any[Source[ByteString, ?]], any[Version])(any(), any())
 
@@ -9684,7 +9779,7 @@ class MovementsControllerSpec
                     eqTo(movementType),
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   // small messages
@@ -9694,7 +9789,7 @@ class MovementsControllerSpec
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     any[Source[ByteString, ?]],
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any[ExecutionContext], any[HeaderCarrier])
 
                   verify(mockAuditService, times(0)).auditStatusEvent(
@@ -9705,7 +9800,7 @@ class MovementsControllerSpec
                     any(),
                     eqTo(Some(movementType)),
                     eqTo(Some(messageType)),
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any[HeaderCarrier], any[ExecutionContext])
                   // success status
                   verify(mockPersistenceService, times(0)).updateMessage(
@@ -9714,14 +9809,14 @@ class MovementsControllerSpec
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     eqTo(MessageUpdate(MessageStatus.Success, None, None)),
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   verify(mockPushNotificationService, times(1)).postPpnsNotification(
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     any[JsValue],
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(
                     any[HeaderCarrier],
                     any[ExecutionContext]
@@ -9734,7 +9829,7 @@ class MovementsControllerSpec
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     eqTo(MessageUpdate(MessageStatus.Failed, None, None)),
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   verify(mockAuditService, times(1)).auditMessageEvent(
@@ -9747,7 +9842,7 @@ class MovementsControllerSpec
                     eqTo(Some(eori)),
                     eqTo(Some(movementType)),
                     eqTo(Some(messageType)),
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any(), any())
 
                   verify(mockAuditService, times(1)).auditStatusEvent(
@@ -9765,7 +9860,7 @@ class MovementsControllerSpec
                     eqTo(Some(eori)),
                     eqTo(Some(movementType)),
                     eqTo(Some(messageType)),
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any[HeaderCarrier], any[ExecutionContext])
               }
 
@@ -9794,6 +9889,23 @@ class MovementsControllerSpec
               ) = createControllerAndMocks(
               )
 
+              val enrolmentEORINumber = arbitrary[EORINumber].sample.value
+              val dateTime            = OffsetDateTime.of(2022, 8, 4, 11, 34, 42, 0, ZoneOffset.UTC)
+
+              val movementResponse = MovementSummary(
+                _id = arbitrary[MovementId].sample.value,
+                enrollmentEORINumber = enrolmentEORINumber,
+                movementEORINumber = Some(arbitrary[EORINumber].sample.get),
+                movementReferenceNumber = Some(arbitrary[MovementReferenceNumber].sample.value),
+                localReferenceNumber = Some(arbitrary[LocalReferenceNumber].sample.value),
+                created = dateTime,
+                updated = dateTime.plusHours(1),
+                apiVersion = versionHeader
+              )
+
+              when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
+                .thenReturn(EitherT.rightT(movementResponse))
+
               val ppnsMessage = Json.toJson(
                 Json.obj(
                   "code"    -> "SUCCESS",
@@ -9819,7 +9931,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   any[Source[ByteString, ?]],
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[HeaderCarrier], any[ExecutionContext])
               )
                 .thenReturn(EitherT.rightT((): Unit))
@@ -9835,7 +9947,7 @@ class MovementsControllerSpec
                   eqTo(Some(eori)),
                   eqTo(Some(movementType)),
                   eqTo(Some(messageType)),
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any(), any())
               ).thenReturn(Future.successful(()))
 
@@ -9848,13 +9960,13 @@ class MovementsControllerSpec
                   any(),
                   eqTo(Some(movementType)),
                   eqTo(Some(messageType)),
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[HeaderCarrier], any[ExecutionContext])
               ).thenReturn(Future.successful(()))
 
               when(
-                mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, ?]], eqTo(V2_1))(any(), any())
-              ) // TODO version will need to be dynamic CTCP6-68
+                mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, ?]], eqTo(versionHeader))(any(), any())
+              )
                 .thenReturn(EitherT.rightT((): Unit))
 
               // large message
@@ -9866,7 +9978,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   any[Source[ByteString, ?]],
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[ExecutionContext], any[HeaderCarrier])
               )
                 .thenReturn(EitherT.rightT(SubmissionRoute.ViaEIS))
@@ -9876,7 +9988,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   eqTo(ppnsMessage),
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -9911,7 +10023,7 @@ class MovementsControllerSpec
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     any[Source[ByteString, ?]],
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(argThat(HeaderCarrierMatcher.clientId(clientId)), any[ExecutionContext])
 
                   verify(mockValidationService, times(1))
@@ -9922,7 +10034,7 @@ class MovementsControllerSpec
                     eqTo(movementType),
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   // small messages
@@ -9932,7 +10044,7 @@ class MovementsControllerSpec
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     any[Source[ByteString, ?]],
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any[ExecutionContext], argThat(HeaderCarrierMatcher.clientId(clientId)))
 
                   verify(mockAuditService, times(1)).auditStatusEvent(
@@ -9943,7 +10055,7 @@ class MovementsControllerSpec
                     any(),
                     eqTo(Some(movementType)),
                     eqTo(Some(messageType)),
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   // success status
@@ -9953,14 +10065,14 @@ class MovementsControllerSpec
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     eqTo(MessageUpdate(MessageStatus.Success, None, None)),
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(argThat(HeaderCarrierMatcher.clientId(clientId)), any[ExecutionContext])
 
                   verify(mockPushNotificationService, times(1)).postPpnsNotification(
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     eqTo(ppnsMessage),
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(
                     argThat(HeaderCarrierMatcher.clientId(clientId)),
                     any[ExecutionContext]
@@ -9973,7 +10085,7 @@ class MovementsControllerSpec
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     eqTo(MessageUpdate(MessageStatus.Failed, None, None)),
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   verify(mockAuditService, times(1)).auditMessageEvent(
@@ -9986,7 +10098,7 @@ class MovementsControllerSpec
                     eqTo(Some(eori)),
                     eqTo(Some(movementType)),
                     eqTo(Some(messageType)),
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any(), any())
 
               }
@@ -9997,9 +10109,11 @@ class MovementsControllerSpec
             arbitrary[EORINumber],
             arbitrary[MovementType],
             arbitrary[MovementId],
-            arbitrary[MessageId]
+            arbitrary[MessageId],
+            arbitrary[MovementReferenceNumber],
+            arbitrary[LocalReferenceNumber]
           ) {
-            (eori, movementType, movementId, messageId) =>
+            (eori, movementType, movementId, messageId, mrn, lrn) =>
               val ControllerAndMocks(
                 sut,
                 mockValidationService,
@@ -10014,6 +10128,21 @@ class MovementsControllerSpec
                 mockAppConfig
               ) = createControllerAndMocks(
               )
+
+              val createdTime      = OffsetDateTime.now()
+              val movementResponse = MovementSummary(
+                movementId,
+                eori,
+                Some(eori),
+                Some(mrn),
+                Some(lrn),
+                createdTime,
+                createdTime,
+                versionHeader
+              )
+
+              when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
+                .thenReturn(EitherT.rightT(movementResponse))
 
               val allowedTypes =
                 if (movementType == MovementType.Arrival) MessageType.messageTypesSentByArrivalTrader else MessageType.messageTypesSentByDepartureTrader
@@ -10032,7 +10161,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   any[Source[ByteString, ?]],
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[HeaderCarrier], any[ExecutionContext])
               )
                 .thenReturn(EitherT.rightT((): Unit))
@@ -10048,13 +10177,13 @@ class MovementsControllerSpec
                   eqTo(Some(eori)),
                   eqTo(Some(movementType)),
                   eqTo(Some(messageType)),
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any(), any())
               ).thenReturn(Future.successful(()))
 
               when(
-                mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, ?]], eqTo(V2_1))(any(), any())
-              ) // TODO version will need to be dynamic CTCP6-68
+                mockValidationService.validateXml(eqTo(messageType), any[Source[ByteString, ?]], eqTo(versionHeader))(any(), any())
+              )
                 .thenReturn(EitherT.rightT((): Unit))
 
               when(
@@ -10066,7 +10195,7 @@ class MovementsControllerSpec
                   any(),
                   eqTo(Some(movementType)),
                   eqTo(Some(messageType)),
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[HeaderCarrier], any[ExecutionContext])
               ).thenReturn(Future.successful(()))
 
@@ -10079,7 +10208,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   any[Source[ByteString, ?]],
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(any[ExecutionContext], any[HeaderCarrier])
               )
                 .thenReturn(EitherT.rightT(SubmissionRoute.ViaSDES))
@@ -10089,7 +10218,7 @@ class MovementsControllerSpec
                   MovementId(eqTo(movementId.value)),
                   MessageId(eqTo(messageId.value)),
                   any[JsValue],
-                  eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                  eqTo(versionHeader)
                 )(
                   any[HeaderCarrier],
                   any[ExecutionContext]
@@ -10120,7 +10249,7 @@ class MovementsControllerSpec
                     eqTo(Some(eori)),
                     eqTo(Some(movementType)),
                     eqTo(Some(messageType)),
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any(), any())
 
                   verify(mockAuditService, times(1)).auditStatusEvent(
@@ -10131,7 +10260,7 @@ class MovementsControllerSpec
                     any(),
                     eqTo(Some(movementType)),
                     eqTo(Some(messageType)),
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   verify(mockPersistenceService, times(1)).updateMessageBody(
@@ -10141,7 +10270,7 @@ class MovementsControllerSpec
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     any[Source[ByteString, ?]],
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any[HeaderCarrier], any[ExecutionContext])
                   verify(mockValidationService, times(1)).validateXml(eqTo(messageType), any[Source[ByteString, ?]], any[Version])(any(), any())
 
@@ -10150,7 +10279,7 @@ class MovementsControllerSpec
                     eqTo(movementType),
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   verify(mockRouterService, times(1)).send(
@@ -10159,7 +10288,7 @@ class MovementsControllerSpec
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     any[Source[ByteString, ?]],
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any[ExecutionContext], any[HeaderCarrier])
 
                   // success status
@@ -10169,7 +10298,7 @@ class MovementsControllerSpec
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     eqTo(MessageUpdate(MessageStatus.Success, None, None)),
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any[HeaderCarrier], any[ExecutionContext])
 
                   // Verify that postPpnsNotification was not  called
@@ -10177,7 +10306,7 @@ class MovementsControllerSpec
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     any[JsValue],
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(
                     any[HeaderCarrier],
                     any[ExecutionContext]
@@ -10190,7 +10319,7 @@ class MovementsControllerSpec
                     MovementId(eqTo(movementId.value)),
                     MessageId(eqTo(messageId.value)),
                     eqTo(MessageUpdate(MessageStatus.Failed, None, None)),
-                    eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+                    eqTo(versionHeader)
                   )(any[HeaderCarrier], any[ExecutionContext])
 
               }
@@ -10205,13 +10334,15 @@ class MovementsControllerSpec
       arbitraryEORINumber.arbitrary,
       arbitraryMovementType.arbitrary,
       arbitraryMovementId.arbitrary,
-      arbitraryMessageId.arbitrary
+      arbitraryMessageId.arbitrary,
+      arbitrary[MovementReferenceNumber],
+      arbitrary[LocalReferenceNumber]
     ) {
-      (eoriNumber, movementType, movementId, messageId) =>
+      (eoriNumber, movementType, movementId, messageId, mrn, lrn) =>
         val ControllerAndMocks(
           sut,
           _,
-          _,
+          mockPersistenceService,
           _,
           mockAuditService,
           _,
@@ -10221,6 +10352,21 @@ class MovementsControllerSpec
           _,
           _
         ) = createControllerAndMocks()
+
+        val createdTime      = OffsetDateTime.now()
+        val movementResponse = MovementSummary(
+          movementId,
+          eoriNumber,
+          Some(eoriNumber),
+          Some(mrn),
+          Some(lrn),
+          createdTime,
+          createdTime,
+          versionHeader
+        )
+
+        when(mockPersistenceService.getMovement(EORINumber(any()), any[MovementType], MovementId(any()))(any(), any()))
+          .thenReturn(EitherT.rightT(movementResponse))
 
         when(
           mockAuditService.auditStatusEvent(
@@ -10240,7 +10386,7 @@ class MovementsControllerSpec
             eqTo(Some(eoriNumber)),
             eqTo(Some(movementType)),
             eqTo(None),
-            eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+            eqTo(versionHeader)
           )(any(), any())
         ).thenReturn(Future.successful(()))
 
@@ -10251,7 +10397,7 @@ class MovementsControllerSpec
             eqTo(
               Json.toJson(PresentationError.badRequestError("e.g. This file has a virus"))
             ),
-            eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+            eqTo(versionHeader)
           )(
             any[HeaderCarrier],
             any[ExecutionContext]
@@ -10287,7 +10433,7 @@ class MovementsControllerSpec
           eqTo(Some(eoriNumber)),
           eqTo(Some(movementType)),
           eqTo(None),
-          eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+          eqTo(versionHeader)
         )(any(), any())
 
         // Verify that postPpnsNotification was not  called
@@ -10297,7 +10443,7 @@ class MovementsControllerSpec
           eqTo(
             Json.toJson(PresentationError.badRequestError("e.g. This file has a virus"))
           ),
-          eqTo(V2_1) // TODO this will need to be dynamic CTCP6-68
+          eqTo(versionHeader)
         )(
           any[HeaderCarrier],
           any[ExecutionContext]

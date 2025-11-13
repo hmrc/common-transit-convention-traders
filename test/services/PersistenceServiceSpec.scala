@@ -324,23 +324,24 @@ class PersistenceServiceSpec
         movementReferenceNumber = Some(MovementReferenceNumber("MRN001")),
         localReferenceNumber = Some(LocalReferenceNumber("LRN001")),
         created = now,
-        updated = now
+        updated = now,
+        apiVersion = version
       )
 
-      when(mockConnector.getMovement(EORINumber(any()), any(), MovementId(any()), any())(any(), any()))
+      when(mockConnector.getMovement(EORINumber(any()), any(), MovementId(any()))(any(), any()))
         .thenReturn(Future.successful(successResponse))
 
-      val result = sut.getMovement(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"), version)
+      val result = sut.getMovement(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"))
       whenReady(result.value) {
         _ mustBe Right(successResponse)
       }
     }
 
     "when a departure is not found, should return DepartureNotFound" in {
-      when(mockConnector.getMovement(EORINumber(any()), any(), MovementId(any()), any())(any(), any()))
+      when(mockConnector.getMovement(EORINumber(any()), any(), MovementId(any()))(any(), any()))
         .thenReturn(Future.failed(UpstreamErrorResponse("not found", NOT_FOUND)))
 
-      val result = sut.getMovement(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"), version)
+      val result = sut.getMovement(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"))
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.MovementNotFound(MovementId("1234567890abcdef"), MovementType.Departure))
       }
@@ -348,10 +349,10 @@ class PersistenceServiceSpec
 
     "on any other error, should return an UnexpectedError" in {
       val error = UpstreamErrorResponse("error", INTERNAL_SERVER_ERROR)
-      when(mockConnector.getMovement(EORINumber(any()), any(), MovementId(any()), any())(any(), any()))
+      when(mockConnector.getMovement(EORINumber(any()), any(), MovementId(any()))(any(), any()))
         .thenReturn(Future.failed(error))
 
-      val result = sut.getMovement(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"), version)
+      val result = sut.getMovement(EORINumber("1"), MovementType.Departure, MovementId("1234567890abcdef"))
       whenReady(result.value) {
         _ mustBe Left(PersistenceError.UnexpectedError(thr = Some(error)))
       }
