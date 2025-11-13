@@ -16,11 +16,15 @@
 
 package models.responses
 
+import models.Version
+import models.Version.V2_1
+import models.Version.V3_0
 import models.common.EORINumber
 import models.common.LocalReferenceNumber
 import models.common.MovementId
 import models.common.MovementReferenceNumber
 import org.scalacheck.Gen
+import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -30,10 +34,12 @@ import play.api.libs.json.Json
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
-class MovementSummarySpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class MovementSummarySpec extends AnyFreeSpec with Matchers with OptionValues with ScalaCheckDrivenPropertyChecks {
 
   private val hexId    = Gen.listOfN(16, Gen.hexChar).map(_.mkString.toLowerCase)
   private val dateTime = OffsetDateTime.of(2022, 8, 15, 11, 30, 0, 0, ZoneOffset.UTC)
+
+  val version: Version = Gen.oneOf(V2_1, V3_0).sample.value
 
   "when DepartureResponse is serialized, return an appropriate JsObject" in {
     val departureId = MovementId(hexId.sample.get)
@@ -46,7 +52,8 @@ class MovementSummarySpec extends AnyFreeSpec with Matchers with ScalaCheckDrive
         movementReferenceNumber = Some(MovementReferenceNumber("MRN001")),
         localReferenceNumber = Some(LocalReferenceNumber("LRN001")),
         created = dateTime,
-        updated = dateTime
+        updated = dateTime,
+        apiVersion = version
       )
     )
 
@@ -57,7 +64,8 @@ class MovementSummarySpec extends AnyFreeSpec with Matchers with ScalaCheckDrive
       "movementReferenceNumber" -> "MRN001",
       "localReferenceNumber"    -> "LRN001",
       "created"                 -> "2022-08-15T11:30:00Z", // due to OffsetDateTime in UTC
-      "updated"                 -> "2022-08-15T11:30:00Z"
+      "updated"                 -> "2022-08-15T11:30:00Z",
+      "apiVersion"              -> s"${version.value}"
     )
     actual mustBe expected
   }
@@ -73,7 +81,8 @@ class MovementSummarySpec extends AnyFreeSpec with Matchers with ScalaCheckDrive
         movementReferenceNumber = Some(MovementReferenceNumber("MRN001")),
         localReferenceNumber = Some(LocalReferenceNumber("LRN001")),
         created = dateTime,
-        updated = dateTime
+        updated = dateTime,
+        apiVersion = version
       )
 
     val actual = MovementSummary.movementSummaryFormat.reads(
@@ -84,7 +93,8 @@ class MovementSummarySpec extends AnyFreeSpec with Matchers with ScalaCheckDrive
         "movementReferenceNumber" -> "MRN001",
         "localReferenceNumber"    -> "LRN001",
         "created"                 -> "2022-08-15T11:30:00Z", // due to OffsetDateTime in UTC
-        "updated"                 -> "2022-08-15T11:30:00Z"
+        "updated"                 -> "2022-08-15T11:30:00Z",
+        "apiVersion"              -> s"${version.value}"
       )
     )
     actual mustBe JsSuccess(expected)

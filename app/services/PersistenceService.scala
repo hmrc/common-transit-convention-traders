@@ -109,13 +109,13 @@ class PersistenceService @Inject() (persistenceConnector: PersistenceConnector) 
         }
     )
 
-  def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId, version: Version)(implicit
+  def getMovement(eori: EORINumber, movementType: MovementType, movementId: MovementId)(implicit
     hc: HeaderCarrier,
     ec: ExecutionContext
   ): EitherT[Future, PersistenceError, MovementSummary] =
     EitherT(
       persistenceConnector
-        .getMovement(eori, movementType, movementId, version)
+        .getMovement(eori, movementType, movementId)
         .map(Right(_))
         .recover {
           case UpstreamErrorResponse(_, NOT_FOUND, _, _) => Left(PersistenceError.MovementNotFound(movementId, movementType))

@@ -787,7 +787,7 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getMovement(movementSummary.enrollmentEORINumber, MovementType.Departure, movementSummary._id, version)
+      val result      = persistenceConnector.getMovement(movementSummary.enrollmentEORINumber, MovementType.Departure, movementSummary._id)
       whenReady(result) {
         _ mustBe movementSummary
       }
@@ -809,7 +809,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getMovement(movementSummary.enrollmentEORINumber, MovementType.Departure, movementSummary._id, version)
+        .getMovement(movementSummary.enrollmentEORINumber, MovementType.Departure, movementSummary._id)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -841,7 +841,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getMovement(movementSummary.enrollmentEORINumber, MovementType.Departure, movementSummary._id, version)
+        .getMovement(movementSummary.enrollmentEORINumber, MovementType.Departure, movementSummary._id)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )
@@ -2363,7 +2363,7 @@ class PersistenceConnectorSpec
       )
 
       implicit val hc = HeaderCarrier()
-      val result      = persistenceConnector.getMovement(movementSummary.enrollmentEORINumber, MovementType.Arrival, movementSummary._id, version)
+      val result      = persistenceConnector.getMovement(movementSummary.enrollmentEORINumber, MovementType.Arrival, movementSummary._id)
       whenReady(result) {
         _ mustBe movementSummary
       }
@@ -2385,7 +2385,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getMovement(movementSummary.enrollmentEORINumber, MovementType.Arrival, movementSummary._id, version)
+        .getMovement(movementSummary.enrollmentEORINumber, MovementType.Arrival, movementSummary._id)
         .map(
           _ => fail("This should have failed with a JsResult.Exception, but it succeeded")
         )
@@ -2420,7 +2420,7 @@ class PersistenceConnectorSpec
       )
 
       val result = persistenceConnector
-        .getMovement(movementSummary.enrollmentEORINumber, MovementType.Arrival, movementSummary._id, version)
+        .getMovement(movementSummary.enrollmentEORINumber, MovementType.Arrival, movementSummary._id)
         .map(
           _ => fail("This should have failed with an UpstreamErrorResponse, but it succeeded")
         )

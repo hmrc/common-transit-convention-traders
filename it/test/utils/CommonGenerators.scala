@@ -20,6 +20,7 @@ import models.BoxId
 import models.MessageStatus
 import models.ObjectStoreURI
 import models.TotalCount
+import models.Version
 import models.common.*
 import models.request.MessageType
 import models.request.MessageUpdate
@@ -121,6 +122,10 @@ trait CommonGenerators {
     } yield LocalReferenceNumber(ref)
   }
 
+  implicit val arbitraryVersion: Arbitrary[Version] = Arbitrary {
+    Gen.oneOf(Version.V2_1, Version.V3_0)
+  }
+
   implicit lazy val arbitraryMovementSummary: Arbitrary[MovementSummary] = Arbitrary {
     for {
       id                      <- arbitrary[MovementId]
@@ -130,7 +135,8 @@ trait CommonGenerators {
       localReferenceNumber    <- arbitrary[Option[LocalReferenceNumber]]
       created                 <- arbitrary[OffsetDateTime]
       updated                 <- arbitrary[OffsetDateTime]
-    } yield MovementSummary(id, enrollmentEORINumber, Some(movementEORINumber), movementReferenceNumber, localReferenceNumber, created, updated)
+      apiVersion              <- arbitrary[Version]
+    } yield MovementSummary(id, enrollmentEORINumber, Some(movementEORINumber), movementReferenceNumber, localReferenceNumber, created, updated, apiVersion)
   }
 
   implicit lazy val arbitraryObjectStoreURI: Arbitrary[ObjectStoreURI] = Arbitrary {

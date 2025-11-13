@@ -18,6 +18,12 @@ package models
 
 import cats.implicits.*
 import models.common.errors.PresentationError
+import play.api.libs.json.Format
+import play.api.libs.json.JsError
+import play.api.libs.json.JsResult
+import play.api.libs.json.JsString
+import play.api.libs.json.JsSuccess
+import play.api.libs.json.JsValue
 
 enum Version(val value: String) {
   case V2_1 extends Version("2.1")
@@ -25,6 +31,17 @@ enum Version(val value: String) {
 }
 
 object Version {
+
+  implicit val format: Format[Version] = new Format[Version] {
+    override def writes(o: Version): JsValue = JsString(o.value)
+
+    override def reads(json: JsValue): JsResult[Version] = json match {
+      case JsString("3.0") => JsSuccess(V3_0)
+      case JsString("2.1") => JsSuccess(V2_1)
+      case value           => JsError(s"Invalid version provided: $value")
+    }
+  }
+
   def fromString(value: String): Either[PresentationError, Version] =
     Version.values
       .find(_.value == value)

@@ -121,6 +121,10 @@ trait TestCommonGenerators {
       } yield OffsetDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneOffset.UTC)
     }
 
+  implicit val arbitraryVersion: Arbitrary[Version] = Arbitrary {
+    Gen.oneOf(Version.V2_1, Version.V3_0)
+  }
+
   implicit lazy val arbitraryMovementSummary: Arbitrary[MovementSummary] = Arbitrary {
     for {
       id                      <- arbitrary[MovementId]
@@ -130,7 +134,17 @@ trait TestCommonGenerators {
       localReferenceNumber    <- arbitrary[LocalReferenceNumber]
       created                 <- arbitraryOffsetDateTime.arbitrary
       updated                 <- arbitraryOffsetDateTime.arbitrary
-    } yield MovementSummary(id, enrollmentEORINumber, Some(movementEORINumber), Some(movementReferenceNumber), Some(localReferenceNumber), created, updated)
+      apiVersion              <- arbitrary[Version]
+    } yield MovementSummary(
+      id,
+      enrollmentEORINumber,
+      Some(movementEORINumber),
+      Some(movementReferenceNumber),
+      Some(localReferenceNumber),
+      created,
+      updated,
+      apiVersion
+    )
   }
 
   implicit private lazy val arbitraryFields: Arbitrary[Map[String, String]] = Arbitrary {

@@ -17,11 +17,15 @@
 package models.responses.hateoas
 
 import base.TestCommonGenerators
+import models.Version
+import models.Version.V2_1
+import models.Version.V3_0
 import models.common.EORINumber
 import models.common.LocalReferenceNumber
 import models.common.MovementReferenceNumber
 import models.common.MovementType
 import models.responses.MovementSummary
+import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -34,6 +38,7 @@ import java.time.ZoneOffset
 class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaCheckDrivenPropertyChecks with TestCommonGenerators with OptionValues {
 
   private val dateTime = OffsetDateTime.of(2022, 8, 15, 11, 45, 0, 0, ZoneOffset.UTC)
+  val version: Version = Gen.oneOf(V2_1, V3_0).sample.value
 
   for (movementType <- MovementType.values)
     s"${movementType.movementType} with a valid response, create a valid HateoasMovementSummary" in {
@@ -46,7 +51,8 @@ class HateosMovementResponseSpec extends AnyFreeSpec with Matchers with ScalaChe
         movementReferenceNumber = Some(MovementReferenceNumber("MRN001")),
         localReferenceNumber = Some(LocalReferenceNumber("LRN001")),
         created = dateTime,
-        updated = dateTime
+        updated = dateTime,
+        apiVersion = version
       )
 
       val actual = HateoasMovementResponse(movementId, response, movementType)
