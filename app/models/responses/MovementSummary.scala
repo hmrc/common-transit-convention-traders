@@ -16,6 +16,7 @@
 
 package models.responses
 
+import models.Version
 import models.common.EORINumber
 import models.common.LocalReferenceNumber
 import models.common.MovementId
@@ -36,5 +37,6 @@ case class MovementSummary(
   movementReferenceNumber: Option[MovementReferenceNumber],
   localReferenceNumber: Option[LocalReferenceNumber],
   created: OffsetDateTime,
-  updated: OffsetDateTime
+  updated: OffsetDateTime,
+  apiVersion: Version
 )
