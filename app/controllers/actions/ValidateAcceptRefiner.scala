@@ -17,6 +17,7 @@
 package controllers.actions
 
 import cats.implicits.catsSyntaxEitherId
+import config.AppConfig
 import models.MediaType
 import models.Version
 import models.VersionedHeader
@@ -42,13 +43,15 @@ final case class ValidatedVersionedRequest[T](
   authenticatedRequest: AuthenticatedRequest[T]
 ) extends WrappedRequest[T](authenticatedRequest)
 
-final class ValidateAcceptRefiner @Inject() (implicit val ec: ExecutionContext, mat: Materializer)
+final class ValidateAcceptRefiner @Inject() (appConfig: AppConfig)(implicit val ec: ExecutionContext, mat: Materializer)
     extends ActionRefiner[AuthenticatedRequest, ValidatedVersionedRequest] {
 
   private val versionedRegex: Regex = """^application/vnd\.hmrc\.(\d*\.\d*)\+(.+)""".r
 
   private def validateAcceptHeader(authenticatedRequest: AuthenticatedRequest[?]): Either[PresentationError, VersionedHeader] =
     authenticatedRequest.headers.get(play.api.http.HeaderNames.ACCEPT) match {
+      case Some(versionedRegex("2.1", _)) if appConfig.disableP5 =>
+        PresentationError.notAcceptableError("Version 2.1 is no longer available. Please use version 3.0 of the API instead.").asLeft
       case Some(versionedRegex(ver, ext)) =>
         for {
           mediaType <- MediaType.fromString(ext)

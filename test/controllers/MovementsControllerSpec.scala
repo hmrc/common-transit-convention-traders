@@ -213,7 +213,7 @@ class MovementsControllerSpec
       mockRouterService,
       mockAuditService,
       mockPushNotificationService,
-      new ValidateAcceptRefiner(),
+      new ValidateAcceptRefiner(mockAppConfig),
       new MetricRegistry,
       mockXmlParsingService,
       mockJsonParsingService,
@@ -2889,6 +2889,43 @@ class MovementsControllerSpec
       contentAsJson(response) mustBe Json.obj(
         "code"    -> "NOT_ACCEPTABLE",
         "message" -> "The Accept header is missing or invalid."
+      )
+    }
+
+    "must return NOT_ACCEPTABLE when version 2.1 is used and disableP5 is 'true'" in {
+
+      val ControllerAndMocks(
+        sut,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        mockAppConfig
+      ) = createControllerAndMocks()
+
+      when(mockAppConfig.disableP5).thenReturn(true)
+
+      val standardHeaders = FakeHeaders(
+        Seq(
+          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
+          HeaderNames.CONTENT_TYPE   -> MimeTypes.JSON,
+          HeaderNames.CONTENT_LENGTH -> "1000",
+          Constants.XClientIdHeader  -> "1234567890"
+        )
+      )
+
+      val json     = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
+      val request  = fakeCreateMovementRequest("POST", standardHeaders, Source.single(json), MovementType.Departure)
+      val response = sut.createMovement(MovementType.Departure)(request)
+      status(response) mustBe NOT_ACCEPTABLE
+      contentAsJson(response) mustBe Json.obj(
+        "code"    -> "NOT_ACCEPTABLE",
+        "message" -> "Version 2.1 is no longer available. Please use version 3.0 of the API instead."
       )
     }
 
