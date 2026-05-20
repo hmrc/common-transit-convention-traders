@@ -2925,7 +2925,43 @@ class MovementsControllerSpec
       status(response) mustBe NOT_ACCEPTABLE
       contentAsJson(response) mustBe Json.obj(
         "code"    -> "NOT_ACCEPTABLE",
-        "message" -> "Version 2.1 is no longer available. Please use version 3.0 of the API instead."
+        "message" -> "CTC Traders API v2.1 is no longer available. Use CTC Traders API v3.0 instead."
+      )
+    }
+
+    "must return NOT_ACCEPTABLE when version 3.0 is used and disableP6 is 'true'" in {
+      val ControllerAndMocks(
+        sut,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        mockAppConfig
+      ) = createControllerAndMocks()
+
+      when(mockAppConfig.disableP6).thenReturn(true)
+
+      val standardHeaders = FakeHeaders(
+        Seq(
+          HeaderNames.ACCEPT         -> "application/vnd.hmrc.3.0+json",
+          HeaderNames.CONTENT_TYPE   -> MimeTypes.JSON,
+          HeaderNames.CONTENT_LENGTH -> "1000",
+          Constants.XClientIdHeader  -> "1234567890"
+        )
+      )
+
+      val json     = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
+      val request  = fakeCreateMovementRequest("POST", standardHeaders, Source.single(json), MovementType.Departure)
+      val response = sut.createMovement(MovementType.Departure)(request)
+      status(response) mustBe NOT_ACCEPTABLE
+      contentAsJson(response) mustBe Json.obj(
+        "code"    -> "NOT_ACCEPTABLE",
+        "message" -> "CTC Traders API v3.0 is only available June 1st 2026. Use CTC Traders API v2.1 instead."
       )
     }
 

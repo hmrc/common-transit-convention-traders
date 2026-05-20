@@ -41,4 +41,5 @@ class AppConfig @Inject() (config: Configuration, servicesConfig: CTCServicesCon
   val maxItemsPerPage: Int                    = config.get[Int]("maxItemsPerPage")
   val internalAuthToken: String               = config.get[String]("internal-auth.token")
   val disableP5: Boolean                      = config.get[Boolean]("disable-p5")
+  val disableP6: Boolean                      = config.get[Boolean]("disable-p6")
 }

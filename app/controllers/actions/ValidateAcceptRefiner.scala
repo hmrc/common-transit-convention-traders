@@ -51,7 +51,9 @@ final class ValidateAcceptRefiner @Inject() (appConfig: AppConfig)(implicit val 
   private def validateAcceptHeader(authenticatedRequest: AuthenticatedRequest[?]): Either[PresentationError, VersionedHeader] =
     authenticatedRequest.headers.get(play.api.http.HeaderNames.ACCEPT) match {
       case Some(versionedRegex("2.1", _)) if appConfig.disableP5 =>
-        PresentationError.notAcceptableError("Version 2.1 is no longer available. Please use version 3.0 of the API instead.").asLeft
+        PresentationError.notAcceptableError("CTC Traders API v2.1 is no longer available. Use CTC Traders API v3.0 instead.").asLeft
+      case Some(versionedRegex("3.0", _)) if appConfig.disableP6 =>
+        PresentationError.notAcceptableError("CTC Traders API v3.0 is only available June 1st 2026. Use CTC Traders API v2.1 instead.").asLeft
       case Some(versionedRegex(ver, ext)) =>
         for {
           mediaType <- MediaType.fromString(ext)
