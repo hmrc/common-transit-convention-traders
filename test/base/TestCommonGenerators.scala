@@ -16,14 +16,14 @@
 
 package base
 
+import models.*
 import models.common.*
 import models.request.MessageType
 import models.request.MessageUpdate
 import models.request.Metadata
+import models.responses.*
 import models.responses.UpscanResponse.DownloadUrl
 import models.responses.UpscanResponse.Reference
-import models.responses.*
-import models.*
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
@@ -121,9 +121,7 @@ trait TestCommonGenerators {
       } yield OffsetDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneOffset.UTC)
     }
 
-  implicit val arbitraryVersion: Arbitrary[Version] = Arbitrary {
-    Gen.oneOf(Version.V2_1, Version.V3_0)
-  }
+  implicit val arbitraryVersion: Arbitrary[Version] = Arbitrary(Version.V3_0)
 
   implicit lazy val arbitraryMovementSummary: Arbitrary[MovementSummary] = Arbitrary {
     for {

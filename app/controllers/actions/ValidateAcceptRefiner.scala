@@ -17,7 +17,6 @@
 package controllers.actions
 
 import cats.implicits.catsSyntaxEitherId
-import config.AppConfig
 import models.MediaType
 import models.Version
 import models.VersionedHeader
@@ -43,17 +42,13 @@ final case class ValidatedVersionedRequest[T](
   authenticatedRequest: AuthenticatedRequest[T]
 ) extends WrappedRequest[T](authenticatedRequest)
 
-final class ValidateAcceptRefiner @Inject() (appConfig: AppConfig)(implicit val ec: ExecutionContext, mat: Materializer)
+final class ValidateAcceptRefiner @Inject() (implicit val ec: ExecutionContext, mat: Materializer)
     extends ActionRefiner[AuthenticatedRequest, ValidatedVersionedRequest] {
 
   private val versionedRegex: Regex = """^application/vnd\.hmrc\.(\d*\.\d*)\+(.+)""".r
 
   private def validateAcceptHeader(authenticatedRequest: AuthenticatedRequest[?]): Either[PresentationError, VersionedHeader] =
     authenticatedRequest.headers.get(play.api.http.HeaderNames.ACCEPT) match {
-      case Some(versionedRegex("2.1", _)) if appConfig.disableP5 =>
-        PresentationError.notAcceptableError("CTC Traders API v2.1 is no longer available. Use CTC Traders API v3.0 instead.").asLeft
-      case Some(versionedRegex("3.0", _)) if appConfig.disableP6 =>
-        PresentationError.notAcceptableError("CTC Traders API v3.0 is only available June 1st 2026. Use CTC Traders API v2.1 instead.").asLeft
       case Some(versionedRegex(ver, ext)) =>
         for {
           mediaType <- MediaType.fromString(ext)

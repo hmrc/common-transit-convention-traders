@@ -20,9 +20,10 @@ import base.TestActorSystem
 import cats.data.EitherT
 import cats.implicits.catsSyntaxEitherId
 import connectors.ConversionConnector
+import models.HeaderTypes.jsonToXml
 import models.HeaderType
 import models.Version
-import models.HeaderTypes.jsonToXml
+import models.Version.V3_0
 import models.common.errors.ConversionError
 import models.request.MessageType
 import org.apache.pekko.NotUsed
@@ -32,9 +33,6 @@ import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.*
-import org.scalacheck.Gen
-import models.Version.V2_1
-import models.Version.V3_0
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -49,7 +47,7 @@ import scala.concurrent.*
 
 class ConversionServiceSpec extends AnyFreeSpec with Matchers with OptionValues with MockitoSugar with ScalaFutures with TestActorSystem {
 
-  val version: Version = Gen.oneOf(V2_1, V3_0).sample.value
+  val version: Version = V3_0
 
   "On converting a message" - {
     "a successful conversion, should return a Right" in new Setup {

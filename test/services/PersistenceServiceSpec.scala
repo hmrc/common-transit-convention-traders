@@ -19,12 +19,13 @@ package services
 import base.TestActorSystem
 import base.TestCommonGenerators
 import connectors.PersistenceConnector
+import models.*
+import models.Version.V3_0
 import models.common.*
 import models.common.errors.PersistenceError
 import models.request.MessageType
 import models.request.MessageUpdate
 import models.responses.*
-import models.*
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
@@ -34,8 +35,6 @@ import org.mockito.Mockito.reset
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
-import models.Version.V2_1
-import models.Version.V3_0
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -70,7 +69,7 @@ class PersistenceServiceSpec
 
   val mockConnector: PersistenceConnector = mock[PersistenceConnector]
   val sut                                 = new PersistenceService(mockConnector)
-  val version: Version                    = Gen.oneOf(V2_1, V3_0).sample.value
+  val version: Version                    = V3_0
 
   override def beforeEach(): Unit =
     reset(mockConnector)

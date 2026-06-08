@@ -39,7 +39,6 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import models.Version
-import models.Version.V2_1
 import models.Version.V3_0
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.IntegrationPatience
@@ -78,7 +77,7 @@ class AuditingConnectorSpec
     with CommonGenerators {
 
   val token: String                     = Gen.alphaNumStr.sample.get
-  lazy val version: Version             = Gen.oneOf(V2_1, V3_0).sample.value
+  lazy val version: Version             = V3_0
   implicit val mockAppConfig: AppConfig = mock[AppConfig]
   when(mockAppConfig.internalAuthToken).thenReturn(token)
   when(mockAppConfig.auditingUrl).thenAnswer(

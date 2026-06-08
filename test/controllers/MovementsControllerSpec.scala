@@ -37,7 +37,6 @@ import models.MediaType.JsonHeader
 import models.MediaType.JsonHyphenXmlHeader
 import models.MediaType.JsonPlusXmlHeader
 import models.MediaType.XMLHeader
-import models.Version.V2_1
 import models.Version.V3_0
 import models.common.*
 import models.common.errors.*
@@ -146,7 +145,7 @@ class MovementsControllerSpec
   val CC013Cjson: String = Json.stringify(Json.obj("CC013" -> Json.obj("field" -> "value")))
   val CC044Cjson: String = Json.stringify(Json.obj("CC044" -> Json.obj("field" -> "value")))
 
-  val versionHeader: Version = Gen.oneOf(V2_1, V3_0).sample.value
+  val versionHeader: Version = V3_0
 
   val upscanDownloadUrl: DownloadUrl = DownloadUrl("https://bucketName.s3.eu-west-2.amazonaws.com?1235676")
 
@@ -213,7 +212,7 @@ class MovementsControllerSpec
       mockRouterService,
       mockAuditService,
       mockPushNotificationService,
-      new ValidateAcceptRefiner(mockAppConfig),
+      new ValidateAcceptRefiner,
       new MetricRegistry,
       mockXmlParsingService,
       mockJsonParsingService,
@@ -2892,79 +2891,6 @@ class MovementsControllerSpec
       )
     }
 
-    "must return NOT_ACCEPTABLE when version 2.1 is used and disableP5 is 'true'" in {
-
-      val ControllerAndMocks(
-        sut,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _,
-        mockAppConfig
-      ) = createControllerAndMocks()
-
-      when(mockAppConfig.disableP5).thenReturn(true)
-
-      val standardHeaders = FakeHeaders(
-        Seq(
-          HeaderNames.ACCEPT         -> "application/vnd.hmrc.2.1+json",
-          HeaderNames.CONTENT_TYPE   -> MimeTypes.JSON,
-          HeaderNames.CONTENT_LENGTH -> "1000",
-          Constants.XClientIdHeader  -> "1234567890"
-        )
-      )
-
-      val json     = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
-      val request  = fakeCreateMovementRequest("POST", standardHeaders, Source.single(json), MovementType.Departure)
-      val response = sut.createMovement(MovementType.Departure)(request)
-      status(response) mustBe NOT_ACCEPTABLE
-      contentAsJson(response) mustBe Json.obj(
-        "code"    -> "NOT_ACCEPTABLE",
-        "message" -> "CTC Traders API v2.1 is no longer available. Use CTC Traders API v3.0 instead."
-      )
-    }
-
-    "must return NOT_ACCEPTABLE when version 3.0 is used and disableP6 is 'true'" in {
-      val ControllerAndMocks(
-        sut,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _,
-        _,
-        mockAppConfig
-      ) = createControllerAndMocks()
-
-      when(mockAppConfig.disableP6).thenReturn(true)
-
-      val standardHeaders = FakeHeaders(
-        Seq(
-          HeaderNames.ACCEPT         -> "application/vnd.hmrc.3.0+json",
-          HeaderNames.CONTENT_TYPE   -> MimeTypes.JSON,
-          HeaderNames.CONTENT_LENGTH -> "1000",
-          Constants.XClientIdHeader  -> "1234567890"
-        )
-      )
-
-      val json     = Json.stringify(Json.obj("CC015" -> Json.obj("SynIdeMES1" -> "UNOC")))
-      val request  = fakeCreateMovementRequest("POST", standardHeaders, Source.single(json), MovementType.Departure)
-      val response = sut.createMovement(MovementType.Departure)(request)
-      status(response) mustBe NOT_ACCEPTABLE
-      contentAsJson(response) mustBe Json.obj(
-        "code"    -> "NOT_ACCEPTABLE",
-        "message" -> "CTC Traders API v3.0 is only available June 1st 2026. Use CTC Traders API v2.1 instead."
-      )
-    }
-
     "must return NOT_ACCEPTABLE when the accept type is invalid" in {
       val ControllerAndMocks(
         sut,
@@ -5636,7 +5562,7 @@ class MovementsControllerSpec
           status(response) mustBe NOT_ACCEPTABLE
           contentAsJson(response) mustBe Json.obj(
             "code"    -> "NOT_ACCEPTABLE",
-            "message" -> "The Accept header is missing or invalid."
+            "message" -> "Invalid version provided"
           )
       }
 

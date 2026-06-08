@@ -24,7 +24,6 @@ import com.github.tomakehurst.wiremock.client.WireMock.*
 import config.AppConfig
 import config.Constants
 import models.Version
-import models.Version.V2_1
 import models.Version.V3_0
 import models.SubmissionRoute
 import models.common.MessageId
@@ -85,7 +84,7 @@ class RouterConnectorSpec
   implicit lazy val ec: ExecutionContext       = app.materializer.executionContext
   lazy val routerConnector: RouterConnector    = new RouterConnector(new MetricRegistry, httpClientV2)
 
-  lazy val version: Version = Gen.oneOf(V2_1, V3_0).sample.value
+  lazy val version: Version = V3_0
 
   def targetUrl(eoriNumber: EORINumber, messageType: MessageType, movementId: MovementId, messageId: MessageId) =
     s"/transit-movements-router/traders/${eoriNumber.value}/movements/${messageType.movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"

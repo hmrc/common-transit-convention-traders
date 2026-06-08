@@ -17,17 +17,17 @@
 package connectors
 
 import com.codahale.metrics.MetricRegistry
-import org.apache.pekko.stream.scaladsl.Sink
-import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.util.ByteString
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import config.AppConfig
-import org.scalacheck.Gen
+import models.HeaderTypes.jsonToXml
 import models.Version
-import models.Version.V2_1
 import models.Version.V3_0
 import models.request.MessageType
 import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
+import org.scalatest.OptionValues
 import org.scalatest.concurrent.*
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -37,8 +37,6 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.http.test.HttpClientV2Support
 import utils.*
-import models.HeaderTypes.jsonToXml
-import org.scalatest.OptionValues
 
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContextExecutor
@@ -59,7 +57,7 @@ class ConversionConnectorSpec
   implicit lazy val hc: HeaderCarrier            = HeaderCarrier()
   lazy val messageType                           = MessageType.DeclarationData
   lazy val jsonStream                            = Source.single(ByteString("{}", StandardCharsets.UTF_8))
-  lazy val version: Version                      = Gen.oneOf(V2_1, V3_0).sample.value
+  lazy val version: Version                      = V3_0
 
   lazy val sut = new ConversionConnector(httpClientV2, appConfig, new MetricRegistry)
 

@@ -71,7 +71,6 @@ import models.responses.PaginationMovementSummary
 import models.responses.UpdateMovementResponse
 import org.scalatest.OptionValues
 import models.Version
-import models.Version.V2_1
 import models.Version.V3_0
 
 import java.nio.charset.StandardCharsets
@@ -106,7 +105,7 @@ class PersistenceConnectorSpec
   lazy val messageType                   = MessageType.DeclarationAmendment
   lazy val persistenceConnector          = new PersistenceConnector(httpClientV2, new MetricRegistry)
   implicit lazy val ec: ExecutionContext = app.materializer.executionContext
-  lazy val version: Version              = Gen.oneOf(V2_1, V3_0).sample.value
+  lazy val version: Version              = V3_0
 
   val defaultFilterParams = "?page=1&count=25"
 

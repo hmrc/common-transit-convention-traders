@@ -29,7 +29,6 @@ import models.common.MessageId
 import models.common.MovementId
 import org.scalatest.OptionValues
 import models.Version
-import models.Version.V2_1
 import models.Version.V3_0
 import models.request.PushNotificationsAssociation
 import org.mockito.Mockito.when
@@ -70,7 +69,7 @@ class PushNotificationsConnectorSpec
     with MockitoSugar
     with CommonGenerators {
 
-  lazy val version: Version = Gen.oneOf(V2_1, V3_0).sample.value
+  lazy val version: Version = V3_0
 
   val token: String                     = Gen.alphaNumStr.sample.get
   implicit val mockAppConfig: AppConfig = mock[AppConfig]

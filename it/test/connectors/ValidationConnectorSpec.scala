@@ -25,7 +25,6 @@ import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import config.AppConfig
 import models.Version
-import models.Version.V2_1
 import models.Version.V3_0
 import models.common.errors.JsonValidationError
 import models.common.errors.PresentationError
@@ -36,13 +35,12 @@ import models.responses.JsonSchemaValidationResponse
 import models.responses.XmlSchemaValidationResponse
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
-import org.scalacheck.Gen
+import org.scalatest.OptionValues
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import org.scalatest.OptionValues
 import play.api.http.ContentTypes
 import play.api.http.HeaderNames
 import play.api.http.Status.BAD_REQUEST
@@ -70,7 +68,7 @@ class ValidationConnectorSpec
     with IntegrationPatience {
 
   lazy val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
-  lazy val version: Version     = Gen.oneOf(V2_1, V3_0).sample.value
+  lazy val version: Version     = V3_0
 
   lazy val validationConnector: ValidationConnector = new ValidationConnector(httpClientV2, appConfig, new MetricRegistry)
   implicit lazy val ec: ExecutionContext            = app.materializer.executionContext

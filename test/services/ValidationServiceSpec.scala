@@ -19,14 +19,13 @@ package services
 import cats.data.EitherT
 import cats.data.NonEmptyList
 import connectors.ValidationConnector
+import models.Version
+import models.Version.V3_0
 import models.common.errors.FailedToValidateError
 import models.common.errors.JsonValidationError
 import models.common.errors.XmlValidationError
 import models.request.MessageType
 import models.responses.*
-import models.Version
-import models.Version.V2_1
-import models.Version.V3_0
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString
@@ -43,7 +42,6 @@ import play.api.http.Status.NOT_FOUND
 import play.api.libs.json.JsError
 import play.api.libs.json.JsResult
 import play.api.libs.json.Json
-import org.scalacheck.Gen
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.UpstreamErrorResponse
 
@@ -54,7 +52,7 @@ import scala.concurrent.Future
 
 class ValidationServiceSpec extends AnyFreeSpec with Matchers with OptionValues with ScalaFutures with MockitoSugar {
 
-  val version: Version = Gen.oneOf(V2_1, V3_0).sample.value
+  val version: Version = V3_0
 
   "validating XML" - {
 

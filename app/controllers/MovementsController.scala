@@ -37,7 +37,6 @@ import models.MediaType.JsonHeader
 import models.MediaType.JsonHyphenXmlHeader
 import models.MediaType.JsonPlusXmlHeader
 import models.MediaType.XMLHeader
-import models.Version.V2_1
 import models.Version.V3_0
 import models.common.*
 import models.common.errors.PersistenceError
@@ -141,11 +140,11 @@ class MovementsControllerImpl @Inject() (
       version   <- versions
     } yield VersionedHeader(mediaType, version)).toSet
 
-  private lazy val jsonOnlyAcceptHeader: Set[VersionedHeader] = acceptHeadersFor(JsonHeader)(V2_1, V3_0)
+  private lazy val jsonOnlyAcceptHeader: Set[VersionedHeader] = acceptHeadersFor(JsonHeader)(V3_0)
 
-  private lazy val jsonAndXmlAcceptHeaders: Set[VersionedHeader] = acceptHeadersFor(JsonHeader, XMLHeader)(V2_1, V3_0)
+  private lazy val jsonAndXmlAcceptHeaders: Set[VersionedHeader] = acceptHeadersFor(JsonHeader, XMLHeader)(V3_0)
 
-  private lazy val jsonAndJsonWrappedXmlAcceptHeaders: Set[VersionedHeader] = acceptHeadersFor(JsonHeader, JsonPlusXmlHeader, JsonHyphenXmlHeader)(V2_1, V3_0)
+  private lazy val jsonAndJsonWrappedXmlAcceptHeaders: Set[VersionedHeader] = acceptHeadersFor(JsonHeader, JsonPlusXmlHeader, JsonHyphenXmlHeader)(V3_0)
 
   private def contentSizeIsLessThanLimit(size: Long): EitherT[Future, PresentationError, Unit] = EitherT {
     if (size <= config.smallMessageSizeLimit) Future.successful(Right(()))

@@ -16,11 +16,7 @@
 
 package utils
 
-import models.BoxId
-import models.MessageStatus
-import models.ObjectStoreURI
-import models.TotalCount
-import models.Version
+import models.*
 import models.common.*
 import models.request.MessageType
 import models.request.MessageUpdate
@@ -123,7 +119,7 @@ trait CommonGenerators {
   }
 
   implicit val arbitraryVersion: Arbitrary[Version] = Arbitrary {
-    Gen.oneOf(Version.V2_1, Version.V3_0)
+    Version.V3_0
   }
 
   implicit lazy val arbitraryMovementSummary: Arbitrary[MovementSummary] = Arbitrary {

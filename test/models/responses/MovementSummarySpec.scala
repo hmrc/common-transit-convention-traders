@@ -17,7 +17,6 @@
 package models.responses
 
 import models.Version
-import models.Version.V2_1
 import models.Version.V3_0
 import models.common.EORINumber
 import models.common.LocalReferenceNumber
@@ -39,7 +38,7 @@ class MovementSummarySpec extends AnyFreeSpec with Matchers with OptionValues wi
   private val hexId    = Gen.listOfN(16, Gen.hexChar).map(_.mkString.toLowerCase)
   private val dateTime = OffsetDateTime.of(2022, 8, 15, 11, 30, 0, 0, ZoneOffset.UTC)
 
-  val version: Version = Gen.oneOf(V2_1, V3_0).sample.value
+  val version: Version = V3_0
 
   "when DepartureResponse is serialized, return an appropriate JsObject" in {
     val departureId = MovementId(hexId.sample.get)

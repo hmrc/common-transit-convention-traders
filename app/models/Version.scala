@@ -26,7 +26,6 @@ import play.api.libs.json.JsSuccess
 import play.api.libs.json.JsValue
 
 enum Version(val value: String) {
-  case V2_1 extends Version("2.1")
   case V3_0 extends Version("3.0")
 }
 
@@ -37,7 +36,6 @@ object Version {
 
     override def reads(json: JsValue): JsResult[Version] = json match {
       case JsString("3.0") => JsSuccess(V3_0)
-      case JsString("2.1") => JsSuccess(V2_1)
       case value           => JsError(s"Invalid version provided: $value")
     }
   }

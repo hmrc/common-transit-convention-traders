@@ -20,6 +20,7 @@ import base.TestCommonGenerators
 import connectors.AuditingConnector
 import models.*
 import models.AuditType.DeclarationData
+import models.Version.V3_0
 import models.common.EORINumber
 import models.common.MessageId
 import models.common.MovementId
@@ -35,10 +36,8 @@ import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
-import models.Version.V2_1
-import models.Version.V3_0
-import org.scalatest.OptionValues
 import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -68,7 +67,7 @@ class AuditingServiceSpec
   val sut: AuditingService             = new AuditingService(mockConnector)
   implicit val hc: HeaderCarrier       = HeaderCarrier()
   val smallMessageSize                 = 49999
-  val version: Version                 = Gen.oneOf(V2_1, V3_0).sample.value
+  val version: Version                 = V3_0
 
   override def beforeEach(): Unit =
     reset(mockConnector)

@@ -22,6 +22,7 @@ import config.Constants
 import connectors.PushNotificationsConnector
 import models.BoxId
 import models.Version
+import models.Version.V3_0
 import models.common.*
 import models.common.errors.PushNotificationError
 import models.request.PushNotificationsAssociation
@@ -33,13 +34,11 @@ import org.mockito.Mockito.reset
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
-import models.Version.V2_1
-import models.Version.V3_0
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.OptionValues
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.http.Status.NOT_FOUND
@@ -66,7 +65,7 @@ class PushNotificationServiceSpec
 
   val mockConnector: PushNotificationsConnector = mock[PushNotificationsConnector]
   val mockAppConfig: AppConfig                  = mock[AppConfig]
-  val version: Version                          = Gen.oneOf(V2_1, V3_0).sample.value
+  val version: Version                          = V3_0
 
   val sut = new PushNotificationsService(mockConnector)
 
