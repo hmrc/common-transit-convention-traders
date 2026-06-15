@@ -35,8 +35,8 @@
       },
       {
         "version": "2.1",
-        "status": "BETA",
-        "endpointsEnabled": true,
+        "status": "DEPRECATED",
+        "endpointsEnabled": false,
         "access": {
           "type": "PUBLIC"
         },
