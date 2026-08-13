@@ -91,6 +91,11 @@ trait BaseConnector extends HttpErrorFunctions {
         requestBuilder.setHeader("X-Audit-Meta-EORI" -> eoriNumber.get.value)
       else requestBuilder
 
+    def withOptionalAcceptRedirectHeader(optionalHeader: Option[String]): RequestBuilder =
+      if (optionalHeader.isDefined)
+        requestBuilder.setHeader(Constants.XAcceptRedirectHeader -> optionalHeader.get)
+      else requestBuilder
+
     def withMovementType(movementType: Option[MovementType]): RequestBuilder =
       if (movementType.isDefined)
         requestBuilder.setHeader("X-Audit-Meta-Movement-Type" -> movementType.get.movementType)
