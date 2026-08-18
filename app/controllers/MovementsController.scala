@@ -1055,7 +1055,7 @@ class MovementsControllerImpl @Inject() (
 
       // Send message to router to be sent
       submissionResult <- routerService
-        .send(messageType, eori, movementId, messageId, source, movementSummary.apiVersion, None)
+        .send(messageType, eori, movementId, messageId, source, movementSummary.apiVersion)
         .asPresentation
         .leftMap {
           err =>
@@ -1166,15 +1166,7 @@ class MovementsControllerImpl @Inject() (
           err
       }
       _ <- routerService
-        .send(
-          messageType,
-          request.authenticatedRequest.eoriNumber,
-          movementId,
-          updateMovementResponse.messageId,
-          sources.lift(2).get,
-          version,
-          request.authenticatedRequest.headers.get(Constants.XAcceptRedirectHeader)
-        )
+        .send(messageType, request.authenticatedRequest.eoriNumber, movementId, updateMovementResponse.messageId, sources.lift(2).get, version)
         .asPresentation
         .leftMap {
           err =>
@@ -1337,8 +1329,7 @@ class MovementsControllerImpl @Inject() (
           movementResponse.movementId,
           movementResponse.messageId,
           sources.lift(2).get,
-          version,
-          request.authenticatedRequest.headers.get(Constants.XAcceptRedirectHeader)
+          version
         )
         .asPresentation
         .leftMap {
