@@ -47,14 +47,21 @@ import scala.util.control.NonFatal
 
 class RouterService @Inject() (routerConnector: RouterConnector) extends Logging {
 
-  def send(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, ?], version: Version)(
-    implicit
+  def send(
+    messageType: MessageType,
+    eoriNumber: EORINumber,
+    movementId: MovementId,
+    messageId: MessageId,
+    body: Source[ByteString, ?],
+    version: Version,
+    customAcceptRedirectHeader: Option[String]
+  )(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): EitherT[Future, RouterError, SubmissionRoute] =
     EitherT(
       routerConnector
-        .post(messageType, eoriNumber, movementId, messageId, body, version)
+        .post(messageType, eoriNumber, movementId, messageId, body, version, customAcceptRedirectHeader)
         .map(
           result => Right(result)
         )

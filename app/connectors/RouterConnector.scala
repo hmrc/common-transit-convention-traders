@@ -56,13 +56,20 @@ class RouterConnector @Inject() (val metrics: MetricRegistry, httpClientV2: Http
 
   private val routerBaseRoute: String = "/transit-movements-router"
 
-  def routerRoute(eoriNumber: EORINumber, messageType: MessageType, movementId: MovementId, messageId: MessageId): UrlPath =
+  private def routerRoute(eoriNumber: EORINumber, messageType: MessageType, movementId: MovementId, messageId: MessageId): UrlPath =
     UrlPath.parse(
       s"$routerBaseRoute/traders/${eoriNumber.value}/movements/${messageType.movementType.urlFragment}/${movementId.value}/messages/${messageId.value}"
     )
 
-  def post(messageType: MessageType, eoriNumber: EORINumber, movementId: MovementId, messageId: MessageId, body: Source[ByteString, ?], version: Version)(
-    implicit
+  def post(
+    messageType: MessageType,
+    eoriNumber: EORINumber,
+    movementId: MovementId,
+    messageId: MessageId,
+    body: Source[ByteString, ?],
+    version: Version,
+    customAcceptRedirectHeader: Option[String]
+  )(implicit
     ec: ExecutionContext,
     hc: HeaderCarrier
   ): Future[SubmissionRoute] =
@@ -73,6 +80,7 @@ class RouterConnector @Inject() (val metrics: MetricRegistry, httpClientV2: Http
         httpClientV2
           .post(url"$url")
           .withInternalAuthToken
+          .withOptionalAcceptRedirectHeader(customAcceptRedirectHeader)
           .setHeader(
             HeaderNames.CONTENT_TYPE     -> MimeTypes.XML,
             Constants.XMessageTypeHeader -> messageType.code,
