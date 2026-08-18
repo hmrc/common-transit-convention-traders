@@ -28,6 +28,4 @@ object Constants {
 
   val EnrolmentKey: String   = "HMRC-CTC-ORG"
   val EnrolmentIdKey: String = "EORINumber"
-
-  val XAcceptRedirectHeader: String = "X-ACCEPT-REDIRECT"
 }
