@@ -109,9 +109,10 @@ class RouterServiceSpec
       arbitrary[EORINumber],
       arbitrary[MovementId],
       arbitrary[MessageId],
-      Gen.oneOf(SubmissionRoute.values.toIndexedSeq)
+      Gen.oneOf(SubmissionRoute.values.toIndexedSeq),
+      Gen.option(arbitrary[String])
     ) {
-      (messageType, eori, movementId, messageId, submissionRoute) =>
+      (messageType, eori, movementId, messageId, submissionRoute, acceptRedirectHeader) =>
         when(
           mockConnector.post(
             eqTo(messageType),
@@ -119,7 +120,8 @@ class RouterServiceSpec
             MovementId(eqTo(movementId.value)),
             MessageId(eqTo(messageId.value)),
             eqTo(validRequest),
-            eqTo(version)
+            eqTo(version),
+            eqTo(acceptRedirectHeader)
           )(
             any[ExecutionContext],
             any[HeaderCarrier]
@@ -127,7 +129,7 @@ class RouterServiceSpec
         )
           .thenReturn(Future.successful(submissionRoute))
 
-        val result                                         = sut.send(messageType, eori, movementId, messageId, validRequest, version)
+        val result                                         = sut.send(messageType, eori, movementId, messageId, validRequest, version, acceptRedirectHeader)
         val expected: Either[RouterError, SubmissionRoute] = Right(submissionRoute)
         whenReady(result.value) {
           _ mustBe expected
@@ -143,14 +145,15 @@ class RouterServiceSpec
           any[String].asInstanceOf[MovementId],
           any[String].asInstanceOf[MessageId],
           eqTo(invalidRequest),
-          eqTo(version)
+          eqTo(version),
+          any()
         )(
           any[ExecutionContext],
           any[HeaderCarrier]
         )
       )
         .thenReturn(Future.failed(upstreamErrorResponse))
-      val result                              = sut.send(MessageType.DeclarationData, EORINumber("1"), MovementId("1"), MessageId("1"), invalidRequest, version)
+      val result = sut.send(MessageType.DeclarationData, EORINumber("1"), MovementId("1"), MessageId("1"), invalidRequest, version, None)
       val expected: Either[RouterError, Unit] = Left(RouterError.UnexpectedError(Some(upstreamErrorResponse)))
       whenReady(result.value) {
         _ mustBe expected
@@ -166,7 +169,8 @@ class RouterServiceSpec
           any[String].asInstanceOf[MovementId],
           any[String].asInstanceOf[MessageId],
           eqTo(unrecognisedOfficeRequest),
-          eqTo(version)
+          eqTo(version),
+          any()
         )(
           any[ExecutionContext],
           any[HeaderCarrier]
@@ -187,7 +191,7 @@ class RouterServiceSpec
             )
           )
         )
-      val result = sut.send(MessageType.DeclarationData, EORINumber("1"), MovementId("1"), MessageId("1"), unrecognisedOfficeRequest, version)
+      val result = sut.send(MessageType.DeclarationData, EORINumber("1"), MovementId("1"), MessageId("1"), unrecognisedOfficeRequest, version, None)
       val expected: Either[RouterError, Unit] = Left(RouterError.UnrecognisedOffice("AB012345", "CustomsOfficeOfDeparture"))
       whenReady(result.value) {
         _ mustBe expected
@@ -203,14 +207,15 @@ class RouterServiceSpec
           any[String].asInstanceOf[MovementId],
           any[String].asInstanceOf[MessageId],
           eqTo(invalidRequest),
-          eqTo(version)
+          eqTo(version),
+          any()
         )(
           any[ExecutionContext],
           any[HeaderCarrier]
         )
       )
         .thenReturn(Future.failed(lrnDuplicateErrorResponse))
-      val result                              = sut.send(MessageType.DeclarationData, EORINumber("1"), MovementId("1"), MessageId("1"), invalidRequest, version)
+      val result = sut.send(MessageType.DeclarationData, EORINumber("1"), MovementId("1"), MessageId("1"), invalidRequest, version, None)
       val expected: Either[RouterError, Unit] = Left(RouterError.DuplicateLRN(LocalReferenceNumber("1234")))
       whenReady(result.value) {
         _ mustBe expected
