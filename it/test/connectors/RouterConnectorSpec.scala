@@ -97,9 +97,10 @@ class RouterConnectorSpec
       arbitrary[EORINumber],
       arbitrary[MessageType],
       arbitrary[MovementId],
-      arbitrary[MessageId]
+      arbitrary[MessageId],
+      Gen.option(arbitrary[String])
     ) {
-      (eoriNumber, messageType, movementId, messageId) =>
+      (eoriNumber, messageType, movementId, messageId, acceptRedirectHeader) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber, messageType, movementId, messageId))
@@ -114,7 +115,7 @@ class RouterConnectorSpec
 
         whenReady(
           routerConnector
-            .post(messageType, eoriNumber, movementId, messageId, source, version)
+            .post(messageType, eoriNumber, movementId, messageId, source, version, acceptRedirectHeader)
             .map(Right(_)) // can't test unit, but we want to test for success
             .recover {
               case thr => Left(thr)
@@ -129,9 +130,10 @@ class RouterConnectorSpec
       arbitrary[MessageType],
       arbitrary[MovementId],
       arbitrary[MessageId],
-      Gen.stringOfN(15, Gen.alphaNumChar)
+      Gen.stringOfN(15, Gen.alphaNumChar),
+      Gen.option(arbitrary[String])
     ) {
-      (eoriNumber, messageType, movementId, messageId, clientId) =>
+      (eoriNumber, messageType, movementId, messageId, clientId, acceptRedirectHeader) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber, messageType, movementId, messageId))
@@ -147,7 +149,7 @@ class RouterConnectorSpec
 
         whenReady(
           routerConnector
-            .post(messageType, eoriNumber, movementId, messageId, source, version)(
+            .post(messageType, eoriNumber, movementId, messageId, source, version, acceptRedirectHeader)(
               implicitly[ExecutionContext],
               HeaderCarrier(otherHeaders = Seq(Constants.XClientIdHeader -> clientId))
             )
@@ -164,9 +166,10 @@ class RouterConnectorSpec
       arbitrary[EORINumber],
       arbitrary[MessageType],
       arbitrary[MovementId],
-      arbitrary[MessageId]
+      arbitrary[MessageId],
+      Gen.option(arbitrary[String])
     ) {
-      (eoriNumber, messageType, movementId, messageId) =>
+      (eoriNumber, messageType, movementId, messageId, acceptRedirectHeader) =>
         server.stubFor(
           post(
             urlEqualTo(targetUrl(eoriNumber, messageType, movementId, messageId))
@@ -185,7 +188,7 @@ class RouterConnectorSpec
 
         val source = Source.single(ByteString("<test></test>", StandardCharsets.UTF_8))
 
-        val future = routerConnector.post(messageType, eoriNumber, movementId, messageId, source, version).map(Right(_)).recover {
+        val future = routerConnector.post(messageType, eoriNumber, movementId, messageId, source, version, acceptRedirectHeader).map(Right(_)).recover {
           case NonFatal(e) => Left(e)
         }
 

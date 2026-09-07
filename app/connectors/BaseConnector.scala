@@ -106,6 +106,11 @@ trait BaseConnector extends HttpErrorFunctions {
         requestBuilder.setHeader("X-Audit-Meta-Message-Id" -> messageId.get.value)
       else requestBuilder
 
+    def withAcceptRedirectHeader(acceptRedirectHeader: Option[String]): RequestBuilder =
+      if (acceptRedirectHeader.isDefined)
+        requestBuilder.setHeader(Constants.XAcceptRedirectHeader -> acceptRedirectHeader.get)
+      else requestBuilder
+
     def executeAndDeserialise[T](implicit ec: ExecutionContext, reads: Reads[T]): Future[T] =
       requestBuilder
         .execute[HttpResponse]
