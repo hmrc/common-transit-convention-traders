@@ -9,6 +9,7 @@
         "version": "2.0",
         "status": "RETIRED",
         "endpointsEnabled": false,
+        "access": "PUBLIC",
         "fieldDefinitions": [{
           "name": "notificationUrl",
           "shortDescription": "Notification URL",
@@ -34,6 +35,7 @@
         "version": "2.1",
         "status": "BETA",
         "endpointsEnabled": true,
+        "access": "PUBLIC",
         "fieldDefinitions": [{
           "name": "notificationUrl",
           "shortDescription": "Notification URL",
