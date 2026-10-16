@@ -5,3 +5,4 @@ test-repositories:
   - manage-transit-movements-performance-tests
   - common-transit-convention-traders-postman
   - ctc-traders-api-tests
+serviceNowMapping: SNSVC0005357
